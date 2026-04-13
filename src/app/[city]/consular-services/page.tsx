@@ -1,4 +1,7 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { format } from 'date-fns';
+import { db } from '@/lib/db';
 
 /**
  * Programmatic SEO: Consular Services
@@ -11,9 +14,26 @@ import type { Metadata } from 'next';
 
 type Props = { params: Promise<{ city: string }> };
 
+const TYPE_LABELS: Record<string, string> = {
+  CONSULAR_SERVICE: 'Consular Service',
+  OFFICIAL_EVENT: 'Official Event',
+  GOVERNMENT_INFO: 'Government Info',
+  VISA_SERVICE: 'Visa Service',
+  COMMUNITY_RESOURCE: 'Community Resource',
+};
+
+const TYPE_ICONS: Record<string, string> = {
+  CONSULAR_SERVICE: '🏛️',
+  OFFICIAL_EVENT: '📅',
+  GOVERNMENT_INFO: 'ℹ️',
+  VISA_SERVICE: '🛂',
+  COMMUNITY_RESOURCE: '🤝',
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
+  const cityName = cityRow?.name ?? city;
   return {
     title: `Indian Consular Services near ${cityName}`,
     description: `CGI consular camps, passport seva, VFS services, and official Indian government services near ${cityName}, Germany.`,
@@ -22,19 +42,127 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ConsularServicesPage({ params }: Props) {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
 
-  // TODO: Fetch resources with type CONSULAR_SERVICE for this city
+  const cityRow = await db.city.findUnique({
+    where: { slug: city },
+    select: { name: true, isActive: true, id: true, satelliteCities: { select: { id: true } } },
+  });
+  if (!cityRow || !cityRow.isActive) notFound();
+
+  const cityIds = [cityRow.id, ...cityRow.satelliteCities.map((s) => s.id)];
+  const cityName = cityRow.name;
+
+  const resources = await db.resource.findMany({
+    where: {
+      cityId: { in: cityIds },
+      OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
+    },
+    orderBy: [{ resourceType: 'asc' }, { title: 'asc' }],
+  });
+
+  // Group by type
+  const grouped: Record<string, typeof resources> = {};
+  for (const r of resources) {
+    if (!grouped[r.resourceType]) grouped[r.resourceType] = [];
+    grouped[r.resourceType].push(r);
+  }
+
   return (
-    <div>
-      <h1 className="text-2xl font-bold">Indian Consular Services near {cityName}</h1>
-      <p className="mt-2 text-gray-600">
-        Consular camps, passport services, VFS appointments, and official events.
-      </p>
-
-      <div className="mt-6 rounded-lg border border-dashed border-gray-300 p-8 text-center text-gray-400">
-        Consular service resources — connect to database
+    <div className="space-y-10">
+      {/* Header */}
+      <div>
+        <nav className="mb-2 text-sm text-gray-500">
+          <a href={`/${city}`} className="hover:underline">
+            {cityName}
+          </a>
+          {' / '}
+          <span>Consular Services</span>
+        </nav>
+        <h1 className="text-3xl font-bold">Indian Consular Services near {cityName}</h1>
+        <p className="mt-2 text-gray-600">
+          Passport seva, CGI consular camps, VFS appointments, and official services for Indians in{' '}
+          {cityName}.
+        </p>
       </div>
+
+      {resources.length === 0 && (
+        <p className="text-gray-400">No resources listed yet — check back soon.</p>
+      )}
+
+      {/* Grouped sections */}
+      {Object.entries(grouped).map(([type, items]) => (
+        <section key={type}>
+          <h2 className="text-xl font-semibold">
+            {TYPE_ICONS[type]} {TYPE_LABELS[type] ?? type}
+          </h2>
+          <div className="mt-4 space-y-4">
+            {items.map((r) => (
+              <div key={r.id} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">{r.title}</h3>
+                    {r.description && (
+                      <p className="mt-1 text-sm leading-relaxed text-gray-600">{r.description}</p>
+                    )}
+                    {(r.validFrom || r.validUntil) && (
+                      <p className="mt-2 text-xs text-gray-400">
+                        {r.validFrom && `From ${format(new Date(r.validFrom), 'MMM d, yyyy')}`}
+                        {r.validFrom && r.validUntil && ' · '}
+                        {r.validUntil && `Until ${format(new Date(r.validUntil), 'MMM d, yyyy')}`}
+                      </p>
+                    )}
+                  </div>
+                  {r.url && (
+                    <a
+                      href={r.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                    >
+                      Visit →
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {/* Permanent info block */}
+      <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <h2 className="font-semibold text-amber-900">🏛️ Consulate General of India, Munich</h2>
+        <p className="mt-1 text-sm text-amber-800">
+          The nearest Indian Consulate for Stuttgart residents is in Munich. They conduct periodic
+          Consular Camps in Stuttgart for passport, OCI, and document services.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <a
+            href="https://www.cgimunich.gov.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-100"
+          >
+            CGI Munich Website →
+          </a>
+          <a
+            href="https://passportindia.gov.in"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-100"
+          >
+            Passport Seva Portal →
+          </a>
+          <a
+            href="https://www.vfsglobal.com/India/Germany"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-amber-800 shadow-sm hover:bg-amber-100"
+          >
+            VFS Global Germany →
+          </a>
+        </div>
+      </section>
     </div>
   );
 }
