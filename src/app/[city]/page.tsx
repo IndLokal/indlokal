@@ -1,4 +1,8 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getCityFeed } from '@/modules/discovery/queries';
+import { CommunityCard } from '@/components/CommunityCard';
+import { EventCard } from '@/components/EventCard';
 
 /**
  * City Feed — the primary discovery surface.
@@ -23,63 +27,70 @@ export async function generateMetadata({ params }: CityFeedPageProps): Promise<M
 
 export default async function CityFeedPage({ params }: CityFeedPageProps) {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
 
-  // TODO: Replace with getCityFeed(city) when DB is connected
+  const feed = await getCityFeed(city);
+  if (!feed) notFound();
+
+  const { city: cityData, thisWeek, activeCommunities, recentPastEvents, counts } = feed;
+  const cityName = cityData.name;
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-12">
       {/* Hero */}
       <section>
-        <h1 className="text-3xl font-bold">What&apos;s happening for Indians in {cityName}</h1>
-        <p className="mt-2 text-gray-600">Communities, events, and activities — updated weekly.</p>
+        <h1 className="text-3xl font-bold">Indians in {cityName}</h1>
+        <p className="mt-2 text-gray-600">
+          {counts.communities} communities · {counts.upcomingEvents} upcoming events
+        </p>
       </section>
 
       {/* This Week */}
       <section>
-        <h2 className="text-xl font-semibold">This Week</h2>
-        <p className="mt-2 text-sm text-gray-500">Events coming up in the next 7 days</p>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* Event cards will go here */}
-          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-            Event cards load here
-          </div>
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-xl font-semibold">
+            {thisWeek.expandedToMonth ? 'This Month' : 'This Week'}
+          </h2>
+          <a href={`/${city}/events`} className="text-sm text-indigo-600 hover:underline">
+            See all events →
+          </a>
         </div>
+        {thisWeek.events.length === 0 ? (
+          <p className="mt-4 text-sm text-gray-400">No events coming up — check back soon.</p>
+        ) : (
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {thisWeek.events.map((event) => (
+              <EventCard key={event.id} event={event} city={city} />
+            ))}
+          </div>
+        )}
       </section>
+
+      {/* Recently Happened */}
+      {recentPastEvents.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold">Recently Happened</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Catch up on what&apos;s been active in {cityName}
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {recentPastEvents.map((event) => (
+              <EventCard key={event.id} event={event} city={city} past />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Active Communities */}
       <section>
-        <h2 className="text-xl font-semibold">Active Communities</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="rounded-lg border border-dashed border-gray-300 p-6 text-center text-sm text-gray-400">
-            Community cards load here
-          </div>
+        <div className="flex items-baseline gap-3">
+          <h2 className="text-xl font-semibold">Active Communities</h2>
+          <a href={`/${city}/communities`} className="text-sm text-indigo-600 hover:underline">
+            See all →
+          </a>
         </div>
-      </section>
-
-      {/* Browse by Category */}
-      <section>
-        <h2 className="text-xl font-semibold">Browse by Category</h2>
-        <div className="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-6">
-          {[
-            { icon: '🎭', name: 'Cultural' },
-            { icon: '🎓', name: 'Student' },
-            { icon: '💼', name: 'Professional' },
-            { icon: '🙏', name: 'Religious' },
-            { icon: '🗣️', name: 'Language' },
-            { icon: '⚽', name: 'Sports' },
-            { icon: '👨‍👩‍👧', name: 'Family' },
-            { icon: '🤝', name: 'Networking' },
-            { icon: '🍛', name: 'Food' },
-            { icon: '🎵', name: 'Arts' },
-            { icon: '🏛️', name: 'Consular' },
-          ].map((cat) => (
-            <div
-              key={cat.name}
-              className="flex flex-col items-center rounded-lg border border-gray-200 p-3 text-sm transition-colors hover:bg-gray-50"
-            >
-              <span className="text-2xl">{cat.icon}</span>
-              <span className="mt-1">{cat.name}</span>
-            </div>
+        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {activeCommunities.map((community) => (
+            <CommunityCard key={community.id} community={community} city={city} />
           ))}
         </div>
       </section>
