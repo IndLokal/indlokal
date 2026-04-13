@@ -44,7 +44,7 @@ src/
 ### Prerequisites
 
 - Node.js >= 20
-- PostgreSQL (local or Docker)
+- Docker (for PostgreSQL)
 
 ### Setup
 
@@ -57,10 +57,12 @@ npm install
 
 # Set up environment
 cp .env.example .env.local
-# Edit .env.local with your DATABASE_URL
+cp .env.example .env        # Prisma reads from .env
+
+# Start PostgreSQL via Docker
+docker compose up -d
 
 # Set up database
-npx prisma generate
 npx prisma db push
 npm run db:seed
 
@@ -69,6 +71,15 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
+
+### Docker Commands
+
+| Command                     | Description                     |
+| --------------------------- | ------------------------------- |
+| `docker compose up -d`      | Start PostgreSQL                |
+| `docker compose down`       | Stop PostgreSQL (data persists) |
+| `docker compose down -v`    | Stop and **wipe** all data      |
+| `docker compose logs -f db` | Tail database logs              |
 
 ### Useful Commands
 
