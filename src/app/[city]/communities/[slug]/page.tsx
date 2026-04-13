@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getCommunityBySlug } from '@/modules/community/queries';
+import { ClaimSection } from './ClaimSection';
 
 /**
  * Community Detail Page
@@ -232,6 +233,13 @@ export default async function CommunityDetailPage({ params }: Props) {
             </div>
           </div>
         )}
+
+        {/* Claim Section */}
+        <ClaimSection
+          communityId={community.id}
+          communityName={community.name}
+          claimState={community.claimState}
+        />
       </div>
     </>
   );

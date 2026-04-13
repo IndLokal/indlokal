@@ -31,6 +31,12 @@ export default function AdminDashboardPage() {
           href="/admin/categories"
         />
         <DashboardCard title="Scoring" description="Run score refresh" href="/admin/scoring" />
+        <DashboardCard
+          title="Submissions"
+          description="Review submitted communities"
+          href="/admin/submissions"
+        />
+        <DashboardCard title="Claims" description="Review claim requests" href="/admin/claims" />
       </div>
     </div>
   );

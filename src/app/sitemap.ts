@@ -26,6 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Root
   entries.push({ url: baseUrl, changeFrequency: 'weekly', priority: 1.0 });
 
+  // Submit page
+  entries.push({ url: `${baseUrl}/submit`, changeFrequency: 'monthly', priority: 0.6 });
+
   for (const city of cities) {
     const cityBase = `${baseUrl}/${city.slug}`;
 

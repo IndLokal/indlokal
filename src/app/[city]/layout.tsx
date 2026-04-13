@@ -58,6 +58,12 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
             >
               Search
             </Link>
+            <Link
+              href="/submit"
+              className="rounded-lg bg-indigo-600 px-3 py-1.5 text-white hover:bg-indigo-700"
+            >
+              + Submit
+            </Link>
           </nav>
         </div>
       </header>
