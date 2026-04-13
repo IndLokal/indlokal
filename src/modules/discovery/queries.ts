@@ -28,7 +28,7 @@ export async function getCityFeed(citySlug: string): Promise<CityFeedData | null
   const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
 
   // Parallel data fetching
-  const [thisWeek, activeCommunities, recentPastEvents, counts] = await Promise.all([
+  const [thisWeek, activeCommunities, recentPastEvents, categoryRows, counts] = await Promise.all([
     getEventsThisWeek(citySlug),
 
     getCommunitiesByCity(citySlug, { limit: 8 }),
@@ -60,6 +60,27 @@ export async function getCityFeed(citySlug: string): Promise<CityFeedData | null
       take: 6,
     }),
 
+    // Categories with community counts for "Browse by Category" grid
+    db.category.findMany({
+      where: {
+        type: 'CATEGORY',
+        communities: { some: { community: { cityId: { in: cityIds } } } },
+      },
+      select: {
+        name: true,
+        slug: true,
+        icon: true,
+        _count: {
+          select: {
+            communities: {
+              where: { community: { cityId: { in: cityIds }, status: { not: 'INACTIVE' } } },
+            },
+          },
+        },
+      },
+      orderBy: { sortOrder: 'asc' },
+    }),
+
     // Aggregate counts
     Promise.all([
       db.community.count({ where: { cityId: { in: cityIds }, status: { not: 'INACTIVE' } } }),
@@ -88,6 +109,12 @@ export async function getCityFeed(citySlug: string): Promise<CityFeedData | null
     thisWeek,
     activeCommunities,
     recentPastEvents,
+    categories: categoryRows.map((c) => ({
+      name: c.name,
+      slug: c.slug,
+      icon: c.icon,
+      communityCount: c._count.communities,
+    })),
     counts,
   };
 }

@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         source: '/:city/:language-communities',
         destination: '/:city/communities?language=:language',
       },
+      {
+        // SEO: /stuttgart/professional-groups → /stuttgart/communities?category=professional
+        source: '/:city/:category-groups',
+        destination: '/:city/communities?category=:category',
+      },
     ];
   },
 };

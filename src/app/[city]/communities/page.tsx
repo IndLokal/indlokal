@@ -16,7 +16,7 @@ import { CommunityCard } from '@/components/CommunityCard';
 
 type Props = {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ language?: string }>;
+  searchParams: Promise<{ language?: string; category?: string }>;
 };
 
 function capitalize(s: string) {
@@ -25,7 +25,7 @@ function capitalize(s: string) {
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { city } = await params;
-  const { language } = await searchParams;
+  const { language, category } = await searchParams;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
   if (language) {
@@ -33,6 +33,13 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: `${languageName} Communities in ${cityName}`,
       description: `Find ${languageName} communities, groups, and events in ${cityName}, Germany.`,
+    };
+  }
+  if (category) {
+    const categoryName = capitalize(category);
+    return {
+      title: `Indian ${categoryName} Groups in ${cityName}`,
+      description: `Discover Indian ${categoryName.toLowerCase()} groups, communities, and organizations in ${cityName}, Germany.`,
     };
   }
   return {
@@ -43,7 +50,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function CommunitiesPage({ params, searchParams }: Props) {
   const { city } = await params;
-  const { language } = await searchParams;
+  const { language, category } = await searchParams;
 
   const cityRow = await db.city.findUnique({
     where: { slug: city },
@@ -51,7 +58,10 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const allCommunities = await getCommunitiesByCity(city, { limit: 40 });
+  const allCommunities = await getCommunitiesByCity(city, {
+    categorySlug: category,
+    limit: 40,
+  });
   const cityName = cityRow.name;
 
   // Optional language filter (for SEO pages like /telugu-communities)

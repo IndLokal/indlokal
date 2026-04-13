@@ -31,7 +31,14 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
   const feed = await getCityFeed(city);
   if (!feed) notFound();
 
-  const { city: cityData, thisWeek, activeCommunities, recentPastEvents, counts } = feed;
+  const {
+    city: cityData,
+    thisWeek,
+    activeCommunities,
+    recentPastEvents,
+    categories,
+    counts,
+  } = feed;
   const cityName = cityData.name;
 
   return (
@@ -75,6 +82,28 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recentPastEvents.map((event) => (
               <EventCard key={event.id} event={event} city={city} past />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Browse by Category */}
+      {categories.length > 0 && (
+        <section>
+          <h2 className="text-xl font-semibold">Browse by Category</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {categories.map((cat) => (
+              <a
+                key={cat.slug}
+                href={`/${city}/communities?category=${cat.slug}`}
+                className="flex flex-col items-center gap-1.5 rounded-xl border border-gray-200 bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md"
+              >
+                <span className="text-2xl">{cat.icon}</span>
+                <span className="text-sm font-medium text-gray-800">{cat.name}</span>
+                <span className="text-xs text-gray-400">
+                  {cat.communityCount} communit{cat.communityCount !== 1 ? 'ies' : 'y'}
+                </span>
+              </a>
             ))}
           </div>
         </section>

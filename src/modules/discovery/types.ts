@@ -22,6 +22,14 @@ export type CityFeedData = {
   /** Recently happened events — proves the city is active */
   recentPastEvents: EventListItem[];
 
+  /** Browse by category with counts */
+  categories: {
+    name: string;
+    slug: string;
+    icon: string | null;
+    communityCount: number;
+  }[];
+
   /** Content counts for the city */
   counts: {
     communities: number;
