@@ -5,8 +5,8 @@ import type { CommunityWithRelations, CommunityListItem } from './types';
  * Get a single community with all relations for the detail page.
  */
 export async function getCommunityBySlug(slug: string): Promise<CommunityWithRelations | null> {
-  return db.community.findUnique({
-    where: { slug },
+  return db.community.findFirst({
+    where: { slug, status: { not: 'INACTIVE' } },
     include: {
       city: true,
       categories: { include: { category: true } },

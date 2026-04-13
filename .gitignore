@@ -45,3 +45,9 @@ next-env.d.ts
 # prisma
 prisma/*.db
 prisma/*.db-journal
+
+# test output
+coverage/
+playwright-report/
+test-results/
+.vitest-cache/

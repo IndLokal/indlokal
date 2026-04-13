@@ -134,6 +134,51 @@ cmd_db_studio() {
   npx prisma studio
 }
 
+cmd_test() {
+  print_header
+  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+    cmd_db_start
+  fi
+  echo "Running unit + component tests..."
+  echo ""
+  npm run test
+}
+
+cmd_test_watch() {
+  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+    cmd_db_start
+  fi
+  npm run test:watch
+}
+
+cmd_test_setup() {
+  print_header
+  echo "Setting up test database..."
+
+  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+    cmd_db_start
+  fi
+
+  # Create test DB if it doesn't exist
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || \
+    print_warn "localpulse_test already exists — skipping creation"
+
+  # Push schema to test DB
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+    npx prisma db push --skip-generate
+
+  print_success "Test database ready"
+}
+
+cmd_test_coverage() {
+  print_header
+  echo "Running tests with coverage..."
+  echo ""
+  npm run test:coverage
+  echo ""
+  print_success "Coverage report saved to coverage/"
+}
+
 cmd_check() {
   print_header
   echo "Running all checks..."
@@ -189,6 +234,12 @@ cmd_help() {
   echo "  db:reset       Wipe DB, recreate, and re-seed"
   echo "  db:studio      Open Prisma Studio (browser UI)"
   echo ""
+  echo -e "${CYAN}Testing${NC}"
+  echo "  test:setup     Create test DB + push schema (run once)"
+  echo "  test           Run all unit + component tests"
+  echo "  test:watch     Run tests in watch mode"
+  echo "  test:coverage  Run tests with coverage report"
+  echo ""
   echo -e "${CYAN}Quality${NC}"
   echo "  check          Run typecheck + lint + format check"
   echo ""
@@ -202,15 +253,19 @@ cmd_help() {
 # ─── Router ───
 
 case "${1:-help}" in
-  setup)      cmd_setup ;;
-  start)      cmd_start ;;
-  stop)       cmd_stop ;;
-  db:start)   cmd_db_start ;;
-  db:stop)    cmd_db_stop ;;
-  db:reset)   cmd_db_reset ;;
-  db:studio)  cmd_db_studio ;;
-  check)      cmd_check ;;
-  clean)      cmd_clean ;;
+  setup)         cmd_setup ;;
+  start)         cmd_start ;;
+  stop)          cmd_stop ;;
+  db:start)      cmd_db_start ;;
+  db:stop)       cmd_db_stop ;;
+  db:reset)      cmd_db_reset ;;
+  db:studio)     cmd_db_studio ;;
+  test)          cmd_test ;;
+  test:watch)    cmd_test_watch ;;
+  test:setup)    cmd_test_setup ;;
+  test:coverage) cmd_test_coverage ;;
+  check)         cmd_check ;;
+  clean)         cmd_clean ;;
   help|--help|-h) cmd_help ;;
   *)
     print_error "Unknown command: $1"

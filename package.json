@@ -20,6 +20,12 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "check": "npm run typecheck && npm run lint && npm run format:check",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "echo 'E2E tests not configured yet — add Playwright when first feature ships'",
+    "test:setup": "bash -c 'docker compose exec -T db psql -U postgres -c \"CREATE DATABASE localpulse_test;\" 2>/dev/null || true && DATABASE_URL=${TEST_DATABASE_URL} npx prisma db push --skip-generate'",
     "prepare": "husky"
   },
   "dependencies": {
@@ -48,7 +54,15 @@
     "prettier": "^3.5.0",
     "prettier-plugin-tailwindcss": "^0.6.0",
     "husky": "^9.0.0",
-    "lint-staged": "^15.0.0"
+    "lint-staged": "^15.0.0",
+    "vitest": "^2.1.0",
+    "@vitest/coverage-v8": "^2.1.0",
+    "@vitest/ui": "^2.1.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@testing-library/jest-dom": "^6.6.0",
+    "jsdom": "^25.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
