@@ -40,7 +40,7 @@ export async function getCommunitiesByCity(
   if (!city) return [];
 
   // Include satellite city IDs if this is a metro primary
-  const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
+  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 
   return db.community.findMany({
     where: {

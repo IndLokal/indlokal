@@ -49,7 +49,7 @@ export default async function ConsularServicesPage({ params }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const cityIds = [cityRow.id, ...cityRow.satelliteCities.map((s) => s.id)];
+  const cityIds = [cityRow.id, ...cityRow.satelliteCities.map((s: { id: string }) => s.id)];
   const cityName = cityRow.name;
 
   const resources = await db.resource.findMany({

@@ -17,7 +17,7 @@ export async function searchCommunities(
   });
   if (!city) return [];
 
-  const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
+  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 
   // MVP: simple ILIKE search. Migrate to full-text search with tsvector later.
   return db.community.findMany({
@@ -63,7 +63,7 @@ export async function searchEvents(
   });
   if (!city) return [];
 
-  const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
+  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 
   return db.event.findMany({
     where: {

@@ -51,7 +51,8 @@ export default async function LanguageCommunitiesPage({ params }: Props) {
   // (Prisma String[] has-filter is supported)
   const allCommunities = await getCommunitiesByCity(city, { limit: 40 });
   const communities = allCommunities.filter(
-    (c) => c.languages?.some((l) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
+    (c) =>
+      c.languages?.some((l: string) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
   );
 
   return (

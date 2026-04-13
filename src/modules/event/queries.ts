@@ -27,7 +27,7 @@ async function resolveCityIds(citySlug: string): Promise<string[]> {
     select: { id: true, satelliteCities: { select: { id: true } } },
   });
   if (!city) return [];
-  return [city.id, ...city.satelliteCities.map((s) => s.id)];
+  return [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 }
 
 /**

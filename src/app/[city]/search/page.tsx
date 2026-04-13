@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound, redirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { searchCommunities, searchEvents } from '@/modules/search/queries';
 import { CommunityCard } from '@/components/CommunityCard';
