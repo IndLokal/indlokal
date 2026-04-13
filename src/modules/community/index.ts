@@ -1,0 +1,15 @@
+/**
+ * Community Module
+ *
+ * The central domain module. Communities are the primary node in the
+ * community graph. All discovery, scoring, and relationship logic
+ * flows through or connects to communities.
+ *
+ * Responsibilities:
+ * - CRUD for community entities
+ * - Community lifecycle (unverified → active → claimed)
+ * - Profile completeness computation
+ * - Access channel management
+ */
+export { getCommunityBySlug, getCommunitiesByCity } from './queries';
+export type { CommunityWithRelations, CommunityListItem } from './types';

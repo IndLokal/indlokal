@@ -1,0 +1,93 @@
+import { db } from '@/lib/db';
+import { getEventsThisWeek } from '@/modules/event/queries';
+import { getCommunitiesByCity } from '@/modules/community/queries';
+import { subDays } from 'date-fns';
+import type { CityFeedData } from './types';
+
+/**
+ * Assemble the full city feed — the primary discovery surface.
+ * Composes data from multiple modules into a single feed response.
+ */
+export async function getCityFeed(citySlug: string): Promise<CityFeedData | null> {
+  const city = await db.city.findUnique({
+    where: { slug: citySlug },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      state: true,
+      diasporaDensityEstimate: true,
+      isActive: true,
+      isMetroPrimary: true,
+      satelliteCities: { select: { id: true } },
+    },
+  });
+
+  if (!city || !city.isActive) return null;
+
+  const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
+
+  // Parallel data fetching
+  const [thisWeek, activeCommunities, recentPastEvents, counts] = await Promise.all([
+    getEventsThisWeek(citySlug),
+
+    getCommunitiesByCity(citySlug, { limit: 8 }),
+
+    // Past events from last 30 days — "recently happened"
+    db.event.findMany({
+      where: {
+        cityId: { in: cityIds },
+        startsAt: { lt: new Date(), gte: subDays(new Date(), 30) },
+        status: 'PAST',
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        startsAt: true,
+        endsAt: true,
+        venueName: true,
+        isOnline: true,
+        cost: true,
+        imageUrl: true,
+        community: { select: { name: true, slug: true } },
+        city: { select: { name: true, slug: true } },
+        categories: {
+          select: { category: { select: { name: true, slug: true, icon: true } } },
+        },
+      },
+      orderBy: { startsAt: 'desc' },
+      take: 6,
+    }),
+
+    // Aggregate counts
+    Promise.all([
+      db.community.count({ where: { cityId: { in: cityIds }, status: { not: 'INACTIVE' } } }),
+      db.event.count({
+        where: { cityId: { in: cityIds }, startsAt: { gte: new Date() }, status: 'UPCOMING' },
+      }),
+      db.communityCategory.findMany({
+        where: { community: { cityId: { in: cityIds } } },
+        select: { categoryId: true },
+        distinct: ['categoryId'],
+      }),
+    ]).then(([communities, upcomingEvents, categoriesRaw]) => ({
+      communities,
+      upcomingEvents,
+      categories: categoriesRaw.length,
+    })),
+  ]);
+
+  return {
+    city: {
+      name: city.name,
+      slug: city.slug,
+      state: city.state,
+      diasporaDensityEstimate: city.diasporaDensityEstimate,
+    },
+    thisWeek,
+    activeCommunities,
+    recentPastEvents,
+    counts,
+  };
+}

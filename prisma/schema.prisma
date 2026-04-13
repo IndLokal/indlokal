@@ -1,0 +1,466 @@
+// Prisma schema for LocalPulse
+// Domain model: Community Graph for Indian Diaspora in Germany
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────
+// City / Locality — primary partition key for all discovery
+// ─────────────────────────────────────────────────────────
+
+model City {
+  id                     String   @id @default(cuid())
+  name                   String
+  slug                   String   @unique
+  state                  String   // Bundesland
+  country                String   @default("Germany")
+  latitude               Float?
+  longitude              Float?
+  population             Int?
+  diasporaDensityEstimate Int?    @map("diaspora_density_estimate")
+  isActive               Boolean  @default(false) @map("is_active")
+  timezone               String   @default("Europe/Berlin")
+
+  // Metro region support — Stuttgart metro includes satellites
+  isMetroPrimary         Boolean  @default(false) @map("is_metro_primary")
+  metroRegionId          String?  @map("metro_region_id")
+  metroRegion            City?    @relation("MetroRegion", fields: [metroRegionId], references: [id])
+  satelliteCities        City[]   @relation("MetroRegion")
+
+  communities            Community[]
+  events                 Event[]
+  resources              Resource[]
+  users                  User[]
+  userInteractions       UserInteraction[]
+
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
+
+  @@map("cities")
+}
+
+// ─────────────────────────────────────────────────
+// Category — Cultural, Student, Professional, etc.
+// ─────────────────────────────────────────────────
+
+enum CategoryType {
+  CATEGORY
+  PERSONA
+}
+
+model Category {
+  id          String       @id @default(cuid())
+  name        String
+  slug        String       @unique
+  type        CategoryType @default(CATEGORY)
+  parentId    String?      @map("parent_id")
+  parent      Category?    @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    Category[]   @relation("CategoryHierarchy")
+  icon        String?
+  description String?
+  sortOrder   Int          @default(0) @map("sort_order")
+
+  communities CommunityCategory[]
+  events      EventCategory[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("categories")
+}
+
+// ─────────────────────────────────────────────────
+// Community — the central node of the community graph
+// ─────────────────────────────────────────────────
+
+enum CommunityStatus {
+  ACTIVE
+  INACTIVE
+  UNVERIFIED
+  CLAIMED
+}
+
+enum ClaimState {
+  UNCLAIMED
+  CLAIM_PENDING
+  CLAIMED
+}
+
+enum ContentSource {
+  ADMIN_SEED
+  COMMUNITY_SUBMITTED
+  IMPORTED
+  USER_SUGGESTED
+}
+
+model Community {
+  id               String          @id @default(cuid())
+  name             String
+  slug             String          @unique
+  description      String?
+  descriptionLong  String?         @map("description_long")
+
+  cityId           String          @map("city_id")
+  city             City            @relation(fields: [cityId], references: [id])
+
+  personaSegments  String[]        @map("persona_segments") // student, family, professional, etc.
+  languages        String[]        // Hindi, Telugu, Tamil, etc.
+  foundedYear      Int?            @map("founded_year")
+  memberCountApprox Int?           @map("member_count_approx")
+
+  status           CommunityStatus @default(UNVERIFIED)
+  claimState       ClaimState      @default(UNCLAIMED) @map("claim_state")
+  claimedByUserId  String?         @map("claimed_by_user_id")
+  claimedBy        User?           @relation("ClaimedCommunities", fields: [claimedByUserId], references: [id])
+
+  logoUrl          String?         @map("logo_url")
+  coverImageUrl    String?         @map("cover_image_url")
+  metadata         Json?           // JSONB for flexible attributes
+
+  source           ContentSource   @default(ADMIN_SEED)
+
+  // Computed scores (updated by scoring cron)
+  activityScore    Float           @default(0) @map("activity_score")
+  trustScore       Float           @default(0) @map("trust_score")
+  completenessScore Float          @default(0) @map("completeness_score")
+
+  // Relationships
+  categories       CommunityCategory[]
+  events           Event[]
+  accessChannels   AccessChannel[]
+  activitySignals  ActivitySignal[]
+  trustSignals     TrustSignal[]   @relation("CommunityTrustSignals")
+
+  // Edges — relationships to other entities
+  sourceEdges      RelationshipEdge[] @relation("SourceEdges")
+  targetEdges      RelationshipEdge[] @relation("TargetEdges")
+
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  lastActivityAt   DateTime? @map("last_activity_at")
+
+  @@index([cityId])
+  @@index([activityScore])
+  @@index([status])
+  @@map("communities")
+}
+
+// Join table: Community ↔ Category (many-to-many)
+model CommunityCategory {
+  communityId String    @map("community_id")
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  categoryId  String    @map("category_id")
+  category    Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([communityId, categoryId])
+  @@map("community_categories")
+}
+
+// ─────────────────────────────────────────────────
+// Event — the primary retention driver
+// ─────────────────────────────────────────────────
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  PAST
+  CANCELLED
+}
+
+model Event {
+  id              String       @id @default(cuid())
+  title           String
+  slug            String       @unique
+  description     String?
+
+  communityId     String?      @map("community_id")
+  community       Community?   @relation(fields: [communityId], references: [id])
+
+  cityId          String       @map("city_id")
+  city            City         @relation(fields: [cityId], references: [id])
+
+  venueName       String?      @map("venue_name")
+  venueAddress    String?      @map("venue_address")
+  latitude        Float?
+  longitude       Float?
+
+  startsAt        DateTime     @map("starts_at")
+  endsAt          DateTime?    @map("ends_at")
+  isRecurring     Boolean      @default(false) @map("is_recurring")
+  recurrenceRule  String?      @map("recurrence_rule") // RRULE format
+
+  isOnline        Boolean      @default(false) @map("is_online")
+  onlineLink      String?      @map("online_link")
+  registrationUrl String?      @map("registration_url")
+  cost            String?      // "free", "paid", "unclear", or amount
+
+  imageUrl        String?      @map("image_url")
+  status          EventStatus  @default(UPCOMING)
+  source          ContentSource @default(ADMIN_SEED)
+  metadata        Json?
+
+  categories      EventCategory[]
+  trustSignals    TrustSignal[] @relation("EventTrustSignals")
+
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@index([cityId, startsAt])
+  @@index([communityId])
+  @@index([status])
+  @@index([startsAt])
+  @@map("events")
+}
+
+// Join table: Event ↔ Category
+model EventCategory {
+  eventId    String   @map("event_id")
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, categoryId])
+  @@map("event_categories")
+}
+
+// ─────────────────────────────────────────────────
+// Access Channel — the bridge from discovery to engagement
+// ─────────────────────────────────────────────────
+
+enum ChannelType {
+  WHATSAPP
+  TELEGRAM
+  WEBSITE
+  FACEBOOK
+  INSTAGRAM
+  EMAIL
+  MEETUP
+  YOUTUBE
+  LINKEDIN
+  OTHER
+}
+
+model AccessChannel {
+  id           String      @id @default(cuid())
+  communityId  String      @map("community_id")
+  community    Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  channelType  ChannelType @map("channel_type")
+  url          String
+  label        String?
+  isPrimary    Boolean     @default(false) @map("is_primary")
+  isVerified   Boolean     @default(false) @map("is_verified")
+  lastVerifiedAt DateTime? @map("last_verified_at")
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([communityId])
+  @@map("access_channels")
+}
+
+// ─────────────────────────────────────────────────
+// Activity Signal — raw material for freshness scoring
+// ─────────────────────────────────────────────────
+
+enum ActivitySignalType {
+  EVENT_CREATED
+  PROFILE_UPDATED
+  MEMBER_COUNT_CHANGED
+  LINK_VERIFIED
+  EVENT_IMPORTED
+  EXTERNAL_MENTION
+}
+
+model ActivitySignal {
+  id          String             @id @default(cuid())
+  communityId String             @map("community_id")
+  community   Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  signalType  ActivitySignalType @map("signal_type")
+  occurredAt  DateTime           @default(now()) @map("occurred_at")
+  metadata    Json?
+
+  @@index([communityId, occurredAt])
+  @@map("activity_signals")
+}
+
+// ─────────────────────────────────────────────────
+// Trust Signal — quality ranking inputs
+// ─────────────────────────────────────────────────
+
+enum TrustSignalEntityType {
+  COMMUNITY
+  EVENT
+}
+
+enum TrustSignalType {
+  ADMIN_VERIFIED
+  COMMUNITY_CLAIMED
+  USER_REPORTED_ACCURATE
+  USER_REPORTED_STALE
+  EDITORIAL_REVIEWED
+}
+
+model TrustSignal {
+  id         String               @id @default(cuid())
+  entityType TrustSignalEntityType @map("entity_type")
+
+  // Polymorphic relation — one of these will be set
+  communityId String?             @map("community_id")
+  community   Community?          @relation("CommunityTrustSignals", fields: [communityId], references: [id], onDelete: Cascade)
+  eventId     String?             @map("event_id")
+  event       Event?              @relation("EventTrustSignals", fields: [eventId], references: [id], onDelete: Cascade)
+
+  signalType  TrustSignalType     @map("signal_type")
+  createdBy   String?             @map("created_by") // user id or "system"
+  metadata    Json?
+
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([communityId])
+  @@index([eventId])
+  @@map("trust_signals")
+}
+
+// ─────────────────────────────────────────────────
+// Relationship Edge — the community graph
+// ─────────────────────────────────────────────────
+
+enum RelationshipType {
+  RELATED_COMMUNITY
+  SISTER_CHAPTER
+  CO_HOSTED
+  PARENT_CHILD
+  SAME_ORGANIZER
+}
+
+model RelationshipEdge {
+  id                String           @id @default(cuid())
+  sourceCommunityId String           @map("source_community_id")
+  sourceCommunity   Community        @relation("SourceEdges", fields: [sourceCommunityId], references: [id], onDelete: Cascade)
+  targetCommunityId String           @map("target_community_id")
+  targetCommunity   Community        @relation("TargetEdges", fields: [targetCommunityId], references: [id], onDelete: Cascade)
+  relationshipType  RelationshipType @map("relationship_type")
+  strength          Float            @default(1.0)
+  metadata          Json?
+
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  @@unique([sourceCommunityId, targetCommunityId, relationshipType])
+  @@map("relationship_edges")
+}
+
+// ─────────────────────────────────────────────────
+// Resource — consular/official/institutional content
+// ─────────────────────────────────────────────────
+
+enum ResourceType {
+  CONSULAR_SERVICE
+  OFFICIAL_EVENT
+  GOVERNMENT_INFO
+  VISA_SERVICE
+  COMMUNITY_RESOURCE
+}
+
+model Resource {
+  id           String       @id @default(cuid())
+  title        String
+  slug         String       @unique
+  resourceType ResourceType @map("resource_type")
+
+  cityId       String       @map("city_id")
+  city         City         @relation(fields: [cityId], references: [id])
+
+  url          String?
+  description  String?
+  validFrom    DateTime?    @map("valid_from")
+  validUntil   DateTime?    @map("valid_until")
+  source       ContentSource @default(ADMIN_SEED)
+  metadata     Json?
+
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([cityId])
+  @@index([resourceType])
+  @@map("resources")
+}
+
+// ─────────────────────────────────────────────────
+// User — lightweight initially; grows with Phase 2
+// ─────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  COMMUNITY_ADMIN
+  PLATFORM_ADMIN
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  displayName        String?  @map("display_name")
+
+  cityId             String?  @map("city_id")
+  city               City?    @relation(fields: [cityId], references: [id])
+
+  personaSegments    String[] @map("persona_segments")
+  preferredLanguages String[] @map("preferred_languages")
+  onboardingComplete Boolean  @default(false) @map("onboarding_complete")
+
+  role               UserRole @default(USER)
+
+  claimedCommunities Community[] @relation("ClaimedCommunities")
+  interactions       UserInteraction[]
+
+  createdAt          DateTime @default(now()) @map("created_at")
+  lastActiveAt       DateTime? @map("last_active_at")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────────
+// User Interaction — behavioral signals for scoring
+// ─────────────────────────────────────────────────
+
+enum InteractionType {
+  VIEW
+  CLICK_ACCESS
+  SAVE
+  SHARE
+  REPORT
+  SEARCH
+}
+
+enum InteractionEntityType {
+  COMMUNITY
+  EVENT
+  RESOURCE
+}
+
+model UserInteraction {
+  id              String                @id @default(cuid())
+  userId          String?               @map("user_id")
+  user            User?                 @relation(fields: [userId], references: [id])
+  sessionId       String?               @map("session_id")
+  entityType      InteractionEntityType @map("entity_type")
+  entityId        String                @map("entity_id")
+  interactionType InteractionType       @map("interaction_type")
+
+  cityId          String?               @map("city_id")
+  city            City?                 @relation(fields: [cityId], references: [id])
+
+  metadata        Json?                 // search query text, referrer, etc.
+
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([userId])
+  @@index([cityId, createdAt])
+  @@map("user_interactions")
+}
