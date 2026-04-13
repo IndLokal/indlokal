@@ -39,6 +39,7 @@ export async function searchCommunities(
       memberCountApprox: true,
       logoUrl: true,
       lastActivityAt: true,
+      languages: true,
       city: { select: { name: true, slug: true } },
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
       _count: { select: { events: { where: { startsAt: { gte: new Date() } } } } },

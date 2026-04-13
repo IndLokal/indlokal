@@ -20,6 +20,7 @@ export type CommunityListItem = Pick<
   | 'memberCountApprox'
   | 'logoUrl'
   | 'lastActivityAt'
+  | 'languages'
 > & {
   city: Pick<City, 'name' | 'slug'>;
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
