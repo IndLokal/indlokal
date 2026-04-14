@@ -129,6 +129,7 @@ model Community {
   activityScore    Float           @default(0) @map("activity_score")
   trustScore       Float           @default(0) @map("trust_score")
   completenessScore Float          @default(0) @map("completeness_score")
+  isTrending       Boolean         @default(false) @map("is_trending")
 
   // Relationships
   categories       CommunityCategory[]

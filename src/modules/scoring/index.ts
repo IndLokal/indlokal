@@ -15,4 +15,11 @@
  * - Stale content flagging
  * - Score update scheduling
  */
-export { computeActivityScore, computeCompletenessScore, refreshAllScores } from './scoring';
+export {
+  computeActivityScore,
+  computeCompletenessScore,
+  computeTrustScore,
+  computeFinalScore,
+  detectTrending,
+  refreshAllScores,
+} from './scoring';
