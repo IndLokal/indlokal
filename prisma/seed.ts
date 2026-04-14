@@ -2257,6 +2257,584 @@ async function main() {
   }
   console.log(`✅ Resources: ${resourceCount} consular/official resources seeded`);
 
+  // ─── Karlsruhe ───────────────────────────────────────────────────────────
+
+  const karlsruhe = await prisma.city.upsert({
+    where: { slug: 'karlsruhe' },
+    update: {},
+    create: {
+      name: 'Karlsruhe',
+      slug: 'karlsruhe',
+      state: 'Baden-Württemberg',
+      country: 'Germany',
+      latitude: 49.0069,
+      longitude: 8.4037,
+      population: 313092,
+      diasporaDensityEstimate: 6000,
+      isActive: true,
+      isMetroPrimary: true,
+      timezone: 'Europe/Berlin',
+    },
+  });
+  console.log(`\n✅ City: ${karlsruhe.name}`);
+
+  const karlsruheKaCommunities = [
+    {
+      name: 'Indians in Karlsruhe',
+      slug: 'indians-in-karlsruhe',
+      description:
+        'General social community for all Indians in Karlsruhe — monthly meetups, newcomer help, and city tips.',
+      languages: ['Hindi', 'English'],
+      personaSegments: ['newcomer', 'working-professional'],
+      memberCountApprox: 420,
+      activityScore: 74,
+      completenessScore: 72,
+      trustScore: 70,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(5),
+      categories: ['networking-social'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/indians-karlsruhe',
+          label: 'WhatsApp Group',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'Indian Students at KIT',
+      slug: 'indian-students-kit',
+      description:
+        'Student community at Karlsruhe Institute of Technology — orientation help, semester socials, and study groups.',
+      languages: ['Hindi', 'English', 'Telugu'],
+      personaSegments: ['persona-student', 'newcomer'],
+      memberCountApprox: 310,
+      activityScore: 80,
+      completenessScore: 78,
+      trustScore: 72,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(8),
+      categories: ['student', 'networking-social'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/indian-students-kit',
+          label: 'KIT Indian Students',
+          isPrimary: true,
+        },
+        {
+          channelType: 'INSTAGRAM' as const,
+          url: 'https://instagram.com/indianstudentskit',
+          label: 'Instagram',
+          isPrimary: false,
+        },
+      ],
+    },
+    {
+      name: 'HSS Karlsruhe',
+      slug: 'hss-karlsruhe',
+      description:
+        'Hindu Swayamsevak Sangh Karlsruhe — weekly shakha, Diwali and Holi celebrations, and family camps.',
+      languages: ['Hindi', 'English'],
+      personaSegments: ['family', 'working-professional'],
+      memberCountApprox: 140,
+      activityScore: 65,
+      completenessScore: 70,
+      trustScore: 78,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(12),
+      categories: ['cultural', 'religious'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/hss-karlsruhe',
+          label: 'HSS Karlsruhe WhatsApp',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'Telugu Association Karlsruhe',
+      slug: 'telugu-association-karlsruhe',
+      description:
+        'Telugu community in Karlsruhe and the Rhein-Neckar region — Ugadi, Sankranti and monthly gatherings.',
+      languages: ['Telugu', 'English'],
+      personaSegments: ['family', 'working-professional'],
+      memberCountApprox: 190,
+      activityScore: 62,
+      completenessScore: 65,
+      trustScore: 68,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(25),
+      categories: ['language-regional', 'cultural'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/telugu-karlsruhe',
+          label: 'Telugu KA WhatsApp',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'Indian Professional Network Karlsruhe',
+      slug: 'indian-professional-network-karlsruhe',
+      description:
+        'Networking community for Indian professionals in Karlsruhe, Walldorf and the Rhine Valley — monthly happy hours and career events.',
+      languages: ['English', 'Hindi'],
+      personaSegments: ['working-professional'],
+      memberCountApprox: 260,
+      activityScore: 70,
+      completenessScore: 68,
+      trustScore: 65,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(15),
+      categories: ['professional', 'networking-social'],
+      channels: [
+        {
+          channelType: 'LINKEDIN' as const,
+          url: 'https://linkedin.com/groups/indian-professionals-karlsruhe',
+          label: 'LinkedIn Group',
+          isPrimary: true,
+        },
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/ipn-karlsruhe',
+          label: 'WhatsApp',
+          isPrimary: false,
+        },
+      ],
+    },
+    {
+      name: 'Bollywood Dance Karlsruhe',
+      slug: 'bollywood-dance-karlsruhe',
+      description:
+        'Bollywood and Bhangra dance classes open to all — beginners welcome. Weekly sessions, annual showcase.',
+      languages: ['Hindi', 'English', 'German'],
+      personaSegments: ['single', 'working-professional'],
+      memberCountApprox: 75,
+      activityScore: 72,
+      completenessScore: 60,
+      trustScore: 60,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(6),
+      categories: ['arts-entertainment', 'cultural'],
+      channels: [
+        {
+          channelType: 'INSTAGRAM' as const,
+          url: 'https://instagram.com/bollywooddanceka',
+          label: 'Instagram',
+          isPrimary: true,
+        },
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/bollywood-ka',
+          label: 'WhatsApp',
+          isPrimary: false,
+        },
+      ],
+    },
+  ];
+
+  const karlsruheIds: Record<string, string> = {};
+  for (const c of karlsruheKaCommunities) {
+    const { categories, channels, ...data } = c;
+    const community = await prisma.community.upsert({
+      where: { slug: data.slug },
+      update: { activityScore: data.activityScore, lastActivityAt: data.lastActivityAt },
+      create: {
+        ...data,
+        cityId: karlsruhe.id,
+        source: 'ADMIN_SEED',
+        claimState: 'UNCLAIMED',
+        categories: { create: categories.map((slug) => ({ categoryId: cats[slug] })) },
+        accessChannels: { create: channels },
+      },
+    });
+    karlsruheIds[data.slug] = community.id;
+    process.stdout.write(`  🏘 ${community.name}\n`);
+  }
+  console.log(`\n✅ Karlsruhe communities: ${karlsruheKaCommunities.length} seeded`);
+
+  // Karlsruhe events
+  const karlsruheEventDefs = [
+    {
+      title: 'KIT Indian Students — Welcome Dinner Spring 2026',
+      slug: 'kit-iss-welcome-dinner-spring-2026',
+      description:
+        'Welcome gathering for new Indian students arriving at KIT for the summer semester. Homemade food, campus tips and WhatsApp group onboarding.',
+      communitySlug: 'indian-students-kit',
+      venueName: 'Studentenwerk Karlsruhe — Cafeteria',
+      venueAddress: 'Adenauerring 7, 76131 Karlsruhe',
+      startsAt: past(22, 18),
+      endsAt: past(22, 21),
+      cost: 'free',
+      status: 'PAST' as const,
+      categories: ['student'],
+    },
+    {
+      title: 'Indians in Karlsruhe — April Meetup',
+      slug: 'indians-karlsruhe-april-meetup-2026',
+      description:
+        'Monthly open social for all Indians in Karlsruhe. New faces always welcome — no RSVP needed.',
+      communitySlug: 'indians-in-karlsruhe',
+      venueName: 'Kolb & Consorten Karlsruhe',
+      venueAddress: 'Kaiserstr. 75, 76133 Karlsruhe',
+      startsAt: future(3, 19),
+      endsAt: future(3, 22),
+      cost: 'free',
+      status: 'UPCOMING' as const,
+      categories: ['networking-social'],
+    },
+    {
+      title: 'Holi Celebration Karlsruhe 2026',
+      slug: 'holi-karlsruhe-2026',
+      description:
+        'Outdoor Holi festival at Schlossgarten Karlsruhe — organic colours, music and street food. All welcome.',
+      communitySlug: 'hss-karlsruhe',
+      venueName: 'Schlossgarten Karlsruhe',
+      venueAddress: 'Schlossbezirk, 76131 Karlsruhe',
+      startsAt: past(35, 14),
+      endsAt: past(35, 18),
+      cost: 'free',
+      status: 'PAST' as const,
+      categories: ['cultural'],
+    },
+    {
+      title: 'Indian Professionals Networking Night — Karlsruhe',
+      slug: 'ipn-karlsruhe-networking-may-2026',
+      description:
+        'Monthly networking happy hour for Indian professionals in Karlsruhe and the Rhine Valley. Tech, consulting, academia — all welcome.',
+      communitySlug: 'indian-professional-network-karlsruhe',
+      venueName: 'KUKA Innovation Hub Karlsruhe',
+      venueAddress: 'Kriegsstr. 100, 76133 Karlsruhe',
+      startsAt: future(14, 18),
+      endsAt: future(14, 21),
+      cost: 'free',
+      status: 'UPCOMING' as const,
+      categories: ['professional', 'networking-social'],
+    },
+    {
+      title: 'Bollywood Dance Showcase — Summer Edition',
+      slug: 'bollywood-dance-showcase-ka-2026',
+      description:
+        'End-of-semester showcase by Bollywood Dance Karlsruhe. Students perform Bollywood and Bhangra choreographies. Open to all spectators.',
+      communitySlug: 'bollywood-dance-karlsruhe',
+      venueName: 'Tollhaus Kulturzentrum',
+      venueAddress: 'Alter Schlachthof 35, 76131 Karlsruhe',
+      startsAt: future(30, 19),
+      endsAt: future(30, 22),
+      cost: 'paid',
+      status: 'UPCOMING' as const,
+      categories: ['arts-entertainment', 'cultural'],
+    },
+  ];
+
+  for (const e of karlsruheEventDefs) {
+    const { categories, communitySlug, ...data } = e;
+    await prisma.event.upsert({
+      where: { slug: data.slug },
+      update: { status: data.status },
+      create: {
+        ...data,
+        isRecurring: false,
+        recurrenceRule: null,
+        cityId: karlsruhe.id,
+        communityId: karlsruheIds[communitySlug],
+        source: 'ADMIN_SEED',
+        categories: { create: categories.map((slug) => ({ categoryId: cats[slug] })) },
+      },
+    });
+  }
+  console.log(`✅ Karlsruhe events: ${karlsruheEventDefs.length} seeded`);
+
+  // ─── Mannheim ────────────────────────────────────────────────────────────
+
+  const mannheim = await prisma.city.upsert({
+    where: { slug: 'mannheim' },
+    update: {},
+    create: {
+      name: 'Mannheim',
+      slug: 'mannheim',
+      state: 'Baden-Württemberg',
+      country: 'Germany',
+      latitude: 49.4875,
+      longitude: 8.466,
+      population: 310658,
+      diasporaDensityEstimate: 5500,
+      isActive: true,
+      isMetroPrimary: true,
+      timezone: 'Europe/Berlin',
+    },
+  });
+  console.log(`\n✅ City: ${mannheim.name}`);
+
+  const mannheimCommunities = [
+    {
+      name: 'Indians in Mannheim',
+      slug: 'indians-in-mannheim',
+      description:
+        'Open social community for all Indians in Mannheim and Heidelberg — monthly dinners, newcomer support, and city guides.',
+      languages: ['Hindi', 'English'],
+      personaSegments: ['newcomer', 'working-professional'],
+      memberCountApprox: 380,
+      activityScore: 71,
+      completenessScore: 68,
+      trustScore: 68,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(7),
+      categories: ['networking-social'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/indians-mannheim',
+          label: 'WhatsApp Community',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'Tamil Community Mannheim-Heidelberg',
+      slug: 'tamil-community-mannheim-heidelberg',
+      description:
+        'Tamil cultural association in the Rhein-Neckar region — Pongal, Tamil New Year, and CGI consular camp coordination.',
+      languages: ['Tamil', 'English'],
+      personaSegments: ['family', 'working-professional'],
+      memberCountApprox: 155,
+      activityScore: 64,
+      completenessScore: 70,
+      trustScore: 72,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(18),
+      categories: ['language-regional', 'cultural', 'consular-official'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/tamil-mannheim',
+          label: 'Tamil Community WhatsApp',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'University of Mannheim Indian Society',
+      slug: 'university-mannheim-indian-society',
+      description:
+        'Indian student society at University of Mannheim — orientation help, cultural events, and a strong alumni network.',
+      languages: ['Hindi', 'English'],
+      personaSegments: ['persona-student', 'newcomer'],
+      memberCountApprox: 220,
+      activityScore: 76,
+      completenessScore: 72,
+      trustScore: 68,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(10),
+      categories: ['student', 'networking-social'],
+      channels: [
+        {
+          channelType: 'INSTAGRAM' as const,
+          url: 'https://instagram.com/unimannheimindians',
+          label: 'Instagram',
+          isPrimary: true,
+        },
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/unimannheim-indians',
+          label: 'WhatsApp',
+          isPrimary: false,
+        },
+      ],
+    },
+    {
+      name: 'Indian Cultural Association Mannheim',
+      slug: 'indian-cultural-association-mannheim',
+      description:
+        "Multi-regional cultural association celebrating India's diversity — Independence Day, Diwali, and classical dance performances.",
+      languages: ['Hindi', 'English', 'Tamil', 'Telugu'],
+      personaSegments: ['family', 'working-professional'],
+      memberCountApprox: 210,
+      activityScore: 67,
+      completenessScore: 65,
+      trustScore: 70,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(30),
+      categories: ['cultural', 'arts-entertainment'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/icam-mannheim',
+          label: 'ICA Mannheim WhatsApp',
+          isPrimary: true,
+        },
+        {
+          channelType: 'FACEBOOK' as const,
+          url: 'https://facebook.com/icamannheim',
+          label: 'Facebook Page',
+          isPrimary: false,
+        },
+      ],
+    },
+    {
+      name: 'SAP India Network Walldorf',
+      slug: 'sap-india-network-walldorf',
+      description:
+        'Informal network of Indian professionals at SAP SE in Walldorf and the surrounding Rhein-Neckar area.',
+      languages: ['Hindi', 'English', 'Telugu', 'Tamil'],
+      personaSegments: ['working-professional'],
+      memberCountApprox: 480,
+      activityScore: 58,
+      completenessScore: 55,
+      trustScore: 60,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(40),
+      categories: ['professional', 'networking-social'],
+      channels: [
+        {
+          channelType: 'WHATSAPP' as const,
+          url: 'https://chat.whatsapp.com/sap-india-walldorf',
+          label: 'SAP Indians WhatsApp',
+          isPrimary: true,
+        },
+      ],
+    },
+    {
+      name: 'CGI Munich — Consular Camp Mannheim',
+      slug: 'cgi-munich-consular-camp-mannheim',
+      description:
+        'The Consulate General of India, Munich regularly conducts consular camps in Mannheim for passport renewal, OCI card, PCC, and attestation services. Serving the Rhein-Neckar diaspora.',
+      languages: ['Hindi', 'English', 'Tamil', 'Telugu'],
+      personaSegments: ['newcomer', 'family', 'working-professional'],
+      memberCountApprox: null,
+      activityScore: 55,
+      completenessScore: 60,
+      trustScore: 85,
+      status: 'ACTIVE' as const,
+      lastActivityAt: past(45),
+      categories: ['consular-official'],
+      channels: [
+        {
+          channelType: 'WEBSITE' as const,
+          url: 'https://www.cgimunich.gov.in',
+          label: 'CGI Munich Website',
+          isPrimary: true,
+        },
+      ],
+    },
+  ];
+
+  const mannheimIds: Record<string, string> = {};
+  for (const c of mannheimCommunities) {
+    const { categories, channels, ...data } = c;
+    const community = await prisma.community.upsert({
+      where: { slug: data.slug },
+      update: { activityScore: data.activityScore, lastActivityAt: data.lastActivityAt },
+      create: {
+        ...data,
+        cityId: mannheim.id,
+        source: 'ADMIN_SEED',
+        claimState: 'UNCLAIMED',
+        categories: { create: categories.map((slug) => ({ categoryId: cats[slug] })) },
+        accessChannels: { create: channels },
+      },
+    });
+    mannheimIds[data.slug] = community.id;
+    process.stdout.write(`  🏘 ${community.name}\n`);
+  }
+  console.log(`\n✅ Mannheim communities: ${mannheimCommunities.length} seeded`);
+
+  // Mannheim events
+  const mannheimEventDefs = [
+    {
+      title: 'Indians in Mannheim — April Social',
+      slug: 'indians-mannheim-april-social-2026',
+      description:
+        'Monthly social dinner for the Indian community in Mannheim. All backgrounds welcome — bring friends!',
+      communitySlug: 'indians-in-mannheim',
+      venueName: 'Restaurant Maharaja Mannheim',
+      venueAddress: 'Planken 10, 68161 Mannheim',
+      startsAt: future(5, 19),
+      endsAt: future(5, 22),
+      cost: 'free',
+      status: 'UPCOMING' as const,
+      categories: ['networking-social'],
+    },
+    {
+      title: 'CGI Consular Camp — Mannheim Spring 2026',
+      slug: 'cgi-consular-camp-mannheim-spring-2026',
+      description:
+        'Consulate General of India, Munich conducts a consular camp in Mannheim for OCI, passport renewal, PCC, and attestation. Book appointments via CGI Munich website.',
+      communitySlug: 'cgi-munich-consular-camp-mannheim',
+      venueName: 'Stadthaus Mannheim',
+      venueAddress: 'N 1, 68161 Mannheim',
+      startsAt: future(20, 9),
+      endsAt: future(20, 17),
+      cost: 'free',
+      status: 'UPCOMING' as const,
+      categories: ['consular-official'],
+    },
+    {
+      title: 'UniMannheim Indian Society — Orientation Night',
+      slug: 'unimannheim-indian-society-orientation-2026',
+      description:
+        'Welcome event for new Indian students at University of Mannheim. Housing tips, SIM cards, banking guide and WhatsApp group onboarding.',
+      communitySlug: 'university-mannheim-indian-society',
+      venueName: 'University of Mannheim — Aula',
+      venueAddress: 'Schloss Ehrenhof, 68131 Mannheim',
+      startsAt: past(28, 17),
+      endsAt: past(28, 20),
+      cost: 'free',
+      status: 'PAST' as const,
+      categories: ['student'],
+    },
+    {
+      title: 'Tamil New Year Celebration — Mannheim 2026',
+      slug: 'tamil-new-year-mannheim-2026',
+      description:
+        'Puthandu celebrations by Tamil Community Mannheim — traditional meal, cultural performances and community gathering.',
+      communitySlug: 'tamil-community-mannheim-heidelberg',
+      venueName: 'Gemeindehaus Neckarstadt',
+      venueAddress: 'Mittelstr. 28, 68167 Mannheim',
+      startsAt: past(8, 16),
+      endsAt: past(8, 21),
+      cost: 'paid',
+      status: 'PAST' as const,
+      categories: ['cultural', 'language-regional'],
+    },
+    {
+      title: 'Indian Cultural Night — Mannheim Summer 2026',
+      slug: 'indian-cultural-night-mannheim-summer-2026',
+      description:
+        "ICA Mannheim's flagship summer event — Bharatanatyam performance, folk dances, and a community dinner.",
+      communitySlug: 'indian-cultural-association-mannheim',
+      venueName: 'Rosengarten Mannheim',
+      venueAddress: 'Rosengartenplatz 2, 68161 Mannheim',
+      startsAt: future(45, 18),
+      endsAt: future(45, 22),
+      cost: 'paid',
+      status: 'UPCOMING' as const,
+      categories: ['cultural', 'arts-entertainment'],
+    },
+  ];
+
+  for (const e of mannheimEventDefs) {
+    const { categories, communitySlug, ...data } = e;
+    await prisma.event.upsert({
+      where: { slug: data.slug },
+      update: { status: data.status },
+      create: {
+        ...data,
+        isRecurring: false,
+        recurrenceRule: null,
+        cityId: mannheim.id,
+        communityId: mannheimIds[communitySlug],
+        source: 'ADMIN_SEED',
+        categories: { create: categories.map((slug) => ({ categoryId: cats[slug] })) },
+      },
+    });
+  }
+  console.log(`✅ Mannheim events: ${mannheimEventDefs.length} seeded`);
+
   // ─── Update lastActivityAt on communities based on their events ───────────
 
   for (const c of communityDefs) {
@@ -2273,9 +2851,15 @@ async function main() {
   console.log('\n✅ Seed complete!');
   console.log(`   Stuttgart metro: 1 primary + ${satellites.length} satellites`);
   console.log(
-    `   Communities: ${communityDefs.length} + ${moreCommunityDefs.length} = ${communityDefs.length + moreCommunityDefs.length}`,
+    `   Karlsruhe: 1 primary city, ${karlsruheKaCommunities.length} communities, ${karlsruheEventDefs.length} events`,
   );
-  console.log(`   Events: ${eventCount} (past + this week + upcoming)`);
+  console.log(
+    `   Mannheim: 1 primary city, ${mannheimCommunities.length} communities, ${mannheimEventDefs.length} events`,
+  );
+  console.log(
+    `   Communities: ${communityDefs.length} + ${moreCommunityDefs.length} = ${communityDefs.length + moreCommunityDefs.length} (Stuttgart)`,
+  );
+  console.log(`   Events: ${eventCount} (Stuttgart, past + this week + upcoming)`);
 }
 
 main()

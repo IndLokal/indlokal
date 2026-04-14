@@ -12,7 +12,7 @@ export const siteConfig = {
 } as const;
 
 /** Launch city slugs that are currently active */
-export const ACTIVE_CITIES = ['stuttgart'] as const;
+export const ACTIVE_CITIES = ['stuttgart', 'karlsruhe', 'mannheim'] as const;
 
 /** Default number of items in paginated lists */
 export const PAGE_SIZE = 20;
