@@ -90,9 +90,11 @@ export async function submitCommunity(
       claimState: 'UNCLAIMED',
       source: 'COMMUNITY_SUBMITTED',
       metadata: {
-        submitterEmail: data.contactEmail,
-        submitterName: data.contactName,
-        submittedAt: new Date().toISOString(),
+        submitter: {
+          name: data.contactName,
+          email: data.contactEmail,
+          submittedAt: new Date().toISOString(),
+        },
       },
       categories: {
         create: categoryRows.map((c) => ({ categoryId: c.id })),

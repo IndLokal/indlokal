@@ -33,7 +33,9 @@ export default async function AdminSubmissionsPage() {
         <div className="mt-8 space-y-6">
           {submissions.map((c) => {
             const meta = c.metadata as Record<string, unknown> | null;
-            const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
+            const submitter = meta?.submitter as
+              | { name?: string; email?: string; submittedAt?: string }
+              | undefined;
 
             return (
               <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -41,11 +43,15 @@ export default async function AdminSubmissionsPage() {
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-semibold">{c.name}</h2>
                     <p className="mt-0.5 text-sm text-gray-500">
-                      {c.city.name} · Submitted {c.createdAt.toLocaleDateString()}
+                      {c.city.name} · Submitted{' '}
+                      {submitter?.submittedAt
+                        ? new Date(submitter.submittedAt).toLocaleDateString()
+                        : c.createdAt.toLocaleDateString()}
                     </p>
-                    {submitter?.email && (
+                    {submitter && (
                       <p className="mt-1 text-xs text-gray-400">
-                        By {submitter.name ?? 'Unknown'} ({submitter.email})
+                        By {submitter.name ?? 'Unknown'}
+                        {submitter.email && ` (${submitter.email})`}
                       </p>
                     )}
                   </div>
@@ -87,16 +93,20 @@ export default async function AdminSubmissionsPage() {
                 </div>
 
                 {c.accessChannels.length > 0 && (
-                  <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-500">
+                  <div className="mt-3 flex flex-wrap gap-2 text-xs">
                     {c.accessChannels.map((ch) => (
                       <a
                         key={ch.id}
                         href={ch.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline"
+                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 hover:bg-gray-200"
                       >
                         {ch.channelType}
+                        {ch.isPrimary && (
+                          <span className="ml-0.5 text-indigo-500">· primary</span>
+                        )}{' '}
+                        ↗
                       </a>
                     ))}
                   </div>
