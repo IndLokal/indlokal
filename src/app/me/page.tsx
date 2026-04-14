@@ -4,9 +4,10 @@ import Link from 'next/link';
 import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
+import { PreferencesForm } from './PreferencesForm';
 
 export const metadata: Metadata = {
-  title: 'My Saves — LocalPulse',
+  title: 'My Profile — LocalPulse',
   robots: { index: false },
 };
 
@@ -14,7 +15,7 @@ export default async function MePage() {
   const user = await getSessionUser();
   if (!user) redirect('/me/login');
 
-  const [savedCommunities, savedEvents] = await Promise.all([
+  const [savedCommunities, savedEvents, activeCities] = await Promise.all([
     db.savedCommunity.findMany({
       where: { userId: user.id },
       orderBy: { savedAt: 'desc' },
@@ -48,6 +49,11 @@ export default async function MePage() {
         },
       },
     }),
+    db.city.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, slug: true },
+      orderBy: { name: 'asc' },
+    }),
   ]);
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
@@ -74,6 +80,22 @@ export default async function MePage() {
           <p className="text-sm text-gray-500">{user.email}</p>
         </div>
       </div>
+
+      {/* Preferences */}
+      <section>
+        <h2 className="text-xl font-semibold">Preferences</h2>
+        <p className="mt-1 text-sm text-gray-500">
+          Personalise LocalPulse to show content relevant to you.
+        </p>
+        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5">
+          <PreferencesForm
+            cities={activeCities}
+            currentCityId={user.cityId ?? null}
+            currentPersonas={user.personaSegments ?? []}
+            currentLanguages={user.preferredLanguages ?? []}
+          />
+        </div>
+      </section>
 
       {/* Saved Communities */}
       <section>

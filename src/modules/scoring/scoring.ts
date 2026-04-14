@@ -11,26 +11,30 @@ const WEIGHTS = {
 
 /**
  * Compute activity score for a community (0-100).
- * Formula: f(events in last 90 days, last_update recency)
+ * Formula: f(events in last 90 days, last_update recency, views in last 30 days)
  */
 export function computeActivityScore(input: {
   eventsLast90Days: number;
   lastActivityAt: Date | null;
+  viewsLast30Days?: number;
 }): number {
-  const { eventsLast90Days, lastActivityAt } = input;
+  const { eventsLast90Days, lastActivityAt, viewsLast30Days = 0 } = input;
   const now = new Date();
 
   // Event count component (0-50 points) — logarithmic to avoid gaming
   const eventScore = Math.min(50, Math.log2(eventsLast90Days + 1) * 15);
 
-  // Recency component (0-50 points) — decays over STALE_THRESHOLD_DAYS
+  // Recency component (0-40 points) — decays over STALE_THRESHOLD_DAYS
   let recencyScore = 0;
   if (lastActivityAt) {
     const daysAgo = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
-    recencyScore = Math.max(0, 50 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS));
+    recencyScore = Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS));
   }
 
-  return Math.round((eventScore + recencyScore) * 100) / 100;
+  // Engagement component (0-10 points) — view count signal
+  const engagementScore = Math.min(10, Math.log2(viewsLast30Days + 1) * 3);
+
+  return Math.round((eventScore + recencyScore + engagementScore) * 100) / 100;
 }
 
 /**
@@ -166,14 +170,27 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
     _count: { _all: true },
   });
 
+  // Batch-fetch view counts per community from UserInteraction (last 30 days)
+  const viewCounts = await db.userInteraction.groupBy({
+    by: ['entityId'],
+    where: {
+      entityType: 'COMMUNITY',
+      interactionType: 'VIEW',
+      createdAt: { gte: cutoff30 },
+    },
+    _count: { _all: true },
+  });
+
   const last30Map = new Map(eventCountsLast30.map((r) => [r.communityId, r._count._all]));
   const prior30Map = new Map(eventCountsPrior30.map((r) => [r.communityId, r._count._all]));
+  const viewMap = new Map(viewCounts.map((r) => [r.entityId, r._count._all]));
 
   let updated = 0;
   for (const c of communities) {
     const activityScore = computeActivityScore({
       eventsLast90Days: c._count.events,
       lastActivityAt: c.lastActivityAt,
+      viewsLast30Days: viewMap.get(c.id) ?? 0,
     });
 
     const completenessScore = computeCompletenessScore({

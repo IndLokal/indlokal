@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event/queries';
+import { ViewTracker } from '@/components/ViewTracker';
 
 /**
  * Event Detail Page
@@ -62,6 +63,7 @@ export default async function EventDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ViewTracker entityType="EVENT" entityId={event.id} cityId={event.city.id} />
 
       <div className="mx-auto max-w-2xl space-y-8">
         {/* Breadcrumb */}

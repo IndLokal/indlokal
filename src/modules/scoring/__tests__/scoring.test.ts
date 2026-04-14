@@ -20,20 +20,34 @@ describe('computeActivityScore', () => {
     expect(computeActivityScore({ eventsLast90Days: 0, lastActivityAt: null })).toBe(0);
   });
 
-  it('returns exactly 50 for a community active today with 0 events', () => {
+  it('returns exactly 40 for a community active today with 0 events (recency max)', () => {
     const score = computeActivityScore({
       eventsLast90Days: 0,
       lastActivityAt: new Date(),
     });
-    expect(score).toBeCloseTo(50, 1);
+    expect(score).toBeCloseTo(40, 1);
   });
 
-  it('returns > 50 for a community with recent events', () => {
+  it('returns > 40 for a community with recent events', () => {
     const score = computeActivityScore({
       eventsLast90Days: 5,
       lastActivityAt: new Date(),
     });
-    expect(score).toBeGreaterThan(50);
+    expect(score).toBeGreaterThan(40);
+  });
+
+  it('adds engagement score for communities with views', () => {
+    const withViews = computeActivityScore({
+      eventsLast90Days: 0,
+      lastActivityAt: new Date(),
+      viewsLast30Days: 10,
+    });
+    const withoutViews = computeActivityScore({
+      eventsLast90Days: 0,
+      lastActivityAt: new Date(),
+      viewsLast30Days: 0,
+    });
+    expect(withViews).toBeGreaterThan(withoutViews);
   });
 
   it('caps score at 100 (max events + max recency)', () => {

@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { getCommunityBySlug } from '@/modules/community/queries';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from '@/components/ReportIssueForm';
+import { ViewTracker } from '@/components/ViewTracker';
 
 /**
  * Community Detail Page
@@ -98,6 +99,7 @@ export default async function CommunityDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
+      <ViewTracker entityType="COMMUNITY" entityId={community.id} cityId={community.city.id} />
 
       <div className="mx-auto max-w-2xl space-y-10">
         {/* Breadcrumb */}
