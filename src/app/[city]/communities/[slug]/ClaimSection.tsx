@@ -48,12 +48,13 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
   const errors = state?.success === false ? state.errors : {};
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 p-5">
+    <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-medium text-gray-800">Do you manage this community?</p>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Claim this listing to update its profile, add events, and show a verified badge.
+          <p className="font-medium text-indigo-900">Is this your community?</p>
+          <p className="mt-0.5 text-sm text-indigo-700">
+            Claim it to post events to the city feed, manage your profile, and reach hundreds of
+            people already searching for communities like yours.
           </p>
         </div>
         {!expanded && (
@@ -135,6 +136,60 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
               className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               placeholder="Any additional information that helps us verify your claim..."
             />
+          </div>
+
+          <div className="border-t border-gray-200 pt-4">
+            <p className="text-sm font-medium text-gray-700">
+              Proof of connection{' '}
+              <span className="font-normal text-gray-400">(optional — helps us verify faster)</span>
+            </p>
+            <div className="mt-3 space-y-3">
+              <div>
+                <label htmlFor="claim-whatsapp" className="block text-sm text-gray-600">
+                  WhatsApp group link
+                </label>
+                <input
+                  id="claim-whatsapp"
+                  name="whatsappUrl"
+                  type="url"
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="https://chat.whatsapp.com/..."
+                />
+                {errors.whatsappUrl && (
+                  <p className="mt-1 text-sm text-red-600">{errors.whatsappUrl[0]}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="claim-telegram" className="block text-sm text-gray-600">
+                  Telegram group link
+                </label>
+                <input
+                  id="claim-telegram"
+                  name="telegramUrl"
+                  type="url"
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="https://t.me/..."
+                />
+                {errors.telegramUrl && (
+                  <p className="mt-1 text-sm text-red-600">{errors.telegramUrl[0]}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="claim-social" className="block text-sm text-gray-600">
+                  Website or social profile
+                </label>
+                <input
+                  id="claim-social"
+                  name="socialUrl"
+                  type="url"
+                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  placeholder="https://instagram.com/... or your website"
+                />
+                {errors.socialUrl && (
+                  <p className="mt-1 text-sm text-red-600">{errors.socialUrl[0]}</p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className="flex gap-3">

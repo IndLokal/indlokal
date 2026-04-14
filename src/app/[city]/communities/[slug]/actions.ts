@@ -15,6 +15,9 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
     name: formData.get('name') as string,
     relationship: formData.get('relationship') as string,
     message: (formData.get('message') as string) || '',
+    whatsappUrl: (formData.get('whatsappUrl') as string) || '',
+    telegramUrl: (formData.get('telegramUrl') as string) || '',
+    socialUrl: (formData.get('socialUrl') as string) || '',
   };
 
   const parsed = claimCommunitySchema.safeParse(raw);
@@ -66,6 +69,9 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
         claimRequest: {
           relationship: data.relationship,
           message: data.message,
+          whatsappUrl: data.whatsappUrl || undefined,
+          telegramUrl: data.telegramUrl || undefined,
+          socialUrl: data.socialUrl || undefined,
           requestedAt: new Date().toISOString(),
         },
       },

@@ -45,7 +45,11 @@ export async function approveClaim(formData: FormData) {
 
   const community = await db.community.findUnique({
     where: { id },
-    select: { claimedByUserId: true },
+    select: {
+      claimedByUserId: true,
+      slug: true,
+      city: { select: { slug: true } },
+    },
   });
 
   if (!community?.claimedByUserId) return;
@@ -59,14 +63,30 @@ export async function approveClaim(formData: FormData) {
       where: { id: community.claimedByUserId },
       data: { role: 'COMMUNITY_ADMIN' },
     }),
+    db.trustSignal.create({
+      data: {
+        entityType: 'COMMUNITY',
+        communityId: id,
+        signalType: 'ADMIN_VERIFIED',
+        createdBy: community.claimedByUserId,
+      },
+    }),
   ]);
 
+  if (community.city?.slug && community.slug) {
+    revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+  }
   revalidatePath('/admin/claims');
 }
 
 export async function rejectClaim(formData: FormData) {
   const id = formData.get('id') as string;
   if (!id) return;
+
+  const community = await db.community.findUnique({
+    where: { id },
+    select: { slug: true, city: { select: { slug: true } } },
+  });
 
   await db.community.update({
     where: { id },
@@ -76,5 +96,8 @@ export async function rejectClaim(formData: FormData) {
     },
   });
 
+  if (community?.city?.slug && community?.slug) {
+    revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+  }
   revalidatePath('/admin/claims');
 }

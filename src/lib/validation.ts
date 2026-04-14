@@ -33,6 +33,9 @@ export const claimCommunitySchema = z.object({
   name: z.string().min(1, 'Please enter your name'),
   relationship: z.enum(['organizer', 'co-organizer', 'admin', 'member']),
   message: z.string().max(500).optional().default(''),
+  whatsappUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  telegramUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  socialUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
 });
 
 export type ClaimCommunityInput = z.infer<typeof claimCommunitySchema>;

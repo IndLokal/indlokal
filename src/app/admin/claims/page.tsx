@@ -33,8 +33,33 @@ export default async function AdminClaimsPage() {
           {claims.map((c) => {
             const meta = c.metadata as Record<string, unknown> | null;
             const claim = meta?.claimRequest as
-              | { relationship?: string; message?: string; requestedAt?: string }
+              | {
+                  relationship?: string;
+                  message?: string;
+                  requestedAt?: string;
+                  whatsappUrl?: string;
+                  telegramUrl?: string;
+                  socialUrl?: string;
+                }
               | undefined;
+
+            const evidenceLinks = [
+              claim?.whatsappUrl && {
+                label: 'WhatsApp',
+                url: claim.whatsappUrl,
+                color: 'bg-green-100 text-green-700 hover:bg-green-200',
+              },
+              claim?.telegramUrl && {
+                label: 'Telegram',
+                url: claim.telegramUrl,
+                color: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+              },
+              claim?.socialUrl && {
+                label: 'Website / Social',
+                url: claim.socialUrl,
+                color: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
+              },
+            ].filter(Boolean) as { label: string; url: string; color: string }[];
 
             return (
               <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
@@ -55,6 +80,26 @@ export default async function AdminClaimsPage() {
                         )}
                         {claim?.message && (
                           <p className="mt-1 text-gray-600">Message: {claim.message}</p>
+                        )}
+                        {evidenceLinks.length > 0 && (
+                          <div className="mt-2 border-t border-gray-200 pt-2">
+                            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                              Evidence ({evidenceLinks.length}/3)
+                            </p>
+                            <div className="mt-1.5 flex flex-wrap gap-2">
+                              {evidenceLinks.map((ev) => (
+                                <a
+                                  key={ev.label}
+                                  href={ev.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${ev.color}`}
+                                >
+                                  {ev.label} ↗
+                                </a>
+                              ))}
+                            </div>
+                          </div>
                         )}
                         {claim?.requestedAt && (
                           <p className="mt-1 text-xs text-gray-400">
