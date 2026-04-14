@@ -2,7 +2,7 @@
 
 **The real-time guide to Indian communities and events near you.**
 
-*Product Planning Document — April 2026*
+_Product Planning Document — April 2026_
 
 ---
 
@@ -32,7 +32,7 @@
 
 For any Indian living in Germany — whether a new arrival, a student, a working professional, or a settled family — LocalPulse answers the question:
 
-> *"What's happening for Indians in my city this week, and how do I get involved?"*
+> _"What's happening for Indians in my city this week, and how do I get involved?"_
 
 The product is designed as an **activity-led discovery layer**: users come for fresh, relevant, time-sensitive events and community activity. They don't come to browse a directory.
 
@@ -127,23 +127,23 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 
 ### What LocalPulse IS
 
-| Positioning | Explanation |
-|---|---|
-| **Activity-led discovery layer** | Users experience fresh, time-sensitive content — not a static directory |
-| **Community participation gateway** | The path from "I didn't know this existed" to "I'm now part of it" |
-| **Event and relevance engine** | Surfaces the right events at the right time for the right person |
+| Positioning                         | Explanation                                                                         |
+| ----------------------------------- | ----------------------------------------------------------------------------------- |
+| **Activity-led discovery layer**    | Users experience fresh, time-sensitive content — not a static directory             |
+| **Community participation gateway** | The path from "I didn't know this existed" to "I'm now part of it"                  |
+| **Event and relevance engine**      | Surfaces the right events at the right time for the right person                    |
 | **Trusted guide to community life** | Over time, becomes the reliable source for "what's good" in diaspora community life |
 
 ### What LocalPulse is NOT
 
-| Not this | Why not |
-|---|---|
-| A messaging app | Communities communicate on WhatsApp/Telegram; we don't replace that |
-| A social network | No profiles, feeds, friend lists, or social features |
-| A WhatsApp alternative | We're a discovery layer, not an engagement platform |
-| A generic business directory | We're activity-led and community-focused, not a Yellow Pages |
-| An event ticketing platform | We link to events; we don't sell tickets |
-| A content/media platform | No blogs, user-generated posts, or media sharing |
+| Not this                     | Why not                                                             |
+| ---------------------------- | ------------------------------------------------------------------- |
+| A messaging app              | Communities communicate on WhatsApp/Telegram; we don't replace that |
+| A social network             | No profiles, feeds, friend lists, or social features                |
+| A WhatsApp alternative       | We're a discovery layer, not an engagement platform                 |
+| A generic business directory | We're activity-led and community-focused, not a Yellow Pages        |
+| An event ticketing platform  | We link to events; we don't sell tickets                            |
+| A content/media platform     | No blogs, user-generated posts, or media sharing                    |
 
 ### Positioning statement
 
@@ -528,6 +528,10 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Engagement score (more views/clicks = higher ranking)
 - Trust score (verified + claimed + low reports = higher ranking)
 - "Trending" badge for communities with rising activity
+- **Branded "Pulse Score"** — composite activity/completeness/trust score, visible to claimed-community organizers on their dashboard as an improvement tool (e.g., "Your Pulse Score is 45 — add more events and update your description to improve it")
+- Pulse Score breakdown stored in database; **NOT publicly visible until Phase 3** (communities need 60-90+ days of behavioral data before numeric scores are meaningful)
+
+> **Why not show Pulse Score at launch?** At go-live, all communities have zero engagement data. A score of "15/100" on a freshly seeded community is technically accurate but practically harmful — it alienates the organizers you're trying to recruit. Qualitative labels ("Active", "Moderate") are honest about what we know. Numeric scores require data density that doesn't exist until Phase 2 engagement signals accumulate. See Tracxn competitive analysis for the full rationale.
 
 ### 8.7 Multi-City Support
 
@@ -536,6 +540,12 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Cross-city community linking (same community in multiple cities — e.g., HSS chapters)
 - Metro-region concept: Stuttgart metro includes Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen — events in satellite cities appear in Stuttgart feed
 - City comparison ("Stuttgart has 60 communities, Karlsruhe has 25")
+
+### 8.8 Content Provenance & Pipeline (informed by Tracxn analysis)
+
+- **Content provenance logging:** Every community/event creation, update, and verification is logged with source, actor, and timestamp. Enables freshness auditing ("when was this community last verified?") and source quality tracking ("which sources produce the best content?")
+- **Systematic content pipeline:** Define a repeatable weekly process: source identification → content detection → classification → verification → publication → freshness monitoring (see Tracxn competitive analysis §5.3 for the full pipeline model)
+- **Weekly city digest email:** "This week in [city] for Indians" — auto-generated from upcoming events, sent to registered users (retention mechanism; Tracxn retains users via alerts and newsletters)
 
 ---
 
@@ -565,12 +575,12 @@ LocalPulse
 
 These are auto-generated, thin but structured pages targeting long-tail search queries:
 
-| Page pattern | Example | Target query |
-|---|---|---|
-| `/[city]/[language]-communities/` | `/stuttgart/telugu-communities/` | "Telugu community Stuttgart" |
-| `/[city]/indian-events-this-week/` | `/stuttgart/indian-events-this-week/` | "Indian events Stuttgart this week" |
-| `/[city]/consular-services/` | `/stuttgart/consular-services/` | "Indian consulate Stuttgart" |
-| `/[city]/[category]-groups/` | `/stuttgart/professional-groups/` | "Indian professional network Stuttgart" |
+| Page pattern                       | Example                               | Target query                            |
+| ---------------------------------- | ------------------------------------- | --------------------------------------- |
+| `/[city]/[language]-communities/`  | `/stuttgart/telugu-communities/`      | "Telugu community Stuttgart"            |
+| `/[city]/indian-events-this-week/` | `/stuttgart/indian-events-this-week/` | "Indian events Stuttgart this week"     |
+| `/[city]/consular-services/`       | `/stuttgart/consular-services/`       | "Indian consulate Stuttgart"            |
+| `/[city]/[category]-groups/`       | `/stuttgart/professional-groups/`     | "Indian professional network Stuttgart" |
 
 Each page includes: filtered community/event list, brief intro paragraph, internal links to full community/event pages. No thin-content risk because each page links to real, structured data.
 
@@ -610,33 +620,33 @@ City-first URLs are critical for SEO and clarity:
 
 **Minimum viable content density per city:**
 
-| Content type | Minimum count | Target count |
-|---|---|---|
-| Communities | 50 | 60-80 |
-| Upcoming events (next 30 days) | 20 | 30+ |
-| Categories represented | 8+ | All 11 |
-| Communities with complete profiles | 30+ | 50+ |
-| Historical/past events imported | 25+ | 50+ |
-| Consular/official events | 3+ | 5+ |
+| Content type                       | Minimum count | Target count |
+| ---------------------------------- | ------------- | ------------ |
+| Communities                        | 50            | 60-80        |
+| Upcoming events (next 30 days)     | 20            | 30+          |
+| Categories represented             | 8+            | All 11       |
+| Communities with complete profiles | 30+           | 50+          |
+| Historical/past events imported    | 25+           | 50+          |
+| Consular/official events           | 3+            | 5+           |
 
 **Note:** Content targets are higher than a typical greenfield launch because we are entering a market with an active (if poorly structured) incumbent (IndoEuropean.eu). Thin content = "why would I use this when IE already has stuff?"
 
 ### 10.2 Content sources for seeding
 
-| Source | How to use |
-|---|---|
-| Facebook groups | Search "Indians in Stuttgart," "Indians in Baden-Württemberg" — group names, descriptions, member counts |
-| WhatsApp communities | Known through network — carefully collect public invite links |
-| IndoEuropean.eu Stuttgart Mela | 50+ posts identifying real communities: HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V., Bombay Dance Club, Shiridi Sai Stuttgart, DeBI, Green Sox Göppingen. Use as research guide, NOT automated scraping |
-| InterNations Stuttgart | 1,752 Indian members — monitor their events, identify crossover communities |
-| Meetup.com | No Indian-specific groups exist — but check generic expat groups for crossover events |
-| Eventbrite | Search for Indian cultural events in Stuttgart / Baden-Württemberg |
-| University international offices | University of Stuttgart, Hochschule der Medien — Indian student group lists |
-| CGI Munich (Consulate General) | Official event calendar, consular camp schedule for BW region, Mannheim camps |
-| Indian Film Festival Stuttgart | Official site — annual tentpole event, connected community |
-| Google search | "Stuttgart Indian association," "Stuttgart Indian cultural events," "Indischer Verein Stuttgart" |
-| Personal network | Diaspora contacts in Stuttgart automotive companies |
-| Company internal networks | Bosch, Daimler, Porsche — often have Indian employee groups with events |
+| Source                           | How to use                                                                                                                                                                                                                          |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Facebook groups                  | Search "Indians in Stuttgart," "Indians in Baden-Württemberg" — group names, descriptions, member counts                                                                                                                            |
+| WhatsApp communities             | Known through network — carefully collect public invite links                                                                                                                                                                       |
+| IndoEuropean.eu Stuttgart Mela   | 50+ posts identifying real communities: HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V., Bombay Dance Club, Shiridi Sai Stuttgart, DeBI, Green Sox Göppingen. Use as research guide, NOT automated scraping |
+| InterNations Stuttgart           | 1,752 Indian members — monitor their events, identify crossover communities                                                                                                                                                         |
+| Meetup.com                       | No Indian-specific groups exist — but check generic expat groups for crossover events                                                                                                                                               |
+| Eventbrite                       | Search for Indian cultural events in Stuttgart / Baden-Württemberg                                                                                                                                                                  |
+| University international offices | University of Stuttgart, Hochschule der Medien — Indian student group lists                                                                                                                                                         |
+| CGI Munich (Consulate General)   | Official event calendar, consular camp schedule for BW region, Mannheim camps                                                                                                                                                       |
+| Indian Film Festival Stuttgart   | Official site — annual tentpole event, connected community                                                                                                                                                                          |
+| Google search                    | "Stuttgart Indian association," "Stuttgart Indian cultural events," "Indischer Verein Stuttgart"                                                                                                                                    |
+| Personal network                 | Diaspora contacts in Stuttgart automotive companies                                                                                                                                                                                 |
+| Company internal networks        | Bosch, Daimler, Porsche — often have Indian employee groups with events                                                                                                                                                             |
 
 ### 10.3 Content quality guidelines
 
@@ -648,39 +658,39 @@ City-first URLs are critical for SEO and clarity:
 
 ### 10.4 Content freshness strategy
 
-| Time since last update | System behavior |
-|---|---|
-| 0-30 days | Active — normal ranking |
-| 30-90 days | Slightly downranked; no warning |
-| 90-180 days | "Last updated X months ago" badge; downranked |
-| 180+ days | Significant downranking; flagged for review |
-| Access links broken | Warning badge; manual review triggered |
+| Time since last update | System behavior                               |
+| ---------------------- | --------------------------------------------- |
+| 0-30 days              | Active — normal ranking                       |
+| 30-90 days             | Slightly downranked; no warning               |
+| 90-180 days            | "Last updated X months ago" badge; downranked |
+| 180+ days              | Significant downranking; flagged for review   |
+| Access links broken    | Warning badge; manual review triggered        |
 
 ### 10.5 Category taxonomy (MVP)
 
-| Category | Icon | Example communities |
-|---|---|---|
-| Cultural | 🎭 | Indian cultural associations, Bollywood dance groups, Bombay Dance Club |
-| Student | 🎓 | University of Stuttgart Indian student association |
-| Professional | 💼 | Indian professional networks, automotive industry groups |
-| Religious | 🙏 | Sithivinayagar Kovil, Shiridi Sai Stuttgart, gurudwaras |
-| Language/Regional | 🗣️ | German Tamil Sangam, Malayalee Deutsches Treffen BW e.V., Telugu associations |
-| Sports & Fitness | ⚽ | Green Sox Göppingen cricket, badminton groups, yoga communities |
-| Family & Kids | 👨‍👩‍👧 | Parent groups, kids cultural classes, playdate groups |
-| Networking & Social | 🤝 | General meetup groups, social clubs, HSS Stuttgart |
-| Food & Cooking | 🍛 | Cooking clubs, potluck groups, Tamil Sangam food festivals |
-| Arts & Entertainment | 🎵 | DeBI/Naadbharat music, Bollywood dance, Indian Film Festival community |
-| **Consular & Official** | 🏛️ | **CGI Munich consular camps, passport seva, embassy cultural events, VFS services** |
+| Category                | Icon | Example communities                                                                 |
+| ----------------------- | ---- | ----------------------------------------------------------------------------------- |
+| Cultural                | 🎭   | Indian cultural associations, Bollywood dance groups, Bombay Dance Club             |
+| Student                 | 🎓   | University of Stuttgart Indian student association                                  |
+| Professional            | 💼   | Indian professional networks, automotive industry groups                            |
+| Religious               | 🙏   | Sithivinayagar Kovil, Shiridi Sai Stuttgart, gurudwaras                             |
+| Language/Regional       | 🗣️   | German Tamil Sangam, Malayalee Deutsches Treffen BW e.V., Telugu associations       |
+| Sports & Fitness        | ⚽   | Green Sox Göppingen cricket, badminton groups, yoga communities                     |
+| Family & Kids           | 👨‍👩‍👧   | Parent groups, kids cultural classes, playdate groups                               |
+| Networking & Social     | 🤝   | General meetup groups, social clubs, HSS Stuttgart                                  |
+| Food & Cooking          | 🍛   | Cooking clubs, potluck groups, Tamil Sangam food festivals                          |
+| Arts & Entertainment    | 🎵   | DeBI/Naadbharat music, Bollywood dance, Indian Film Festival community              |
+| **Consular & Official** | 🏛️   | **CGI Munich consular camps, passport seva, embassy cultural events, VFS services** |
 
 ### 10.6 Persona segments
 
-| Persona | Description | Matching categories |
-|---|---|---|
-| Newcomer | Recently arrived, needs orientation | All — especially social, cultural, networking |
-| Student | University student | Student, sports, social, cultural |
-| Working Professional | Employed, networking focus | Professional, networking, sports |
-| Family | Has children, values family activities | Family, cultural, religious, language |
-| Single | Social activities, dating-adjacent interests | Networking, social, sports, entertainment |
+| Persona              | Description                                  | Matching categories                           |
+| -------------------- | -------------------------------------------- | --------------------------------------------- |
+| Newcomer             | Recently arrived, needs orientation          | All — especially social, cultural, networking |
+| Student              | University student                           | Student, sports, social, cultural             |
+| Working Professional | Employed, networking focus                   | Professional, networking, sports              |
+| Family               | Has children, values family activities       | Family, cultural, religious, language         |
+| Single               | Social activities, dating-adjacent interests | Networking, social, sports, entertainment     |
 
 ---
 
@@ -692,14 +702,14 @@ City-first URLs are critical for SEO and clarity:
 
 Stuttgart was selected based on:
 
-| Criterion | Stuttgart score | Rationale |
-|---|---|---|
-| Size of Indian diaspora | Medium-High (10-15K+) | Sufficient; growing via automotive pipeline |
-| Founder's ability to research the city | High | Well-documented community through IndoEuropean.eu + InterNations data |
-| Density of existing communities | High | 35-56 discoverable communities in metro area |
-| Competition weakness | **Very High** | Weakest competitor coverage among top 5 German cities |
-| Automotive growth pipeline | **Unique** | Structural, recurring influx of Indian professionals |
-| Regional expansion potential | High | BW region (Karlsruhe, Mannheim, Heidelberg) as natural Phase 2 |
+| Criterion                              | Stuttgart score       | Rationale                                                             |
+| -------------------------------------- | --------------------- | --------------------------------------------------------------------- |
+| Size of Indian diaspora                | Medium-High (10-15K+) | Sufficient; growing via automotive pipeline                           |
+| Founder's ability to research the city | High                  | Well-documented community through IndoEuropean.eu + InterNations data |
+| Density of existing communities        | High                  | 35-56 discoverable communities in metro area                          |
+| Competition weakness                   | **Very High**         | Weakest competitor coverage among top 5 German cities                 |
+| Automotive growth pipeline             | **Unique**            | Structural, recurring influx of Indian professionals                  |
+| Regional expansion potential           | High                  | BW region (Karlsruhe, Mannheim, Heidelberg) as natural Phase 2        |
 
 ### 11.2 Pre-launch checklist
 
@@ -719,17 +729,17 @@ Stuttgart was selected based on:
 
 ### 11.3 Launch channels
 
-| Channel | Approach |
-|---|---|
+| Channel                  | Approach                                                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Community organizers** | Primary channel. Reach out directly to 5-10 Stuttgart community organizers; offer free, beautiful web profile; ask them to share with their community |
-| **SEO** | Optimize for "Indian communities Stuttgart," "Indian events Stuttgart," "Indians in Stuttgart," language-specific ("Telugu community Stuttgart") |
-| **WhatsApp** | Share the Stuttgart page link in known Indian WhatsApp groups (via organizer relationships) |
-| **Facebook** | Post in "Indians in Stuttgart," "Indians in Baden-Württemberg" Facebook groups |
-| **InterNations** | Share in InterNations Stuttgart Indian expat threads (1,752 potential users) |
-| **Word of mouth** | Personal introductions through automotive company Indian employee networks |
-| **Reddit** | Post in r/stuttgart, r/germany, r/india |
-| **Indian Film Festival** | Partner/presence at the next Indian Film Festival Stuttgart — audience IS our users |
-| **Consular camps** | Distribute at CGI Munich consular camps in Mannheim/Stuttgart area |
+| **SEO**                  | Optimize for "Indian communities Stuttgart," "Indian events Stuttgart," "Indians in Stuttgart," language-specific ("Telugu community Stuttgart")      |
+| **WhatsApp**             | Share the Stuttgart page link in known Indian WhatsApp groups (via organizer relationships)                                                           |
+| **Facebook**             | Post in "Indians in Stuttgart," "Indians in Baden-Württemberg" Facebook groups                                                                        |
+| **InterNations**         | Share in InterNations Stuttgart Indian expat threads (1,752 potential users)                                                                          |
+| **Word of mouth**        | Personal introductions through automotive company Indian employee networks                                                                            |
+| **Reddit**               | Post in r/stuttgart, r/germany, r/india                                                                                                               |
+| **Indian Film Festival** | Partner/presence at the next Indian Film Festival Stuttgart — audience IS our users                                                                   |
+| **Consular camps**       | Distribute at CGI Munich consular camps in Mannheim/Stuttgart area                                                                                    |
 
 ### 11.4 Post-launch content maintenance
 
@@ -754,30 +764,30 @@ This metric captures:
 
 ### 12.2 MVP metrics (first 3 months)
 
-| Metric | Target | Why it matters |
-|---|---|---|
-| Communities listed (Stuttgart) | 60+ | Content density — must exceed perception of IE's coverage |
-| Events listed (next 30 days) | 25+ | Freshness and activity — higher bar due to incumbent |
-| Historical events imported | 50+ | Proves community is active; SEO content |
-| Consular/official events listed | 5+ | Unique value prop vs all competitors |
-| Weekly active sessions (Stuttgart) | 200+ | User traction |
-| Access channel clicks per week | 50+ | User converting to community join |
-| Organic search visits per week | 100+ | SEO working |
-| Communities with complete profiles | 60%+ | Content quality |
-| Average events per community | 2+ | Community activity diversity |
-| Zero-result search rate | < 20% | Content coverage |
-| Community organizer relationships | 5+ | Supply-side engagement; content freshness |
-| Programmatic SEO pages indexed | 15+ | Long-tail search capture |
+| Metric                             | Target | Why it matters                                            |
+| ---------------------------------- | ------ | --------------------------------------------------------- |
+| Communities listed (Stuttgart)     | 60+    | Content density — must exceed perception of IE's coverage |
+| Events listed (next 30 days)       | 25+    | Freshness and activity — higher bar due to incumbent      |
+| Historical events imported         | 50+    | Proves community is active; SEO content                   |
+| Consular/official events listed    | 5+     | Unique value prop vs all competitors                      |
+| Weekly active sessions (Stuttgart) | 200+   | User traction                                             |
+| Access channel clicks per week     | 50+    | User converting to community join                         |
+| Organic search visits per week     | 100+   | SEO working                                               |
+| Communities with complete profiles | 60%+   | Content quality                                           |
+| Average events per community       | 2+     | Community activity diversity                              |
+| Zero-result search rate            | < 20%  | Content coverage                                          |
+| Community organizer relationships  | 5+     | Supply-side engagement; content freshness                 |
+| Programmatic SEO pages indexed     | 15+    | Long-tail search capture                                  |
 
 ### 12.3 Phase 2 metrics
 
-| Metric | Target | Why it matters |
-|---|---|---|
-| Registered users | 500+ per city | User retention capability |
-| Community claims | 10+ | Community-side engagement |
-| Community self-submissions | 20+ | Organic supply growth |
-| Weekly digest open rate | 30%+ | Email as retention channel |
-| Return visitor rate | 25%+ weekly | Repeat usage via activity |
+| Metric                     | Target        | Why it matters             |
+| -------------------------- | ------------- | -------------------------- |
+| Registered users           | 500+ per city | User retention capability  |
+| Community claims           | 10+           | Community-side engagement  |
+| Community self-submissions | 20+           | Organic supply growth      |
+| Weekly digest open rate    | 30%+          | Email as retention channel |
+| Return visitor rate        | 25%+ weekly   | Repeat usage via activity  |
 
 ### 12.4 Leading indicators (watch early)
 
@@ -800,30 +810,30 @@ This metric captures:
 
 ### 13.1 Named competitors — Stuttgart specific
 
-| Competitor | What they offer for Indians in Stuttgart | Threat level | Our advantage |
-|---|---|---|---|
-| **IndoEuropean.eu** | ~50 blog posts on "Stuttgurt Mela" page (misspelled URL). Blog-format event announcements. 327+ Germany-wide articles. 11 years SEO authority. Active daily posting. Run by MyRadius GmbH (Munich). | **MEDIUM** | Structured city-level discovery, event filtering, community profiles. Their URL misspelling gives us SEO opportunity. They can't answer "what's happening this week?" |
-| **InterNations** | 17,335 Stuttgart members, 1,752 Indian members. Generic expat events (Italian dinners, hiking). Paid premium model. No Indian-specific content. | **LOW** | Indian-diaspora-specific. Free to browse. 1,752 Indian members = proof of demand we can capture |
-| **Meetup.com** | Zero Indian-specific groups in Stuttgart. Top groups are tech, language, hiking. | **NONE** | We serve the audience Meetup completely missed |
-| **Facebook Groups** | Closed groups ("Indians in Stuttgart," regional/language groups, corporate groups). Current de facto discovery via search + request to join. | **MEDIUM** | Open discovery (no login to browse). Structured data. Cross-group visibility. But FB is incumbent behavior we must displace |
-| **WhatsApp Groups** | Primary engagement layer for Indian communities. Not a competitor — we complement it. | **NONE** | We're the discovery layer that helps people FIND WhatsApp groups |
+| Competitor          | What they offer for Indians in Stuttgart                                                                                                                                                            | Threat level | Our advantage                                                                                                                                                         |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **IndoEuropean.eu** | ~50 blog posts on "Stuttgurt Mela" page (misspelled URL). Blog-format event announcements. 327+ Germany-wide articles. 11 years SEO authority. Active daily posting. Run by MyRadius GmbH (Munich). | **MEDIUM**   | Structured city-level discovery, event filtering, community profiles. Their URL misspelling gives us SEO opportunity. They can't answer "what's happening this week?" |
+| **InterNations**    | 17,335 Stuttgart members, 1,752 Indian members. Generic expat events (Italian dinners, hiking). Paid premium model. No Indian-specific content.                                                     | **LOW**      | Indian-diaspora-specific. Free to browse. 1,752 Indian members = proof of demand we can capture                                                                       |
+| **Meetup.com**      | Zero Indian-specific groups in Stuttgart. Top groups are tech, language, hiking.                                                                                                                    | **NONE**     | We serve the audience Meetup completely missed                                                                                                                        |
+| **Facebook Groups** | Closed groups ("Indians in Stuttgart," regional/language groups, corporate groups). Current de facto discovery via search + request to join.                                                        | **MEDIUM**   | Open discovery (no login to browse). Structured data. Cross-group visibility. But FB is incumbent behavior we must displace                                           |
+| **WhatsApp Groups** | Primary engagement layer for Indian communities. Not a competitor — we complement it.                                                                                                               | **NONE**     | We're the discovery layer that helps people FIND WhatsApp groups                                                                                                      |
 
 ### 13.2 Competitive positioning — how we're different
 
-| Dimension | IndoEuropean.eu | InterNations | Meetup | Facebook | **LocalPulse** |
-|---|---|---|---|---|---|
-| Indian-diaspora-specific | ✅ | ❌ | ❌ | Partially | ✅ |
-| Stuttgart-specific view | ✅ (misspelled) | ✅ | ❌ | ❌ | **✅** |
-| Structured event data | ❌ (blog posts) | ✅ | ✅ | ❌ | **✅** |
-| Event filtering (date/category) | ❌ | ✅ | ✅ | ❌ | **✅** |
-| Community profiles | ❌ | ❌ | ❌ | ❌ | **✅** |
-| Activity/trust signals | ❌ | ❌ | ❌ | ❌ | **✅** |
-| Language/regional filter | ❌ | ❌ | ❌ | ❌ | **✅** |
-| WhatsApp/Telegram access links | ❌ | ❌ | ❌ | ❌ | **✅** |
-| Free to browse (no login) | ✅ | ❌ (paywall) | Partial | Partial | **✅** |
-| Consular/official events | ✅ | ❌ | ❌ | ❌ | **✅** |
-| JSON-LD Event schema | ❌ | ❌ | ✅ | ❌ | **✅** |
-| Historical events | ✅ (by default) | ❌ | ❌ | ❌ | **✅** |
+| Dimension                       | IndoEuropean.eu | InterNations | Meetup  | Facebook  | **LocalPulse** |
+| ------------------------------- | --------------- | ------------ | ------- | --------- | -------------- |
+| Indian-diaspora-specific        | ✅              | ❌           | ❌      | Partially | ✅             |
+| Stuttgart-specific view         | ✅ (misspelled) | ✅           | ❌      | ❌        | **✅**         |
+| Structured event data           | ❌ (blog posts) | ✅           | ✅      | ❌        | **✅**         |
+| Event filtering (date/category) | ❌              | ✅           | ✅      | ❌        | **✅**         |
+| Community profiles              | ❌              | ❌           | ❌      | ❌        | **✅**         |
+| Activity/trust signals          | ❌              | ❌           | ❌      | ❌        | **✅**         |
+| Language/regional filter        | ❌              | ❌           | ❌      | ❌        | **✅**         |
+| WhatsApp/Telegram access links  | ❌              | ❌           | ❌      | ❌        | **✅**         |
+| Free to browse (no login)       | ✅              | ❌ (paywall) | Partial | Partial   | **✅**         |
+| Consular/official events        | ✅              | ❌           | ❌      | ❌        | **✅**         |
+| JSON-LD Event schema            | ❌              | ❌           | ✅      | ❌        | **✅**         |
+| Historical events               | ✅ (by default) | ❌           | ❌      | ❌        | **✅**         |
 
 ### 13.3 Positioning statement (revised for competitive market)
 
@@ -843,14 +853,13 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 ### 13.5 Competitive risk matrix
 
-| Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|
-| IE adds Stuttgart-specific structured pages | Low (they'd need to rebuild) | High | Move fast; own SEO queries before they wake up |
-| IE fixes their "Stuttgurt" URL | Medium | Medium | By then we should have stronger content + structure |
-| InterNations adds Indian-specific features | Very Low | High | Their business model is generic expat; unlikely to niche down |
-| A new Indian-specific Stuttgart platform launches | Low | High | First-mover advantage in a thin market; community graph is defensive |
-| Facebook Groups remain "good enough" | Medium | Medium | Our value is cross-group discovery + search + temporal filtering — things FB can't do for closed groups |
-
+| Risk                                              | Likelihood                   | Impact | Mitigation                                                                                              |
+| ------------------------------------------------- | ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
+| IE adds Stuttgart-specific structured pages       | Low (they'd need to rebuild) | High   | Move fast; own SEO queries before they wake up                                                          |
+| IE fixes their "Stuttgurt" URL                    | Medium                       | Medium | By then we should have stronger content + structure                                                     |
+| InterNations adds Indian-specific features        | Very Low                     | High   | Their business model is generic expat; unlikely to niche down                                           |
+| A new Indian-specific Stuttgart platform launches | Low                          | High   | First-mover advantage in a thin market; community graph is defensive                                    |
+| Facebook Groups remain "good enough"              | Medium                       | Medium | Our value is cross-group discovery + search + temporal filtering — things FB can't do for closed groups |
 
 ---
 
@@ -871,14 +880,18 @@ The community graph — structured, scored, city-dense data about diaspora commu
 - "Recommended for you" communities
 - Smart notifications ("New community in your interest area")
 - Multi-language UI (English, German, Hindi)
+- **Pulse Score publicly visible** on all community cards and detail pages (communities now have 60-90+ days of behavioral data; scoring methodology published on /about/scoring for transparency)
+- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing+SEO; inspired by Tracxn's 12K+ monthly reports)
 
 ### Phase 4: Graph-Powered Features
 
-- "Related communities" — powered by community graph relationships
+- **"Similar communities"** — powered by community graph relationships (same category, same city, shared event attendees)
 - "People who joined X also explored Y" — collaborative filtering
 - Cross-city discovery ("this community also exists in Munich")
 - Community health dashboard (for community organizers)
 - Cross-reference community mentions (same organizer appears in multiple events)
+- **Hierarchical taxonomy expansion** (sub-categories: "Cultural > Festivals > Diwali", "Professional > Automotive"; deeper filtering UI; inspired by Tracxn's 55K+ taxonomy nodes)
+- **Data API** for integrations (city tourism boards, German integration agencies, relocation companies, corporate HR onboarding)
 
 ### Phase 5: Ecosystem Expansion
 
@@ -890,13 +903,13 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 ### Future monetization possibilities (not MVP)
 
-| Model | Description |
-|---|---|
-| **Promoted listings** | Communities pay for higher visibility |
-| **Event promotion** | Event organizers pay to promote events |
-| **Community tools** | Premium management features for community organizers |
-| **Data/insights** | Aggregated diaspora community intelligence (B2B) |
-| **Sponsorship** | Indian brands sponsoring city pages or categories |
+| Model                 | Description                                          |
+| --------------------- | ---------------------------------------------------- |
+| **Promoted listings** | Communities pay for higher visibility                |
+| **Event promotion**   | Event organizers pay to promote events               |
+| **Community tools**   | Premium management features for community organizers |
+| **Data/insights**     | Aggregated diaspora community intelligence (B2B)     |
+| **Sponsorship**       | Indian brands sponsoring city pages or categories    |
 
 ---
 
@@ -904,61 +917,61 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 ### 15.1 Decisions made
 
-| # | Decision | Resolution |
-|---|---|---|
-| 1 | **Launch city** | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path |
-| 2 | **Product name / domain** | localpulse.de — validate with target users; secure domain early |
-| 3 | **Authentication approach** | No auth for MVP browsing; optional auth for saves (Phase 2) |
-| 4 | **Content language** | English for MVP (lingua franca for Indian diaspora in Germany) |
-| 5 | **Mobile approach** | Responsive web for MVP; consider PWA for Phase 2 |
+| #   | Decision                    | Resolution                                                                                                                   |
+| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Launch city**             | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path |
+| 2   | **Product name / domain**   | localpulse.de — validate with target users; secure domain early                                                              |
+| 3   | **Authentication approach** | No auth for MVP browsing; optional auth for saves (Phase 2)                                                                  |
+| 4   | **Content language**        | English for MVP (lingua franca for Indian diaspora in Germany)                                                               |
+| 5   | **Mobile approach**         | Responsive web for MVP; consider PWA for Phase 2                                                                             |
 
 ### 15.2 Decisions still needed
 
-| # | Decision | Options | Notes |
-|---|---|---|---|
-| 1 | **Organizer outreach strategy** | Cold email, mutual intro via network, in-person at events | Need to reach HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V. before launch |
-| 2 | **Automotive company partnerships** | Formal HR partnership, informal employee network contact, ignore for now | Bosch/Daimler/Porsche Indian employee groups could be massive distribution channel |
-| 3 | **Indian Film Festival timing** | Launch before (to capture pre-event search traffic) or after (to use event for launch distribution) | Festival is usually July — plan accordingly |
-| 4 | **Historical event attribution** | Import with original community linked, or as standalone events | IE research reveals past events — how to structure them in our data model |
-| 5 | **Metro region boundary** | Stuttgart only, or include Böblingen/Sindelfingen/Ludwigsburg/Esslingen/Göppingen | Recommendation: include metro from day 1 (communities like Green Sox Göppingen are part of the Stuttgart Indian ecosystem) |
+| #   | Decision                            | Options                                                                                             | Notes                                                                                                                      |
+| --- | ----------------------------------- | --------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Organizer outreach strategy**     | Cold email, mutual intro via network, in-person at events                                           | Need to reach HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V. before launch                        |
+| 2   | **Automotive company partnerships** | Formal HR partnership, informal employee network contact, ignore for now                            | Bosch/Daimler/Porsche Indian employee groups could be massive distribution channel                                         |
+| 3   | **Indian Film Festival timing**     | Launch before (to capture pre-event search traffic) or after (to use event for launch distribution) | Festival is usually July — plan accordingly                                                                                |
+| 4   | **Historical event attribution**    | Import with original community linked, or as standalone events                                      | IE research reveals past events — how to structure them in our data model                                                  |
+| 5   | **Metro region boundary**           | Stuttgart only, or include Böblingen/Sindelfingen/Ludwigsburg/Esslingen/Göppingen                   | Recommendation: include metro from day 1 (communities like Green Sox Göppingen are part of the Stuttgart Indian ecosystem) |
 
 ### 15.3 Open research questions
 
-| # | Question | How to answer |
-|---|---|---|
-| 1 | How many of the 35-56 estimated Stuttgart communities are still active? | Manual verification: check last event date, test access links |
-| 2 | How willing are community organizers to be listed (and share access links)? | Interview 5-10 Stuttgart community organizers |
-| 3 | What search terms do Indians in Stuttgart actually use? | Google Keyword Planner: "Indian community Stuttgart," "Indians in Stuttgart," "Telugu Stuttgart," etc. |
-| 4 | Is English sufficient or is Hindi/German needed from launch? | Survey target users (likely English is fine — professional diaspora) |
-| 5 | Can we get CGI Munich consular camp schedule reliably? | Contact consulate; check if they have a public calendar or mailing list |
-| 6 | What's the actual community density breakdown by category in Stuttgart? | Map discovered communities to our 11 categories; identify gaps |
+| #   | Question                                                                    | How to answer                                                                                          |
+| --- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 1   | How many of the 35-56 estimated Stuttgart communities are still active?     | Manual verification: check last event date, test access links                                          |
+| 2   | How willing are community organizers to be listed (and share access links)? | Interview 5-10 Stuttgart community organizers                                                          |
+| 3   | What search terms do Indians in Stuttgart actually use?                     | Google Keyword Planner: "Indian community Stuttgart," "Indians in Stuttgart," "Telugu Stuttgart," etc. |
+| 4   | Is English sufficient or is Hindi/German needed from launch?                | Survey target users (likely English is fine — professional diaspora)                                   |
+| 5   | Can we get CGI Munich consular camp schedule reliably?                      | Contact consulate; check if they have a public calendar or mailing list                                |
+| 6   | What's the actual community density breakdown by category in Stuttgart?     | Map discovered communities to our 11 categories; identify gaps                                         |
 
 ### 15.4 Assumptions to validate
 
-| Assumption | Validation method |
-|---|---|
-| Newcomers actively search for Indian communities online | User interviews + search volume data |
-| Community discovery is a felt pain point | User interviews (5-10 people in Stuttgart) |
-| People will browse a web platform (vs asking friends) | Prototype testing |
-| Activity/events are more compelling than static listings | A/B test: directory view vs feed view |
-| WhatsApp group join links can be reliably maintained | Track link decay over 30 days after seeding |
-| Stuttgart Indian population is 10,000-15,000+ | Cross-reference InterNations data (1,752 Indian members) with estimated capture rate |
+| Assumption                                                                          | Validation method                                                                     |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Newcomers actively search for Indian communities online                             | User interviews + search volume data                                                  |
+| Community discovery is a felt pain point                                            | User interviews (5-10 people in Stuttgart)                                            |
+| People will browse a web platform (vs asking friends)                               | Prototype testing                                                                     |
+| Activity/events are more compelling than static listings                            | A/B test: directory view vs feed view                                                 |
+| WhatsApp group join links can be reliably maintained                                | Track link decay over 30 days after seeding                                           |
+| Stuttgart Indian population is 10,000-15,000+                                       | Cross-reference InterNations data (1,752 Indian members) with estimated capture rate  |
 | IndoEuropean.eu will not significantly improve their Stuttgart coverage in 6 months | Monitor monthly; they've had 11 years with a misspelled URL — unlikely to change fast |
 
 ---
 
 ## Appendix A: Glossary
 
-| Term | Definition |
-|---|---|
-| **Community** | An organized group of Indians in a German city, such as a cultural association, student group, professional network, or religious organization |
-| **Event** | A time-bound activity organized by or relevant to the Indian diaspora — meetup, celebration, workshop, class, social gathering |
-| **Access channel** | A link or contact method to join or reach a community — WhatsApp group, Telegram channel, website, email |
-| **Activity signal** | Any indicator that a community is active — recent event, profile update, verified link |
-| **Trust signal** | Any indicator that a community listing is accurate and reliable — platform verification, community claim, user reports |
-| **Community graph** | The structured network of relationships between communities, events, cities, categories, and users that LocalPulse builds over time |
-| **City feed** | The primary discovery surface for a city — showing upcoming events, active communities, and fresh content |
-| **Discovery session** | A user visit where at least one community or event detail page is viewed |
+| Term                  | Definition                                                                                                                                     |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Community**         | An organized group of Indians in a German city, such as a cultural association, student group, professional network, or religious organization |
+| **Event**             | A time-bound activity organized by or relevant to the Indian diaspora — meetup, celebration, workshop, class, social gathering                 |
+| **Access channel**    | A link or contact method to join or reach a community — WhatsApp group, Telegram channel, website, email                                       |
+| **Activity signal**   | Any indicator that a community is active — recent event, profile update, verified link                                                         |
+| **Trust signal**      | Any indicator that a community listing is accurate and reliable — platform verification, community claim, user reports                         |
+| **Community graph**   | The structured network of relationships between communities, events, cities, categories, and users that LocalPulse builds over time            |
+| **City feed**         | The primary discovery surface for a city — showing upcoming events, active communities, and fresh content                                      |
+| **Discovery session** | A user visit where at least one community or event detail page is viewed                                                                       |
 
 ---
 
@@ -968,15 +981,15 @@ Estimated Indian population in Germany: ~200,000+ (growing rapidly due to tech i
 
 **Key cities by estimated Indian population:**
 
-| City | Estimated Indian population | Notes |
-|---|---|---|
-| Munich | 25,000+ | Major tech hub, large professional population |
-| Berlin | 20,000+ | Capital, diverse, startup ecosystem |
-| Frankfurt | 15,000+ | Financial sector, established diaspora |
-| **Stuttgart** | **10,000-15,000+** | **Launch city.** Automotive industry (Bosch, Daimler, Porsche). Structurally growing via Blue Card pipeline. 1,752 Indian members on InterNations alone. 35-56 discoverable communities in metro area. |
-| Hamburg | 8,000+ | Port city, growing tech scene |
-| Düsseldorf | 8,000+ | Largest Japanese diaspora — growing Indian presence |
-| Cologne | 7,000+ | University city, cultural hub |
-| Bangalore-to-Germany pipeline | Growing | Blue Card immigration driving rapid growth |
+| City                          | Estimated Indian population | Notes                                                                                                                                                                                                  |
+| ----------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Munich                        | 25,000+                     | Major tech hub, large professional population                                                                                                                                                          |
+| Berlin                        | 20,000+                     | Capital, diverse, startup ecosystem                                                                                                                                                                    |
+| Frankfurt                     | 15,000+                     | Financial sector, established diaspora                                                                                                                                                                 |
+| **Stuttgart**                 | **10,000-15,000+**          | **Launch city.** Automotive industry (Bosch, Daimler, Porsche). Structurally growing via Blue Card pipeline. 1,752 Indian members on InterNations alone. 35-56 discoverable communities in metro area. |
+| Hamburg                       | 8,000+                      | Port city, growing tech scene                                                                                                                                                                          |
+| Düsseldorf                    | 8,000+                      | Largest Japanese diaspora — growing Indian presence                                                                                                                                                    |
+| Cologne                       | 7,000+                      | University city, cultural hub                                                                                                                                                                          |
+| Bangalore-to-Germany pipeline | Growing                     | Blue Card immigration driving rapid growth                                                                                                                                                             |
 
-*Estimates are approximate and based on publicly available data. Actual numbers may be higher when including students on temporary visas.*
+_Estimates are approximate and based on publicly available data. Actual numbers may be higher when including students on temporary visas._

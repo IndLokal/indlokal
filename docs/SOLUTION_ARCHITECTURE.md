@@ -2,7 +2,7 @@
 
 **Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
 
-*Architecture Planning Document — April 2026*
+_Architecture Planning Document — April 2026_
 
 ---
 
@@ -27,19 +27,19 @@
 
 ## 1. Executive Summary
 
-LocalPulse is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: *"What's happening for Indians in my city this week?"* The internal architecture builds a **trusted community graph** — a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
+LocalPulse is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** — a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
 
 ### Key architectural decisions
 
-| Decision | Rationale |
-|---|---|
-| **Activity-led, not directory-led** | Retention comes from time-sensitive, fresh content — not static listings |
-| **Monolith-first, modular-internal** | Ship fast, avoid distributed-system overhead; separate concerns at the module/domain boundary |
-| **City-first data model** | Hyperlocal density is the prerequisite for product-market fit; architecture must make city the primary partition |
-| **Metro-region aware** | Stuttgart metro includes satellite cities (Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen); events in satellites must appear in main city feed |
-| **Graph-ready relational core** | Start with PostgreSQL + structured relational schema; design edges and scores as first-class entities so graph queries are natural when needed |
-| **External community assumption** | Communities live on WhatsApp/Telegram/etc; LocalPulse is the discovery, access, and trust layer — not the engagement layer |
-| **Ingestion as a first-class concern** | Supply is the hardest problem; the architecture must treat content acquisition as a core system capability, not an afterthought |
+| Decision                               | Rationale                                                                                                                                                  |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Activity-led, not directory-led**    | Retention comes from time-sensitive, fresh content — not static listings                                                                                   |
+| **Monolith-first, modular-internal**   | Ship fast, avoid distributed-system overhead; separate concerns at the module/domain boundary                                                              |
+| **City-first data model**              | Hyperlocal density is the prerequisite for product-market fit; architecture must make city the primary partition                                           |
+| **Metro-region aware**                 | Stuttgart metro includes satellite cities (Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen); events in satellites must appear in main city feed |
+| **Graph-ready relational core**        | Start with PostgreSQL + structured relational schema; design edges and scores as first-class entities so graph queries are natural when needed             |
+| **External community assumption**      | Communities live on WhatsApp/Telegram/etc; LocalPulse is the discovery, access, and trust layer — not the engagement layer                                 |
+| **Ingestion as a first-class concern** | Supply is the hardest problem; the architecture must treat content acquisition as a core system capability, not an afterthought                            |
 
 ### The long-term moat
 
@@ -117,19 +117,19 @@ Architecturally, this means the system must treat **events and activity signals 
 
 ### Domain relationships (conceptual)
 
-| Relationship | Meaning |
-|---|---|
-| Community → City | A community operates in one or more cities |
-| Community → Category | A community has one or more category/persona tags |
-| Community → Access Channel | A community is reachable via WhatsApp link, Telegram, website, etc. |
-| Event → Community | An event is hosted by or associated with a community |
-| Event → City | An event has a location (city, venue) |
-| Event → Category | An event has type tags (cultural, networking, religious, etc.) |
-| Community → Activity Signals | Freshness, event frequency, member growth, etc. |
-| Community → Trust Signals | Verification, admin claims, user reports, editorial review |
-| User → City | A user has a primary city |
-| User → Interaction Signal | Views, saves, clicks, joins |
-| Community ↔ Community | Related communities (same city, same category, shared members later) |
+| Relationship                 | Meaning                                                              |
+| ---------------------------- | -------------------------------------------------------------------- |
+| Community → City             | A community operates in one or more cities                           |
+| Community → Category         | A community has one or more category/persona tags                    |
+| Community → Access Channel   | A community is reachable via WhatsApp link, Telegram, website, etc.  |
+| Event → Community            | An event is hosted by or associated with a community                 |
+| Event → City                 | An event has a location (city, venue)                                |
+| Event → Category             | An event has type tags (cultural, networking, religious, etc.)       |
+| Community → Activity Signals | Freshness, event frequency, member growth, etc.                      |
+| Community → Trust Signals    | Verification, admin claims, user reports, editorial review           |
+| User → City                  | A user has a primary city                                            |
+| User → Interaction Signal    | Views, saves, clicks, joins                                          |
+| Community ↔ Community        | Related communities (same city, same category, shared members later) |
 
 These relationships form the **community graph**. The architecture must model them as structured, queryable edges — not as denormalized blobs.
 
@@ -178,13 +178,13 @@ These relationships form the **community graph**. The architecture must model th
 
 ### What should be separated conceptually even if implemented simply
 
-| Concern | Why separate conceptually | MVP implementation |
-|---|---|---|
-| **Search/Discovery** | Will need its own index, ranking logic, and query language | SQL queries with full-text search initially; extract to Elasticsearch/Meilisearch later |
-| **Scoring/Relevance** | Changes independently; will become complex | Simple computed columns or materialized scores; separate scoring module internally |
-| **Ingestion** | Has its own lifecycle (cron, import, admin tools) | Admin-only scripts/endpoints; grows into a pipeline |
-| **Graph queries** | Relationship traversal will need specialized tooling | SQL joins initially; graph database or graph query layer later |
-| **Analytics/Telemetry** | Must not couple to product logic | Event emission to a simple log/table; later to analytics pipeline |
+| Concern                 | Why separate conceptually                                  | MVP implementation                                                                      |
+| ----------------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **Search/Discovery**    | Will need its own index, ranking logic, and query language | SQL queries with full-text search initially; extract to Elasticsearch/Meilisearch later |
+| **Scoring/Relevance**   | Changes independently; will become complex                 | Simple computed columns or materialized scores; separate scoring module internally      |
+| **Ingestion**           | Has its own lifecycle (cron, import, admin tools)          | Admin-only scripts/endpoints; grows into a pipeline                                     |
+| **Graph queries**       | Relationship traversal will need specialized tooling       | SQL joins initially; graph database or graph query layer later                          |
+| **Analytics/Telemetry** | Must not couple to product logic                           | Event emission to a simple log/table; later to analytics pipeline                       |
 
 ---
 
@@ -215,16 +215,16 @@ These relationships form the **community graph**. The architecture must model th
 
 **Modules:**
 
-| Module | Responsibility |
-|---|---|
-| **Discovery** | Powers the feed, city view, "this week" view; applies filtering, ranking, and personalization. Includes sparse-content resilience: if "this week" has <3 items, auto-expands to "this month"; mixes content types (events + communities) to avoid empty sections; shows "recently happened" past events to prove city activity |
-| **Community** | CRUD and lifecycle for community entities; ownership, claims, verification state |
-| **Event** | CRUD and lifecycle for events; temporal logic (upcoming, past, recurring); deduplication |
-| **Search** | Full-text and faceted search across communities and events |
-| **Scoring** | Computes activity scores, freshness signals, trust indicators; runs periodically or on write |
-| **Ingestion** | Handles content import from external sources, admin seeding, community submissions |
-| **User** | Authentication, preferences, saved items, city selection |
-| **Admin/Curation** | Editorial tools, content moderation, claim review |
+| Module             | Responsibility                                                                                                                                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Discovery**      | Powers the feed, city view, "this week" view; applies filtering, ranking, and personalization. Includes sparse-content resilience: if "this week" has <3 items, auto-expands to "this month"; mixes content types (events + communities) to avoid empty sections; shows "recently happened" past events to prove city activity |
+| **Community**      | CRUD and lifecycle for community entities; ownership, claims, verification state                                                                                                                                                                                                                                               |
+| **Event**          | CRUD and lifecycle for events; temporal logic (upcoming, past, recurring); deduplication                                                                                                                                                                                                                                       |
+| **Search**         | Full-text and faceted search across communities and events                                                                                                                                                                                                                                                                     |
+| **Scoring**        | Computes activity scores, freshness signals, trust indicators; runs periodically or on write                                                                                                                                                                                                                                   |
+| **Ingestion**      | Handles content import from external sources, admin seeding, community submissions                                                                                                                                                                                                                                             |
+| **User**           | Authentication, preferences, saved items, city selection                                                                                                                                                                                                                                                                       |
+| **Admin/Curation** | Editorial tools, content moderation, claim review                                                                                                                                                                                                                                                                              |
 
 ### 5.3 Data / Storage Layer
 
@@ -318,14 +318,14 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 **Scoring dimensions (designed for, not all implemented at MVP):**
 
-| Dimension | What it measures | MVP proxy |
-|---|---|---|
-| **Freshness** | How recently was this community/event updated? | `last_updated_at` timestamp |
-| **Activity** | How many events has this community had recently? | Count of events in last 90 days |
-| **Completeness** | How rich is the community profile? | Percentage of fields filled |
-| **Trust** | Is this community verified/claimed? | Boolean `is_verified` flag |
-| **Engagement** | Do users interact with this listing? | Click count (later) |
-| **Relevance** | How well does this match a user's city/interests? | City match + category match |
+| Dimension        | What it measures                                  | MVP proxy                       |
+| ---------------- | ------------------------------------------------- | ------------------------------- |
+| **Freshness**    | How recently was this community/event updated?    | `last_updated_at` timestamp     |
+| **Activity**     | How many events has this community had recently?  | Count of events in last 90 days |
+| **Completeness** | How rich is the community profile?                | Percentage of fields filled     |
+| **Trust**        | Is this community verified/claimed?               | Boolean `is_verified` flag      |
+| **Engagement**   | Do users interact with this listing?              | Click count (later)             |
+| **Relevance**    | How well does this match a user's city/interests? | City match + category match     |
 
 **Architectural pattern:** Scoring runs as a periodic computation (cron job or triggered on write) that updates materialized score columns. Not real-time initially.
 
@@ -356,33 +356,33 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.1 Entity: Community
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `name` | Community name |
-| `slug` | URL-friendly identifier |
-| `description` | Short description |
-| `description_long` | Rich text description |
-| `city_id` | Primary city (FK) |
-| `additional_cities` | Multi-city communities |
-| `categories` | Array of category tags |
-| `persona_segments` | Target audience (student, family, professional, etc.) |
-| `languages` | Languages used in the community |
-| `founded_year` | Optional |
-| `member_count_approx` | Approximate (self-reported or estimated) |
-| `status` | active / inactive / unverified / claimed |
-| `claim_state` | unclaimed / claim_pending / claimed |
-| `claimed_by_user_id` | Who owns/manages this listing |
-| `logo_url` | Community logo |
-| `cover_image_url` | Cover image |
-| `metadata` | JSONB for flexible additional attributes |
-| `created_at` | When first added |
-| `updated_at` | Last content update |
-| `last_activity_at` | Last event or update signal |
-| `source` | How this was added (admin_seed, community_submitted, imported) |
-| `activity_score` | Computed score |
-| `trust_score` | Computed score |
-| `completeness_score` | Computed score |
+| Attribute             | Description                                                    |
+| --------------------- | -------------------------------------------------------------- |
+| `id`                  | Unique identifier                                              |
+| `name`                | Community name                                                 |
+| `slug`                | URL-friendly identifier                                        |
+| `description`         | Short description                                              |
+| `description_long`    | Rich text description                                          |
+| `city_id`             | Primary city (FK)                                              |
+| `additional_cities`   | Multi-city communities                                         |
+| `categories`          | Array of category tags                                         |
+| `persona_segments`    | Target audience (student, family, professional, etc.)          |
+| `languages`           | Languages used in the community                                |
+| `founded_year`        | Optional                                                       |
+| `member_count_approx` | Approximate (self-reported or estimated)                       |
+| `status`              | active / inactive / unverified / claimed                       |
+| `claim_state`         | unclaimed / claim_pending / claimed                            |
+| `claimed_by_user_id`  | Who owns/manages this listing                                  |
+| `logo_url`            | Community logo                                                 |
+| `cover_image_url`     | Cover image                                                    |
+| `metadata`            | JSONB for flexible additional attributes                       |
+| `created_at`          | When first added                                               |
+| `updated_at`          | Last content update                                            |
+| `last_activity_at`    | Last event or update signal                                    |
+| `source`              | How this was added (admin_seed, community_submitted, imported) |
+| `activity_score`      | Computed score                                                 |
+| `trust_score`         | Computed score                                                 |
+| `completeness_score`  | Computed score                                                 |
 
 **Why it matters:** The community is the central node. Every other entity connects to or through communities. The richness and accuracy of community data directly determines product quality.
 
@@ -390,32 +390,32 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.2 Entity: Event
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `title` | Event name |
-| `slug` | URL-friendly identifier |
-| `description` | Event description |
-| `community_id` | Hosting community (FK, nullable for independent events) |
-| `city_id` | Event city (FK) |
-| `venue_name` | Location name |
-| `venue_address` | Address |
-| `latitude` / `longitude` | Geo coordinates (optional) |
-| `starts_at` | Start datetime (with timezone) |
-| `ends_at` | End datetime |
-| `is_recurring` | Boolean |
-| `recurrence_rule` | RRULE for recurring events |
-| `categories` | Event type tags |
-| `is_online` | Boolean |
-| `online_link` | URL for online events |
-| `registration_url` | External registration link |
-| `cost` | Free / paid / unclear |
-| `image_url` | Event image |
-| `status` | upcoming / ongoing / past / cancelled |
-| `source` | How this was added |
-| `metadata` | JSONB |
-| `created_at` | When first added |
-| `updated_at` | Last update |
+| Attribute                | Description                                             |
+| ------------------------ | ------------------------------------------------------- |
+| `id`                     | Unique identifier                                       |
+| `title`                  | Event name                                              |
+| `slug`                   | URL-friendly identifier                                 |
+| `description`            | Event description                                       |
+| `community_id`           | Hosting community (FK, nullable for independent events) |
+| `city_id`                | Event city (FK)                                         |
+| `venue_name`             | Location name                                           |
+| `venue_address`          | Address                                                 |
+| `latitude` / `longitude` | Geo coordinates (optional)                              |
+| `starts_at`              | Start datetime (with timezone)                          |
+| `ends_at`                | End datetime                                            |
+| `is_recurring`           | Boolean                                                 |
+| `recurrence_rule`        | RRULE for recurring events                              |
+| `categories`             | Event type tags                                         |
+| `is_online`              | Boolean                                                 |
+| `online_link`            | URL for online events                                   |
+| `registration_url`       | External registration link                              |
+| `cost`                   | Free / paid / unclear                                   |
+| `image_url`              | Event image                                             |
+| `status`                 | upcoming / ongoing / past / cancelled                   |
+| `source`                 | How this was added                                      |
+| `metadata`               | JSONB                                                   |
+| `created_at`             | When first added                                        |
+| `updated_at`             | Last update                                             |
 
 **Why it matters:** Events are the **primary retention driver**. Fresh, relevant events are what bring users back. The event model must support temporal queries (this week, this month, upcoming) natively.
 
@@ -423,20 +423,20 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.3 Entity: City / Locality
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `name` | City name (e.g., "Stuttgart", "Munich") |
-| `slug` | URL-friendly identifier |
-| `state` | German state (Bundesland) |
-| `country` | Country (Germany initially) |
-| `latitude` / `longitude` | Center point |
-| `population` | For density context |
-| `diaspora_density_estimate` | Estimated Indian diaspora size |
-| `is_active` | Whether this city is "launched" on the platform |
-| `timezone` | City timezone |
-| `metro_region_id` | FK to parent metro region (nullable — null if this IS the primary city) |
-| `is_metro_primary` | Boolean — true if this is the main city of a metro region |
+| Attribute                   | Description                                                             |
+| --------------------------- | ----------------------------------------------------------------------- |
+| `id`                        | Unique identifier                                                       |
+| `name`                      | City name (e.g., "Stuttgart", "Munich")                                 |
+| `slug`                      | URL-friendly identifier                                                 |
+| `state`                     | German state (Bundesland)                                               |
+| `country`                   | Country (Germany initially)                                             |
+| `latitude` / `longitude`    | Center point                                                            |
+| `population`                | For density context                                                     |
+| `diaspora_density_estimate` | Estimated Indian diaspora size                                          |
+| `is_active`                 | Whether this city is "launched" on the platform                         |
+| `timezone`                  | City timezone                                                           |
+| `metro_region_id`           | FK to parent metro region (nullable — null if this IS the primary city) |
+| `is_metro_primary`          | Boolean — true if this is the main city of a metro region               |
 
 **Metro region concept:** Stuttgart metro includes Stuttgart (primary), Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen. Events and communities in satellite cities appear in the Stuttgart city feed. Each satellite is a City row with `metro_region_id` pointing to Stuttgart's `id`.
 
@@ -446,16 +446,16 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.4 Entity: Category / Persona Segment
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `name` | Category name (e.g., "Cultural", "Student", "Professional") |
-| `slug` | URL-friendly identifier |
-| `type` | `category` or `persona` |
-| `parent_id` | For hierarchical categories (optional) |
-| `icon` | Visual icon |
-| `description` | Short description |
-| `sort_order` | Display ordering |
+| Attribute     | Description                                                 |
+| ------------- | ----------------------------------------------------------- |
+| `id`          | Unique identifier                                           |
+| `name`        | Category name (e.g., "Cultural", "Student", "Professional") |
+| `slug`        | URL-friendly identifier                                     |
+| `type`        | `category` or `persona`                                     |
+| `parent_id`   | For hierarchical categories (optional)                      |
+| `icon`        | Visual icon                                                 |
+| `description` | Short description                                           |
+| `sort_order`  | Display ordering                                            |
 
 **Why it matters:** Categories and personas enable structured discovery beyond city. "Show me student groups" or "Telugu cultural organizations" are category-mediated queries.
 
@@ -463,16 +463,16 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.5 Entity: Access Channel
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `community_id` | Parent community (FK) |
-| `channel_type` | whatsapp / telegram / website / facebook / instagram / email / meetup / other |
-| `url` | Link to the channel |
-| `label` | Display label |
-| `is_primary` | Primary access method |
-| `is_verified` | Link has been verified to work |
-| `last_verified_at` | Last verification date |
+| Attribute          | Description                                                                   |
+| ------------------ | ----------------------------------------------------------------------------- |
+| `id`               | Unique identifier                                                             |
+| `community_id`     | Parent community (FK)                                                         |
+| `channel_type`     | whatsapp / telegram / website / facebook / instagram / email / meetup / other |
+| `url`              | Link to the channel                                                           |
+| `label`            | Display label                                                                 |
+| `is_primary`       | Primary access method                                                         |
+| `is_verified`      | Link has been verified to work                                                |
+| `last_verified_at` | Last verification date                                                        |
 
 **Why it matters:** Since communities live externally, access channels are the **bridge** between discovery (LocalPulse) and engagement (WhatsApp/Telegram/etc). These must be accurate and maintained.
 
@@ -480,13 +480,13 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.6 Entity: Activity Signal
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `community_id` | Parent community (FK) |
-| `signal_type` | event_created / profile_updated / member_count_changed / link_verified / etc. |
-| `occurred_at` | When the signal was recorded |
-| `metadata` | JSONB details |
+| Attribute      | Description                                                                   |
+| -------------- | ----------------------------------------------------------------------------- |
+| `id`           | Unique identifier                                                             |
+| `community_id` | Parent community (FK)                                                         |
+| `signal_type`  | event_created / profile_updated / member_count_changed / link_verified / etc. |
+| `occurred_at`  | When the signal was recorded                                                  |
+| `metadata`     | JSONB details                                                                 |
 
 **Why it matters:** Activity signals are the raw material for freshness and activity scoring. They allow the system to distinguish active communities from stale ones without requiring communities to log in.
 
@@ -494,15 +494,15 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.7 Entity: Trust Signal
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `entity_type` | community / event |
-| `entity_id` | FK to community or event |
+| Attribute     | Description                                                                                            |
+| ------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`          | Unique identifier                                                                                      |
+| `entity_type` | community / event                                                                                      |
+| `entity_id`   | FK to community or event                                                                               |
 | `signal_type` | admin_verified / community_claimed / user_reported_accurate / user_reported_stale / editorial_reviewed |
-| `created_by` | User or system |
-| `created_at` | Timestamp |
-| `metadata` | JSONB details |
+| `created_by`  | User or system                                                                                         |
+| `created_at`  | Timestamp                                                                                              |
+| `metadata`    | JSONB details                                                                                          |
 
 **Why it matters:** Trust signals enable quality ranking. A claimed, verified community with recent editorial review should rank higher than an unverified seed listing.
 
@@ -510,16 +510,16 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.8 Entity: Relationship Edge
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `source_entity_type` | community / event / city |
-| `source_entity_id` | FK |
-| `target_entity_type` | community / event / city |
-| `target_entity_id` | FK |
-| `relationship_type` | related_community / sister_chapter / co_hosted / parent_child / etc. |
-| `strength` | Numeric weight (computed or manual) |
-| `metadata` | JSONB |
+| Attribute            | Description                                                          |
+| -------------------- | -------------------------------------------------------------------- |
+| `id`                 | Unique identifier                                                    |
+| `source_entity_type` | community / event / city                                             |
+| `source_entity_id`   | FK                                                                   |
+| `target_entity_type` | community / event / city                                             |
+| `target_entity_id`   | FK                                                                   |
+| `relationship_type`  | related_community / sister_chapter / co_hosted / parent_child / etc. |
+| `strength`           | Numeric weight (computed or manual)                                  |
+| `metadata`           | JSONB                                                                |
 
 **Why it matters:** Explicit relationship edges form the community graph. They enable "related communities," "if you liked this, explore these," and graph-based discovery.
 
@@ -527,54 +527,54 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.9 Entity: User
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `email` | Email address |
-| `display_name` | Name |
-| `city_id` | Primary city |
-| `persona_segments` | Self-selected interests (student, family, etc.) |
-| `preferred_languages` | Language preferences |
-| `onboarding_complete` | Boolean |
-| `role` | user / community_admin / platform_admin |
-| `created_at` | Registration date |
-| `last_active_at` | Last visit |
+| Attribute             | Description                                     |
+| --------------------- | ----------------------------------------------- |
+| `id`                  | Unique identifier                               |
+| `email`               | Email address                                   |
+| `display_name`        | Name                                            |
+| `city_id`             | Primary city                                    |
+| `persona_segments`    | Self-selected interests (student, family, etc.) |
+| `preferred_languages` | Language preferences                            |
+| `onboarding_complete` | Boolean                                         |
+| `role`                | user / community_admin / platform_admin         |
+| `created_at`          | Registration date                               |
+| `last_active_at`      | Last visit                                      |
 
 **Why it matters:** Users are necessary for personalization, saved content, community claims, and later for behavioral signal collection. Keep lightweight initially.
 
 ### 6.10 Entity: User Interaction Signal
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `user_id` | FK (nullable for anonymous) |
-| `session_id` | Anonymous session ID |
-| `entity_type` | community / event |
-| `entity_id` | FK |
+| Attribute          | Description                                 |
+| ------------------ | ------------------------------------------- |
+| `id`               | Unique identifier                           |
+| `user_id`          | FK (nullable for anonymous)                 |
+| `session_id`       | Anonymous session ID                        |
+| `entity_type`      | community / event                           |
+| `entity_id`        | FK                                          |
 | `interaction_type` | view / click_access / save / share / report |
-| `city_id` | Context city |
-| `created_at` | Timestamp |
+| `city_id`          | Context city                                |
+| `created_at`       | Timestamp                                   |
 
 **Why it matters:** Interaction signals feed the relevance and engagement scoring pipeline. They reveal what users actually find valuable.
 
 ### 6.11 Entity: Resource
 
-| Attribute | Description |
-|---|---|
-| `id` | Unique identifier |
-| `title` | Resource title (e.g., "CGI Munich Consular Camp — Stuttgart") |
-| `slug` | URL-friendly identifier |
-| `resource_type` | consular_service / official_event / government_info / visa_service / community_resource |
-| `city_id` | Primary city (FK) |
-| `url` | External URL |
-| `description` | Description of the resource |
-| `valid_from` | Start of validity (nullable) |
-| `valid_until` | End of validity (nullable — null = ongoing) |
-| `source` | Where this was sourced from |
-| `categories` | Array of category tags |
-| `metadata` | JSONB for flexible attributes (e.g., consulate details, appointment links, VFS center info) |
-| `created_at` | When first added |
-| `updated_at` | Last update |
+| Attribute       | Description                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------- |
+| `id`            | Unique identifier                                                                           |
+| `title`         | Resource title (e.g., "CGI Munich Consular Camp — Stuttgart")                               |
+| `slug`          | URL-friendly identifier                                                                     |
+| `resource_type` | consular_service / official_event / government_info / visa_service / community_resource     |
+| `city_id`       | Primary city (FK)                                                                           |
+| `url`           | External URL                                                                                |
+| `description`   | Description of the resource                                                                 |
+| `valid_from`    | Start of validity (nullable)                                                                |
+| `valid_until`   | End of validity (nullable — null = ongoing)                                                 |
+| `source`        | Where this was sourced from                                                                 |
+| `categories`    | Array of category tags                                                                      |
+| `metadata`      | JSONB for flexible attributes (e.g., consulate details, appointment links, VFS center info) |
+| `created_at`    | When first added                                                                            |
+| `updated_at`    | Last update                                                                                 |
 
 **Why it matters:** Consular services, VFS appointments, and official embassy events are a unique content type that no competitor surfaces well. They serve a high-intent need (passport renewal, visa services, official cultural events) and are architecturally distinct from community-organized events — they have validity windows rather than single event dates, are institutionally sourced rather than community-submitted, and carry inherent trust.
 
@@ -586,13 +586,13 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 7.1 Data sources and lifecycle
 
-| Data type | Source | Lifecycle | Trust level |
-|---|---|---|---|
-| **Seed data** | Admin team manually researches and enters | One-time bootstrap, then updated | Medium (human-curated but may be incomplete) |
-| **Community-submitted** | Community admins self-list | Ongoing | Medium-high (first-party but unverified) |
-| **Imported events** | Scraped or API-imported from Eventbrite, Meetup, community websites | Periodic refresh | Low-medium (requires deduplication/validation) |
-| **User-contributed** | "Suggest a community" or "report stale" | Ongoing | Low (must be moderated) |
-| **Inferred signals** | Computed from activity, freshness, engagement | Continuous | Derived (depends on input quality) |
+| Data type               | Source                                                              | Lifecycle                        | Trust level                                    |
+| ----------------------- | ------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------- |
+| **Seed data**           | Admin team manually researches and enters                           | One-time bootstrap, then updated | Medium (human-curated but may be incomplete)   |
+| **Community-submitted** | Community admins self-list                                          | Ongoing                          | Medium-high (first-party but unverified)       |
+| **Imported events**     | Scraped or API-imported from Eventbrite, Meetup, community websites | Periodic refresh                 | Low-medium (requires deduplication/validation) |
+| **User-contributed**    | "Suggest a community" or "report stale"                             | Ongoing                          | Low (must be moderated)                        |
+| **Inferred signals**    | Computed from activity, freshness, engagement                       | Continuous                       | Derived (depends on input quality)             |
 
 ### 7.2 Structured vs semi-structured
 
@@ -642,12 +642,12 @@ Events are inherently temporal. The data model must natively support:
 
 ### 7.7 Handling inactive / stale communities
 
-| Scenario | System response |
-|---|---|
-| No events in 90+ days | Reduce activity score; flag for review |
-| No updates in 180+ days | Show "last updated X months ago" badge; downrank |
-| Access links broken | Flag for verification; show warning |
-| User reports stale | Trigger review; accumulate reports |
+| Scenario                 | System response                                                     |
+| ------------------------ | ------------------------------------------------------------------- |
+| No events in 90+ days    | Reduce activity score; flag for review                              |
+| No updates in 180+ days  | Show "last updated X months ago" badge; downrank                    |
+| Access links broken      | Flag for verification; show warning                                 |
+| User reports stale       | Trigger review; accumulate reports                                  |
 | Community confirmed dead | Set status to `inactive`; remove from active feeds, keep in archive |
 
 ---
@@ -663,6 +663,7 @@ City → Activity/Events this week → Communities → Detail → Access
 ```
 
 **Not:**
+
 ```
 Search box → Type query → Get results
 ```
@@ -671,27 +672,27 @@ Search is secondary to **curated, city-scoped, time-aware discovery**.
 
 ### 8.2 Discovery surfaces
 
-| Surface | Description | Primary query pattern |
-|---|---|---|
-| **City feed** | "What's happening in Munich for Indians" | City + upcoming events + active communities |
-| **This week view** | Time-bounded event listing | City + date range |
-| **Community explorer** | Browse communities by category/persona | City + category filter |
-| **Event calendar** | Calendar or list view of all events | City + date range + category |
-| **Search** | Free-text search | Full-text across communities and events |
-| **Community detail** | Full community profile with events and access | Single community lookup |
-| **Event detail** | Full event page | Single event lookup |
+| Surface                | Description                                   | Primary query pattern                       |
+| ---------------------- | --------------------------------------------- | ------------------------------------------- |
+| **City feed**          | "What's happening in Munich for Indians"      | City + upcoming events + active communities |
+| **This week view**     | Time-bounded event listing                    | City + date range                           |
+| **Community explorer** | Browse communities by category/persona        | City + category filter                      |
+| **Event calendar**     | Calendar or list view of all events           | City + date range + category                |
+| **Search**             | Free-text search                              | Full-text across communities and events     |
+| **Community detail**   | Full community profile with events and access | Single community lookup                     |
+| **Event detail**       | Full event page                               | Single event lookup                         |
 
 ### 8.3 Filtering and facets
 
-| Facet | Description |
-|---|---|
-| **City** | Primary partition — always applied |
-| **Category** | Cultural, professional, student, religious, etc. |
-| **Persona** | Student, family, professional, newcomer |
-| **Language** | Hindi, Telugu, Tamil, Malayalam, Bengali, etc. |
-| **Event type** | Online / in-person |
-| **Time range** | This week, this month, this weekend |
-| **Cost** | Free / paid |
+| Facet          | Description                                      |
+| -------------- | ------------------------------------------------ |
+| **City**       | Primary partition — always applied               |
+| **Category**   | Cultural, professional, student, religious, etc. |
+| **Persona**    | Student, family, professional, newcomer          |
+| **Language**   | Hindi, Telugu, Tamil, Malayalam, Bengali, etc.   |
+| **Event type** | Online / in-person                               |
+| **Time range** | This week, this month, this weekend              |
+| **Cost**       | Free / paid                                      |
 
 ### 8.4 Ranking strategy
 
@@ -714,12 +715,12 @@ Default ranking (city feed):
 
 ### 8.6 Personalization roadmap
 
-| Phase | Personalization level |
-|---|---|
-| **MVP** | City-based only (shows content for your city) |
-| **Phase 2** | Category/persona filtering based on user preferences |
+| Phase       | Personalization level                                         |
+| ----------- | ------------------------------------------------------------- |
+| **MVP**     | City-based only (shows content for your city)                 |
+| **Phase 2** | Category/persona filtering based on user preferences          |
 | **Phase 3** | Behavioral personalization (show more of what you clicked on) |
-| **Phase 4** | Collaborative filtering ("users like you also explored...") |
+| **Phase 4** | Collaborative filtering ("users like you also explored...")   |
 
 ---
 
@@ -759,31 +760,34 @@ Trust and relevance should be **extensible dimensions, not hardcoded logic**. Th
 
 ### 9.3 Scoring implementation plan
 
-| Phase | Capability |
-|---|---|
-| **MVP** | `activity_score` = f(events in 90d, last_update). `trust_score` = f(is_verified, source). Computed via cron. |
-| **Phase 2** | Add completeness score. Add engagement signals (view count). Tunable weights via config. |
-| **Phase 3** | Introduce relevance score based on user preferences. A/B test ranking formulas. |
-| **Phase 4** | ML-based ranking. Graph-propagated trust (community X is trusted because related community Y is trusted). |
+| Phase       | Capability                                                                                                                                                                                                                                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **MVP**     | `activity_score` = f(events in 90d, last_update). `trust_score` = f(is_verified, source). Computed via cron. User-visible as qualitative label only ("Active" / "Moderate" / "Low activity") — NOT as a numeric score. Store score breakdown in JSONB (`score_breakdown`) for internal analytics but do not expose to users.                                 |
+| **Phase 2** | Add completeness score. Add engagement signals (view count). Tunable weights via config. Name and brand the composite score as **"Pulse Score"** — visible to organizers on their dashboard first (opt-in). Show score breakdown on community detail pages only for **claimed** communities (organizer sees it as a tool to improve, not a public judgment). |
+| **Phase 3** | Make Pulse Score publicly visible on all community cards and detail pages (by now communities have 60-90+ days of behavioral data). Introduce relevance score based on user preferences. A/B test ranking formulas. Publish scoring methodology on /about/scoring page for transparency.                                                                     |
+| **Phase 4** | ML-based ranking. Graph-propagated trust (community X is trusted because related community Y is trusted).                                                                                                                                                                                                                                                    |
+
+> **Rationale for deferred public scoring (learned from Tracxn analysis):** Tracxn's branded score works because they have 13 years of data density. At go-live, LocalPulse communities have zero behavioral data — showing "Pulse Score: 15/100" to an organizer you're recruiting is damaging. Qualitative labels ("Active") are honest; numeric scores on cold-start data are misleadingly precise. Scores become meaningful after Phase 2 engagement data accumulates.
 
 ### 9.4 Community quality indicators (user-visible)
 
-| Indicator | Meaning |
-|---|---|
-| "Verified" badge | Platform team has confirmed this community exists and is active |
-| "Claimed" badge | A community admin has claimed and manages this listing |
-| Activity indicator | "Active" / "Occasionally active" / "Last updated X months ago" |
-| Event count | "12 events in the last 3 months" |
-| Freshness | "Updated 3 days ago" |
+| Indicator             | Meaning                                                               | Phase                                       |
+| --------------------- | --------------------------------------------------------------------- | ------------------------------------------- |
+| "Verified" badge      | Platform team has confirmed this community exists and is active       | MVP                                         |
+| "Claimed" badge       | A community admin has claimed and manages this listing                | Phase 2                                     |
+| Activity indicator    | "Active" / "Occasionally active" / "Last updated X months ago"        | MVP                                         |
+| Event count           | "12 events in the last 3 months"                                      | MVP                                         |
+| Freshness             | "Updated 3 days ago"                                                  | MVP                                         |
+| Pulse Score (numeric) | Composite score with visual breakdown (activity, completeness, trust) | Phase 3 (public) / Phase 2 (organizer-only) |
 
 ### 9.5 Event quality indicators
 
-| Indicator | Meaning |
-|---|---|
-| Source trust | Is this from a claimed community or imported? |
-| Completeness | Does it have time, venue, description, image? |
-| Registration available | Is there a clear way to sign up? |
-| Past events from same community | Track record indicator |
+| Indicator                       | Meaning                                       |
+| ------------------------------- | --------------------------------------------- |
+| Source trust                    | Is this from a claimed community or imported? |
+| Completeness                    | Does it have time, venue, description, image? |
+| Registration available          | Is there a clear way to sign up?              |
+| Past events from same community | Track record indicator                        |
 
 ---
 
@@ -795,18 +799,18 @@ The platform is only as good as its content density. A city with 3 communities a
 
 ### 10.2 Ingestion channels and system support
 
-| Channel | System capability needed | Phase |
-|---|---|---|
-| **Manual admin seeding** | Admin CRUD interface with bulk import (CSV/JSON) | MVP |
-| **Admin curation** | Rich editing, metadata management, image upload | MVP |
-| **Institutional source import** | Import consular event schedules (CGI Munich), embassy cultural calendars, VFS service info | MVP |
-| **Historical event import** | Import past events from research (IndoEuropean.eu data, community websites) to populate activity history | MVP |
-| **Community self-submission** | Public submission form with moderation queue | Phase 2 |
-| **Event import from external sources** | Import pipeline with adapters for Eventbrite, Meetup APIs | Phase 2-3 |
-| **Semi-automated enrichment** | Scripts to scrape public community pages for metadata | Phase 3 |
-| **Verification / claim flows** | Ownership verification (email, admin link, etc.) | Phase 2 |
-| **User suggestions** | "Suggest a community" with light form | Phase 2 |
-| **Stale content management** | Scheduled checks, alerts, downranking pipeline | MVP (basic) |
+| Channel                                | System capability needed                                                                                 | Phase       |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------- |
+| **Manual admin seeding**               | Admin CRUD interface with bulk import (CSV/JSON)                                                         | MVP         |
+| **Admin curation**                     | Rich editing, metadata management, image upload                                                          | MVP         |
+| **Institutional source import**        | Import consular event schedules (CGI Munich), embassy cultural calendars, VFS service info               | MVP         |
+| **Historical event import**            | Import past events from research (IndoEuropean.eu data, community websites) to populate activity history | MVP         |
+| **Community self-submission**          | Public submission form with moderation queue                                                             | Phase 2     |
+| **Event import from external sources** | Import pipeline with adapters for Eventbrite, Meetup APIs                                                | Phase 2-3   |
+| **Semi-automated enrichment**          | Scripts to scrape public community pages for metadata                                                    | Phase 3     |
+| **Verification / claim flows**         | Ownership verification (email, admin link, etc.)                                                         | Phase 2     |
+| **User suggestions**                   | "Suggest a community" with light form                                                                    | Phase 2     |
+| **Stale content management**           | Scheduled checks, alerts, downranking pipeline                                                           | MVP (basic) |
 
 ### 10.3 Ingestion pipeline architecture
 
@@ -834,51 +838,54 @@ The platform is only as good as its content density. A city with 3 communities a
 
 ### 11.1 What must exist in MVP
 
-| Capability | Notes |
-|---|---|
-| **Community entity with full schema** | All fields from domain model, even if sparsely populated initially |
-| **Event entity with temporal queries** | "This week in Berlin" must work from day 1 |
-| **City as primary partition** | City selection is the first user action |
-| **Category/persona tagging** | At least 11 curated categories (including Consular & Official) |
-| **Access channels** | WhatsApp/Telegram/website links per community |
-| **City feed / discovery page** | The primary UX — activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events) |
-| **Event listing with time filters** | This week, this month, upcoming |
-| **Community detail page** | Full profile with events and access info |
-| **Resource pages** | Consular services, VFS info, official events |
-| **Admin CRUD + bulk import** | Content seeding capability including historical events and institutional sources |
-| **Programmatic SEO pages** | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.) |
-| **Basic activity scoring** | Sort by last_updated, event count — just enough to avoid stale-first |
-| **SEO-ready rendering** | Communities and events must be Google-indexable |
-| **Mobile-responsive web** | Most diaspora users will access via mobile |
-| **Basic analytics** | Page views, clicks, search queries |
+| Capability                             | Notes                                                                                                                                           |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Community entity with full schema**  | All fields from domain model, even if sparsely populated initially                                                                              |
+| **Event entity with temporal queries** | "This week in Berlin" must work from day 1                                                                                                      |
+| **City as primary partition**          | City selection is the first user action                                                                                                         |
+| **Category/persona tagging**           | At least 11 curated categories (including Consular & Official)                                                                                  |
+| **Access channels**                    | WhatsApp/Telegram/website links per community                                                                                                   |
+| **City feed / discovery page**         | The primary UX — activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events) |
+| **Event listing with time filters**    | This week, this month, upcoming                                                                                                                 |
+| **Community detail page**              | Full profile with events and access info                                                                                                        |
+| **Resource pages**                     | Consular services, VFS info, official events                                                                                                    |
+| **Admin CRUD + bulk import**           | Content seeding capability including historical events and institutional sources                                                                |
+| **Programmatic SEO pages**             | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.)                                                               |
+| **Basic activity scoring**             | Sort by last_updated, event count — just enough to avoid stale-first                                                                            |
+| **SEO-ready rendering**                | Communities and events must be Google-indexable                                                                                                 |
+| **Mobile-responsive web**              | Most diaspora users will access via mobile                                                                                                      |
+| **Basic analytics**                    | Page views, clicks, search queries                                                                                                              |
 
 ### 11.2 What should be designed as future-ready but not overbuilt
 
-| Capability | Design now | Build later |
-|---|---|---|
-| **Scoring system** | Store activity signals as separate entities; compute simple scores | Full weighted multi-signal scoring |
-| **Relationship edges** | Include the `relationship_edge` table in schema | Graph queries and recommendations |
-| **Search index** | Full-text search via PostgreSQL | Meilisearch/Elasticsearch migration |
-| **Personalization** | User entity with city and interest preferences | Behavioral personalization |
-| **Community claims** | `claim_state` field on community entity | Full claim/verification workflow |
-| **Trust signals** | `trust_signal` table in schema | Multi-signal trust computation |
-| **Event import** | Design the ingestion pipeline interface | Build adapters for external sources |
-| **Notifications** | User entity with preferences | Email/push notifications |
-| **Multi-city** | City model supports multiple cities | Cross-city discovery and comparison |
+| Capability             | Design now                                                                                                        | Build later                                                                                                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scoring system**     | Store activity signals as separate entities; compute simple scores; store score breakdown in JSONB for future use | Full weighted multi-signal scoring (Phase 2); branded "Pulse Score" visible to organizers (Phase 2); public Pulse Score with breakdown UI (Phase 3) |
+| **Relationship edges** | Include the `relationship_edge` table in schema                                                                   | Graph queries and recommendations (Phase 4); "Similar communities" feature (Phase 4)                                                                |
+| **Content provenance** | Include `ContentLog` table in schema (zero cost, high future value)                                               | Content pipeline tracking and source quality analytics (Phase 2)                                                                                    |
+| **Search index**       | Full-text search via PostgreSQL                                                                                   | Meilisearch/Elasticsearch migration                                                                                                                 |
+| **Personalization**    | User entity with city and interest preferences                                                                    | Behavioral personalization                                                                                                                          |
+| **Community claims**   | `claim_state` field on community entity                                                                           | Full claim/verification workflow                                                                                                                    |
+| **Trust signals**      | `trust_signal` table in schema                                                                                    | Multi-signal trust computation                                                                                                                      |
+| **Event import**       | Design the ingestion pipeline interface                                                                           | Build adapters for external sources                                                                                                                 |
+| **Notifications**      | User entity with preferences                                                                                      | Email/push notifications                                                                                                                            |
+| **Multi-city**         | City model supports multiple cities                                                                               | Cross-city discovery and comparison                                                                                                                 |
+| **Taxonomy depth**     | JSONB `metadata` field on community supports subcategories                                                        | Hierarchical taxonomy UI (Phase 4)                                                                                                                  |
+| **Data API**           | Normalized, structured data model                                                                                 | External API for integrations (Phase 4+)                                                                                                            |
 
 ### 11.3 What can be postponed entirely
 
-| Capability | Why postpone |
-|---|---|
-| **Graph database** | PostgreSQL handles relationship queries at this scale |
-| **ML-based ranking** | Need behavioral data first; months away |
-| **Recommendation engine** | Need user interaction data |
-| **Mobile app** | Responsive web is sufficient initially |
-| **Real-time features** | No need for WebSockets or live updates |
-| **Content CDN** | Images can be served from object storage directly |
-| **Multi-language UI** | Start in English; add German and Hindi later |
-| **Payments/monetization** | No business model features in MVP |
-| **API for third parties** | Internal API only |
+| Capability                | Why postpone                                          |
+| ------------------------- | ----------------------------------------------------- |
+| **Graph database**        | PostgreSQL handles relationship queries at this scale |
+| **ML-based ranking**      | Need behavioral data first; months away               |
+| **Recommendation engine** | Need user interaction data                            |
+| **Mobile app**            | Responsive web is sufficient initially                |
+| **Real-time features**    | No need for WebSockets or live updates                |
+| **Content CDN**           | Images can be served from object storage directly     |
+| **Multi-language UI**     | Start in English; add German and Hindi later          |
+| **Payments/monetization** | No business model features in MVP                     |
+| **API for third parties** | Internal API only                                     |
 
 ### 11.4 Architecture evolution diagram
 
@@ -903,19 +910,19 @@ PostgreSQL                   PostgreSQL                   PostgreSQL
 
 The following are explicitly **out of scope** for the initial architecture and should not influence design decisions:
 
-| Non-goal | Rationale |
-|---|---|
-| **Chat / messaging** | Communities communicate on WhatsApp/Telegram; LocalPulse is the discovery layer, not an engagement platform |
-| **Full social graph** | Users do not need to friend/follow each other; this is not a social network |
-| **User-generated content feeds** | No posts, stories, or social feeds; content is structured (communities, events) |
-| **Payments / transactions** | No ticketing, donations, or commerce |
-| **Heavy workflow systems** | No complex approval chains, multi-step forms, or enterprise admin tools |
-| **Real-time collaboration** | No live editing, co-planning, or shared workspaces |
-| **Content moderation AI** | Manual moderation is sufficient at initial scale |
-| **Multi-country expansion** | Design for Germany first; internationalization is a later concern |
-| **Monetization features** | No ads, premium listings, or subscription tiers in MVP |
-| **Mobile native apps** | Responsive web is the correct investment at this stage |
-| **Email marketing platform** | Simple transactional emails only; no newsletter platform |
+| Non-goal                         | Rationale                                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| **Chat / messaging**             | Communities communicate on WhatsApp/Telegram; LocalPulse is the discovery layer, not an engagement platform |
+| **Full social graph**            | Users do not need to friend/follow each other; this is not a social network                                 |
+| **User-generated content feeds** | No posts, stories, or social feeds; content is structured (communities, events)                             |
+| **Payments / transactions**      | No ticketing, donations, or commerce                                                                        |
+| **Heavy workflow systems**       | No complex approval chains, multi-step forms, or enterprise admin tools                                     |
+| **Real-time collaboration**      | No live editing, co-planning, or shared workspaces                                                          |
+| **Content moderation AI**        | Manual moderation is sufficient at initial scale                                                            |
+| **Multi-country expansion**      | Design for Germany first; internationalization is a later concern                                           |
+| **Monetization features**        | No ads, premium listings, or subscription tiers in MVP                                                      |
+| **Mobile native apps**           | Responsive web is the correct investment at this stage                                                      |
+| **Email marketing platform**     | Simple transactional emails only; no newsletter platform                                                    |
 
 ---
 
@@ -923,36 +930,39 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ### 13.1 Product-architecture risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| **Low content density** | Users arrive, find nothing, never return | Invest heavily in seeding before launch. Target minimum density: 60+ communities, 25+ events for Stuttgart. Import 50+ historical events. |
-| **Stale content** | Platform feels abandoned even if it's not | Freshness scoring + staleness alerts + scheduled content review |
-| **Sparse event coverage** | "This week" view is empty | Sparse-content resilience: auto-expand to "this month"; show past events as "recently happened"; mix community cards into feed |
-| **Weak discovery UX** | Users don't find what they need | Invest in city feed design; test with real diaspora users before launch |
-| **Cold start per city** | Each new city starts from zero | Stuttgart launch creates repeatable playbook; BW region cities share some communities |
-| **Competitor SEO advantage** | IndoEuropean.eu has 11 years of SEO authority and 327+ Germany articles | Launch programmatic SEO pages early; target long-tail queries they don't serve ("Telugu community Stuttgart"); their misspelled "Stuttgurt" URL gives us an opening |
-| **IE adds structured features** | They rebuild from WordPress to structured platform | Move fast; our structural advantage (community profiles, event filtering, trust signals) requires architectural rebuild they're unlikely to do |
-| **Facebook Groups remain good enough** | Users stay in closed FB groups for discovery | Our value is cross-group, searchable, temporal — FB can't do this for closed groups. Position as complement, not replacement |
+| Risk                                   | Impact                                                                  | Mitigation                                                                                                                                                          |
+| -------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Low content density**                | Users arrive, find nothing, never return                                | Invest heavily in seeding before launch. Target minimum density: 60+ communities, 25+ events for Stuttgart. Import 50+ historical events.                           |
+| **Stale content**                      | Platform feels abandoned even if it's not                               | Freshness scoring + staleness alerts + scheduled content review                                                                                                     |
+| **Sparse event coverage**              | "This week" view is empty                                               | Sparse-content resilience: auto-expand to "this month"; show past events as "recently happened"; mix community cards into feed                                      |
+| **Weak discovery UX**                  | Users don't find what they need                                         | Invest in city feed design; test with real diaspora users before launch                                                                                             |
+| **Cold start per city**                | Each new city starts from zero                                          | Stuttgart launch creates repeatable playbook; BW region cities share some communities                                                                               |
+| **Competitor SEO advantage**           | IndoEuropean.eu has 11 years of SEO authority and 327+ Germany articles | Launch programmatic SEO pages early; target long-tail queries they don't serve ("Telugu community Stuttgart"); their misspelled "Stuttgurt" URL gives us an opening |
+| **IE adds structured features**        | They rebuild from WordPress to structured platform                      | Move fast; our structural advantage (community profiles, event filtering, trust signals) requires architectural rebuild they're unlikely to do                      |
+| **Facebook Groups remain good enough** | Users stay in closed FB groups for discovery                            | Our value is cross-group, searchable, temporal — FB can't do this for closed groups. Position as complement, not replacement                                        |
 
 ### 13.2 Technical risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| **Over-engineering early** | Ship too late; build things nobody uses | Monolith-first; simple scoring; no ML; no graph DB |
-| **Building graph intelligence too early** | Complexity without enough data to justify it | Design graph-ready schema but use simple SQL. Only add graph tooling when query patterns demand it |
-| **Search quality** | PostgreSQL FTS may be insufficient for fuzzy/multilingual search | Plan for Meilisearch migration; keep search in a separate module |
-| **Ingestion complexity** | External source integration is harder than expected | Start with manual seeding + CSV import; add automated ingestion only after manual proves the model |
-| **Schema rigidity** | Domain model doesn't fit real-world community diversity | Use JSONB for flexible attributes; keep metadata extensible |
-| **SEO dependency** | If organic search doesn't work, discovery suffers | Invest in SSR, structured data (JSON-LD), and city-specific landing pages |
+| Risk                                      | Impact                                                                                                                                                        | Mitigation                                                                                                                                          |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Over-engineering early**                | Ship too late; build things nobody uses                                                                                                                       | Monolith-first; simple scoring; no ML; no graph DB                                                                                                  |
+| **Building graph intelligence too early** | Complexity without enough data to justify it                                                                                                                  | Design graph-ready schema but use simple SQL. Only add graph tooling when query patterns demand it                                                  |
+| **Premature scoring visibility**          | Showing numeric scores on cold-start data misleads users and alienates organizers (a score of "15/100" on a freshly seeded community is accurate but harmful) | MVP: qualitative labels only ("Active", "Moderate"). Phase 2: Pulse Score visible to organizers. Phase 3: public numeric scores (see §9.3)          |
+| **Search quality**                        | PostgreSQL FTS may be insufficient for fuzzy/multilingual search                                                                                              | Plan for Meilisearch migration; keep search in a separate module                                                                                    |
+| **Ingestion complexity**                  | External source integration is harder than expected                                                                                                           | Start with manual seeding + CSV import; add automated ingestion only after manual proves the model                                                  |
+| **Content freshness stalls**              | Platform feels dead within weeks of launch; users don't return (Tracxn adds 18,300+ data points daily; our content pipeline must be systematic, not ad-hoc)   | Commit to weekly content pipeline; track freshness SLA (every community profile checked monthly); define repeatable ingestion process before launch |
+| **Schema rigidity**                       | Domain model doesn't fit real-world community diversity                                                                                                       | Use JSONB for flexible attributes; keep metadata extensible                                                                                         |
+| **SEO dependency**                        | If organic search doesn't work, discovery suffers                                                                                                             | Invest in SSR, structured data (JSON-LD), and city-specific landing pages                                                                           |
 
 ### 13.3 Operational risks
 
-| Risk | Impact | Mitigation |
-|---|---|---|
-| **Content accuracy** | Wrong links, wrong event times erode trust | Verification workflows; user reporting; periodic link checks |
-| **Community pushback** | Communities don't want to be listed | Claim flow allows removal; be respectful of community ownership |
-| **Single-city fragility** | If launch city doesn't work, product appears to fail | Stuttgart chosen for weakest competitor coverage + strong automotive pipeline + discoverable communities; BW region expansion if metro needs more density |
-| **Founder bus factor** | Platform depends on manual curation too long | Build community submission and claim flows in Phase 2 to distribute supply; establish 5+ organizer relationships pre-launch |
+| Risk                       | Impact                                                                | Mitigation                                                                                                                                                      |
+| -------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Content accuracy**       | Wrong links, wrong event times erode trust                            | Verification workflows; user reporting; periodic link checks                                                                                                    |
+| **Community pushback**     | Communities don't want to be listed                                   | Claim flow allows removal; be respectful of community ownership                                                                                                 |
+| **No retention mechanism** | Users visit once, get the info they need, join WhatsApp, never return | Weekly digest email/WhatsApp (Phase 2); "new this week" section on city feed; event reminders; Tracxn retains via alerts and dashboards — we need an equivalent |
+| **Single-city fragility**  | If launch city doesn't work, product appears to fail                  | Stuttgart chosen for weakest competitor coverage + strong automotive pipeline + discoverable communities; BW region expansion if metro needs more density       |
+| **Founder bus factor**     | Platform depends on manual curation too long                          | Build community submission and claim flows in Phase 2 to distribute supply; establish 5+ organizer relationships pre-launch                                     |
 
 ---
 
@@ -1020,6 +1030,8 @@ The following are explicitly **out of scope** for the initial architecture and s
 - "Suggest a community" user flow
 - "Report stale/incorrect" user flow
 - Improved scoring: completeness score, engagement signals (view counts)
+- **Pulse Score branded and visible to claimed-community organizers** on their dashboard (score breakdown as improvement tool, not public judgment)
+- **Content provenance logging** (`ContentLog` entity tracking source, action, timestamp for every creation/update/verification — enables freshness auditing and source quality tracking; see Tracxn analysis §6.2)
 - Broken link detection (scheduled job)
 - Stale content alerting and downranking
 - **Second city launch: Karlsruhe or Mannheim** (BW region — shared consular services, overlapping communities)
@@ -1035,6 +1047,8 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Dedicated search index (Meilisearch) for fast, faceted, typo-tolerant search
 - Multi-signal scoring engine with configurable weights
 - Trust score computation (verification, claim state, user reports, editorial review)
+- **Pulse Score publicly visible** on all community cards and detail pages (communities now have 60-90+ days of behavioral data to back the numbers)
+- **Scoring transparency page** (/about/scoring — explain methodology, build user trust; see Tracxn analysis §6.3)
 - Category-aware ranking ("best student communities in Munich")
 - Trending signals ("most active this week")
 - Redis caching for hot queries (city feeds, popular communities)
@@ -1043,6 +1057,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Event import adapter for at least one external source (Eventbrite or Meetup API)
 - User preference-based filtering (show me communities matching my interests)
 - Email notifications (weekly digest of events in your city — optional)
+- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing and SEO; see Tracxn analysis §7.3)
 
 **Architecture milestone:** The scoring and search layer is decoupled from CRUD; ranking can be tuned without code changes.
 
@@ -1053,14 +1068,15 @@ The following are explicitly **out of scope** for the initial architecture and s
 **Architecture deliverables:**
 
 - Relationship edge population (related communities, shared categories, co-hosted events)
-- "Related communities" feature powered by graph queries
+- **"Similar communities" feature** powered by graph queries (same category, same city, shared event attendees)
 - "If you're interested in X, you might like Y" recommendations
 - Graph query layer (Apache AGE on PostgreSQL or dedicated graph DB evaluation)
 - Cross-city discovery ("this community also exists in Frankfurt")
 - Behavioral personalization (ranking influenced by user's past interactions)
 - A/B testing framework for ranking experiments
 - Analytics warehouse for deep behavioral analysis
-- API for potential integrations
+- **Data API for potential integrations** (city tourism boards, German integration agencies, relocation companies — see Tracxn analysis §5.4)
+- **Hierarchical taxonomy expansion** (sub-categories for deeper filtering: "Cultural > Festivals > Diwali", "Professional > Automotive"; see Tracxn analysis §2.2)
 
 **Architecture milestone:** The community graph is a queryable, scored asset that enables discovery beyond simple listing and filtering.
 
@@ -1068,20 +1084,20 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ## Technology Recommendations Summary
 
-| Layer | MVP Recommendation | Evolution |
-|---|---|---|
-| **Frontend** | Next.js (App Router) + TypeScript + Tailwind CSS | Same |
-| **Backend** | Next.js API routes / standalone Node.js API | Extract services if needed |
-| **Database** | PostgreSQL (via Supabase, Neon, or self-hosted) | Same + extensions |
-| **ORM** | Prisma or Drizzle ORM | Same |
-| **Search** | PostgreSQL full-text search | Meilisearch |
-| **Cache** | None | Redis |
-| **Auth** | NextAuth.js or Supabase Auth | Same |
-| **Analytics** | PostHog or Plausible | PostHog + data warehouse |
-| **Hosting** | Vercel (frontend) + Railway/Fly.io (backend/DB) | Same or AWS/GCP |
-| **File storage** | Cloudflare R2 or S3 | Same |
-| **CI/CD** | GitHub Actions | Same |
-| **Graph** | SQL joins + CTEs | Apache AGE or Neo4j |
+| Layer            | MVP Recommendation                               | Evolution                  |
+| ---------------- | ------------------------------------------------ | -------------------------- |
+| **Frontend**     | Next.js (App Router) + TypeScript + Tailwind CSS | Same                       |
+| **Backend**      | Next.js API routes / standalone Node.js API      | Extract services if needed |
+| **Database**     | PostgreSQL (via Supabase, Neon, or self-hosted)  | Same + extensions          |
+| **ORM**          | Prisma or Drizzle ORM                            | Same                       |
+| **Search**       | PostgreSQL full-text search                      | Meilisearch                |
+| **Cache**        | None                                             | Redis                      |
+| **Auth**         | NextAuth.js or Supabase Auth                     | Same                       |
+| **Analytics**    | PostHog or Plausible                             | PostHog + data warehouse   |
+| **Hosting**      | Vercel (frontend) + Railway/Fly.io (backend/DB)  | Same or AWS/GCP            |
+| **File storage** | Cloudflare R2 or S3                              | Same                       |
+| **CI/CD**        | GitHub Actions                                   | Same                       |
+| **Graph**        | SQL joins + CTEs                                 | Apache AGE or Neo4j        |
 
 ---
 
