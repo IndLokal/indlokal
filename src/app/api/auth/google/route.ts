@@ -6,6 +6,13 @@ import { cookies } from 'next/headers';
  * Initiates Google OAuth flow — generates CSRF state and redirects to Google.
  */
 export async function GET() {
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    // Google OAuth not configured — redirect to the login page with an informative error
+    return NextResponse.redirect(
+      `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'}/me/login?error=not_configured`,
+    );
+  }
+
   const state = crypto.randomUUID();
 
   const jar = await cookies();

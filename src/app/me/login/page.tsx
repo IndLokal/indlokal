@@ -34,6 +34,16 @@ export default async function LoginPage({
           </div>
         )}
 
+        {error === 'not_configured' && (
+          <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Google sign-in is not configured yet.{' '}
+            <span className="font-medium">
+              Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> to your{' '}
+              <code>.env</code>.
+            </span>
+          </div>
+        )}
+
         <Link
           href="/api/auth/google"
           className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-shadow hover:shadow-md"
