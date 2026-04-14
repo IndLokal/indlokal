@@ -86,5 +86,41 @@ export async function suggestCommunity(
     },
   });
 
+  // Also seed the AI pipeline — the LLM can enrich this suggestion
+  // with any online info it finds (events, social links, descriptions).
+  // This is how WhatsApp-only communities enter the pipeline.
+  await db.pipelineItem.create({
+    data: {
+      entityType: 'COMMUNITY',
+      sourceType: 'COMMUNITY_SUGGESTION',
+      sourceUrl: null,
+      rawContent: [
+        `Community name: ${suggestedName}`,
+        details ? `Details: ${details}` : null,
+        reporterEmail ? `Submitter: ${reporterEmail}` : null,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      extractedData: {
+        type: 'COMMUNITY',
+        name: suggestedName,
+        description: details || null,
+        cityName: null,
+        categories: [],
+        languages: [],
+        websiteUrl: null,
+        facebookUrl: null,
+        instagramUrl: null,
+        whatsappUrl: null,
+        telegramUrl: null,
+        contactEmail: reporterEmail || null,
+        confidence: 0.6,
+        fieldConfidence: { name: 0.95 },
+      },
+      confidence: 0.6,
+      cityId: city.id,
+    },
+  });
+
   return { success: true, name: suggestedName };
 }

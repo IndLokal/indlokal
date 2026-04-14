@@ -39,6 +39,7 @@ model City {
   users                  User[]
   userInteractions       UserInteraction[]
   contentReports         ContentReport[] @relation("CityReports")
+  pipelineItems          PipelineItem[]
 
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
@@ -573,4 +574,74 @@ model ContentLog {
   @@index([entityType, entityId])
   @@index([createdAt])
   @@map("content_logs")
+}
+
+// ─────────────────────────────────────────────────
+// Pipeline Item — AI content pipeline review queue
+// ─────────────────────────────────────────────────
+
+enum PipelineEntityType {
+  EVENT
+  COMMUNITY
+}
+
+enum PipelineItemStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  MERGED // merged into existing entity (dedup)
+}
+
+enum PipelineSourceType {
+  EVENTBRITE
+  FACEBOOK
+  INSTAGRAM
+  WEBSITE_SCRAPE
+  CGI_MUNICH
+  INDOEUROPEAN
+  GOOGLE_ALERT
+  GOOGLE_SEARCH
+  DUCKDUCKGO
+  MEETUP
+  COMMUNITY_SUGGESTION
+  DB_COMMUNITY
+}
+
+model PipelineItem {
+  id             String             @id @default(cuid())
+  entityType     PipelineEntityType @map("entity_type")
+  status         PipelineItemStatus @default(PENDING)
+
+  // Source provenance
+  sourceType     PipelineSourceType @map("source_type")
+  sourceUrl      String?            @map("source_url")
+  rawContent     String?            @map("raw_content")    // original scraped text/HTML (for audit)
+
+  // LLM-extracted structured data
+  extractedData  Json               @map("extracted_data")  // the structured event/community JSON
+  confidence     Float              @default(0)             // 0-1 overall confidence from LLM
+
+  // City context
+  cityId         String             @map("city_id")
+  city           City               @relation(fields: [cityId], references: [id])
+
+  // Dedup — matched against an existing entity
+  matchedEntityId String?           @map("matched_entity_id") // existing event/community id if dupe detected
+  matchScore      Float?            @map("match_score")       // 0-1 similarity score
+
+  // Review tracking
+  reviewedBy     String?            @map("reviewed_by")
+  reviewedAt     DateTime?          @map("reviewed_at")
+  reviewNotes    String?            @map("review_notes")
+
+  // The entity created/updated after approval
+  createdEntityId String?           @map("created_entity_id")
+
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([cityId])
+  @@index([entityType, status])
+  @@map("pipeline_items")
 }

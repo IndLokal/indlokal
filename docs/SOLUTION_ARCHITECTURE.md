@@ -799,38 +799,189 @@ The platform is only as good as its content density. A city with 3 communities a
 
 ### 10.2 Ingestion channels and system support
 
-| Channel                                | System capability needed                                                                                 | Phase       |
-| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ----------- |
-| **Manual admin seeding**               | Admin CRUD interface with bulk import (CSV/JSON)                                                         | MVP         |
-| **Admin curation**                     | Rich editing, metadata management, image upload                                                          | MVP         |
-| **Institutional source import**        | Import consular event schedules (CGI Munich), embassy cultural calendars, VFS service info               | MVP         |
-| **Historical event import**            | Import past events from research (IndoEuropean.eu data, community websites) to populate activity history | MVP         |
-| **Community self-submission**          | Public submission form with moderation queue                                                             | Phase 2     |
-| **Event import from external sources** | Import pipeline with adapters for Eventbrite, Meetup APIs                                                | Phase 2-3   |
-| **Semi-automated enrichment**          | Scripts to scrape public community pages for metadata                                                    | Phase 3     |
-| **Verification / claim flows**         | Ownership verification (email, admin link, etc.)                                                         | Phase 2     |
-| **User suggestions**                   | "Suggest a community" with light form                                                                    | Phase 2     |
-| **Stale content management**           | Scheduled checks, alerts, downranking pipeline                                                           | MVP (basic) |
+| Channel                                | System capability needed                                                                                 | Phase                        |
+| -------------------------------------- | -------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Manual admin seeding**               | Admin CRUD interface with bulk import (CSV/JSON)                                                         | MVP                          |
+| **Admin curation**                     | Rich editing, metadata management, image upload                                                          | MVP                          |
+| **Institutional source import**        | Import consular event schedules (CGI Munich), embassy cultural calendars, VFS service info               | MVP                          |
+| **Historical event import**            | Import past events from research (IndoEuropean.eu data, community websites) to populate activity history | MVP                          |
+| **AI-powered source monitoring**       | Automated pipeline: scrape public sources → LLM extraction → admin review queue (see §10.5)              | MVP (basic) / Phase 2 (full) |
+| **Community self-submission**          | Public submission form with moderation queue                                                             | Phase 2                      |
+| **Event import from external sources** | Import pipeline with adapters for Eventbrite, Meetup APIs                                                | Phase 2                      |
+| **AI enrichment & classification**     | LLM-powered auto-tagging, description generation, translation (DE/HI → EN)                               | Phase 2                      |
+| **Verification / claim flows**         | Ownership verification (email, admin link, etc.)                                                         | Phase 2                      |
+| **User suggestions**                   | "Suggest a community" with light form                                                                    | Phase 2                      |
+| **Stale content management**           | Scheduled checks, AI-powered link validation, downranking pipeline                                       | MVP (basic)                  |
 
 ### 10.3 Ingestion pipeline architecture
 
 ```
-┌──────────┐     ┌───────────┐     ┌─────────────┐     ┌──────────┐     ┌────────┐
-│  Source   │────▶│  Ingest   │────▶│  Normalize   │────▶│  Dedup   │────▶│ Store  │
-│ (admin,  │     │  Adapter  │     │  & Validate  │     │  Check   │     │ & Index│
-│  import, │     │           │     │              │     │          │     │        │
-│  submit) │     └───────────┘     └─────────────┘     └──────────┘     └────────┘
-└──────────┘
+┌──────────────┐     ┌───────────────┐     ┌──────────────┐     ┌──────────┐     ┌────────────┐     ┌──────────┐
+│  Sources     │────▶│  Scrape /     │────▶│  LLM Extract │────▶│  Dedup   │────▶│  Admin     │────▶│  Store   │
+│  (scheduled) │     │  Fetch        │     │  & Classify  │     │  Check   │     │  Review    │     │  & Index │
+│              │     │               │     │              │     │          │     │  Queue     │     │          │
+│ FB, IG,      │     │ Raw HTML,     │     │ Structured   │     │ Fuzzy    │     │ Approve /  │     │ Publish  │
+│ Eventbrite,  │     │ API JSON,     │     │ event/comm   │     │ match vs │     │ Reject /   │     │ + Log    │
+│ Websites,    │     │ Images        │     │ data + tags  │     │ existing │     │ Edit       │     │ provenance│
+│ Consulate,   │     │               │     │              │     │          │     │            │     │          │
+│ Google Alerts│     └───────────────┘     └──────────────┘     └──────────┘     └────────────┘     └──────────┘
+└──────────────┘
 ```
 
-**MVP:** This is just the admin CRUD interface + CSV import. But the mental model of "source → normalize → dedup → store" should guide even manual processes.
+**Key design principle: AI does the heavy lifting, humans do quality control.** The pipeline automates source monitoring, content extraction, classification, and deduplication. Admin effort reduces from "research + write + classify + publish" (~30 min/item) to "review + approve" (~1-2 min/item).
 
-### 10.4 Content quality enforcement
+### 10.4 AI-Powered Content Pipeline (detailed)
+
+> **Why AI, not manual?** At LocalPulse's scale (1 city, 60-80 communities), manual seeding works for the initial load. But ongoing freshness — detecting new events, updating stale profiles, monitoring community activity — requires checking 50+ sources weekly. A single founder cannot sustain this. AI reduces the ongoing content cost from ~10 hours/week of manual research to ~1 hour/week of review queue processing.
+
+#### 10.4.1 Source monitoring layer
+
+Scheduled jobs (cron or serverless functions) fetch content from configured sources:
+
+| Source type                   | Fetch method                                                                | Frequency | What we extract                                                            |
+| ----------------------------- | --------------------------------------------------------------------------- | --------- | -------------------------------------------------------------------------- |
+| **Facebook public pages**     | Meta Graph API or web scrape of public pages                                | Daily     | Posts mentioning events, community updates                                 |
+| **Instagram public accounts** | Instagram Basic Display API or public page scrape                           | Daily     | Event flyer images, story highlights with dates/venues                     |
+| **Eventbrite**                | Eventbrite API (search: "Indian", "Bollywood", "Diwali", etc. in Stuttgart) | Daily     | Structured event data (title, date, venue, description, ticket link)       |
+| **Meetup**                    | Meetup GraphQL API (search by keywords + location)                          | Daily     | Structured event data                                                      |
+| **Community websites**        | HTTP fetch + HTML parse (configured list of ~20 URLs)                       | Weekly    | Event pages, "upcoming" sections, About page changes                       |
+| **CGI Munich / Embassy**      | Scrape consulate event page                                                 | Weekly    | Consular camp dates, passport seva schedules, cultural events              |
+| **IndoEuropean.eu**           | RSS feed or page scrape (Stuttgart Mela section)                            | Daily     | Blog posts announcing events                                               |
+| **Google Alerts**             | Google Alerts → email → parse, or SerpAPI                                   | Daily     | New web mentions of "Indian event Stuttgart", "Indian community Stuttgart" |
+
+**MVP implementation:** Start with 3-5 highest-value sources (Eventbrite API, Facebook public pages for top 10 communities, CGI Munich page, IndoEuropean.eu). Expand source list as the pipeline proves reliable.
+
+#### 10.4.2 LLM extraction & classification layer
+
+Raw fetched content (HTML, social media posts, images) is processed through an LLM to extract structured data:
+
+```
+Input: Raw Facebook post text + any attached image
+  "Hey everyone! 🎉 Our annual Diwali celebration is happening on Oct 25th
+   at Bürgerzentrum Stuttgart from 5pm. Entry free. Bring your family!
+   See you there! — Stuttgart Tamil Sangam"
+
+LLM Prompt: Extract event details as JSON from this social media post.
+  Return: title, date, time, venue, description, hostCommunity, categories,
+  languages, isFree, registrationUrl (if any). If an image is attached,
+  extract any additional details from it.
+
+Output:
+  {
+    "title": "Annual Diwali Celebration",
+    "date": "2026-10-25",
+    "time": "17:00",
+    "venue": "Bürgerzentrum Stuttgart",
+    "description": "Annual Diwali celebration hosted by Stuttgart Tamil Sangam. Entry free, family-friendly event.",
+    "hostCommunity": "Stuttgart Tamil Sangam",
+    "categories": ["Cultural", "Family & Kids"],
+    "languages": ["Tamil", "English"],
+    "isFree": true,
+    "registrationUrl": null,
+    "confidence": 0.92
+  }
+```
+
+**Capabilities the LLM layer provides:**
+
+| Capability                 | How it works                                                          | Value                                                                   |
+| -------------------------- | --------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| **Structured extraction**  | LLM parses unstructured text/HTML into event/community JSON           | Eliminates manual data entry                                            |
+| **Image understanding**    | Vision LLM reads event posters/flyers → extracts date, venue, title   | Captures events only posted as images (common on Instagram/WhatsApp)    |
+| **Auto-classification**    | LLM tags categories (Cultural, Professional, etc.) and languages      | Eliminates manual tagging                                               |
+| **Translation**            | LLM translates German or Hindi event descriptions to English          | Handles multilingual sources without manual translation                 |
+| **Description generation** | LLM generates/improves community descriptions from sparse source data | Enriches thin profiles                                                  |
+| **Dedup assistance**       | LLM compares extracted event against existing events for fuzzy match  | "Is this the same Diwali event posted on Facebook AND Eventbrite?"      |
+| **Confidence scoring**     | LLM outputs confidence per field (high/medium/low)                    | Low-confidence items get human review; high-confidence can auto-approve |
+
+**LLM choice:** OpenAI GPT-4o-mini for text extraction (~$0.15/1M input tokens — extremely cheap). GPT-4o or Claude for image/poster extraction. Estimated cost: **$5-15/month per city** at Stuttgart's content volume.
+
+#### 10.4.3 Admin review queue
+
+The pipeline outputs items into a review queue — NOT directly to the public site. The admin sees:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 🔔 Content Review Queue (7 items pending)                    │
+├─────────────────────────────────────────────────────────────┤
+│ ✅ HIGH CONFIDENCE                                           │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ "Annual Diwali Celebration"                              │ │
+│ │ Oct 25, 5pm · Bürgerzentrum · Stuttgart Tamil Sangam    │ │
+│ │ Source: Facebook (Stuttgart Tamil Sangam page)           │ │
+│ │ Confidence: 92% · Categories: Cultural, Family          │ │
+│ │ [✓ Approve]  [✏️ Edit]  [✗ Reject]                      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                              │
+│ ⚠️ NEEDS REVIEW                                              │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ "Stammtisch meeting"                                     │ │
+│ │ Date unclear · Location missing · Possible duplicate     │ │
+│ │ Source: IndoEuropean.eu blog post                        │ │
+│ │ Confidence: 45% · Matched existing: "Monthly Stammtisch"│ │
+│ │ [✓ Approve]  [✏️ Edit]  [✗ Reject]  [🔗 Merge]          │ │
+│ └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key rules:**
+
+- Nothing publishes without at least one human approval (prevents hallucinated events)
+- High-confidence items (>85%) can be batch-approved (select all → approve)
+- Low-confidence items require individual review
+- Duplicate matches show the existing item side-by-side for merge decision
+- Each approved/rejected item is logged with provenance (source, extraction method, reviewer, timestamp)
+
+#### 10.4.4 Freshness monitoring (AI-assisted)
+
+Beyond new content detection, AI helps keep existing content fresh:
+
+| Check                            | Method                                                                       | Frequency        | Action on failure                                 |
+| -------------------------------- | ---------------------------------------------------------------------------- | ---------------- | ------------------------------------------------- |
+| **Access link health**           | HTTP HEAD request to all community access channel URLs                       | Weekly           | Broken → flag for review, downrank                |
+| **Community activity detection** | Check community's Facebook/Instagram for new posts                           | Weekly           | No posts in 90 days → mark as "possibly inactive" |
+| **Event accuracy**               | Compare stored event details against source page                             | Day before event | Discrepancy → flag for review                     |
+| **Stale profile detection**      | LLM compares community's current web presence against our stored description | Monthly          | Significant changes → queue update for review     |
+
+#### 10.4.5 Implementation phasing
+
+| Phase         | AI pipeline capability                                                                                                                                                                                                         | Effort            |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------- |
+| **MVP**       | Manual seeding + **basic source monitoring** (Eventbrite API + 5-10 configured Facebook page scrapes + CGI Munich scrape → LLM extraction → admin review queue). Goal: reduce weekly content maintenance from 10 hrs to 2 hrs. | 2-3 days to build |
+| **Phase 1.5** | Add Instagram image extraction (vision LLM reads event flyers). Add Google Alerts integration. Add access link health checker. Auto-classification for all new content.                                                        | 1-2 days          |
+| **Phase 2**   | Full pipeline: 30+ monitored sources, high-confidence auto-approve option, batch operations, provenance logging, source quality tracking. Integrate with community self-submission (submissions also get LLM-enriched).        | 3-5 days          |
+| **Phase 3**   | Cross-source dedup intelligence, community activity trend detection, auto-generated freshness reports, anomaly detection ("this community's event frequency dropped 80%").                                                     | 2-3 days          |
+
+#### 10.4.6 Technology stack for AI pipeline
+
+| Component            | Recommendation                                                             | Rationale                                                         |
+| -------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| **Scheduler**        | Node.js cron jobs (node-cron) or Vercel Cron                               | Same stack as app; no new infrastructure                          |
+| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML | Handles modern SPAs; Playwright runs in Node                      |
+| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                       | Best cost/quality ratio; structured output mode for reliable JSON |
+| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                  | No new infrastructure; works with existing Prisma setup           |
+| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                 | Reduce API costs by resizing large images                         |
+
+**Total monthly cost estimate for Stuttgart:**
+
+| Item                                                        | Estimated cost           |
+| ----------------------------------------------------------- | ------------------------ |
+| LLM API (text extraction, ~500 items/month)                 | $3-5                     |
+| LLM API (image extraction, ~100 images/month)               | $2-5                     |
+| LLM API (freshness checks, ~300 checks/month)               | $1-3                     |
+| Scraping infrastructure (if using Playwright on serverless) | $0-5                     |
+| **Total**                                                   | **$6-18/month per city** |
+
+Compare this to the alternative: 10+ hours/week of manual research at any reasonable hourly rate = $400-1000+/month. **The AI pipeline pays for itself on day 1.**
+
+### 10.5 Content quality enforcement
 
 - Required fields for publishing: name, city, at least one category, at least one access channel
 - Completeness score incentivizes rich profiles
 - Stale content alerts after 90 days without activity
 - Broken link detection (periodic HTTP checks on access channel URLs)
+- AI-extracted content is always flagged with source and confidence level
+- No AI-generated content publishes without human approval (prevents hallucinated events)
 
 ---
 

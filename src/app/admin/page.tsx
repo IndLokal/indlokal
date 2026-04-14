@@ -42,6 +42,11 @@ export default function AdminDashboardPage() {
           description="User reports &amp; suggestions"
           href="/admin/reports"
         />
+        <DashboardCard
+          title="Content Pipeline"
+          description="AI-extracted content review queue"
+          href="/admin/pipeline"
+        />
       </div>
     </div>
   );

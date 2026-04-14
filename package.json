@@ -26,6 +26,8 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "echo 'E2E tests not configured yet — add Playwright when first feature ships'",
     "test:setup": "bash -c 'docker compose exec -T db psql -U postgres -c \"CREATE DATABASE localpulse_test;\" 2>/dev/null || true && DATABASE_URL=${TEST_DATABASE_URL} npx prisma db push --skip-generate'",
+    "pipeline": "tsx src/modules/pipeline/run.ts",
+    "pipeline:city": "tsx src/modules/pipeline/run.ts --city",
     "prepare": "husky"
   },
   "dependencies": {

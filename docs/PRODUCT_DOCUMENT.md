@@ -544,7 +544,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 ### 8.8 Content Provenance & Pipeline (informed by Tracxn analysis)
 
 - **Content provenance logging:** Every community/event creation, update, and verification is logged with source, actor, and timestamp. Enables freshness auditing ("when was this community last verified?") and source quality tracking ("which sources produce the best content?")
-- **Systematic content pipeline:** Define a repeatable weekly process: source identification → content detection → classification → verification → publication → freshness monitoring (see Tracxn competitive analysis §5.3 for the full pipeline model)
+- **AI content pipeline maturation:** Expand from MVP's basic 5-10 source monitoring to 30+ sources. Add high-confidence auto-approve option (items with >85% LLM confidence can auto-publish with logging). Integrate with community self-submission (user submissions also get LLM-enriched with auto-classification and description improvement)
 - **Weekly city digest email:** "This week in [city] for Indians" — auto-generated from upcoming events, sent to registered users (retention mechanism; Tracxn retains users via alerts and newsletters)
 
 ---
@@ -666,6 +666,38 @@ City-first URLs are critical for SEO and clarity:
 | 180+ days              | Significant downranking; flagged for review   |
 | Access links broken    | Warning badge; manual review triggered        |
 
+### 10.5 AI-Powered Content Pipeline
+
+> **Core principle: AI does the research, humans approve the results.**
+>
+> Manual daily content work is cost-inefficient and unsustainable for a solo founder / small team. The AI content pipeline automates 90% of the effort (source monitoring, content extraction, classification, deduplication) and reduces the human role to reviewing a daily queue of pre-processed items (~1-2 min per item vs ~30 min of manual research per item).
+
+#### How it works
+
+1. **Automated source monitoring** — Scheduled jobs fetch content from configured public sources (Facebook pages, Instagram accounts, Eventbrite, community websites, CGI Munich, IndoEuropean.eu, Google Alerts)
+2. **LLM extraction** — AI reads raw posts, HTML, and event flyer images → extracts structured data (title, date, venue, community, categories, languages)
+3. **Auto-classification** — AI tags each item with categories (Cultural, Professional, etc.) and language tags (Tamil, Telugu, Hindi, etc.)
+4. **Deduplication** — AI compares extracted items against existing database entries to catch duplicates across sources
+5. **Admin review queue** — Extracted items appear in a review queue. High-confidence items can be batch-approved. Low-confidence or duplicate-flagged items require individual review. **Nothing publishes without human approval** (prevents hallucinated events)
+6. **Freshness monitoring** — AI periodically checks community link health, detects activity drops, and flags stale profiles
+
+#### Content cost comparison
+
+| Approach                                                 | Effort per week               | Monthly cost estimate                   |
+| -------------------------------------------------------- | ----------------------------- | --------------------------------------- |
+| **Fully manual** (research + write + classify + publish) | 10+ hours                     | $400-1000+ (at any reasonable rate)     |
+| **AI pipeline + human review**                           | 1-2 hours (queue review only) | $6-18 in LLM API costs + 1-2 hrs review |
+
+#### Phasing
+
+| Phase         | AI capability                                                                                                                                                          |
+| ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MVP**       | Basic pipeline: Eventbrite API + 5-10 Facebook page scrapes + CGI Munich page → LLM extraction → admin review queue. Reduces weekly content work from 10 hrs to 2 hrs. |
+| **Phase 1.5** | Add Instagram image extraction (vision LLM reads event posters). Google Alerts integration. Access link health checker.                                                |
+| **Phase 2**   | Full pipeline: 30+ monitored sources, high-confidence auto-approve, batch operations, source quality tracking.                                                         |
+
+See Solution Architecture §10.4 for full technical specification.
+
 ### 10.5 Category taxonomy (MVP)
 
 | Category                | Icon | Example communities                                                                 |
@@ -743,10 +775,17 @@ Stuttgart was selected based on:
 
 ### 11.4 Post-launch content maintenance
 
-- Weekly: Review all communities, update stale entries, add any new events discovered
-- Bi-weekly: Run broken link check
-- Monthly: Review analytics for zero-result searches (content gaps)
+**AI-assisted workflow (not manual research):**
+
+- **Daily (automated):** AI pipeline scans configured sources (Facebook pages, Eventbrite, community websites), extracts new events/updates, populates admin review queue
+- **Daily (human, ~15-20 min):** Review and approve/reject items in the queue. High-confidence items can be batch-approved in one click
+- **Weekly (automated):** Access link health check on all community channels. Broken links auto-flagged
+- **Weekly (human, ~30 min):** Review flagged broken links, update or remove. Check for any sources the pipeline missed
+- **Monthly (automated):** AI checks each community's public presence for activity signals; flags communities inactive for 90+ days
+- **Monthly (human, ~30 min):** Review analytics for zero-result searches (content gaps). Add new sources to the pipeline if gaps found
 - Ongoing: Respond to "suggest a community" and "report issue" submissions (Phase 2)
+
+**Total human effort: ~3-4 hours/week** (vs 10+ hours/week without AI pipeline)
 
 ---
 
