@@ -139,6 +139,7 @@ model Community {
   activitySignals  ActivitySignal[]
   trustSignals     TrustSignal[]   @relation("CommunityTrustSignals")
   reports          ContentReport[] @relation("CommunityReports")
+  savedBy          SavedCommunity[]
 
   // Edges — relationships to other entities
   sourceEdges      RelationshipEdge[] @relation("SourceEdges")
@@ -210,6 +211,7 @@ model Event {
 
   categories      EventCategory[]
   trustSignals    TrustSignal[] @relation("EventTrustSignals")
+  savedBy         SavedEvent[]
 
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -418,11 +420,17 @@ model User {
 
   role               UserRole @default(USER)
 
+  // OAuth
+  googleId             String?   @unique @map("google_id")
+  avatarUrl            String?   @map("avatar_url")
+
   sessionToken       String?   @unique @map("session_token")
   sessionTokenExpiry DateTime? @map("session_token_expiry")
 
   claimedCommunities Community[] @relation("ClaimedCommunities")
   interactions       UserInteraction[]
+  savedCommunities   SavedCommunity[]
+  savedEvents        SavedEvent[]
 
   createdAt          DateTime @default(now()) @map("created_at")
   lastActiveAt       DateTime? @map("last_active_at")
@@ -511,4 +519,30 @@ model ContentReport {
   @@index([status, createdAt])
   @@index([communityId])
   @@map("content_reports")
+}
+
+// ─────────────────────────────────────────────────
+// Saved / bookmarked items
+// ─────────────────────────────────────────────────
+
+model SavedCommunity {
+  userId      String    @map("user_id")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String    @map("community_id")
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  savedAt     DateTime  @default(now()) @map("saved_at")
+
+  @@id([userId, communityId])
+  @@map("saved_communities")
+}
+
+model SavedEvent {
+  userId   String   @map("user_id")
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId  String   @map("event_id")
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  savedAt  DateTime @default(now()) @map("saved_at")
+
+  @@id([userId, eventId])
+  @@map("saved_events")
 }

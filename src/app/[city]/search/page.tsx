@@ -4,6 +4,9 @@ import { db } from '@/lib/db';
 import { searchCommunities, searchEvents } from '@/modules/search/queries';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
+import { getSessionUser } from '@/lib/session';
+import type { CommunityListItem } from '@/modules/community/types';
+import type { EventListItem } from '@/modules/event/types';
 
 /**
  * Search Results Page
@@ -41,10 +44,14 @@ export default async function SearchPage({ params, searchParams }: Props) {
   const cityName = cityRow.name;
   const query = q?.trim() ?? '';
 
-  const [communities, events] =
+  const [results, user] = await Promise.all([
     query.length >= 2
-      ? await Promise.all([searchCommunities(city, query, 12), searchEvents(city, query, 12)])
-      : [[], []];
+      ? Promise.all([searchCommunities(city, query, 12), searchEvents(city, query, 12)])
+      : Promise.resolve([[], []] as [CommunityListItem[], EventListItem[]]),
+    getSessionUser(),
+  ]);
+  const [communities, events] = results;
+  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
 
   const total = communities.length + events.length;
 
@@ -99,7 +106,12 @@ export default async function SearchPage({ params, searchParams }: Props) {
               </h2>
               <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {communities.map((c) => (
-                  <CommunityCard key={c.id} community={c} city={city} />
+                  <CommunityCard
+                    key={c.id}
+                    community={c}
+                    city={city}
+                    savedByUser={savedCommunityIds.has(c.id)}
+                  />
                 ))}
               </div>
             </section>

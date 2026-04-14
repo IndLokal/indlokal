@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getCommunitiesByCity } from '@/modules/community/queries';
 import { CommunityCard } from '@/components/CommunityCard';
+import { getSessionUser } from '@/lib/session';
 
 /**
  * Community Explorer — browse communities in a city.
@@ -58,11 +59,12 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const allCommunities = await getCommunitiesByCity(city, {
-    categorySlug: category,
-    limit: 40,
-  });
+  const [allCommunities, user] = await Promise.all([
+    getCommunitiesByCity(city, { categorySlug: category, limit: 40 }),
+    getSessionUser(),
+  ]);
   const cityName = cityRow.name;
+  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
 
   // Optional language filter (for SEO pages like /telugu-communities)
   const languageName = language ? capitalize(language) : null;
@@ -114,7 +116,12 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
       {communities.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {communities.map((community) => (
-            <CommunityCard key={community.id} community={community} city={city} />
+            <CommunityCard
+              key={community.id}
+              community={community}
+              city={city}
+              savedByUser={savedCommunityIds.has(community.id)}
+            />
           ))}
         </div>
       )}

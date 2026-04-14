@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
+import { NavAuthWidget } from '@/components/NavAuthWidget';
 
 type CityLayoutProps = {
   children: React.ReactNode;
@@ -64,6 +65,7 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
             >
               + Submit
             </Link>
+            <NavAuthWidget />
           </nav>
         </div>
       </header>

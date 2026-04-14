@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getCityFeed } from '@/modules/discovery/queries';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
+import { getSessionUser } from '@/lib/session';
 
 /**
  * City Feed — the primary discovery surface.
@@ -28,8 +29,9 @@ export async function generateMetadata({ params }: CityFeedPageProps): Promise<M
 export default async function CityFeedPage({ params }: CityFeedPageProps) {
   const { city } = await params;
 
-  const feed = await getCityFeed(city);
+  const [feed, user] = await Promise.all([getCityFeed(city), getSessionUser()]);
   if (!feed) notFound();
+  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
 
   const {
     city: cityData,
@@ -119,7 +121,12 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         </div>
         <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {activeCommunities.map((community) => (
-            <CommunityCard key={community.id} community={community} city={city} />
+            <CommunityCard
+              key={community.id}
+              community={community}
+              city={city}
+              savedByUser={savedCommunityIds.has(community.id)}
+            />
           ))}
         </div>
         <p className="mt-6 text-center text-sm text-gray-500">

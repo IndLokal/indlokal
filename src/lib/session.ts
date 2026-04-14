@@ -50,6 +50,8 @@ export async function getSessionUser() {
           accessChannels: true,
         },
       },
+      savedCommunities: { select: { communityId: true } },
+      savedEvents: { select: { eventId: true } },
     },
   });
 
