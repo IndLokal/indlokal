@@ -17,9 +17,12 @@
  */
 export {
   computeActivityScore,
+  computeActivityBreakdown,
   computeCompletenessScore,
   computeTrustScore,
   computeFinalScore,
   detectTrending,
   refreshAllScores,
 } from './scoring';
+
+export type { PulseScoreBreakdown } from './scoring';

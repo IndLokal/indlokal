@@ -76,7 +76,9 @@ export default async function CommunityDetailPage({ params }: Props) {
   const community = await getCommunityBySlug(slug);
   if (!community) notFound();
 
-  const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= new Date());
+  const now = new Date();
+  const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= now);
+  const pastEvents = community.events.filter((e) => new Date(e.startsAt) < now);
 
   // JSON-LD Organization schema
   const jsonLd = {
@@ -231,6 +233,34 @@ export default async function CommunityDetailPage({ params }: Props) {
                     </p>
                   </div>
                   <span className="ml-4 shrink-0 text-gray-400">→</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Past Events */}
+        {pastEvents.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold">Past Events</h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Track record: {pastEvents.length} event{pastEvents.length !== 1 ? 's' : ''} hosted
+            </p>
+            <div className="mt-3 space-y-2">
+              {pastEvents.slice(0, 5).map((event) => (
+                <a
+                  key={event.id}
+                  href={`/${city}/events/${event.slug}`}
+                  className="flex items-center justify-between rounded-xl border border-gray-100 bg-gray-50 p-3 text-sm transition-shadow hover:shadow-sm"
+                >
+                  <div>
+                    <p className="font-medium text-gray-700">{event.title}</p>
+                    <p className="mt-0.5 text-xs text-gray-400">
+                      {format(new Date(event.startsAt), 'MMM d, yyyy')}
+                      {event.venueName && ` · ${event.venueName}`}
+                    </p>
+                  </div>
+                  <span className="ml-4 shrink-0 text-gray-300">→</span>
                 </a>
               ))}
             </div>

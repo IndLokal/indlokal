@@ -9,6 +9,21 @@ const WEIGHTS = {
   trust: 0.2,
 } as const;
 
+/** Pulse Score breakdown — stored in community.scoreBreakdown JSONB */
+export type PulseScoreBreakdown = {
+  pulseScore: number;
+  activity: {
+    total: number;
+    eventFrequency: number;
+    recency: number;
+    engagement: number;
+  };
+  completeness: number;
+  trust: number;
+  isTrending: boolean;
+  computedAt: string; // ISO 8601
+};
+
 /**
  * Compute activity score for a community (0-100).
  * Formula: f(events in last 90 days, last_update recency, views in last 30 days)
@@ -18,23 +33,38 @@ export function computeActivityScore(input: {
   lastActivityAt: Date | null;
   viewsLast30Days?: number;
 }): number {
+  const b = computeActivityBreakdown(input);
+  return b.total;
+}
+
+/**
+ * Compute activity score with full breakdown of sub-components.
+ */
+export function computeActivityBreakdown(input: {
+  eventsLast90Days: number;
+  lastActivityAt: Date | null;
+  viewsLast30Days?: number;
+}): { total: number; eventFrequency: number; recency: number; engagement: number } {
   const { eventsLast90Days, lastActivityAt, viewsLast30Days = 0 } = input;
   const now = new Date();
 
   // Event count component (0-50 points) — logarithmic to avoid gaming
-  const eventScore = Math.min(50, Math.log2(eventsLast90Days + 1) * 15);
+  const eventFrequency = Math.round(Math.min(50, Math.log2(eventsLast90Days + 1) * 15) * 100) / 100;
 
   // Recency component (0-40 points) — decays over STALE_THRESHOLD_DAYS
-  let recencyScore = 0;
+  let recency = 0;
   if (lastActivityAt) {
     const daysAgo = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
-    recencyScore = Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS));
+    recency =
+      Math.round(Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS)) * 100) / 100;
   }
 
   // Engagement component (0-10 points) — view count signal
-  const engagementScore = Math.min(10, Math.log2(viewsLast30Days + 1) * 3);
+  const engagement = Math.round(Math.min(10, Math.log2(viewsLast30Days + 1) * 3) * 100) / 100;
 
-  return Math.round((eventScore + recencyScore + engagementScore) * 100) / 100;
+  const total = Math.round((eventFrequency + recency + engagement) * 100) / 100;
+
+  return { total, eventFrequency, recency, engagement };
 }
 
 /**
@@ -187,11 +217,13 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
 
   let updated = 0;
   for (const c of communities) {
-    const activityScore = computeActivityScore({
+    const activityBreakdown = computeActivityBreakdown({
       eventsLast90Days: c._count.events,
       lastActivityAt: c.lastActivityAt,
       viewsLast30Days: viewMap.get(c.id) ?? 0,
     });
+
+    const activityScore = activityBreakdown.total;
 
     const completenessScore = computeCompletenessScore({
       hasDescription: !!c.description,
@@ -214,9 +246,20 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
       eventsPrior30Days: prior30Map.get(c.id) ?? 0,
     });
 
+    const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
+
+    const scoreBreakdown: PulseScoreBreakdown = {
+      pulseScore,
+      activity: activityBreakdown,
+      completeness: completenessScore,
+      trust: trustScore,
+      isTrending,
+      computedAt: new Date().toISOString(),
+    };
+
     await db.community.update({
       where: { id: c.id },
-      data: { activityScore, completenessScore, trustScore, isTrending },
+      data: { activityScore, completenessScore, trustScore, isTrending, scoreBreakdown },
     });
     updated++;
   }

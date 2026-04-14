@@ -130,6 +130,7 @@ model Community {
   activityScore    Float           @default(0) @map("activity_score")
   trustScore       Float           @default(0) @map("trust_score")
   completenessScore Float          @default(0) @map("completeness_score")
+  scoreBreakdown   Json?           @map("score_breakdown") // Pulse Score breakdown
   isTrending       Boolean         @default(false) @map("is_trending")
 
   // Relationships
@@ -545,4 +546,31 @@ model SavedEvent {
 
   @@id([userId, eventId])
   @@map("saved_events")
+}
+
+// ─────────────────────────────────────────────────
+// Content Log — provenance tracking for every data change
+// ─────────────────────────────────────────────────
+
+enum ContentLogAction {
+  CREATED
+  UPDATED
+  VERIFIED
+  ARCHIVED
+  SCORE_REFRESHED
+}
+
+model ContentLog {
+  id         String           @id @default(cuid())
+  entityType String           @map("entity_type") // "community" | "event" | "resource"
+  entityId   String           @map("entity_id")
+  action     ContentLogAction
+  source     ContentSource    @default(ADMIN_SEED)
+  changedBy  String?          @map("changed_by") // admin user ID or "system"
+  metadata   Json?            // diff details, previous values, notes
+  createdAt  DateTime         @default(now()) @map("created_at")
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("content_logs")
 }

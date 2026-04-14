@@ -3,6 +3,7 @@ import type { CommunityWithRelations, CommunityListItem } from './types';
 
 /**
  * Get a single community with all relations for the detail page.
+ * Includes past events for credibility (event history).
  */
 export async function getCommunityBySlug(slug: string): Promise<CommunityWithRelations | null> {
   return db.community.findFirst({
@@ -12,9 +13,8 @@ export async function getCommunityBySlug(slug: string): Promise<CommunityWithRel
       categories: { include: { category: true } },
       accessChannels: { orderBy: { isPrimary: 'desc' } },
       events: {
-        where: { startsAt: { gte: new Date() } },
-        orderBy: { startsAt: 'asc' },
-        take: 10,
+        orderBy: { startsAt: 'desc' },
+        take: 30,
       },
     },
   });

@@ -1,4 +1,4 @@
-import type { Community, AccessChannel, Event, Category, City } from '@prisma/client';
+import type { Community, AccessChannel, Event, Category, City, Prisma } from '@prisma/client';
 
 /** Community with all relations needed for the detail page */
 export type CommunityWithRelations = Community & {
@@ -6,6 +6,7 @@ export type CommunityWithRelations = Community & {
   categories: { category: Category }[];
   accessChannels: AccessChannel[];
   events: Event[];
+  scoreBreakdown: Prisma.JsonValue;
 };
 
 /** Lightweight community shape for list/card views */
