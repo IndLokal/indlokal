@@ -415,6 +415,9 @@ model User {
 
   role               UserRole @default(USER)
 
+  sessionToken       String?   @unique @map("session_token")
+  sessionTokenExpiry DateTime? @map("session_token_expiry")
+
   claimedCommunities Community[] @relation("ClaimedCommunities")
   interactions       UserInteraction[]
 
