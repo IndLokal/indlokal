@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getCommunityBySlug } from '@/modules/community/queries';
 import { ClaimSection } from './ClaimSection';
+import { ReportIssueForm } from '@/components/ReportIssueForm';
 
 /**
  * Community Detail Page
@@ -240,6 +241,9 @@ export default async function CommunityDetailPage({ params }: Props) {
           communityName={community.name}
           claimState={community.claimState}
         />
+
+        {/* Report an issue */}
+        <ReportIssueForm communityId={community.id} />
       </div>
     </>
   );

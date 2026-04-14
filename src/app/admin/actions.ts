@@ -142,3 +142,29 @@ export async function rejectClaim(formData: FormData) {
   }
   revalidatePath('/admin/claims');
 }
+
+/* ——— Report actions ——— */
+
+export async function reviewReport(formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  await db.contentReport.update({
+    where: { id },
+    data: { status: 'REVIEWED' },
+  });
+
+  revalidatePath('/admin/reports');
+}
+
+export async function resolveReport(formData: FormData) {
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  await db.contentReport.update({
+    where: { id },
+    data: { status: 'RESOLVED' },
+  });
+
+  revalidatePath('/admin/reports');
+}

@@ -38,6 +38,7 @@ model City {
   resources              Resource[]
   users                  User[]
   userInteractions       UserInteraction[]
+  contentReports         ContentReport[] @relation("CityReports")
 
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
@@ -137,6 +138,7 @@ model Community {
   accessChannels   AccessChannel[]
   activitySignals  ActivitySignal[]
   trustSignals     TrustSignal[]   @relation("CommunityTrustSignals")
+  reports          ContentReport[] @relation("CommunityReports")
 
   // Edges — relationships to other entities
   sourceEdges      RelationshipEdge[] @relation("SourceEdges")
@@ -467,4 +469,46 @@ model UserInteraction {
   @@index([userId])
   @@index([cityId, createdAt])
   @@map("user_interactions")
+}
+
+// ─────────────────────────────────────────────────
+// Content reports & community suggestions
+// ─────────────────────────────────────────────────
+
+enum ReportType {
+  STALE_INFO
+  BROKEN_LINK
+  INCORRECT_DETAILS
+  SUGGEST_COMMUNITY
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  RESOLVED
+}
+
+model ContentReport {
+  id             String       @id @default(cuid())
+  reportType     ReportType   @map("report_type")
+
+  // For reports: the community being reported
+  communityId    String?      @map("community_id")
+  community      Community?   @relation("CommunityReports", fields: [communityId], references: [id])
+
+  // For suggestions: free-text name + city
+  suggestedName  String?      @map("suggested_name")
+  cityId         String?      @map("city_id")
+  city           City?        @relation("CityReports", fields: [cityId], references: [id])
+
+  details        String?
+  reporterEmail  String?      @map("reporter_email")
+  status         ReportStatus @default(PENDING)
+
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@index([communityId])
+  @@map("content_reports")
 }

@@ -122,6 +122,12 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             <CommunityCard key={community.id} community={community} city={city} />
           ))}
         </div>
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Don&apos;t see a community?{' '}
+          <a href={`/${city}/suggest`} className="text-indigo-600 hover:underline">
+            Suggest one →
+          </a>
+        </p>
       </section>
     </div>
   );
