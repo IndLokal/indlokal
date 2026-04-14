@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useActionState } from 'react';
+import Link from 'next/link';
 import { claimCommunity, type ClaimResult } from './actions';
 
 type Props = {
@@ -33,16 +34,31 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
     );
   }
 
-  if (claimState === 'CLAIM_PENDING' || state?.success) {
+  if (state?.success) {
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
-        <span>⏳</span>
-        <span className="font-medium">Claim pending review</span>
-        <span className="text-amber-600">
-          — Our team will verify and approve this claim shortly
-        </span>
+      <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+        <div className="flex items-center gap-2">
+          <span className="text-lg">✓</span>
+          <h3 className="font-semibold text-green-800">Claim submitted!</h3>
+        </div>
+        <div className="mt-3 space-y-2 text-sm text-green-700">
+          <p>Our team will review your request — this usually takes 1–2 days.</p>
+          <p>
+            Once approved, log in at{' '}
+            <Link href="/organizer/login" className="font-medium underline">
+              /organizer/login
+            </Link>{' '}
+            with the same email you just used. You&apos;ll get full access to edit your community
+            profile, manage channels, and post events.
+          </p>
+        </div>
       </div>
     );
+  }
+
+  if (claimState === 'CLAIM_PENDING') {
+    // Don't show anything to random visitors — a pending claim is an internal state
+    return null;
   }
 
   const errors = state?.success === false ? state.errors : {};
