@@ -2,6 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
+import {
+  sendClaimApprovedEmail,
+  sendClaimRejectedEmail,
+  sendSubmissionApprovedEmail,
+} from '@/lib/email';
 
 /* ——— Submission actions ——— */
 
@@ -9,9 +14,15 @@ export async function approveSubmission(formData: FormData) {
   const id = formData.get('id') as string;
   if (!id) return;
 
-  await db.community.update({
+  const community = await db.community.update({
     where: { id },
     data: { status: 'ACTIVE' },
+    select: {
+      name: true,
+      slug: true,
+      metadata: true,
+      city: { select: { slug: true } },
+    },
   });
 
   await db.trustSignal.create({
@@ -21,6 +32,18 @@ export async function approveSubmission(formData: FormData) {
       signalType: 'ADMIN_VERIFIED',
     },
   });
+
+  const meta = community.metadata as Record<string, unknown> | null;
+  const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
+  if (submitter?.email && community.city?.slug && community.slug) {
+    await sendSubmissionApprovedEmail(
+      submitter.email,
+      submitter.name ?? 'there',
+      community.name,
+      community.city.slug,
+      community.slug,
+    );
+  }
 
   revalidatePath('/admin/submissions');
 }
@@ -47,8 +70,10 @@ export async function approveClaim(formData: FormData) {
     where: { id },
     select: {
       claimedByUserId: true,
+      name: true,
       slug: true,
       city: { select: { slug: true } },
+      claimedBy: { select: { email: true } },
     },
   });
 
@@ -75,6 +100,14 @@ export async function approveClaim(formData: FormData) {
 
   if (community.city?.slug && community.slug) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+    if (community.claimedBy?.email) {
+      await sendClaimApprovedEmail(
+        community.claimedBy.email,
+        community.name,
+        community.city.slug,
+        community.slug,
+      );
+    }
   }
   revalidatePath('/admin/claims');
 }
@@ -85,7 +118,12 @@ export async function rejectClaim(formData: FormData) {
 
   const community = await db.community.findUnique({
     where: { id },
-    select: { slug: true, city: { select: { slug: true } } },
+    select: {
+      name: true,
+      slug: true,
+      city: { select: { slug: true } },
+      claimedBy: { select: { email: true } },
+    },
   });
 
   await db.community.update({
@@ -98,6 +136,9 @@ export async function rejectClaim(formData: FormData) {
 
   if (community?.city?.slug && community?.slug) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+  }
+  if (community?.claimedBy?.email && community?.name) {
+    await sendClaimRejectedEmail(community.claimedBy.email, community.name);
   }
   revalidatePath('/admin/claims');
 }

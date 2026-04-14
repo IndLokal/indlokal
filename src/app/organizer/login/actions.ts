@@ -2,9 +2,10 @@
 
 import { db } from '@/lib/db';
 import { generateSessionToken, tokenExpiry } from '@/lib/session';
+import { sendMagicLinkEmail } from '@/lib/email';
 
 export type LoginResult =
-  | { success: true; token: string; communityName: string }
+  | { success: true; communityName: string }
   | { success: false; error: string }
   | null;
 
@@ -50,9 +51,10 @@ export async function requestMagicLink(
     data: { sessionToken: token, sessionTokenExpiry: tokenExpiry() },
   });
 
+  await sendMagicLinkEmail(user.email, token, user.claimedCommunities[0].name);
+
   return {
     success: true,
-    token,
     communityName: user.claimedCommunities[0].name,
   };
 }

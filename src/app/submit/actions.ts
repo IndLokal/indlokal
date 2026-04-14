@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import type { ChannelType } from '@prisma/client';
 import { submitCommunitySchema } from '@/lib/validation';
 import slugify from 'slugify';
+import { sendSubmissionReceivedEmail } from '@/lib/email';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -102,6 +103,8 @@ export async function submitCommunity(
       accessChannels: { create: channels },
     },
   });
+
+  await sendSubmissionReceivedEmail(data.contactEmail, data.contactName, data.name);
 
   return { success: true, communityName: data.name };
 }

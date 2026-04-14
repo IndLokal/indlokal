@@ -22,23 +22,17 @@ export default function OrganizerLoginPage() {
   const urlErrorMessage = urlError ? ERROR_MESSAGES[urlError] : null;
 
   if (state?.success) {
-    const verifyUrl = `/organizer/verify?token=${state.token}`;
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="w-full max-w-md rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
           <div className="text-4xl">✓</div>
-          <h2 className="mt-3 text-xl font-semibold text-green-800">You&apos;re verified!</h2>
+          <h2 className="mt-3 text-xl font-semibold text-green-800">Check your inbox</h2>
           <p className="mt-2 text-sm text-green-700">
-            Organizer access for <strong>{state.communityName}</strong>
+            We&apos;ve sent an access link for <strong>{state.communityName}</strong> to your email
+            address. Click the link to open your organizer dashboard.
           </p>
-          <a
-            href={verifyUrl}
-            className="mt-6 inline-block rounded-lg bg-indigo-600 px-6 py-3 text-sm font-medium text-white hover:bg-indigo-700"
-          >
-            Enter organizer dashboard →
-          </a>
           <p className="mt-4 text-xs text-gray-400">
-            (In production this link would be emailed to you)
+            The link expires in 24 hours. Check your spam folder if you don&apos;t see it.
           </p>
         </div>
       </div>
