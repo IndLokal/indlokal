@@ -2,15 +2,26 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/session';
 import {
   sendClaimApprovedEmail,
   sendClaimRejectedEmail,
   sendSubmissionApprovedEmail,
 } from '@/lib/email';
 
+/** Guard: reject if caller is not PLATFORM_ADMIN */
+async function requireAdminAction() {
+  const user = await getSessionUser();
+  if (!user || user.role !== 'PLATFORM_ADMIN') {
+    throw new Error('Unauthorized');
+  }
+  return user;
+}
+
 /* ——— Submission actions ——— */
 
 export async function approveSubmission(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -49,6 +60,7 @@ export async function approveSubmission(formData: FormData) {
 }
 
 export async function rejectSubmission(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -63,6 +75,7 @@ export async function rejectSubmission(formData: FormData) {
 /* ——— Claim actions ——— */
 
 export async function approveClaim(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -113,6 +126,7 @@ export async function approveClaim(formData: FormData) {
 }
 
 export async function rejectClaim(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -146,6 +160,7 @@ export async function rejectClaim(formData: FormData) {
 /* ——— Report actions ——— */
 
 export async function reviewReport(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -158,6 +173,7 @@ export async function reviewReport(formData: FormData) {
 }
 
 export async function resolveReport(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 

@@ -68,6 +68,13 @@ export async function requireSessionUser() {
   return user;
 }
 
+/** Require PLATFORM_ADMIN role — redirect to home if not authorized */
+export async function requireAdmin() {
+  const user = await getSessionUser();
+  if (!user || user.role !== 'PLATFORM_ADMIN') redirect('/');
+  return user;
+}
+
 /** Clear the session cookie and invalidate the token in the DB */
 export async function clearSessionCookie() {
   const jar = await cookies();

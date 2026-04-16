@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/session';
 import slugify from 'slugify';
 import type {
   ExtractedEvent,
@@ -9,9 +10,19 @@ import type {
   PipelineRunResult,
 } from '@/modules/pipeline/types';
 
+/** Guard: reject if caller is not PLATFORM_ADMIN */
+async function requireAdminAction() {
+  const user = await getSessionUser();
+  if (!user || user.role !== 'PLATFORM_ADMIN') {
+    throw new Error('Unauthorized');
+  }
+  return user;
+}
+
 /* ——— Run the pipeline on demand ——— */
 
 export async function triggerPipelineRun(): Promise<PipelineRunResult> {
+  await requireAdminAction();
   // Dynamic import to avoid bundling the pipeline in the client
   const { runPipeline } = await import('@/modules/pipeline/orchestrator');
   const result = await runPipeline();
@@ -22,6 +33,7 @@ export async function triggerPipelineRun(): Promise<PipelineRunResult> {
 /* ——— Approve: create entity from pipeline item ——— */
 
 export async function approvePipelineItem(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -85,6 +97,7 @@ export async function approvePipelineItem(formData: FormData) {
 /* ——— Reject pipeline item ——— */
 
 export async function rejectPipelineItem(formData: FormData) {
+  await requireAdminAction();
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -104,6 +117,7 @@ export async function rejectPipelineItem(formData: FormData) {
 /* ——— Batch approve high-confidence items ——— */
 
 export async function batchApprovePipelineItems(formData: FormData) {
+  await requireAdminAction();
   const ids = (formData.get('ids') as string)?.split(',').filter(Boolean);
   if (!ids?.length) return;
 
