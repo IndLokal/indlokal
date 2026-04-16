@@ -266,3 +266,101 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
 
   return { updated };
 }
+
+/**
+ * Refresh scores for a single community.
+ * Call this after events are created, profiles edited, claims approved, etc.
+ */
+export async function refreshCommunityScore(communityId: string): Promise<void> {
+  const now = new Date();
+  const cutoff90 = subDays(now, 90);
+  const cutoff30 = subDays(now, 30);
+  const cutoff60 = subDays(now, 60);
+
+  const c = await db.community.findUnique({
+    where: { id: communityId },
+    select: {
+      id: true,
+      description: true,
+      descriptionLong: true,
+      logoUrl: true,
+      coverImageUrl: true,
+      languages: true,
+      personaSegments: true,
+      lastActivityAt: true,
+      claimState: true,
+      categories: { select: { categoryId: true } },
+      accessChannels: { select: { id: true } },
+      trustSignals: { select: { signalType: true } },
+      _count: {
+        select: {
+          events: { where: { startsAt: { gte: cutoff90 } } },
+        },
+      },
+    },
+  });
+
+  if (!c) return;
+
+  const [eventsLast30, eventsPrior30, viewCount] = await Promise.all([
+    db.event.count({
+      where: { communityId, startsAt: { gte: cutoff30 } },
+    }),
+    db.event.count({
+      where: { communityId, startsAt: { gte: cutoff60, lt: cutoff30 } },
+    }),
+    db.userInteraction.count({
+      where: {
+        entityType: 'COMMUNITY',
+        entityId: communityId,
+        interactionType: 'VIEW',
+        createdAt: { gte: cutoff30 },
+      },
+    }),
+  ]);
+
+  const activityBreakdown = computeActivityBreakdown({
+    eventsLast90Days: c._count.events,
+    lastActivityAt: c.lastActivityAt,
+    viewsLast30Days: viewCount,
+  });
+
+  const activityScore = activityBreakdown.total;
+
+  const completenessScore = computeCompletenessScore({
+    hasDescription: !!c.description,
+    hasDescriptionLong: !!c.descriptionLong,
+    hasLogo: !!c.logoUrl,
+    hasCoverImage: !!c.coverImageUrl,
+    categoryCount: c.categories.length,
+    accessChannelCount: c.accessChannels.length,
+    hasLanguages: c.languages.length > 0,
+    hasPersonas: c.personaSegments.length > 0,
+  });
+
+  const trustScore = computeTrustScore({
+    trustSignalTypes: c.trustSignals.map((s) => s.signalType),
+    claimState: c.claimState,
+  });
+
+  const isTrending = detectTrending({
+    eventsLast30Days: eventsLast30,
+    eventsPrior30Days: eventsPrior30,
+  });
+
+  const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
+
+  const scoreBreakdown: PulseScoreBreakdown = {
+    pulseScore,
+    activity: activityBreakdown,
+    completeness: completenessScore,
+    trust: trustScore,
+    isTrending,
+    computedAt: new Date().toISOString(),
+  };
+
+  await db.community.update({
+    where: { id: communityId },
+    data: { activityScore, completenessScore, trustScore, isTrending, scoreBreakdown },
+  });
+}

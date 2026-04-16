@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { refreshCommunityScore } from '@/modules/scoring';
 import {
   sendClaimApprovedEmail,
   sendClaimRejectedEmail,
@@ -55,6 +56,9 @@ export async function approveSubmission(formData: FormData) {
       community.slug,
     );
   }
+
+  // Refresh scores — trust and completeness change on approval
+  await refreshCommunityScore(id);
 
   revalidatePath('/admin/submissions');
 }
@@ -122,6 +126,9 @@ export async function approveClaim(formData: FormData) {
       );
     }
   }
+  // Refresh scores — trust score changes when claimed
+  await refreshCommunityScore(id);
+
   revalidatePath('/admin/claims');
 }
 

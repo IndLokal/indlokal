@@ -9,6 +9,7 @@ import type {
   ExtractedCommunity,
   PipelineRunResult,
 } from '@/modules/pipeline/types';
+import { refreshCommunityScore } from '@/modules/scoring';
 
 /** Guard: reject if caller is not PLATFORM_ADMIN */
 async function requireAdminAction() {
@@ -59,6 +60,15 @@ export async function approvePipelineItem(formData: FormData) {
         createdEntityId,
       },
     });
+
+    // Refresh host community score if the event was linked
+    const created = await db.event.findUnique({
+      where: { id: createdEntityId },
+      select: { communityId: true },
+    });
+    if (created?.communityId) {
+      await refreshCommunityScore(created.communityId);
+    }
   } else {
     const community = data as ExtractedCommunity;
     const createdEntityId = await createCommunityFromExtraction(community, item.cityId);
@@ -72,6 +82,9 @@ export async function approvePipelineItem(formData: FormData) {
         createdEntityId,
       },
     });
+
+    // Compute initial score for the newly created community
+    await refreshCommunityScore(createdEntityId);
   }
 
   // Log provenance

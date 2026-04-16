@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { ActivitySignalType } from '@prisma/client';
+import { refreshCommunityScore } from '@/modules/scoring';
 
 const editProfileSchema = z.object({
   name: z.string().min(2).max(200),
@@ -79,6 +80,9 @@ export async function editCommunityProfile(
       signalType: ActivitySignalType.PROFILE_UPDATED,
     },
   });
+
+  // Refresh completeness score after profile edit
+  await refreshCommunityScore(community.id);
 
   revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
   revalidatePath('/organizer');

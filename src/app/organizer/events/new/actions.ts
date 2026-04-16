@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { ActivitySignalType } from '@prisma/client';
+import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
 
 const addEventSchema = z.object({
@@ -94,6 +95,9 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
       signalType: ActivitySignalType.EVENT_CREATED,
     },
   });
+
+  // Refresh scores so new events immediately affect rankings
+  await refreshCommunityScore(community.id);
 
   redirect(`/${community.city.slug}/events/${event.slug}`);
 }
