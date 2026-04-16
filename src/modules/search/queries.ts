@@ -26,8 +26,8 @@ export async function searchCommunities(
 
   // PostgreSQL full-text search with ranking
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
-    SELECT id FROM "Community"
-    WHERE "cityId" IN (${Prisma.join(cityIds)})
+    SELECT id FROM communities
+    WHERE city_id IN (${Prisma.join(cityIds)})
       AND status != 'INACTIVE'
       AND to_tsvector('english', name || ' ' || COALESCE(description, ''))
           @@ plainto_tsquery('english', ${trimmed})
@@ -112,9 +112,9 @@ export async function searchEvents(
 
   // PostgreSQL full-text search with ranking
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
-    SELECT id FROM "Event"
-    WHERE "cityId" IN (${Prisma.join(cityIds)})
-      AND "startsAt" >= ${now}
+    SELECT id FROM events
+    WHERE city_id IN (${Prisma.join(cityIds)})
+      AND starts_at >= ${now}
       AND status != 'CANCELLED'
       AND to_tsvector('english', title || ' ' || COALESCE(description, ''))
           @@ plainto_tsquery('english', ${trimmed})

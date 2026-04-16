@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { refreshCommunityScore } from '@/modules/scoring';
@@ -64,6 +64,7 @@ export async function approveSubmission(formData: FormData) {
   // Refresh scores — trust and completeness change on approval
   await refreshCommunityScore(id);
 
+  revalidateTag('city-feed', 'max');
   revalidatePath('/admin/submissions');
 }
 

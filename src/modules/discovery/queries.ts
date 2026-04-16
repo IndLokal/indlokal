@@ -2,13 +2,22 @@ import { db } from '@/lib/db';
 import { getEventsThisWeek } from '@/modules/event/queries';
 import { getCommunitiesByCity } from '@/modules/community/queries';
 import { subDays } from 'date-fns';
+import { unstable_cache } from 'next/cache';
 import type { CityFeedData } from './types';
 
 /**
  * Assemble the full city feed — the primary discovery surface.
- * Composes data from multiple modules into a single feed response.
+ * Cached for 5 minutes with tag-based invalidation.
  */
-export async function getCityFeed(citySlug: string): Promise<CityFeedData | null> {
+export const getCityFeed = unstable_cache(
+  async (citySlug: string): Promise<CityFeedData | null> => {
+    return _getCityFeed(citySlug);
+  },
+  ['city-feed'],
+  { revalidate: 300, tags: ['city-feed'] },
+);
+
+async function _getCityFeed(citySlug: string): Promise<CityFeedData | null> {
   const city = await db.city.findUnique({
     where: { slug: citySlug },
     select: {

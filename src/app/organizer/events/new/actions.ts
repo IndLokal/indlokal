@@ -1,6 +1,7 @@
 'use server';
 
 import { redirect } from 'next/navigation';
+import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
@@ -99,5 +100,6 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   // Refresh scores so new events immediately affect rankings
   await refreshCommunityScore(community.id);
 
+  revalidateTag('city-feed', 'max');
   redirect(`/${community.city.slug}/events/${event.slug}`);
 }

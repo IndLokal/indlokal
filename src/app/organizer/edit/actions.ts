@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
@@ -86,6 +86,7 @@ export async function editCommunityProfile(
 
   revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
   revalidatePath('/organizer');
+  revalidateTag('city-feed', 'max');
 
   return { success: true };
 }

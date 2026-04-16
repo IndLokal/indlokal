@@ -83,3 +83,16 @@ export async function createEvent(
     },
   });
 }
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+export async function createUser(db: PrismaClient, overrides: Record<string, unknown> = {}) {
+  return db.user.create({
+    data: {
+      email: `test-${Date.now()}@example.com`,
+      displayName: 'Test User',
+      role: 'USER',
+      ...overrides,
+    },
+  });
+}

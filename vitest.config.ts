@@ -41,5 +41,12 @@ export default defineConfig({
       include: ['src/modules/**', 'src/lib/**'],
       exclude: ['src/test/**', '**/__tests__/**', '**/*.d.ts'],
     },
+
+    // Run test files sequentially to avoid DB race conditions between
+    // integration tests that share the same test database.
+    pool: 'forks',
+    poolOptions: {
+      forks: { singleFork: true },
+    },
   },
 });
