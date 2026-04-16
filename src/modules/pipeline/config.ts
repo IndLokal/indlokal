@@ -246,6 +246,14 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     url: 'https://diz-ev.de/bawue',
     enabled: true,
   },
+  {
+    id: 'web-stuttgartexpats-events',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'Stuttgart Expats — Events (general expat, cross-reference)',
+    url: 'https://stuttgartexpats.com/events',
+    enabled: true,
+  },
 
   // ── Community-specific URLs now come from the database automatically ──
   // See db-sources.ts — communities with WEBSITE/MEETUP access channels

@@ -842,34 +842,37 @@ This metric captures:
 
 ### 13.1 Named competitors — Stuttgart specific
 
-| Competitor          | What they offer for Indians in Stuttgart                                                                                                                                                            | Threat level | Our advantage                                                                                                                                                         |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **IndoEuropean.eu** | ~50 blog posts on "Stuttgurt Mela" page (misspelled URL). Blog-format event announcements. 327+ Germany-wide articles. 11 years SEO authority. Active daily posting. Run by MyRadius GmbH (Munich). | **MEDIUM**   | Structured city-level discovery, event filtering, community profiles. Their URL misspelling gives us SEO opportunity. They can't answer "what's happening this week?" |
-| **InterNations**    | 17,335 Stuttgart members, 1,752 Indian members. Generic expat events (Italian dinners, hiking). Paid premium model. No Indian-specific content.                                                     | **LOW**      | Indian-diaspora-specific. Free to browse. 1,752 Indian members = proof of demand we can capture                                                                       |
-| **Meetup.com**      | Zero Indian-specific groups in Stuttgart. Top groups are tech, language, hiking.                                                                                                                    | **NONE**     | We serve the audience Meetup completely missed                                                                                                                        |
-| **Facebook Groups** | Closed groups ("Indians in Stuttgart," regional/language groups, corporate groups). Current de facto discovery via search + request to join.                                                        | **MEDIUM**   | Open discovery (no login to browse). Structured data. Cross-group visibility. But FB is incumbent behavior we must displace                                           |
-| **WhatsApp Groups** | Primary engagement layer for Indian communities. Not a competitor — we complement it.                                                                                                               | **NONE**     | We're the discovery layer that helps people FIND WhatsApp groups                                                                                                      |
+| Competitor              | What they offer for Indians in Stuttgart                                                                                                                                                                                                                                  | Threat level    | Our advantage                                                                                                                                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **StuttgartExpats.com** | Stuttgart's largest general expat community (est. 2007). Weekly events (bar nights, wine walks, board games, comedy). 20+ WhatsApp sub-groups including a dedicated "Indians" channel. Monetized via ticketed events + service affiliates. Multi-city (6+ German cities). | **MEDIUM-HIGH** | Indian-diaspora-specific depth (language, regional, cultural filtering). Structured community profiles. Consular/official events. AI-powered discovery. They serve all expats broadly; we serve Indians deeply. See [full analysis](COMPETITIVE_ANALYSIS_STUTTGARTEXPATS.md). |
+| **IndoEuropean.eu**     | ~50 blog posts on "Stuttgurt Mela" page (misspelled URL). Blog-format event announcements. 327+ Germany-wide articles. 11 years SEO authority. Active daily posting. Run by MyRadius GmbH (Munich).                                                                       | **MEDIUM**      | Structured city-level discovery, event filtering, community profiles. Their URL misspelling gives us SEO opportunity. They can't answer "what's happening this week?"                                                                                                         |
+| **InterNations**        | 17,335 Stuttgart members, 1,752 Indian members. Generic expat events (Italian dinners, hiking). Paid premium model. No Indian-specific content.                                                                                                                           | **LOW**         | Indian-diaspora-specific. Free to browse. 1,752 Indian members = proof of demand we can capture                                                                                                                                                                               |
+| **Meetup.com**          | Zero Indian-specific groups in Stuttgart. Top groups are tech, language, hiking.                                                                                                                                                                                          | **NONE**        | We serve the audience Meetup completely missed                                                                                                                                                                                                                                |
+| **Facebook Groups**     | Closed groups ("Indians in Stuttgart," regional/language groups, corporate groups). Current de facto discovery via search + request to join.                                                                                                                              | **MEDIUM**      | Open discovery (no login to browse). Structured data. Cross-group visibility. But FB is incumbent behavior we must displace                                                                                                                                                   |
+| **WhatsApp Groups**     | Primary engagement layer for Indian communities. Not a competitor — we complement it.                                                                                                                                                                                     | **NONE**        | We're the discovery layer that helps people FIND WhatsApp groups                                                                                                                                                                                                              |
 
 ### 13.2 Competitive positioning — how we're different
 
-| Dimension                       | IndoEuropean.eu | InterNations | Meetup  | Facebook  | **LocalPulse** |
-| ------------------------------- | --------------- | ------------ | ------- | --------- | -------------- |
-| Indian-diaspora-specific        | ✅              | ❌           | ❌      | Partially | ✅             |
-| Stuttgart-specific view         | ✅ (misspelled) | ✅           | ❌      | ❌        | **✅**         |
-| Structured event data           | ❌ (blog posts) | ✅           | ✅      | ❌        | **✅**         |
-| Event filtering (date/category) | ❌              | ✅           | ✅      | ❌        | **✅**         |
-| Community profiles              | ❌              | ❌           | ❌      | ❌        | **✅**         |
-| Activity/trust signals          | ❌              | ❌           | ❌      | ❌        | **✅**         |
-| Language/regional filter        | ❌              | ❌           | ❌      | ❌        | **✅**         |
-| WhatsApp/Telegram access links  | ❌              | ❌           | ❌      | ❌        | **✅**         |
-| Free to browse (no login)       | ✅              | ❌ (paywall) | Partial | Partial   | **✅**         |
-| Consular/official events        | ✅              | ❌           | ❌      | ❌        | **✅**         |
-| JSON-LD Event schema            | ❌              | ❌           | ✅      | ❌        | **✅**         |
-| Historical events               | ✅ (by default) | ❌           | ❌      | ❌        | **✅**         |
+| Dimension                       | IndoEuropean.eu | Stuttgart Expats  | InterNations | Meetup  | Facebook  | **LocalPulse** |
+| ------------------------------- | --------------- | ----------------- | ------------ | ------- | --------- | -------------- |
+| Indian-diaspora-specific        | ✅              | ❌                | ❌           | ❌      | Partially | ✅             |
+| Stuttgart-specific view         | ✅ (misspelled) | ✅                | ✅           | ❌      | ❌        | **✅**         |
+| Structured event data           | ❌ (blog posts) | ❌ (FB embed)     | ✅           | ✅      | ❌        | **✅**         |
+| Event filtering (date/category) | ❌              | ❌                | ✅           | ✅      | ❌        | **✅**         |
+| Community profiles              | ❌              | ❌ (flat links)   | ❌           | ❌      | ❌        | **✅**         |
+| Activity/trust signals          | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**         |
+| Language/regional filter        | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**         |
+| WhatsApp/Telegram access links  | ❌              | ✅ (scattered)    | ❌           | ❌      | ❌        | **✅**         |
+| Free to browse (no login)       | ✅              | ✅                | ❌ (paywall) | Partial | Partial   | **✅**         |
+| Consular/official events        | ✅              | ❌                | ❌           | ❌      | ❌        | **✅**         |
+| JSON-LD Event schema            | ❌              | ❌                | ❌           | ✅      | ❌        | **✅**         |
+| Historical events               | ✅ (by default) | ❌                | ❌           | ❌      | ❌        | **✅**         |
+| Real weekly community events    | ❌              | ✅                | ✅           | ✅      | ✅        | ❌ (seeded)    |
+| Expat service directory         | ❌              | ✅ (15+ services) | ❌           | ❌      | ❌        | Partial        |
 
 ### 13.3 Positioning statement (revised for competitive market)
 
-> IndoEuropean.eu is a news portal that happens to list events. InterNations is a generic expat platform where Indians get Italian dinners. Meetup missed the Indian diaspora entirely. Facebook requires you to be inside closed groups.
+> IndoEuropean.eu is a news portal that happens to list events. Stuttgart Expats is the biggest general expat community — great for bar nights and wine walks, but an Indian newcomer looking for Telugu or Tamil communities won't find that there. InterNations is a generic expat platform where Indians get Italian dinners. Meetup missed the Indian diaspora entirely. Facebook requires you to be inside closed groups.
 >
 > **LocalPulse is the first structured, city-level discovery platform for Indians in Stuttgart.** We answer: "What's happening for Indians in Stuttgart this week?" — a question no existing platform can answer.
 
@@ -885,13 +888,14 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 ### 13.5 Competitive risk matrix
 
-| Risk                                              | Likelihood                   | Impact | Mitigation                                                                                              |
-| ------------------------------------------------- | ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------- |
-| IE adds Stuttgart-specific structured pages       | Low (they'd need to rebuild) | High   | Move fast; own SEO queries before they wake up                                                          |
-| IE fixes their "Stuttgurt" URL                    | Medium                       | Medium | By then we should have stronger content + structure                                                     |
-| InterNations adds Indian-specific features        | Very Low                     | High   | Their business model is generic expat; unlikely to niche down                                           |
-| A new Indian-specific Stuttgart platform launches | Low                          | High   | First-mover advantage in a thin market; community graph is defensive                                    |
-| Facebook Groups remain "good enough"              | Medium                       | Medium | Our value is cross-group discovery + search + temporal filtering — things FB can't do for closed groups |
+| Risk                                               | Likelihood                   | Impact | Mitigation                                                                                                                                                   |
+| -------------------------------------------------- | ---------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| IE adds Stuttgart-specific structured pages        | Low (they'd need to rebuild) | High   | Move fast; own SEO queries before they wake up                                                                                                               |
+| IE fixes their "Stuttgurt" URL                     | Medium                       | Medium | By then we should have stronger content + structure                                                                                                          |
+| InterNations adds Indian-specific features         | Very Low                     | High   | Their business model is generic expat; unlikely to niche down                                                                                                |
+| Stuttgart Expats adds Indian-specific sub-platform | Low                          | Medium | They're a general expat community; Indian niche requires cultural domain knowledge they don't have. Their "Indians" WhatsApp group is passive, not a product |
+| A new Indian-specific Stuttgart platform launches  | Low                          | High   | First-mover advantage in a thin market; community graph is defensive                                                                                         |
+| Facebook Groups remain "good enough"               | Medium                       | Medium | Our value is cross-group discovery + search + temporal filtering — things FB can't do for closed groups                                                      |
 
 ---
 
