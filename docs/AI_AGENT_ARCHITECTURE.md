@@ -279,7 +279,7 @@ Instead of hardcoding community website URLs in config, the pipeline **automatic
 
 ```mermaid
 flowchart LR
-    DB["Community DB\n(72 communities)"] --> Q["Query ACTIVE/CLAIMED\nwith WEBSITE/MEETUP\naccess channels"]
+    DB["Community DB"] --> Q["Query ACTIVE/CLAIMED\nwith WEBSITE/MEETUP\naccess channels"]
     Q --> GEN["Generate\npinned_url strategies"]
     GEN --> ORCH["Merge with\nstatic pinned URLs"]
     ORCH --> FETCH["fetchPinnedUrl()"]
@@ -324,7 +324,7 @@ Expand by adding entries. Commented-out examples for Bavaria, Netherlands.
 - **Google CSE keyword search** — 16 targeted compound queries per region
 - **DuckDuckGo keyword search** — 15 keywords per region (free, no API key)
 - **9 static pinned URLs** — CGI Munich, IndoEuropean (5), Indians in Germany, AIGEV, DIZ BW
-- **DB community sources** — auto-generated from community WEBSITE/MEETUP access channels (currently 7)
+- **DB community sources** — auto-generated from community WEBSITE/MEETUP access channels
 
 ## Environment Variables
 

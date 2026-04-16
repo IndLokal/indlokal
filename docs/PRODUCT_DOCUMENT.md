@@ -620,16 +620,9 @@ City-first URLs are critical for SEO and clarity:
 
 **Minimum viable content density per city:**
 
-| Content type                       | Minimum count | Target count |
-| ---------------------------------- | ------------- | ------------ |
-| Communities                        | 50            | 60-80        |
-| Upcoming events (next 30 days)     | 20            | 30+          |
-| Categories represented             | 8+            | All 11       |
-| Communities with complete profiles | 30+           | 50+          |
-| Historical/past events imported    | 25+           | 50+          |
-| Consular/official events           | 3+            | 5+           |
+The launch city must have enough communities, upcoming events, complete profiles, historical events, and consular/official events to feel **alive and comprehensive** from day 1. Specific numeric targets should be derived from the actual discoverable communities in each city rather than fixed upfront — the goal is to catalog every real, active community rather than hit an arbitrary number.
 
-**Note:** Content targets are higher than a typical greenfield launch because we are entering a market with an active (if poorly structured) incumbent (IndoEuropean.eu). Thin content = "why would I use this when IE already has stuff?"
+**Note:** Content density matters more than usual because we are entering a market with an active (if poorly structured) incumbent (IndoEuropean.eu). Thin content = "why would I use this when IE already has stuff?"
 
 ### 10.2 Content sources for seeding
 
@@ -738,16 +731,16 @@ Stuttgart was selected based on:
 | -------------------------------------- | --------------------- | --------------------------------------------------------------------- |
 | Size of Indian diaspora                | Medium-High (10-15K+) | Sufficient; growing via automotive pipeline                           |
 | Founder's ability to research the city | High                  | Well-documented community through IndoEuropean.eu + InterNations data |
-| Density of existing communities        | High                  | 35-56 discoverable communities in metro area                          |
+| Density of existing communities        | High                  | Many discoverable communities in metro area                           |
 | Competition weakness                   | **Very High**         | Weakest competitor coverage among top 5 German cities                 |
 | Automotive growth pipeline             | **Unique**            | Structural, recurring influx of Indian professionals                  |
 | Regional expansion potential           | High                  | BW region (Karlsruhe, Mannheim, Heidelberg) as natural Phase 2        |
 
 ### 11.2 Pre-launch checklist
 
-- [ ] 60+ communities seeded with complete profiles in Stuttgart metro
-- [ ] 20+ upcoming events in the next 30 days
-- [ ] 25+ historical events imported (from IndoEuropean.eu research, community websites)
+- [ ] All discoverable communities seeded with complete profiles in Stuttgart metro
+- [ ] Upcoming events populated for the next 30 days
+- [ ] Historical events imported (from IndoEuropean.eu research, community websites)
 - [ ] Consular events from CGI Munich for BW region loaded
 - [ ] All access links tested and working
 - [ ] SEO pages live and indexed by Google (submit sitemap 2-3 weeks before launch)
@@ -803,20 +796,20 @@ This metric captures:
 
 ### 12.2 MVP metrics (first 3 months)
 
-| Metric                             | Target | Why it matters                                            |
-| ---------------------------------- | ------ | --------------------------------------------------------- |
-| Communities listed (Stuttgart)     | 60+    | Content density — must exceed perception of IE's coverage |
-| Events listed (next 30 days)       | 25+    | Freshness and activity — higher bar due to incumbent      |
-| Historical events imported         | 50+    | Proves community is active; SEO content                   |
-| Consular/official events listed    | 5+     | Unique value prop vs all competitors                      |
-| Weekly active sessions (Stuttgart) | 200+   | User traction                                             |
-| Access channel clicks per week     | 50+    | User converting to community join                         |
-| Organic search visits per week     | 100+   | SEO working                                               |
-| Communities with complete profiles | 60%+   | Content quality                                           |
-| Average events per community       | 2+     | Community activity diversity                              |
-| Zero-result search rate            | < 20%  | Content coverage                                          |
-| Community organizer relationships  | 5+     | Supply-side engagement; content freshness                 |
-| Programmatic SEO pages indexed     | 15+    | Long-tail search capture                                  |
+| Metric                             | Target        | Why it matters                                            |
+| ---------------------------------- | ------------- | --------------------------------------------------------- |
+| Communities listed (Stuttgart)     | Comprehensive | Content density — must exceed perception of IE's coverage |
+| Events listed (next 30 days)       | Sufficient    | Freshness and activity — higher bar due to incumbent      |
+| Historical events imported         | Sufficient    | Proves community is active; SEO content                   |
+| Consular/official events listed    | All known     | Unique value prop vs all competitors                      |
+| Weekly active sessions (Stuttgart) | 200+          | User traction                                             |
+| Access channel clicks per week     | 50+           | User converting to community join                         |
+| Organic search visits per week     | 100+          | SEO working                                               |
+| Communities with complete profiles | 60%+          | Content quality                                           |
+| Average events per community       | 2+            | Community activity diversity                              |
+| Zero-result search rate            | < 20%         | Content coverage                                          |
+| Community organizer relationships  | 5+            | Supply-side engagement; content freshness                 |
+| Programmatic SEO pages indexed     | 15+           | Long-tail search capture                                  |
 
 ### 12.3 Phase 2 metrics
 
@@ -978,7 +971,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 | #   | Question                                                                    | How to answer                                                                                          |
 | --- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| 1   | How many of the 35-56 estimated Stuttgart communities are still active?     | Manual verification: check last event date, test access links                                          |
+| 1   | How many of the estimated Stuttgart communities are still active?           | Manual verification: check last event date, test access links                                          |
 | 2   | How willing are community organizers to be listed (and share access links)? | Interview 5-10 Stuttgart community organizers                                                          |
 | 3   | What search terms do Indians in Stuttgart actually use?                     | Google Keyword Planner: "Indian community Stuttgart," "Indians in Stuttgart," "Telugu Stuttgart," etc. |
 | 4   | Is English sufficient or is Hindi/German needed from launch?                | Survey target users (likely English is fine — professional diaspora)                                   |

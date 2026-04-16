@@ -1083,7 +1083,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 | Risk                                   | Impact                                                                  | Mitigation                                                                                                                                                          |
 | -------------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Low content density**                | Users arrive, find nothing, never return                                | Invest heavily in seeding before launch. Target minimum density: 60+ communities, 25+ events for Stuttgart. Import 50+ historical events.                           |
+| **Low content density**                | Users arrive, find nothing, never return                                | Invest heavily in seeding before launch. Target sufficient community and event density for Stuttgart. Import historical events.                                     |
 | **Stale content**                      | Platform feels abandoned even if it's not                               | Freshness scoring + staleness alerts + scheduled content review                                                                                                     |
 | **Sparse event coverage**              | "This week" view is empty                                               | Sparse-content resilience: auto-expand to "this month"; show past events as "recently happened"; mix community cards into feed                                      |
 | **Weak discovery UX**                  | Users don't find what they need                                         | Invest in city feed design; test with real diaspora users before launch                                                                                             |
@@ -1165,7 +1165,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Mobile-responsive design
 - Basic analytics integration (PostHog or Plausible)
 
-**Content milestone:** 60+ communities, 25+ upcoming events, 50+ historical events, 5+ consular events in Stuttgart metro before public launch.
+**Content milestone:** Sufficient communities with complete profiles, upcoming events, historical events, and consular events in Stuttgart metro before public launch.
 
 ### Phase 2: Supply Activation (Weeks 8-14)
 
