@@ -65,6 +65,14 @@ cmd_setup() {
   npm run db:seed
   print_success "Database seeded"
 
+  # Test DB
+  echo ""
+  echo "Setting up test database..."
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+    npx prisma db push --skip-generate >/dev/null 2>&1
+  print_success "Test database ready"
+
   echo ""
   print_success "Setup complete! Run ${CYAN}./dev.sh start${NC} to launch."
 }
@@ -139,6 +147,12 @@ cmd_test() {
   if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
     cmd_db_start
   fi
+
+  # Ensure test DB schema is up to date
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+    npx prisma db push --skip-generate >/dev/null 2>&1
+
   echo "Running unit + component tests..."
   echo ""
   npm run test
@@ -148,6 +162,10 @@ cmd_test_watch() {
   if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
     cmd_db_start
   fi
+  # Ensure test DB schema is up to date
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+    npx prisma db push --skip-generate >/dev/null 2>&1
   npm run test:watch
 }
 
@@ -172,6 +190,13 @@ cmd_test_setup() {
 
 cmd_test_coverage() {
   print_header
+  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+    cmd_db_start
+  fi
+  # Ensure test DB schema is up to date
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+    npx prisma db push --skip-generate >/dev/null 2>&1
   echo "Running tests with coverage..."
   echo ""
   npm run test:coverage

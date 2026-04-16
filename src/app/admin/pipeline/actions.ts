@@ -226,9 +226,7 @@ async function createCommunityFromExtraction(
   return created.id;
 }
 
-function buildAccessChannels(
-  community: ExtractedCommunity,
-): Array<{
+function buildAccessChannels(community: ExtractedCommunity): Array<{
   channelType: 'WEBSITE' | 'FACEBOOK' | 'INSTAGRAM' | 'WHATSAPP' | 'TELEGRAM' | 'EMAIL';
   url: string;
   isPrimary: boolean;
