@@ -250,62 +250,7 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
   // ── Community-specific URLs now come from the database automatically ──
   // See db-sources.ts — communities with WEBSITE/MEETUP access channels
   // are auto-generated as pinned_url strategies at runtime.
-  //
-  // Disabled entries kept as documentation:
-  // Facebook pages — Meta blocks unauthenticated scraping (HTTP 400)
-  // Sithivinayagar — website is down (DNS failure)
-  {
-    id: 'fb-stuttgart-tamil-sangam',
-    sourceType: 'FACEBOOK',
-    kind: 'pinned_url',
-    label: 'Stuttgart Tamil Sangam',
-    url: 'https://www.facebook.com/stuttgarttamilsangam',
-    hintCitySlug: 'stuttgart',
-    enabled: false,
-  },
-  {
-    id: 'fb-isa-stuttgart',
-    sourceType: 'FACEBOOK',
-    kind: 'pinned_url',
-    label: 'Indian Student Association Stuttgart',
-    url: 'https://www.facebook.com/ISAStuttgart',
-    hintCitySlug: 'stuttgart',
-    enabled: false,
-  },
-  {
-    id: 'fb-hss-stuttgart',
-    sourceType: 'FACEBOOK',
-    kind: 'pinned_url',
-    label: 'HSS Stuttgart',
-    url: 'https://www.facebook.com/HSS.Stuttgart',
-    hintCitySlug: 'stuttgart',
-    enabled: false,
-  },
-  {
-    id: 'fb-debi-naadbharat',
-    sourceType: 'FACEBOOK',
-    kind: 'pinned_url',
-    label: 'DeBI/Naadbharat',
-    url: 'https://www.facebook.com/DeBINaadbharat',
-    enabled: false,
-  },
-  {
-    id: 'fb-bombay-dance-club',
-    sourceType: 'FACEBOOK',
-    kind: 'pinned_url',
-    label: 'Bombay Dance Club',
-    url: 'https://www.facebook.com/BombayDanceClub',
-    enabled: false,
-  },
-  {
-    id: 'web-sithivinayagar',
-    sourceType: 'WEBSITE_SCRAPE',
-    kind: 'pinned_url',
-    label: 'Sithivinayagar Kovil Stuttgart',
-    url: 'https://www.sithivinayagar.de',
-    hintCitySlug: 'stuttgart',
-    enabled: false,
-  },
+  // Facebook pages are excluded: Meta blocks unauthenticated scraping (HTTP 400).
 ];
 
 // ─── Helpers ───────────────────────────────────────────
