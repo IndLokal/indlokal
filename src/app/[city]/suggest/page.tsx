@@ -34,10 +34,10 @@ export default async function SuggestCommunityPage({ params }: Props) {
           {' / '}
           <span className="text-gray-700">Suggest a community</span>
         </nav>
-        <h1 className="mt-4 text-2xl font-bold">Suggest a Community</h1>
+        <h1 className="mt-4 text-2xl font-bold">Suggest a Community or Service</h1>
         <p className="mt-2 text-gray-600">
-          Know of an Indian community in {cityData.name} that isn&apos;t listed here? Share the
-          details and we&apos;ll look into adding it.
+          Know of an Indian community, service, or useful resource in {cityData.name} that
+          isn&apos;t listed here? Share the details and we&apos;ll look into adding it.
         </p>
       </div>
 

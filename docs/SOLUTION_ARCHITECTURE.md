@@ -405,17 +405,19 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `ends_at`                | End datetime                                            |
 | `is_recurring`           | Boolean                                                 |
 | `recurrence_rule`        | RRULE for recurring events                              |
-| `categories`             | Event type tags                                         |
-| `is_online`              | Boolean                                                 |
-| `online_link`            | URL for online events                                   |
-| `registration_url`       | External registration link                              |
-| `cost`                   | Free / paid / unclear                                   |
-| `image_url`              | Event image                                             |
-| `status`                 | upcoming / ongoing / past / cancelled                   |
-| `source`                 | How this was added                                      |
-| `metadata`               | JSONB                                                   |
-| `created_at`             | When first added                                        |
-| `updated_at`             | Last update                                             |
+
+**RRULE handling:** Recurring events store a single row with `is_recurring: true` and an RRULE string (e.g., `FREQ=WEEKLY;BYDAY=SA`). For MVP, recurring events display a 🔄 badge and human-readable label; queries match on the stored `starts_at` date. Phase 2 will expand RRULEs into virtual event instances for "this week" queries, so a weekly Saturday event always appears in the feed without manual re-creation.
+| `categories` | Event type tags |
+| `is_online` | Boolean |
+| `online_link` | URL for online events |
+| `registration_url` | External registration link |
+| `cost` | Free / paid / unclear |
+| `image_url` | Event image |
+| `status` | upcoming / ongoing / past / cancelled |
+| `source` | How this was added |
+| `metadata` | JSONB |
+| `created_at` | When first added |
+| `updated_at` | Last update |
 
 **Why it matters:** Events are the **primary retention driver**. Fresh, relevant events are what bring users back. The event model must support temporal queries (this week, this month, upcoming) natively.
 
@@ -559,24 +561,24 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 6.11 Entity: Resource
 
-| Attribute       | Description                                                                                 |
-| --------------- | ------------------------------------------------------------------------------------------- |
-| `id`            | Unique identifier                                                                           |
-| `title`         | Resource title (e.g., "CGI Munich Consular Camp — Stuttgart")                               |
-| `slug`          | URL-friendly identifier                                                                     |
-| `resource_type` | consular_service / official_event / government_info / visa_service / community_resource     |
-| `city_id`       | Primary city (FK)                                                                           |
-| `url`           | External URL                                                                                |
-| `description`   | Description of the resource                                                                 |
-| `valid_from`    | Start of validity (nullable)                                                                |
-| `valid_until`   | End of validity (nullable — null = ongoing)                                                 |
-| `source`        | Where this was sourced from                                                                 |
-| `categories`    | Array of category tags                                                                      |
-| `metadata`      | JSONB for flexible attributes (e.g., consulate details, appointment links, VFS center info) |
-| `created_at`    | When first added                                                                            |
-| `updated_at`    | Last update                                                                                 |
+| Attribute       | Description                                                                                                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`            | Unique identifier                                                                                                                                                                                                               |
+| `title`         | Resource title (e.g., "CGI Munich Consular Camp — Stuttgart")                                                                                                                                                                   |
+| `slug`          | URL-friendly identifier                                                                                                                                                                                                         |
+| `resource_type` | consular_service / official_event / government_info / visa_service / community_resource / city_registration / driving / housing / health_doctors / family_children / jobs_careers / tax_finance / business_setup / grocery_food |
+| `city_id`       | Primary city (FK)                                                                                                                                                                                                               |
+| `url`           | External URL                                                                                                                                                                                                                    |
+| `description`   | Description of the resource                                                                                                                                                                                                     |
+| `valid_from`    | Start of validity (nullable)                                                                                                                                                                                                    |
+| `valid_until`   | End of validity (nullable — null = ongoing)                                                                                                                                                                                     |
+| `source`        | Where this was sourced from                                                                                                                                                                                                     |
+| `categories`    | Array of category tags                                                                                                                                                                                                          |
+| `metadata`      | JSONB for flexible attributes (e.g., consulate details, appointment links, VFS center info)                                                                                                                                     |
+| `created_at`    | When first added                                                                                                                                                                                                                |
+| `updated_at`    | Last update                                                                                                                                                                                                                     |
 
-**Why it matters:** Consular services, VFS appointments, and official embassy events are a unique content type that no competitor surfaces well. They serve a high-intent need (passport renewal, visa services, official cultural events) and are architecturally distinct from community-organized events — they have validity windows rather than single event dates, are institutionally sourced rather than community-submitted, and carry inherent trust.
+**Why it matters:** Consular services, VFS appointments, and official embassy events are a unique content type that no competitor surfaces well. They serve a high-intent need (passport renewal, visa services, official cultural events) and are architecturally distinct from community-organized events — they have validity windows rather than single event dates, are institutionally sourced rather than community-submitted, and carry inherent trust. The topic-based types (city_registration, driving, housing, health_doctors, family_children, jobs_careers, tax_finance, business_setup, grocery_food) extend this model into a comprehensive Indian expat knowledge base — covering Anmeldung, Blue Card, Kindergeld, driving licence conversion, tax DTAA, apartment search, and more — a content category inspired by Stuttgart Expats' service directory but structured as detailed practical guides narrowed to the Indian diaspora niche.
 
 **Graph connections:** → City, → Categories
 

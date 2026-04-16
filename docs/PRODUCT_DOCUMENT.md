@@ -361,6 +361,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Hosting community name (linked)
 - Category tag(s)
 - Image (if available)
+- **Recurring badge** — events with `isRecurring: true` show a 🔄 indicator and human-readable recurrence label (e.g., "Every Saturday", "Monthly"). This builds event frequency perception without requiring many distinct event rows.
 
 ### 7.4 Event Detail Page
 
@@ -373,6 +374,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Hosting community (linked to community profile)
 - Access: registration link, community join link
 - Category tags
+- **Recurrence info** — if the event is recurring, display recurrence pattern ("Every Saturday at 10:00 AM", "First Sunday of each month") with RRULE-derived human-readable text. Helps users understand it's an ongoing commitment, not a one-off.
 - Share button
 - "More events from this community" section
 
@@ -547,6 +549,19 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - **AI content pipeline maturation:** Expand from MVP's basic 5-10 source monitoring to 30+ sources. Add high-confidence auto-approve option (items with >85% LLM confidence can auto-publish with logging). Integrate with community self-submission (user submissions also get LLM-enriched with auto-classification and description improvement)
 - **Weekly city digest email:** "This week in [city] for Indians" — auto-generated from upcoming events, sent to registered users (retention mechanism; Tracxn retains users via alerts and newsletters)
 
+### 8.9 Indian Expat Services Directory (informed by Stuttgart Expats analysis)
+
+- **Expanded resource types:** Beyond consular/official resources, the resource model uses a topic-based taxonomy with 9 expat categories: `CITY_REGISTRATION` (Anmeldung, Blue Card, PR, family reunion), `DRIVING` (licence conversion, English Fahrschule), `HOUSING` (apartment search, Schufa, GEZ), `HEALTH_DOCTORS` (GKV vs PKV, finding doctors, emergencies), `JOBS_CAREERS` (job portals, freelance visa), `TAX_FINANCE` (Steuererklärung, DTAA, NRE/NRO, ELSTER), `BUSINESS_SETUP` (Freiberufler vs Gewerbe, Finanzamt), `FAMILY_CHILDREN` (Kindergeld, Elterngeld, Kita, schools), and `GROCERY_FOOD` (Indian groceries, restaurants, online delivery). Each resource is a detailed practical guide written specifically for Indian expats.
+- **Dedicated `/[city]/resources/` page:** Grouped by resource type, with search/filter. Targets high-intent queries like "Indian grocery store Stuttgart", "Hindi-speaking doctor Stuttgart".
+- **Community-sourced contributions:** Leverage community organiser knowledge — claimed communities can suggest relevant services, feeding into moderation queue.
+- **SEO value:** Indian-specific service pages are a content moat — Stuttgart Expats links to generic expat services; LocalPulse links to Indian-specific ones.
+
+### 8.10 Multi-Channel Distribution (informed by Stuttgart Expats analysis)
+
+- **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. LocalPulse should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
+- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.
+- **Social proof & testimonials:** Community organisers can add short testimonials visible on community detail pages. Social proof drives trust for newcomers deciding whether to join a group.
+
 ---
 
 ## 9. Information Architecture
@@ -564,7 +579,8 @@ LocalPulse
 │   ├── /[city]/search?q=... (Search results)
 │   ├── /[city]/[language]-communities/ (Programmatic SEO — e.g., /stuttgart/telugu-communities/)
 │   ├── /[city]/indian-events-this-week/ (Programmatic SEO — temporal)
-│   └── /[city]/consular-services/ (Programmatic SEO — consular/official)
+│   ├── /[city]/consular-services/ (Programmatic SEO — consular/official)
+│   └── /[city]/resources/ (Indian expat services — groceries, doctors, tax, driving)
 ├── /about/ (About LocalPulse)
 ├── /submit/ (Submit a community — Phase 2)
 ├── /login/ (User accounts — Phase 2)

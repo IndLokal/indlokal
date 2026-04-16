@@ -363,14 +363,28 @@ model RelationshipEdge {
 }
 
 // ─────────────────────────────────────────────────
-// Resource — consular/official/institutional content
+// Resource — consular/official/institutional + practical expat guides
 // ─────────────────────────────────────────────────
 
 enum ResourceType {
+  // Consular & Indian government
   CONSULAR_SERVICE
   OFFICIAL_EVENT
   GOVERNMENT_INFO
   VISA_SERVICE
+  // German bureaucracy & settling-in
+  CITY_REGISTRATION
+  DRIVING
+  HOUSING
+  HEALTH_DOCTORS
+  FAMILY_CHILDREN
+  // Work & money
+  JOBS_CAREERS
+  TAX_FINANCE
+  BUSINESS_SETUP
+  // Everyday life
+  GROCERY_FOOD
+  // General
   COMMUNITY_RESOURCE
 }
 

@@ -19,7 +19,6 @@ const TYPE_LABELS: Record<string, string> = {
   OFFICIAL_EVENT: 'Official Event',
   GOVERNMENT_INFO: 'Government Info',
   VISA_SERVICE: 'Visa Service',
-  COMMUNITY_RESOURCE: 'Community Resource',
 };
 
 const TYPE_ICONS: Record<string, string> = {
@@ -27,7 +26,6 @@ const TYPE_ICONS: Record<string, string> = {
   OFFICIAL_EVENT: '📅',
   GOVERNMENT_INFO: 'ℹ️',
   VISA_SERVICE: '🛂',
-  COMMUNITY_RESOURCE: '🤝',
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -55,6 +53,9 @@ export default async function ConsularServicesPage({ params }: Props) {
   const resources = await db.resource.findMany({
     where: {
       cityId: { in: cityIds },
+      resourceType: {
+        in: ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'],
+      },
       OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
     },
     orderBy: [{ resourceType: 'asc' }, { title: 'asc' }],

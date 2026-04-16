@@ -52,6 +52,9 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
             <Link href={`/${city}/communities`} className="text-gray-700 hover:text-black">
               Communities
             </Link>
+            <Link href={`/${city}/resources`} className="text-gray-700 hover:text-black">
+              Resources
+            </Link>
             <Link
               href={`/${city}/search`}
               className="text-gray-700 hover:text-black"
