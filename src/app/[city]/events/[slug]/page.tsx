@@ -97,6 +97,23 @@ export default async function EventDetailPage({ params }: Props) {
 
           <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
 
+          {/* Recurring badge */}
+          {event.isRecurring && (
+            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+              🔄 Recurring event
+              {event.recurrenceRule && (
+                <span className="text-blue-500">
+                  {' · '}
+                  {event.recurrenceRule.includes('WEEKLY')
+                    ? 'Weekly'
+                    : event.recurrenceRule.includes('MONTHLY')
+                      ? 'Monthly'
+                      : 'Repeats'}
+                </span>
+              )}
+            </span>
+          )}
+
           {/* Status badge */}
           {isPast && (
             <span className="mt-2 inline-block rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-500">

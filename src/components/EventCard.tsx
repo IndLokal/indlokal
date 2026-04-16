@@ -28,7 +28,17 @@ export function EventCard({ event, city, past = false }: Props) {
     >
       {/* Category icon + date */}
       <div className="flex items-center justify-between">
-        <span className="text-xl">{event.categories[0]?.category.icon ?? '📅'}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xl">{event.categories[0]?.category.icon ?? '📅'}</span>
+          {event.isRecurring && (
+            <span
+              className="rounded-full bg-blue-50 px-1.5 py-0.5 text-xs font-medium text-blue-600"
+              title="Recurring event"
+            >
+              🔄 Recurring
+            </span>
+          )}
+        </div>
         <span className={`text-xs font-medium ${past ? 'text-gray-400' : 'text-indigo-600'}`}>
           {dateLabel}
         </span>

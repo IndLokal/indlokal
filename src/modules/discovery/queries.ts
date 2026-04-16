@@ -50,6 +50,7 @@ export async function getCityFeed(citySlug: string): Promise<CityFeedData | null
         isOnline: true,
         cost: true,
         imageUrl: true,
+        isRecurring: true,
         community: { select: { name: true, slug: true } },
         city: { select: { name: true, slug: true } },
         categories: {

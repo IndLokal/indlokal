@@ -10,7 +10,16 @@ export type EventWithRelations = Event & {
 /** Lightweight event shape for list/card views */
 export type EventListItem = Pick<
   Event,
-  'id' | 'title' | 'slug' | 'startsAt' | 'endsAt' | 'venueName' | 'isOnline' | 'cost' | 'imageUrl'
+  | 'id'
+  | 'title'
+  | 'slug'
+  | 'startsAt'
+  | 'endsAt'
+  | 'venueName'
+  | 'isOnline'
+  | 'cost'
+  | 'imageUrl'
+  | 'isRecurring'
 > & {
   community: Pick<Community, 'name' | 'slug'> | null;
   city: Pick<City, 'name' | 'slug'>;
