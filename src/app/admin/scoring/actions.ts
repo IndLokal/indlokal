@@ -73,6 +73,16 @@ export async function runLinkCheck(): Promise<JobResult> {
 
 /** HEAD request with 5s timeout; falls back to GET if HEAD is not supported */
 async function checkUrl(url: string): Promise<boolean> {
+  // Only allow http(s) to prevent SSRF via file://, ftp://, etc.
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+  } catch {
+    return false;
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 5000);
   try {

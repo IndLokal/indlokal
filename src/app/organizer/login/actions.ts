@@ -3,6 +3,9 @@
 import { db } from '@/lib/db';
 import { generateSessionToken, tokenExpiry } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
+import { z } from 'zod';
+
+const emailSchema = z.string().email();
 
 export type LoginResult =
   | { success: true; communityName: string }
@@ -15,7 +18,7 @@ export async function requestMagicLink(
 ): Promise<LoginResult> {
   const email = (formData.get('email') as string)?.trim().toLowerCase();
 
-  if (!email || !email.includes('@')) {
+  if (!email || !emailSchema.safeParse(email).success) {
     return { success: false, error: 'Please enter a valid email address.' };
   }
 
@@ -51,7 +54,11 @@ export async function requestMagicLink(
     data: { sessionToken: token, sessionTokenExpiry: tokenExpiry() },
   });
 
-  await sendMagicLinkEmail(user.email, token, user.claimedCommunities[0].name);
+  try {
+    await sendMagicLinkEmail(user.email, token, user.claimedCommunities[0].name);
+  } catch {
+    return { success: false, error: 'Failed to send login email. Please try again.' };
+  }
 
   return {
     success: true,

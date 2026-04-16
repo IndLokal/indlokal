@@ -48,13 +48,17 @@ export async function approveSubmission(formData: FormData) {
   const meta = community.metadata as Record<string, unknown> | null;
   const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
   if (submitter?.email && community.city?.slug && community.slug) {
-    await sendSubmissionApprovedEmail(
-      submitter.email,
-      submitter.name ?? 'there',
-      community.name,
-      community.city.slug,
-      community.slug,
-    );
+    try {
+      await sendSubmissionApprovedEmail(
+        submitter.email,
+        submitter.name ?? 'there',
+        community.name,
+        community.city.slug,
+        community.slug,
+      );
+    } catch {
+      // Email is best-effort — don't fail admin action
+    }
   }
 
   // Refresh scores — trust and completeness change on approval
@@ -118,12 +122,16 @@ export async function approveClaim(formData: FormData) {
   if (community.city?.slug && community.slug) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
     if (community.claimedBy?.email) {
-      await sendClaimApprovedEmail(
-        community.claimedBy.email,
-        community.name,
-        community.city.slug,
-        community.slug,
-      );
+      try {
+        await sendClaimApprovedEmail(
+          community.claimedBy.email,
+          community.name,
+          community.city.slug,
+          community.slug,
+        );
+      } catch {
+        // Email is best-effort
+      }
     }
   }
   // Refresh scores — trust score changes when claimed
@@ -159,7 +167,11 @@ export async function rejectClaim(formData: FormData) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
   }
   if (community?.claimedBy?.email && community?.name) {
-    await sendClaimRejectedEmail(community.claimedBy.email, community.name);
+    try {
+      await sendClaimRejectedEmail(community.claimedBy.email, community.name);
+    } catch {
+      // Email is best-effort
+    }
   }
   revalidatePath('/admin/claims');
 }

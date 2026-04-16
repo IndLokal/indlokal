@@ -29,14 +29,18 @@ export async function reportIssue(_prev: ReportResult, formData: FormData): Prom
 
   const { communityId, reportType, details, reporterEmail } = parsed.data;
 
-  await db.contentReport.create({
-    data: {
-      reportType,
-      communityId,
-      details: details || null,
-      reporterEmail: reporterEmail || null,
-    },
-  });
+  try {
+    await db.contentReport.create({
+      data: {
+        reportType,
+        communityId,
+        details: details || null,
+        reporterEmail: reporterEmail || null,
+      },
+    });
+  } catch {
+    return { success: false, error: 'Failed to submit report. Please try again.' };
+  }
 
   return { success: true };
 }
@@ -76,15 +80,19 @@ export async function suggestCommunity(
   const city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
   if (!city) return { success: false, error: 'City not found.' };
 
-  await db.contentReport.create({
-    data: {
-      reportType: 'SUGGEST_COMMUNITY',
-      suggestedName,
-      cityId: city.id,
-      details: details || null,
-      reporterEmail: reporterEmail || null,
-    },
-  });
+  try {
+    await db.contentReport.create({
+      data: {
+        reportType: 'SUGGEST_COMMUNITY',
+        suggestedName,
+        cityId: city.id,
+        details: details || null,
+        reporterEmail: reporterEmail || null,
+      },
+    });
+  } catch {
+    return { success: false, error: 'Failed to submit suggestion. Please try again.' };
+  }
 
   // Also seed the AI pipeline — the LLM can enrich this suggestion
   // with any online info it finds (events, social links, descriptions).

@@ -80,31 +80,40 @@ export async function submitCommunity(
   }
 
   // Create community as UNVERIFIED
-  await db.community.create({
-    data: {
-      name: data.name,
-      slug,
-      description: data.description,
-      cityId: city.id,
-      languages: data.languages,
-      status: 'UNVERIFIED',
-      claimState: 'UNCLAIMED',
-      source: 'COMMUNITY_SUBMITTED',
-      metadata: {
-        submitter: {
-          name: data.contactName,
-          email: data.contactEmail,
-          submittedAt: new Date().toISOString(),
+  try {
+    await db.community.create({
+      data: {
+        name: data.name,
+        slug,
+        description: data.description,
+        cityId: city.id,
+        languages: data.languages,
+        status: 'UNVERIFIED',
+        claimState: 'UNCLAIMED',
+        source: 'COMMUNITY_SUBMITTED',
+        metadata: {
+          submitter: {
+            name: data.contactName,
+            email: data.contactEmail,
+            submittedAt: new Date().toISOString(),
+          },
         },
+        categories: {
+          create: categoryRows.map((c) => ({ categoryId: c.id })),
+        },
+        accessChannels: { create: channels },
       },
-      categories: {
-        create: categoryRows.map((c) => ({ categoryId: c.id })),
-      },
-      accessChannels: { create: channels },
-    },
-  });
+    });
+  } catch {
+    return { success: false, errors: { name: ['Failed to create community. Please try again.'] } };
+  }
 
-  await sendSubmissionReceivedEmail(data.contactEmail, data.contactName, data.name);
+  // Email is best-effort — don't fail the submission if it doesn't send
+  try {
+    await sendSubmissionReceivedEmail(data.contactEmail, data.contactName, data.name);
+  } catch {
+    // silently ignore email failure
+  }
 
   return { success: true, communityName: data.name };
 }
