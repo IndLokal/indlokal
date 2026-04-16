@@ -1,10 +1,12 @@
 import { db } from '@/lib/db';
+import { Prisma } from '@prisma/client';
 import type { CommunityListItem } from '@/modules/community/types';
 import type { EventListItem } from '@/modules/event/types';
 
 /**
  * Search communities by text query within a city.
- * Uses PostgreSQL full-text search for MVP.
+ * Uses PostgreSQL full-text search (tsvector/tsquery) with ranking.
+ * Falls back to ILIKE substring match if FTS returns no results.
  */
 export async function searchCommunities(
   citySlug: string,
@@ -22,16 +24,44 @@ export async function searchCommunities(
 
   const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 
-  // MVP: simple ILIKE search. Migrate to full-text search with tsvector later.
-  return db.community.findMany({
-    where: {
-      cityId: { in: cityIds },
-      status: { not: 'INACTIVE' },
-      OR: [
-        { name: { contains: trimmed, mode: 'insensitive' } },
-        { description: { contains: trimmed, mode: 'insensitive' } },
-      ],
-    },
+  // PostgreSQL full-text search with ranking
+  const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
+    SELECT id FROM "Community"
+    WHERE "cityId" IN (${Prisma.join(cityIds)})
+      AND status != 'INACTIVE'
+      AND to_tsvector('english', name || ' ' || COALESCE(description, ''))
+          @@ plainto_tsquery('english', ${trimmed})
+    ORDER BY ts_rank(
+      to_tsvector('english', name || ' ' || COALESCE(description, '')),
+      plainto_tsquery('english', ${trimmed})
+    ) DESC
+    LIMIT ${limit}
+  `;
+
+  let ids = rankedIds.map((r) => r.id);
+
+  // Fallback to ILIKE for partial matches that FTS misses (e.g. "yoga" matching "yogalife")
+  if (ids.length === 0) {
+    const fallback = await db.community.findMany({
+      where: {
+        cityId: { in: cityIds },
+        status: { not: 'INACTIVE' },
+        OR: [
+          { name: { contains: trimmed, mode: 'insensitive' } },
+          { description: { contains: trimmed, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true },
+      orderBy: { activityScore: 'desc' },
+      take: limit,
+    });
+    ids = fallback.map((r) => r.id);
+  }
+
+  if (ids.length === 0) return [];
+
+  const results = await db.community.findMany({
+    where: { id: { in: ids } },
     select: {
       id: true,
       name: true,
@@ -51,13 +81,16 @@ export async function searchCommunities(
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
       _count: { select: { events: { where: { startsAt: { gte: new Date() } } } } },
     },
-    orderBy: { activityScore: 'desc' },
-    take: limit,
   });
+
+  // Preserve rank order from full-text search
+  const idOrder = new Map(ids.map((id, i) => [id, i]));
+  return results.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
 }
 
 /**
  * Search events by text query within a city.
+ * Uses PostgreSQL full-text search with fallback to ILIKE.
  */
 export async function searchEvents(
   citySlug: string,
@@ -75,16 +108,48 @@ export async function searchEvents(
 
   const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
 
-  return db.event.findMany({
-    where: {
-      cityId: { in: cityIds },
-      startsAt: { gte: new Date() },
-      status: { not: 'CANCELLED' },
-      OR: [
-        { title: { contains: trimmed, mode: 'insensitive' } },
-        { description: { contains: trimmed, mode: 'insensitive' } },
-      ],
-    },
+  const now = new Date();
+
+  // PostgreSQL full-text search with ranking
+  const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
+    SELECT id FROM "Event"
+    WHERE "cityId" IN (${Prisma.join(cityIds)})
+      AND "startsAt" >= ${now}
+      AND status != 'CANCELLED'
+      AND to_tsvector('english', title || ' ' || COALESCE(description, ''))
+          @@ plainto_tsquery('english', ${trimmed})
+    ORDER BY ts_rank(
+      to_tsvector('english', title || ' ' || COALESCE(description, '')),
+      plainto_tsquery('english', ${trimmed})
+    ) DESC
+    LIMIT ${limit}
+  `;
+
+  let ids = rankedIds.map((r) => r.id);
+
+  // Fallback to ILIKE for partial matches
+  if (ids.length === 0) {
+    const fallback = await db.event.findMany({
+      where: {
+        cityId: { in: cityIds },
+        startsAt: { gte: now },
+        status: { not: 'CANCELLED' },
+        OR: [
+          { title: { contains: trimmed, mode: 'insensitive' } },
+          { description: { contains: trimmed, mode: 'insensitive' } },
+        ],
+      },
+      select: { id: true },
+      orderBy: { startsAt: 'asc' },
+      take: limit,
+    });
+    ids = fallback.map((r) => r.id);
+  }
+
+  if (ids.length === 0) return [];
+
+  const results = await db.event.findMany({
+    where: { id: { in: ids } },
     select: {
       id: true,
       title: true,
@@ -100,7 +165,9 @@ export async function searchEvents(
       city: { select: { name: true, slug: true } },
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
     },
-    orderBy: { startsAt: 'asc' },
-    take: limit,
   });
+
+  // Preserve rank order
+  const idOrder = new Map(ids.map((id, i) => [id, i]));
+  return results.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
 }

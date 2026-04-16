@@ -91,9 +91,18 @@ export default async function SearchPage({ params, searchParams }: Props) {
       {query.length >= 2 && (
         <>
           {total === 0 && (
-            <p className="text-gray-500">
-              No results for <strong>&ldquo;{query}&rdquo;</strong> in {cityName}.
-            </p>
+            <div className="space-y-3">
+              <p className="text-gray-500">
+                No results for <strong>&ldquo;{query}&rdquo;</strong> in {cityName}.
+              </p>
+              <p className="text-sm text-gray-400">
+                Try a different search term, or{' '}
+                <a href={`/${city}/communities`} className="text-indigo-600 hover:underline">
+                  browse all communities
+                </a>
+                .
+              </p>
+            </div>
           )}
 
           {communities.length > 0 && (
