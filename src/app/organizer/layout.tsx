@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
+import { MobileNav } from '@/components/MobileNav';
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -13,20 +14,30 @@ export default async function OrganizerLayout({ children }: { children: React.Re
               Organizer Dashboard
             </Link>
             {user && (
-              <nav className="hidden items-center gap-4 text-sm sm:flex">
-                <Link href="/organizer" className="text-gray-600 hover:text-gray-900">
-                  Overview
-                </Link>
-                <Link href="/organizer/edit" className="text-gray-600 hover:text-gray-900">
-                  Edit Profile
-                </Link>
-                <Link href="/organizer/channels" className="text-gray-600 hover:text-gray-900">
-                  Channels
-                </Link>
-                <Link href="/organizer/events/new" className="text-gray-600 hover:text-gray-900">
-                  Add Event
-                </Link>
-              </nav>
+              <>
+                <nav className="hidden items-center gap-4 text-sm sm:flex">
+                  <Link href="/organizer" className="text-gray-600 hover:text-gray-900">
+                    Overview
+                  </Link>
+                  <Link href="/organizer/edit" className="text-gray-600 hover:text-gray-900">
+                    Edit Profile
+                  </Link>
+                  <Link href="/organizer/channels" className="text-gray-600 hover:text-gray-900">
+                    Channels
+                  </Link>
+                  <Link href="/organizer/events/new" className="text-gray-600 hover:text-gray-900">
+                    Add Event
+                  </Link>
+                </nav>
+                <MobileNav
+                  links={[
+                    { href: '/organizer', label: 'Overview' },
+                    { href: '/organizer/edit', label: 'Edit Profile' },
+                    { href: '/organizer/channels', label: 'Channels' },
+                    { href: '/organizer/events/new', label: 'Add Event' },
+                  ]}
+                />
+              </>
             )}
           </div>
           <div className="flex items-center gap-4">

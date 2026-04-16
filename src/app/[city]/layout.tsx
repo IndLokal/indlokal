@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
+import { MobileNav } from '@/components/MobileNav';
 
 type CityLayoutProps = {
   children: React.ReactNode;
@@ -42,7 +43,8 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
             <span className="text-sm text-gray-500">{cityName}</span>
           </div>
 
-          <nav className="flex items-center gap-4 text-sm">
+          {/* Desktop nav */}
+          <nav className="hidden items-center gap-4 text-sm sm:flex">
             <Link href={`/${city}`} className="text-gray-700 hover:text-black">
               Feed
             </Link>
@@ -70,6 +72,21 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
             </Link>
             <NavAuthWidget />
           </nav>
+
+          {/* Mobile nav */}
+          <div className="flex items-center gap-2 sm:hidden">
+            <NavAuthWidget />
+            <MobileNav
+              links={[
+                { href: `/${city}`, label: 'Feed' },
+                { href: `/${city}/events`, label: 'Events' },
+                { href: `/${city}/communities`, label: 'Communities' },
+                { href: `/${city}/resources`, label: 'Resources' },
+                { href: `/${city}/search`, label: 'Search' },
+                { href: '/submit', label: '+ Submit', highlight: true },
+              ]}
+            />
+          </div>
         </div>
       </header>
 
