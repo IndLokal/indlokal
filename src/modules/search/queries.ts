@@ -11,6 +11,9 @@ export async function searchCommunities(
   query: string,
   limit = 10,
 ): Promise<CommunityListItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) return [];
+
   const city = await db.city.findUnique({
     where: { slug: citySlug },
     select: { id: true, satelliteCities: { select: { id: true } } },
@@ -25,8 +28,8 @@ export async function searchCommunities(
       cityId: { in: cityIds },
       status: { not: 'INACTIVE' },
       OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
+        { name: { contains: trimmed, mode: 'insensitive' } },
+        { description: { contains: trimmed, mode: 'insensitive' } },
       ],
     },
     select: {
@@ -61,6 +64,9 @@ export async function searchEvents(
   query: string,
   limit = 10,
 ): Promise<EventListItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) return [];
+
   const city = await db.city.findUnique({
     where: { slug: citySlug },
     select: { id: true, satelliteCities: { select: { id: true } } },
@@ -75,8 +81,8 @@ export async function searchEvents(
       startsAt: { gte: new Date() },
       status: { not: 'CANCELLED' },
       OR: [
-        { title: { contains: query, mode: 'insensitive' } },
-        { description: { contains: query, mode: 'insensitive' } },
+        { title: { contains: trimmed, mode: 'insensitive' } },
+        { description: { contains: trimmed, mode: 'insensitive' } },
       ],
     },
     select: {

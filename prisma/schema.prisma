@@ -154,6 +154,8 @@ model Community {
   @@index([cityId])
   @@index([activityScore])
   @@index([status])
+  @@index([cityId, status])
+  @@index([claimState])
   @@map("communities")
 }
 
@@ -220,6 +222,7 @@ model Event {
 
   @@index([cityId, startsAt])
   @@index([communityId])
+  @@index([communityId, startsAt])
   @@index([status])
   @@index([startsAt])
   @@map("events")
