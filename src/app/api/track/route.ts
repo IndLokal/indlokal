@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
 
     // Basic input validation
     if (!entityType || !entityId || !VALID_ENTITY_TYPES.has(entityType)) {
-      return NextResponse.json({ ok: true }); // silently ignore bad input
+      console.warn('[track] Invalid input — entityType=%s entityId=%s', entityType, entityId);
+      return NextResponse.json({ ok: true });
     }
 
     // Optional user resolution via session cookie
@@ -52,8 +53,9 @@ export async function POST(req: NextRequest) {
         ...(resolvedCityId && { cityId: resolvedCityId }),
       },
     });
-  } catch {
-    // Non-critical telemetry — swallow all errors
+  } catch (err) {
+    // Non-critical telemetry — don't surface to client but log for debugging
+    console.error('[track] Failed to record interaction:', err);
   }
 
   return NextResponse.json({ ok: true });

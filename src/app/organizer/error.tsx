@@ -6,5 +6,5 @@ export default function OrganizerError(props: {
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  return <ErrorFallback {...props} action={{ label: 'Dashboard', href: '/organizer' }} />;
+  return <ErrorFallback {...props} action={{ label: 'Go to Home', href: '/' }} />;
 }

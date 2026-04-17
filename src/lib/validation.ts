@@ -1,25 +1,15 @@
 import { z } from 'zod';
-
-const CHANNEL_TYPES = [
-  'WHATSAPP',
-  'TELEGRAM',
-  'WEBSITE',
-  'FACEBOOK',
-  'INSTAGRAM',
-  'EMAIL',
-  'MEETUP',
-  'OTHER',
-] as const;
+import { ChannelType } from '@prisma/client';
 
 export const submitCommunitySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
   description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
   citySlug: z.string().min(1, 'Please select a city'),
-  categories: z.array(z.string()).min(1, 'Select at least one category'),
-  languages: z.array(z.string()).default([]),
-  primaryChannelType: z.enum(CHANNEL_TYPES),
+  categories: z.array(z.string()).min(1, 'Select at least one category').max(20),
+  languages: z.array(z.string()).max(20).default([]),
+  primaryChannelType: z.nativeEnum(ChannelType),
   primaryChannelUrl: z.string().url('Please enter a valid URL'),
-  secondaryChannelType: z.enum(CHANNEL_TYPES).optional(),
+  secondaryChannelType: z.nativeEnum(ChannelType).optional(),
   secondaryChannelUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
   contactEmail: z.string().email('Please enter a valid email'),
   contactName: z.string().min(1, 'Please enter your name'),

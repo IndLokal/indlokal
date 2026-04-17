@@ -12,6 +12,7 @@ type Result = {
 };
 
 function buildResults(query: string): Result[] {
+  if (query.length > 200) return [];
   const q = query.toLowerCase().trim();
   if (!q) return [];
 

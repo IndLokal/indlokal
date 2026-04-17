@@ -28,7 +28,7 @@ async function _getCityFeed(citySlug: string): Promise<CityFeedData | null> {
       diasporaDensityEstimate: true,
       isActive: true,
       isMetroPrimary: true,
-      satelliteCities: { select: { id: true } },
+      satelliteCities: { select: { id: true }, where: { isActive: true } },
     },
   });
 

@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { setSessionCookie } from '@/lib/session';
+import { setSessionCookie, generateSessionToken, tokenExpiry } from '@/lib/session';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
@@ -22,7 +22,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/organizer/login?error=expired_token', request.url));
   }
 
-  await setSessionCookie(token);
+  // Rotate to a fresh session token — this consumes the magic link so it can't be replayed
+  const newToken = generateSessionToken();
+  await db.user.update({
+    where: { id: user.id },
+    data: { sessionToken: newToken, sessionTokenExpiry: tokenExpiry() },
+  });
+
+  await setSessionCookie(newToken);
 
   return NextResponse.redirect(new URL('/organizer', request.url));
 }

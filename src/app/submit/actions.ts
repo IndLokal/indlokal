@@ -39,6 +39,16 @@ export async function submitCommunity(
 
   const data = parsed.data;
 
+  // Secondary channel type requires a URL
+  if (data.secondaryChannelType && !data.secondaryChannelUrl) {
+    return {
+      success: false,
+      errors: {
+        secondaryChannelUrl: ['A URL is required when a secondary channel type is selected'],
+      },
+    };
+  }
+
   // Resolve city
   const city = await db.city.findFirst({
     where: { slug: data.citySlug, isActive: true },
@@ -57,9 +67,16 @@ export async function submitCommunity(
 
   // Resolve category IDs
   const categoryRows = await db.category.findMany({
-    where: { slug: { in: data.categories } },
+    where: { slug: { in: data.categories }, type: 'CATEGORY' },
     select: { id: true },
   });
+
+  if (categoryRows.length !== data.categories.length) {
+    return {
+      success: false,
+      errors: { categories: ['One or more selected categories are invalid'] },
+    };
+  }
 
   // Build access channels
   const channels: { channelType: ChannelType; url: string; label: string; isPrimary: boolean }[] = [
