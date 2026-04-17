@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { searchCommunities, searchEvents } from '@/modules/search/queries';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
+import { SearchTracker } from '@/components/SearchTracker';
 import { getSessionUser } from '@/lib/session';
 import type { CommunityListItem } from '@/modules/community/types';
 import type { EventListItem } from '@/modules/event/types';
@@ -58,6 +59,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-8">
+      {query.length >= 2 && <SearchTracker query={query} city={city} resultsCount={total} />}
       {/* Search header */}
       <div>
         <nav className="text-muted mb-2 text-sm">

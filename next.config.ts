@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next';
 
+const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com';
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -14,6 +16,15 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
+      // PostHog reverse proxy — routes analytics through our domain to avoid ad-blockers
+      {
+        source: '/ingest/static/:path*',
+        destination: `${POSTHOG_HOST}/static/:path*`,
+      },
+      {
+        source: '/ingest/:path*',
+        destination: `${POSTHOG_HOST}/:path*`,
+      },
       {
         // SEO: /stuttgart/telugu-communities → /stuttgart/communities?language=telugu
         source: '/:city/:language-communities',

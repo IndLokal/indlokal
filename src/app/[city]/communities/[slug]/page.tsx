@@ -7,6 +7,7 @@ import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from '@/components/ReportIssueForm';
 import { ViewTracker } from '@/components/ViewTracker';
 import { ActivityBadge } from '@/components/ui';
+import { AccessChannelLink } from '@/components/AccessChannelLink';
 
 /**
  * Community Detail Page
@@ -85,7 +86,13 @@ export default async function CommunityDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ViewTracker entityType="COMMUNITY" entityId={community.id} cityId={community.city.id} />
+      <ViewTracker
+        entityType="COMMUNITY"
+        entityId={community.id}
+        cityId={community.city.id}
+        entitySlug={community.slug}
+        city={city}
+      />
 
       <div className="mx-auto max-w-2xl space-y-10">
         {/* Breadcrumb */}
@@ -184,21 +191,17 @@ export default async function CommunityDetailPage({ params }: Props) {
             <h2 className="text-lg font-semibold">Join this community</h2>
             <div className="mt-3 flex flex-wrap gap-3">
               {community.accessChannels.map((ch) => (
-                <a
+                <AccessChannelLink
                   key={ch.id}
                   href={ch.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="card-base text-foreground inline-flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <span className="text-lg">{CHANNEL_ICONS[ch.channelType] ?? '🔗'}</span>
-                  {ch.label ?? CHANNEL_LABELS[ch.channelType] ?? ch.channelType}
-                  {ch.isPrimary && (
-                    <span className="badge-base bg-brand-50 text-brand-600 ml-1 px-2 py-0.5 text-xs">
-                      Primary
-                    </span>
-                  )}
-                </a>
+                  channelType={ch.channelType}
+                  channelLabel={ch.label ?? CHANNEL_LABELS[ch.channelType] ?? ch.channelType}
+                  channelIcon={CHANNEL_ICONS[ch.channelType] ?? '🔗'}
+                  communityId={community.id}
+                  communitySlug={community.slug}
+                  city={city}
+                  isPrimary={ch.isPrimary}
+                />
               ))}
             </div>
           </div>

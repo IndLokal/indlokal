@@ -2,6 +2,7 @@
 
 import { useOptimistic, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { Events, useTrackEvent } from '@/lib/analytics';
 import { toggleSaveCommunity } from '@/app/actions/saves';
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 
 export function BookmarkButton({ communityId, saved }: Props) {
   const router = useRouter();
+  const track = useTrackEvent();
   const [isPending, startTransition] = useTransition();
   const [optimisticSaved, setOptimisticSaved] = useOptimistic(saved);
 
@@ -22,6 +24,12 @@ export function BookmarkButton({ communityId, saved }: Props) {
       const result = await toggleSaveCommunity(communityId);
       if ('requiresAuth' in result) {
         router.push('/me/login');
+        return;
+      }
+      if ('saved' in result) {
+        track(result.saved ? Events.COMMUNITY_SAVED : Events.COMMUNITY_UNSAVED, {
+          community_id: communityId,
+        });
       }
     });
   }

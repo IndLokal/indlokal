@@ -2,6 +2,8 @@
 
 import { db } from '@/lib/db';
 import { claimCommunitySchema } from '@/lib/validation';
+import { captureServerEvent } from '@/lib/posthog';
+import { Events } from '@/lib/analytics-events';
 
 export type ClaimResult =
   | { success: true }
@@ -88,6 +90,11 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
       signalType: 'COMMUNITY_CLAIMED',
       createdBy: user.id,
     },
+  });
+
+  await captureServerEvent(user.id, Events.CLAIM_SUBMITTED, {
+    community_id: data.communityId,
+    relationship: data.relationship,
   });
 
   return { success: true };

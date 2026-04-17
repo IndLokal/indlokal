@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
 import { Suspense } from 'react';
+import { cookies } from 'next/headers';
 import './globals.css';
 import { siteConfig } from '@/lib/config';
+import { db } from '@/lib/db';
 import { PostHogProvider } from '@/components/PostHogProvider';
+import { PostHogIdentify } from '@/components/PostHogIdentify';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -26,11 +29,33 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+/**
+ * Lightweight user ID resolution for analytics identity.
+ * Avoids the full getSessionUser() include to keep the root layout fast.
+ */
+async function getAnalyticsUserId(): Promise<string | null> {
+  try {
+    const jar = await cookies();
+    const token = jar.get('lp_session')?.value;
+    if (!token) return null;
+    const user = await db.user.findUnique({
+      where: { sessionToken: token },
+      select: { id: true, sessionTokenExpiry: true },
+    });
+    if (!user?.sessionTokenExpiry || user.sessionTokenExpiry < new Date()) return null;
+    return user.id;
+  } catch {
+    return null;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const userId = await getAnalyticsUserId();
+
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <head>
@@ -38,6 +63,7 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col font-sans">
         <PostHogProvider>
+          <PostHogIdentify userId={userId} />
           <Suspense>{children}</Suspense>
         </PostHogProvider>
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (

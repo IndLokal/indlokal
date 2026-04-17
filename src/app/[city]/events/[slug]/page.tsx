@@ -64,7 +64,13 @@ export default async function EventDetailPage({ params }: Props) {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <ViewTracker entityType="EVENT" entityId={event.id} cityId={event.city.id} />
+      <ViewTracker
+        entityType="EVENT"
+        entityId={event.id}
+        cityId={event.city.id}
+        entitySlug={event.slug}
+        city={city}
+      />
 
       <div className="mx-auto max-w-2xl space-y-8">
         {/* Breadcrumb */}

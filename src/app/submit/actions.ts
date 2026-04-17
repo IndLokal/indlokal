@@ -5,6 +5,8 @@ import type { ChannelType } from '@prisma/client';
 import { submitCommunitySchema } from '@/lib/validation';
 import slugify from 'slugify';
 import { sendSubmissionReceivedEmail } from '@/lib/email';
+import { captureServerEvent } from '@/lib/posthog';
+import { Events } from '@/lib/analytics-events';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -131,6 +133,13 @@ export async function submitCommunity(
   } catch {
     // silently ignore email failure
   }
+
+  // Analytics — fire-and-forget, non-critical
+  // Use 'anonymous' as distinctId for unauthenticated submissions to avoid PII in PostHog
+  await captureServerEvent('anonymous-submitter', Events.COMMUNITY_SUBMITTED, {
+    city: data.citySlug,
+    channel_types: channels.map((c) => c.channelType.toLowerCase()),
+  });
 
   return { success: true, communityName: data.name };
 }

@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { generateSessionToken, tokenExpiry, setSessionCookie } from '@/lib/session';
+import { captureServerEvent } from '@/lib/posthog';
+import { Events } from '@/lib/analytics-events';
 
 const BASE = process.env.NEXT_PUBLIC_APP_URL!;
 
@@ -67,7 +69,12 @@ export async function GET(req: NextRequest) {
     select: { id: true },
   });
 
+  let userId: string;
+  let isNewUser: boolean;
+
   if (existing) {
+    isNewUser = false;
+    userId = existing.id;
     await db.user.update({
       where: { id: existing.id },
       data: {
@@ -80,7 +87,8 @@ export async function GET(req: NextRequest) {
       },
     });
   } else {
-    await db.user.create({
+    isNewUser = true;
+    const created = await db.user.create({
       data: {
         googleId: profile.sub,
         email: profile.email,
@@ -89,10 +97,19 @@ export async function GET(req: NextRequest) {
         sessionToken,
         sessionTokenExpiry: expiry,
       },
+      select: { id: true },
     });
+    userId = created.id;
   }
 
   await setSessionCookie(sessionToken);
+
+  // Fire analytics event — identify the user and record signup vs login
+  if (isNewUser) {
+    await captureServerEvent(userId, Events.USER_SIGNED_UP, { auth_provider: 'google' });
+  } else {
+    await captureServerEvent(userId, Events.USER_LOGGED_IN, { auth_provider: 'google' });
+  }
 
   return NextResponse.redirect(`${BASE}/me`);
 }
