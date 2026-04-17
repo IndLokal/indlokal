@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
-import { generateSessionToken, tokenExpiry, setSessionCookie } from '@/lib/session';
+import { generateSessionToken, createSession } from '@/lib/session';
 import { captureServerEvent } from '@/lib/posthog';
 import { Events } from '@/lib/analytics-events';
 
@@ -60,8 +60,7 @@ export async function GET(req: NextRequest) {
     picture?: string;
   };
 
-  const sessionToken = generateSessionToken();
-  const expiry = tokenExpiry();
+  const rawToken = generateSessionToken();
 
   // Find existing account by googleId or email (link accounts, no duplicates)
   const existing = await db.user.findFirst({
@@ -81,8 +80,6 @@ export async function GET(req: NextRequest) {
         googleId: profile.sub,
         displayName: profile.name ?? undefined,
         avatarUrl: profile.picture ?? undefined,
-        sessionToken,
-        sessionTokenExpiry: expiry,
         lastActiveAt: new Date(),
       },
     });
@@ -94,15 +91,13 @@ export async function GET(req: NextRequest) {
         email: profile.email,
         displayName: profile.name ?? null,
         avatarUrl: profile.picture ?? null,
-        sessionToken,
-        sessionTokenExpiry: expiry,
       },
       select: { id: true },
     });
     userId = created.id;
   }
 
-  await setSessionCookie(sessionToken);
+  await createSession(userId, rawToken);
 
   // Fire analytics event — identify the user and record signup vs login
   if (isNewUser) {

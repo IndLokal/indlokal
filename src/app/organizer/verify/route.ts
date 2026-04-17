@@ -1,35 +1,43 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { setSessionCookie, generateSessionToken, tokenExpiry } from '@/lib/session';
+import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
-  const token = request.nextUrl.searchParams.get('token');
+  const rawToken = request.nextUrl.searchParams.get('token');
 
-  if (!token) {
+  if (!rawToken) {
     return NextResponse.redirect(new URL('/organizer/login?error=missing_token', request.url));
   }
 
-  const user = await db.user.findUnique({
-    where: { sessionToken: token },
-    select: { id: true, sessionTokenExpiry: true, role: true },
+  const tokenHash = await hashToken(rawToken);
+
+  // Look up the one-time magic link token
+  const magicLink = await db.magicLinkToken.findUnique({
+    where: { tokenHash },
+    include: { user: { select: { id: true, role: true } } },
   });
 
-  if (!user || user.role !== 'COMMUNITY_ADMIN') {
+  if (!magicLink || magicLink.user.role !== 'COMMUNITY_ADMIN') {
     return NextResponse.redirect(new URL('/organizer/login?error=invalid_token', request.url));
   }
 
-  if (!user.sessionTokenExpiry || user.sessionTokenExpiry < new Date()) {
+  if (magicLink.usedAt) {
+    return NextResponse.redirect(new URL('/organizer/login?error=invalid_token', request.url));
+  }
+
+  if (magicLink.expiresAt < new Date()) {
     return NextResponse.redirect(new URL('/organizer/login?error=expired_token', request.url));
   }
 
-  // Rotate to a fresh session token — this consumes the magic link so it can't be replayed
-  const newToken = generateSessionToken();
-  await db.user.update({
-    where: { id: user.id },
-    data: { sessionToken: newToken, sessionTokenExpiry: tokenExpiry() },
+  // Mark the magic link as consumed so it cannot be replayed
+  await db.magicLinkToken.update({
+    where: { id: magicLink.id },
+    data: { usedAt: new Date() },
   });
 
-  await setSessionCookie(newToken);
+  // Issue a fresh session token (hashed in DB, raw in cookie)
+  const sessionToken = generateSessionToken();
+  await createSession(magicLink.user.id, sessionToken);
 
   return NextResponse.redirect(new URL('/organizer', request.url));
 }

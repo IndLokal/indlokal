@@ -4,8 +4,10 @@ import Script from 'next/script';
 import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import './globals.css';
+import '@/lib/env'; // Runtime env validation — fail fast on missing vars
 import { siteConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { hashToken } from '@/lib/session';
 import { PostHogProvider } from '@/components/PostHogProvider';
 import { PostHogIdentify } from '@/components/PostHogIdentify';
 
@@ -38,8 +40,9 @@ async function getAnalyticsUserId(): Promise<string | null> {
     const jar = await cookies();
     const token = jar.get('lp_session')?.value;
     if (!token) return null;
+    const hashed = await hashToken(token);
     const user = await db.user.findUnique({
-      where: { sessionToken: token },
+      where: { sessionToken: hashed },
       select: { id: true, sessionTokenExpiry: true },
     });
     if (!user?.sessionTokenExpiry || user.sessionTokenExpiry < new Date()) return null;

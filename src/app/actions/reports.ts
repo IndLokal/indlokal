@@ -2,6 +2,8 @@
 
 import { db } from '@/lib/db';
 import { z } from 'zod';
+import { headers } from 'next/headers';
+import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
 
 // ─── Report an issue ─────────────────────────────────────────────────────────
 
@@ -15,6 +17,11 @@ const reportSchema = z.object({
 export type ReportResult = { success: true } | { success: false; error: string } | null;
 
 export async function reportIssue(_prev: ReportResult, formData: FormData): Promise<ReportResult> {
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!checkRateLimit(reportLimiter, ip).allowed) {
+    return { success: false, error: 'Too many reports. Please try again later.' };
+  }
+
   const raw = {
     communityId: formData.get('communityId') as string,
     reportType: formData.get('reportType') as string,
@@ -63,6 +70,11 @@ export async function suggestCommunity(
   _prev: SuggestResult,
   formData: FormData,
 ): Promise<SuggestResult> {
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!checkRateLimit(reportLimiter, ip).allowed) {
+    return { success: false, error: 'Too many suggestions. Please try again later.' };
+  }
+
   const raw = {
     suggestedName: formData.get('suggestedName') as string,
     citySlug: formData.get('citySlug') as string,

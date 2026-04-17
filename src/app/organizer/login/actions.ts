@@ -1,15 +1,12 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { generateSessionToken, tokenExpiry } from '@/lib/session';
+import { generateSessionToken, hashToken, tokenExpiry } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
+import { checkRateLimit, magicLinkLimiter } from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const emailSchema = z.string().email();
-
-// TOKEN_TTL_HOURS must match the value in session.ts
-const TOKEN_TTL_HOURS = 24;
-const MAGIC_LINK_COOLDOWN_MS = 60 * 1000; // 1 minute between requests
 
 export type LoginResult =
   | { success: true; communityName: string }
@@ -52,26 +49,29 @@ export async function requestMagicLink(
     };
   }
 
-  // Rate limit: derive when the last token was issued from its expiry time
-  if (user.sessionTokenExpiry) {
-    const issuedAt = new Date(user.sessionTokenExpiry.getTime() - TOKEN_TTL_HOURS * 60 * 60 * 1000);
-    if (Date.now() - issuedAt.getTime() < MAGIC_LINK_COOLDOWN_MS) {
-      return {
-        success: false,
-        error:
-          'A login link was just sent. Please check your email or wait a moment before retrying.',
-      };
-    }
+  // Rate limit by email address
+  const rl = checkRateLimit(magicLinkLimiter, email);
+  if (!rl.allowed) {
+    return {
+      success: false,
+      error: 'Too many login requests. Please check your email or wait before retrying.',
+    };
   }
 
-  const token = generateSessionToken();
-  await db.user.update({
-    where: { id: user.id },
-    data: { sessionToken: token, sessionTokenExpiry: tokenExpiry() },
+  // Generate a one-time magic link token (separate from session token)
+  const rawToken = generateSessionToken();
+  const tokenHash = await hashToken(rawToken);
+
+  await db.magicLinkToken.create({
+    data: {
+      tokenHash,
+      userId: user.id,
+      expiresAt: tokenExpiry(),
+    },
   });
 
   try {
-    await sendMagicLinkEmail(user.email, token, user.claimedCommunities[0].name);
+    await sendMagicLinkEmail(user.email, rawToken, user.claimedCommunities[0].name);
   } catch {
     return { success: false, error: 'Failed to send login email. Please try again.' };
   }

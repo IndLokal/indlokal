@@ -1,12 +1,26 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
+import { hashToken } from '@/lib/session';
+import { checkRateLimit, trackLimiter } from '@/lib/rate-limit';
 import type { InteractionEntityType } from '@prisma/client';
 
 const VALID_ENTITY_TYPES = new Set<string>(['COMMUNITY', 'EVENT', 'RESOURCE']);
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit by IP
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const rl = checkRateLimit(trackLimiter, ip);
+    if (!rl.allowed) {
+      return NextResponse.json({ ok: true }); // silently drop — non-critical telemetry
+    }
+
+    const contentType = req.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      return NextResponse.json({ ok: true });
+    }
+
     const body = await req.json();
     const { entityType, entityId, cityId } = body as {
       entityType: string;
@@ -22,11 +36,12 @@ export async function POST(req: NextRequest) {
 
     // Optional user resolution via session cookie
     const jar = await cookies();
-    const token = jar.get('lp_session')?.value;
+    const rawToken = jar.get('lp_session')?.value;
     let userId: string | null = null;
-    if (token) {
+    if (rawToken) {
+      const hashed = await hashToken(rawToken);
       const user = await db.user.findUnique({
-        where: { sessionToken: token },
+        where: { sessionToken: hashed },
         select: { id: true, sessionTokenExpiry: true },
       });
       if (user?.sessionTokenExpiry && user.sessionTokenExpiry > new Date()) {

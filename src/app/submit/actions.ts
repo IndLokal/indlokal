@@ -7,6 +7,8 @@ import slugify from 'slugify';
 import { sendSubmissionReceivedEmail } from '@/lib/email';
 import { captureServerEvent } from '@/lib/posthog';
 import { Events } from '@/lib/analytics-events';
+import { headers } from 'next/headers';
+import { checkRateLimit, submitLimiter } from '@/lib/rate-limit';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -17,6 +19,11 @@ export async function submitCommunity(
   _prev: SubmitResult,
   formData: FormData,
 ): Promise<SubmitResult> {
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!checkRateLimit(submitLimiter, ip).allowed) {
+    return { success: false, errors: { name: ['Too many submissions. Please try again later.'] } };
+  }
+
   const raw = {
     name: formData.get('name') as string,
     description: formData.get('description') as string,

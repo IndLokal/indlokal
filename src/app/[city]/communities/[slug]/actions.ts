@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { claimCommunitySchema } from '@/lib/validation';
 import { captureServerEvent } from '@/lib/posthog';
 import { Events } from '@/lib/analytics-events';
+import { headers } from 'next/headers';
+import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
 
 export type ClaimResult =
   | { success: true }
@@ -11,6 +13,14 @@ export type ClaimResult =
   | null;
 
 export async function claimCommunity(_prev: ClaimResult, formData: FormData): Promise<ClaimResult> {
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  if (!checkRateLimit(reportLimiter, ip).allowed) {
+    return {
+      success: false,
+      errors: { communityId: ['Too many requests. Please try again later.'] },
+    };
+  }
+
   const raw = {
     communityId: formData.get('communityId') as string,
     email: formData.get('email') as string,

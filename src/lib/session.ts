@@ -5,6 +5,16 @@ import { db } from '@/lib/db';
 const COOKIE_NAME = 'lp_session';
 const TOKEN_TTL_HOURS = 24;
 
+/** Hash a token with SHA-256 for safe DB storage (the raw token is only in the cookie) */
+export async function hashToken(token: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(token);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
 /** Generate a cryptographically random session token */
 export function generateSessionToken(): string {
   const bytes = new Uint8Array(32);
@@ -21,6 +31,19 @@ export function tokenExpiry(): Date {
   return d;
 }
 
+/**
+ * Persist a session: hash the raw token and store it in the DB, then set the raw token as a cookie.
+ * Call this instead of writing sessionToken to the DB directly.
+ */
+export async function createSession(userId: string, rawToken: string) {
+  const hashed = await hashToken(rawToken);
+  await db.user.update({
+    where: { id: userId },
+    data: { sessionToken: hashed, sessionTokenExpiry: tokenExpiry() },
+  });
+  await setSessionCookie(rawToken);
+}
+
 /** Set the session cookie (call from a Route Handler, not a Server Action) */
 export async function setSessionCookie(token: string) {
   const jar = await cookies();
@@ -33,14 +56,16 @@ export async function setSessionCookie(token: string) {
   });
 }
 
-/** Read the session cookie and return the authenticated user, or null */
+/** Read the session cookie, hash it, and return the authenticated user or null */
 export async function getSessionUser() {
   const jar = await cookies();
-  const token = jar.get(COOKIE_NAME)?.value;
-  if (!token) return null;
+  const rawToken = jar.get(COOKIE_NAME)?.value;
+  if (!rawToken) return null;
+
+  const hashed = await hashToken(rawToken);
 
   const user = await db.user.findUnique({
-    where: { sessionToken: token },
+    where: { sessionToken: hashed },
     include: {
       claimedCommunities: {
         where: { claimState: 'CLAIMED' },
@@ -79,13 +104,13 @@ export async function requireAdmin() {
 /** Clear the session cookie and invalidate the token in the DB */
 export async function clearSessionCookie() {
   const jar = await cookies();
-  const token = jar.get(COOKIE_NAME)?.value;
+  const rawToken = jar.get(COOKIE_NAME)?.value;
   jar.delete(COOKIE_NAME);
 
-  // Null out the DB token so it cannot be reused even before the 24h expiry
-  if (token) {
+  if (rawToken) {
+    const hashed = await hashToken(rawToken);
     await db.user.updateMany({
-      where: { sessionToken: token },
+      where: { sessionToken: hashed },
       data: { sessionToken: null, sessionTokenExpiry: null },
     });
   }
