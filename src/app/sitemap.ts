@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { siteConfig, UPCOMING_CITIES } from '@/lib/config';
+import { siteConfig, UPCOMING_CITIES, RESOURCE_CATEGORIES } from '@/lib/config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
@@ -77,6 +77,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: 'monthly',
       priority: 0.6,
     });
+    // Resource category sub-pages
+    entries.push({
+      url: `${cityBase}/resources`,
+      changeFrequency: 'weekly',
+      priority: 0.6,
+    });
+    for (const cat of RESOURCE_CATEGORIES) {
+      entries.push({
+        url: `${cityBase}/resources/${cat.slug}`,
+        changeFrequency: 'monthly',
+        priority: 0.5,
+      });
+    }
     entries.push({
       url: `${cityBase}/search`,
       changeFrequency: 'weekly',
