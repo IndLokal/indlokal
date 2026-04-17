@@ -12,8 +12,15 @@ import slugify from 'slugify';
 const addEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
-  startsAt: z.string().datetime({ offset: true }).or(z.string().min(1)),
-  endsAt: z.string().optional().or(z.literal('')),
+  startsAt: z
+    .string()
+    .min(1, 'Start date is required')
+    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid start date' }),
+  endsAt: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((v) => !v || !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
   venueName: z.string().max(200).optional().or(z.literal('')),
   venueAddress: z.string().max(500).optional().or(z.literal('')),
   isOnline: z.coerce.boolean().default(false),
@@ -58,6 +65,14 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   }
 
   const data = parsed.data;
+
+  // Validate ordering: endsAt must be after startsAt
+  if (data.endsAt && data.endsAt !== '' && new Date(data.endsAt) <= new Date(data.startsAt)) {
+    return {
+      success: false,
+      errors: { endsAt: ['End time must be after start time'] },
+    };
+  }
 
   // Generate slug
   const baseSlug = slugify(data.title, { lower: true, strict: true });

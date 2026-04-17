@@ -7,6 +7,10 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email();
 
+// TOKEN_TTL_HOURS must match the value in session.ts
+const TOKEN_TTL_HOURS = 24;
+const MAGIC_LINK_COOLDOWN_MS = 60 * 1000; // 1 minute between requests
+
 export type LoginResult =
   | { success: true; communityName: string }
   | { success: false; error: string }
@@ -46,6 +50,18 @@ export async function requestMagicLink(
       success: false,
       error: 'Your account exists but has no approved community claim yet.',
     };
+  }
+
+  // Rate limit: derive when the last token was issued from its expiry time
+  if (user.sessionTokenExpiry) {
+    const issuedAt = new Date(user.sessionTokenExpiry.getTime() - TOKEN_TTL_HOURS * 60 * 60 * 1000);
+    if (Date.now() - issuedAt.getTime() < MAGIC_LINK_COOLDOWN_MS) {
+      return {
+        success: false,
+        error:
+          'A login link was just sent. Please check your email or wait a moment before retrying.',
+      };
+    }
   }
 
   const token = generateSessionToken();

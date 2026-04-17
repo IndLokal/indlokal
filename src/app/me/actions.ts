@@ -6,8 +6,31 @@ import { db } from '@/lib/db';
 
 export type PreferencesResult = { success: true } | { success: false; error: string } | null;
 
-const VALID_PERSONAS = ['STUDENT', 'PROFESSIONAL', 'FAMILY', 'EXPAT', 'VISITOR'];
-const VALID_LANGUAGES = ['en', 'de', 'hi', 'ta', 'te', 'ml', 'kn', 'bn', 'mr', 'gu', 'pa'];
+const VALID_PERSONAS = [
+  'student',
+  'family',
+  'professional',
+  'newcomer',
+  'cultural',
+  'religious',
+  'sports',
+  'food',
+];
+const VALID_LANGUAGES = [
+  'Hindi',
+  'Telugu',
+  'Tamil',
+  'Kannada',
+  'Malayalam',
+  'Bengali',
+  'Marathi',
+  'Gujarati',
+  'Punjabi',
+  'Odia',
+  'Urdu',
+  'English',
+  'German',
+];
 
 export async function updatePreferences(
   _prev: PreferencesResult,

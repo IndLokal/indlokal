@@ -33,7 +33,7 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
   // Verify community exists and is claimable
   const community = await db.community.findUnique({
     where: { id: data.communityId },
-    select: { id: true, claimState: true },
+    select: { id: true, claimState: true, metadata: true },
   });
 
   if (!community) {
@@ -59,13 +59,15 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
     });
   }
 
-  // Update community claim state
+  // Update community claim state — merge into existing metadata to avoid overwriting submission data
+  const existingMetadata = (community.metadata ?? {}) as Record<string, unknown>;
   await db.community.update({
     where: { id: data.communityId },
     data: {
       claimState: 'CLAIM_PENDING',
       claimedByUserId: user.id,
       metadata: {
+        ...existingMetadata,
         claimRequest: {
           relationship: data.relationship,
           message: data.message,
