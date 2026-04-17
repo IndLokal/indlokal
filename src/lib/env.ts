@@ -1,9 +1,10 @@
 /**
- * Runtime environment validation — import this in the root layout to fail fast
- * if critical environment variables are missing in production.
+ * Runtime environment validation — call validateEnv() in the root layout to
+ * fail fast if critical environment variables are missing in production.
+ *
+ * All checks are deferred to a function so they run at server startup, NOT
+ * during `next build` static generation (which also uses NODE_ENV=production).
  */
-
-const isProduction = process.env.NODE_ENV === 'production';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -15,29 +16,36 @@ function requireEnv(name: string): string {
 
 function requireEnvInProduction(name: string): string | undefined {
   const value = process.env[name];
-  if (isProduction && !value) {
+  if (process.env.NODE_ENV === 'production' && !value) {
     throw new Error(`[env] Missing required environment variable in production: ${name}`);
   }
   return value;
 }
 
-// Always required
-requireEnv('DATABASE_URL');
+let validated = false;
 
-// Required in production
-requireEnvInProduction('NEXT_PUBLIC_APP_URL');
-requireEnvInProduction('GOOGLE_CLIENT_ID');
-requireEnvInProduction('GOOGLE_CLIENT_SECRET');
-requireEnvInProduction('RESEND_API_KEY');
+export function validateEnv() {
+  if (validated) return;
+  // Skip during `next build` static generation — env secrets aren't available
+  if (process.env.NEXT_PHASE === 'phase-production-build') return;
+  validated = true;
 
-// Validate NEXT_PUBLIC_APP_URL is not localhost in production
-if (isProduction) {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (appUrl && (appUrl.includes('localhost') || appUrl.includes('127.0.0.1'))) {
-    throw new Error(
-      `[env] NEXT_PUBLIC_APP_URL must not point to localhost in production: ${appUrl}`,
-    );
+  // Always required
+  requireEnv('DATABASE_URL');
+
+  // Required in production
+  requireEnvInProduction('NEXT_PUBLIC_APP_URL');
+  requireEnvInProduction('GOOGLE_CLIENT_ID');
+  requireEnvInProduction('GOOGLE_CLIENT_SECRET');
+  requireEnvInProduction('RESEND_API_KEY');
+
+  // Validate NEXT_PUBLIC_APP_URL is not localhost in production
+  if (process.env.NODE_ENV === 'production') {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    if (appUrl && (appUrl.includes('localhost') || appUrl.includes('127.0.0.1'))) {
+      throw new Error(
+        `[env] NEXT_PUBLIC_APP_URL must not point to localhost in production: ${appUrl}`,
+      );
+    }
   }
 }
-
-export {};

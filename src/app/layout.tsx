@@ -4,7 +4,7 @@ import Script from 'next/script';
 import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import './globals.css';
-import '@/lib/env'; // Runtime env validation — fail fast on missing vars
+import { validateEnv } from '@/lib/env';
 import { siteConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { hashToken } from '@/lib/session';
@@ -57,6 +57,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  validateEnv(); // Runtime env validation — fail fast on missing vars
   const userId = await getAnalyticsUserId();
 
   return (

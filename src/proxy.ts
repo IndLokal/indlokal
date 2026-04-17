@@ -20,7 +20,7 @@ const BLOCKED_PATHS = [
 
 const BLOCKED_PREFIXES = ['/.git/', '/.svn/', '/wp-', '/phpmyadmin/', '/cgi-bin/'];
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // 1. Block scanner paths — return 404 immediately

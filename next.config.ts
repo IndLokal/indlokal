@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next';
 
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? 'https://eu.i.posthog.com';
+const isDev = process.env.NODE_ENV === 'development';
 
 const nextConfig: NextConfig = {
   images: {
@@ -32,7 +33,7 @@ const nextConfig: NextConfig = {
             key: 'Content-Security-Policy',
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://plausible.io https://eu.i.posthog.com",
+              `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''} https://plausible.io https://eu.i.posthog.com`,
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: blob:",
               "font-src 'self' https://fonts.gstatic.com",
