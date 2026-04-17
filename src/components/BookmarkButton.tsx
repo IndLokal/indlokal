@@ -31,7 +31,7 @@ export function BookmarkButton({ communityId, saved }: Props) {
       onClick={handleClick}
       disabled={isPending}
       aria-label={optimisticSaved ? 'Remove from saves' : 'Save community'}
-      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
+      className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors active:scale-95 ${
         optimisticSaved
           ? 'bg-brand-100 text-brand-600'
           : 'bg-muted-bg text-muted hover:text-foreground hover:bg-slate-200'

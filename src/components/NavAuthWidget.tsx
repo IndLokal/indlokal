@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { getSessionUser } from '@/lib/session';
 import { signOut } from '@/app/actions/auth';
 
@@ -29,12 +30,14 @@ export async function NavAuthWidget() {
         className="text-muted hover:text-foreground flex items-center gap-2 text-sm transition-colors"
       >
         {user.avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={user.avatarUrl}
             alt={user.displayName ?? 'Avatar'}
+            width={28}
+            height={28}
             className="h-7 w-7 rounded-full object-cover"
             referrerPolicy="no-referrer"
+            fetchPriority="high"
           />
         ) : (
           <span className="bg-brand-100 text-brand-700 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold">
@@ -47,7 +50,7 @@ export async function NavAuthWidget() {
       <form action={signOut}>
         <button
           type="submit"
-          className="text-muted hover:text-foreground text-xs transition-colors"
+          className="text-muted hover:text-foreground rounded-lg px-2 py-2 text-xs transition-colors"
         >
           Sign out
         </button>

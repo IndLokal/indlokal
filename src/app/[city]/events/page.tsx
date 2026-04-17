@@ -41,7 +41,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
 
   const events = await getUpcomingEvents(city, {
     categorySlug: filters.category,
-    limit: 40,
+    limit: 16,
   });
 
   // Client-side-ish filters for cost and type (applied after fetch)
@@ -88,41 +88,39 @@ export default async function EventsPage({ params, searchParams }: Props) {
         </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
+      {/* Filters — horizontally scrollable on mobile */}
+      <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {/* Category filter */}
-        <div className="flex flex-wrap gap-1.5">
-          <Link
-            href={`/${city}/events`}
-            className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-              !filters.category
-                ? 'border-brand-600 bg-brand-50 text-brand-700'
-                : 'border-border text-muted hover:border-border hover:text-foreground'
-            }`}
-          >
-            All
-          </Link>
-          {categories.map((cat) => {
-            const isActive = filters.category === cat.slug;
-            const href = `/${city}/events?category=${cat.slug}${filters.cost ? `&cost=${filters.cost}` : ''}${filters.type ? `&type=${filters.type}` : ''}`;
-            return (
-              <Link
-                key={cat.slug}
-                href={href}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                  isActive
-                    ? 'border-brand-600 bg-brand-50 text-brand-700'
-                    : 'border-border text-muted hover:border-border hover:text-foreground'
-                }`}
-              >
-                {cat.icon} {cat.name}
-              </Link>
-            );
-          })}
-        </div>
+        <Link
+          href={`/${city}/events`}
+          className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+            !filters.category
+              ? 'border-brand-600 bg-brand-50 text-brand-700'
+              : 'border-border text-muted hover:border-border hover:text-foreground'
+          }`}
+        >
+          All
+        </Link>
+        {categories.map((cat) => {
+          const isActive = filters.category === cat.slug;
+          const href = `/${city}/events?category=${cat.slug}${filters.cost ? `&cost=${filters.cost}` : ''}${filters.type ? `&type=${filters.type}` : ''}`;
+          return (
+            <Link
+              key={cat.slug}
+              href={href}
+              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+                isActive
+                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                  : 'border-border text-muted hover:border-border hover:text-foreground'
+              }`}
+            >
+              {cat.icon} {cat.name}
+            </Link>
+          );
+        })}
 
         {/* Divider */}
-        <span className="text-border hidden sm:inline">|</span>
+        <span className="text-border hidden self-center sm:inline">|</span>
 
         {/* Cost filter */}
         {(['free', 'paid'] as const).map((cost) => {
@@ -135,7 +133,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <Link
               key={cost}
               href={href}
-              className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium capitalize transition-colors active:opacity-70 ${
                 isActive
                   ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'
@@ -155,7 +153,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <Link
               key={type}
               href={href}
-              className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
+              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
                 isActive
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'

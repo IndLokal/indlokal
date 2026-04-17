@@ -37,7 +37,7 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            <Link href="/submit" className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
+            <Link href="/submit" className="btn-primary inline-flex px-4 py-2 text-sm">
               Submit Community
             </Link>
             <NavAuthWidget />
@@ -47,12 +47,12 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero — big, bold, colorful */}
-        <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pt-28 pb-32 text-center">
+        <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pt-16 pb-20 text-center sm:pt-28 sm:pb-32">
           {/* Decorative blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="bg-brand-500/20 absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full blur-3xl" />
-            <div className="bg-accent-400/15 absolute top-1/2 -left-40 h-[400px] w-[400px] rounded-full blur-3xl" />
-            <div className="absolute right-1/4 -bottom-20 h-[300px] w-[300px] rounded-full bg-fuchsia-500/10 blur-3xl" />
+            <div className="bg-brand-500/20 absolute -top-40 -right-40 hidden h-[500px] w-[500px] rounded-full blur-3xl sm:block" />
+            <div className="bg-accent-400/15 absolute top-1/2 -left-40 hidden h-[400px] w-[400px] rounded-full blur-3xl sm:block" />
+            <div className="absolute right-1/4 -bottom-20 hidden h-[300px] w-[300px] rounded-full bg-fuchsia-500/10 blur-3xl sm:block" />
             {/* Subtle grid pattern */}
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           </div>
@@ -62,7 +62,7 @@ export default function HomePage() {
               <span className="bg-accent-400 flex h-2 w-2 animate-pulse rounded-full" />
               🇮🇳 For the Indian community in Germany 🇩🇪
             </span>
-            <h1 className="mt-8 text-5xl leading-[1.1] font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:mt-8 sm:text-6xl lg:text-7xl">
               Discover what&apos;s happening{' '}
               <span className="from-accent-300 via-accent-400 bg-gradient-to-r to-orange-300 bg-clip-text text-transparent">
                 for Indians

@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Script from 'next/script';
+import { Suspense } from 'react';
 import './globals.css';
 import { siteConfig } from '@/lib/config';
+import { PostHogProvider } from '@/components/PostHogProvider';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -31,8 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <head>
+        <meta name="theme-color" content="#4f46e5" />
+      </head>
       <body className="flex min-h-full flex-col font-sans">
-        {children}
+        <PostHogProvider>
+          <Suspense>{children}</Suspense>
+        </PostHogProvider>
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
             strategy="afterInteractive"

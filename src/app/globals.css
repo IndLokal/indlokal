@@ -106,7 +106,12 @@
     @apply border-border/60 overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm ring-1 ring-black/[0.03];
   }
   .card-interactive {
-    @apply border-border/60 hover:shadow-brand-500/5 hover:border-brand-200 overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm ring-1 ring-black/[0.03] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg;
+    @apply border-border/60 hover:shadow-brand-500/5 hover:border-brand-200 overflow-hidden rounded-[var(--radius-card)] border bg-white shadow-sm ring-1 ring-black/[0.03] transition-all duration-200 hover:shadow-lg;
+  }
+  @media (hover: hover) {
+    .card-interactive {
+      @apply hover:-translate-y-1;
+    }
   }
 
   /* ─── Badges ─── */

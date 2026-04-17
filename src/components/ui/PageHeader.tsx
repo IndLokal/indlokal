@@ -51,7 +51,7 @@ export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
       {action && (
         <Link
           href={action.href}
-          className="text-brand-600 hover:text-brand-700 shrink-0 text-sm font-semibold transition-colors"
+          className="text-brand-600 hover:text-brand-700 -mr-2 shrink-0 rounded-lg px-2 py-2 text-sm font-semibold transition-colors"
         >
           {action.label} →
         </Link>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import type { CommunityListItem } from '@/modules/community/types';
 import { BookmarkButton } from '@/components/BookmarkButton';
 import { ActivityBadge } from '@/components/ui';
@@ -42,10 +43,11 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
             className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${avatarGradient} text-lg font-semibold text-white shadow-sm`}
           >
             {community.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={community.logoUrl}
                 alt={community.name}
+                width={40}
+                height={40}
                 className="h-full w-full object-cover"
               />
             ) : (

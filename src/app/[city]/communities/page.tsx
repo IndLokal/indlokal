@@ -61,7 +61,7 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   if (!cityRow || !cityRow.isActive) notFound();
 
   const [allCommunities, user] = await Promise.all([
-    getCommunitiesByCity(city, { categorySlug: category, limit: 40 }),
+    getCommunitiesByCity(city, { categorySlug: category, limit: 24 }),
     getSessionUser(),
   ]);
   const cityName = cityRow.name;
