@@ -82,6 +82,12 @@ cmd_start() {
   echo "Starting LocalPulse..."
   echo ""
 
+  # Clear Next.js cache to ensure fresh build
+  if [ -d ".next" ]; then
+    rm -rf .next
+    print_success "Cleared .next cache"
+  fi
+
   # Ensure DB is running
   if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
     cmd_db_start
