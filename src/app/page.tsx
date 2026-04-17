@@ -1,23 +1,24 @@
 import Link from 'next/link';
-import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
+import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { Footer } from '@/components/layout';
+import { CitySearch } from '@/components/CitySearch';
 
 const CITY_META: Record<string, { emoji: string; tagline: string; gradient: string }> = {
   stuttgart: {
     emoji: '🏰',
     tagline: "Baden-Württemberg's capital",
-    gradient: 'from-brand-600 to-brand-800',
+    gradient: 'from-brand-500 to-brand-700',
   },
   karlsruhe: {
     emoji: '⚡',
     tagline: 'Tech hub of the south',
-    gradient: 'from-violet-600 to-violet-800',
+    gradient: 'from-violet-500 to-purple-700',
   },
   mannheim: {
     emoji: '🎵',
     tagline: 'Culture at the Rhine-Neckar',
-    gradient: 'from-fuchsia-600 to-fuchsia-800',
+    gradient: 'from-fuchsia-500 to-pink-700',
   },
 };
 
@@ -72,7 +73,13 @@ export default function HomePage() {
               {siteConfig.tagline} Find communities, events, festivals, and resources — all in one
               place.
             </p>
-            <div className="mt-10 flex flex-wrap justify-center gap-4">
+
+            {/* City search box */}
+            <div className="mx-auto mt-10 max-w-md">
+              <CitySearch />
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link
                 href={`/${ACTIVE_CITIES[0]}`}
                 className="text-brand-700 hover:bg-brand-50 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold shadow-2xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.98]"
@@ -89,40 +96,79 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* City cards — overlapping hero */}
-        <section className="relative z-10 mx-auto -mt-14 max-w-4xl px-4 pb-20">
-          <div className="grid gap-5 sm:grid-cols-3">
+        {/* City selector — overlapping hero */}
+        <section className="relative z-10 mx-auto -mt-14 max-w-5xl px-4 pb-12">
+          <div className="grid gap-4 sm:grid-cols-3">
             {ACTIVE_CITIES.map((city) => {
               const meta = CITY_META[city] ?? {
                 emoji: '🏙️',
                 tagline: '',
-                gradient: 'from-brand-600 to-brand-800',
+                gradient: 'from-brand-500 to-brand-700',
               };
               return (
                 <Link
                   key={city}
                   href={`/${city}`}
-                  className="group hover:shadow-brand-500/10 relative flex flex-col items-center gap-4 overflow-hidden rounded-2xl bg-white p-8 text-center shadow-xl ring-1 shadow-black/5 ring-black/[0.04] transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                  className="group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl bg-white p-7 text-center shadow-lg ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  {/* Top gradient stripe */}
                   <div
-                    className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${meta.gradient}`}
+                    className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${meta.gradient}`}
                   />
                   <span
-                    className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.gradient} text-3xl shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}
+                    className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${meta.gradient} text-2xl shadow-sm transition-transform duration-200 group-hover:scale-105`}
                   >
                     {meta.emoji}
                   </span>
-                  <span className="text-foreground group-hover:text-brand-600 text-xl font-extrabold capitalize transition-colors">
+                  <span className="text-foreground group-hover:text-brand-600 text-lg font-bold capitalize transition-colors">
                     {city}
                   </span>
                   <span className="text-muted text-sm">{meta.tagline}</span>
-                  <span className="text-brand-600 mt-1 inline-flex translate-y-2 items-center gap-1 text-xs font-semibold opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">
+                  {METRO_REGIONS[city] && (
+                    <span className="text-muted/70 mt-1 text-xs leading-snug">
+                      Incl.{' '}
+                      {METRO_REGIONS[city].satellites
+                        .slice(0, 4)
+                        .map((s) => s.name)
+                        .join(', ')}
+                      {METRO_REGIONS[city].satellites.length > 4 && ' & more'}
+                    </span>
+                  )}
+                  <span className="text-brand-600 mt-0.5 text-xs font-semibold opacity-0 transition-all group-hover:opacity-100">
                     Explore →
                   </span>
                 </Link>
               );
             })}
+          </div>
+        </section>
+
+        {/* Expanding to more cities */}
+        <section className="mx-auto max-w-5xl px-4 pb-20">
+          <div className="text-center">
+            <h2 className="text-foreground text-xl font-bold sm:text-2xl">
+              Expanding across Germany
+            </h2>
+            <p className="text-muted mx-auto mt-2 max-w-md text-sm">
+              We&apos;re bringing LocalPulse to more cities. Click a city to see what&apos;s
+              planned.
+            </p>
+          </div>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            {UPCOMING_CITIES.map((city) => (
+              <Link
+                key={city.slug}
+                href={`/${city.slug}`}
+                className="group hover:ring-brand-200 inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <span className="text-lg">{city.emoji}</span>
+                <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">
+                  {city.name}
+                </span>
+                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 ring-1 ring-amber-200/60">
+                  Soon
+                </span>
+              </Link>
+            ))}
           </div>
         </section>
 
@@ -133,7 +179,7 @@ export default function HomePage() {
               <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
                 Why LocalPulse
               </span>
-              <h2 className="text-foreground mt-4 text-3xl font-extrabold sm:text-4xl">
+              <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
                 Everything the Indian diaspora needs
               </h2>
               <p className="text-muted mx-auto mt-3 max-w-lg">
@@ -172,11 +218,11 @@ export default function HomePage() {
                   className={`${item.bg} rounded-2xl p-8 ring-1 ${item.border} text-center transition-all hover:-translate-y-1 hover:shadow-lg`}
                 >
                   <span
-                    className={`mx-auto flex h-16 w-16 items-center justify-center rounded-2xl ${item.iconBg} text-3xl shadow-lg`}
+                    className={`mx-auto flex h-14 w-14 items-center justify-center rounded-xl ${item.iconBg} text-2xl shadow-sm`}
                   >
                     {item.icon}
                   </span>
-                  <h3 className="text-foreground mt-6 text-lg font-bold">{item.title}</h3>
+                  <h3 className="text-foreground mt-5 text-base font-semibold">{item.title}</h3>
                   <p className="text-muted mt-2 text-sm leading-relaxed">{item.desc}</p>
                 </div>
               ))}
@@ -190,7 +236,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           <div className="relative mx-auto max-w-xl">
-            <h2 className="text-3xl font-extrabold text-white sm:text-4xl">Run a community?</h2>
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">Run a community?</h2>
             <p className="text-brand-200 mt-4 text-lg">
               Claim your community page, post events, and reach more people — free forever.
             </p>

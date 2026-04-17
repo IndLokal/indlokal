@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
-import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
+import { notFound, redirect } from 'next/navigation';
+import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, SATELLITE_TO_METRO } from '@/lib/config';
 import { AppShell } from '@/components/layout';
 
 type CityLayoutProps = {
@@ -23,8 +23,22 @@ export async function generateMetadata({ params }: CityLayoutProps): Promise<Met
 export default async function CityLayout({ children, params }: CityLayoutProps) {
   const { city } = await params;
 
-  if (!ACTIVE_CITIES.includes(city as (typeof ACTIVE_CITIES)[number])) {
+  const isActive = (ACTIVE_CITIES as readonly string[]).includes(city);
+  const isUpcoming = UPCOMING_CITIES.some((c) => c.slug === city);
+  const metroRedirect = SATELLITE_TO_METRO[city];
+
+  // Satellite towns redirect to their metro city
+  if (metroRedirect) {
+    redirect(`/${metroRedirect}`);
+  }
+
+  if (!isActive && !isUpcoming) {
     notFound();
+  }
+
+  // Upcoming cities: render children directly (coming-soon page handles its own layout)
+  if (isUpcoming && !isActive) {
+    return <>{children}</>;
   }
 
   const cityName = city.charAt(0).toUpperCase() + city.slice(1);

@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { siteConfig } from '@/lib/config';
+import { siteConfig, UPCOMING_CITIES } from '@/lib/config';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
@@ -28,6 +28,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Submit page
   entries.push({ url: `${baseUrl}/submit`, changeFrequency: 'monthly', priority: 0.6 });
+
+  // Static pages
+  entries.push({ url: `${baseUrl}/about`, changeFrequency: 'monthly', priority: 0.5 });
+  entries.push({ url: `${baseUrl}/contact`, changeFrequency: 'monthly', priority: 0.4 });
+  entries.push({ url: `${baseUrl}/privacy`, changeFrequency: 'yearly', priority: 0.3 });
+  entries.push({ url: `${baseUrl}/terms`, changeFrequency: 'yearly', priority: 0.3 });
+  entries.push({ url: `${baseUrl}/impressum`, changeFrequency: 'yearly', priority: 0.3 });
+
+  // Upcoming cities — coming soon pages
+  for (const city of UPCOMING_CITIES) {
+    entries.push({
+      url: `${baseUrl}/${city.slug}/coming-soon`,
+      changeFrequency: 'monthly',
+      priority: 0.4,
+    });
+  }
 
   for (const city of cities) {
     const cityBase = `${baseUrl}/${city.slug}`;
