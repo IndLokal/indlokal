@@ -136,4 +136,21 @@
   .gradient-warm {
     background: linear-gradient(135deg, #fef3c7 0%, #eef2ff 100%);
   }
+
+  /* ─── Legal / Prose ─── */
+  .prose-legal h2 {
+    @apply text-foreground mt-0 mb-3 text-lg font-bold;
+  }
+  .prose-legal h3 {
+    @apply text-foreground mt-4 mb-2 text-base font-semibold;
+  }
+  .prose-legal p {
+    @apply text-muted text-sm leading-relaxed;
+  }
+  .prose-legal ul {
+    @apply text-muted list-disc space-y-1 pl-5 text-sm leading-relaxed;
+  }
+  .prose-legal a {
+    @apply text-brand-600 hover:underline;
+  }
 }

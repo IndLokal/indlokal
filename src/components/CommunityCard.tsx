@@ -10,14 +10,14 @@ type Props = {
 };
 
 const AVATAR_COLORS = [
-  'from-brand-500 to-brand-700',
-  'from-violet-500 to-purple-700',
-  'from-fuchsia-500 to-pink-700',
-  'from-orange-500 to-red-600',
-  'from-emerald-500 to-teal-700',
-  'from-cyan-500 to-blue-600',
-  'from-amber-500 to-orange-600',
-  'from-rose-500 to-pink-600',
+  'from-brand-400 to-brand-600',
+  'from-violet-400 to-purple-600',
+  'from-fuchsia-400 to-pink-600',
+  'from-orange-400 to-red-500',
+  'from-emerald-400 to-teal-600',
+  'from-cyan-400 to-blue-500',
+  'from-amber-400 to-orange-500',
+  'from-rose-400 to-pink-500',
 ];
 
 function getAvatarColor(name: string) {
@@ -31,15 +31,15 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
   const avatarGradient = getAvatarColor(community.name);
 
   return (
-    <div className="group hover:shadow-brand-500/10 relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 shadow-black/5 ring-black/[0.04] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
-      {/* Colored top stripe — 3px gradient */}
-      <div className={`h-1 w-full bg-gradient-to-r ${avatarGradient}`} />
+    <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/[0.06]">
+      {/* Colored top stripe */}
+      <div className={`h-0.5 w-full bg-gradient-to-r ${avatarGradient} opacity-70`} />
 
       <Link href={href} className="flex flex-col p-5">
         {/* Top row: logo + badges */}
         <div className="flex items-start justify-between gap-3">
           <div
-            className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${avatarGradient} text-xl font-bold text-white shadow-lg`}
+            className={`flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${avatarGradient} text-lg font-semibold text-white shadow-sm`}
           >
             {community.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -54,12 +54,12 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
             {community.isTrending && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm">
+              <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600 ring-1 ring-orange-200">
                 🔥 Trending
               </span>
             )}
             {community.claimState === 'CLAIMED' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
                 ✓ Verified
               </span>
             )}
@@ -68,13 +68,15 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
         </div>
 
         {/* Name */}
-        <h3 className="text-foreground group-hover:text-brand-600 mt-4 leading-snug font-bold transition-colors">
+        <h3 className="text-foreground group-hover:text-brand-600 mt-3 text-[15px] leading-snug font-semibold transition-colors">
           {community.name}
         </h3>
 
         {/* Description */}
         {community.description && (
-          <p className="text-muted mt-1.5 line-clamp-2 text-sm">{community.description}</p>
+          <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
+            {community.description}
+          </p>
         )}
 
         {/* Category tags */}
@@ -94,10 +96,10 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
 
         {/* Footer: event count */}
         <div className="border-border/30 mt-5 mt-auto flex items-center justify-between gap-3 border-t pt-4">
-          <div className="text-muted flex items-center gap-3 text-xs font-semibold">
+          <div className="text-muted flex items-center gap-3 text-[11px] font-medium">
             {community._count.events > 0 && (
-              <span className="bg-brand-50 text-brand-600 flex items-center gap-1.5 rounded-full px-3 py-1">
-                <span className="bg-brand-500 h-1.5 w-1.5 animate-pulse rounded-full" />
+              <span className="bg-brand-50 text-brand-600 flex items-center gap-1.5 rounded-full px-2.5 py-0.5">
+                <span className="bg-brand-400 h-1.5 w-1.5 animate-pulse rounded-full" />
                 {community._count.events} Upcoming Event{community._count.events !== 1 ? 's' : ''}
               </span>
             )}

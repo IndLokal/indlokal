@@ -45,7 +45,7 @@ export function SectionHeader({ title, subtitle, action }: SectionHeaderProps) {
   return (
     <div className="flex items-baseline justify-between gap-4">
       <div>
-        <h2 className="text-foreground text-xl font-semibold">{title}</h2>
+        <h2 className="text-foreground text-lg font-semibold">{title}</h2>
         {subtitle && <p className="text-muted mt-1 text-sm">{subtitle}</p>}
       </div>
       {action && (
