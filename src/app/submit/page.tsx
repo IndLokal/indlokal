@@ -34,8 +34,8 @@ export default async function SubmitPage() {
       </nav>
       <h1 className="text-foreground text-3xl font-bold tracking-tight">List your community</h1>
       <p className="text-muted mt-3 text-lg leading-relaxed">
-        Know an Indian community in Germany that should be on LocalPulse? Fill out the form below
-        and our team will review it within a few days.
+        Help others find what you wish you had when you arrived. It takes 2 minutes - our team
+        reviews submissions quickly and you&apos;ll be notified when it goes live.
       </p>
 
       <div className="border-border mt-10 rounded-[var(--radius-card)] border bg-white p-6 shadow-sm sm:p-8">

@@ -5,9 +5,9 @@
 
 export const siteConfig = {
   name: 'LocalPulse',
-  tagline: 'The real-time guide to Indian communities and events near you.',
+  tagline: 'Your guide to Indian communities, events, and resources in Germany.',
   description:
-    'Discover Indian communities, events, and cultural activities in your German city. Find what is happening this week for the Indian diaspora.',
+    'Find Indian communities, events, festivals, and expat resources in your German city. See what is happening this week near you.',
   url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://localpulse.de',
 } as const;
 

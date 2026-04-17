@@ -72,7 +72,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           </div>
           <div className="relative">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Indians in {cityName}
+              What&apos;s happening for Indians in {cityName}
             </h1>
             <div className="mt-3 flex items-center gap-4 text-sm">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-medium text-white/90 backdrop-blur-sm">

@@ -59,7 +59,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-muted max-w-xs text-sm leading-relaxed">
-              Connecting the Indian diaspora with communities, events, and resources across Germany.
+              Because finding your people in a new country shouldn&apos;t be hard.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 pt-1">

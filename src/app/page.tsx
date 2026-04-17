@@ -38,7 +38,7 @@ export default function HomePage() {
           </Link>
           <div className="flex items-center gap-3 text-sm">
             <Link href="/submit" className="btn-primary inline-flex px-4 py-2 text-sm">
-              Submit Community
+              List a Community
             </Link>
             <NavAuthWidget />
           </div>
@@ -63,15 +63,14 @@ export default function HomePage() {
               🇮🇳 For the Indian community in Germany 🇩🇪
             </span>
             <h1 className="mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:mt-8 sm:text-6xl lg:text-7xl">
-              Discover what&apos;s happening{' '}
+              Your Indian community{' '}
               <span className="from-accent-300 via-accent-400 bg-gradient-to-r to-orange-300 bg-clip-text text-transparent">
-                for Indians
+                in Germany
               </span>{' '}
-              near you
+              - all in one place
             </h1>
             <p className="text-brand-200/80 mx-auto mt-6 max-w-xl text-lg leading-relaxed">
-              {siteConfig.tagline} Find communities, events, festivals, and resources — all in one
-              place.
+              Find the communities, events, and resources that make Germany feel like home.
             </p>
 
             {/* City search box */}
@@ -90,7 +89,7 @@ export default function HomePage() {
                 href="/submit"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/20"
               >
-                Submit Community
+                List a Community
               </Link>
             </div>
           </div>
@@ -177,13 +176,13 @@ export default function HomePage() {
           <div className="mx-auto max-w-5xl">
             <div className="text-center">
               <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
-                Why LocalPulse
+                Made for Indians in Germany
               </span>
               <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
-                Everything the Indian diaspora needs
+                Everything you need to feel at home
               </h2>
               <p className="text-muted mx-auto mt-3 max-w-lg">
-                One platform to stay connected with your community in Germany
+                From festivals to flat-hunting tips — we&apos;ve got your city covered.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-3">
@@ -194,7 +193,7 @@ export default function HomePage() {
                   iconBg: 'bg-gradient-to-br from-orange-400 to-amber-500',
                   border: 'ring-orange-200/60',
                   title: 'Events & Festivals',
-                  desc: 'Holi, Diwali, Navratri, meetups, workshops — see what\u2019s happening this week.',
+                  desc: 'Never miss a celebration. From Holi to cricket tournaments — see everything happening near you this week.',
                 },
                 {
                   icon: '🤝',
@@ -202,7 +201,7 @@ export default function HomePage() {
                   iconBg: 'bg-gradient-to-br from-brand-500 to-violet-500',
                   border: 'ring-brand-200/60',
                   title: 'Communities & Groups',
-                  desc: 'WhatsApp groups, cultural associations, student networks — find your people.',
+                  desc: 'Your people are already here. Find the WhatsApp groups, associations, and networks where you belong.',
                 },
                 {
                   icon: '📋',
@@ -210,7 +209,7 @@ export default function HomePage() {
                   iconBg: 'bg-gradient-to-br from-emerald-400 to-teal-500',
                   border: 'ring-emerald-200/60',
                   title: 'Expat Resources',
-                  desc: 'City registration, doctors, grocery stores, tax guides — practical help for daily life.',
+                  desc: 'Anmeldung guides, Indian grocery stores, doctors, tax tips — practical help so you can settle in faster.',
                 },
               ].map((item) => (
                 <div
@@ -236,22 +235,24 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           <div className="relative mx-auto max-w-xl">
-            <h2 className="text-2xl font-bold text-white sm:text-3xl">Run a community?</h2>
+            <h2 className="text-2xl font-bold text-white sm:text-3xl">
+              Your community deserves to be found
+            </h2>
             <p className="text-brand-200 mt-4 text-lg">
-              Claim your community page, post events, and reach more people — free forever.
+              Claim your page, post events, and connect with Indians in your city — 100% free.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link
                 href="/submit"
                 className="text-brand-700 hover:bg-brand-50 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold shadow-2xl shadow-black/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               >
-                Submit your community
+                List your community →
               </Link>
               <Link
                 href="/organizer/login"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/20"
               >
-                Organiser login
+                Already listed? Sign in
               </Link>
             </div>
           </div>
