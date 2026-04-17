@@ -56,7 +56,8 @@ export async function getSessionUser() {
   });
 
   if (!user) return null;
-  if (!user.sessionTokenExpiry || user.sessionTokenExpiry < new Date()) return null;
+  if (!user.sessionToken || !user.sessionTokenExpiry || user.sessionTokenExpiry < new Date())
+    return null;
 
   return user;
 }
