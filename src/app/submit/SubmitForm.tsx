@@ -56,10 +56,7 @@ export function SubmitForm({ cities, categories }: Props) {
           <strong>{state.communityName}</strong> has been submitted for review. Our team will review
           it and make it live within a few days.
         </p>
-        <Link
-          href="/submit"
-          className="mt-6 inline-block rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
-        >
+        <Link href="/submit" className="btn-primary mt-6 inline-block px-5 py-2.5 text-sm">
           Submit another community
         </Link>
       </div>
@@ -71,11 +68,11 @@ export function SubmitForm({ cities, categories }: Props) {
   return (
     <form action={formAction} className="space-y-8">
       {/* Community details */}
-      <fieldset className="space-y-4">
-        <legend className="text-lg font-semibold">Community Details</legend>
+      <fieldset className="card-base space-y-5 p-6">
+        <legend className="text-foreground -ml-1 text-lg font-bold">Community Details</legend>
 
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="name" className="text-foreground block text-sm font-medium">
             Community Name *
           </label>
           <input
@@ -83,14 +80,14 @@ export function SubmitForm({ cities, categories }: Props) {
             name="name"
             type="text"
             required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="input-base mt-1"
             placeholder="e.g. Telugu Association Stuttgart"
           />
           <FieldError errors={errors.name} />
         </div>
 
         <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="description" className="text-foreground block text-sm font-medium">
             Description *
           </label>
           <textarea
@@ -98,22 +95,17 @@ export function SubmitForm({ cities, categories }: Props) {
             name="description"
             required
             rows={4}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+            className="input-base mt-1"
             placeholder="What does your community do? Who is it for? How often do you meet?"
           />
           <FieldError errors={errors.description} />
         </div>
 
         <div>
-          <label htmlFor="citySlug" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="citySlug" className="text-foreground block text-sm font-medium">
             City *
           </label>
-          <select
-            id="citySlug"
-            name="citySlug"
-            required
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-          >
+          <select id="citySlug" name="citySlug" required className="input-base mt-1">
             <option value="">Select a city</option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
@@ -126,20 +118,20 @@ export function SubmitForm({ cities, categories }: Props) {
       </fieldset>
 
       {/* Categories */}
-      <fieldset className="space-y-3">
-        <legend className="text-lg font-semibold">Categories *</legend>
-        <p className="text-sm text-gray-500">Select at least one that fits your community.</p>
+      <fieldset className="card-base space-y-4 p-6">
+        <legend className="text-foreground -ml-1 text-lg font-bold">Categories *</legend>
+        <p className="text-muted text-sm">Select at least one that fits your community.</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {categories.map((cat) => (
             <label
               key={cat.slug}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+              className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
             >
               <input
                 type="checkbox"
                 name="categories"
                 value={cat.slug}
-                className="accent-indigo-600"
+                className="accent-brand-500"
               />
               <span>
                 {cat.icon} {cat.name}
@@ -151,16 +143,16 @@ export function SubmitForm({ cities, categories }: Props) {
       </fieldset>
 
       {/* Languages */}
-      <fieldset className="space-y-3">
-        <legend className="text-lg font-semibold">Languages</legend>
-        <p className="text-sm text-gray-500">Which languages are used in your community?</p>
+      <fieldset className="card-base space-y-4 p-6">
+        <legend className="text-foreground -ml-1 text-lg font-bold">Languages</legend>
+        <p className="text-muted text-sm">Which languages are used in your community?</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {LANGUAGES.map((lang) => (
             <label
               key={lang}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+              className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
             >
-              <input type="checkbox" name="languages" value={lang} className="accent-indigo-600" />
+              <input type="checkbox" name="languages" value={lang} className="accent-brand-500" />
               <span>{lang}</span>
             </label>
           ))}
@@ -168,19 +160,19 @@ export function SubmitForm({ cities, categories }: Props) {
       </fieldset>
 
       {/* Access Channels */}
-      <fieldset className="space-y-4">
-        <legend className="text-lg font-semibold">Access Channel *</legend>
-        <p className="text-sm text-gray-500">
+      <fieldset className="card-base space-y-5 p-6">
+        <legend className="text-foreground -ml-1 text-lg font-bold">Access Channel *</legend>
+        <p className="text-muted text-sm">
           How can people find/join your community? At least one link is required.
         </p>
 
-        <div className="rounded-lg border border-gray-200 p-4">
-          <p className="mb-2 text-sm font-medium text-gray-600">Primary Channel</p>
+        <div className="border-border rounded-[var(--radius-button)] border p-4">
+          <p className="text-muted mb-2 text-sm font-medium">Primary Channel</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <select
               name="primaryChannelType"
               required
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               {CHANNEL_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -193,18 +185,18 @@ export function SubmitForm({ cities, categories }: Props) {
               type="url"
               required
               placeholder="https://chat.whatsapp.com/..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             />
           </div>
           <FieldError errors={errors.primaryChannelUrl} />
         </div>
 
-        <div className="rounded-lg border border-dashed border-gray-200 p-4">
-          <p className="mb-2 text-sm font-medium text-gray-400">Secondary Channel (optional)</p>
+        <div className="border-border rounded-[var(--radius-button)] border border-dashed p-4">
+          <p className="text-muted mb-2 text-sm font-medium">Secondary Channel (optional)</p>
           <div className="flex flex-col gap-2 sm:flex-row">
             <select
               name="secondaryChannelType"
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <option value="">None</option>
               {CHANNEL_OPTIONS.map((opt) => (
@@ -217,22 +209,24 @@ export function SubmitForm({ cities, categories }: Props) {
               name="secondaryChannelUrl"
               type="url"
               placeholder="https://..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             />
           </div>
         </div>
       </fieldset>
 
       {/* Contact Information */}
-      <fieldset className="space-y-4">
-        <legend className="text-lg font-semibold">Your Contact Information</legend>
-        <p className="text-sm text-gray-500">
+      <fieldset className="card-base space-y-5 p-6">
+        <legend className="text-foreground -ml-1 text-lg font-bold">
+          Your Contact Information
+        </legend>
+        <p className="text-muted text-sm">
           We&apos;ll use this to follow up about your submission. Not displayed publicly.
         </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="contactName" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="contactName" className="text-foreground block text-sm font-medium">
               Your Name *
             </label>
             <input
@@ -240,12 +234,12 @@ export function SubmitForm({ cities, categories }: Props) {
               name="contactName"
               type="text"
               required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="input-base mt-1"
             />
             <FieldError errors={errors.contactName} />
           </div>
           <div>
-            <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="contactEmail" className="text-foreground block text-sm font-medium">
               Your Email *
             </label>
             <input
@@ -253,7 +247,7 @@ export function SubmitForm({ cities, categories }: Props) {
               name="contactEmail"
               type="email"
               required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="input-base mt-1"
             />
             <FieldError errors={errors.contactEmail} />
           </div>
@@ -263,7 +257,7 @@ export function SubmitForm({ cities, categories }: Props) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-indigo-600 px-5 py-3 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50"
       >
         {isPending ? 'Submitting...' : 'Submit Community for Review'}
       </button>

@@ -28,13 +28,16 @@ export default async function AdminPipelinePage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Content Pipeline</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="text-muted mt-1 text-sm">
             {items.length} items pending review · AI-extracted from configured sources
           </p>
         </div>
         <div className="flex items-center gap-4">
           <RunPipelineButton />
-          <Link href="/admin" className="text-sm text-indigo-600 hover:underline">
+          <Link
+            href="/admin"
+            className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
+          >
             ← Dashboard
           </Link>
         </div>
@@ -80,7 +83,7 @@ export default async function AdminPipelinePage() {
       )}
 
       {items.length === 0 && (
-        <p className="mt-12 text-center text-gray-400">
+        <p className="text-muted mt-12 text-center">
           No items in the review queue. Run the pipeline to fetch new content.
         </p>
       )}
@@ -88,7 +91,7 @@ export default async function AdminPipelinePage() {
       {/* ─── Recent history ─── */}
       {recentlyProcessed.length > 0 && (
         <section className="mt-12">
-          <h2 className="text-lg font-semibold text-gray-600">Recently Processed</h2>
+          <h2 className="text-muted text-lg font-semibold">Recently Processed</h2>
           <div className="mt-4 space-y-2">
             {recentlyProcessed.map((item) => {
               const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
@@ -99,7 +102,7 @@ export default async function AdminPipelinePage() {
               return (
                 <div
                   key={item.id}
-                  className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-2 text-sm"
+                  className="border-border/50 flex items-center justify-between rounded-[var(--radius-button)] border px-4 py-2 text-sm"
                 >
                   <div>
                     <span
@@ -108,11 +111,11 @@ export default async function AdminPipelinePage() {
                       {item.status === 'APPROVED' ? '✓' : '✗'}
                     </span>{' '}
                     <span className="font-medium">{name}</span>
-                    <span className="ml-2 text-gray-400">
+                    <span className="text-muted ml-2">
                       {item.entityType} · {item.city.name}
                     </span>
                   </div>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-muted text-xs">
                     {item.reviewedAt?.toLocaleDateString()}
                   </span>
                 </div>
@@ -147,7 +150,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
         : 'bg-red-100 text-red-800';
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="card-base p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           {/* Title + type badge */}
@@ -167,7 +170,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
 
           {/* Event details */}
           {event && (
-            <div className="mt-1.5 space-y-0.5 text-sm text-gray-600">
+            <div className="text-muted mt-1.5 space-y-0.5 text-sm">
               {event.date && (
                 <p>
                   📅 {event.date}
@@ -190,7 +193,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
 
           {/* Community details */}
           {community && (
-            <div className="mt-1.5 space-y-0.5 text-sm text-gray-600">
+            <div className="text-muted mt-1.5 space-y-0.5 text-sm">
               {community.description && <p>{community.description}</p>}
               {community.languages.length > 0 && <p>🗣️ {community.languages.join(', ')}</p>}
             </div>
@@ -198,7 +201,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
 
           {/* Description */}
           {(event?.description ?? community?.description) && (
-            <p className="mt-2 line-clamp-2 text-sm text-gray-500">
+            <p className="text-muted mt-2 line-clamp-2 text-sm">
               {event?.description ?? community?.description}
             </p>
           )}
@@ -209,7 +212,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
               {(event?.categories ?? community?.categories ?? []).map((cat) => (
                 <span
                   key={cat}
-                  className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700"
+                  className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 text-xs"
                 >
                   {cat}
                 </span>
@@ -218,7 +221,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
           )}
 
           {/* Source info */}
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="text-muted mt-2 text-xs">
             Source: {item.sourceType}
             {item.sourceUrl && (
               <>
@@ -227,7 +230,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
                   href={item.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-indigo-500 hover:underline"
+                  className="text-brand-500 hover:underline"
                 >
                   View source ↗
                 </a>

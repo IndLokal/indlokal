@@ -15,9 +15,6 @@
 import { db } from '@/lib/db';
 import type { SearchStrategy } from './types';
 
-/** Channel types we can actually scrape (no auth / API needed) */
-const SCRAPEABLE_CHANNEL_TYPES = ['WEBSITE', 'MEETUP'] as const;
-
 /**
  * Query the database for all active communities with scrapeable access channels,
  * and return a SearchStrategy[] of pinned_url entries.

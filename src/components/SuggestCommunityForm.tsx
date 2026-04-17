@@ -11,9 +11,9 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
 
   if (state?.success) {
     return (
-      <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
-        <p className="text-sm font-medium text-green-800">Thanks for the suggestion!</p>
-        <p className="mt-1 text-xs text-green-700">
+      <div className="rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50 p-6 text-center shadow-sm">
+        <p className="text-base font-semibold text-emerald-800">🎉 Thanks for the suggestion!</p>
+        <p className="mt-2 text-sm text-emerald-700">
           We&apos;ll look into adding <strong>{state.name}</strong> to LocalPulse.
         </p>
       </div>
@@ -21,12 +21,12 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
   }
 
   return (
-    <form action={formAction} className="space-y-3">
+    <form action={formAction} className="space-y-4">
       <input type="hidden" name="citySlug" value={citySlug} />
 
       <div>
-        <label htmlFor="suggestedName" className="block text-sm font-medium text-gray-700">
-          Community name <span className="text-red-500">*</span>
+        <label htmlFor="suggestedName" className="text-foreground block text-sm font-semibold">
+          Community name <span className="text-destructive">*</span>
         </label>
         <input
           id="suggestedName"
@@ -35,45 +35,47 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
           required
           maxLength={120}
           placeholder="e.g. Frankfurt Tamil Sangam"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="suggDetails" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="suggDetails" className="text-foreground block text-sm font-semibold">
           Any extra details?
         </label>
         <textarea
           id="suggDetails"
           name="details"
-          rows={2}
+          rows={3}
           maxLength={500}
           placeholder="WhatsApp link, website, description — anything useful"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="suggEmail" className="block text-sm font-medium text-gray-700">
-          Your email (optional)
+        <label htmlFor="suggEmail" className="text-foreground block text-sm font-semibold">
+          Your email <span className="text-muted font-normal">(optional)</span>
         </label>
         <input
           id="suggEmail"
           name="reporterEmail"
           type="email"
           placeholder="We'll let you know when it's live"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
         />
       </div>
 
       {state?.success === false && (
-        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
+        <p className="bg-destructive/10 text-destructive rounded-[var(--radius-button)] px-3.5 py-2.5 text-sm font-medium">
+          {state.error}
+        </p>
       )}
 
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+        className="btn-primary mt-2 w-full py-2.5 text-base"
       >
         {isPending ? 'Submitting…' : 'Suggest this community'}
       </button>

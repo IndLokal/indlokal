@@ -21,28 +21,28 @@ export default function AddEventForm({ communityName }: { communityName: string 
     <form action={formAction} className="space-y-6">
       {/* Title */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Event title *</label>
+        <label className="text-foreground block text-sm font-medium">Event title *</label>
         <input
           name="title"
           type="text"
           required
           maxLength={200}
           placeholder={`${communityName} — Diwali Celebration`}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
         {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title[0]}</p>}
       </div>
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Description <span className="text-gray-400">(optional)</span>
+        <label className="text-foreground block text-sm font-medium">
+          Description <span className="text-muted">(optional)</span>
         </label>
         <textarea
           name="description"
           rows={4}
           maxLength={5000}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           placeholder="What's happening, who should come, what to bring..."
         />
       </div>
@@ -50,67 +50,67 @@ export default function AddEventForm({ communityName }: { communityName: string 
       {/* Dates */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Start date & time *</label>
+          <label className="text-foreground block text-sm font-medium">Start date & time *</label>
           <input
             name="startsAt"
             type="datetime-local"
             required
             defaultValue={defaultStart}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           />
           {errors.startsAt && <p className="mt-1 text-sm text-red-600">{errors.startsAt[0]}</p>}
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            End time <span className="text-gray-400">(optional)</span>
+          <label className="text-foreground block text-sm font-medium">
+            End time <span className="text-muted">(optional)</span>
           </label>
           <input
             name="endsAt"
             type="datetime-local"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           />
         </div>
       </div>
 
       {/* Location */}
       <div className="space-y-3">
-        <label className="flex items-center gap-2 text-sm text-gray-700">
+        <label className="text-foreground flex items-center gap-2 text-sm">
           <input type="checkbox" name="isOnline" value="true" className="rounded" />
           This is an online event
         </label>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Venue name</label>
+            <label className="text-foreground block text-sm font-medium">Venue name</label>
             <input
               name="venueName"
               type="text"
               maxLength={200}
               placeholder="e.g. Kulturhaus Stuttgart"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+              className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Venue address</label>
+            <label className="text-foreground block text-sm font-medium">Venue address</label>
             <input
               name="venueAddress"
               type="text"
               maxLength={500}
               placeholder="e.g. Theodor-Heuss-Str. 2, 70174 Stuttgart"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+              className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Online link <span className="text-gray-400">(for online events)</span>
+          <label className="text-foreground block text-sm font-medium">
+            Online link <span className="text-muted">(for online events)</span>
           </label>
           <input
             name="onlineLink"
             type="url"
             placeholder="https://meet.google.com/..."
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           />
         </div>
       </div>
@@ -118,11 +118,11 @@ export default function AddEventForm({ communityName }: { communityName: string 
       {/* Cost + Registration */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Cost</label>
+          <label className="text-foreground block text-sm font-medium">Cost</label>
           <select
             name="cost"
             defaultValue="free"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           >
             <option value="free">Free</option>
             <option value="paid">Paid</option>
@@ -130,28 +130,28 @@ export default function AddEventForm({ communityName }: { communityName: string 
           </select>
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Registration URL <span className="text-gray-400">(optional)</span>
+          <label className="text-foreground block text-sm font-medium">
+            Registration URL <span className="text-muted">(optional)</span>
           </label>
           <input
             name="registrationUrl"
             type="url"
             placeholder="https://eventbrite.com/..."
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           />
         </div>
       </div>
 
       {/* Featured image */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Featured image URL <span className="text-gray-400">(optional)</span>
+        <label className="text-foreground block text-sm font-medium">
+          Featured image URL <span className="text-muted">(optional)</span>
         </label>
         <input
           name="imageUrl"
           type="url"
           placeholder="https://example.com/event-banner.jpg"
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
         {errors.imageUrl && <p className="mt-1 text-sm text-red-600">{errors.imageUrl[0]}</p>}
       </div>
@@ -162,14 +162,11 @@ export default function AddEventForm({ communityName }: { communityName: string 
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="btn-primary px-6 py-2.5 text-sm disabled:opacity-50"
         >
           {isPending ? 'Publishing...' : 'Publish event'}
         </button>
-        <Link
-          href="/organizer"
-          className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-        >
+        <Link href="/organizer" className="btn-secondary px-6 py-2.5 text-sm">
           Cancel
         </Link>
       </div>

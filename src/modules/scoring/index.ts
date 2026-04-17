@@ -25,5 +25,3 @@ export {
   refreshAllScores,
   refreshCommunityScore,
 } from './scoring';
-
-export type { PulseScoreBreakdown } from './scoring';

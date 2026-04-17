@@ -22,20 +22,20 @@ export default async function LoginPage({
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Sign in to LocalPulse</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <h1 className="text-foreground text-2xl font-bold">Sign in to LocalPulse</h1>
+          <p className="text-muted mt-2 text-sm">
             Save communities and events you&apos;re interested in.
           </p>
         </div>
 
         {error === 'oauth' && (
-          <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="bg-destructive/10 text-destructive rounded-[var(--radius-button)] px-4 py-3 text-sm font-medium">
             Sign-in failed. Please try again.
           </div>
         )}
 
         {error === 'not_configured' && (
-          <div className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-[var(--radius-button)] border border-amber-200/50 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Google sign-in is not configured yet.{' '}
             <span className="font-medium">
               Add <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code> to your{' '}
@@ -46,7 +46,7 @@ export default async function LoginPage({
 
         <Link
           href="/api/auth/google"
-          className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-sm transition-shadow hover:shadow-md"
+          className="card-base text-foreground flex w-full items-center justify-center gap-3 px-4 py-3 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           {/* Google "G" logo */}
           <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
@@ -70,9 +70,16 @@ export default async function LoginPage({
           Continue with Google
         </Link>
 
-        <p className="text-center text-xs text-gray-400">
+        <p className="text-muted text-center text-xs">
           By signing in, you agree to LocalPulse&apos;s terms. We only store your name and email.
         </p>
+
+        <Link
+          href="/"
+          className="text-muted hover:text-foreground block text-center text-sm transition-colors"
+        >
+          ← Continue browsing
+        </Link>
       </div>
     </div>
   );

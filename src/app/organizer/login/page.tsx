@@ -24,15 +24,18 @@ export default function OrganizerLoginPage() {
   if (state?.success) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
-        <div className="w-full max-w-md rounded-2xl border border-green-200 bg-green-50 p-8 text-center">
-          <div className="text-4xl">✓</div>
-          <h2 className="mt-3 text-xl font-semibold text-green-800">Check your inbox</h2>
-          <p className="mt-2 text-sm text-green-700">
-            We&apos;ve sent an access link for <strong>{state.communityName}</strong> to your email
-            address. Click the link to open your organizer dashboard.
+        <div className="w-full max-w-md rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50 p-8 text-center shadow-sm">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-3xl text-emerald-600">
+            ✓
+          </div>
+          <h2 className="text-xl font-bold tracking-tight text-emerald-900">Check your inbox</h2>
+          <p className="mt-2.5 text-sm leading-relaxed text-emerald-800">
+            We&apos;ve sent an access link for{' '}
+            <strong className="font-semibold">{state.communityName}</strong> to your email address.
+            Click the link to securely open your dashboard.
           </p>
-          <p className="mt-4 text-xs text-gray-400">
-            The link expires in 24 hours. Check your spam folder if you don&apos;t see it.
+          <p className="mt-6 border-t border-emerald-200/50 pt-4 text-xs font-medium text-emerald-600/70">
+            Secure link expires in 24 hours. Check your spam folder if you don&apos;t see it.
           </p>
         </div>
       </div>
@@ -42,20 +45,21 @@ export default function OrganizerLoginPage() {
   return (
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="w-full max-w-md">
-        <div className="rounded-2xl border border-gray-200 bg-white p-8 shadow-sm">
-          <h1 className="text-2xl font-bold">Organizer Login</h1>
-          <p className="mt-2 text-sm text-gray-500">
-            Enter your email address to access your community dashboard.
+        <div className="card-base px-8 py-10 text-center">
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">Organizer Login</h1>
+          <p className="text-muted mt-2 text-sm">
+            Enter your email address to receive a secure login link. No passwords required.
           </p>
 
-          <form action={formAction} className="mt-6 space-y-4">
+          <form action={formAction} className="mt-8 space-y-5 text-left">
             {urlErrorMessage && (
-              <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700">
+              <p className="rounded-[var(--radius-button)] border border-amber-200/50 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
                 {urlErrorMessage}
               </p>
             )}
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+
+            <div className="space-y-1.5">
+              <label htmlFor="email" className="text-foreground block text-sm font-semibold">
                 Email address
               </label>
               <input
@@ -64,32 +68,47 @@ export default function OrganizerLoginPage() {
                 type="email"
                 required
                 autoComplete="email"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2.5 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
                 placeholder="you@example.com"
               />
             </div>
 
             {state?.success === false && (
-              <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{state.error}</p>
+              <p className="bg-destructive/10 text-destructive rounded-[var(--radius-button)] px-4 py-3 text-sm font-medium">
+                {state.error}
+              </p>
             )}
 
             <button
               type="submit"
               disabled={isPending}
-              className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="btn-primary mt-2 w-full py-2.5 text-base"
             >
-              {isPending ? 'Checking...' : 'Get access link'}
+              {isPending ? 'Sending secure link...' : 'Get access link'}
             </button>
           </form>
         </div>
 
-        <p className="mt-4 text-center text-xs text-gray-400">
-          Only approved community organizers can log in.{' '}
-          <Link href="/submit" className="underline">
+        <p className="text-muted mt-6 text-center text-sm">
+          Only approved community organizers can log in.
+          <br />
+          <Link
+            href="/submit"
+            className="text-brand-600 hover:text-brand-700 font-semibold transition-colors hover:underline"
+          >
             Submit your community
           </Link>{' '}
-          to get started.
+          to get an invite.
         </p>
+
+        <div className="mt-8 text-center">
+          <Link
+            href="/"
+            className="text-muted hover:text-foreground inline-flex items-center text-sm font-medium transition-colors"
+          >
+            <span className="mr-1.5">←</span> Back to home
+          </Link>
+        </div>
       </div>
     </div>
   );

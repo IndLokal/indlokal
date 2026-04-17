@@ -29,17 +29,17 @@ export default function RunPipelineButton() {
       <button
         onClick={handleRun}
         disabled={running}
-        className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
       >
         {running ? '⏳ Running Pipeline…' : '🚀 Run Pipeline Now'}
       </button>
 
       {result && (
-        <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm">
-          <p className="font-semibold text-gray-700">
+        <div className="border-border bg-muted-bg mt-3 rounded-[var(--radius-button)] border p-4 text-sm">
+          <p className="text-foreground font-semibold">
             Pipeline Complete ({(result.duration / 1000).toFixed(1)}s)
           </p>
-          <div className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-gray-600">
+          <div className="text-muted mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
             <span>Sources processed:</span>
             <span className="font-medium">{result.sourcesProcessed}</span>
             <span>Items fetched:</span>
@@ -64,7 +64,7 @@ export default function RunPipelineButton() {
               <summary className="cursor-pointer text-xs text-amber-600">
                 ⚠️ {result.errors.length} errors
               </summary>
-              <ul className="mt-1 space-y-0.5 text-xs text-gray-500">
+              <ul className="text-muted mt-1 space-y-0.5 text-xs">
                 {result.errors.map((e, i) => (
                   <li key={i}>• {e}</li>
                 ))}

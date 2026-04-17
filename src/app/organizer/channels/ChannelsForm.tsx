@@ -42,19 +42,19 @@ export default function ChannelsForm({ channels }: Props) {
     <div className="mt-8 space-y-8">
       {/* Existing channels */}
       {channels.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="font-semibold text-gray-800">Current channels</h2>
+        <div className="card-base p-6">
+          <h2 className="text-foreground font-semibold">Current channels</h2>
           <ul className="mt-4 space-y-3">
             {channels.map((ch) => (
               <li
                 key={ch.id}
-                className="flex items-center justify-between gap-4 rounded-lg bg-gray-50 px-4 py-3"
+                className="bg-muted-bg flex items-center justify-between gap-4 rounded-[var(--radius-button)] px-4 py-3"
               >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800">
+                  <p className="text-foreground text-sm font-medium">
                     {ch.channelType}
                     {ch.isPrimary && (
-                      <span className="ml-2 rounded-full bg-indigo-100 px-2 py-0.5 text-xs text-indigo-600">
+                      <span className="bg-brand-100 text-brand-600 ml-2 rounded-full px-2 py-0.5 text-xs">
                         Primary
                       </span>
                     )}
@@ -63,7 +63,7 @@ export default function ChannelsForm({ channels }: Props) {
                     href={ch.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="truncate text-xs text-gray-500 hover:underline"
+                    className="text-muted truncate text-xs hover:underline"
                   >
                     {ch.url}
                   </a>
@@ -84,8 +84,8 @@ export default function ChannelsForm({ channels }: Props) {
       )}
 
       {/* Add channel form */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="font-semibold text-gray-800">Add a channel</h2>
+      <div className="card-base p-6">
+        <h2 className="text-foreground font-semibold">Add a channel</h2>
 
         {state?.success && (
           <p className="mt-3 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
@@ -96,11 +96,11 @@ export default function ChannelsForm({ channels }: Props) {
         <form action={addFormAction} className="mt-5 space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Channel type *</label>
+              <label className="text-foreground block text-sm font-medium">Channel type *</label>
               <select
                 name="channelType"
                 required
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">Select...</option>
                 {CHANNEL_OPTIONS.map((o) => (
@@ -114,30 +114,30 @@ export default function ChannelsForm({ channels }: Props) {
               )}
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">Custom label</label>
+              <label className="text-foreground block text-sm font-medium">Custom label</label>
               <input
                 name="label"
                 type="text"
                 maxLength={100}
                 placeholder="e.g. Join our WhatsApp group"
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">URL *</label>
+            <label className="text-foreground block text-sm font-medium">URL *</label>
             <input
               name="url"
               type="url"
               required
               placeholder="https://"
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+              className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             />
             {errors.url && <p className="mt-1 text-sm text-red-600">{errors.url[0]}</p>}
           </div>
 
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+          <label className="text-foreground flex items-center gap-2 text-sm">
             <input type="checkbox" name="isPrimary" value="true" className="rounded" />
             Set as primary channel
           </label>
@@ -145,7 +145,7 @@ export default function ChannelsForm({ channels }: Props) {
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+            className="btn-primary px-5 py-2.5 text-sm disabled:opacity-50"
           >
             {isPending ? 'Adding...' : 'Add channel'}
           </button>

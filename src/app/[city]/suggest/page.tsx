@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { SuggestCommunityForm } from '@/components/SuggestCommunityForm';
@@ -27,21 +28,34 @@ export default async function SuggestCommunityPage({ params }: Props) {
   return (
     <div className="mx-auto max-w-lg space-y-8">
       <div>
-        <nav className="text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityData.name}
-          </a>
+          </Link>
           {' / '}
-          <span className="text-gray-700">Suggest a community</span>
+          <span className="text-foreground">Suggest a community</span>
         </nav>
-        <h1 className="mt-4 text-2xl font-bold">Suggest a Community or Service</h1>
-        <p className="mt-2 text-gray-600">
+        <h1 className="text-foreground mt-4 text-2xl font-bold">Suggest a Community or Service</h1>
+        <p className="text-muted mt-2">
           Know of an Indian community, service, or useful resource in {cityData.name} that
           isn&apos;t listed here? Share the details and we&apos;ll look into adding it.
         </p>
       </div>
 
       <SuggestCommunityForm citySlug={city} />
+
+      <p className="text-muted text-center text-sm">
+        Or{' '}
+        <Link
+          href={`/${city}/communities`}
+          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+        >
+          browse existing communities →
+        </Link>
+      </p>
     </div>
   );
 }

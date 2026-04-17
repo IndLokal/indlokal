@@ -33,8 +33,8 @@ export function BookmarkButton({ communityId, saved }: Props) {
       aria-label={optimisticSaved ? 'Remove from saves' : 'Save community'}
       className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors ${
         optimisticSaved
-          ? 'bg-indigo-100 text-indigo-600'
-          : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:text-gray-600'
+          ? 'bg-brand-100 text-brand-600'
+          : 'bg-muted-bg text-muted hover:text-foreground hover:bg-slate-200'
       }`}
     >
       {/* Bookmark icon */}

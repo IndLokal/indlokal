@@ -16,7 +16,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
     <div className="sm:hidden">
       <button
         onClick={() => setOpen(!open)}
-        className="flex h-9 w-9 items-center justify-center rounded-md text-gray-700 hover:bg-gray-100"
+        className="text-foreground hover:bg-muted-bg flex h-9 w-9 items-center justify-center rounded-[var(--radius-button)] transition-colors"
         aria-label={open ? 'Close menu' : 'Open menu'}
         aria-expanded={open}
       >
@@ -50,7 +50,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
       </button>
 
       {open && (
-        <div className="absolute top-14 right-0 left-0 z-50 border-b border-gray-200 bg-white px-4 py-3 shadow-lg">
+        <div className="border-border absolute top-14 right-0 left-0 z-50 border-b bg-white px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
             {links.map((link) => (
               <Link
@@ -59,8 +59,8 @@ export function MobileNav({ links }: { links: NavLink[] }) {
                 onClick={() => setOpen(false)}
                 className={
                   link.highlight
-                    ? 'rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-medium text-white hover:bg-indigo-700'
-                    : 'rounded-lg px-3 py-2 text-sm text-gray-700 hover:bg-gray-50'
+                    ? 'btn-primary rounded-[var(--radius-button)] px-3 py-2 text-center text-sm'
+                    : 'text-foreground hover:bg-muted-bg rounded-[var(--radius-button)] px-3 py-2 text-sm transition-colors'
                 }
               >
                 {link.label}

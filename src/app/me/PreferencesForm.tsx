@@ -54,14 +54,14 @@ export function PreferencesForm({
     <form action={formAction} className="space-y-6">
       {/* City */}
       <div>
-        <label htmlFor="pref-city" className="block text-sm font-medium text-gray-700">
+        <label htmlFor="pref-city" className="text-foreground block text-sm font-medium">
           My City
         </label>
         <select
           id="pref-city"
           name="cityId"
           defaultValue={currentCityId ?? ''}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         >
           <option value="">No preference</option>
           {cities.map((c) => (
@@ -74,20 +74,20 @@ export function PreferencesForm({
 
       {/* Persona segments */}
       <div>
-        <p className="text-sm font-medium text-gray-700">I identify as</p>
-        <p className="mt-0.5 text-xs text-gray-400">Select all that apply</p>
+        <p className="text-foreground text-sm font-medium">I identify as</p>
+        <p className="text-muted mt-0.5 text-xs">Select all that apply</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {PERSONA_OPTIONS.map((p) => (
             <label
               key={p.value}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+              className="border-border hover:bg-muted-bg flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <input
                 type="checkbox"
                 name="personaSegments"
                 value={p.value}
                 defaultChecked={currentPersonas.includes(p.value)}
-                className="accent-indigo-600"
+                className="accent-brand-500"
               />
               {p.label}
             </label>
@@ -97,19 +97,19 @@ export function PreferencesForm({
 
       {/* Languages */}
       <div>
-        <p className="text-sm font-medium text-gray-700">My Languages</p>
+        <p className="text-foreground text-sm font-medium">My Languages</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
           {LANGUAGES.map((lang) => (
             <label
               key={lang}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+              className="border-border hover:bg-muted-bg flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <input
                 type="checkbox"
                 name="preferredLanguages"
                 value={lang}
                 defaultChecked={currentLanguages.includes(lang)}
-                className="accent-indigo-600"
+                className="accent-brand-500"
               />
               {lang}
             </label>
@@ -121,7 +121,7 @@ export function PreferencesForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="btn-primary px-5 py-2.5 text-sm disabled:opacity-50"
         >
           {isPending ? 'Saving…' : 'Save preferences'}
         </button>

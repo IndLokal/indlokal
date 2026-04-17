@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { searchCommunities, searchEvents } from '@/modules/search/queries';
@@ -59,10 +60,13 @@ export default async function SearchPage({ params, searchParams }: Props) {
     <div className="space-y-8">
       {/* Search header */}
       <div>
-        <nav className="mb-2 text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted mb-2 text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityName}
-          </a>
+          </Link>
           {' / '}
           <span>Search</span>
         </nav>
@@ -77,11 +81,11 @@ export default async function SearchPage({ params, searchParams }: Props) {
           defaultValue={query}
           placeholder="Search communities, events…"
           autoFocus
-          className="flex-1 rounded-xl border border-gray-300 px-4 py-3 text-base outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="border-border text-foreground focus:border-brand-500 focus:ring-brand-100 flex-1 rounded-[var(--radius-card)] border px-4 py-3 text-base transition-colors outline-none focus:ring-2"
         />
         <button
           type="submit"
-          className="rounded-xl bg-indigo-600 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-700"
+          className="btn-primary rounded-[var(--radius-card)] px-6 py-3 text-sm"
         >
           Search
         </button>
@@ -92,14 +96,17 @@ export default async function SearchPage({ params, searchParams }: Props) {
         <>
           {total === 0 && (
             <div className="space-y-3">
-              <p className="text-gray-500">
+              <p className="text-muted">
                 No results for <strong>&ldquo;{query}&rdquo;</strong> in {cityName}.
               </p>
-              <p className="text-sm text-gray-400">
+              <p className="text-muted text-sm">
                 Try a different search term, or{' '}
-                <a href={`/${city}/communities`} className="text-indigo-600 hover:underline">
+                <Link
+                  href={`/${city}/communities`}
+                  className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+                >
                   browse all communities
-                </a>
+                </Link>
                 .
               </p>
             </div>
@@ -109,9 +116,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
             <section>
               <h2 className="text-lg font-semibold">
                 Communities
-                <span className="ml-2 text-sm font-normal text-gray-400">
-                  ({communities.length})
-                </span>
+                <span className="text-muted ml-2 text-sm font-normal">({communities.length})</span>
               </h2>
               <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {communities.map((c) => (
@@ -130,7 +135,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
             <section>
               <h2 className="text-lg font-semibold">
                 Events
-                <span className="ml-2 text-sm font-normal text-gray-400">({events.length})</span>
+                <span className="text-muted ml-2 text-sm font-normal">({events.length})</span>
               </h2>
               <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {events.map((e) => (
@@ -144,7 +149,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
 
       {/* Empty state — no query yet */}
       {query.length < 2 && (
-        <div className="space-y-3 text-sm text-gray-500">
+        <div className="text-muted space-y-3 text-sm">
           <p>Try searching for:</p>
           <div className="flex flex-wrap gap-2">
             {[
@@ -161,7 +166,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
               <a
                 key={s}
                 href={`/${city}/search?q=${encodeURIComponent(s)}`}
-                className="rounded-full border border-gray-200 bg-white px-3 py-1 text-gray-600 hover:bg-gray-50"
+                className="badge-base text-foreground border-border hover:bg-muted-bg bg-white px-3 py-1 transition-colors"
               >
                 {s}
               </a>

@@ -71,23 +71,23 @@ export default async function MePage() {
             referrerPolicy="no-referrer"
           />
         ) : (
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-100 text-xl font-bold text-indigo-700">
+          <div className="bg-brand-100 text-brand-700 flex h-14 w-14 items-center justify-center rounded-full text-xl font-bold">
             {initial}
           </div>
         )}
         <div>
-          <p className="font-semibold text-gray-900">{user.displayName ?? user.email}</p>
-          <p className="text-sm text-gray-500">{user.email}</p>
+          <p className="text-foreground font-semibold">{user.displayName ?? user.email}</p>
+          <p className="text-muted text-sm">{user.email}</p>
         </div>
       </div>
 
       {/* Preferences */}
       <section>
         <h2 className="text-xl font-semibold">Preferences</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="text-muted mt-1 text-sm">
           Personalise LocalPulse to show content relevant to you.
         </p>
-        <div className="mt-4 rounded-xl border border-gray-200 bg-white p-5">
+        <div className="card-base mt-4 p-5">
           <PreferencesForm
             cities={activeCities}
             currentCityId={user.cityId ?? null}
@@ -101,9 +101,12 @@ export default async function MePage() {
       <section>
         <h2 className="text-xl font-semibold">Saved Communities</h2>
         {savedCommunities.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-400">
+          <p className="text-muted mt-3 text-sm">
             No saved communities yet.{' '}
-            <Link href="/" className="text-indigo-600 hover:underline">
+            <Link
+              href="/"
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
               Browse cities →
             </Link>
           </p>
@@ -113,9 +116,9 @@ export default async function MePage() {
               <Link
                 key={community.id}
                 href={`/${community.city.slug}/communities/${community.slug}`}
-                className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="card-base flex items-center gap-4 p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-base font-bold text-indigo-700">
+                <div className="bg-brand-100 text-brand-700 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-base font-bold">
                   {community.logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -128,41 +131,51 @@ export default async function MePage() {
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-gray-900">{community.name}</p>
+                  <p className="text-foreground font-medium">{community.name}</p>
                   {community.description && (
-                    <p className="mt-0.5 truncate text-sm text-gray-500">{community.description}</p>
+                    <p className="text-muted mt-0.5 truncate text-sm">{community.description}</p>
                   )}
-                  <p className="mt-0.5 text-xs text-gray-400">{community.city.name}</p>
+                  <p className="text-muted mt-0.5 text-xs">{community.city.name}</p>
                 </div>
-                <span className="shrink-0 text-gray-400">→</span>
+                <span className="text-muted shrink-0">→</span>
               </Link>
             ))}
           </div>
         )}
       </section>
 
+      {/* Quick links */}
+      <section className="flex flex-wrap gap-3 text-sm">
+        <Link href="/" className="btn-secondary px-4 py-2 text-sm">
+          Explore cities
+        </Link>
+        <Link href="/organizer/login" className="btn-secondary px-4 py-2 text-sm">
+          Organizer dashboard →
+        </Link>
+      </section>
+
       {/* Saved Events */}
       <section>
         <h2 className="text-xl font-semibold">Saved Events</h2>
         {savedEvents.length === 0 ? (
-          <p className="mt-3 text-sm text-gray-400">No saved events yet.</p>
+          <p className="text-muted mt-3 text-sm">No saved events yet.</p>
         ) : (
           <div className="mt-4 space-y-3">
             {savedEvents.map(({ event }) => (
               <Link
                 key={event.id}
                 href={`/${event.city.slug}/events/${event.slug}`}
-                className="flex items-center justify-between rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                className="card-base flex items-center justify-between p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
                 <div>
-                  <p className="font-medium text-gray-900">{event.title}</p>
-                  <p className="mt-0.5 text-sm text-gray-500">
+                  <p className="text-foreground font-medium">{event.title}</p>
+                  <p className="text-muted mt-0.5 text-sm">
                     {format(new Date(event.startsAt), 'EEE, MMM d · h:mm a')}
                     {event.isOnline ? ' · Online' : event.venueName ? ` · ${event.venueName}` : ''}
                   </p>
-                  <p className="mt-0.5 text-xs text-gray-400">{event.city.name}</p>
+                  <p className="text-muted mt-0.5 text-xs">{event.city.name}</p>
                 </div>
-                <span className="shrink-0 text-gray-400">→</span>
+                <span className="text-muted shrink-0">→</span>
               </Link>
             ))}
           </div>

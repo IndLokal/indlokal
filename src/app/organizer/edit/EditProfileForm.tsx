@@ -50,47 +50,47 @@ export default function EditProfileForm({ community }: { community: Community })
 
       {/* Name */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Community name *</label>
+        <label className="text-foreground block text-sm font-medium">Community name *</label>
         <input
           name="name"
           type="text"
           required
           defaultValue={community.name}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>}
       </div>
 
       {/* Short description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">Short description *</label>
+        <label className="text-foreground block text-sm font-medium">Short description *</label>
         <textarea
           name="description"
           required
           rows={3}
           defaultValue={community.description ?? ''}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
         {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description[0]}</p>}
       </div>
 
       {/* Long description */}
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Full description <span className="text-gray-400">(optional)</span>
+        <label className="text-foreground block text-sm font-medium">
+          Full description <span className="text-muted">(optional)</span>
         </label>
         <textarea
           name="descriptionLong"
           rows={6}
           defaultValue={community.descriptionLong ?? ''}
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           placeholder="More detailed information about the community, its history, activities..."
         />
       </div>
 
       {/* Languages */}
       <div>
-        <p className="block text-sm font-medium text-gray-700">Languages</p>
+        <p className="text-foreground block text-sm font-medium">Languages</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
           {LANGUAGES.map((lang) => (
             <label key={lang} className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function EditProfileForm({ community }: { community: Community })
                 defaultChecked={community.languages.includes(lang)}
                 className="rounded"
               />
-              <span className="text-sm text-gray-700">{lang}</span>
+              <span className="text-foreground text-sm">{lang}</span>
             </label>
           ))}
         </div>
@@ -110,19 +110,19 @@ export default function EditProfileForm({ community }: { community: Community })
       {/* Founded year + member count */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Founded year</label>
+          <label className="text-foreground block text-sm font-medium">Founded year</label>
           <input
             name="foundedYear"
             type="number"
             min={1900}
             max={new Date().getFullYear()}
             defaultValue={community.foundedYear ?? ''}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             placeholder="e.g. 2018"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="text-foreground block text-sm font-medium">
             Approximate member count
           </label>
           <input
@@ -130,7 +130,7 @@ export default function EditProfileForm({ community }: { community: Community })
             type="number"
             min={0}
             defaultValue={community.memberCountApprox ?? ''}
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500"
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             placeholder="e.g. 150"
           />
         </div>
@@ -140,14 +140,11 @@ export default function EditProfileForm({ community }: { community: Community })
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-lg bg-indigo-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="btn-primary px-6 py-2.5 text-sm disabled:opacity-50"
         >
           {isPending ? 'Saving...' : 'Save changes'}
         </button>
-        <Link
-          href="/organizer"
-          className="rounded-lg border border-gray-300 px-6 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50"
-        >
+        <Link href="/organizer" className="btn-secondary px-6 py-2.5 text-sm">
           Cancel
         </Link>
       </div>

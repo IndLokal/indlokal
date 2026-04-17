@@ -56,9 +56,9 @@ export default async function AdminScoringPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Scoring &amp; Jobs</h1>
-          <p className="mt-1 text-sm text-gray-500">Run scoring refresh and maintenance jobs.</p>
+          <p className="text-muted mt-1 text-sm">Run scoring refresh and maintenance jobs.</p>
         </div>
-        <Link href="/admin" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
           ← Dashboard
         </Link>
       </div>
@@ -85,36 +85,36 @@ export default async function AdminScoringPage() {
       <section className="mt-10">
         <h2 className="text-lg font-semibold">
           Stale Communities{' '}
-          <span className="text-sm font-normal text-gray-400">(no activity in 90+ days)</span>
+          <span className="text-muted text-sm font-normal">(no activity in 90+ days)</span>
         </h2>
 
         {staleCommunities.length === 0 ? (
-          <p className="mt-4 text-sm text-gray-400">All communities have recent activity.</p>
+          <p className="text-muted mt-4 text-sm">All communities have recent activity.</p>
         ) : (
-          <div className="mt-4 overflow-hidden rounded-xl border border-gray-200">
+          <div className="border-border mt-4 overflow-hidden rounded-[var(--radius-card)] border">
             <table className="w-full text-sm">
-              <thead className="border-b border-gray-200 bg-gray-50 text-left">
+              <thead className="border-border bg-muted-bg border-b text-left">
                 <tr>
-                  <th className="px-4 py-2 font-medium text-gray-600">Community</th>
-                  <th className="px-4 py-2 font-medium text-gray-600">City</th>
-                  <th className="px-4 py-2 font-medium text-gray-600">Last Activity</th>
-                  <th className="px-4 py-2 font-medium text-gray-600">Score</th>
+                  <th className="text-muted px-4 py-2 font-medium">Community</th>
+                  <th className="text-muted px-4 py-2 font-medium">City</th>
+                  <th className="text-muted px-4 py-2 font-medium">Last Activity</th>
+                  <th className="text-muted px-4 py-2 font-medium">Score</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-border/50 divide-y">
                 {staleCommunities.map((c) => (
-                  <tr key={c.id} className="hover:bg-gray-50">
+                  <tr key={c.id} className="hover:bg-muted-bg">
                     <td className="px-4 py-3">
                       <Link
                         href={`/${c.city.slug}/communities/${c.slug}`}
-                        className="font-medium text-indigo-600 hover:underline"
+                        className="text-brand-600 font-medium hover:underline"
                         target="_blank"
                       >
                         {c.name}
                       </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-600">{c.city.name}</td>
-                    <td className="px-4 py-3 text-gray-500">
+                    <td className="text-muted px-4 py-3">{c.city.name}</td>
+                    <td className="text-muted px-4 py-3">
                       {c.lastActivityAt
                         ? c.lastActivityAt.toLocaleDateString('en-GB', {
                             day: 'numeric',
@@ -149,7 +149,7 @@ function StatCard({
   color: 'indigo' | 'green' | 'yellow' | 'red';
 }) {
   const colors = {
-    indigo: 'bg-indigo-50 text-indigo-700',
+    indigo: 'bg-brand-50 text-brand-700',
     green: 'bg-green-50 text-green-700',
     yellow: 'bg-yellow-50 text-yellow-700',
     red: 'bg-red-50 text-red-700',

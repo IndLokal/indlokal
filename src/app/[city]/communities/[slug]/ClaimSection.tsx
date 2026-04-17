@@ -64,11 +64,11 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
   const errors = state?.success === false ? state.errors : {};
 
   return (
-    <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
+    <div className="border-brand-100 bg-brand-50 rounded-[var(--radius-panel)] border p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="font-medium text-indigo-900">Is this your community?</p>
-          <p className="mt-0.5 text-sm text-indigo-700">
+          <p className="text-brand-900 font-medium">Is this your community?</p>
+          <p className="text-brand-700 mt-0.5 text-sm">
             Claim it to post events to the city feed, manage your profile, and reach hundreds of
             people already searching for communities like yours.
           </p>
@@ -76,7 +76,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
         {!expanded && (
           <button
             onClick={() => setExpanded(true)}
-            className="shrink-0 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="btn-primary shrink-0 px-4 py-2 text-sm"
           >
             Claim this community
           </button>
@@ -91,7 +91,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label htmlFor="claim-name" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="claim-name" className="text-foreground block text-sm font-medium">
                 Your Name *
               </label>
               <input
@@ -99,12 +99,12 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                 name="name"
                 type="text"
                 required
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               />
               {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>}
             </div>
             <div>
-              <label htmlFor="claim-email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="claim-email" className="text-foreground block text-sm font-medium">
                 Your Email *
               </label>
               <input
@@ -112,21 +112,24 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                 name="email"
                 type="email"
                 required
-                className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               />
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email[0]}</p>}
             </div>
           </div>
 
           <div>
-            <label htmlFor="claim-relationship" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="claim-relationship"
+              className="text-foreground block text-sm font-medium"
+            >
               Your relationship to {communityName} *
             </label>
             <select
               id="claim-relationship"
               name="relationship"
               required
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
             >
               <option value="">Select...</option>
               {RELATIONSHIPS.map((r) => (
@@ -141,7 +144,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
           </div>
 
           <div>
-            <label htmlFor="claim-message" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="claim-message" className="text-foreground block text-sm font-medium">
               Additional context (optional)
             </label>
             <textarea
@@ -149,26 +152,26 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
               name="message"
               rows={2}
               maxLength={500}
-              className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               placeholder="Any additional information that helps us verify your claim..."
             />
           </div>
 
-          <div className="border-t border-gray-200 pt-4">
-            <p className="text-sm font-medium text-gray-700">
+          <div className="border-border border-t pt-4">
+            <p className="text-foreground text-sm font-medium">
               Proof of connection{' '}
-              <span className="font-normal text-gray-400">(optional — helps us verify faster)</span>
+              <span className="text-muted font-normal">(optional — helps us verify faster)</span>
             </p>
             <div className="mt-3 space-y-3">
               <div>
-                <label htmlFor="claim-whatsapp" className="block text-sm text-gray-600">
+                <label htmlFor="claim-whatsapp" className="text-muted block text-sm">
                   WhatsApp group link
                 </label>
                 <input
                   id="claim-whatsapp"
                   name="whatsappUrl"
                   type="url"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                   placeholder="https://chat.whatsapp.com/..."
                 />
                 {errors.whatsappUrl && (
@@ -176,14 +179,14 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                 )}
               </div>
               <div>
-                <label htmlFor="claim-telegram" className="block text-sm text-gray-600">
+                <label htmlFor="claim-telegram" className="text-muted block text-sm">
                   Telegram group link
                 </label>
                 <input
                   id="claim-telegram"
                   name="telegramUrl"
                   type="url"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                   placeholder="https://t.me/..."
                 />
                 {errors.telegramUrl && (
@@ -191,14 +194,14 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                 )}
               </div>
               <div>
-                <label htmlFor="claim-social" className="block text-sm text-gray-600">
+                <label htmlFor="claim-social" className="text-muted block text-sm">
                   Website or social profile
                 </label>
                 <input
                   id="claim-social"
                   name="socialUrl"
                   type="url"
-                  className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                   placeholder="https://instagram.com/... or your website"
                 />
                 {errors.socialUrl && (
@@ -212,14 +215,14 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
             <button
               type="submit"
               disabled={isPending}
-              className="rounded-lg bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+              className="btn-primary px-5 py-2.5 text-sm disabled:opacity-50"
             >
               {isPending ? 'Submitting...' : 'Submit Claim'}
             </button>
             <button
               type="button"
               onClick={() => setExpanded(false)}
-              className="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+              className="btn-secondary px-5 py-2.5 text-sm"
             >
               Cancel
             </button>

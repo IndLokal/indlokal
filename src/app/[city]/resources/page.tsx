@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 
@@ -110,22 +111,25 @@ export default async function ResourcesPage({ params }: Props) {
     <div className="space-y-10">
       {/* Header */}
       <div>
-        <nav className="mb-2 text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted mb-2 text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityName}
-          </a>
+          </Link>
           {' / '}
           <span>Resources</span>
         </nav>
         <h1 className="text-3xl font-bold">Indian Expat Resources in {cityName}</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="text-muted mt-2">
           Practical guides on city registration, driving, health insurance, taxes, Kindergeld,
           housing, Indian groceries, and more — everything an Indian expat needs in {cityName}.
         </p>
       </div>
 
       {resources.length === 0 && (
-        <p className="text-gray-400">No resources listed yet — check back soon.</p>
+        <p className="text-muted">No resources listed yet — check back soon.</p>
       )}
 
       {/* Grouped sections */}
@@ -138,17 +142,12 @@ export default async function ResourcesPage({ params }: Props) {
             </h2>
             <div className="mt-4 space-y-4">
               {items.map((r) => (
-                <div
-                  key={r.id}
-                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-                >
+                <div key={r.id} className="card-base p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{r.title}</h3>
+                      <h3 className="text-foreground font-semibold">{r.title}</h3>
                       {r.description && (
-                        <p className="mt-1 text-sm leading-relaxed text-gray-600">
-                          {r.description}
-                        </p>
+                        <p className="text-muted mt-1 text-sm leading-relaxed">{r.description}</p>
                       )}
                     </div>
                     {r.url && (
@@ -156,7 +155,7 @@ export default async function ResourcesPage({ params }: Props) {
                         href={r.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="shrink-0 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+                        className="bg-brand-50 text-brand-700 hover:bg-brand-100 shrink-0 rounded-[var(--radius-button)] px-4 py-2 text-sm font-medium"
                       >
                         Visit →
                       </a>
@@ -170,26 +169,23 @@ export default async function ResourcesPage({ params }: Props) {
       })}
 
       {/* CTA */}
-      <section className="rounded-xl border border-indigo-100 bg-indigo-50 p-5">
-        <h2 className="font-semibold text-indigo-900">Know an Indian service in {cityName}?</h2>
-        <p className="mt-1 text-sm text-indigo-700">
+      <section className="border-brand-100 bg-brand-50 rounded-[var(--radius-panel)] border p-5">
+        <h2 className="text-brand-900 font-semibold">Know an Indian service in {cityName}?</h2>
+        <p className="text-brand-700 mt-1 text-sm">
           Help fellow Indians discover useful services — grocery stores, doctors, tax consultants,
           and more.
         </p>
-        <a
-          href={`/${city}/suggest`}
-          className="mt-3 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
+        <Link href={`/${city}/suggest`} className="btn-primary mt-3 inline-block px-4 py-2 text-sm">
           Suggest a service →
-        </a>
+        </Link>
       </section>
 
       {/* Link to consular services */}
-      <p className="text-sm text-gray-500">
+      <p className="text-muted text-sm">
         Looking for passport, visa, or consular services?{' '}
-        <a href={`/${city}/consular-services`} className="text-indigo-600 hover:underline">
+        <Link href={`/${city}/consular-services`} className="text-brand-600 hover:underline">
           View consular services →
-        </a>
+        </Link>
       </p>
     </div>
   );

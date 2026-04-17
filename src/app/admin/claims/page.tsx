@@ -19,15 +19,15 @@ export default async function AdminClaimsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Claim Requests</h1>
-          <p className="mt-1 text-sm text-gray-500">{claims.length} pending review</p>
+          <p className="text-muted mt-1 text-sm">{claims.length} pending review</p>
         </div>
-        <Link href="/admin" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
           ← Dashboard
         </Link>
       </div>
 
       {claims.length === 0 ? (
-        <p className="mt-12 text-center text-gray-400">No claims to review.</p>
+        <p className="text-muted mt-12 text-center">No claims to review.</p>
       ) : (
         <div className="mt-8 space-y-6">
           {claims.map((c) => {
@@ -62,28 +62,28 @@ export default async function AdminClaimsPage() {
             ].filter(Boolean) as { label: string; url: string; color: string }[];
 
             return (
-              <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div key={c.id} className="card-base p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-semibold">{c.name}</h2>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="text-muted mt-0.5 text-sm">
                       {c.city.name} · Slug: {c.slug}
                     </p>
 
                     {c.claimedBy && (
-                      <div className="mt-2 rounded-lg bg-gray-50 p-3 text-sm">
-                        <p className="font-medium text-gray-800">
+                      <div className="bg-muted-bg mt-2 rounded-[var(--radius-button)] p-3 text-sm">
+                        <p className="text-foreground font-medium">
                           Claimant: {c.claimedBy.displayName ?? 'Unknown'} ({c.claimedBy.email})
                         </p>
                         {claim?.relationship && (
-                          <p className="mt-1 text-gray-600">Relationship: {claim.relationship}</p>
+                          <p className="text-muted mt-1">Relationship: {claim.relationship}</p>
                         )}
                         {claim?.message && (
-                          <p className="mt-1 text-gray-600">Message: {claim.message}</p>
+                          <p className="text-muted mt-1">Message: {claim.message}</p>
                         )}
                         {evidenceLinks.length > 0 && (
-                          <div className="mt-2 border-t border-gray-200 pt-2">
-                            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                          <div className="border-border mt-2 border-t pt-2">
+                            <p className="text-muted text-xs font-medium tracking-wide uppercase">
                               Evidence ({evidenceLinks.length}/3)
                             </p>
                             <div className="mt-1.5 flex flex-wrap gap-2">
@@ -102,7 +102,7 @@ export default async function AdminClaimsPage() {
                           </div>
                         )}
                         {claim?.requestedAt && (
-                          <p className="mt-1 text-xs text-gray-400">
+                          <p className="text-muted mt-1 text-xs">
                             Requested: {new Date(claim.requestedAt).toLocaleDateString()}
                           </p>
                         )}

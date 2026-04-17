@@ -13,7 +13,7 @@ export async function NavAuthWidget() {
     return (
       <Link
         href="/me/login"
-        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+        className="btn-secondary rounded-[var(--radius-button)] px-3 py-1.5 text-sm"
       >
         Sign in
       </Link>
@@ -24,7 +24,10 @@ export async function NavAuthWidget() {
 
   return (
     <div className="flex items-center gap-3">
-      <Link href="/me" className="flex items-center gap-2 text-sm text-gray-700 hover:text-black">
+      <Link
+        href="/me"
+        className="text-muted hover:text-foreground flex items-center gap-2 text-sm transition-colors"
+      >
         {user.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -34,7 +37,7 @@ export async function NavAuthWidget() {
             referrerPolicy="no-referrer"
           />
         ) : (
-          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700">
+          <span className="bg-brand-100 text-brand-700 flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold">
             {initial}
           </span>
         )}
@@ -42,7 +45,10 @@ export async function NavAuthWidget() {
       </Link>
 
       <form action={signOut}>
-        <button type="submit" className="text-xs text-gray-400 hover:text-gray-700">
+        <button
+          type="submit"
+          className="text-muted hover:text-foreground text-xs transition-colors"
+        >
           Sign out
         </button>
       </form>

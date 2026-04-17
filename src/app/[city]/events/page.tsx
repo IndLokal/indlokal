@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getUpcomingEvents } from '@/modules/event/queries';
 import { db } from '@/lib/db';
@@ -69,15 +70,18 @@ export default async function EventsPage({ params, searchParams }: Props) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <nav className="mb-2 text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted mb-2 text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityName}
-          </a>
+          </Link>
           {' / '}
           <span>Events</span>
         </nav>
         <h1 className="text-3xl font-bold">Indian Events in {cityName}</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="text-muted mt-2">
           {filtered.length > 0
             ? `${filtered.length} upcoming event${filtered.length !== 1 ? 's' : ''}`
             : 'No upcoming events right now — check back soon.'}
@@ -88,37 +92,37 @@ export default async function EventsPage({ params, searchParams }: Props) {
       <div className="flex flex-wrap gap-2">
         {/* Category filter */}
         <div className="flex flex-wrap gap-1.5">
-          <a
+          <Link
             href={`/${city}/events`}
             className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
               !filters.category
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
             }`}
           >
             All
-          </a>
+          </Link>
           {categories.map((cat) => {
             const isActive = filters.category === cat.slug;
             const href = `/${city}/events?category=${cat.slug}${filters.cost ? `&cost=${filters.cost}` : ''}${filters.type ? `&type=${filters.type}` : ''}`;
             return (
-              <a
+              <Link
                 key={cat.slug}
                 href={href}
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                   isActive
-                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                    : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                    ? 'border-brand-600 bg-brand-50 text-brand-700'
+                    : 'border-border text-muted hover:border-border hover:text-foreground'
                 }`}
               >
                 {cat.icon} {cat.name}
-              </a>
+              </Link>
             );
           })}
         </div>
 
         {/* Divider */}
-        <span className="hidden text-gray-300 sm:inline">|</span>
+        <span className="text-border hidden sm:inline">|</span>
 
         {/* Cost filter */}
         {(['free', 'paid'] as const).map((cost) => {
@@ -128,17 +132,17 @@ export default async function EventsPage({ params, searchParams }: Props) {
             ? base.replace(/&$/, '')
             : `${base}cost=${cost}${filters.type ? `&type=${filters.type}` : ''}`;
           return (
-            <a
+            <Link
               key={cost}
               href={href}
               className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
                 isActive
-                  ? 'border-green-600 bg-green-50 text-green-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                  : 'border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
               {cost}
-            </a>
+            </Link>
           );
         })}
 
@@ -148,17 +152,17 @@ export default async function EventsPage({ params, searchParams }: Props) {
           const base = `/${city}/events?${filters.category ? `category=${filters.category}&` : ''}${filters.cost ? `cost=${filters.cost}&` : ''}`;
           const href = isActive ? base.replace(/&$/, '') : `${base}type=${type}`;
           return (
-            <a
+            <Link
               key={type}
               href={href}
               className={`rounded-full border px-3 py-1 text-xs font-medium capitalize transition-colors ${
                 isActive
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  : 'border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
               {type === 'in-person' ? '📍 In-person' : '🌐 Online'}
-            </a>
+            </Link>
           );
         })}
       </div>
@@ -171,6 +175,23 @@ export default async function EventsPage({ params, searchParams }: Props) {
           ))}
         </div>
       )}
+
+      {/* Cross-links */}
+      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
+        <Link
+          href={`/${city}/communities`}
+          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+        >
+          Browse communities →
+        </Link>
+        <span className="text-border hidden sm:inline">|</span>
+        <Link
+          href={`/${city}/search`}
+          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+        >
+          Search everything →
+        </Link>
+      </div>
     </div>
   );
 }

@@ -14,15 +14,10 @@ export const siteConfig = {
 /** Launch city slugs that are currently active */
 export const ACTIVE_CITIES = ['stuttgart', 'karlsruhe', 'mannheim'] as const;
 
-/** Default number of items in paginated lists */
-export const PAGE_SIZE = 20;
-
 /** Scoring thresholds */
 export const SCORING = {
   /** Days with no activity before a community is considered stale */
   STALE_THRESHOLD_DAYS: 90,
-  /** Days before a stale badge is shown to users */
-  STALE_BADGE_DAYS: 180,
   /** Minimum items in "this week" before auto-expanding to "this month" */
   SPARSE_CONTENT_THRESHOLD: 3,
 } as const;

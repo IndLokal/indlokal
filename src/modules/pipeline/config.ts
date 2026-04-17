@@ -95,12 +95,6 @@ export const SEARCH_REGIONS: SearchRegion[] = [
     citySlugs: ['stuttgart', 'karlsruhe', 'mannheim'],
     enabled: true,
   },
-  // Future regions — just add entries here:
-  // { id: 'bavaria', label: 'Bavaria', searchCenter: 'Munich, Germany',
-  //   citySlugs: ['munich'], enabled: false },
-  // { id: 'netherlands-randstad', label: 'Randstad',
-  //   searchCenter: 'Amsterdam, Netherlands',
-  //   citySlugs: ['amsterdam', 'rotterdam', 'den-haag'], enabled: false },
 ];
 
 // ─── Search strategies ─────────────────────────────────

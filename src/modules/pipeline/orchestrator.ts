@@ -23,13 +23,7 @@ import {
   fetchDuckDuckGoSearch,
 } from './sources';
 import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
-import type {
-  ExtractedData,
-  ExtractedEvent,
-  RawContent,
-  PipelineRunResult,
-  SearchStrategy,
-} from './types';
+import type { ExtractedData, ExtractedEvent, RawContent, PipelineRunResult } from './types';
 
 // Re-export PipelineRunResult type from types.ts
 export type { PipelineRunResult } from './types';

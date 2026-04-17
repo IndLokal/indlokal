@@ -20,15 +20,15 @@ export default async function AdminSubmissionsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Community Submissions</h1>
-          <p className="mt-1 text-sm text-gray-500">{submissions.length} pending review</p>
+          <p className="text-muted mt-1 text-sm">{submissions.length} pending review</p>
         </div>
-        <Link href="/admin" className="text-sm text-indigo-600 hover:underline">
+        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
           ← Dashboard
         </Link>
       </div>
 
       {submissions.length === 0 ? (
-        <p className="mt-12 text-center text-gray-400">No submissions to review.</p>
+        <p className="text-muted mt-12 text-center">No submissions to review.</p>
       ) : (
         <div className="mt-8 space-y-6">
           {submissions.map((c) => {
@@ -38,18 +38,18 @@ export default async function AdminSubmissionsPage() {
               | undefined;
 
             return (
-              <div key={c.id} className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div key={c.id} className="card-base p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <h2 className="text-lg font-semibold">{c.name}</h2>
-                    <p className="mt-0.5 text-sm text-gray-500">
+                    <p className="text-muted mt-0.5 text-sm">
                       {c.city.name} · Submitted{' '}
                       {submitter?.submittedAt
                         ? new Date(submitter.submittedAt).toLocaleDateString()
                         : c.createdAt.toLocaleDateString()}
                     </p>
                     {submitter && (
-                      <p className="mt-1 text-xs text-gray-400">
+                      <p className="text-muted mt-1 text-xs">
                         By {submitter.name ?? 'Unknown'}
                         {submitter.email && ` (${submitter.email})`}
                       </p>
@@ -78,14 +78,14 @@ export default async function AdminSubmissionsPage() {
                 </div>
 
                 {c.description && (
-                  <p className="mt-3 text-sm leading-relaxed text-gray-700">{c.description}</p>
+                  <p className="text-foreground mt-3 text-sm leading-relaxed">{c.description}</p>
                 )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {c.categories.map(({ category }) => (
                     <span
                       key={category.slug}
-                      className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700"
+                      className="bg-brand-50 text-brand-700 rounded-full px-2.5 py-0.5 text-xs font-medium"
                     >
                       {category.icon} {category.name}
                     </span>
@@ -100,13 +100,10 @@ export default async function AdminSubmissionsPage() {
                         href={ch.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-gray-600 hover:bg-gray-200"
+                        className="bg-muted-bg text-muted hover:bg-muted-bg/80 inline-flex items-center gap-1 rounded-full px-2.5 py-1"
                       >
                         {ch.channelType}
-                        {ch.isPrimary && (
-                          <span className="ml-0.5 text-indigo-500">· primary</span>
-                        )}{' '}
-                        ↗
+                        {ch.isPrimary && <span className="text-brand-500 ml-0.5">· primary</span>} ↗
                       </a>
                     ))}
                   </div>

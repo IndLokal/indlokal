@@ -29,19 +29,6 @@ export async function createCity(db: PrismaClient, overrides: Record<string, unk
   });
 }
 
-// ─── Category ────────────────────────────────────────────────────────────────
-
-export async function createCategory(db: PrismaClient, overrides: Record<string, unknown> = {}) {
-  return db.category.create({
-    data: {
-      name: 'Cultural',
-      slug: 'cultural',
-      type: 'CATEGORY',
-      ...overrides,
-    },
-  });
-}
-
 // ─── Community ───────────────────────────────────────────────────────────────
 
 export async function createCommunity(
@@ -80,19 +67,6 @@ export async function createEvent(
       startsAt: new Date(now.getTime() + 24 * 60 * 60 * 1000), // tomorrow
       cityId,
       ...rest,
-    },
-  });
-}
-
-// ─── User ────────────────────────────────────────────────────────────────────
-
-export async function createUser(db: PrismaClient, overrides: Record<string, unknown> = {}) {
-  return db.user.create({
-    data: {
-      email: `test-${Date.now()}@example.com`,
-      displayName: 'Test User',
-      role: 'USER',
-      ...overrides,
     },
   });
 }

@@ -34,16 +34,16 @@ export function ScoringJobPanel() {
   return (
     <div className="mt-8 grid gap-4 sm:grid-cols-2">
       {/* Score refresh */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="card-base p-5">
         <h3 className="font-semibold">Refresh All Scores</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="text-muted mt-1 text-sm">
           Recomputes activity, completeness, and trust scores for every active community. Includes
           engagement signals from page views.
         </p>
         <button
           onClick={handleScoreRefresh}
           disabled={scoreRunning}
-          className="mt-4 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          className="btn-primary mt-4 px-4 py-2 text-sm disabled:opacity-50"
         >
           {scoreRunning ? 'Running…' : 'Run Score Refresh'}
         </button>
@@ -55,9 +55,9 @@ export function ScoringJobPanel() {
       </div>
 
       {/* Link check */}
-      <div className="rounded-xl border border-gray-200 bg-white p-5">
+      <div className="card-base p-5">
         <h3 className="font-semibold">Check Broken Links</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="text-muted mt-1 text-sm">
           Sends a HEAD request to every access channel URL not checked in the last 24 hours. Marks
           each as verified or unreachable.
         </p>

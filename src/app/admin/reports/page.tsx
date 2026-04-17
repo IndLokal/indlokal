@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { reviewReport, resolveReport } from '../actions';
@@ -29,20 +30,21 @@ export default async function AdminReportsPage() {
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
       <div>
-        <h1 className="text-2xl font-bold">Reports &amp; Suggestions</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {reports.length} pending · sorted by newest first
-        </p>
+        <Link href="/admin" className="text-muted hover:text-foreground text-sm transition-colors">
+          ← Dashboard
+        </Link>
+        <h1 className="mt-2 text-2xl font-bold">Reports &amp; Suggestions</h1>
+        <p className="text-muted mt-1 text-sm">{reports.length} pending · sorted by newest first</p>
       </div>
 
       {reports.length === 0 ? (
-        <p className="rounded-xl border border-gray-200 p-8 text-center text-gray-400">
+        <p className="border-border text-muted rounded-[var(--radius-card)] border p-8 text-center">
           No pending reports.
         </p>
       ) : (
         <div className="space-y-4">
           {reports.map((report) => (
-            <div key={report.id} className="rounded-xl border border-gray-200 bg-white p-5">
+            <div key={report.id} className="card-base p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <span
@@ -50,10 +52,10 @@ export default async function AdminReportsPage() {
                   >
                     {report.status}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                  <span className="bg-muted-bg text-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium">
                     {REPORT_TYPE_LABELS[report.reportType] ?? report.reportType}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-muted text-xs">
                     {format(new Date(report.createdAt), 'MMM d, yyyy · h:mm a')}
                   </span>
                 </div>
@@ -65,7 +67,7 @@ export default async function AdminReportsPage() {
                       <input type="hidden" name="id" value={report.id} />
                       <button
                         type="submit"
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-medium hover:bg-gray-50"
+                        className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-1.5 text-xs font-medium"
                       >
                         Mark reviewed
                       </button>
@@ -86,10 +88,10 @@ export default async function AdminReportsPage() {
               {/* Subject */}
               <div className="mt-3">
                 {report.reportType === 'SUGGEST_COMMUNITY' ? (
-                  <p className="font-medium text-gray-900">
+                  <p className="text-foreground font-medium">
                     Suggested: &ldquo;{report.suggestedName}&rdquo;
                     {report.city && (
-                      <span className="ml-2 text-sm font-normal text-gray-500">
+                      <span className="text-muted ml-2 text-sm font-normal">
                         in {report.city.name}
                       </span>
                     )}
@@ -97,25 +99,25 @@ export default async function AdminReportsPage() {
                 ) : report.community ? (
                   <a
                     href={`/${report.community.city?.slug}/communities/${report.community.slug}`}
-                    className="font-medium text-indigo-700 hover:underline"
+                    className="text-brand-700 font-medium hover:underline"
                     target="_blank"
                     rel="noreferrer"
                   >
                     {report.community.name} ↗
                   </a>
                 ) : (
-                  <span className="text-sm text-gray-400">No community linked</span>
+                  <span className="text-muted text-sm">No community linked</span>
                 )}
               </div>
 
               {/* Details */}
               {report.details && (
-                <p className="mt-2 text-sm leading-relaxed text-gray-700">{report.details}</p>
+                <p className="text-foreground mt-2 text-sm leading-relaxed">{report.details}</p>
               )}
 
               {/* Reporter email */}
               {report.reporterEmail && (
-                <p className="mt-2 text-xs text-gray-400">
+                <p className="text-muted mt-2 text-xs">
                   From:{' '}
                   <a href={`mailto:${report.reporterEmail}`} className="hover:underline">
                     {report.reporterEmail}

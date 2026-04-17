@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event/queries';
@@ -67,16 +68,22 @@ export default async function EventDetailPage({ params }: Props) {
 
       <div className="mx-auto max-w-2xl space-y-8">
         {/* Breadcrumb */}
-        <nav className="text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {event.city.name}
-          </a>
+          </Link>
           {' / '}
-          <a href={`/${city}/events`} className="hover:underline">
+          <Link
+            href={`/${city}/events`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             Events
-          </a>
+          </Link>
           {' / '}
-          <span className="text-gray-700">{event.title}</span>
+          <span className="text-foreground">{event.title}</span>
         </nav>
 
         {/* Header */}
@@ -87,7 +94,7 @@ export default async function EventDetailPage({ params }: Props) {
               {event.categories.map(({ category }) => (
                 <span
                   key={category.slug}
-                  className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700"
+                  className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
                 >
                   {category.icon} {category.name}
                 </span>
@@ -116,20 +123,20 @@ export default async function EventDetailPage({ params }: Props) {
 
           {/* Status badge */}
           {isPast && (
-            <span className="mt-2 inline-block rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-500">
+            <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
               This event has passed
             </span>
           )}
         </div>
 
         {/* Key details card */}
-        <div className="space-y-4 rounded-xl border border-gray-200 bg-gray-50 p-6">
+        <div className="card-base space-y-4 p-6">
           {/* Date & Time */}
           <div className="flex items-start gap-3">
             <span className="mt-0.5 text-xl">📅</span>
             <div>
               <p className="font-medium">{format(startsAt, 'EEEE, MMMM d, yyyy')}</p>
-              <p className="text-sm text-gray-600">
+              <p className="text-muted text-sm">
                 {format(startsAt, 'h:mm a')}
                 {endsAt && ` – ${format(endsAt, 'h:mm a')}`}
               </p>
@@ -147,9 +154,7 @@ export default async function EventDetailPage({ params }: Props) {
               <span className="mt-0.5 text-xl">📍</span>
               <div>
                 <p className="font-medium">{event.venueName}</p>
-                {event.venueAddress && (
-                  <p className="text-sm text-gray-600">{event.venueAddress}</p>
-                )}
+                {event.venueAddress && <p className="text-muted text-sm">{event.venueAddress}</p>}
               </div>
             </div>
           ) : null}
@@ -159,10 +164,10 @@ export default async function EventDetailPage({ params }: Props) {
             <div className="flex items-center gap-3">
               <span className="text-xl">🎟️</span>
               <span
-                className={`rounded-full px-3 py-1 text-sm font-medium ${
+                className={`badge-base px-3 py-1 text-sm ${
                   event.cost === 'free'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-orange-100 text-orange-700'
+                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10 ring-inset'
+                    : 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/10 ring-inset'
                 }`}
               >
                 {event.cost === 'free' ? 'Free entry' : event.cost}
@@ -175,7 +180,7 @@ export default async function EventDetailPage({ params }: Props) {
         {event.description && (
           <div>
             <h2 className="text-lg font-semibold">About this event</h2>
-            <p className="mt-2 leading-relaxed whitespace-pre-line text-gray-700">
+            <p className="text-muted mt-2 leading-relaxed whitespace-pre-line">
               {event.description}
             </p>
           </div>
@@ -187,15 +192,15 @@ export default async function EventDetailPage({ params }: Props) {
             <h2 className="text-lg font-semibold">Organised by</h2>
             <a
               href={`/${city}/communities/${event.community.slug}`}
-              className="mt-2 inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-900 transition-colors hover:bg-gray-50"
+              className="card-base text-foreground mt-2 inline-flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
+              <span className="bg-brand-100 text-brand-700 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
                 {event.community.name.charAt(0)}
               </span>
               {event.community.name}
-              <span className="ml-auto text-gray-400">→</span>
+              <span className="text-muted ml-auto">→</span>
             </a>
-            <p className="mt-2 text-sm text-gray-500">
+            <p className="text-muted mt-2 text-sm">
               View the community page to join their WhatsApp, Facebook, or other channels.
             </p>
           </div>

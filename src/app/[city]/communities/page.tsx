@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getCommunitiesByCity } from '@/modules/community/queries';
@@ -79,16 +80,19 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <nav className="mb-2 text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted mb-2 text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityName}
-          </a>
+          </Link>
           {' / '}
           {languageName ? (
             <>
-              <a href={`/${city}/communities`} className="hover:underline">
+              <Link href={`/${city}/communities`} className="hover:underline">
                 Communities
-              </a>
+              </Link>
               {' / '}
               <span>{languageName}</span>
             </>
@@ -101,7 +105,7 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
             ? `${languageName} Communities in ${cityName}`
             : `Indian Communities in ${cityName}`}
         </h1>
-        <p className="mt-2 text-gray-600">
+        <p className="text-muted mt-2">
           {communities.length > 0
             ? languageName
               ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
@@ -128,17 +132,37 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
 
       {/* Empty state for language filter */}
       {languageName && communities.length === 0 && (
-        <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center text-gray-400">
+        <div className="border-border text-muted rounded-[var(--radius-card)] border border-dashed p-10 text-center">
           <p className="text-lg">No {languageName} communities yet</p>
           <p className="mt-1 text-sm">Check back soon or browse all {cityName} communities.</p>
           <a
             href={`/${city}/communities`}
-            className="mt-4 inline-block rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
           >
             Browse all communities
           </a>
         </div>
       )}
+
+      {/* Cross-links */}
+      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
+        <span>
+          Don&apos;t see your community?{' '}
+          <Link
+            href={`/${city}/suggest`}
+            className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+          >
+            Suggest one →
+          </Link>
+        </span>
+        <span className="text-border hidden sm:inline">|</span>
+        <Link
+          href={`/${city}/events`}
+          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+        >
+          Browse events →
+        </Link>
+      </div>
     </div>
   );
 }

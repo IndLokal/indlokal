@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format, endOfWeek, endOfMonth } from 'date-fns';
 import { db } from '@/lib/db';
@@ -49,15 +50,18 @@ export default async function IndianEventsThisWeekPage({ params }: Props) {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <nav className="mb-2 text-sm text-gray-500">
-          <a href={`/${city}`} className="hover:underline">
+        <nav className="text-muted mb-2 text-sm">
+          <Link
+            href={`/${city}`}
+            className="hover:text-foreground transition-colors hover:underline"
+          >
             {cityName}
-          </a>
+          </Link>
           {' / '}
           <span>Events this week</span>
         </nav>
         <h1 className="text-3xl font-bold">Indian Events This Week in {cityName}</h1>
-        <p className="mt-2 text-gray-600">
+        <p className="text-muted mt-2">
           {events.length > 0
             ? `${events.length} event${events.length !== 1 ? 's' : ''} ${windowLabel}`
             : `No events found ${windowLabel} — check back soon.`}
@@ -73,10 +77,13 @@ export default async function IndianEventsThisWeekPage({ params }: Props) {
       )}
 
       {/* CTA to all events */}
-      <div className="border-t border-gray-100 pt-6">
-        <a href={`/${city}/events`} className="text-sm font-medium text-indigo-600 hover:underline">
+      <div className="border-border/50 border-t pt-6">
+        <Link
+          href={`/${city}/events`}
+          className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
+        >
           See all upcoming events in {cityName} →
-        </a>
+        </Link>
       </div>
     </div>
   );

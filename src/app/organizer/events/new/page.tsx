@@ -8,13 +8,13 @@ export default async function AddEventPage() {
   const community = user.claimedCommunities[0];
 
   if (!community) {
-    return <p className="text-gray-500">No community found.</p>;
+    return <p className="text-muted">No community found.</p>;
   }
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold">Add Event</h1>
-      <p className="mt-1 text-sm text-gray-500">
+      <h1 className="text-foreground text-2xl font-bold">Add Event</h1>
+      <p className="text-muted mt-1 text-sm">
         Events appear on your community page and the city events feed.
       </p>
       <div className="mt-8">

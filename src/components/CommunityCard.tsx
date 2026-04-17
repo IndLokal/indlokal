@@ -1,61 +1,65 @@
 import Link from 'next/link';
 import type { CommunityListItem } from '@/modules/community/types';
 import { BookmarkButton } from '@/components/BookmarkButton';
+import { ActivityBadge } from '@/components/ui';
 
 type Props = {
   community: CommunityListItem;
   city: string;
-  /** When provided, shows the bookmark toggle button. Pass `true` if user has saved it. */
   savedByUser?: boolean;
 };
 
-function ActivityBadge({ score }: { score: number }) {
-  const level =
-    score >= 80
-      ? { label: 'Very Active', cls: 'bg-green-100 text-green-700' }
-      : score >= 60
-        ? { label: 'Active', cls: 'bg-blue-100 text-blue-700' }
-        : score >= 40
-          ? { label: 'Moderate', cls: 'bg-yellow-100 text-yellow-700' }
-          : { label: 'Low', cls: 'bg-gray-100 text-gray-500' };
+const AVATAR_COLORS = [
+  'from-brand-500 to-brand-700',
+  'from-violet-500 to-purple-700',
+  'from-fuchsia-500 to-pink-700',
+  'from-orange-500 to-red-600',
+  'from-emerald-500 to-teal-700',
+  'from-cyan-500 to-blue-600',
+  'from-amber-500 to-orange-600',
+  'from-rose-500 to-pink-600',
+];
 
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${level.cls}`}
-    >
-      {level.label}
-    </span>
-  );
+function getAvatarColor(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
 }
 
 export function CommunityCard({ community, city, savedByUser }: Props) {
   const href = `/${city}/communities/${community.slug}`;
+  const avatarGradient = getAvatarColor(community.name);
 
   return (
-    <div className="relative flex flex-col rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <Link href={href} className="flex flex-col p-4">
+    <div className="group hover:shadow-brand-500/10 relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-md ring-1 shadow-black/5 ring-black/[0.04] transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl">
+      {/* Colored top stripe — 3px gradient */}
+      <div className={`h-1 w-full bg-gradient-to-r ${avatarGradient}`} />
+
+      <Link href={href} className="flex flex-col p-5">
         {/* Top row: logo + badges */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-lg font-bold text-indigo-700">
+        <div className="flex items-start justify-between gap-3">
+          <div
+            className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${avatarGradient} text-xl font-bold text-white shadow-lg`}
+          >
             {community.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={community.logoUrl}
                 alt={community.name}
-                className="h-10 w-10 rounded-full object-cover"
+                className="h-full w-full object-cover"
               />
             ) : (
               community.name.charAt(0)
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
             {community.isTrending && (
-              <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
+              <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-orange-500 to-red-500 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm">
                 🔥 Trending
               </span>
             )}
             {community.claimState === 'CLAIMED' && (
-              <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[11px] font-bold text-white">
                 ✓ Verified
               </span>
             )}
@@ -64,20 +68,22 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
         </div>
 
         {/* Name */}
-        <h3 className="mt-3 leading-snug font-semibold text-gray-900">{community.name}</h3>
+        <h3 className="text-foreground group-hover:text-brand-600 mt-4 leading-snug font-bold transition-colors">
+          {community.name}
+        </h3>
 
         {/* Description */}
         {community.description && (
-          <p className="mt-1 line-clamp-2 text-sm text-gray-500">{community.description}</p>
+          <p className="text-muted mt-1.5 line-clamp-2 text-sm">{community.description}</p>
         )}
 
         {/* Category tags */}
         {community.categories.length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-1">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {community.categories.slice(0, 3).map(({ category }) => (
               <span
                 key={category.slug}
-                className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600"
+                className="bg-muted-bg text-foreground/70 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium"
               >
                 {category.icon && <span>{category.icon}</span>}
                 {category.name}
@@ -86,22 +92,24 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
           </div>
         )}
 
-        {/* Footer: member count + event count */}
-        <div className="mt-auto flex items-center gap-3 pt-3 text-xs text-gray-400">
-          {community.memberCountApprox && (
-            <span>~{community.memberCountApprox.toLocaleString()} members</span>
-          )}
-          {community._count.events > 0 && (
-            <span>
-              {community._count.events} event{community._count.events !== 1 ? 's' : ''}
-            </span>
-          )}
+        {/* Footer: event count */}
+        <div className="border-border/30 mt-5 mt-auto flex items-center justify-between gap-3 border-t pt-4">
+          <div className="text-muted flex items-center gap-3 text-xs font-semibold">
+            {community._count.events > 0 && (
+              <span className="bg-brand-50 text-brand-600 flex items-center gap-1.5 rounded-full px-3 py-1">
+                <span className="bg-brand-500 h-1.5 w-1.5 animate-pulse rounded-full" />
+                {community._count.events} Upcoming Event{community._count.events !== 1 ? 's' : ''}
+              </span>
+            )}
+            {community.memberCountApprox && community._count.events === 0 && (
+              <span>~{community.memberCountApprox.toLocaleString()} members</span>
+            )}
+          </div>
         </div>
       </Link>
 
-      {/* Bookmark button — only rendered when savedByUser is provided */}
       {savedByUser !== undefined && (
-        <div className="absolute right-3 bottom-3">
+        <div className="absolute right-3 bottom-4 z-10">
           <BookmarkButton communityId={community.id} saved={savedByUser} />
         </div>
       )}
