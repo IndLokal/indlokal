@@ -37,7 +37,7 @@ export default function HomePage() {
             </span>
           </Link>
           <div className="flex items-center gap-3 text-sm">
-            <Link href="/submit" className="btn-primary px-4 py-2 text-sm">
+            <Link href="/submit" className="btn-primary hidden px-4 py-2 text-sm sm:inline-flex">
               Submit Community
             </Link>
             <NavAuthWidget />
