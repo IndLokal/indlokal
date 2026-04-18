@@ -1,14 +1,40 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'LocalPulse <noreply@localpulse.de>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
+// Dev SMTP transport — sends to Mailpit (or any local SMTP server)
+const SMTP_HOST = process.env.SMTP_HOST ?? 'localhost';
+const SMTP_PORT = Number(process.env.SMTP_PORT ?? '1026');
+
+const devTransport = nodemailer.createTransport({
+  host: SMTP_HOST,
+  port: SMTP_PORT,
+  secure: false,
+});
+
 async function sendEmail(to: string, subject: string, html: string): Promise<void> {
-  if (!resend) {
-    // Dev fallback — log to console
-    console.log(`\n📧 [EMAIL – no RESEND_API_KEY set]\nTo: ${to}\nSubject: ${subject}\n`);
+  // Production: use Resend
+  if (resend) {
+    const { error } = await resend.emails.send({ from: FROM, to, subject, html });
+    if (error) {
+      console.error('[Resend error]', error);
+    }
+    return;
+  }
+
+  // Dev: send via SMTP to Mailpit
+  try {
+    await devTransport.sendMail({ from: FROM, to, subject, html });
+    console.log(`📧 Email sent to Mailpit → http://localhost:8026`);
+  } catch {
+    // Mailpit not running — fall back to console
+    console.log(
+      `\n📧 [EMAIL – Mailpit unavailable, logging to console]\nTo: ${to}\nSubject: ${subject}\n`,
+    );
     console.log(
       html
         .replace(/<[^>]+>/g, '')
@@ -16,13 +42,6 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
         .trim(),
     );
     console.log('─'.repeat(60));
-    return;
-  }
-
-  const { error } = await resend.emails.send({ from: FROM, to, subject, html });
-  if (error) {
-    // Non-fatal — log and continue so the action still succeeds
-    console.error('[Resend error]', error);
   }
 }
 

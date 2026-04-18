@@ -88,12 +88,13 @@ cmd_start() {
     print_success "Cleared .next cache"
   fi
 
-  # Ensure DB is running
+  # Ensure DB + Mailpit are running
   if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
     cmd_db_start
   fi
 
   echo ""
+  print_success "Mailbox UI → ${CYAN}http://localhost:8026${NC}"
   print_success "Starting Next.js dev server..."
   echo ""
   npm run dev
@@ -146,6 +147,16 @@ cmd_db_studio() {
     cmd_db_start
   fi
   npx prisma studio
+}
+
+cmd_mailbox() {
+  print_header
+  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-mailpit"; then
+    echo "Starting Mailpit..."
+    docker compose up -d mailpit
+  fi
+  print_success "Mailbox UI → ${CYAN}http://localhost:8026${NC}"
+  open "http://localhost:8026" 2>/dev/null || true
 }
 
 cmd_test() {
@@ -265,6 +276,9 @@ cmd_help() {
   echo "  db:reset       Wipe DB, recreate, and re-seed"
   echo "  db:studio      Open Prisma Studio (browser UI)"
   echo ""
+  echo -e "${CYAN}Email${NC}"
+  echo "  mailbox        Open Mailpit web UI (catches all dev emails)"
+  echo ""
   echo -e "${CYAN}Testing${NC}"
   echo "  test:setup     Create test DB + push schema (run once)"
   echo "  test           Run all unit + component tests"
@@ -291,6 +305,7 @@ case "${1:-help}" in
   db:stop)       cmd_db_stop ;;
   db:reset)      cmd_db_reset ;;
   db:studio)     cmd_db_studio ;;
+  mailbox)       cmd_mailbox ;;
   test)          cmd_test ;;
   test:watch)    cmd_test_watch ;;
   test:setup)    cmd_test_setup ;;
