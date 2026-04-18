@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db, resolveCityIds } from '@/lib/db';
 import type { CommunityWithRelations, CommunityListItem } from './types';
 
 /**
@@ -59,15 +59,8 @@ export async function getCommunitiesByCity(
     offset?: number;
   },
 ): Promise<CommunityListItem[]> {
-  const city = await db.city.findUnique({
-    where: { slug: citySlug },
-    select: { id: true, isMetroPrimary: true, satelliteCities: { select: { id: true } } },
-  });
-
-  if (!city) return [];
-
-  // Include satellite city IDs if this is a metro primary
-  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return [];
 
   return db.community.findMany({
     where: {

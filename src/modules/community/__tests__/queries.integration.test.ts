@@ -13,9 +13,22 @@ import { createCity, createCommunity } from '@/test/fixtures';
 
 // Redirect the module-level `db` singleton to the test database
 // so query functions operate on localpulse_test instead of localpulse.
-vi.mock('@/lib/db', async () => {
+vi.mock('@/lib/db', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/db')>();
   const { testDb } = await import('@/test/db-helpers');
-  return { db: testDb };
+  // Replace db and rebuild resolveCityIds to use testDb
+  return {
+    ...mod,
+    db: testDb,
+    resolveCityIds: async (citySlug: string) => {
+      const city = await testDb.city.findUnique({
+        where: { slug: citySlug },
+        select: { id: true, satelliteCities: { select: { id: true } } },
+      });
+      if (!city) return [];
+      return [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+    },
+  };
 });
 
 import { getCommunityBySlug, getCommunityRedirectTarget, getCommunitiesByCity } from '../index';

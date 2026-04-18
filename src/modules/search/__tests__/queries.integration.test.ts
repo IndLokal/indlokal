@@ -10,9 +10,22 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';
 import { createCity, createCommunity, createEvent } from '@/test/fixtures';
 
-vi.mock('@/lib/db', () => ({
-  db: testDb,
-}));
+vi.mock('@/lib/db', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/lib/db')>();
+  const { testDb } = await import('@/test/db-helpers');
+  return {
+    ...mod,
+    db: testDb,
+    resolveCityIds: async (citySlug: string) => {
+      const city = await testDb.city.findUnique({
+        where: { slug: citySlug },
+        select: { id: true, satelliteCities: { select: { id: true } } },
+      });
+      if (!city) return [];
+      return [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+    },
+  };
+});
 
 import { searchCommunities, searchEvents } from '@/modules/search/queries';
 

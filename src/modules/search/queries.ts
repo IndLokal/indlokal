@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db, resolveCityIds } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import type { CommunityListItem } from '@/modules/community/types';
 import type { EventListItem } from '@/modules/event/types';
@@ -16,13 +16,8 @@ export async function searchCommunities(
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
-  const city = await db.city.findUnique({
-    where: { slug: citySlug },
-    select: { id: true, satelliteCities: { select: { id: true } } },
-  });
-  if (!city) return [];
-
-  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return [];
 
   // PostgreSQL full-text search with ranking
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
@@ -100,13 +95,8 @@ export async function searchEvents(
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
-  const city = await db.city.findUnique({
-    where: { slug: citySlug },
-    select: { id: true, satelliteCities: { select: { id: true } } },
-  });
-  if (!city) return [];
-
-  const cityIds = [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return [];
 
   const now = new Date();
 

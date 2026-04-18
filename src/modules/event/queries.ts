@@ -1,4 +1,4 @@
-import { db } from '@/lib/db';
+import { db, resolveCityIds } from '@/lib/db';
 import { SCORING } from '@/lib/config';
 import { endOfWeek, endOfMonth } from 'date-fns';
 import type { EventWithRelations, EventListItem } from './types';
@@ -18,18 +18,6 @@ const eventListSelect = {
   city: { select: { name: true, slug: true } },
   categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
 } as const;
-
-/**
- * Resolve city IDs including metro satellites.
- */
-async function resolveCityIds(citySlug: string): Promise<string[]> {
-  const city = await db.city.findUnique({
-    where: { slug: citySlug },
-    select: { id: true, satelliteCities: { select: { id: true } } },
-  });
-  if (!city) return [];
-  return [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
-}
 
 /**
  * Get a single event with full relations.
