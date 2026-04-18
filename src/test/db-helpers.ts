@@ -43,9 +43,16 @@ export async function cleanDb(): Promise<void> {
   // Order matters — child tables first to respect FK constraints
   await testDb.$transaction([
     testDb.userInteraction.deleteMany(),
+    testDb.magicLinkToken.deleteMany(),
+    testDb.savedCommunity.deleteMany(),
+    testDb.savedEvent.deleteMany(),
     testDb.activitySignal.deleteMany(),
     testDb.trustSignal.deleteMany(),
     testDb.relationshipEdge.deleteMany(),
+    testDb.pipelineItem.deleteMany(),
+    testDb.keywordSuggestion.deleteMany(),
+    testDb.contentLog.deleteMany(),
+    testDb.contentReport.deleteMany(),
     testDb.communityCategory.deleteMany(),
     testDb.eventCategory.deleteMany(),
     testDb.accessChannel.deleteMany(),

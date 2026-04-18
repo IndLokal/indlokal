@@ -1708,6 +1708,48 @@ async function main() {
   });
   console.log(`\n✅ City: ${mannheim.name} (no communities yet — pipeline will discover)`);
 
+  // ─── Munich ───────────────────────────────────────────────────────────────
+
+  const munich = await prisma.city.upsert({
+    where: { slug: 'munich' },
+    update: {},
+    create: {
+      name: 'Munich',
+      slug: 'munich',
+      state: 'Bavaria',
+      country: 'Germany',
+      latitude: 48.1351,
+      longitude: 11.582,
+      population: 1488202,
+      diasporaDensityEstimate: 18000,
+      isActive: true,
+      isMetroPrimary: true,
+      timezone: 'Europe/Berlin',
+    },
+  });
+  console.log(`\n✅ City: ${munich.name} (no communities yet — pipeline will discover)`);
+
+  // ─── Frankfurt ────────────────────────────────────────────────────────────
+
+  const frankfurt = await prisma.city.upsert({
+    where: { slug: 'frankfurt' },
+    update: {},
+    create: {
+      name: 'Frankfurt',
+      slug: 'frankfurt',
+      state: 'Hesse',
+      country: 'Germany',
+      latitude: 50.1109,
+      longitude: 8.6821,
+      population: 773068,
+      diasporaDensityEstimate: 14000,
+      isActive: true,
+      isMetroPrimary: true,
+      timezone: 'Europe/Berlin',
+    },
+  });
+  console.log(`\n✅ City: ${frankfurt.name} (no communities yet — pipeline will discover)`);
+
   // ─── Update lastActivityAt on communities based on their events ───────────
 
   for (const c of communityDefs) {
@@ -1721,10 +1763,25 @@ async function main() {
   const { updated } = await refreshAllScores();
   console.log(`✅ Scores refreshed: ${updated} communities updated`);
 
+  // ─── Platform admin user ────────────────────────────────────────────────
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@localpulse.de';
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: { role: 'PLATFORM_ADMIN' },
+    create: {
+      email: adminEmail,
+      displayName: 'Admin',
+      role: 'PLATFORM_ADMIN',
+    },
+  });
+  console.log(`✅ Admin user: ${admin.email} (${admin.role})`);
+
   console.log('\n✅ Seed complete!');
   console.log(`   Stuttgart metro: 1 primary + ${satellites.length} satellites`);
   console.log(`   Karlsruhe: city seeded (communities via pipeline)`);
   console.log(`   Mannheim: city seeded (communities via pipeline)`);
+  console.log(`   Munich: city seeded (communities via pipeline)`);
+  console.log(`   Frankfurt: city seeded (communities via pipeline)`);
   console.log(
     `   Communities: ${communityDefs.length} + ${verifiedCommunityDefs.length} = ${communityDefs.length + verifiedCommunityDefs.length} (Stuttgart)`,
   );

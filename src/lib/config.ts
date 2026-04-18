@@ -12,7 +12,7 @@ export const siteConfig = {
 } as const;
 
 /** Launch city slugs that are currently active */
-export const ACTIVE_CITIES = ['stuttgart', 'karlsruhe', 'mannheim'] as const;
+export const ACTIVE_CITIES = ['stuttgart', 'karlsruhe', 'mannheim', 'munich', 'frankfurt'] as const;
 
 /**
  * Metro regions — maps satellite town slugs to their metro primary city.
@@ -47,6 +47,22 @@ export const METRO_REGIONS: Record<string, { satellites: { slug: string; name: s
       { slug: 'schwetzingen', name: 'Schwetzingen' },
     ],
   },
+  munich: {
+    satellites: [
+      { slug: 'garching', name: 'Garching' },
+      { slug: 'freising', name: 'Freising' },
+      { slug: 'augsburg', name: 'Augsburg' },
+      { slug: 'erding', name: 'Erding' },
+    ],
+  },
+  frankfurt: {
+    satellites: [
+      { slug: 'offenbach', name: 'Offenbach' },
+      { slug: 'darmstadt-sat', name: 'Darmstadt' },
+      { slug: 'mainz', name: 'Mainz' },
+      { slug: 'wiesbaden', name: 'Wiesbaden' },
+    ],
+  },
 };
 
 /** Reverse map: satellite slug → metro city slug */
@@ -73,8 +89,6 @@ export const SEARCHABLE_TOWNS: { name: string; slug: string; metro: string }[] =
 
 /** Cities we're expanding to — shown as "Coming Soon" */
 export const UPCOMING_CITIES = [
-  { slug: 'munich', name: 'Munich', state: 'Bavaria', emoji: '🏔️' },
-  { slug: 'frankfurt', name: 'Frankfurt', state: 'Hesse', emoji: '🏦' },
   { slug: 'berlin', name: 'Berlin', state: 'Berlin', emoji: '🐻' },
   { slug: 'hamburg', name: 'Hamburg', state: 'Hamburg', emoji: '⚓' },
   { slug: 'dusseldorf', name: 'Düsseldorf', state: 'NRW', emoji: '🗼' },
