@@ -20,9 +20,7 @@ vi.mock('@/components/layout', () => ({
 describe('HomePage', () => {
   it('renders the main heading', async () => {
     render(await HomePage());
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-      /discover what.*happening/i,
-    );
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/your indian community/i);
   });
 
   it('renders the value proposition tagline', async () => {
@@ -32,18 +30,18 @@ describe('HomePage', () => {
 
   it('renders a link for every active city', async () => {
     render(await HomePage());
-    const stuttgartLink = screen.getByRole('link', { name: /stuttgart/i });
-    expect(stuttgartLink).toBeInTheDocument();
+    const stuttgartLinks = screen.getAllByRole('link', { name: /stuttgart/i });
+    expect(stuttgartLinks.length).toBeGreaterThan(0);
   });
 
   it('renders Stuttgart as a city link pointing to /stuttgart', async () => {
     render(await HomePage());
-    const stuttgartLink = screen.getByRole('link', { name: /stuttgart/i });
-    expect(stuttgartLink).toHaveAttribute('href', '/stuttgart');
+    const stuttgartLinks = screen.getAllByRole('link', { name: /stuttgart/i });
+    expect(stuttgartLinks.some((l) => l.getAttribute('href') === '/stuttgart')).toBe(true);
   });
 
-  it('renders the "Choose your city" label', async () => {
+  it('renders the "Expanding across Germany" section', async () => {
     render(await HomePage());
-    expect(screen.getByText(/choose your city/i)).toBeInTheDocument();
+    expect(screen.getByText(/expanding across germany/i)).toBeInTheDocument();
   });
 });
