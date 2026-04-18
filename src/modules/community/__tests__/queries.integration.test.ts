@@ -18,7 +18,7 @@ vi.mock('@/lib/db', async () => {
   return { db: testDb };
 });
 
-import { getCommunityBySlug, getCommunitiesByCity } from '../index';
+import { getCommunityBySlug, getCommunityRedirectTarget, getCommunitiesByCity } from '../index';
 
 // ─── Test setup ──────────────────────────────────────────────────────────────
 
@@ -61,6 +61,26 @@ describe('getCommunityBySlug', () => {
 
     const result = await getCommunityBySlug('old-group');
     expect(result).toBeNull();
+  });
+
+  it('returns redirect target for merged inactive communities', async () => {
+    const city = await createCity(testDb);
+    const primary = await createCommunity(testDb, {
+      slug: 'new-group',
+      name: 'New Group',
+      cityId: city.id,
+    });
+    await createCommunity(testDb, {
+      slug: 'old-group',
+      name: 'Old Group',
+      cityId: city.id,
+      status: 'INACTIVE',
+      mergedIntoId: primary.id,
+      redirectSlug: primary.slug,
+    });
+
+    const redirectTarget = await getCommunityRedirectTarget('old-group');
+    expect(redirectTarget).toEqual({ citySlug: city.slug, slug: 'new-group' });
   });
 });
 

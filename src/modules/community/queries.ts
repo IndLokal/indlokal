@@ -7,7 +7,7 @@ import type { CommunityWithRelations, CommunityListItem } from './types';
  */
 export async function getCommunityBySlug(slug: string): Promise<CommunityWithRelations | null> {
   return db.community.findFirst({
-    where: { slug, status: { not: 'INACTIVE' } },
+    where: { slug, status: { not: 'INACTIVE' }, mergedIntoId: null },
     include: {
       city: true,
       categories: { include: { category: true } },
@@ -18,6 +18,33 @@ export async function getCommunityBySlug(slug: string): Promise<CommunityWithRel
       },
     },
   });
+}
+
+export async function getCommunityRedirectTarget(
+  slug: string,
+): Promise<{ citySlug: string; slug: string } | null> {
+  const community = await db.community.findFirst({
+    where: {
+      slug,
+      status: 'INACTIVE',
+      mergedIntoId: { not: null },
+    },
+    select: {
+      mergedInto: {
+        select: {
+          slug: true,
+          city: { select: { slug: true } },
+        },
+      },
+    },
+  });
+
+  if (!community?.mergedInto) return null;
+
+  return {
+    citySlug: community.mergedInto.city.slug,
+    slug: community.mergedInto.slug,
+  };
 }
 
 /**
@@ -46,6 +73,7 @@ export async function getCommunitiesByCity(
     where: {
       cityId: { in: cityIds },
       status: { not: 'INACTIVE' },
+      mergedIntoId: null,
       ...(options?.categorySlug && {
         categories: { some: { category: { slug: options.categorySlug } } },
       }),
