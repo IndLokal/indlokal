@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { Footer } from '@/components/layout';
-import { CitySearch } from '@/components/CitySearch';
+import { CitySearch } from './CitySearch';
 
 const CITY_META: Record<string, { emoji: string; tagline: string; gradient: string }> = {
   stuttgart: {

@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community';
 import { ClaimSection } from './ClaimSection';
-import { ReportIssueForm } from '@/components/ReportIssueForm';
+import { ReportIssueForm } from './ReportIssueForm';
 import { ViewTracker } from '@/components/ViewTracker';
 import { ActivityBadge } from '@/components/ui';
 import { AccessChannelLink } from '@/components/AccessChannelLink';

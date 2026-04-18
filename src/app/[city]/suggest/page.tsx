@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { SuggestCommunityForm } from '@/components/SuggestCommunityForm';
+import { SuggestCommunityForm } from './SuggestCommunityForm';
 
 type Props = { params: Promise<{ city: string }> };
 
