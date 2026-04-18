@@ -47,8 +47,8 @@ We do **not** use PostHog for:
 ┌──────────────────────┴──────────────────────────────┐
 │  Server (API Routes / Server Actions)                │
 │                                                      │
-│  import { Events } from '@/lib/analytics-events'     │
-│  import { captureServerEvent } from '@/lib/posthog'  │
+│  import { Events } from '@/lib/analytics/events'     │
+│  import { captureServerEvent } from '@/lib/analytics/server'  │
 │  await captureServerEvent(userId, Events.X, {...})   │
 └─────────────────────────────────────────────────────┘
 ```
@@ -57,9 +57,10 @@ We do **not** use PostHog for:
 
 | File                                 | Purpose                                              |
 | ------------------------------------ | ---------------------------------------------------- |
-| `src/lib/analytics-events.ts`        | Canonical event names (shared client + server)       |
-| `src/lib/analytics.ts`               | Client-side hooks: `useTrackEvent`, identity helpers |
-| `src/lib/posthog.ts`                 | Server-side PostHog client + `captureServerEvent()`  |
+| `src/lib/analytics/events.ts`        | Canonical event names (shared client + server)       |
+| `src/lib/analytics/hooks.ts`         | Client-side hooks: `useTrackEvent`, identity helpers |
+| `src/lib/analytics/server.ts`        | Server-side PostHog client + `captureServerEvent()`  |
+| `src/lib/analytics/index.ts`         | Barrel re-export for client consumers                |
 | `src/components/PostHogProvider.tsx` | Client init, pageview tracking                       |
 | `src/components/PostHogIdentify.tsx` | User identity sync (identify/reset)                  |
 | `next.config.ts`                     | Reverse proxy rewrites (`/ingest/*`)                 |

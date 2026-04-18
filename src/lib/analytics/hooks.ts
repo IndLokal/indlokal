@@ -8,8 +8,8 @@
  *   track(Events.COMMUNITY_SAVED, { community_id: '...' });
  *
  * Usage (server actions / API routes):
- *   import { Events } from '@/lib/analytics-events';
- *   import { captureServerEvent } from '@/lib/posthog';
+ *   import { Events } from '@/lib/analytics/events';
+ *   import { captureServerEvent } from '@/lib/analytics/server';
  *   await captureServerEvent(userId, Events.USER_SIGNED_UP, { ... });
  */
 
@@ -17,10 +17,10 @@
 
 import { usePostHog } from 'posthog-js/react';
 import { useCallback } from 'react';
-import type { AnalyticsEvent } from './analytics-events';
+import type { AnalyticsEvent } from './events';
 
 // Re-export event constants so client components only need one import
-export { Events, type AnalyticsEvent } from './analytics-events';
+export { Events, type AnalyticsEvent } from './events';
 
 // ─── Client-side Tracking Hook ───────────────────────────────────────────────
 
@@ -37,32 +37,4 @@ export function useTrackEvent() {
     },
     [posthog],
   );
-}
-
-// ─── Identity Helpers ────────────────────────────────────────────────────────
-
-/**
- * Identify the current user in PostHog (client-side).
- * Call after login / on app load when a session exists.
- */
-export function useIdentifyUser() {
-  const posthog = usePostHog();
-
-  return useCallback(
-    (userId: string, traits?: Record<string, unknown>) => {
-      posthog?.identify(userId, traits);
-    },
-    [posthog],
-  );
-}
-
-/**
- * Reset PostHog identity (client-side). Call on logout.
- */
-export function useResetUser() {
-  const posthog = usePostHog();
-
-  return useCallback(() => {
-    posthog?.reset();
-  }, [posthog]);
 }

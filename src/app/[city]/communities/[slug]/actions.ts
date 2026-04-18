@@ -2,8 +2,8 @@
 
 import { db } from '@/lib/db';
 import { claimCommunitySchema } from '@/lib/validation';
-import { captureServerEvent } from '@/lib/posthog';
-import { Events } from '@/lib/analytics-events';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import { headers } from 'next/headers';
 import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
 

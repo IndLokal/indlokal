@@ -2,8 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { generateSessionToken, createSession } from '@/lib/session';
-import { captureServerEvent } from '@/lib/posthog';
-import { Events } from '@/lib/analytics-events';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 
 const BASE = process.env.NEXT_PUBLIC_APP_URL!;
 
