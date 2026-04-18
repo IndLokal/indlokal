@@ -40,7 +40,7 @@ const EXTRACT_BATCH_SIZE = 5;
 
 type ChatMessage = { role: 'system' | 'user'; content: string };
 
-async function callOpenAI(
+export async function callOpenAI(
   messages: ChatMessage[],
   opts: { model?: string; maxTokens?: number } = {},
 ): Promise<string> {

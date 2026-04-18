@@ -120,6 +120,10 @@ model Community {
   claimState       ClaimState      @default(UNCLAIMED) @map("claim_state")
   claimedByUserId  String?         @map("claimed_by_user_id")
   claimedBy        User?           @relation("ClaimedCommunities", fields: [claimedByUserId], references: [id])
+  mergedIntoId     String?         @map("merged_into_id")
+  mergedInto       Community?      @relation("CommunityMerge", fields: [mergedIntoId], references: [id])
+  mergedCommunities Community[]    @relation("CommunityMerge")
+  redirectSlug     String?         @map("redirect_slug")
 
   logoUrl          String?         @map("logo_url")
   coverImageUrl    String?         @map("cover_image_url")
@@ -150,12 +154,15 @@ model Community {
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
   lastActivityAt   DateTime? @map("last_activity_at")
+  lastEnrichedAt   DateTime? @map("last_enriched_at")
 
   @@index([cityId])
   @@index([activityScore])
   @@index([status])
   @@index([cityId, status])
   @@index([claimState])
+  @@index([mergedIntoId])
+  @@index([redirectSlug])
   @@map("communities")
 }
 
@@ -627,6 +634,11 @@ enum PipelineItemStatus {
   MERGED // merged into existing entity (dedup)
 }
 
+enum PipelineReviewKind {
+  DISCOVERY
+  ENRICHMENT
+}
+
 enum PipelineSourceType {
   EVENTBRITE
   FACEBOOK
@@ -646,6 +658,7 @@ model PipelineItem {
   id             String             @id @default(cuid())
   entityType     PipelineEntityType @map("entity_type")
   status         PipelineItemStatus @default(PENDING)
+  reviewKind     PipelineReviewKind @default(DISCOVERY) @map("review_kind")
 
   // Source provenance
   sourceType     PipelineSourceType @map("source_type")
@@ -668,6 +681,9 @@ model PipelineItem {
   reviewedBy     String?            @map("reviewed_by")
   reviewedAt     DateTime?          @map("reviewed_at")
   reviewNotes    String?            @map("review_notes")
+  autoApproved   Boolean            @default(false) @map("auto_approved")
+  autoApprovalReason String?        @map("auto_approval_reason")
+  targetEntityId String?            @map("target_entity_id")
 
   // The entity created/updated after approval
   createdEntityId String?           @map("created_entity_id")
@@ -678,5 +694,28 @@ model PipelineItem {
   @@index([status, createdAt])
   @@index([cityId])
   @@index([entityType, status])
+  @@index([reviewKind, status])
   @@map("pipeline_items")
+}
+
+enum KeywordSuggestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model KeywordSuggestion {
+  id          String                  @id @default(cuid())
+  keyword     String                  @unique
+  normalizedKeyword String            @unique @map("normalized_keyword")
+  status      KeywordSuggestionStatus @default(PENDING)
+  confidence  Float                   @default(0)
+  sourceCount Int                     @default(0) @map("source_count")
+  evidence    Json?
+  reviewedAt  DateTime?               @map("reviewed_at")
+  createdAt   DateTime                @default(now()) @map("created_at")
+  updatedAt   DateTime                @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@map("keyword_suggestions")
 }

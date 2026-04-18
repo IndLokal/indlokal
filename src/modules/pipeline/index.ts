@@ -25,6 +25,24 @@ export {
   DIASPORA_KEYWORDS,
 } from './config';
 export { getDbCommunityStrategies } from './db-sources';
+export { computeSimilarity } from './orchestrator';
+export {
+  getSourceReliabilityStats,
+  getSourceReliabilityMap,
+  applySourceConfidenceAdjustment,
+} from './reliability';
+export {
+  semanticCommunityDuplicateCheck,
+  enrichSparseCommunities,
+  inferCommunityRelationships,
+  refreshKeywordSuggestions,
+  getApprovedDynamicKeywords,
+} from './intelligence';
+export {
+  shouldAutoApprovePipelineItem,
+  approvePipelineItemRecord,
+  revertAutoApprovedPipelineItems,
+} from './review';
 export type {
   RawContent,
   ExtractedEvent,
@@ -35,3 +53,4 @@ export type {
   SearchRegion,
   RelevanceResult,
 } from './types';
+export type { SourceReliabilityStat } from './reliability';

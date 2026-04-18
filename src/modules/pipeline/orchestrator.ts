@@ -14,6 +14,7 @@
  */
 
 import { db } from '@/lib/db';
+import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { getEnabledRegions, getKeywordStrategies, getPinnedStrategies } from './config';
 import { getDbCommunityStrategies } from './db-sources';
 import {
@@ -23,6 +24,9 @@ import {
   fetchDuckDuckGoSearch,
 } from './sources';
 import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
+import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
+import { getApprovedDynamicKeywords, semanticCommunityDuplicateCheck } from './intelligence';
+import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
 import type { ExtractedData, ExtractedEvent, RawContent, PipelineRunResult } from './types';
 
 // Re-export PipelineRunResult type from types.ts
@@ -55,7 +59,15 @@ export async function runPipeline(): Promise<PipelineRunResult> {
 
   const allRaw: RawContent[] = [];
   const regions = getEnabledRegions();
-  const keywordStrategies = getKeywordStrategies();
+  const approvedKeywords = await getApprovedDynamicKeywords();
+  const keywordStrategies = getKeywordStrategies().map((strategy) =>
+    strategy.kind === 'keyword_search'
+      ? {
+          ...strategy,
+          keywords: [...new Set([...strategy.keywords, ...approvedKeywords])],
+        }
+      : strategy,
+  );
   const staticPinned = getPinnedStrategies();
   const dbPinned = await getDbCommunityStrategies();
   const pinnedStrategies = [...staticPinned, ...dbPinned];
@@ -157,6 +169,7 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     where: { slug: { in: allCitySlugs } },
     select: { id: true, slug: true, name: true },
   });
+  const sourceReliabilityByType = await getSourceReliabilityMap();
   const cityByName = new Map<string, { id: string; slug: string }>();
   const cityBySlug = new Map<string, { id: string; name: string }>();
   for (const c of cities) {
@@ -196,27 +209,60 @@ export async function runPipeline(): Promise<PipelineRunResult> {
 
     // Dedup check
     const isDupe = await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
+    if (
+      item.type === 'EVENT' &&
+      isDupe.isDuplicate &&
+      isDupe.matchKind === 'PIPELINE_ITEM' &&
+      isDupe.matchedId
+    ) {
+      await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
+      result.itemsSkippedDuplicate++;
+      continue;
+    }
+
     if (isDupe.isDuplicate && isDupe.matchScore && isDupe.matchScore > 0.9) {
       result.itemsSkippedDuplicate++;
       continue;
     }
 
+    const reliability = sourceReliabilityByType.get(sourceRaw.sourceType as PipelineSourceType);
+    const confidence = applySourceConfidenceAdjustment(
+      item.confidence,
+      reliability?.confidenceAdjustment ?? 0,
+    );
+
     // Queue for review
-    await db.pipelineItem.create({
+    const createdItem = await db.pipelineItem.create({
       data: {
         entityType: item.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
         sourceType: sourceRaw.sourceType as import('@prisma/client').PipelineSourceType,
         sourceUrl: sourceRaw.sourceUrl,
         rawContent: sourceRaw.text.slice(0, 50_000),
         extractedData: item as unknown as import('@prisma/client').Prisma.InputJsonValue,
-        confidence: item.confidence,
+        confidence,
         cityId,
         matchedEntityId: isDupe.matchedId ?? undefined,
         matchScore: isDupe.matchScore ?? undefined,
       },
+      select: { id: true },
     });
 
     result.itemsQueued++;
+
+    const autoApprove = shouldAutoApprovePipelineItem({
+      item: { ...item, confidence },
+      sourceType: sourceRaw.sourceType as PipelineSourceType,
+      reliability,
+      matchedEntityId: isDupe.matchedId,
+      matchScore: isDupe.matchScore,
+    });
+    if (autoApprove.eligible) {
+      await approvePipelineItemRecord(createdItem.id, {
+        reviewedBy: 'system',
+        autoApproved: true,
+        autoApprovalReason: autoApprove.reason,
+      });
+    }
   }
 
   const stats = getLlmStats();
@@ -237,6 +283,7 @@ type DedupResult = {
   isDuplicate: boolean;
   matchedId: string | null;
   matchScore: number | null;
+  matchKind: 'PIPELINE_ITEM' | 'ENTITY' | null;
 };
 
 async function checkDuplicate(
@@ -254,7 +301,12 @@ async function checkDuplicate(
   });
 
   if (existingQueueItem) {
-    return { isDuplicate: true, matchedId: existingQueueItem.id, matchScore: 1.0 };
+    return {
+      isDuplicate: true,
+      matchedId: existingQueueItem.id,
+      matchScore: 1.0,
+      matchKind: 'PIPELINE_ITEM',
+    };
   }
 
   if (item.type === 'EVENT') {
@@ -265,15 +317,22 @@ async function checkDuplicate(
 }
 
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {
-  if (!event.date) return { isDuplicate: false, matchedId: null, matchScore: null };
+  if (!event.date) {
+    return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
+  }
 
-  const startOfDay = new Date(event.date + 'T00:00:00');
-  const endOfDay = new Date(event.date + 'T23:59:59');
+  const eventDate = new Date(event.date + 'T12:00:00');
+  const startOfWindow = new Date(eventDate);
+  startOfWindow.setDate(startOfWindow.getDate() - 1);
+  startOfWindow.setHours(0, 0, 0, 0);
+  const endOfWindow = new Date(eventDate);
+  endOfWindow.setDate(endOfWindow.getDate() + 1);
+  endOfWindow.setHours(23, 59, 59, 999);
 
   const candidates = await db.event.findMany({
     where: {
       cityId,
-      startsAt: { gte: startOfDay, lte: endOfDay },
+      startsAt: { gte: startOfWindow, lte: endOfWindow },
     },
     select: { id: true, title: true },
   });
@@ -281,11 +340,40 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
   for (const candidate of candidates) {
     const score = computeSimilarity(event.title.toLowerCase(), candidate.title.toLowerCase());
     if (score > 0.7) {
-      return { isDuplicate: true, matchedId: candidate.id, matchScore: score };
+      return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
   }
 
-  return { isDuplicate: false, matchedId: null, matchScore: null };
+  const pendingItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType: 'EVENT',
+      status: 'PENDING',
+    },
+    select: { id: true, extractedData: true },
+  });
+
+  for (const candidate of pendingItems) {
+    const pendingEvent = candidate.extractedData as unknown as Partial<ExtractedEvent>;
+    if (!pendingEvent.title || !pendingEvent.date) continue;
+
+    const candidateDate = new Date(`${pendingEvent.date}T12:00:00`);
+    if (Number.isNaN(candidateDate.getTime())) continue;
+    const dayDiff = Math.abs(eventDate.getTime() - candidateDate.getTime()) / (1000 * 60 * 60 * 24);
+    if (dayDiff > 1) continue;
+
+    const score = computeSimilarity(event.title.toLowerCase(), pendingEvent.title.toLowerCase());
+    if (score > 0.7) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: score,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+  }
+
+  return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
 }
 
 async function checkCommunityDuplicate(
@@ -293,18 +381,121 @@ async function checkCommunityDuplicate(
   cityId: string,
 ): Promise<DedupResult> {
   const candidates = await db.community.findMany({
-    where: { cityId },
-    select: { id: true, name: true },
+    where: { cityId, mergedIntoId: null },
+    select: { id: true, name: true, description: true, city: { select: { name: true } } },
   });
+
+  const borderlineCandidates: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    cityName: string;
+  }> = [];
 
   for (const candidate of candidates) {
     const score = computeSimilarity(community.name.toLowerCase(), candidate.name.toLowerCase());
     if (score > 0.7) {
-      return { isDuplicate: true, matchedId: candidate.id, matchScore: score };
+      return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
+    }
+    if (score >= 0.5) {
+      borderlineCandidates.push({
+        id: candidate.id,
+        name: candidate.name,
+        description: candidate.description,
+        cityName: candidate.city.name,
+      });
     }
   }
 
-  return { isDuplicate: false, matchedId: null, matchScore: null };
+  const semanticMatch = await semanticCommunityDuplicateCheck(
+    community,
+    borderlineCandidates.slice(0, 5),
+  );
+  if (semanticMatch) {
+    return {
+      isDuplicate: true,
+      matchedId: semanticMatch.matchedId,
+      matchScore: semanticMatch.confidence,
+      matchKind: 'ENTITY',
+    };
+  }
+
+  return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
+}
+
+async function mergeIntoPendingEventPipelineItem(
+  pipelineItemId: string,
+  incomingEvent: ExtractedEvent,
+  sourceRaw: RawContent,
+): Promise<void> {
+  const existingItem = await db.pipelineItem.findUnique({
+    where: { id: pipelineItemId },
+    select: { extractedData: true, rawContent: true, confidence: true },
+  });
+  if (!existingItem) return;
+
+  const existingEvent = existingItem.extractedData as unknown as ExtractedEvent;
+  const mergedEvent = mergeExtractedEvents(existingEvent, incomingEvent);
+  const mergedConfidence = Math.max(existingItem.confidence, incomingEvent.confidence);
+  const mergedRawContent = [
+    existingItem.rawContent,
+    `\n\n--- MERGED SOURCE (${sourceRaw.sourceType}) ${sourceRaw.sourceUrl} ---\n${sourceRaw.text.slice(0, 10_000)}`,
+  ]
+    .filter(Boolean)
+    .join('');
+
+  await db.pipelineItem.update({
+    where: { id: pipelineItemId },
+    data: {
+      extractedData: mergedEvent as unknown as Prisma.InputJsonValue,
+      confidence: mergedConfidence,
+      rawContent: mergedRawContent,
+      status: 'PENDING',
+    },
+  });
+}
+
+function mergeExtractedEvents(base: ExtractedEvent, incoming: ExtractedEvent): ExtractedEvent {
+  const mergedFieldConfidence: Record<string, number> = {
+    ...base.fieldConfidence,
+    ...incoming.fieldConfidence,
+  };
+
+  const chooseField = <T>(field: keyof ExtractedEvent, baseValue: T, incomingValue: T): T => {
+    const baseConfidence = base.fieldConfidence[field as string] ?? 0;
+    const incomingConfidence = incoming.fieldConfidence[field as string] ?? 0;
+
+    if (incomingValue == null || incomingValue === '' || incomingValue === false) {
+      return baseValue;
+    }
+    if (baseValue == null || baseValue === '' || baseValue === false) {
+      return incomingValue;
+    }
+    return incomingConfidence >= baseConfidence ? incomingValue : baseValue;
+  };
+
+  return {
+    ...base,
+    title: chooseField('title', base.title, incoming.title),
+    description: chooseField('description', base.description, incoming.description),
+    date: chooseField('date', base.date, incoming.date),
+    time: chooseField('time', base.time, incoming.time),
+    endDate: chooseField('endDate', base.endDate, incoming.endDate),
+    endTime: chooseField('endTime', base.endTime, incoming.endTime),
+    venueName: chooseField('venueName', base.venueName, incoming.venueName),
+    venueAddress: chooseField('venueAddress', base.venueAddress, incoming.venueAddress),
+    cityName: chooseField('cityName', base.cityName, incoming.cityName),
+    isOnline: chooseField('isOnline', base.isOnline, incoming.isOnline),
+    isFree: chooseField('isFree', base.isFree, incoming.isFree),
+    cost: chooseField('cost', base.cost, incoming.cost),
+    registrationUrl: chooseField('registrationUrl', base.registrationUrl, incoming.registrationUrl),
+    imageUrl: chooseField('imageUrl', base.imageUrl, incoming.imageUrl),
+    hostCommunity: chooseField('hostCommunity', base.hostCommunity, incoming.hostCommunity),
+    categories: [...new Set([...base.categories, ...incoming.categories])],
+    languages: [...new Set([...base.languages, ...incoming.languages])],
+    confidence: Math.max(base.confidence, incoming.confidence),
+    fieldConfidence: mergedFieldConfidence,
+  };
 }
 
 /**
