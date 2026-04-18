@@ -73,20 +73,6 @@ for (const [metro, region] of Object.entries(METRO_REGIONS)) {
   }
 }
 
-/** All searchable town names with their target city slug */
-export const SEARCHABLE_TOWNS: { name: string; slug: string; metro: string }[] = [
-  // Active cities themselves
-  ...ACTIVE_CITIES.map((c) => ({
-    name: c.charAt(0).toUpperCase() + c.slice(1),
-    slug: c,
-    metro: c,
-  })),
-  // All satellites
-  ...Object.entries(METRO_REGIONS).flatMap(([metro, region]) =>
-    region.satellites.map((s) => ({ name: s.name, slug: s.slug, metro })),
-  ),
-];
-
 /** Cities we're expanding to — shown as "Coming Soon" */
 export const UPCOMING_CITIES = [
   { slug: 'berlin', name: 'Berlin', state: 'Berlin', emoji: '🐻' },
