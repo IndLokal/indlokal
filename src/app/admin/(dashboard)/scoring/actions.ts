@@ -20,9 +20,13 @@ export type JobResult = { ok: true; message: string } | { ok: false; error: stri
 export async function runScoreRefresh(): Promise<JobResult> {
   await requireAdminAction();
   try {
-    const { updated } = await refreshAllScores();
+    const { updated, demoted } = await refreshAllScores();
     revalidatePath('/admin/scoring');
-    return { ok: true, message: `Scores refreshed for ${updated} communities.` };
+    const msg =
+      demoted > 0
+        ? `Scores refreshed for ${updated} communities. ${demoted} dormant communities demoted to INACTIVE.`
+        : `Scores refreshed for ${updated} communities.`;
+    return { ok: true, message: msg };
   } catch (err) {
     return { ok: false, error: String(err) };
   }

@@ -1,16 +1,41 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { approvePipelineItem, rejectPipelineItem, batchApprovePipelineItems } from './actions';
+import {
+  approveKeywordSuggestion,
+  approvePipelineItem,
+  batchApprovePipelineItems,
+  rejectKeywordSuggestion,
+  rejectPipelineItem,
+  revertAutoApprovedItems,
+  runEnrichmentPass,
+  runKeywordExpansionPass,
+  runRelationshipInference,
+} from './actions';
 import RunPipelineButton from './RunPipelineButton';
+import { getSourceReliabilityStats } from '@/modules/pipeline';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline/types';
 
 export const metadata = { title: 'Content Pipeline — Admin' };
 
 export default async function AdminPipelinePage() {
+  const sourceStats = await getSourceReliabilityStats();
   const items = await db.pipelineItem.findMany({
     where: { status: 'PENDING' },
     include: { city: { select: { name: true, slug: true } } },
     orderBy: [{ confidence: 'desc' }, { createdAt: 'desc' }],
+  });
+
+  const autoApprovedItems = await db.pipelineItem.findMany({
+    where: { autoApproved: true, status: 'APPROVED' },
+    include: { city: { select: { name: true } } },
+    orderBy: { reviewedAt: 'desc' },
+    take: 10,
+  });
+
+  const keywordSuggestions = await db.keywordSuggestion.findMany({
+    where: { status: 'PENDING' },
+    orderBy: [{ confidence: 'desc' }, { createdAt: 'desc' }],
+    take: 12,
   });
 
   const highConfidence = items.filter((i) => i.confidence >= 0.85);
@@ -42,6 +67,165 @@ export default async function AdminPipelinePage() {
           </Link>
         </div>
       </div>
+
+      <section className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <form action={runEnrichmentPass} className="card-base p-4">
+          <h2 className="font-semibold">Enrichment</h2>
+          <p className="text-muted mt-1 text-sm">Queue sparse-community enrichment suggestions.</p>
+          <button type="submit" className="btn-secondary mt-4 w-full">
+            Run Enrichment
+          </button>
+        </form>
+        <form action={runRelationshipInference} className="card-base p-4">
+          <h2 className="font-semibold">Relationships</h2>
+          <p className="text-muted mt-1 text-sm">Infer same-organizer and sister-chapter edges.</p>
+          <button type="submit" className="btn-secondary mt-4 w-full">
+            Infer Relationships
+          </button>
+        </form>
+        <form action={runKeywordExpansionPass} className="card-base p-4">
+          <h2 className="font-semibold">Keywords</h2>
+          <p className="text-muted mt-1 text-sm">
+            Generate new search keyword suggestions from approved items.
+          </p>
+          <button type="submit" className="btn-secondary mt-4 w-full">
+            Generate Keywords
+          </button>
+        </form>
+        {autoApprovedItems.length > 0 && (
+          <form action={revertAutoApprovedItems} className="card-base p-4">
+            <h2 className="font-semibold">Auto-Approve</h2>
+            <p className="text-muted mt-1 text-sm">
+              Revert the latest auto-approved items back into review.
+            </p>
+            <input
+              type="hidden"
+              name="ids"
+              value={autoApprovedItems.map((item) => item.id).join(',')}
+            />
+            <button
+              type="submit"
+              className="mt-4 w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              Revert Recent Auto-Approvals
+            </button>
+          </form>
+        )}
+      </section>
+
+      {sourceStats.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Source Reliability</h2>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {sourceStats.map((stat) => (
+              <div key={stat.sourceType} className="card-base p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold">{stat.sourceType}</h3>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      stat.confidenceAdjustment > 0
+                        ? 'bg-green-100 text-green-700'
+                        : stat.confidenceAdjustment < 0
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    {stat.confidenceAdjustment > 0
+                      ? `+${Math.round(stat.confidenceAdjustment * 100)}%`
+                      : `${Math.round(stat.confidenceAdjustment * 100)}%`}
+                  </span>
+                </div>
+                <p className="text-muted mt-2 text-sm">
+                  Approval rate: {Math.round(stat.approvalRate * 100)}% · Reviewed:{' '}
+                  {stat.totalReviewed}
+                </p>
+                <p className="text-muted mt-1 text-xs">
+                  Approved {stat.approved} · Rejected {stat.rejected} · Pending {stat.pending} ·
+                  Merged {stat.merged}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {keywordSuggestions.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold">Keyword Suggestions</h2>
+          <div className="mt-4 space-y-3">
+            {keywordSuggestions.map((suggestion) => (
+              <div
+                key={suggestion.id}
+                className="card-base flex items-center justify-between gap-4 p-4"
+              >
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{suggestion.keyword}</span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                      {Math.round(suggestion.confidence * 100)}%
+                    </span>
+                  </div>
+                  <p className="text-muted mt-1 text-sm">
+                    Seen in {suggestion.sourceCount} approved items
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <form action={approveKeywordSuggestion}>
+                    <input type="hidden" name="id" value={suggestion.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"
+                    >
+                      Approve
+                    </button>
+                  </form>
+                  <form action={rejectKeywordSuggestion}>
+                    <input type="hidden" name="id" value={suggestion.id} />
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-red-300 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      Reject
+                    </button>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {autoApprovedItems.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-lg font-semibold text-sky-700">Auto-Approved</h2>
+          <div className="mt-4 space-y-2">
+            {autoApprovedItems.map((item) => {
+              const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
+              const name = data.type === 'EVENT' ? data.title : data.name;
+              return (
+                <div
+                  key={item.id}
+                  className="border-border/50 flex items-center justify-between rounded-[var(--radius-button)] border px-4 py-2 text-sm"
+                >
+                  <div>
+                    <span className="text-sky-600">⚡</span>{' '}
+                    <span className="font-medium">{name}</span>
+                    <span className="text-muted ml-2">
+                      {item.entityType} · {item.city.name}
+                    </span>
+                    {item.autoApprovalReason && (
+                      <span className="text-muted ml-2 text-xs">({item.autoApprovalReason})</span>
+                    )}
+                  </div>
+                  <span className="text-muted text-xs">
+                    {item.reviewedAt?.toLocaleDateString()}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {/* ─── High confidence batch approve ─── */}
       {highConfidence.length > 0 && (
@@ -162,10 +346,18 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
             >
               {item.entityType}
             </span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
+              {item.reviewKind}
+            </span>
             <h3 className="font-semibold">{event?.title ?? community?.name}</h3>
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${confidenceColor}`}>
               {Math.round(item.confidence * 100)}%
             </span>
+            {item.autoApproved && (
+              <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
+                AUTO
+              </span>
+            )}
           </div>
 
           {/* Event details */}
@@ -241,6 +433,11 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
             {item.matchedEntityId && (
               <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-amber-700">
                 ⚠️ Possible duplicate (match: {Math.round((item.matchScore ?? 0) * 100)}%)
+              </span>
+            )}
+            {item.reviewKind === 'ENRICHMENT' && item.targetEntityId && (
+              <span className="ml-2 rounded bg-sky-50 px-1.5 py-0.5 text-sky-700">
+                Suggestion for existing community
               </span>
             )}
           </p>

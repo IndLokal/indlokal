@@ -30,6 +30,11 @@ export default function AdminDashboardPage() {
           description="AI-extracted content review queue"
           href="/admin/pipeline"
         />
+        <DashboardCard
+          title="Merge Communities"
+          description="Consolidate duplicates into a canonical record"
+          href="/admin/merge"
+        />
       </div>
     </div>
   );
@@ -62,4 +67,5 @@ export const ADMIN_NAV_LINKS = [
   { href: '/admin/claims', label: 'Claims' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/pipeline', label: 'Pipeline' },
+  { href: '/admin/merge', label: 'Merge' },
 ];
