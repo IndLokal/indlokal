@@ -21,6 +21,7 @@ export {
   computeCompletenessScore,
   computeTrustScore,
   computeFinalScore,
+  computeFreshnessState,
   detectTrending,
   refreshAllScores,
   refreshCommunityScore,

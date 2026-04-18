@@ -1,5 +1,8 @@
 import { db } from '@/lib/db';
 import { SCORING } from '@/lib/config';
+import { sendStaleReEngagementEmail } from '@/lib/email';
+import { createMagicLinkToken } from '@/lib/session';
+import { Prisma } from '@prisma/client';
 import { subDays } from 'date-fns';
 
 // ─── Scoring weights (must sum to 1.0) ────────────────────────────────────
@@ -21,6 +24,7 @@ export type PulseScoreBreakdown = {
   completeness: number;
   trust: number;
   isTrending: boolean;
+  freshnessState: 'FRESH' | 'AGING' | 'STALE' | 'DORMANT';
   computedAt: string; // ISO 8601
 };
 
@@ -156,10 +160,109 @@ export function computeFinalScore(input: {
 }
 
 /**
+ * Compute freshness state based on last activity date.
+ */
+export function computeFreshnessState(
+  lastActivityAt: Date | null,
+): 'FRESH' | 'AGING' | 'STALE' | 'DORMANT' {
+  if (!lastActivityAt) return 'DORMANT';
+  const daysAgo = (Date.now() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
+  if (daysAgo < 30) return 'FRESH';
+  if (daysAgo < 90) return 'AGING';
+  if (daysAgo < 180) return 'STALE';
+  return 'DORMANT';
+}
+
+type FreshnessState = PulseScoreBreakdown['freshnessState'];
+
+function getPreviousFreshnessState(scoreBreakdown: unknown): FreshnessState | null {
+  if (!scoreBreakdown || typeof scoreBreakdown !== 'object') return null;
+  const freshnessState = (scoreBreakdown as { freshnessState?: unknown }).freshnessState;
+  return freshnessState === 'FRESH' ||
+    freshnessState === 'AGING' ||
+    freshnessState === 'STALE' ||
+    freshnessState === 'DORMANT'
+    ? freshnessState
+    : null;
+}
+
+function getMetadataObject(metadata: unknown): Record<string, unknown> {
+  if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
+    return metadata as Record<string, unknown>;
+  }
+  return {};
+}
+
+function getLastStaleEmailSentAt(metadata: unknown): Date | null {
+  const meta = getMetadataObject(metadata);
+  const reengagement = meta.reengagement;
+  if (!reengagement || typeof reengagement !== 'object' || Array.isArray(reengagement)) return null;
+
+  const staleEmailSentAt = (reengagement as { staleEmailSentAt?: unknown }).staleEmailSentAt;
+  if (typeof staleEmailSentAt !== 'string') return null;
+
+  const parsed = new Date(staleEmailSentAt);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+async function maybeSendStaleReengagementEmail(input: {
+  communityId: string;
+  communityName: string;
+  freshnessState: FreshnessState;
+  previousFreshnessState: FreshnessState | null;
+  claimState: string;
+  organizer: { id: string; email: string; displayName: string | null } | null;
+  metadata: unknown;
+}): Promise<Record<string, unknown> | null> {
+  const {
+    communityId,
+    communityName,
+    freshnessState,
+    previousFreshnessState,
+    claimState,
+    organizer,
+    metadata,
+  } = input;
+
+  if (freshnessState !== 'STALE' || previousFreshnessState === 'STALE') return null;
+  if (claimState !== 'CLAIMED' || !organizer?.email) return null;
+
+  const lastSentAt = getLastStaleEmailSentAt(metadata);
+  if (lastSentAt && Date.now() - lastSentAt.getTime() < 30 * 24 * 60 * 60 * 1000) {
+    return null;
+  }
+
+  const rawToken = await createMagicLinkToken(organizer.id);
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
+  const loginUrl = `${appUrl}/organizer/verify?token=${rawToken}`;
+
+  await sendStaleReEngagementEmail(
+    organizer.email,
+    organizer.displayName ?? 'there',
+    communityName,
+    loginUrl,
+  );
+
+  const meta = getMetadataObject(metadata);
+  return {
+    ...meta,
+    reengagement: {
+      ...(meta.reengagement &&
+      typeof meta.reengagement === 'object' &&
+      !Array.isArray(meta.reengagement)
+        ? (meta.reengagement as Record<string, unknown>)
+        : {}),
+      staleEmailSentAt: new Date().toISOString(),
+      lastTriggeredForCommunityId: communityId,
+    },
+  };
+}
+
+/**
  * Refresh scores for all active communities.
  * Intended to run as a cron job (daily or on content change).
  */
-export async function refreshAllScores(): Promise<{ updated: number }> {
+export async function refreshAllScores(): Promise<{ updated: number; demoted: number }> {
   const now = new Date();
   const cutoff90 = subDays(now, 90);
   const cutoff30 = subDays(now, 30);
@@ -169,14 +272,21 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
     where: { status: { not: 'INACTIVE' } },
     select: {
       id: true,
+      name: true,
+      status: true,
       description: true,
       descriptionLong: true,
+      slug: true,
       logoUrl: true,
       coverImageUrl: true,
       languages: true,
       personaSegments: true,
       lastActivityAt: true,
       claimState: true,
+      metadata: true,
+      scoreBreakdown: true,
+      city: { select: { slug: true } },
+      claimedBy: { select: { id: true, email: true, displayName: true } },
       categories: { select: { categoryId: true } },
       accessChannels: { select: { id: true } },
       trustSignals: { select: { signalType: true } },
@@ -216,6 +326,7 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
   const viewMap = new Map(viewCounts.map((r) => [r.entityId, r._count._all]));
 
   let updated = 0;
+  let demoted = 0;
   for (const c of communities) {
     const activityBreakdown = computeActivityBreakdown({
       eventsLast90Days: c._count.events,
@@ -247,6 +358,17 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
     });
 
     const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
+    const freshnessState = computeFreshnessState(c.lastActivityAt);
+    const previousFreshnessState = getPreviousFreshnessState(c.scoreBreakdown);
+    const nextMetadata = await maybeSendStaleReengagementEmail({
+      communityId: c.id,
+      communityName: c.name,
+      freshnessState,
+      previousFreshnessState,
+      claimState: c.claimState,
+      organizer: c.claimedBy,
+      metadata: c.metadata,
+    });
 
     const scoreBreakdown: PulseScoreBreakdown = {
       pulseScore,
@@ -254,17 +376,30 @@ export async function refreshAllScores(): Promise<{ updated: number }> {
       completeness: completenessScore,
       trust: trustScore,
       isTrending,
+      freshnessState,
       computedAt: new Date().toISOString(),
     };
 
+    // Auto-demote DORMANT communities (180d+ no activity) to INACTIVE
+    const shouldDemote = freshnessState === 'DORMANT' && c.status === 'ACTIVE';
+
     await db.community.update({
       where: { id: c.id },
-      data: { activityScore, completenessScore, trustScore, isTrending, scoreBreakdown },
+      data: {
+        activityScore,
+        completenessScore,
+        trustScore,
+        isTrending,
+        scoreBreakdown,
+        ...(nextMetadata ? { metadata: nextMetadata as Prisma.InputJsonValue } : {}),
+        ...(shouldDemote ? { status: 'INACTIVE' } : {}),
+      },
     });
     updated++;
+    if (shouldDemote) demoted++;
   }
 
-  return { updated };
+  return { updated, demoted };
 }
 
 /**
@@ -349,6 +484,7 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
   });
 
   const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
+  const freshnessState = computeFreshnessState(c.lastActivityAt);
 
   const scoreBreakdown: PulseScoreBreakdown = {
     pulseScore,
@@ -356,6 +492,7 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
     completeness: completenessScore,
     trust: trustScore,
     isTrending,
+    freshnessState,
     computedAt: new Date().toISOString(),
   };
 
