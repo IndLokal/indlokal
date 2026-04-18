@@ -4,53 +4,28 @@
  * Generic-first architecture: broad search → cheap LLM filter →
  * batch extraction with city assignment → dedup → admin review queue.
  *
+ * Public API only — internal helpers (sources, extraction stages, config
+ * constants) are imported directly by orchestrator and CLI (run.ts).
+ *
  * @see docs/SOLUTION_ARCHITECTURE.md §10.4
  */
 
-export { runPipeline } from './orchestrator';
-export type { PipelineRunResult } from './types';
-export { filterRelevance, extractBatch, extractContent } from './extraction';
+// ─── Core pipeline ──────────────────────────────────────────────────────
+export { runPipeline, computeSimilarity } from './orchestrator';
+
+// ─── Review & approval ──────────────────────────────────────────────────
+export { approvePipelineItemRecord, revertAutoApprovedPipelineItems } from './review';
+
+// ─── Intelligence (cron jobs) ───────────────────────────────────────────
 export {
-  fetchEventbriteKeywords,
-  fetchPinnedUrl,
-  fetchGoogleSearch,
-  fetchDuckDuckGoSearch,
-} from './sources';
-export {
-  getEnabledRegions,
-  getKeywordStrategies,
-  getPinnedStrategies,
-  SEARCH_REGIONS,
-  SEARCH_STRATEGIES,
-  DIASPORA_KEYWORDS,
-} from './config';
-export { getDbCommunityStrategies } from './db-sources';
-export { computeSimilarity } from './orchestrator';
-export {
-  getSourceReliabilityStats,
-  getSourceReliabilityMap,
-  applySourceConfidenceAdjustment,
-} from './reliability';
-export {
-  semanticCommunityDuplicateCheck,
   enrichSparseCommunities,
   inferCommunityRelationships,
   refreshKeywordSuggestions,
-  getApprovedDynamicKeywords,
 } from './intelligence';
-export {
-  shouldAutoApprovePipelineItem,
-  approvePipelineItemRecord,
-  revertAutoApprovedPipelineItems,
-} from './review';
-export type {
-  RawContent,
-  ExtractedEvent,
-  ExtractedCommunity,
-  ExtractedData,
-  FetchResult,
-  SearchStrategy,
-  SearchRegion,
-  RelevanceResult,
-} from './types';
+
+// ─── Reliability stats (admin UI) ───────────────────────────────────────
+export { getSourceReliabilityStats } from './reliability';
+
+// ─── Types ──────────────────────────────────────────────────────────────
+export type { PipelineRunResult, ExtractedEvent, ExtractedCommunity, ExtractedData } from './types';
 export type { SourceReliabilityStat } from './reliability';
