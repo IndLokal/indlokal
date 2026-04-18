@@ -55,10 +55,50 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     duration: 0,
   };
 
-  // ── Step 1: Fetch from all sources ──
-
-  const allRaw: RawContent[] = [];
+  // Phase 1: Fetch from all sources + URL dedup
   const regions = getEnabledRegions();
+  const uniqueRaw = await fetchAllSources(regions, result);
+
+  if (uniqueRaw.length === 0) {
+    result.duration = Date.now() - start;
+    return result;
+  }
+
+  // Phase 2: LLM relevance filter + structured extraction
+  const { extracted, relevantItems } = await filterAndExtract(uniqueRaw, result);
+
+  if (extracted.length === 0) {
+    const stats = getLlmStats();
+    result.llmCalls = stats.calls;
+    result.llmTokensEstimate = stats.tokensEstimate;
+    result.duration = Date.now() - start;
+    return result;
+  }
+
+  // Phase 3: Resolve cities, dedup, queue for review
+  await resolveAndQueue(extracted, relevantItems, regions, result);
+
+  const stats = getLlmStats();
+  result.llmCalls = stats.calls;
+  result.llmTokensEstimate = stats.tokensEstimate;
+  result.duration = Date.now() - start;
+
+  console.log(
+    `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
+  );
+
+  return result;
+}
+
+// ─── Phase 1: Fetch ────────────────────────────────────
+
+type Region = ReturnType<typeof getEnabledRegions>[number];
+
+async function fetchAllSources(
+  regions: Region[],
+  result: PipelineRunResult,
+): Promise<RawContent[]> {
+  const allRaw: RawContent[] = [];
   const approvedKeywords = await getApprovedDynamicKeywords();
   const keywordStrategies = getKeywordStrategies().map((strategy) =>
     strategy.kind === 'keyword_search'
@@ -76,12 +116,11 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${keywordStrategies.length}, Pinned: ${staticPinned.length} static + ${dbPinned.length} DB = ${pinnedStrategies.length} total`,
   );
 
-  // 1a. Keyword strategies × regions
+  // Keyword strategies × regions
   for (const region of regions) {
     result.regionsScanned++;
     for (const strategy of keywordStrategies) {
       try {
-        // Dispatch to the right fetcher based on source type
         let fetchResult;
         if (strategy.sourceType === 'GOOGLE_SEARCH') {
           fetchResult = await fetchGoogleSearch(strategy, region);
@@ -100,11 +139,10 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     }
   }
 
-  // 1b. Pinned URLs (run regardless of regions)
+  // Pinned URLs (run regardless of regions)
   for (const strategy of pinnedStrategies) {
     try {
       const fetchResult = await fetchPinnedUrl(strategy);
-      // For pinned URLs with hintCitySlug, tag the raw content
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
       }
@@ -120,12 +158,7 @@ export async function runPipeline(): Promise<PipelineRunResult> {
   result.itemsFetched = allRaw.length;
   console.log(`[Pipeline] Total fetched: ${allRaw.length} raw items`);
 
-  if (allRaw.length === 0) {
-    result.duration = Date.now() - start;
-    return result;
-  }
-
-  // Deduplicate by sourceUrl (same event from multiple keyword searches)
+  // Deduplicate by sourceUrl
   const seen = new Set<string>();
   const uniqueRaw = allRaw.filter((item) => {
     if (seen.has(item.sourceUrl)) return false;
@@ -133,9 +166,17 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     return true;
   });
   console.log(`[Pipeline] After URL dedup: ${uniqueRaw.length} unique items`);
+  return uniqueRaw;
+}
 
-  // ── Step 2: Stage 1 LLM — cheap relevance filter ──
+type ExtractedItem = ExtractedData & { sourceIndex: number };
 
+// ─── Phase 2: Filter & Extract ─────────────────────────
+
+async function filterAndExtract(
+  uniqueRaw: RawContent[],
+  result: PipelineRunResult,
+): Promise<{ extracted: ExtractedItem[]; relevantItems: RawContent[] }> {
   console.log('[Pipeline] Stage 1: Relevance filter...');
   const relevanceResults = await filterRelevance(uniqueRaw);
   const relevantItems = relevanceResults
@@ -147,23 +188,25 @@ export async function runPipeline(): Promise<PipelineRunResult> {
   console.log(`[Pipeline] Passed filter: ${relevantItems.length}/${uniqueRaw.length}`);
 
   if (relevantItems.length === 0) {
-    const stats = getLlmStats();
-    result.llmCalls = stats.calls;
-    result.llmTokensEstimate = stats.tokensEstimate;
-    result.duration = Date.now() - start;
-    return result;
+    return { extracted: [], relevantItems: [] };
   }
-
-  // ── Step 3: Stage 2 LLM — batch extraction with city assignment ──
 
   console.log('[Pipeline] Stage 2: Batch extraction...');
   const extracted = await extractBatch(relevantItems);
   result.itemsExtracted = extracted.length;
   console.log(`[Pipeline] Extracted: ${extracted.length} structured items`);
 
-  // ── Step 4 & 5 & 6: Resolve city → dedup → queue ──
+  return { extracted, relevantItems };
+}
 
-  // Pre-load city lookup for all known slugs
+// ─── Phase 3: Resolve, Dedup & Queue ───────────────────
+
+async function resolveAndQueue(
+  extracted: ExtractedItem[],
+  relevantItems: RawContent[],
+  regions: Region[],
+  result: PipelineRunResult,
+): Promise<void> {
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
   const cities = await db.city.findMany({
     where: { slug: { in: allCitySlugs } },
@@ -190,7 +233,6 @@ export async function runPipeline(): Promise<PipelineRunResult> {
       if (match) cityId = match.id;
     }
 
-    // Fallback: check hintCitySlug from pinned URL source
     if (!cityId) {
       const hint = (sourceRaw as RawContent & { _hintCitySlug?: string })._hintCitySlug;
       if (hint) {
@@ -264,17 +306,6 @@ export async function runPipeline(): Promise<PipelineRunResult> {
       });
     }
   }
-
-  const stats = getLlmStats();
-  result.llmCalls = stats.calls;
-  result.llmTokensEstimate = stats.tokensEstimate;
-  result.duration = Date.now() - start;
-
-  console.log(
-    `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
-  );
-
-  return result;
 }
 
 // ─── Deduplication ─────────────────────────────────────
