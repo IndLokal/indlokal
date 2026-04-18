@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
-import { getCommunityBySlug } from '@/modules/community/queries';
+import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community/queries';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from '@/components/ReportIssueForm';
 import { ViewTracker } from '@/components/ViewTracker';
@@ -59,7 +59,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CommunityDetailPage({ params }: Props) {
   const { city, slug } = await params;
   const community = await getCommunityBySlug(slug);
-  if (!community) notFound();
+  if (!community) {
+    const redirectTarget = await getCommunityRedirectTarget(slug);
+    if (redirectTarget) {
+      redirect(`/${redirectTarget.citySlug}/communities/${redirectTarget.slug}`);
+    }
+    notFound();
+  }
 
   const now = new Date();
   const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= now);

@@ -9,6 +9,7 @@ import { captureServerEvent } from '@/lib/posthog';
 import { Events } from '@/lib/analytics-events';
 import { headers } from 'next/headers';
 import { checkRateLimit, submitLimiter } from '@/lib/rate-limit';
+import { computeSimilarity } from '@/modules/pipeline';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -65,6 +66,20 @@ export async function submitCommunity(
   });
   if (!city) {
     return { success: false, errors: { citySlug: ['City not found or not active'] } };
+  }
+
+  // Dedup check — prevent duplicate submissions
+  const existingCommunities = await db.community.findMany({
+    where: { cityId: city.id, status: { not: 'INACTIVE' } },
+    select: { name: true },
+  });
+  for (const c of existingCommunities) {
+    if (computeSimilarity(data.name.toLowerCase(), c.name.toLowerCase()) > 0.7) {
+      return {
+        success: false,
+        errors: { name: [`A similar community "${c.name}" already exists.`] },
+      };
+    }
   }
 
   // Generate unique slug

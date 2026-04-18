@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { generateSessionToken, hashToken, tokenExpiry } from '@/lib/session';
+import { createMagicLinkToken } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
 import { checkRateLimit, magicLinkLimiter } from '@/lib/rate-limit';
 import { z } from 'zod';
@@ -59,16 +59,7 @@ export async function requestMagicLink(
   }
 
   // Generate a one-time magic link token (separate from session token)
-  const rawToken = generateSessionToken();
-  const tokenHash = await hashToken(rawToken);
-
-  await db.magicLinkToken.create({
-    data: {
-      tokenHash,
-      userId: user.id,
-      expiresAt: tokenExpiry(),
-    },
-  });
+  const rawToken = await createMagicLinkToken(user.id);
 
   try {
     await sendMagicLinkEmail(user.email, rawToken, user.claimedCommunities[0].name);

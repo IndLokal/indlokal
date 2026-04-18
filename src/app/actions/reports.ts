@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { z } from 'zod';
 import { headers } from 'next/headers';
 import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
+import { computeSimilarity } from '@/modules/pipeline';
 
 // ─── Report an issue ─────────────────────────────────────────────────────────
 
@@ -91,6 +92,20 @@ export async function suggestCommunity(
 
   const city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
   if (!city) return { success: false, error: 'City not found.' };
+
+  // Dedup check — look for existing communities with similar names in this city
+  const existing = await db.community.findMany({
+    where: { cityId: city.id, status: { not: 'INACTIVE' } },
+    select: { id: true, name: true, slug: true },
+  });
+  for (const c of existing) {
+    if (computeSimilarity(suggestedName.toLowerCase(), c.name.toLowerCase()) > 0.7) {
+      return {
+        success: false,
+        error: `A similar community "${c.name}" already exists. Did you mean that one?`,
+      };
+    }
+  }
 
   try {
     await db.contentReport.create({
