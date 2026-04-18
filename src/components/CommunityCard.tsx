@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CommunityListItem } from '@/modules/community/types';
-import { BookmarkButton } from '@/components/BookmarkButton';
+import { BookmarkButton } from './BookmarkButton';
 import { ActivityBadge } from '@/components/ui';
 
 type Props = {

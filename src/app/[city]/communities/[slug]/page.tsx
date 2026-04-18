@@ -5,9 +5,9 @@ import { format } from 'date-fns';
 import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from './ReportIssueForm';
-import { ViewTracker } from '@/components/ViewTracker';
+import { ViewTracker } from '@/components/analytics';
 import { ActivityBadge } from '@/components/ui';
-import { AccessChannelLink } from '@/components/AccessChannelLink';
+import { AccessChannelLink } from './AccessChannelLink';
 
 /**
  * Community Detail Page

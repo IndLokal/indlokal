@@ -8,8 +8,7 @@ import { validateEnv } from '@/lib/env';
 import { siteConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { hashToken } from '@/lib/session';
-import { PostHogProvider } from '@/components/PostHogProvider';
-import { PostHogIdentify } from '@/components/PostHogIdentify';
+import { PostHogProvider, PostHogIdentify } from '@/components/analytics';
 
 const inter = Inter({
   variable: '--font-inter',

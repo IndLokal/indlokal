@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event';
-import { ViewTracker } from '@/components/ViewTracker';
+import { ViewTracker } from '@/components/analytics';
 
 /**
  * Event Detail Page

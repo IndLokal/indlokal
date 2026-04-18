@@ -5,7 +5,7 @@ import { db } from '@/lib/db';
 import { searchCommunities, searchEvents } from '@/modules/search';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
-import { SearchTracker } from '@/components/SearchTracker';
+import { SearchTracker } from '@/components/analytics';
 import { getSessionUser } from '@/lib/session';
 import type { CommunityListItem } from '@/modules/community';
 import type { EventListItem } from '@/modules/event';
