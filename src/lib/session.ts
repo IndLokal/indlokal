@@ -31,6 +31,22 @@ export function tokenExpiry(): Date {
   return d;
 }
 
+/** Create a one-time magic-link token and persist only its hash. */
+export async function createMagicLinkToken(userId: string): Promise<string> {
+  const rawToken = generateSessionToken();
+  const tokenHash = await hashToken(rawToken);
+
+  await db.magicLinkToken.create({
+    data: {
+      tokenHash,
+      userId,
+      expiresAt: tokenExpiry(),
+    },
+  });
+
+  return rawToken;
+}
+
 /**
  * Persist a session: hash the raw token and store it in the DB, then set the raw token as a cookie.
  * Call this instead of writing sessionToken to the DB directly.
@@ -94,10 +110,10 @@ export async function requireSessionUser() {
   return user;
 }
 
-/** Require PLATFORM_ADMIN role — redirect to home if not authorized */
+/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized */
 export async function requireAdmin() {
   const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') redirect('/');
+  if (!user || user.role !== 'PLATFORM_ADMIN') redirect('/admin/login');
   return user;
 }
 

@@ -60,6 +60,36 @@ export async function sendMagicLinkEmail(
   );
 }
 
+/* ─── Admin magic link ─── */
+
+export async function sendAdminMagicLinkEmail(to: string, token: string): Promise<void> {
+  const verifyUrl = `${APP_URL}/admin/verify?token=${token}`;
+
+  await sendEmail(
+    to,
+    'Your LocalPulse admin login link',
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Admin Dashboard Access</h2>
+  <p>Click the button below to log in to the LocalPulse admin dashboard.</p>
+  <p style="margin:28px 0">
+    <a href="${verifyUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Open admin dashboard →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">This link expires in 24 hours and can only be used once.</p>
+  <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
 /* ─── Claim approved ─── */
 
 export async function sendClaimApprovedEmail(
@@ -179,6 +209,37 @@ export async function sendSubmissionApprovedEmail(
   <p style="font-size:13px">Want to manage your listing, add events, and earn a Verified badge? 
     <a href="${APP_URL}/${citySlug}/communities/${communitySlug}" style="color:#4f46e5">Claim your community →</a>
   </p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+export async function sendStaleReEngagementEmail(
+  to: string,
+  organizerName: string,
+  communityName: string,
+  loginUrl: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Is ${communityName} still active?`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Hey ${organizerName},</h2>
+  <p>We noticed <strong>${communityName}</strong> hasn't had any activity on LocalPulse in a while.</p>
+  <p>If your community is still active, just update your listing or add an upcoming event to keep it visible in search results.</p>
+  <p style="margin:28px 0">
+    <a href="${loginUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Open organizer dashboard →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">Communities without activity for 180+ days are automatically moved to inactive status.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
 </body>
