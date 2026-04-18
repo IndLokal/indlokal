@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { searchCommunities, searchEvents } from '@/modules/search/queries';
+import { searchCommunities, searchEvents } from '@/modules/search';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
 import { SearchTracker } from '@/components/SearchTracker';
 import { getSessionUser } from '@/lib/session';
-import type { CommunityListItem } from '@/modules/community/types';
-import type { EventListItem } from '@/modules/event/types';
+import type { CommunityListItem } from '@/modules/community';
+import type { EventListItem } from '@/modules/event';
 
 /**
  * Search Results Page

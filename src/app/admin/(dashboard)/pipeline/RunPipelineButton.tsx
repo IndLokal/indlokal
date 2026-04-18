@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { triggerPipelineRun } from './actions';
-import type { PipelineRunResult } from '@/modules/pipeline/types';
+import type { PipelineRunResult } from '@/modules/pipeline';
 
 export default function RunPipelineButton() {
   const [running, setRunning] = useState(false);

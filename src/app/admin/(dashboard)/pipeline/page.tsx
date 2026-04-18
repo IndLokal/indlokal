@@ -13,7 +13,7 @@ import {
 } from './actions';
 import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
-import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline/types';
+import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 
 export const metadata = { title: 'Content Pipeline — Admin' };
 

@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
-import type { PipelineRunResult } from '@/modules/pipeline/types';
+import type { PipelineRunResult } from '@/modules/pipeline';
 import {
   approvePipelineItemRecord,
   enrichSparseCommunities,

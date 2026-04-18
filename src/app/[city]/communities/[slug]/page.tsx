@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
-import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community/queries';
+import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from '@/components/ReportIssueForm';
 import { ViewTracker } from '@/components/ViewTracker';

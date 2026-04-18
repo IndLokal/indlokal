@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
-import { runPipeline } from '@/modules/pipeline/orchestrator';
+import { runPipeline } from '@/modules/pipeline';
 
 export const maxDuration = 300; // 5 min — pipeline can be slow
 

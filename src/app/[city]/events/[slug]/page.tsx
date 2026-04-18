@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { getEventBySlug } from '@/modules/event/queries';
+import { getEventBySlug } from '@/modules/event';
 import { ViewTracker } from '@/components/ViewTracker';
 
 /**

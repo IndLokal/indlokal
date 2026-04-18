@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format, endOfWeek, endOfMonth } from 'date-fns';
 import { db } from '@/lib/db';
-import { getEventsThisWeek } from '@/modules/event/queries';
+import { getEventsThisWeek } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
 
 /**

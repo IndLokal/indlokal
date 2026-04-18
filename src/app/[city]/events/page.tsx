@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getUpcomingEvents } from '@/modules/event/queries';
+import { getUpcomingEvents } from '@/modules/event';
 import { db } from '@/lib/db';
 import { EventCard } from '@/components/EventCard';
 

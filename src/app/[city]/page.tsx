@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getCityFeed } from '@/modules/discovery/queries';
+import { getCityFeed } from '@/modules/discovery';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';

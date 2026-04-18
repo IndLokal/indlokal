@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { getCommunitiesByCity } from '@/modules/community/queries';
+import { getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
 import { getSessionUser } from '@/lib/session';
 
