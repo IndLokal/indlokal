@@ -278,17 +278,6 @@ async function extractBatchCall(
   }
 }
 
-// ─── Legacy single-item extraction (kept for pinned URLs) ──
-
-/**
- * Extract content from a single raw item. Used for pinned URLs
- * where we skip the relevance filter (they're known high-value).
- */
-export async function extractContent(raw: RawContent): Promise<ExtractedData[]> {
-  const results = await extractBatch([raw]);
-  return results;
-}
-
 // ─── Normalizers ───────────────────────────────────────
 
 function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
