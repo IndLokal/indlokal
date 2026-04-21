@@ -105,6 +105,18 @@ Open [http://localhost:3000](http://localhost:3000).
 
 **Sparse-content resilience.** When a city has few events this week, the system automatically expands the time window to avoid showing empty pages.
 
+## Deployment
+
+The recommended production setup is intentionally simple:
+
+- **Vercel** for the Next.js app
+- **Managed PostgreSQL** (preferably Neon) for Prisma
+- **Resend** for email
+- **PostHog Cloud** for analytics
+- **Scheduled HTTP cron jobs** for pipeline and scoring tasks
+
+See [docs/DEPLOYMENT_STRATEGY.md](/Users/jayjain/Development/local-pulse/docs/DEPLOYMENT_STRATEGY.md) for the full deployment architecture, environment strategy, cron plan, and rollout sequence.
+
 ## Git Workflow
 
 - `main` — production-ready code

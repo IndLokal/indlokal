@@ -1,0 +1,39 @@
+name: Deploy
+
+# Runs Prisma migrations against production immediately after a merge to main,
+# before Vercel starts the new deployment build.
+#
+# Requires repository secrets:
+#   DATABASE_URL  — production database connection string (keep in GitHub secrets, NOT Vercel env, for this workflow only)
+#
+# Vercel picks up the push to main and deploys in parallel. Because Prisma
+# migrations are additive and backward-compatible by convention, the existing
+# app version is safe during the brief overlap.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  migrate:
+    name: Run database migrations
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Deploy migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}

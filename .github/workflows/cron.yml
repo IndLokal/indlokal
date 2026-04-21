@@ -1,0 +1,132 @@
+name: Cron Jobs
+
+# Runs scheduled background jobs by calling authenticated /api/cron/* routes.
+# Requires these repository secrets:
+#   APP_URL      — production base URL, e.g. https://localpulse.de
+#   CRON_SECRET  — shared secret matching CRON_SECRET env var on Vercel
+
+on:
+  schedule:
+    # ─── Scores + event archival — every 2 hours ───────────────────────────
+    - cron: "0 */2 * * *"
+    # ─── AI pipeline — every 6 hours ───────────────────────────────────────
+    - cron: "30 */6 * * *"
+    # ─── Daily maintenance jobs — 03:00 UTC ────────────────────────────────
+    - cron: "0 3 * * *"
+
+  # Allow manual trigger for any single job
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Job to run (scores | pipeline | links | keywords | relationships | enrichment | all)"
+        required: false
+        default: "all"
+
+jobs:
+  # ────────────────────────────────────────────────────────────────
+  # Scores + event archival — runs on the */2 and */6 triggers
+  # ────────────────────────────────────────────────────────────────
+  scores:
+    name: Refresh scores
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 */2 * * *' ||
+      github.event.schedule == '30 */6 * * *'
+    steps:
+      - name: POST /api/cron/scores
+        run: |
+          STATUS=$(curl -s -o /tmp/scores.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/scores" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/scores.json
+          [ "$STATUS" -eq 200 ] || (echo "scores returned HTTP $STATUS" && exit 1)
+
+  # ────────────────────────────────────────────────────────────────
+  # AI content pipeline — runs every 6 hours
+  # ────────────────────────────────────────────────────────────────
+  pipeline:
+    name: AI content pipeline
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '30 */6 * * *'
+    steps:
+      - name: POST /api/cron/pipeline
+        run: |
+          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
+            --max-time 310 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/pipeline.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+
+  # ────────────────────────────────────────────────────────────────
+  # Daily maintenance jobs — links, keywords, relationships, enrichment
+  # ────────────────────────────────────────────────────────────────
+  links:
+    name: Verify join links
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 3 * * *'
+    steps:
+      - name: POST /api/cron/links
+        run: |
+          STATUS=$(curl -s -o /tmp/links.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/links" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/links.json
+          [ "$STATUS" -eq 200 ] || (echo "links returned HTTP $STATUS" && exit 1)
+
+  keywords:
+    name: Refresh keyword suggestions
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 3 * * *'
+    steps:
+      - name: POST /api/cron/keywords
+        run: |
+          STATUS=$(curl -s -o /tmp/keywords.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/keywords" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/keywords.json
+          [ "$STATUS" -eq 200 ] || (echo "keywords returned HTTP $STATUS" && exit 1)
+
+  relationships:
+    name: Infer community relationships
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 3 * * *'
+    steps:
+      - name: POST /api/cron/relationships
+        run: |
+          STATUS=$(curl -s -o /tmp/relationships.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/relationships" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/relationships.json
+          [ "$STATUS" -eq 200 ] || (echo "relationships returned HTTP $STATUS" && exit 1)
+
+  enrichment:
+    name: Enrich sparse communities
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.schedule == '0 3 * * *'
+    steps:
+      - name: POST /api/cron/enrichment
+        run: |
+          STATUS=$(curl -s -o /tmp/enrichment.json -w "%{http_code}" \
+            --max-time 190 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/enrichment" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/enrichment.json
+          [ "$STATUS" -eq 200 ] || (echo "enrichment returned HTTP $STATUS" && exit 1)
