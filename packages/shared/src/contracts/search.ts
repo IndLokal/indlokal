@@ -1,7 +1,7 @@
 import { z } from 'zod';
-import { Page } from './common.js';
-import { CommunityCard } from './discovery.js';
-import { EventCard } from './discovery.js';
+import { Page } from './common';
+import { CommunityCard } from './discovery';
+import { EventCard } from './discovery';
 
 // ─── Enums ─────────────────────────────────────────────────────────────────
 

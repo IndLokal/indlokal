@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { Ack, Cuid, IsoDateTime } from './common.js';
+import { Ack, Cuid, IsoDateTime } from './common';
 
 // ─── Profile returned by GET /api/v1/me ───
 

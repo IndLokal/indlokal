@@ -7,7 +7,7 @@
  */
 
 import { z } from 'zod';
-import { Cuid, IsoDateTime, Page } from './common.js';
+import { Cuid, IsoDateTime, Page } from './common';
 
 // ─── City ──────────────────────────────────────────────────────────────────
 

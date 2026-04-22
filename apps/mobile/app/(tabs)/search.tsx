@@ -54,7 +54,7 @@ export default function SearchScreen() {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }, 200);
+    }, 250);
 
     return () => {
       cancelled = true;

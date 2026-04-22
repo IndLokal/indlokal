@@ -10,12 +10,12 @@
  * except via the contracts directory.
  */
 
-export * as common from './contracts/common.js';
-export * as auth from './contracts/auth.js';
-export * as notifications from './contracts/notifications.js';
-export * as discovery from './contracts/discovery.js';
-export * as events from './contracts/events.js';
-export * as community from './contracts/community.js';
-export * as search from './contracts/search.js';
-export * as submit from './contracts/submit.js';
-export * as resources from './contracts/resources.js';
+export * as common from './contracts/common';
+export * as auth from './contracts/auth';
+export * as notifications from './contracts/notifications';
+export * as discovery from './contracts/discovery';
+export * as events from './contracts/events';
+export * as community from './contracts/community';
+export * as search from './contracts/search';
+export * as submit from './contracts/submit';
+export * as resources from './contracts/resources';

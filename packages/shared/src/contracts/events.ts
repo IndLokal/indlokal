@@ -3,8 +3,8 @@
  */
 
 import { z } from 'zod';
-import { Ack, Cuid, IsoDateTime } from './common.js';
-import { EventCard, CommunityRef, CityRef, CategoryRef } from './discovery.js';
+import { Ack, Cuid, IsoDateTime } from './common';
+import { EventCard, CommunityRef, CityRef, CategoryRef } from './discovery';
 
 // ─── Full event detail ─────────────────────────────────────────────────────
 

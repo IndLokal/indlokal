@@ -6,7 +6,7 @@
  */
 
 import { z } from 'zod';
-import { Ack, Cuid, IsoDateTime, Page } from './common.js';
+import { Ack, Cuid, IsoDateTime, Page } from './common';
 
 // ─── Devices (TDD-0002 §2) ───────────────────────────────────────────
 

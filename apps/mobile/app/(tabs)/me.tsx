@@ -13,7 +13,7 @@ export default function MeTabScreen() {
         <Link href="/settings/notifications" style={styles.link}>
           Notification preferences
         </Link>
-        <Link href="/inbox/index" style={styles.link}>
+        <Link href="/inbox" style={styles.link}>
           Inbox
         </Link>
         <Link href="/me/delete-account" style={styles.link}>

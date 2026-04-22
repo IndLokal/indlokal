@@ -3,9 +3,9 @@
  */
 
 import { z } from 'zod';
-import { Cuid, IsoDateTime } from './common.js';
-import { CommunityStatus, ClaimState, CityRef, CategoryRef } from './discovery.js';
-import { TrustSignalType } from './events.js';
+import { Cuid, IsoDateTime } from './common';
+import { CommunityStatus, ClaimState, CityRef, CategoryRef } from './discovery';
+import { TrustSignalType } from './events';
 
 // ─── Access channels ──────────────────────────────────────────────────────
 
