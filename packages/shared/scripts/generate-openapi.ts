@@ -47,6 +47,109 @@ registry.register('GoogleAuth', authContracts.GoogleAuth);
 registry.register('AppleAuth', authContracts.AppleAuth);
 registry.register('RefreshRequest', authContracts.RefreshRequest);
 
+// ─── Paths ───
+
+const errorResponse = {
+  description: 'Error envelope',
+  content: { 'application/json': { schema: { $ref: '#/components/schemas/ApiError' } } },
+};
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/magic-link/request',
+  summary: 'Request a magic-link email',
+  request: {
+    body: {
+      content: { 'application/json': { schema: authContracts.MagicLinkRequest } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Always 200 to prevent account enumeration',
+      content: { 'application/json': { schema: commonContracts.Ack } },
+    },
+    400: errorResponse,
+    429: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/magic-link/verify',
+  summary: 'Verify a magic-link token and receive auth tokens',
+  request: {
+    body: {
+      content: { 'application/json': { schema: authContracts.MagicLinkVerify } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Auth tokens + user profile',
+      content: { 'application/json': { schema: authContracts.AuthTokens } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/refresh',
+  summary: 'Rotate the refresh token and mint a fresh access token',
+  request: {
+    body: {
+      content: { 'application/json': { schema: authContracts.RefreshRequest } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Fresh auth tokens',
+      content: { 'application/json': { schema: authContracts.AuthTokens } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/logout',
+  summary: 'Revoke a refresh token',
+  request: {
+    body: {
+      content: { 'application/json': { schema: authContracts.RefreshRequest } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Acknowledged (idempotent)',
+      content: { 'application/json': { schema: commonContracts.Ack } },
+    },
+    400: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/me',
+  summary: 'Return the authenticated user profile',
+  security: [{ BearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'User profile',
+      content: { 'application/json': { schema: authContracts.MeProfile } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerComponent('securitySchemes', 'BearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'JWT',
+});
+
 const generator = new OpenApiGeneratorV31(registry.definitions);
 const document = generator.generateDocument({
   openapi: '3.1.0',

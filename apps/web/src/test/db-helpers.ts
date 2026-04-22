@@ -44,6 +44,7 @@ export async function cleanDb(): Promise<void> {
   await testDb.$transaction([
     testDb.userInteraction.deleteMany(),
     testDb.magicLinkToken.deleteMany(),
+    testDb.refreshToken.deleteMany(),
     testDb.savedCommunity.deleteMany(),
     testDb.savedEvent.deleteMany(),
     testDb.activitySignal.deleteMany(),

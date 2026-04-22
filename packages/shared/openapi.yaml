@@ -15,6 +15,11 @@ servers:
   - url: http://localhost:3001
     description: Local dev
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Ack:
       type: object
@@ -60,7 +65,7 @@ components:
       enum: &a2
         - USER
         - COMMUNITY_ADMIN
-        - ADMIN
+        - PLATFORM_ADMIN
     MeProfile:
       type: object
       properties:
@@ -266,5 +271,364 @@ components:
       required:
         - refreshToken
   parameters: {}
-paths: {}
+paths:
+  /api/v1/auth/magic-link/request:
+    post:
+      summary: Request a magic-link email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  maxLength: 254
+                  format: email
+                redirectTo:
+                  type: string
+                  maxLength: 500
+              required:
+                - email
+      responses:
+        "200":
+          description: Always 200 to prevent account enumeration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - ok
+        "400":
+          description: Error envelope
+          content:
+            application/json: &a3
+              schema:
+                $ref: "#/components/schemas/ApiError"
+        "429":
+          description: Error envelope
+          content:
+            application/json: *a3
+  /api/v1/auth/magic-link/verify:
+    post:
+      summary: Verify a magic-link token and receive auth tokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  minLength: 1
+                  maxLength: 500
+              required:
+                - token
+      responses:
+        "200":
+          description: Auth tokens + user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  accessExpiresAt:
+                    type: string
+                    format: date-time
+                  refreshExpiresAt:
+                    type: string
+                    format: date-time
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      email:
+                        type: string
+                        format: email
+                      displayName:
+                        type:
+                          - string
+                          - "null"
+                      avatarUrl:
+                        type:
+                          - string
+                          - "null"
+                        format: uri
+                      role:
+                        type: string
+                        enum: *a2
+                      cityId:
+                        type:
+                          - string
+                          - "null"
+                        minLength: 20
+                        maxLength: 40
+                      personaSegments:
+                        type: array
+                        items:
+                          type: string
+                      preferredLanguages:
+                        type: array
+                        items:
+                          type: string
+                      onboardingComplete:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      lastActiveAt:
+                        type:
+                          - string
+                          - "null"
+                        format: date-time
+                    required:
+                      - id
+                      - email
+                      - displayName
+                      - avatarUrl
+                      - role
+                      - cityId
+                      - personaSegments
+                      - preferredLanguages
+                      - onboardingComplete
+                      - createdAt
+                      - lastActiveAt
+                required:
+                  - accessToken
+                  - refreshToken
+                  - accessExpiresAt
+                  - refreshExpiresAt
+                  - user
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a3
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a3
+  /api/v1/auth/refresh:
+    post:
+      summary: Rotate the refresh token and mint a fresh access token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  minLength: 1
+              required:
+                - refreshToken
+      responses:
+        "200":
+          description: Fresh auth tokens
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  accessExpiresAt:
+                    type: string
+                    format: date-time
+                  refreshExpiresAt:
+                    type: string
+                    format: date-time
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      email:
+                        type: string
+                        format: email
+                      displayName:
+                        type:
+                          - string
+                          - "null"
+                      avatarUrl:
+                        type:
+                          - string
+                          - "null"
+                        format: uri
+                      role:
+                        type: string
+                        enum: *a2
+                      cityId:
+                        type:
+                          - string
+                          - "null"
+                        minLength: 20
+                        maxLength: 40
+                      personaSegments:
+                        type: array
+                        items:
+                          type: string
+                      preferredLanguages:
+                        type: array
+                        items:
+                          type: string
+                      onboardingComplete:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      lastActiveAt:
+                        type:
+                          - string
+                          - "null"
+                        format: date-time
+                    required:
+                      - id
+                      - email
+                      - displayName
+                      - avatarUrl
+                      - role
+                      - cityId
+                      - personaSegments
+                      - preferredLanguages
+                      - onboardingComplete
+                      - createdAt
+                      - lastActiveAt
+                required:
+                  - accessToken
+                  - refreshToken
+                  - accessExpiresAt
+                  - refreshExpiresAt
+                  - user
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a3
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a3
+  /api/v1/auth/logout:
+    post:
+      summary: Revoke a refresh token
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+                  minLength: 1
+              required:
+                - refreshToken
+      responses:
+        "200":
+          description: Acknowledged (idempotent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - ok
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a3
+  /api/v1/me:
+    get:
+      summary: Return the authenticated user profile
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  email:
+                    type: string
+                    format: email
+                  displayName:
+                    type:
+                      - string
+                      - "null"
+                  avatarUrl:
+                    type:
+                      - string
+                      - "null"
+                    format: uri
+                  role:
+                    type: string
+                    enum: *a2
+                  cityId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                  personaSegments:
+                    type: array
+                    items:
+                      type: string
+                  preferredLanguages:
+                    type: array
+                    items:
+                      type: string
+                  onboardingComplete:
+                    type: boolean
+                  createdAt:
+                    type: string
+                    format: date-time
+                  lastActiveAt:
+                    type:
+                      - string
+                      - "null"
+                    format: date-time
+                required:
+                  - id
+                  - email
+                  - displayName
+                  - avatarUrl
+                  - role
+                  - cityId
+                  - personaSegments
+                  - preferredLanguages
+                  - onboardingComplete
+                  - createdAt
+                  - lastActiveAt
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a3
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a3
 webhooks: {}
