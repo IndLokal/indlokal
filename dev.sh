@@ -19,6 +19,17 @@ print_success() { echo -e "${GREEN}✔${NC} $1"; }
 print_warn()    { echo -e "${YELLOW}⚠${NC} $1"; }
 print_error()   { echo -e "${RED}✖${NC} $1"; }
 
+ensure_database_exists() {
+  local db_name="$1"
+
+  if docker compose exec -T db psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$db_name'" | grep -q 1; then
+    print_success "Database '$db_name' exists"
+  else
+    docker compose exec -T db psql -U postgres -c "CREATE DATABASE \"$db_name\";" >/dev/null
+    print_success "Created database '$db_name'"
+  fi
+}
+
 # ─── Commands ───
 
 cmd_setup() {
@@ -52,6 +63,9 @@ cmd_setup() {
   # Docker Postgres
   cmd_db_start
 
+  echo ""
+  ensure_database_exists "indlokal"
+
   # Prisma
   echo ""
   echo "Pushing schema to database..."
@@ -68,7 +82,7 @@ cmd_setup() {
   # Test DB
   echo ""
   echo "Setting up test database..."
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   print_success "Test database ready"
@@ -92,6 +106,8 @@ cmd_start() {
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
+
+  ensure_database_exists "indlokal"
 
   echo ""
   print_success "Mailbox UI → ${CYAN}http://localhost:8026${NC}"
@@ -134,6 +150,7 @@ cmd_db_reset() {
     echo "Resetting database..."
     docker compose down -v
     docker compose up -d --wait
+    ensure_database_exists "indlokal"
     npx prisma db push --skip-generate
     npm run db:seed
     print_success "Database reset and re-seeded"
@@ -146,6 +163,7 @@ cmd_db_studio() {
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
+  ensure_database_exists "indlokal"
   npx prisma studio
 }
 
@@ -166,7 +184,7 @@ cmd_test() {
   fi
 
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
 
@@ -180,7 +198,7 @@ cmd_test_watch() {
     cmd_db_start
   fi
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   npm run test:watch
@@ -195,8 +213,7 @@ cmd_test_setup() {
   fi
 
   # Create test DB if it doesn't exist
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || \
-    print_warn "indlokal_test already exists — skipping creation"
+  ensure_database_exists "indlokal_test"
 
   # Push schema to test DB
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
@@ -211,7 +228,7 @@ cmd_test_coverage() {
     cmd_db_start
   fi
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   echo "Running tests with coverage..."
