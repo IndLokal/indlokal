@@ -9,7 +9,10 @@ Web (`apps/web`) and mobile (`apps/mobile`) must agree on every request/response
 
 ## Decision
 
-- All API contracts live as **Zod schemas in `packages/shared/src/contracts/`**, organized per module (`community`, `event`, `discovery`, `search`, `auth`, `device`, `notification`, `submit`, `report`).
+- All API contracts live as **Zod schemas in `packages/shared/src/contracts/`**, organized per module:
+  `common`, `auth`, `community`, `discovery`, `events`, `notifications` (includes device schemas),
+  `resources` (includes report schemas), `search`, `submit`.
+  These are re-exported from `packages/shared/src/index.ts` as named namespaces.
 - A CI job runs `zod-to-openapi` to emit `openapi.yaml` (OpenAPI 3.1) on every PR; the file is committed and diffed in review.
 - A typed API client is generated from the Zod schemas (not from the OpenAPI) and consumed by both apps.
 - Route handlers in `apps/web/src/app/api/v1/**` validate input with the Zod schema and type their responses against it. CI runs **contract tests** that POST recorded fixtures against handlers and compare against the schema; mismatch fails the build.

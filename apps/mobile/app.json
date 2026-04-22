@@ -31,11 +31,9 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            {
-              "scheme": "https",
-              "host": "indlokal.com",
-              "pathPrefix": "/auth"
-            }
+            { "scheme": "https", "host": "indlokal.com", "pathPrefix": "/auth" },
+            { "scheme": "https", "host": "indlokal.com", "pathPattern": "/.*/events/.*" },
+            { "scheme": "https", "host": "indlokal.com", "pathPattern": "/.*/communities/.*" }
           ],
           "category": ["BROWSABLE", "DEFAULT"]
         }

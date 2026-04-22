@@ -5,10 +5,15 @@
 
 ## 1. Architecture overview
 
-- Mobile screens under `apps/mobile/app/(tabs)/discover/...`.
-- Data via TanStack Query against `/api/v1/discovery/*`.
-- Server reuses `src/modules/discovery/queries.ts`; thin handlers under `apps/web/src/app/api/v1/discovery/`.
-- Offline cache via `@tanstack/query-async-storage-persister` keyed by `(citySlug, tab)`.
+- Mobile screens under `apps/mobile/app/`; the Discover home is `(tabs)/index.tsx`.
+- Data via a lightweight in-memory `queryCache` helper (`apps/mobile/lib/cache/query-cache.ts`)
+  with TTL + de-duplication, calling `/api/v1/discovery/*` directly via `authClient`.
+  TanStack Query was evaluated but not adopted for v1 — `queryCache` covers the use
+  case in ~50 lines with zero added dependencies.
+- Server reuses `src/modules/discovery/queries.ts`; thin handlers under
+  `apps/web/src/app/api/v1/discovery/`.
+- Offline cache is in-memory per session. AsyncStorage persistence across cold
+  starts is a follow-up.
 
 ## 2. Data model changes
 
@@ -30,14 +35,17 @@ None.
 
 ```
 (tabs)/
-  discover/
-    index.tsx           # Discover home with tabs
-    city-picker.tsx     # bottom sheet
-    events/[slug].tsx   # PRD-0005
-    communities/[slug].tsx # PRD-0006
+  index.tsx              # Discover home — chip-rail city picker + tabs
+                         # (This-week / Communities / Resources)
+events/[slug].tsx        # PRD-0005 (top-level so it is reachable from
+                         # search, bookmarks, push notifications, etc.)
+communities/[slug].tsx   # PRD-0006 (top-level for the same reason)
+resources.tsx            # PRD-0010 grouped resources
 ```
 
 Deep link: `indlokal://discover/:citySlug` and Universal Link `https://indlokal.com/:citySlug`.
+Universal Links also route directly to event/community detail and to
+`/auth/magic-link/verify` for the magic-link flow.
 
 ## 5. Push / Email / Inbox triggers
 

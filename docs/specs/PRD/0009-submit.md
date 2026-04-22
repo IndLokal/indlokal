@@ -23,7 +23,7 @@ Mirror web `/submit` so users can contribute events and communities on the go, w
 - Submission types: **Event**, **Community**, **Suggest a community**.
 - Camera + gallery picker for hero/flyer image; cropping.
 - Required fields mirror web; smart defaults (city = current).
-- Submissions enter `PipelineItem` with `source=USER_SUGGESTED`.
+- Submissions enter `PipelineItem` with `sourceType = USER_SUBMITTED` (see `PipelineSourceType` in `prisma/schema.prisma`).
 - Confirmation screen with status + share.
 - Notifications on status change (topic=`ORGANIZER_SUBMISSION`).
 

@@ -8,13 +8,21 @@ import {
   Text,
   View,
 } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { Link, useFocusEffect } from 'expo-router';
 import { resources as r } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type Tab = 'events' | 'communities';
+
+type CardItem = {
+  id: string;
+  slug: string;
+  primary: string;
+  secondary: string | null;
+  kind: Tab;
+};
 
 /**
  * Mobile bookmarks shell — TDD-0010.
@@ -59,17 +67,21 @@ export default function BookmarksScreen() {
     }, [load]),
   );
 
-  const items: ReadonlyArray<{ id: string; primary: string; secondary: string | null }> =
+  const items: ReadonlyArray<CardItem> =
     tab === 'events'
       ? (events?.items ?? []).map((e) => ({
           id: e.id,
+          slug: e.slug,
           primary: e.title,
           secondary: new Date(e.startsAt).toLocaleString(),
+          kind: 'events' as const,
         }))
       : (communities?.items ?? []).map((c) => ({
           id: c.id,
+          slug: c.slug,
           primary: c.name,
           secondary: c.description,
+          kind: 'communities' as const,
         }));
 
   return (
@@ -99,10 +111,19 @@ export default function BookmarksScreen() {
           data={items}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => (
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>{item.primary}</Text>
-              {item.secondary && <Text style={styles.cardMeta}>{item.secondary}</Text>}
-            </View>
+            <Link
+              href={
+                item.kind === 'events'
+                  ? { pathname: '/events/[slug]', params: { slug: item.slug } }
+                  : { pathname: '/communities/[slug]', params: { slug: item.slug } }
+              }
+              asChild
+            >
+              <Pressable style={styles.card}>
+                <Text style={styles.cardTitle}>{item.primary}</Text>
+                {item.secondary && <Text style={styles.cardMeta}>{item.secondary}</Text>}
+              </Pressable>
+            </Link>
           )}
           ListEmptyComponent={
             !loading && !error ? <Text style={styles.empty}>Nothing saved yet.</Text> : null

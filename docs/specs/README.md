@@ -35,21 +35,25 @@ docs/specs/
 
 ## Status of the first spec set (Phase 0 → Phase 1 MVP)
 
-| ID                      | Title                                                  | Status   |
-| ----------------------- | ------------------------------------------------------ | -------- |
-| ADR-0001                | Adopt Expo + monorepo; reject PWA                      | Accepted |
-| ADR-0002                | Zod-as-contract; OpenAPI generated                     | Accepted |
-| PRD/TDD-0001            | `/api/v1` cutover + JWT/refresh auth                   | Draft    |
-| PRD/TDD-0002            | Device registry + NotificationPreference + Outbox      | Draft    |
-| PRD/TDD-0003            | Mobile Discover feed (city + events + communities)     | Draft    |
-| PRD/TDD-0004            | Push permission flow + topic preferences UI            | Draft    |
-| PRD/TDD-0005            | Event detail: save, RSVP/registration, calendar, share | Draft    |
-| PRD/TDD-0006            | Community detail: follow, access channels, related     | Draft    |
-| PRD/TDD-0007            | Search + filters (city, category, date)                | Draft    |
-| PRD/TDD-0008            | Mobile auth: Apple, Google, magic link                 | Draft    |
-| PRD/TDD-0009            | Submit event/community (camera + gallery)              | Draft    |
-| PRD/TDD-0010            | Resources, Bookmarks, Report content                   | Draft    |
-| EVENTS/analytics.md     | Analytics event catalog                                | Draft    |
-| EVENTS/notifications.md | Notification matrix                                    | Draft    |
+Spec status (`Draft` / `Accepted` / `Superseded`) describes the spec document
+itself, not the build. Implementation progress is tracked in the right-most
+column and is the single source of truth for what is shipped.
+
+| ID                      | Title                                                  | Spec     | Implementation                                              |
+| ----------------------- | ------------------------------------------------------ | -------- | ----------------------------------------------------------- |
+| ADR-0001                | Adopt Expo + monorepo; reject PWA                      | Accepted | Done                                                        |
+| ADR-0002                | Zod-as-contract; OpenAPI generated                     | Accepted | Done                                                        |
+| PRD/TDD-0001            | `/api/v1` cutover + JWT/refresh auth                   | Draft    | Done — all `/api/v1/*` routes shipped                       |
+| PRD/TDD-0002            | Device registry + NotificationPreference + Outbox      | Draft    | Server: Done. Worker channel adapters partial               |
+| PRD/TDD-0003            | Mobile Discover feed (city + events + communities)     | Draft    | v1 shipped (no sub-tabs, no trending rail yet)              |
+| PRD/TDD-0004            | Push permission flow + topic preferences UI            | Draft    | Pre-prompt + preferences screen shipped                     |
+| PRD/TDD-0005            | Event detail: save, RSVP/registration, calendar, share | Draft    | v1 shipped (no hero image, no map, no in-app reminders yet) |
+| PRD/TDD-0006            | Community detail: follow, access channels, related     | Draft    | v1 shipped (no related rail, no Pulse-Score drill-in yet)   |
+| PRD/TDD-0007            | Search + filters (city, category, date)                | Draft    | Suggest + recents shipped; full results + filters pending   |
+| PRD/TDD-0008            | Mobile auth: Apple, Google, magic link                 | Draft    | Done — incl. Universal-Link magic-link verify               |
+| PRD/TDD-0009            | Submit event/community (camera + gallery)              | Draft    | Web `/submit` shipped; mobile form pending                  |
+| PRD/TDD-0010            | Resources, Bookmarks, Report content                   | Draft    | Bookmarks + Resources shipped; Report sheet pending         |
+| EVENTS/analytics.md     | Analytics event catalog                                | Draft    | —                                                           |
+| EVENTS/notifications.md | Notification matrix                                    | Draft    | —                                                           |
 
 The spec set above defines the **mobile MVP at functional parity with the current web**, plus the foundations (auth, devices, outbox, OpenAPI) needed to support it.

@@ -16,6 +16,9 @@ export default function MeTabScreen() {
         <Link href="/inbox" style={styles.link}>
           Inbox
         </Link>
+        <Link href="/resources" style={styles.link}>
+          City resources
+        </Link>
         <Link href="/me/delete-account" style={styles.link}>
           Delete account
         </Link>

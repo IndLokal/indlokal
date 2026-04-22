@@ -186,12 +186,18 @@ export default function DiscoverScreen() {
                 <Text style={styles.sectionTitle}>Featured communities</Text>
                 <View style={styles.communityList}>
                   {feed.communities.slice(0, 5).map((community) => (
-                    <View key={community.id} style={styles.communityCard}>
-                      <Text style={styles.communityName}>{community.name}</Text>
-                      <Text style={styles.communityMeta} numberOfLines={2}>
-                        {community.description ?? community.city.name}
-                      </Text>
-                    </View>
+                    <Link
+                      key={community.id}
+                      href={{ pathname: '/communities/[slug]', params: { slug: community.slug } }}
+                      asChild
+                    >
+                      <Pressable style={styles.communityCard}>
+                        <Text style={styles.communityName}>{community.name}</Text>
+                        <Text style={styles.communityMeta} numberOfLines={2}>
+                          {community.description ?? community.city.name}
+                        </Text>
+                      </Pressable>
+                    </Link>
                   ))}
                 </View>
               </View>
@@ -203,13 +209,17 @@ export default function DiscoverScreen() {
           </View>
         }
         renderItem={({ item }) => (
-          <View style={styles.eventCard}>
-            <Text style={styles.eventTitle}>{item.title}</Text>
-            <Text style={styles.eventMeta}>
-              {new Date(item.startsAt).toLocaleString()} · {item.venueName ?? 'Online'}
-            </Text>
-            {item.community && <Text style={styles.eventCommunity}>by {item.community.name}</Text>}
-          </View>
+          <Link href={{ pathname: '/events/[slug]', params: { slug: item.slug } }} asChild>
+            <Pressable style={styles.eventCard}>
+              <Text style={styles.eventTitle}>{item.title}</Text>
+              <Text style={styles.eventMeta}>
+                {new Date(item.startsAt).toLocaleString()} · {item.venueName ?? 'Online'}
+              </Text>
+              {item.community && (
+                <Text style={styles.eventCommunity}>by {item.community.name}</Text>
+              )}
+            </Pressable>
+          </Link>
         )}
         ListEmptyComponent={
           !feedLoading && feed && feed.events.length === 0 ? (
@@ -220,6 +230,9 @@ export default function DiscoverScreen() {
         }
         ListFooterComponent={
           <View style={styles.footer}>
+            <Link href="/resources" style={styles.footerLink}>
+              Browse city resources
+            </Link>
             <Link href="/inbox" style={styles.footerLink}>
               View notifications inbox
             </Link>
