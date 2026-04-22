@@ -23,6 +23,7 @@ import {
 import { z } from 'zod';
 import * as authContracts from '../src/contracts/auth.js';
 import * as commonContracts from '../src/contracts/common.js';
+import * as notificationContracts from '../src/contracts/notifications.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -184,6 +185,158 @@ registry.registerComponent('securitySchemes', 'BearerAuth', {
   type: 'http',
   scheme: 'bearer',
   bearerFormat: 'JWT',
+});
+
+// ─── Notifications (TDD-0002) ───
+
+registry.register('DevicePlatform', notificationContracts.DevicePlatform);
+registry.register('Device', notificationContracts.Device);
+registry.register('DeviceRegister', notificationContracts.DeviceRegister);
+registry.register('DeviceUpdate', notificationContracts.DeviceUpdate);
+registry.register('NotificationTopic', notificationContracts.NotificationTopic);
+registry.register('NotificationChannel', notificationContracts.NotificationChannel);
+registry.register('NotificationPreferenceItem', notificationContracts.NotificationPreferenceItem);
+registry.register('QuietHours', notificationContracts.QuietHours);
+registry.register('NotificationPreferences', notificationContracts.NotificationPreferences);
+registry.register(
+  'NotificationPreferencesUpdate',
+  notificationContracts.NotificationPreferencesUpdate,
+);
+registry.register('InboxItem', notificationContracts.InboxItem);
+registry.register('InboxPage', notificationContracts.InboxPage);
+registry.register('InboxReadRequest', notificationContracts.InboxReadRequest);
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/devices',
+  summary: 'Register or refresh the calling device',
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: notificationContracts.DeviceRegister } } },
+  },
+  responses: {
+    200: {
+      description: 'Device record',
+      content: { 'application/json': { schema: notificationContracts.Device } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'patch',
+  path: '/api/v1/devices/{installationId}',
+  summary: 'Update mutable device fields (push token, locale, ...)',
+  security: [{ BearerAuth: [] }],
+  request: {
+    params: z.object({ installationId: z.string() }),
+    body: { content: { 'application/json': { schema: notificationContracts.DeviceUpdate } } },
+  },
+  responses: {
+    200: {
+      description: 'Device record',
+      content: { 'application/json': { schema: notificationContracts.Device } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/v1/devices/{installationId}',
+  summary: 'Sign out from the given device',
+  security: [{ BearerAuth: [] }],
+  request: { params: z.object({ installationId: z.string() }) },
+  responses: {
+    200: {
+      description: 'Acknowledged (idempotent)',
+      content: { 'application/json': { schema: commonContracts.Ack } },
+    },
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/notifications/preferences',
+  summary: 'Read the full topic × channel preference matrix',
+  security: [{ BearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Preferences',
+      content: {
+        'application/json': { schema: notificationContracts.NotificationPreferences },
+      },
+    },
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'put',
+  path: '/api/v1/notifications/preferences',
+  summary: 'Patch preferences and/or quiet hours',
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: {
+        'application/json': { schema: notificationContracts.NotificationPreferencesUpdate },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Updated preferences',
+      content: {
+        'application/json': { schema: notificationContracts.NotificationPreferences },
+      },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/notifications/inbox',
+  summary: 'List inbox items, newest first',
+  security: [{ BearerAuth: [] }],
+  request: {
+    query: z.object({
+      cursor: z.string().optional(),
+      limit: z.coerce.number().int().min(1).max(50).optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Inbox page',
+      content: { 'application/json': { schema: notificationContracts.InboxPage } },
+    },
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/notifications/inbox/read',
+  summary: 'Mark inbox items as read',
+  security: [{ BearerAuth: [] }],
+  request: {
+    body: {
+      content: { 'application/json': { schema: notificationContracts.InboxReadRequest } },
+    },
+  },
+  responses: {
+    200: {
+      description: 'Acknowledged',
+      content: { 'application/json': { schema: commonContracts.Ack } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
 });
 
 const generator = new OpenApiGeneratorV31(registry.definitions);

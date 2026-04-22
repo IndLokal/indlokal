@@ -270,6 +270,319 @@ components:
           minLength: 1
       required:
         - refreshToken
+    DevicePlatform:
+      type: string
+      enum: &a3
+        - IOS
+        - ANDROID
+        - WEB
+    Device:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        installationId:
+          type: string
+        platform:
+          type: string
+          enum: *a3
+        expoPushToken:
+          type:
+            - string
+            - "null"
+        locale:
+          type: string
+        timezone:
+          type: string
+        appVersion:
+          type:
+            - string
+            - "null"
+        lastSeenAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - installationId
+        - platform
+        - expoPushToken
+        - locale
+        - timezone
+        - appVersion
+        - lastSeenAt
+        - createdAt
+    DeviceRegister:
+      type: object
+      properties:
+        installationId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        platform:
+          type: string
+          enum: *a3
+        expoPushToken:
+          type: string
+          minLength: 1
+          maxLength: 256
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        appVersion:
+          type: string
+          maxLength: 32
+      required:
+        - installationId
+        - platform
+    DeviceUpdate:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: *a3
+        expoPushToken:
+          type: string
+          minLength: 1
+          maxLength: 256
+        locale:
+          type: string
+          minLength: 2
+          maxLength: 16
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+        appVersion:
+          type: string
+          maxLength: 32
+    NotificationTopic:
+      type: string
+      enum: &a4
+        - CITY_NEW_EVENT
+        - COMMUNITY_UPDATE
+        - SAVED_EVENT_REMINDER
+        - FESTIVAL
+        - WEEKLY_DIGEST
+        - ORGANIZER_RSVP
+        - ORGANIZER_SUBMISSION
+        - REENGAGEMENT
+    NotificationChannel:
+      type: string
+      enum: &a5
+        - PUSH
+        - EMAIL
+        - INBOX
+    NotificationPreferenceItem:
+      type: object
+      properties:
+        topic:
+          type: string
+          enum: *a4
+        channel:
+          type: string
+          enum: *a5
+        enabled:
+          type: boolean
+      required:
+        - topic
+        - channel
+        - enabled
+    QuietHours:
+      type: object
+      properties:
+        startMin:
+          type: integer
+          minimum: 0
+          maximum: 1439
+        endMin:
+          type: integer
+          minimum: 0
+          maximum: 1439
+        timezone:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required:
+        - startMin
+        - endMin
+        - timezone
+    NotificationPreferences:
+      type: object
+      properties:
+        preferences:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+                enum: *a4
+              channel:
+                type: string
+                enum: *a5
+              enabled:
+                type: boolean
+            required:
+              - topic
+              - channel
+              - enabled
+        quietHours:
+          type: object
+          properties:
+            startMin:
+              type: integer
+              minimum: 0
+              maximum: 1439
+            endMin:
+              type: integer
+              minimum: 0
+              maximum: 1439
+            timezone:
+              type: string
+              minLength: 1
+              maxLength: 64
+          required:
+            - startMin
+            - endMin
+            - timezone
+      required:
+        - preferences
+        - quietHours
+    NotificationPreferencesUpdate:
+      type: object
+      properties:
+        preferences:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+                enum: *a4
+              channel:
+                type: string
+                enum: *a5
+              enabled:
+                type: boolean
+            required:
+              - topic
+              - channel
+              - enabled
+        quietHours:
+          type: object
+          properties:
+            startMin:
+              type: integer
+              minimum: 0
+              maximum: 1439
+            endMin:
+              type: integer
+              minimum: 0
+              maximum: 1439
+            timezone:
+              type: string
+              minLength: 1
+              maxLength: 64
+    InboxItem:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        topic:
+          type: string
+          enum: *a4
+        title:
+          type: string
+        body:
+          type: string
+        deepLink:
+          type:
+            - string
+            - "null"
+        readAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - topic
+        - title
+        - body
+        - deepLink
+        - readAt
+        - createdAt
+    InboxPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              topic:
+                type: string
+                enum: *a4
+              title:
+                type: string
+              body:
+                type: string
+              deepLink:
+                type:
+                  - string
+                  - "null"
+              readAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              createdAt:
+                type: string
+                format: date-time
+            required:
+              - id
+              - topic
+              - title
+              - body
+              - deepLink
+              - readAt
+              - createdAt
+        nextCursor:
+          type: string
+      required:
+        - items
+    InboxReadRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            minLength: 20
+            maxLength: 40
+          minItems: 1
+          maxItems: 100
+      required:
+        - ids
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -307,13 +620,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a3
+            application/json: &a6
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -414,11 +727,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "401":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -525,15 +838,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "401":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "500":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -650,15 +963,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "401":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "500":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -758,11 +1071,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "401":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -794,7 +1107,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -866,9 +1179,484 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
         "404":
           description: Error envelope
           content:
-            application/json: *a3
+            application/json: *a6
+  /api/v1/devices:
+    post:
+      summary: Register or refresh the calling device
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                installationId:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                platform:
+                  type: string
+                  enum: *a3
+                expoPushToken:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                locale:
+                  type: string
+                  minLength: 2
+                  maxLength: 16
+                timezone:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                appVersion:
+                  type: string
+                  maxLength: 32
+              required:
+                - installationId
+                - platform
+      responses:
+        "200":
+          description: Device record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  installationId:
+                    type: string
+                  platform:
+                    type: string
+                    enum: *a3
+                  expoPushToken:
+                    type:
+                      - string
+                      - "null"
+                  locale:
+                    type: string
+                  timezone:
+                    type: string
+                  appVersion:
+                    type:
+                      - string
+                      - "null"
+                  lastSeenAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - installationId
+                  - platform
+                  - expoPushToken
+                  - locale
+                  - timezone
+                  - appVersion
+                  - lastSeenAt
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a6
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+  /api/v1/devices/{installationId}:
+    patch:
+      summary: Update mutable device fields (push token, locale, ...)
+      security:
+        - BearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: installationId
+          in: path
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                platform:
+                  type: string
+                  enum: *a3
+                expoPushToken:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                locale:
+                  type: string
+                  minLength: 2
+                  maxLength: 16
+                timezone:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                appVersion:
+                  type: string
+                  maxLength: 32
+      responses:
+        "200":
+          description: Device record
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  installationId:
+                    type: string
+                  platform:
+                    type: string
+                    enum: *a3
+                  expoPushToken:
+                    type:
+                      - string
+                      - "null"
+                  locale:
+                    type: string
+                  timezone:
+                    type: string
+                  appVersion:
+                    type:
+                      - string
+                      - "null"
+                  lastSeenAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - installationId
+                  - platform
+                  - expoPushToken
+                  - locale
+                  - timezone
+                  - appVersion
+                  - lastSeenAt
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a6
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a6
+    delete:
+      summary: Sign out from the given device
+      security:
+        - BearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: installationId
+          in: path
+      responses:
+        "200":
+          description: Acknowledged (idempotent)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - ok
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+  /api/v1/notifications/preferences:
+    get:
+      summary: Read the full topic × channel preference matrix
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Preferences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preferences:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                          enum: *a4
+                        channel:
+                          type: string
+                          enum: *a5
+                        enabled:
+                          type: boolean
+                      required:
+                        - topic
+                        - channel
+                        - enabled
+                  quietHours:
+                    type: object
+                    properties:
+                      startMin:
+                        type: integer
+                        minimum: 0
+                        maximum: 1439
+                      endMin:
+                        type: integer
+                        minimum: 0
+                        maximum: 1439
+                      timezone:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                    required:
+                      - startMin
+                      - endMin
+                      - timezone
+                required:
+                  - preferences
+                  - quietHours
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+    put:
+      summary: Patch preferences and/or quiet hours
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                preferences:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      topic:
+                        type: string
+                        enum: *a4
+                      channel:
+                        type: string
+                        enum: *a5
+                      enabled:
+                        type: boolean
+                    required:
+                      - topic
+                      - channel
+                      - enabled
+                quietHours:
+                  type: object
+                  properties:
+                    startMin:
+                      type: integer
+                      minimum: 0
+                      maximum: 1439
+                    endMin:
+                      type: integer
+                      minimum: 0
+                      maximum: 1439
+                    timezone:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+      responses:
+        "200":
+          description: Updated preferences
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  preferences:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                          enum: *a4
+                        channel:
+                          type: string
+                          enum: *a5
+                        enabled:
+                          type: boolean
+                      required:
+                        - topic
+                        - channel
+                        - enabled
+                  quietHours:
+                    type: object
+                    properties:
+                      startMin:
+                        type: integer
+                        minimum: 0
+                        maximum: 1439
+                      endMin:
+                        type: integer
+                        minimum: 0
+                        maximum: 1439
+                      timezone:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                    required:
+                      - startMin
+                      - endMin
+                      - timezone
+                required:
+                  - preferences
+                  - quietHours
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a6
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+  /api/v1/notifications/inbox:
+    get:
+      summary: List inbox items, newest first
+      security:
+        - BearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: Inbox page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        topic:
+                          type: string
+                          enum: *a4
+                        title:
+                          type: string
+                        body:
+                          type: string
+                        deepLink:
+                          type:
+                            - string
+                            - "null"
+                        readAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        createdAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - id
+                        - topic
+                        - title
+                        - body
+                        - deepLink
+                        - readAt
+                        - createdAt
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
+  /api/v1/notifications/inbox/read:
+    post:
+      summary: Mark inbox items as read
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  minItems: 1
+                  maxItems: 100
+              required:
+                - ids
+      responses:
+        "200":
+          description: Acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - ok
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a6
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a6
 webhooks: {}

@@ -460,6 +460,11 @@ model User {
   savedEvents        SavedEvent[]
   magicLinkTokens    MagicLinkToken[]
   refreshTokens      RefreshToken[]
+  devices                 Device[]
+  notificationPreferences NotificationPreference[]
+  quietHours              QuietHours?
+  notificationOutbox      NotificationOutbox[]
+  inboxItems              InboxItem[]
 
   createdAt          DateTime @default(now()) @map("created_at")
   lastActiveAt       DateTime? @map("last_active_at")
@@ -507,6 +512,115 @@ model RefreshToken {
   @@index([userId])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────────
+// Devices + Notifications — TDD-0002
+// ─────────────────────────────────────────────────
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+model Device {
+  id             String         @id @default(cuid())
+  userId         String         @map("user_id")
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installationId String         @map("installation_id")
+  platform       DevicePlatform
+  expoPushToken  String?        @map("expo_push_token")
+  locale         String         @default("en")
+  timezone       String         @default("Europe/Berlin")
+  appVersion     String?        @map("app_version")
+  lastSeenAt     DateTime       @default(now()) @map("last_seen_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  @@unique([userId, installationId])
+  @@index([expoPushToken])
+  @@map("devices")
+}
+
+enum NotificationTopic {
+  CITY_NEW_EVENT
+  COMMUNITY_UPDATE
+  SAVED_EVENT_REMINDER
+  FESTIVAL
+  WEEKLY_DIGEST
+  ORGANIZER_RSVP
+  ORGANIZER_SUBMISSION
+  REENGAGEMENT
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  INBOX
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  SUPPRESSED
+}
+
+model NotificationPreference {
+  userId  String              @map("user_id")
+  user    User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic   NotificationTopic
+  channel NotificationChannel
+  enabled Boolean             @default(true)
+
+  @@id([userId, topic, channel])
+  @@map("notification_preferences")
+}
+
+model QuietHours {
+  userId   String @id @map("user_id")
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  startMin Int    @default(1320) @map("start_min") // 22:00
+  endMin   Int    @default(480)  @map("end_min")   // 08:00
+  timezone String @default("Europe/Berlin")
+
+  @@map("quiet_hours")
+}
+
+model NotificationOutbox {
+  id             String              @id @default(cuid())
+  idempotencyKey String              @unique @map("idempotency_key")
+  userId         String              @map("user_id")
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic          NotificationTopic
+  channel        NotificationChannel
+  payload        Json
+  scoreAtEnqueue Float?              @map("score_at_enqueue")
+  notBefore      DateTime?           @map("not_before")
+  status         NotificationStatus  @default(PENDING)
+  attempts       Int                 @default(0)
+  lastError      String?             @map("last_error")
+  scheduledAt    DateTime            @default(now()) @map("scheduled_at")
+  sentAt         DateTime?           @map("sent_at")
+
+  @@index([status, scheduledAt])
+  @@index([userId])
+  @@map("notification_outbox")
+}
+
+model InboxItem {
+  id        String            @id @default(cuid())
+  userId    String            @map("user_id")
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     NotificationTopic
+  title     String
+  body      String
+  deepLink  String?           @map("deep_link")
+  readAt    DateTime?         @map("read_at")
+  createdAt DateTime          @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("inbox_items")
 }
 
 // ─────────────────────────────────────────────────

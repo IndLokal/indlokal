@@ -12,3 +12,4 @@
 
 export * as common from './contracts/common.js';
 export * as auth from './contracts/auth.js';
+export * as notifications from './contracts/notifications.js';
