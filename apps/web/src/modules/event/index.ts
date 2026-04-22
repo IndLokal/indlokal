@@ -20,5 +20,7 @@ export {
   saveEvent,
   unsaveEvent,
   isEventSaved,
+  getSavedEvents,
 } from './queries';
 export type { EventWithRelations, EventListItem, EventDetailRow } from './types';
+export type { SavedEventRow } from './queries';

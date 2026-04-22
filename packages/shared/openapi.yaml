@@ -1732,7 +1732,7 @@ components:
           enum: *a10
         entityType:
           type: string
-          enum: &a14
+          enum: &a17
             - COMMUNITY
             - EVENT
             - RESOURCE
@@ -2528,7 +2528,7 @@ components:
       properties:
         contentType:
           type: string
-          enum: &a15
+          enum: &a18
             - image/jpeg
             - image/png
             - image/webp
@@ -2635,7 +2635,7 @@ components:
           items:
             type: string
           maxItems: 20
-          default: &a18 []
+          default: &a21 []
         primaryChannelType:
           type: string
           minLength: 1
@@ -2698,12 +2698,12 @@ components:
           type: string
         entityType:
           type: string
-          enum: &a16
+          enum: &a19
             - EVENT
             - COMMUNITY
         status:
           type: string
-          enum: &a17
+          enum: &a20
             - PENDING
             - APPROVED
             - REJECTED
@@ -2716,6 +2716,244 @@ components:
         - entityType
         - status
         - createdAt
+    ResourceType:
+      type: string
+      enum: &a13
+        - CONSULAR_SERVICE
+        - OFFICIAL_EVENT
+        - GOVERNMENT_INFO
+        - VISA_SERVICE
+        - CITY_REGISTRATION
+        - DRIVING
+        - HOUSING
+        - HEALTH_DOCTORS
+        - FAMILY_CHILDREN
+        - JOBS_CAREERS
+        - TAX_FINANCE
+        - BUSINESS_SETUP
+        - GROCERY_FOOD
+        - COMMUNITY_RESOURCE
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        title:
+          type: string
+        slug:
+          type: string
+        resourceType:
+          type: string
+          enum: *a13
+        url:
+          type:
+            - string
+            - "null"
+          format: uri
+        description:
+          type:
+            - string
+            - "null"
+        validFrom:
+          type:
+            - string
+            - "null"
+          format: date-time
+        validUntil:
+          type:
+            - string
+            - "null"
+          format: date-time
+        metadata:
+          type:
+            - object
+            - "null"
+          additionalProperties: {}
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - slug
+        - resourceType
+        - url
+        - description
+        - validFrom
+        - validUntil
+        - metadata
+        - createdAt
+    ReportType:
+      type: string
+      enum: &a14
+        - STALE_INFO
+        - BROKEN_LINK
+        - INCORRECT_DETAILS
+        - SUGGEST_COMMUNITY
+        - OTHER
+    ReportStatus:
+      type: string
+      enum: &a15
+        - PENDING
+        - REVIEWED
+        - RESOLVED
+    ContentReportInput:
+      type: object
+      properties:
+        reportType:
+          type: string
+          enum: *a14
+        communityId:
+          type: string
+          minLength: 20
+          maxLength: 40
+        suggestedName:
+          type: string
+          maxLength: 200
+        citySlug:
+          type: string
+        details:
+          type: string
+          maxLength: 2000
+        reporterEmail:
+          type: string
+          format: email
+      required:
+        - reportType
+    ContentReport:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        reportType:
+          type: string
+          enum: *a14
+        status:
+          type: string
+          enum: *a15
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - reportType
+        - status
+        - createdAt
+    SavedEventsPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              title:
+                type: string
+              slug:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              venueName:
+                type:
+                  - string
+                  - "null"
+              isOnline:
+                type: boolean
+              savedAt:
+                type: string
+                format: date-time
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+            required:
+              - id
+              - title
+              - slug
+              - startsAt
+              - endsAt
+              - venueName
+              - isOnline
+              - savedAt
+              - city
+        nextCursor:
+          type: string
+      required:
+        - items
+    SavedCommunitiesPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              name:
+                type: string
+              slug:
+                type: string
+              description:
+                type:
+                  - string
+                  - "null"
+              logoUrl:
+                type:
+                  - string
+                  - "null"
+              memberCountApprox:
+                type:
+                  - integer
+                  - "null"
+              savedAt:
+                type: string
+                format: date-time
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+            required:
+              - id
+              - name
+              - slug
+              - description
+              - logoUrl
+              - memberCountApprox
+              - savedAt
+              - city
+        nextCursor:
+          type: string
+      required:
+        - items
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -2753,13 +2991,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a13
+            application/json: &a16
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -2860,11 +3098,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -2971,15 +3209,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "500":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -3096,15 +3334,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "500":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -3204,11 +3442,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -3240,7 +3478,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -3312,11 +3550,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/devices:
     post:
       summary: Register or refresh the calling device
@@ -3401,11 +3639,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/devices/{installationId}:
     patch:
       summary: Update mutable device fields (push token, locale, ...)
@@ -3489,15 +3727,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
     delete:
       summary: Sign out from the given device
       security:
@@ -3525,7 +3763,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/notifications/preferences:
     get:
       summary: Read the full topic × channel preference matrix
@@ -3581,7 +3819,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
     put:
       summary: Patch preferences and/or quiet hours
       security:
@@ -3674,11 +3912,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/notifications/inbox:
     get:
       summary: List inbox items, newest first
@@ -3748,7 +3986,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/notifications/inbox/read:
     post:
       summary: Mark inbox items as read
@@ -3787,11 +4025,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/cities:
     get:
       summary: List all active cities
@@ -3944,7 +4182,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/discovery/{citySlug}/events:
     get:
       summary: Cursor-paginated event feed for a city
@@ -4093,7 +4331,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/discovery/{citySlug}/communities:
     get:
       summary: Cursor-paginated community feed for a city
@@ -4235,7 +4473,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/discovery/{citySlug}/trending:
     get:
       summary: Trending communities, upcoming events, and category grid for a city
@@ -4475,7 +4713,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/events/{slug}:
     get:
       summary: Event detail — optional auth for savedByUser flag
@@ -4732,7 +4970,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/events/{slug}/save:
     post:
       summary: Save an event (requires auth)
@@ -4759,11 +4997,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
     delete:
       summary: Unsave an event (requires auth)
       security:
@@ -4789,11 +5027,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/track:
     post:
       summary: Client-side behavioral event tracking (optional auth)
@@ -4809,7 +5047,7 @@ paths:
                   enum: *a10
                 entityType:
                   type: string
-                  enum: *a14
+                  enum: *a17
                 entityId:
                   type: string
                   minLength: 20
@@ -4838,7 +5076,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/communities/{slug}:
     get:
       summary: Community detail — optional auth for followedByUser flag
@@ -5025,7 +5263,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/communities/{slug}/follow:
     post:
       summary: Follow a community (requires auth)
@@ -5052,11 +5290,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
     delete:
       summary: Unfollow a community (requires auth)
       security:
@@ -5082,11 +5320,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/communities/{slug}/events:
     get:
       summary: Cursor-paginated upcoming events for a community
@@ -5235,11 +5473,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/communities/{slug}/related:
     get:
       summary: Related communities via relationship graph
@@ -5326,7 +5564,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/search:
     get:
       summary: Full-text search across communities and events
@@ -5607,7 +5845,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/search/suggest:
     get:
       summary: Autocomplete suggestions for a partial query
@@ -5644,7 +5882,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/search/trending:
     get:
       summary: Trending search terms, optionally scoped to a city
@@ -5676,7 +5914,7 @@ paths:
               properties:
                 contentType:
                   type: string
-                  enum: *a15
+                  enum: *a18
                 sizeBytes:
                   type: integer
                   minimum: 1
@@ -5711,11 +5949,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/submissions/event:
     post:
       summary: Submit a new event for review
@@ -5786,10 +6024,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a16
+                    enum: *a19
                   status:
                     type: string
-                    enum: *a17
+                    enum: *a20
                   createdAt:
                     type: string
                     format: date-time
@@ -5801,15 +6039,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/submissions/community:
     post:
       summary: Submit a new community for review
@@ -5843,7 +6081,7 @@ paths:
                   items:
                     type: string
                   maxItems: 20
-                  default: *a18
+                  default: *a21
                 primaryChannelType:
                   type: string
                   minLength: 1
@@ -5889,10 +6127,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a16
+                    enum: *a19
                   status:
                     type: string
-                    enum: *a17
+                    enum: *a20
                   createdAt:
                     type: string
                     format: date-time
@@ -5904,19 +6142,19 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "409":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
   /api/v1/submissions/suggest:
     post:
       summary: Suggest a community for IndLokal to add
@@ -5959,10 +6197,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a16
+                    enum: *a19
                   status:
                     type: string
-                    enum: *a17
+                    enum: *a20
                   createdAt:
                     type: string
                     format: date-time
@@ -5974,13 +6212,315 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "401":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
         "404":
           description: Error envelope
           content:
-            application/json: *a13
+            application/json: *a16
+  /api/v1/cities/{slug}/resources:
+    get:
+      summary: Get resources for a city, optionally filtered by type
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: slug
+          in: path
+        - schema:
+            type: string
+            enum: *a13
+          required: false
+          name: type
+          in: query
+      responses:
+        "200":
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 20
+                      maxLength: 40
+                    title:
+                      type: string
+                    slug:
+                      type: string
+                    resourceType:
+                      type: string
+                      enum: *a13
+                    url:
+                      type:
+                        - string
+                        - "null"
+                      format: uri
+                    description:
+                      type:
+                        - string
+                        - "null"
+                    validFrom:
+                      type:
+                        - string
+                        - "null"
+                      format: date-time
+                    validUntil:
+                      type:
+                        - string
+                        - "null"
+                      format: date-time
+                    metadata:
+                      type:
+                        - object
+                        - "null"
+                      additionalProperties: {}
+                    createdAt:
+                      type: string
+                      format: date-time
+                  required:
+                    - id
+                    - title
+                    - slug
+                    - resourceType
+                    - url
+                    - description
+                    - validFrom
+                    - validUntil
+                    - metadata
+                    - createdAt
+  /api/v1/me/saves/events:
+    get:
+      summary: Paginated saved events for the authenticated user
+      parameters:
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type:
+              - number
+              - "null"
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: Saved events page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        title:
+                          type: string
+                        slug:
+                          type: string
+                        startsAt:
+                          type: string
+                          format: date-time
+                        endsAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        venueName:
+                          type:
+                            - string
+                            - "null"
+                        isOnline:
+                          type: boolean
+                        savedAt:
+                          type: string
+                          format: date-time
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                      required:
+                        - id
+                        - title
+                        - slug
+                        - startsAt
+                        - endsAt
+                        - venueName
+                        - isOnline
+                        - savedAt
+                        - city
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a16
+  /api/v1/me/saves/communities:
+    get:
+      summary: Paginated saved communities for the authenticated user
+      parameters:
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type:
+              - number
+              - "null"
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: Saved communities page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        description:
+                          type:
+                            - string
+                            - "null"
+                        logoUrl:
+                          type:
+                            - string
+                            - "null"
+                        memberCountApprox:
+                          type:
+                            - integer
+                            - "null"
+                        savedAt:
+                          type: string
+                          format: date-time
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                      required:
+                        - id
+                        - name
+                        - slug
+                        - description
+                        - logoUrl
+                        - memberCountApprox
+                        - savedAt
+                        - city
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a16
+  /api/v1/reports:
+    post:
+      summary: Submit a content report (feature-flagged)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reportType:
+                  type: string
+                  enum: *a14
+                communityId:
+                  type: string
+                  minLength: 20
+                  maxLength: 40
+                suggestedName:
+                  type: string
+                  maxLength: 200
+                citySlug:
+                  type: string
+                details:
+                  type: string
+                  maxLength: 2000
+                reporterEmail:
+                  type: string
+                  format: email
+              required:
+                - reportType
+      responses:
+        "201":
+          description: Report created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  reportType:
+                    type: string
+                    enum: *a14
+                  status:
+                    type: string
+                    enum: *a15
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - reportType
+                  - status
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a16
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a16
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a16
 webhooks: {}

@@ -213,3 +213,52 @@ export async function isEventSaved(userId: string, eventId: string): Promise<boo
   });
   return row !== null;
 }
+
+export interface SavedEventRow {
+  eventId: string;
+  savedAt: Date;
+  event: {
+    id: string;
+    title: string;
+    slug: string;
+    startsAt: Date;
+    endsAt: Date | null;
+    venueName: string | null;
+    isOnline: boolean;
+    city: { name: string; slug: string };
+  };
+}
+
+/**
+ * Cursor-paginated list of events saved by a user.
+ * Cursor is the eventId of the last seen item.
+ */
+export async function getSavedEvents(
+  userId: string,
+  opts: { cursor?: string; limit: number },
+): Promise<{ items: SavedEventRow[]; hasMore: boolean }> {
+  const rows = await db.savedEvent.findMany({
+    where: { userId },
+    select: {
+      eventId: true,
+      savedAt: true,
+      event: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+          startsAt: true,
+          endsAt: true,
+          venueName: true,
+          isOnline: true,
+          city: { select: { name: true, slug: true } },
+        },
+      },
+    },
+    orderBy: { savedAt: 'desc' },
+    take: opts.limit + 1,
+    ...(opts.cursor && { cursor: { userId_eventId: { userId, eventId: opts.cursor } }, skip: 1 }),
+  });
+  const hasMore = rows.length > opts.limit;
+  return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+}

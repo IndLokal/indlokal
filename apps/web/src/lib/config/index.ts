@@ -12,3 +12,4 @@ export {
 } from './cities';
 export { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE, RESOURCE_TYPE_TO_SLUG } from './resources';
 export { CATEGORIES, SCORING } from './scoring';
+export { FLAGS } from './flags';

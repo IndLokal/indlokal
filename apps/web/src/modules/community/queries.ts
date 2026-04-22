@@ -281,3 +281,53 @@ export async function isCommunityFollowed(userId: string, communityId: string): 
   });
   return row !== null;
 }
+
+export interface SavedCommunityRow {
+  communityId: string;
+  savedAt: Date;
+  community: {
+    id: string;
+    name: string;
+    slug: string;
+    description: string | null;
+    logoUrl: string | null;
+    memberCountApprox: number | null;
+    city: { name: string; slug: string };
+  };
+}
+
+/**
+ * Cursor-paginated list of communities saved by a user.
+ * Cursor is the communityId of the last seen item.
+ */
+export async function getSavedCommunities(
+  userId: string,
+  opts: { cursor?: string; limit: number },
+): Promise<{ items: SavedCommunityRow[]; hasMore: boolean }> {
+  const rows = await db.savedCommunity.findMany({
+    where: { userId },
+    select: {
+      communityId: true,
+      savedAt: true,
+      community: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          logoUrl: true,
+          memberCountApprox: true,
+          city: { select: { name: true, slug: true } },
+        },
+      },
+    },
+    orderBy: { savedAt: 'desc' },
+    take: opts.limit + 1,
+    ...(opts.cursor && {
+      cursor: { userId_communityId: { userId, communityId: opts.cursor } },
+      skip: 1,
+    }),
+  });
+  const hasMore = rows.length > opts.limit;
+  return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+}

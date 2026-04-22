@@ -29,6 +29,7 @@ import * as eventsContracts from '../src/contracts/events.js';
 import * as communityContracts from '../src/contracts/community.js';
 import * as searchContracts from '../src/contracts/search.js';
 import * as submitContracts from '../src/contracts/submit.js';
+import * as resourcesContracts from '../src/contracts/resources.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -738,6 +739,83 @@ registry.registerPath({
     201: {
       description: 'Pipeline item created',
       content: { 'application/json': { schema: submitContracts.SubmissionResult } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+// ─── TDD-0010 Resources, Bookmarks, Reports ──────────────────────────────────
+
+registry.register('ResourceType', resourcesContracts.ResourceType);
+registry.register('Resource', resourcesContracts.Resource);
+registry.register('ReportType', resourcesContracts.ReportType);
+registry.register('ReportStatus', resourcesContracts.ReportStatus);
+registry.register('ContentReportInput', resourcesContracts.ContentReportInput);
+registry.register('ContentReport', resourcesContracts.ContentReport);
+registry.register('SavedEventsPage', resourcesContracts.SavedEventsPage);
+registry.register('SavedCommunitiesPage', resourcesContracts.SavedCommunitiesPage);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/cities/{slug}/resources',
+  summary: 'Get resources for a city, optionally filtered by type',
+  request: {
+    params: z.object({ slug: z.string() }),
+    query: z.object({ type: resourcesContracts.ResourceType.optional() }),
+  },
+  responses: {
+    200: {
+      description: 'List of resources',
+      content: { 'application/json': { schema: z.array(resourcesContracts.Resource) } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/me/saves/events',
+  summary: 'Paginated saved events for the authenticated user',
+  request: {
+    query: z.object({ cursor: z.string().optional(), limit: z.coerce.number().optional() }),
+  },
+  responses: {
+    200: {
+      description: 'Saved events page',
+      content: { 'application/json': { schema: resourcesContracts.SavedEventsPage } },
+    },
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/me/saves/communities',
+  summary: 'Paginated saved communities for the authenticated user',
+  request: {
+    query: z.object({ cursor: z.string().optional(), limit: z.coerce.number().optional() }),
+  },
+  responses: {
+    200: {
+      description: 'Saved communities page',
+      content: { 'application/json': { schema: resourcesContracts.SavedCommunitiesPage } },
+    },
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/reports',
+  summary: 'Submit a content report (feature-flagged)',
+  request: {
+    body: { content: { 'application/json': { schema: resourcesContracts.ContentReportInput } } },
+  },
+  responses: {
+    201: {
+      description: 'Report created',
+      content: { 'application/json': { schema: resourcesContracts.ContentReport } },
     },
     400: errorResponse,
     401: errorResponse,

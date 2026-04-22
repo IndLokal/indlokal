@@ -266,3 +266,49 @@ export async function sendStaleReEngagementEmail(
 `,
   );
 }
+
+export async function sendReportNotificationEmail(
+  to: string,
+  opts: {
+    reportId: string;
+    reportType: string;
+    communityId?: string;
+    suggestedName?: string;
+    details?: string;
+    reporterEmail?: string;
+    submittedByUserId: string;
+  },
+): Promise<void> {
+  const {
+    reportId,
+    reportType,
+    communityId,
+    suggestedName,
+    details,
+    reporterEmail,
+    submittedByUserId,
+  } = opts;
+  await sendEmail(
+    to,
+    `[IndLokal] New report: ${reportType} (${reportId})`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">New content report received</h2>
+  <table style="border-collapse:collapse;width:100%;font-size:14px">
+    <tr><td style="padding:4px 8px;font-weight:600;width:140px">Report ID</td><td style="padding:4px 8px">${reportId}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Type</td><td style="padding:4px 8px">${reportType}</td></tr>
+    ${communityId ? `<tr><td style="padding:4px 8px;font-weight:600">Community ID</td><td style="padding:4px 8px">${communityId}</td></tr>` : ''}
+    ${suggestedName ? `<tr><td style="padding:4px 8px;font-weight:600">Suggested name</td><td style="padding:4px 8px">${suggestedName}</td></tr>` : ''}
+    ${details ? `<tr><td style="padding:4px 8px;font-weight:600">Details</td><td style="padding:4px 8px">${details}</td></tr>` : ''}
+    ${reporterEmail ? `<tr><td style="padding:4px 8px;font-weight:600">Reporter email</td><td style="padding:4px 8px">${reporterEmail}</td></tr>` : ''}
+    <tr><td style="padding:4px 8px;font-weight:600">User ID</td><td style="padding:4px 8px">${submittedByUserId}</td></tr>
+  </table>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal admin notification</p>
+</body>
+</html>
+`,
+  );
+}
