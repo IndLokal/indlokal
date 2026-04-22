@@ -100,7 +100,7 @@ export function getLlmStats() {
 
 // ─── Stage 1: Batch relevance filter ───────────────────
 
-const FILTER_SYSTEM_PROMPT = `You are a content relevance filter for LocalPulse, a platform for Indian/South Asian diaspora communities in Europe.
+const FILTER_SYSTEM_PROMPT = `You are a content relevance filter for IndLokal, a platform for Indian/South Asian diaspora communities in Europe.
 
 You will receive a numbered list of content snippets from various sources (Eventbrite, Facebook, websites).
 
@@ -171,7 +171,7 @@ async function filterBatch(batch: RawContent[], startIndex: number): Promise<Rel
 
 const CATEGORY_LIST = CATEGORIES.join(', ');
 
-const EXTRACT_SYSTEM_PROMPT = `You are a data extraction assistant for LocalPulse, a platform for Indian/South Asian diaspora communities across Europe.
+const EXTRACT_SYSTEM_PROMPT = `You are a data extraction assistant for IndLokal, a platform for Indian/South Asian diaspora communities across Europe.
 
 You will receive a numbered list of content items (pre-filtered as diaspora-relevant).
 

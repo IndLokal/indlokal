@@ -43,8 +43,8 @@ export default function ImpressumPage() {
             <h2>Contact</h2>
             <p>
               Email:{' '}
-              <a href="mailto:contact@localpulse.de" className="text-brand-600 hover:underline">
-                contact@localpulse.de
+              <a href="mailto:contact@indlokal.de" className="text-brand-600 hover:underline">
+                contact@indlokal.de
               </a>
               <br />
               Website:{' '}

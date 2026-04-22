@@ -4,9 +4,9 @@ import { db } from '@/lib/db';
 import { SubmitForm } from './SubmitForm';
 
 export const metadata: Metadata = {
-  title: 'List Your Community on LocalPulse',
+  title: 'List Your Community on IndLokal',
   description:
-    'Submit your Indian community, association, or group to LocalPulse and help others discover it.',
+    'Submit your Indian community, association, or group to IndLokal and help others discover it.',
 };
 
 export default async function SubmitPage() {

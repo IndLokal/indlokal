@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ─── LocalPulse Dev Script ───
+# ─── IndLokal Dev Script ───
 # Usage: ./dev.sh <command>
 
 RED='\033[0;31m'
@@ -11,7 +11,7 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 print_header() {
-  echo -e "\n${CYAN}━━━ LocalPulse ━━━${NC}"
+  echo -e "\n${CYAN}━━━ IndLokal ━━━${NC}"
   echo ""
 }
 
@@ -23,7 +23,7 @@ print_error()   { echo -e "${RED}✖${NC} $1"; }
 
 cmd_setup() {
   print_header
-  echo "Setting up LocalPulse for local development..."
+  echo "Setting up IndLokal for local development..."
   echo ""
 
   # Dependencies
@@ -68,8 +68,8 @@ cmd_setup() {
   # Test DB
   echo ""
   echo "Setting up test database..."
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   print_success "Test database ready"
 
@@ -79,7 +79,7 @@ cmd_setup() {
 
 cmd_start() {
   print_header
-  echo "Starting LocalPulse..."
+  echo "Starting IndLokal..."
   echo ""
 
   # Clear Next.js cache to ensure fresh build
@@ -89,7 +89,7 @@ cmd_start() {
   fi
 
   # Ensure DB + Mailpit are running
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
 
@@ -110,7 +110,7 @@ cmd_stop() {
 }
 
 cmd_db_start() {
-  if docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     print_success "PostgreSQL already running"
   else
     echo "Starting PostgreSQL (Docker)..."
@@ -143,7 +143,7 @@ cmd_db_reset() {
 }
 
 cmd_db_studio() {
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
   npx prisma studio
@@ -151,7 +151,7 @@ cmd_db_studio() {
 
 cmd_mailbox() {
   print_header
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-mailpit"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-mailpit"; then
     echo "Starting Mailpit..."
     docker compose up -d mailpit
   fi
@@ -161,13 +161,13 @@ cmd_mailbox() {
 
 cmd_test() {
   print_header
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
 
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
 
   echo "Running unit + component tests..."
@@ -176,12 +176,12 @@ cmd_test() {
 }
 
 cmd_test_watch() {
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   npm run test:watch
 }
@@ -190,16 +190,16 @@ cmd_test_setup() {
   print_header
   echo "Setting up test database..."
 
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
 
   # Create test DB if it doesn't exist
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || \
-    print_warn "localpulse_test already exists — skipping creation"
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || \
+    print_warn "indlokal_test already exists — skipping creation"
 
   # Push schema to test DB
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate
 
   print_success "Test database ready"
@@ -207,12 +207,12 @@ cmd_test_setup() {
 
 cmd_test_coverage() {
   print_header
-  if ! docker compose ps --status running 2>/dev/null | grep -q "localpulse-db"; then
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
   # Ensure test DB schema is up to date
-  docker compose exec -T db psql -U postgres -c "CREATE DATABASE localpulse_test;" 2>/dev/null || true
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public}" \
+  docker compose exec -T db psql -U postgres -c "CREATE DATABASE indlokal_test;" 2>/dev/null || true
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
     npx prisma db push --skip-generate >/dev/null 2>&1
   echo "Running tests with coverage..."
   echo ""

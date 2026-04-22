@@ -1,5 +1,5 @@
 {
-  "name": "local-pulse",
+  "name": "ind-lokal",
   "version": "0.1.0",
   "private": true,
   "description": "Activity-led community discovery platform for the Indian diaspora in Germany",
@@ -24,7 +24,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
-    "test:setup": "bash -c 'docker compose exec -T db psql -U postgres -c \"CREATE DATABASE localpulse_test;\" 2>/dev/null || true && DATABASE_URL=${TEST_DATABASE_URL} npx prisma db push --skip-generate'",
+    "test:setup": "bash -c 'docker compose exec -T db psql -U postgres -c \"CREATE DATABASE indlokal_test;\" 2>/dev/null || true && DATABASE_URL=${TEST_DATABASE_URL} npx prisma db push --skip-generate'",
     "pipeline": "tsx src/modules/pipeline/run.ts",
     "pipeline:city": "tsx src/modules/pipeline/run.ts --city",
     "prepare": "husky"

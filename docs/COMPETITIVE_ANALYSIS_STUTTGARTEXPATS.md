@@ -1,4 +1,4 @@
-# LocalPulse — Competitive Analysis: StuttgartExpats.com
+# IndLokal — Competitive Analysis: StuttgartExpats.com
 
 **Deep-Dive Assessment & Product Improvement Plan**
 
@@ -10,7 +10,7 @@ _April 2026_
 
 StuttgartExpats.com is the **largest general expat community in Stuttgart**, founded in 2007. Unlike IndoEuropean.eu (an Indian-specific content portal) or InterNations (a global professional network), Stuttgart Expats is a **community-first, event-driven platform** run by a single organizer (Barry Callan) that monetizes through ticketed events, affiliate partnerships, and service referrals.
 
-**Why this matters for LocalPulse:** Stuttgart Expats is our closest **structural competitor** — they organize real, recurring events in the exact same city, have an active WhatsApp/Facebook/Telegram presence, and even have a dedicated "Indians" WhatsApp sub-group. They are well-established, community-driven, and monetizing effectively. We ignored them until now. That was a mistake.
+**Why this matters for IndLokal:** Stuttgart Expats is our closest **structural competitor** — they organize real, recurring events in the exact same city, have an active WhatsApp/Facebook/Telegram presence, and even have a dedicated "Indians" WhatsApp sub-group. They are well-established, community-driven, and monetizing effectively. We ignored them until now. That was a mistake.
 
 **Threat level: MEDIUM-HIGH** — higher than IndoEuropean.eu because Stuttgart Expats has **real engagement, real events happening weekly, and real social proof** from thousands of members.
 
@@ -181,7 +181,7 @@ Events disappear after they happen. There's no "past events" archive, no communi
 
 ## 5. Head-to-Head Comparison
 
-| Dimension                         | Stuttgart Expats                | LocalPulse                     | Winner      |
+| Dimension                         | Stuttgart Expats                | IndLokal                       | Winner      |
 | --------------------------------- | ------------------------------- | ------------------------------ | ----------- |
 | Community age                     | 19 years                        | 0 (pre-launch)                 | **SE wins** |
 | Weekly recurring events           | 5-8 per week                    | 0 (seeded, not organized)      | **SE wins** |
@@ -201,7 +201,7 @@ Events disappear after they happen. There's no "past events" archive, no communi
 | Self-service community management | ❌                              | ✅ (claim flow)                | **LP wins** |
 | Free to browse (no login)         | ✅                              | ✅                             | **Tie**     |
 
-**Verdict:** Stuttgart Expats wins on **community execution, engagement, and monetization**. LocalPulse wins on **Indian specificity, data structure, and discovery UX**. These are fundamentally different products serving adjacent audiences — but the overlap at "Indians in Stuttgart looking for community" is real.
+**Verdict:** Stuttgart Expats wins on **community execution, engagement, and monetization**. IndLokal wins on **Indian specificity, data structure, and discovery UX**. These are fundamentally different products serving adjacent audiences — but the overlap at "Indians in Stuttgart looking for community" is real.
 
 ---
 
@@ -213,7 +213,7 @@ We can't compete on community organizing — that's not our product. But we MUST
 
 ---
 
-## 7. Product Improvement Plan for LocalPulse
+## 7. Product Improvement Plan for IndLokal
 
 Based on this analysis, here are concrete improvements:
 
@@ -246,7 +246,7 @@ Stuttgart Expats monetizes heavily through service referrals (driving school, in
 
 Stuttgart Expats is on WhatsApp, Facebook, Telegram, Instagram, YouTube. We're web-only. For Phase 2:
 
-- **WhatsApp Community** for LocalPulse Stuttgart
+- **WhatsApp Community** for IndLokal Stuttgart
 - **Telegram channel** for event announcements
 - Weekly digest email
 
@@ -260,9 +260,9 @@ Their homepage has embedded Google and Facebook reviews. We should plan for:
 
 ### 7.7 MODERATE — Position as complement, not competitor
 
-The smartest strategy may be to position LocalPulse as a complement to Stuttgart Expats for the Indian-specific niche:
+The smartest strategy may be to position IndLokal as a complement to Stuttgart Expats for the Indian-specific niche:
 
-- "Stuttgart Expats is great for general expat life. LocalPulse is where you find YOUR community — the Telugu association, the Tamil Sangam, the Diwali celebration, the cricket club."
+- "Stuttgart Expats is great for general expat life. IndLokal is where you find YOUR community — the Telugu association, the Tamil Sangam, the Diwali celebration, the cricket club."
 - We could even list Stuttgart Expats' Indians WhatsApp group as an access channel on a relevant community profile
 
 ---
@@ -308,6 +308,6 @@ Update to PRODUCT_DOCUMENT §13.1:
 
 Stuttgart Expats proves there IS demand for community discovery and event curation in Stuttgart. They've been doing it for 19 years. But they serve a mile wide and an inch deep — every expat, every nationality, every interest.
 
-**LocalPulse goes an inch wide and a mile deep** — one diaspora, one city, every community, every event, every access channel, structured and searchable.
+**IndLokal goes an inch wide and a mile deep** — one diaspora, one city, every community, every event, every access channel, structured and searchable.
 
 The bet is that depth beats breadth for a user who isn't just any expat — they're Indian, they want to find other Indians, and they want to do it now.

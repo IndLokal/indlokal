@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { PreferencesForm } from './PreferencesForm';
 
 export const metadata: Metadata = {
-  title: 'My Profile — LocalPulse',
+  title: 'My Profile — IndLokal',
   robots: { index: false },
 };
 
@@ -85,7 +85,7 @@ export default async function MePage() {
       <section>
         <h2 className="text-xl font-semibold">Preferences</h2>
         <p className="text-muted mt-1 text-sm">
-          Personalise LocalPulse to show content relevant to you.
+          Personalise IndLokal to show content relevant to you.
         </p>
         <div className="card-base mt-4 p-5">
           <PreferencesForm

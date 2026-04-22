@@ -113,7 +113,7 @@ export async function fetchPinnedUrl(
       headers: {
         'User-Agent': isFacebook
           ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
-          : 'LocalPulse-ContentBot/1.0 (+https://localpulse.de)',
+          : 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
       },
       signal: AbortSignal.timeout(15_000),
     });
@@ -264,7 +264,7 @@ export async function fetchDuckDuckGoSearch(
 
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'LocalPulse-ContentBot/1.0 (+https://localpulse.de)',
+          'User-Agent': 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
         },
         signal: AbortSignal.timeout(15_000),
       });

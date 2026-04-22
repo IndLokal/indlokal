@@ -14,7 +14,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
       <div className="rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50 p-6 text-center shadow-sm">
         <p className="text-base font-semibold text-emerald-800">🎉 Thanks for the suggestion!</p>
         <p className="mt-2 text-sm text-emerald-700">
-          We&apos;ll look into adding <strong>{state.name}</strong> to LocalPulse.
+          We&apos;ll look into adding <strong>{state.name}</strong> to IndLokal.
         </p>
       </div>
     );

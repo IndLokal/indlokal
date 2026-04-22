@@ -148,8 +148,7 @@ export default function HomePage() {
               Expanding across Germany
             </h2>
             <p className="text-muted mx-auto mt-2 max-w-md text-sm">
-              We&apos;re bringing LocalPulse to more cities. Click a city to see what&apos;s
-              planned.
+              We&apos;re bringing IndLokal to more cities. Click a city to see what&apos;s planned.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-3">

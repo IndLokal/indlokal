@@ -1,4 +1,4 @@
-// Prisma schema for LocalPulse
+// Prisma schema for IndLokal
 // Domain model: Community Graph for Indian Diaspora in Germany
 
 generator client {

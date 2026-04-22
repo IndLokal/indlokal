@@ -2,7 +2,7 @@ name: Cron Jobs
 
 # Runs scheduled background jobs by calling authenticated /api/cron/* routes.
 # Requires these repository secrets:
-#   APP_URL      — production base URL, e.g. https://localpulse.de
+#   APP_URL      — production base URL, e.g. https://indlokal.de
 #   CRON_SECRET  — shared secret matching CRON_SECRET env var on Vercel
 
 on:

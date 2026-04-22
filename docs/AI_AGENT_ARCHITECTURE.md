@@ -1,4 +1,4 @@
-# LocalPulse AI Content Agent — Technical Architecture
+# IndLokal AI Content Agent — Technical Architecture
 
 ## Module Structure
 

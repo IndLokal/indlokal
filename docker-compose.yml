@@ -1,14 +1,14 @@
 services:
   db:
     image: postgres:16-alpine
-    container_name: localpulse-db
+    container_name: indlokal-db
     restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: localpulse
+      POSTGRES_DB: indlokal
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./docker/init-test-db.sql:/docker-entrypoint-initdb.d/01-init-test-db.sql
@@ -20,7 +20,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
-    container_name: localpulse-mailpit
+    container_name: indlokal-mailpit
     restart: unless-stopped
     ports:
       - "8026:8025"   # Web UI

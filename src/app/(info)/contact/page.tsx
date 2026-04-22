@@ -37,10 +37,10 @@ export default function ContactPage() {
               Questions about {siteConfig.name}, partnerships, or media inquiries.
             </p>
             <a
-              href="mailto:contact@localpulse.de"
+              href="mailto:contact@indlokal.de"
               className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
-              contact@localpulse.de →
+              contact@indlokal.de →
             </a>
           </div>
 
@@ -88,10 +88,10 @@ export default function ContactPage() {
               Found an issue or have technical feedback? Let us know.
             </p>
             <a
-              href="mailto:support@localpulse.de"
+              href="mailto:support@indlokal.de"
               className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-amber-600 hover:text-amber-700 hover:underline"
             >
-              support@localpulse.de →
+              support@indlokal.de →
             </a>
           </div>
         </div>
@@ -105,7 +105,7 @@ export default function ContactPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
-              href="https://instagram.com/localpulse.de"
+              href="https://instagram.com/indlokal.de"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground ring-border/60 hover:ring-brand-300 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold ring-1 transition-all hover:-translate-y-0.5"
@@ -113,7 +113,7 @@ export default function ContactPage() {
               📸 Instagram
             </a>
             <a
-              href="https://linkedin.com/company/localpulse"
+              href="https://linkedin.com/company/indlokal"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground ring-border/60 hover:ring-brand-300 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold ring-1 transition-all hover:-translate-y-0.5"

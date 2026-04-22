@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
 /**
- * Vitest configuration for LocalPulse.
+ * Vitest configuration for IndLokal.
  *
  * Test layers:
  *   *.test.ts   — unit / integration tests   (Node environment)

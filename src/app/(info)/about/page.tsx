@@ -5,7 +5,7 @@ import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 export const metadata: Metadata = {
   title: `About — ${siteConfig.name}`,
   description:
-    'Learn about LocalPulse — the platform connecting the Indian diaspora in Germany with communities, events, and resources.',
+    'Learn about IndLokal — the platform connecting the Indian diaspora in Germany with communities, events, and resources.',
 };
 
 export default function AboutPage() {

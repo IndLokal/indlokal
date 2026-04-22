@@ -11,7 +11,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
           <div className="flex items-center gap-6">
             <Link href="/admin" className="text-lg font-bold">
-              LocalPulse Admin
+              IndLokal Admin
             </Link>
             <nav className="hidden items-center gap-4 text-sm sm:flex">
               {ADMIN_NAV_LINKS.map((link) => (

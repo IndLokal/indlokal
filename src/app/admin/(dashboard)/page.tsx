@@ -10,7 +10,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <p className="text-muted mt-2">Content management for LocalPulse.</p>
+      <p className="text-muted mt-2">Content management for IndLokal.</p>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardCard title="Scoring" description="Run score refresh" href="/admin/scoring" />

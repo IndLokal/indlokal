@@ -2,7 +2,7 @@
  * Test database helpers.
  *
  * Provides a Prisma client that connects to the isolated test database
- * (localpulse_test) and utilities for resetting state between tests.
+ * (indlokal_test) and utilities for resetting state between tests.
  *
  * Usage:
  *   import { testDb, cleanDb } from '@/test/db-helpers';
@@ -17,7 +17,7 @@ import { PrismaClient } from '@prisma/client';
 
 const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
-  'postgresql://postgres:postgres@localhost:5432/localpulse_test?schema=public';
+  'postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public';
 
 // Singleton scoped to the test process — avoids connection exhaustion
 const globalForTestPrisma = globalThis as unknown as {

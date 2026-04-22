@@ -1,5 +1,5 @@
 /**
- * Database seed script for LocalPulse.
+ * Database seed script for IndLokal.
  *
  * Seeds Stuttgart as the launch city, all categories,
  * real known Stuttgart communities, access channels, and
@@ -22,7 +22,7 @@ const future = (daysAhead: number, hour = 18) =>
   setMinutes(setHours(addDays(new Date(), daysAhead), hour), 0);
 
 async function main() {
-  console.log('🌱 Seeding LocalPulse database...\n');
+  console.log('🌱 Seeding IndLokal database...\n');
 
   // ─── Cities ──────────────────────────────────────────────────────────────
 
@@ -1764,7 +1764,7 @@ async function main() {
   console.log(`✅ Scores refreshed: ${updated} communities updated`);
 
   // ─── Platform admin user ────────────────────────────────────────────────
-  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@localpulse.de';
+  const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@indlokal.de';
   const admin = await prisma.user.upsert({
     where: { email: adminEmail },
     update: { role: 'PLATFORM_ADMIN' },

@@ -4,7 +4,7 @@
 
 ## 1. Overview
 
-The **Community Self-Submission Flow** allows a community organiser whose community is _not yet listed_ on LocalPulse to submit it for review. It is distinct from the Claim Flow:
+The **Community Self-Submission Flow** allows a community organiser whose community is _not yet listed_ on IndLokal to submit it for review. It is distinct from the Claim Flow:
 
 | Flow                | Precondition                             | Use case                                      |
 | ------------------- | ---------------------------------------- | --------------------------------------------- |
@@ -202,7 +202,7 @@ UNVERIFIED ──────────► ACTIVE   (approved by admin)
 Use this to help an organiser choose the right path:
 
 ```
-Is your community already listed on LocalPulse?
+Is your community already listed on IndLokal?
 │
 ├─ YES → Use the Claim Flow
 │        (Claim button on the community detail page)

@@ -1,4 +1,4 @@
-# LocalPulse AI Content Agent — Product Document
+# IndLokal AI Content Agent — Product Document
 
 ## What It Is
 

@@ -1,4 +1,4 @@
-# LocalPulse Deployment Strategy
+# IndLokal Deployment Strategy
 
 **Goal:** keep production reliable with as little manual effort as possible.
 
@@ -21,7 +21,7 @@ Do not introduce Kubernetes, separate workers, Redis, or a queue in the first pr
 Users / Google
       |
       v
-  localpulse.de
+  indlokal.de
       |
       v
    Vercel

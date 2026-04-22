@@ -1,4 +1,4 @@
-# LocalPulse — Product Document
+# IndLokal — Product Document
 
 **The real-time guide to Indian communities and events near you.**
 
@@ -28,15 +28,15 @@ _Product Planning Document — April 2026_
 
 ## 1. Product Vision
 
-**LocalPulse is the real-time guide to Indian communities and events near you.**
+**IndLokal is the real-time guide to Indian communities and events near you.**
 
-For any Indian living in Germany — whether a new arrival, a student, a working professional, or a settled family — LocalPulse answers the question:
+For any Indian living in Germany — whether a new arrival, a student, a working professional, or a settled family — IndLokal answers the question:
 
 > _"What's happening for Indians in my city this week, and how do I get involved?"_
 
 The product is designed as an **activity-led discovery layer**: users come for fresh, relevant, time-sensitive events and community activity. They don't come to browse a directory.
 
-Behind the product experience, LocalPulse builds a **trusted community graph** — a structured, scored, and evolving map of diaspora community life that becomes more valuable over time.
+Behind the product experience, IndLokal builds a **trusted community graph** — a structured, scored, and evolving map of diaspora community life that becomes more valuable over time.
 
 ---
 
@@ -118,14 +118,14 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 - Runs or helps run an Indian community group
 - Wants more visibility and reach
 - Wants to be discoverable to newcomers
-- May want to manage their community's listing on LocalPulse
+- May want to manage their community's listing on IndLokal
 - **Key need:** "Help more people find and join our community"
 
 ---
 
 ## 4. Product Positioning
 
-### What LocalPulse IS
+### What IndLokal IS
 
 | Positioning                         | Explanation                                                                         |
 | ----------------------------------- | ----------------------------------------------------------------------------------- |
@@ -134,7 +134,7 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 | **Event and relevance engine**      | Surfaces the right events at the right time for the right person                    |
 | **Trusted guide to community life** | Over time, becomes the reliable source for "what's good" in diaspora community life |
 
-### What LocalPulse is NOT
+### What IndLokal is NOT
 
 | Not this                     | Why not                                                             |
 | ---------------------------- | ------------------------------------------------------------------- |
@@ -147,7 +147,7 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 
 ### Positioning statement
 
-> For Indians living in Germany who want to discover and participate in community life, LocalPulse is the activity-led platform that shows you what's happening, who's active, and how to get involved — powered by a trusted community graph that ensures freshness, relevance, and quality.
+> For Indians living in Germany who want to discover and participate in community life, IndLokal is the activity-led platform that shows you what's happening, who's active, and how to get involved — powered by a trusted community graph that ensures freshness, relevance, and quality.
 
 ---
 
@@ -171,11 +171,11 @@ Every experience begins with a city. Germany is large; dispersed content is usel
 
 ### 5.3 Discovery, not engagement
 
-LocalPulse is a **gateway**, not a destination.
+IndLokal is a **gateway**, not a destination.
 
-- Users discover communities and events on LocalPulse
+- Users discover communities and events on IndLokal
 - They engage (chat, RSVP, participate) on the community's own platform (WhatsApp, Telegram, etc.)
-- LocalPulse succeeds when someone clicks "Join via WhatsApp" — that is the conversion event
+- IndLokal succeeds when someone clicks "Join via WhatsApp" — that is the conversion event
 
 ### 5.4 Low friction, high trust
 
@@ -202,7 +202,7 @@ Events, access channels, and activity signals all connect back to communities. T
 
 ```
 1. Asha searches "Indian communities Munich" on Google
-   → Lands on LocalPulse Munich city page (SEO)
+   → Lands on IndLokal Munich city page (SEO)
 
 2. She sees the city feed: "This Week in Munich for Indians"
    → 3 upcoming events, 5 active communities highlighted
@@ -230,7 +230,7 @@ Events, access channels, and activity signals all connect back to communities. T
 **Trigger:** Raj has been in Berlin for 2 years. It's Wednesday and he wants something to do this weekend.
 
 ```
-1. Raj opens LocalPulse (bookmarked) → Berlin city feed
+1. Raj opens IndLokal (bookmarked) → Berlin city feed
 
 2. He filters: "This weekend"
    → 4 events: Bollywood night, South Indian food potluck, Hindi book club, Berlin Indians hiking trip
@@ -251,7 +251,7 @@ Events, access channels, and activity signals all connect back to communities. T
 **Trigger:** Priya is a Tamil-speaking professional in Frankfurt. She wants to find Tamil-specific communities and professional networking.
 
 ```
-1. Priya opens LocalPulse → Frankfurt
+1. Priya opens IndLokal → Frankfurt
 
 2. She browses categories: Cultural, Student, Professional, Religious, Language, Sports, Family
    → She selects "Language: Tamil"
@@ -270,10 +270,10 @@ Events, access channels, and activity signals all connect back to communities. T
 
 ### 6.4 Journey: Community Organizer — Claiming a Listing
 
-**Trigger:** Suresh runs the "Düsseldorf Kerala Association." He discovers it's already listed on LocalPulse (from seed data) but the description is incomplete.
+**Trigger:** Suresh runs the "Düsseldorf Kerala Association." He discovers it's already listed on IndLokal (from seed data) but the description is incomplete.
 
 ```
-1. Suresh finds his community on LocalPulse
+1. Suresh finds his community on IndLokal
    → Listed, but description is minimal, missing logo, incorrect WhatsApp link
 
 2. He clicks "Claim this community" (Phase 2 feature)
@@ -497,7 +497,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 
 ### 8.2 Community Self-Submission
 
-- Public form: "List your community on LocalPulse"
+- Public form: "List your community on IndLokal"
 - Required fields: name, city, category, description, at least one access channel
 - Goes into moderation queue
 - Admin approves or requests changes
@@ -554,11 +554,11 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - **Expanded resource types:** Beyond consular/official resources, the resource model uses a topic-based taxonomy with 9 expat categories: `CITY_REGISTRATION` (Anmeldung, Blue Card, PR, family reunion), `DRIVING` (licence conversion, English Fahrschule), `HOUSING` (apartment search, Schufa, GEZ), `HEALTH_DOCTORS` (GKV vs PKV, finding doctors, emergencies), `JOBS_CAREERS` (job portals, freelance visa), `TAX_FINANCE` (Steuererklärung, DTAA, NRE/NRO, ELSTER), `BUSINESS_SETUP` (Freiberufler vs Gewerbe, Finanzamt), `FAMILY_CHILDREN` (Kindergeld, Elterngeld, Kita, schools), and `GROCERY_FOOD` (Indian groceries, restaurants, online delivery). Each resource is a detailed practical guide written specifically for Indian expats.
 - **Dedicated `/[city]/resources/` page:** Grouped by resource type, with search/filter. Targets high-intent queries like "Indian grocery store Stuttgart", "Hindi-speaking doctor Stuttgart".
 - **Community-sourced contributions:** Leverage community organiser knowledge — claimed communities can suggest relevant services, feeding into moderation queue.
-- **SEO value:** Indian-specific service pages are a content moat — Stuttgart Expats links to generic expat services; LocalPulse links to Indian-specific ones.
+- **SEO value:** Indian-specific service pages are a content moat — Stuttgart Expats links to generic expat services; IndLokal links to Indian-specific ones.
 
 ### 8.10 Multi-Channel Distribution (informed by Stuttgart Expats analysis)
 
-- **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. LocalPulse should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
+- **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
 - **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.
 - **Social proof & testimonials:** Community organisers can add short testimonials visible on community detail pages. Social proof drives trust for newcomers deciding whether to join a group.
 
@@ -569,7 +569,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 ### 9.1 Site structure
 
 ```
-LocalPulse
+IndLokal
 ├── / (Landing → City Selection)
 ├── /[city]/ (City Feed — primary discovery surface)
 │   ├── /[city]/events/ (Event listing with filters)
@@ -581,7 +581,7 @@ LocalPulse
 │   ├── /[city]/indian-events-this-week/ (Programmatic SEO — temporal)
 │   ├── /[city]/consular-services/ (Programmatic SEO — consular/official)
 │   └── /[city]/resources/ (Indian expat services — groceries, doctors, tax, driving)
-├── /about/ (About LocalPulse)
+├── /about/ (About IndLokal)
 ├── /submit/ (Submit a community — Phase 2)
 ├── /login/ (User accounts — Phase 2)
 └── /admin/ (Admin dashboard — internal)
@@ -620,11 +620,11 @@ Each page includes: filtered community/event list, brief intro paragraph, intern
 
 City-first URLs are critical for SEO and clarity:
 
-- `localpulse.de/munich/` — Munich city feed
-- `localpulse.de/munich/events/` — Munich events
-- `localpulse.de/munich/events/diwali-celebration-2026/` — Event detail
-- `localpulse.de/munich/communities/` — Munich communities
-- `localpulse.de/munich/communities/munich-indians-community/` — Community detail
+- `indlokal.de/munich/` — Munich city feed
+- `indlokal.de/munich/events/` — Munich events
+- `indlokal.de/munich/events/diwali-celebration-2026/` — Event detail
+- `indlokal.de/munich/communities/` — Munich communities
+- `indlokal.de/munich/communities/munich-indians-community/` — Community detail
 
 ---
 
@@ -869,28 +869,28 @@ This metric captures:
 
 ### 13.2 Competitive positioning — how we're different
 
-| Dimension                       | IndoEuropean.eu | Stuttgart Expats  | InterNations | Meetup  | Facebook  | **LocalPulse** |
-| ------------------------------- | --------------- | ----------------- | ------------ | ------- | --------- | -------------- |
-| Indian-diaspora-specific        | ✅              | ❌                | ❌           | ❌      | Partially | ✅             |
-| Stuttgart-specific view         | ✅ (misspelled) | ✅                | ✅           | ❌      | ❌        | **✅**         |
-| Structured event data           | ❌ (blog posts) | ❌ (FB embed)     | ✅           | ✅      | ❌        | **✅**         |
-| Event filtering (date/category) | ❌              | ❌                | ✅           | ✅      | ❌        | **✅**         |
-| Community profiles              | ❌              | ❌ (flat links)   | ❌           | ❌      | ❌        | **✅**         |
-| Activity/trust signals          | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**         |
-| Language/regional filter        | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**         |
-| WhatsApp/Telegram access links  | ❌              | ✅ (scattered)    | ❌           | ❌      | ❌        | **✅**         |
-| Free to browse (no login)       | ✅              | ✅                | ❌ (paywall) | Partial | Partial   | **✅**         |
-| Consular/official events        | ✅              | ❌                | ❌           | ❌      | ❌        | **✅**         |
-| JSON-LD Event schema            | ❌              | ❌                | ❌           | ✅      | ❌        | **✅**         |
-| Historical events               | ✅ (by default) | ❌                | ❌           | ❌      | ❌        | **✅**         |
-| Real weekly community events    | ❌              | ✅                | ✅           | ✅      | ✅        | ❌ (seeded)    |
-| Expat service directory         | ❌              | ✅ (15+ services) | ❌           | ❌      | ❌        | Partial        |
+| Dimension                       | IndoEuropean.eu | Stuttgart Expats  | InterNations | Meetup  | Facebook  | **IndLokal** |
+| ------------------------------- | --------------- | ----------------- | ------------ | ------- | --------- | ------------ |
+| Indian-diaspora-specific        | ✅              | ❌                | ❌           | ❌      | Partially | ✅           |
+| Stuttgart-specific view         | ✅ (misspelled) | ✅                | ✅           | ❌      | ❌        | **✅**       |
+| Structured event data           | ❌ (blog posts) | ❌ (FB embed)     | ✅           | ✅      | ❌        | **✅**       |
+| Event filtering (date/category) | ❌              | ❌                | ✅           | ✅      | ❌        | **✅**       |
+| Community profiles              | ❌              | ❌ (flat links)   | ❌           | ❌      | ❌        | **✅**       |
+| Activity/trust signals          | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**       |
+| Language/regional filter        | ❌              | ❌                | ❌           | ❌      | ❌        | **✅**       |
+| WhatsApp/Telegram access links  | ❌              | ✅ (scattered)    | ❌           | ❌      | ❌        | **✅**       |
+| Free to browse (no login)       | ✅              | ✅                | ❌ (paywall) | Partial | Partial   | **✅**       |
+| Consular/official events        | ✅              | ❌                | ❌           | ❌      | ❌        | **✅**       |
+| JSON-LD Event schema            | ❌              | ❌                | ❌           | ✅      | ❌        | **✅**       |
+| Historical events               | ✅ (by default) | ❌                | ❌           | ❌      | ❌        | **✅**       |
+| Real weekly community events    | ❌              | ✅                | ✅           | ✅      | ✅        | ❌ (seeded)  |
+| Expat service directory         | ❌              | ✅ (15+ services) | ❌           | ❌      | ❌        | Partial      |
 
 ### 13.3 Positioning statement (revised for competitive market)
 
 > IndoEuropean.eu is a news portal that happens to list events. Stuttgart Expats is the biggest general expat community — great for bar nights and wine walks, but an Indian newcomer looking for Telugu or Tamil communities won't find that there. InterNations is a generic expat platform where Indians get Italian dinners. Meetup missed the Indian diaspora entirely. Facebook requires you to be inside closed groups.
 >
-> **LocalPulse is the first structured, city-level discovery platform for Indians in Stuttgart.** We answer: "What's happening for Indians in Stuttgart this week?" — a question no existing platform can answer.
+> **IndLokal is the first structured, city-level discovery platform for Indians in Stuttgart.** We answer: "What's happening for Indians in Stuttgart this week?" — a question no existing platform can answer.
 
 ### 13.4 Defensive moat (over time)
 
@@ -972,7 +972,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 | #   | Decision                    | Resolution                                                                                                                   |
 | --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 1   | **Launch city**             | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path |
-| 2   | **Product name / domain**   | localpulse.de — validate with target users; secure domain early                                                              |
+| 2   | **Product name / domain**   | indlokal.de — validate with target users; secure domain early                                                                |
 | 3   | **Authentication approach** | No auth for MVP browsing; optional auth for saves (Phase 2)                                                                  |
 | 4   | **Content language**        | English for MVP (lingua franca for Indian diaspora in Germany)                                                               |
 | 5   | **Mobile approach**         | Responsive web for MVP; consider PWA for Phase 2                                                                             |
@@ -1021,7 +1021,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 | **Access channel**    | A link or contact method to join or reach a community — WhatsApp group, Telegram channel, website, email                                       |
 | **Activity signal**   | Any indicator that a community is active — recent event, profile update, verified link                                                         |
 | **Trust signal**      | Any indicator that a community listing is accurate and reliable — platform verification, community claim, user reports                         |
-| **Community graph**   | The structured network of relationships between communities, events, cities, categories, and users that LocalPulse builds over time            |
+| **Community graph**   | The structured network of relationships between communities, events, cities, categories, and users that IndLokal builds over time              |
 | **City feed**         | The primary discovery surface for a city — showing upcoming events, active communities, and fresh content                                      |
 | **Discovery session** | A user visit where at least one community or event detail page is viewed                                                                       |
 

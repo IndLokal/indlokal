@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
               <br />
               Germany
               <br />
-              Email: privacy@localpulse.de
+              Email: privacy@indlokal.de
             </p>
           </section>
 
@@ -176,8 +176,8 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               To exercise any of these rights, contact us at{' '}
-              <a href="mailto:privacy@localpulse.de" className="text-brand-600 hover:underline">
-                privacy@localpulse.de
+              <a href="mailto:privacy@indlokal.de" className="text-brand-600 hover:underline">
+                privacy@indlokal.de
               </a>
               .
             </p>
@@ -205,8 +205,8 @@ export default function PrivacyPolicyPage() {
             <h2>11. Contact</h2>
             <p>
               For privacy-related inquiries, contact us at:{' '}
-              <a href="mailto:privacy@localpulse.de" className="text-brand-600 hover:underline">
-                privacy@localpulse.de
+              <a href="mailto:privacy@indlokal.de" className="text-brand-600 hover:underline">
+                privacy@indlokal.de
               </a>
             </p>
             <p>

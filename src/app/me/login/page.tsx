@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Sign in — LocalPulse',
+  title: 'Sign in — IndLokal',
   robots: { index: false },
 };
 
@@ -22,7 +22,7 @@ export default async function LoginPage({
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-foreground text-2xl font-bold">Sign in to LocalPulse</h1>
+          <h1 className="text-foreground text-2xl font-bold">Sign in to IndLokal</h1>
           <p className="text-muted mt-2 text-sm">
             Save communities and events you&apos;re interested in.
           </p>
@@ -71,7 +71,7 @@ export default async function LoginPage({
         </Link>
 
         <p className="text-muted text-center text-xs">
-          By signing in, you agree to LocalPulse&apos;s terms. We only store your name and email.
+          By signing in, you agree to IndLokal&apos;s terms. We only store your name and email.
         </p>
 
         <Link

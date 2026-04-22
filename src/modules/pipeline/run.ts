@@ -20,7 +20,7 @@ async function main() {
   const dryRun = args.includes('--dry-run');
 
   console.log('╔══════════════════════════════════════════╗');
-  console.log('║  LocalPulse AI Content Pipeline          ║');
+  console.log('║  IndLokal AI Content Pipeline          ║');
   console.log('║  Generic-first · Two-stage LLM           ║');
   console.log('╚══════════════════════════════════════════╝');
   console.log(`Mode: ${dryRun ? 'DRY RUN (config preview)' : 'LIVE'}`);

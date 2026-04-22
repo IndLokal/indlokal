@@ -158,8 +158,8 @@ export default function TermsPage() {
             <h2>12. Contact</h2>
             <p>
               For questions about these Terms, contact us at{' '}
-              <a href="mailto:legal@localpulse.de" className="text-brand-600 hover:underline">
-                legal@localpulse.de
+              <a href="mailto:legal@indlokal.de" className="text-brand-600 hover:underline">
+                legal@indlokal.de
               </a>
             </p>
           </section>

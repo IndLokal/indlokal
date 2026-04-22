@@ -12,7 +12,7 @@ For the one-time claim process, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_
 
 ## 2. Authentication Model
 
-LocalPulse uses a **sessionless, token-in-cookie** approach — no third-party auth library.
+IndLokal uses a **sessionless, token-in-cookie** approach — no third-party auth library.
 
 | Concern       | Implementation                                                                                                                                            |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -44,7 +44,7 @@ Three cards linking to the three management sections: Edit Profile, Manage Chann
 Current channels (type + handle) with a direct link into the Channels editor.
 
 **Public Page Link**
-Deeplink to the community's public page on LocalPulse so the organiser can preview what visitors see.
+Deeplink to the community's public page on IndLokal so the organiser can preview what visitors see.
 
 ---
 

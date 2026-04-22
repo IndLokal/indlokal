@@ -64,7 +64,7 @@ export function Footer() {
             {/* Social links */}
             <div className="flex items-center gap-3 pt-1">
               <a
-                href="https://instagram.com/localpulse.de"
+                href="https://instagram.com/indlokal.de"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -75,7 +75,7 @@ export function Footer() {
                 </svg>
               </a>
               <a
-                href="https://linkedin.com/company/localpulse"
+                href="https://linkedin.com/company/indlokal"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn"

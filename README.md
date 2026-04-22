@@ -1,8 +1,8 @@
-# LocalPulse
+# IndLokal
 
 **Activity-led community discovery platform for the Indian diaspora in Germany.**
 
-LocalPulse helps Indian expats in Germany discover active communities, events, and resources — ranked by real activity signals rather than stale directory listings.
+IndLokal helps Indian expats in Germany discover active communities, events, and resources — ranked by real activity signals rather than stale directory listings.
 
 > 🚀 Launch city: **Stuttgart** (metro region including Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen)
 
@@ -50,7 +50,7 @@ src/
 
 ```bash
 # Clone the repo
-git clone <repo-url> && cd local-pulse
+git clone <repo-url> && cd ind-lokal
 
 # Install dependencies
 npm install
@@ -115,7 +115,7 @@ The recommended production setup is intentionally simple:
 - **PostHog Cloud** for analytics
 - **Scheduled HTTP cron jobs** for pipeline and scoring tasks
 
-See [docs/DEPLOYMENT_STRATEGY.md](/Users/jayjain/Development/local-pulse/docs/DEPLOYMENT_STRATEGY.md) for the full deployment architecture, environment strategy, cron plan, and rollout sequence.
+See [docs/DEPLOYMENT_STRATEGY.md](docs/DEPLOYMENT_STRATEGY.md) for the full deployment architecture, environment strategy, cron plan, and rollout sequence.
 
 ## Git Workflow
 

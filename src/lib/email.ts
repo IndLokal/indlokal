@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'LocalPulse <noreply@localpulse.de>';
+const FROM = process.env.RESEND_FROM_EMAIL ?? 'IndLokal <noreply@indlokal.de>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
 // Dev SMTP transport — sends to Mailpit (or any local SMTP server)
@@ -56,13 +56,13 @@ export async function sendMagicLinkEmail(
 
   await sendEmail(
     to,
-    'Your LocalPulse organizer login link',
+    'Your IndLokal organizer login link',
     `
 <!DOCTYPE html>
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Organizer access for ${communityName}</h2>
-  <p>Click the button below to log in to your LocalPulse organizer dashboard.</p>
+  <p>Click the button below to log in to your IndLokal organizer dashboard.</p>
   <p style="margin:28px 0">
     <a href="${verifyUrl}"
        style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
@@ -72,7 +72,7 @@ export async function sendMagicLinkEmail(
   <p style="font-size:13px;color:#666">This link expires in 24 hours and can only be used once.</p>
   <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -86,13 +86,13 @@ export async function sendAdminMagicLinkEmail(to: string, token: string): Promis
 
   await sendEmail(
     to,
-    'Your LocalPulse admin login link',
+    'Your IndLokal admin login link',
     `
 <!DOCTYPE html>
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Admin Dashboard Access</h2>
-  <p>Click the button below to log in to the LocalPulse admin dashboard.</p>
+  <p>Click the button below to log in to the IndLokal admin dashboard.</p>
   <p style="margin:28px 0">
     <a href="${verifyUrl}"
        style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
@@ -102,7 +102,7 @@ export async function sendAdminMagicLinkEmail(to: string, token: string): Promis
   <p style="font-size:13px;color:#666">This link expires in 24 hours and can only be used once.</p>
   <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -128,7 +128,7 @@ export async function sendClaimApprovedEmail(
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">You're now the organizer of ${communityName}!</h2>
-  <p>Your ownership claim has been reviewed and approved. Your community now displays a <strong>Verified</strong> badge on LocalPulse.</p>
+  <p>Your ownership claim has been reviewed and approved. Your community now displays a <strong>Verified</strong> badge on IndLokal.</p>
   <p>You can now:</p>
   <ul style="line-height:1.7">
     <li>Edit your community profile (description, logo, channels)</li>
@@ -145,7 +145,7 @@ export async function sendClaimApprovedEmail(
     <a href="${communityUrl}" style="color:#4f46e5">View your public community page →</a>
   </p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -166,7 +166,7 @@ export async function sendClaimRejectedEmail(to: string, communityName: string):
   <p>We reviewed your ownership claim for <strong>${communityName}</strong> and were unable to approve it based on the information provided.</p>
   <p>If you believe this is a mistake or can provide additional proof of ownership, please reply to this email or re-submit the claim with more details.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -189,10 +189,10 @@ export async function sendSubmissionReceivedEmail(
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Thanks, ${submitterName}!</h2>
   <p>We've received your submission for <strong>${communityName}</strong> and will review it within 1–2 business days.</p>
-  <p>Once approved, your community will appear on LocalPulse. We'll email you when it's live.</p>
+  <p>Once approved, your community will appear on IndLokal. We'll email you when it's live.</p>
   <p style="font-size:13px;color:#666">If you have any questions in the meantime, reply to this email.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -212,13 +212,13 @@ export async function sendSubmissionApprovedEmail(
 
   await sendEmail(
     to,
-    `"${communityName}" is now live on LocalPulse!`,
+    `"${communityName}" is now live on IndLokal!`,
     `
 <!DOCTYPE html>
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Your community is live, ${submitterName}!</h2>
-  <p><strong>${communityName}</strong> is now published on LocalPulse and discoverable by the Indian diaspora in your city.</p>
+  <p><strong>${communityName}</strong> is now published on IndLokal and discoverable by the Indian diaspora in your city.</p>
   <p style="margin:28px 0">
     <a href="${communityUrl}"
        style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
@@ -229,7 +229,7 @@ export async function sendSubmissionApprovedEmail(
     <a href="${APP_URL}/${citySlug}/communities/${communitySlug}" style="color:#4f46e5">Claim your community →</a>
   </p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,
@@ -250,7 +250,7 @@ export async function sendStaleReEngagementEmail(
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Hey ${organizerName},</h2>
-  <p>We noticed <strong>${communityName}</strong> hasn't had any activity on LocalPulse in a while.</p>
+  <p>We noticed <strong>${communityName}</strong> hasn't had any activity on IndLokal in a while.</p>
   <p>If your community is still active, just update your listing or add an upcoming event to keep it visible in search results.</p>
   <p style="margin:28px 0">
     <a href="${loginUrl}"
@@ -260,7 +260,7 @@ export async function sendStaleReEngagementEmail(
   </p>
   <p style="font-size:13px;color:#666">Communities without activity for 180+ days are automatically moved to inactive status.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">LocalPulse · Indian community discovery in Germany</p>
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
 </html>
 `,

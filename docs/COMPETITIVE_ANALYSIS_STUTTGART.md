@@ -1,4 +1,4 @@
-# LocalPulse — Stuttgart Competitive Landscape Analysis
+# IndLokal — Stuttgart Competitive Landscape Analysis
 
 **Comprehensive Analysis for Stuttgart Launch — Thinking Like a Cofounder**
 
@@ -144,7 +144,7 @@ Known Stuttgart-area Indian associations:
 | **Indische Verein Stuttgart** (likely exists) | General Indian association |
 | **Various temple communities** | Sithivinayagar Kovil, etc. |
 
-**Key insight:** These Vereine are the backbone of community life but have **zero web discoverability** outside their own networks. They post events in their WhatsApp groups and sometimes on Facebook. LocalPulse IS the web discovery layer they don't have.
+**Key insight:** These Vereine are the backbone of community life but have **zero web discoverability** outside their own networks. They post events in their WhatsApp groups and sometimes on Facebook. IndLokal IS the web discovery layer they don't have.
 
 ---
 
@@ -206,7 +206,7 @@ For MVP launch, we need comprehensive community coverage and sufficient upcoming
 **InterNations says:** "Here are generic expat events. Some Indians might attend."
 **Meetup says:** "We have tech meetups and hiking. No Indian groups."
 **Facebook says:** "Figure it out yourself inside closed groups."
-**LocalPulse says:** "Here's everything happening for Indians in Stuttgart this week, with one tap to join."
+**IndLokal says:** "Here's everything happening for Indians in Stuttgart this week, with one tap to join."
 
 ### 4.2 The win conditions
 
@@ -275,23 +275,23 @@ For MVP launch, we need comprehensive community coverage and sufficient upcoming
 
 ## 5. Competitor Feature Matrix
 
-| Feature                          | LocalPulse (planned) | IndoEuropean.eu     | Meetup           | InterNations | Facebook Groups |
-| -------------------------------- | -------------------- | ------------------- | ---------------- | ------------ | --------------- |
-| Indian-diaspora-specific         | ✅                   | ✅                  | ❌               | ❌           | Partially       |
-| Stuttgart-specific view          | ✅                   | ✅ (misspelled URL) | ❌               | ✅           | ❌              |
-| Structured event data            | ✅                   | ❌ (blog posts)     | ✅               | ✅           | ❌              |
-| Event filtering (date/category)  | ✅                   | ❌                  | ✅               | ✅           | ❌              |
-| Community profiles               | ✅                   | ❌                  | ❌ (group pages) | ❌           | ❌              |
-| Activity/trust signals           | ✅                   | ❌                  | ❌               | ❌           | ❌              |
-| Language/regional filter         | ✅                   | ❌                  | ❌               | ❌           | ❌              |
-| WhatsApp/Telegram join links     | ✅                   | ❌                  | ❌               | ❌           | ❌              |
-| Free to browse (no login)        | ✅                   | ✅                  | Partial          | ❌ (paywall) | Partial         |
-| Mobile-first                     | ✅                   | ❌                  | ✅               | ✅           | ✅              |
-| SEO-optimized city pages         | ✅                   | ❌                  | ❌               | ✅           | ❌              |
-| Consular/official events         | ✅                   | ✅                  | ❌               | ❌           | ❌              |
-| JSON-LD Event schema             | ✅                   | ❌                  | ✅               | ❌           | ❌              |
-| Historical events                | ✅                   | ✅ (by default)     | ❌               | ❌           | ❌              |
-| Community self-service (Phase 2) | ✅                   | ❌                  | ✅               | ❌           | ✅              |
+| Feature                          | IndLokal (planned) | IndoEuropean.eu     | Meetup           | InterNations | Facebook Groups |
+| -------------------------------- | ------------------ | ------------------- | ---------------- | ------------ | --------------- |
+| Indian-diaspora-specific         | ✅                 | ✅                  | ❌               | ❌           | Partially       |
+| Stuttgart-specific view          | ✅                 | ✅ (misspelled URL) | ❌               | ✅           | ❌              |
+| Structured event data            | ✅                 | ❌ (blog posts)     | ✅               | ✅           | ❌              |
+| Event filtering (date/category)  | ✅                 | ❌                  | ✅               | ✅           | ❌              |
+| Community profiles               | ✅                 | ❌                  | ❌ (group pages) | ❌           | ❌              |
+| Activity/trust signals           | ✅                 | ❌                  | ❌               | ❌           | ❌              |
+| Language/regional filter         | ✅                 | ❌                  | ❌               | ❌           | ❌              |
+| WhatsApp/Telegram join links     | ✅                 | ❌                  | ❌               | ❌           | ❌              |
+| Free to browse (no login)        | ✅                 | ✅                  | Partial          | ❌ (paywall) | Partial         |
+| Mobile-first                     | ✅                 | ❌                  | ✅               | ✅           | ✅              |
+| SEO-optimized city pages         | ✅                 | ❌                  | ❌               | ✅           | ❌              |
+| Consular/official events         | ✅                 | ✅                  | ❌               | ❌           | ❌              |
+| JSON-LD Event schema             | ✅                 | ❌                  | ✅               | ❌           | ❌              |
+| Historical events                | ✅                 | ✅ (by default)     | ❌               | ❌           | ❌              |
+| Community self-service (Phase 2) | ✅                 | ❌                  | ✅               | ❌           | ✅              |
 
 ---
 

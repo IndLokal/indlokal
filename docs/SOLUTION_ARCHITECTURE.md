@@ -1,4 +1,4 @@
-# LocalPulse — Solution Architecture & Implementation Plan
+# IndLokal — Solution Architecture & Implementation Plan
 
 **Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
 
@@ -27,7 +27,7 @@ _Architecture Planning Document — April 2026_
 
 ## 1. Executive Summary
 
-LocalPulse is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** — a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
+IndLokal is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** — a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
 
 ### Key architectural decisions
 
@@ -38,7 +38,7 @@ LocalPulse is an **activity-led community discovery platform** for the Indian di
 | **City-first data model**              | Hyperlocal density is the prerequisite for product-market fit; architecture must make city the primary partition                                           |
 | **Metro-region aware**                 | Stuttgart metro includes satellite cities (Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen); events in satellites must appear in main city feed |
 | **Graph-ready relational core**        | Start with PostgreSQL + structured relational schema; design edges and scores as first-class entities so graph queries are natural when needed             |
-| **External community assumption**      | Communities live on WhatsApp/Telegram/etc; LocalPulse is the discovery, access, and trust layer — not the engagement layer                                 |
+| **External community assumption**      | Communities live on WhatsApp/Telegram/etc; IndLokal is the discovery, access, and trust layer — not the engagement layer                                   |
 | **Ingestion as a first-class concern** | Supply is the hardest problem; the architecture must treat content acquisition as a core system capability, not an afterthought                            |
 
 ### The long-term moat
@@ -476,7 +476,7 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `is_verified`      | Link has been verified to work                                                |
 | `last_verified_at` | Last verification date                                                        |
 
-**Why it matters:** Since communities live externally, access channels are the **bridge** between discovery (LocalPulse) and engagement (WhatsApp/Telegram/etc). These must be accurate and maintained.
+**Why it matters:** Since communities live externally, access channels are the **bridge** between discovery (IndLokal) and engagement (WhatsApp/Telegram/etc). These must be accurate and maintained.
 
 **Graph connections:** → Community
 
@@ -769,7 +769,7 @@ Trust and relevance should be **extensible dimensions, not hardcoded logic**. Th
 | **Phase 3** | Make Pulse Score publicly visible on all community cards and detail pages (by now communities have 60-90+ days of behavioral data). Introduce relevance score based on user preferences. A/B test ranking formulas. Publish scoring methodology on /about/scoring page for transparency.                                                                     |
 | **Phase 4** | ML-based ranking. Graph-propagated trust (community X is trusted because related community Y is trusted).                                                                                                                                                                                                                                                    |
 
-> **Rationale for deferred public scoring (learned from Tracxn analysis):** Tracxn's branded score works because they have 13 years of data density. At go-live, LocalPulse communities have zero behavioral data — showing "Pulse Score: 15/100" to an organizer you're recruiting is damaging. Qualitative labels ("Active") are honest; numeric scores on cold-start data are misleadingly precise. Scores become meaningful after Phase 2 engagement data accumulates.
+> **Rationale for deferred public scoring (learned from Tracxn analysis):** Tracxn's branded score works because they have 13 years of data density. At go-live, IndLokal communities have zero behavioral data — showing "Pulse Score: 15/100" to an organizer you're recruiting is damaging. Qualitative labels ("Active") are honest; numeric scores on cold-start data are misleadingly precise. Scores become meaningful after Phase 2 engagement data accumulates.
 
 ### 9.4 Community quality indicators (user-visible)
 
@@ -834,7 +834,7 @@ The platform is only as good as its content density. A city with 3 communities a
 
 ### 10.4 AI-Powered Content Pipeline (detailed)
 
-> **Why AI, not manual?** At LocalPulse's scale (1 city, 60-80 communities), manual seeding works for the initial load. But ongoing freshness — detecting new events, updating stale profiles, monitoring community activity — requires checking 50+ sources weekly. A single founder cannot sustain this. AI reduces the ongoing content cost from ~10 hours/week of manual research to ~1 hour/week of review queue processing.
+> **Why AI, not manual?** At IndLokal's scale (1 city, 60-80 communities), manual seeding works for the initial load. But ongoing freshness — detecting new events, updating stale profiles, monitoring community activity — requires checking 50+ sources weekly. A single founder cannot sustain this. AI reduces the ongoing content cost from ~10 hours/week of manual research to ~1 hour/week of review queue processing.
 
 #### 10.4.1 Source monitoring layer
 
@@ -1063,19 +1063,19 @@ PostgreSQL                   PostgreSQL                   PostgreSQL
 
 The following are explicitly **out of scope** for the initial architecture and should not influence design decisions:
 
-| Non-goal                         | Rationale                                                                                                   |
-| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| **Chat / messaging**             | Communities communicate on WhatsApp/Telegram; LocalPulse is the discovery layer, not an engagement platform |
-| **Full social graph**            | Users do not need to friend/follow each other; this is not a social network                                 |
-| **User-generated content feeds** | No posts, stories, or social feeds; content is structured (communities, events)                             |
-| **Payments / transactions**      | No ticketing, donations, or commerce                                                                        |
-| **Heavy workflow systems**       | No complex approval chains, multi-step forms, or enterprise admin tools                                     |
-| **Real-time collaboration**      | No live editing, co-planning, or shared workspaces                                                          |
-| **Content moderation AI**        | Manual moderation is sufficient at initial scale                                                            |
-| **Multi-country expansion**      | Design for Germany first; internationalization is a later concern                                           |
-| **Monetization features**        | No ads, premium listings, or subscription tiers in MVP                                                      |
-| **Mobile native apps**           | Responsive web is the correct investment at this stage                                                      |
-| **Email marketing platform**     | Simple transactional emails only; no newsletter platform                                                    |
+| Non-goal                         | Rationale                                                                                                 |
+| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Chat / messaging**             | Communities communicate on WhatsApp/Telegram; IndLokal is the discovery layer, not an engagement platform |
+| **Full social graph**            | Users do not need to friend/follow each other; this is not a social network                               |
+| **User-generated content feeds** | No posts, stories, or social feeds; content is structured (communities, events)                           |
+| **Payments / transactions**      | No ticketing, donations, or commerce                                                                      |
+| **Heavy workflow systems**       | No complex approval chains, multi-step forms, or enterprise admin tools                                   |
+| **Real-time collaboration**      | No live editing, co-planning, or shared workspaces                                                        |
+| **Content moderation AI**        | Manual moderation is sufficient at initial scale                                                          |
+| **Multi-country expansion**      | Design for Germany first; internationalization is a later concern                                         |
+| **Monetization features**        | No ads, premium listings, or subscription tiers in MVP                                                    |
+| **Mobile native apps**           | Responsive web is the correct investment at this stage                                                    |
+| **Email marketing platform**     | Simple transactional emails only; no newsletter platform                                                  |
 
 ---
 

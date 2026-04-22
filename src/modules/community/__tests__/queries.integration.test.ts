@@ -4,7 +4,7 @@
  * @db — requires test database.
  * Prerequisites: `./dev.sh test:setup`
  *
- * These tests run against `localpulse_test` (isolated from dev data).
+ * These tests run against `indlokal_test` (isolated from dev data).
  * Each test starts with a clean database via beforeEach.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
@@ -12,7 +12,7 @@ import { testDb, cleanDb } from '@/test/db-helpers';
 import { createCity, createCommunity } from '@/test/fixtures';
 
 // Redirect the module-level `db` singleton to the test database
-// so query functions operate on localpulse_test instead of localpulse.
+// so query functions operate on indlokal_test instead of indlokal.
 vi.mock('@/lib/db', async (importOriginal) => {
   const mod = await importOriginal<typeof import('@/lib/db')>();
   const { testDb } = await import('@/test/db-helpers');

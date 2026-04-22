@@ -1,4 +1,4 @@
-# LocalPulse — Competitive Analysis: IndoEuropean.eu
+# IndLokal — Competitive Analysis: IndoEuropean.eu
 
 **Devil's Advocate Assessment & Recommended Architecture/Product Changes**
 
@@ -99,7 +99,7 @@ They call themselves "The Biggest Business Directory" but function as a news por
 
 ## 3. The Honest Differentiation Map
 
-| Dimension                | IndoEuropean.eu                       | LocalPulse (planned)                         | Who wins                     |
+| Dimension                | IndoEuropean.eu                       | IndLokal (planned)                           | Who wins                     |
 | ------------------------ | ------------------------------------- | -------------------------------------------- | ---------------------------- |
 | Content volume           | 327+ Germany events, years of content | 30 communities, 15 events at launch          | **IE wins heavily**          |
 | Content freshness        | Daily posts                           | Depends on supply                            | **IE wins at launch**        |
@@ -116,7 +116,7 @@ They call themselves "The Biggest Business Directory" but function as a news por
 | Temporal event queries   | Impossible                            | Core capability                              | **LP wins**                  |
 | Institutional content    | Strong (embassy, consular)            | None                                         | **IE wins**                  |
 
-**Bottom line: IndoEuropean.eu wins on volume, breadth, and SEO. LocalPulse wins on product experience, structure, and use-case focus. The question is whether product experience is enough to overcome content/SEO disadvantage.**
+**Bottom line: IndoEuropean.eu wins on volume, breadth, and SEO. IndLokal wins on product experience, structure, and use-case focus. The question is whether product experience is enough to overcome content/SEO disadvantage.**
 
 ---
 
@@ -347,7 +347,7 @@ The differentiation is:
 
 ### The pitch against IE
 
-> IndoEuropean.eu is a news portal that happens to list events. LocalPulse is an activity-led discovery platform built from the ground up for structured, city-level community and event discovery. IE tells you what happened. We tell you what's happening for YOU, THIS WEEK, in YOUR CITY.
+> IndoEuropean.eu is a news portal that happens to list events. IndLokal is an activity-led discovery platform built from the ground up for structured, city-level community and event discovery. IE tells you what happened. We tell you what's happening for YOU, THIS WEEK, in YOUR CITY.
 
 ---
 
@@ -388,7 +388,7 @@ The differentiation is:
 
 **The good news:** Their architecture is fundamentally limited. A WordPress blog cannot evolve into a structured community graph. They cannot build "what's happening in Munich this week" without rebuilding their entire platform. Their content model is a dead end for the kind of product intelligence you want to build.
 
-**The required mindset shift:** Do not build LocalPulse as if you're creating a market. You are **entering a market with a dramatically better product architecture** against an incumbent with dramatically more content. The race is:
+**The required mindset shift:** Do not build IndLokal as if you're creating a market. You are **entering a market with a dramatically better product architecture** against an incumbent with dramatically more content. The race is:
 
 - **Short-term (0-6 months):** Content density. You MUST get to critical mass of content in the launch city before users compare you unfavorably to IE.
 - **Medium-term (6-18 months):** SEO + structured advantage. Programmatic pages, rich results, city-level queries.

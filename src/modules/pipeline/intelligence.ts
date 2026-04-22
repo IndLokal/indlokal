@@ -27,7 +27,7 @@ Rules:
 - Prefer null over speculation.
 - Produce useful long-form description text when enough evidence exists.`;
 
-const KEYWORD_EVAL_PROMPT = `You evaluate keyword candidates for LocalPulse, a platform for Indian/South Asian diaspora discovery.
+const KEYWORD_EVAL_PROMPT = `You evaluate keyword candidates for IndLokal, a platform for Indian/South Asian diaspora discovery.
 
 Return JSON:
 {"suggestions": [{"keyword": "Tamil New Year", "accepted": true, "confidence": 0.9, "reason": "high-signal festival/community term"}]}
@@ -95,7 +95,7 @@ function stripHtml(input: string): string {
 async function fetchSourceText(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'LocalPulseBot/1.0 (+https://localpulse.de)' },
+      headers: { 'User-Agent': 'IndLokalBot/1.0 (+https://indlokal.de)' },
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) return null;

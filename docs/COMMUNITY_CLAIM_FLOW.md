@@ -4,7 +4,7 @@
 
 ## Why This Flow Exists
 
-LocalPulse solves a supply-side problem: the directory only has value if community listings are **accurate, active, and event-rich**. Platform staff alone cannot keep up with dozens of communities across multiple cities.
+IndLokal solves a supply-side problem: the directory only has value if community listings are **accurate, active, and event-rich**. Platform staff alone cannot keep up with dozens of communities across multiple cities.
 
 The claim flow converts passive listings into **active, organiser-maintained communities** by giving organisers a concrete reason to engage:
 
@@ -22,7 +22,7 @@ This is not just an admin feature. It is the **primary supply-side growth mechan
 
 ## 1. What This Document Covers
 
-How an existing community organiser discovers their community is already listed on LocalPulse, requests ownership, gets reviewed by a platform admin, and gains access to the organiser portal.
+How an existing community organiser discovers their community is already listed on IndLokal, requests ownership, gets reviewed by a platform admin, and gains access to the organiser portal.
 
 **This is a one-time flow per community.** Once complete, ongoing community management is covered in [ORGANIZER_ADMIN_FLOW.md](./ORGANIZER_ADMIN_FLOW.md).
 
