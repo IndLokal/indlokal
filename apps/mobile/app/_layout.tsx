@@ -10,6 +10,9 @@ export default function RootLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="me/profile" options={{ title: 'Profile' }} />
       <Stack.Screen name="me/delete-account" options={{ title: 'Delete account' }} />
+      <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
+      <Stack.Screen name="settings/notifications/quiet-hours" options={{ title: 'Quiet hours' }} />
+      <Stack.Screen name="inbox/index" options={{ title: 'Inbox' }} />
     </Stack>
   );
 }

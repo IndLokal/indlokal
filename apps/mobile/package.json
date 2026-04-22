@@ -8,11 +8,12 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test lib/auth/__tests__/*.test.ts"
+    "test": "node --import tsx --test \"lib/**/*.test.ts\" \"lib/**/__tests__/*.test.ts\""
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
     "@indlokal/shared": "workspace:^",
+    "@react-native-async-storage/async-storage": "^3.0.2",
     "@react-native-google-signin/google-signin": "^16.1.2",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.33",
@@ -21,6 +22,7 @@
     "expo-constants": "~18.0.13",
     "expo-font": "~14.0.11",
     "expo-linking": "~8.0.11",
+    "expo-notifications": "^55.0.20",
     "expo-router": "~6.0.23",
     "expo-secure-store": "^55.0.13",
     "expo-splash-screen": "~31.0.13",
@@ -33,7 +35,8 @@
     "react-native-safe-area-context": "~5.6.0",
     "react-native-screens": "~4.16.0",
     "react-native-web": "~0.21.0",
-    "react-native-worklets": "0.5.1"
+    "react-native-worklets": "0.5.1",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",

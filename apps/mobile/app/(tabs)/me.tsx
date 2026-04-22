@@ -9,6 +9,12 @@ export default function MeTabScreen() {
         <Link href="/me/profile" style={styles.link}>
           View profile
         </Link>
+        <Link href="/settings/notifications" style={styles.link}>
+          Notification preferences
+        </Link>
+        <Link href="/inbox/index" style={styles.link}>
+          Inbox
+        </Link>
         <Link href="/me/delete-account" style={styles.link}>
           Delete account
         </Link>
