@@ -94,6 +94,42 @@ registry.registerPath({
 
 registry.registerPath({
   method: 'post',
+  path: '/api/v1/auth/google',
+  summary: 'Exchange a Google authorization code for auth tokens',
+  request: {
+    body: { content: { 'application/json': { schema: authContracts.GoogleAuth } } },
+  },
+  responses: {
+    200: {
+      description: 'Auth tokens + user profile',
+      content: { 'application/json': { schema: authContracts.AuthTokens } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    500: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/auth/apple',
+  summary: 'Verify an Apple identity token and exchange for auth tokens',
+  request: {
+    body: { content: { 'application/json': { schema: authContracts.AppleAuth } } },
+  },
+  responses: {
+    200: {
+      description: 'Auth tokens + user profile',
+      content: { 'application/json': { schema: authContracts.AuthTokens } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    500: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
   path: '/api/v1/auth/refresh',
   summary: 'Rotate the refresh token and mint a fresh access token',
   request: {
