@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ─── IndLokal Dev Script ───
+# ─── IndLokal Dev Script (monorepo) ───
 # Usage: ./dev.sh <command>
+#
+# Layout:
+#   apps/web/      Next.js app (owns .env, prisma/, .next/)
+#   apps/mobile/   Expo app (placeholder)
+#   packages/shared/  Zod contracts + generated OpenAPI
+
+WEB_DIR="apps/web"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -19,6 +26,19 @@ print_success() { echo -e "${GREEN}✔${NC} $1"; }
 print_warn()    { echo -e "${YELLOW}⚠${NC} $1"; }
 print_error()   { echo -e "${RED}✖${NC} $1"; }
 
+ensure_pnpm() {
+  if ! command -v pnpm >/dev/null 2>&1; then
+    if command -v corepack >/dev/null 2>&1; then
+      corepack enable >/dev/null 2>&1 || true
+      corepack prepare pnpm@9.12.3 --activate >/dev/null 2>&1 || true
+    fi
+  fi
+  if ! command -v pnpm >/dev/null 2>&1; then
+    print_error "pnpm not found. Install via: npm i -g pnpm"
+    exit 1
+  fi
+}
+
 ensure_database_exists() {
   local db_name="$1"
 
@@ -30,34 +50,39 @@ ensure_database_exists() {
   fi
 }
 
+# Run a command inside apps/web with pnpm
+web() { (cd "$WEB_DIR" && "$@"); }
+
 # ─── Commands ───
 
 cmd_setup() {
   print_header
-  echo "Setting up IndLokal for local development..."
+  echo "Setting up IndLokal monorepo for local development..."
   echo ""
 
-  # Dependencies
-  if [ ! -d "node_modules" ]; then
-    echo "Installing dependencies..."
-    npm install
+  ensure_pnpm
+
+  # Dependencies (workspace install at root)
+  if [ ! -d "node_modules" ] || [ ! -d "$WEB_DIR/node_modules" ]; then
+    echo "Installing dependencies (pnpm workspace)..."
+    pnpm install
   else
     print_success "Dependencies already installed"
   fi
 
-  # Env files
-  if [ ! -f ".env.local" ]; then
-    cp .env.example .env.local
-    print_success "Created .env.local from .env.example"
+  # Env files (live in apps/web/)
+  if [ ! -f "$WEB_DIR/.env.local" ]; then
+    cp "$WEB_DIR/.env.example" "$WEB_DIR/.env.local"
+    print_success "Created $WEB_DIR/.env.local from .env.example"
   else
-    print_success ".env.local exists"
+    print_success "$WEB_DIR/.env.local exists"
   fi
 
-  if [ ! -f ".env" ]; then
-    cp .env.example .env
-    print_success "Created .env for Prisma"
+  if [ ! -f "$WEB_DIR/.env" ]; then
+    cp "$WEB_DIR/.env.example" "$WEB_DIR/.env"
+    print_success "Created $WEB_DIR/.env for Prisma"
   else
-    print_success ".env exists"
+    print_success "$WEB_DIR/.env exists"
   fi
 
   # Docker Postgres
@@ -69,14 +94,14 @@ cmd_setup() {
   # Prisma
   echo ""
   echo "Pushing schema to database..."
-  npx prisma db push --skip-generate
-  npx prisma generate
+  web pnpm exec prisma db push --skip-generate
+  web pnpm exec prisma generate
   print_success "Database schema in sync"
 
   # Seed
   echo ""
   echo "Seeding database..."
-  npm run db:seed
+  pnpm db:seed
   print_success "Database seeded"
 
   # Test DB
@@ -84,7 +109,7 @@ cmd_setup() {
   echo "Setting up test database..."
   ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
-    npx prisma db push --skip-generate >/dev/null 2>&1
+    web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
   print_success "Test database ready"
 
   echo ""
@@ -96,10 +121,12 @@ cmd_start() {
   echo "Starting IndLokal..."
   echo ""
 
+  ensure_pnpm
+
   # Clear Next.js cache to ensure fresh build
-  if [ -d ".next" ]; then
-    rm -rf .next
-    print_success "Cleared .next cache"
+  if [ -d "$WEB_DIR/.next" ]; then
+    rm -rf "$WEB_DIR/.next"
+    print_success "Cleared $WEB_DIR/.next cache"
   fi
 
   # Ensure DB + Mailpit are running
@@ -113,7 +140,7 @@ cmd_start() {
   print_success "Mailbox UI → ${CYAN}http://localhost:8026${NC}"
   print_success "Starting Next.js dev server..."
   echo ""
-  npm run dev
+  pnpm dev:web
 }
 
 cmd_stop() {
@@ -147,12 +174,13 @@ cmd_db_reset() {
   read -p "Are you sure? (y/N) " -n 1 -r
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
+    ensure_pnpm
     echo "Resetting database..."
     docker compose down -v
     docker compose up -d --wait
     ensure_database_exists "indlokal"
-    npx prisma db push --skip-generate
-    npm run db:seed
+    web pnpm exec prisma db push --skip-generate
+    pnpm db:seed
     print_success "Database reset and re-seeded"
   else
     echo "Cancelled."
@@ -160,11 +188,12 @@ cmd_db_reset() {
 }
 
 cmd_db_studio() {
+  ensure_pnpm
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
   ensure_database_exists "indlokal"
-  npx prisma studio
+  web pnpm exec prisma studio
 }
 
 cmd_mailbox() {
@@ -179,99 +208,87 @@ cmd_mailbox() {
 
 cmd_test() {
   print_header
+  ensure_pnpm
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
 
-  # Ensure test DB schema is up to date
   ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
-    npx prisma db push --skip-generate >/dev/null 2>&1
+    web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
 
   echo "Running unit + component tests..."
   echo ""
-  npm run test
+  pnpm test
 }
 
 cmd_test_watch() {
+  ensure_pnpm
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
-  # Ensure test DB schema is up to date
   ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
-    npx prisma db push --skip-generate >/dev/null 2>&1
-  npm run test:watch
+    web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
+  pnpm -F web test:watch
 }
 
 cmd_test_setup() {
   print_header
+  ensure_pnpm
   echo "Setting up test database..."
 
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
 
-  # Create test DB if it doesn't exist
   ensure_database_exists "indlokal_test"
 
-  # Push schema to test DB
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
-    npx prisma db push --skip-generate
+    web pnpm exec prisma db push --skip-generate
 
   print_success "Test database ready"
 }
 
 cmd_test_coverage() {
   print_header
+  ensure_pnpm
   if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
     cmd_db_start
   fi
-  # Ensure test DB schema is up to date
   ensure_database_exists "indlokal_test"
   DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
-    npx prisma db push --skip-generate >/dev/null 2>&1
+    web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
   echo "Running tests with coverage..."
   echo ""
-  npm run test:coverage
+  pnpm -F web test:coverage
   echo ""
-  print_success "Coverage report saved to coverage/"
+  print_success "Coverage report saved to apps/web/coverage/"
 }
 
 cmd_check() {
   print_header
-  echo "Running all checks..."
+  ensure_pnpm
+  echo "Running all checks (turbo)..."
   echo ""
-
-  echo "TypeScript..."
-  npm run typecheck
-  print_success "Types OK"
-
-  echo ""
-  echo "ESLint..."
-  npm run lint
-  print_success "Lint OK"
-
-  echo ""
-  echo "Prettier..."
-  npm run format:check
-  print_success "Format OK"
+  pnpm check
 }
 
 cmd_clean() {
   print_header
   print_warn "This will remove:"
-  echo "  • node_modules/"
-  echo "  • .next/"
+  echo "  • node_modules/ (root + workspaces)"
+  echo "  • apps/web/.next/"
+  echo "  • .turbo/"
   echo "  • Docker volume (all DB data)"
-  echo "  • Generated Prisma client"
   echo ""
   read -p "Are you sure? (y/N) " -n 1 -r
   echo ""
   if [[ $REPLY =~ ^[Yy]$ ]]; then
     docker compose down -v 2>/dev/null || true
-    rm -rf node_modules .next
-    rm -rf node_modules/.prisma
+    rm -rf node_modules apps/*/node_modules packages/*/node_modules
+    rm -rf apps/web/.next
+    rm -rf .turbo apps/*/.turbo packages/*/.turbo
     print_success "Cleaned. Run ${CYAN}./dev.sh setup${NC} to start fresh."
   else
     echo "Cancelled."
@@ -303,10 +320,10 @@ cmd_help() {
   echo "  test:coverage  Run tests with coverage report"
   echo ""
   echo -e "${CYAN}Quality${NC}"
-  echo "  check          Run typecheck + lint + format check"
+  echo "  check          Run typecheck + lint + format check (turbo)"
   echo ""
   echo -e "${CYAN}Cleanup${NC}"
-  echo "  clean          Remove node_modules, .next, DB volume"
+  echo "  clean          Remove node_modules, .next, .turbo, DB volume"
   echo ""
   echo -e "${CYAN}Help${NC}"
   echo "  help           Show this message"
