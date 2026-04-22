@@ -1,5 +1,6 @@
 import { router } from 'expo-router';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const PERSONA_OPTIONS = ['New to this city', 'Student', 'Family', 'Working professional'];
 
@@ -27,31 +28,31 @@ export default function OnboardingPersonaScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
+    padding: spacing.xl,
     justifyContent: 'center',
-    gap: 12,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 26,
+    fontSize: typography.h3,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 8,
+    color: palette.neutral.foreground,
+    marginBottom: spacing.sm,
   },
   option: {
-    backgroundColor: '#fff',
+    backgroundColor: palette.neutral.surface,
     borderWidth: 1,
-    borderColor: '#dbe3f1',
-    borderRadius: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+    borderColor: palette.neutral.border,
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
   },
   optionText: {
-    fontSize: 16,
-    color: '#0f172a',
-    fontWeight: '500',
+    fontSize: typography.body,
+    color: palette.neutral.foreground,
+    fontWeight: '600',
   },
 });

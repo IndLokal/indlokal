@@ -3,6 +3,7 @@ import { Link } from 'expo-router';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { notifications as n } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type PreferencesState = n.NotificationPreferences | null;
 
@@ -103,69 +104,70 @@ export default function NotificationsSettingsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
-    padding: 20,
-    gap: 14,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 28,
+    fontSize: typography.h2,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#475569',
+    fontSize: typography.body,
+    color: palette.neutral.muted,
   },
   topicCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderColor: '#dbe3f1',
+    backgroundColor: palette.neutral.surface,
+    borderRadius: radius.card,
+    borderColor: palette.neutral.border,
     borderWidth: 1,
-    padding: 14,
-    gap: 8,
+    padding: spacing.md,
+    gap: spacing.sm,
   },
   topicTitle: {
-    fontSize: 14,
+    fontSize: typography.small,
     fontWeight: '700',
-    color: '#334155',
+    color: palette.neutral.foreground,
     textTransform: 'capitalize',
   },
   row: {
-    paddingVertical: 8,
+    paddingVertical: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: '#edf2fb',
+    borderBottomColor: palette.neutral.border,
   },
   rowLabel: {
-    color: '#1e293b',
+    color: palette.neutral.foreground,
     fontWeight: '500',
   },
   enabled: {
-    color: '#166534',
-    fontWeight: '600',
+    color: palette.status.success,
+    fontWeight: '700',
   },
   disabled: {
-    color: '#991b1b',
-    fontWeight: '600',
+    color: palette.status.destructive,
+    fontWeight: '700',
   },
   link: {
-    color: '#0f172a',
-    fontWeight: '600',
-    marginTop: 4,
+    color: palette.brand[600],
+    fontWeight: '700',
+    marginTop: spacing.xs,
   },
   saveButton: {
-    marginTop: 4,
-    borderRadius: 10,
-    backgroundColor: '#0f172a',
-    paddingVertical: 12,
+    marginTop: spacing.xs,
+    borderRadius: radius.button,
+    backgroundColor: palette.brand[600],
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   saveButtonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
 });

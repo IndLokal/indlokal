@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { notifications as n } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type InboxState = {
   items: n.InboxItem[];
@@ -100,11 +101,11 @@ export default function InboxScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
-    padding: 20,
-    gap: 12,
+    padding: spacing.lg,
+    gap: spacing.md,
   },
   headerRow: {
     flexDirection: 'row',
@@ -112,67 +113,68 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   title: {
-    fontSize: 28,
+    fontSize: typography.h2,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   markReadButton: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: '#fff',
+    borderColor: palette.neutral.border,
+    borderRadius: radius.button,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs + 2,
+    backgroundColor: palette.neutral.surface,
   },
   markReadText: {
-    color: '#334155',
-    fontWeight: '600',
-    fontSize: 12,
+    color: palette.brand[700],
+    fontWeight: '700',
+    fontSize: typography.small - 2,
   },
   empty: {
-    color: '#64748b',
-    fontSize: 16,
-    marginTop: 12,
+    color: palette.neutral.muted,
+    fontSize: typography.body,
+    marginTop: spacing.md,
   },
   card: {
-    borderRadius: 12,
-    padding: 14,
+    borderRadius: radius.card,
+    padding: spacing.md,
     borderWidth: 1,
   },
   unreadCard: {
-    backgroundColor: '#fff',
-    borderColor: '#dbe3f1',
+    backgroundColor: palette.neutral.surface,
+    borderColor: palette.brand[200],
   },
   readCard: {
-    backgroundColor: '#f8fafc',
-    borderColor: '#e2e8f0',
+    backgroundColor: palette.neutral.mutedBg,
+    borderColor: palette.neutral.border,
   },
   cardTitle: {
-    fontSize: 16,
+    fontSize: typography.body,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   cardBody: {
-    marginTop: 4,
-    color: '#334155',
+    marginTop: spacing.xs,
+    color: palette.neutral.muted,
     lineHeight: 20,
   },
   cardMeta: {
-    marginTop: 8,
+    marginTop: spacing.sm,
     textTransform: 'capitalize',
-    fontSize: 12,
-    color: '#64748b',
+    fontSize: typography.small - 2,
+    color: palette.neutral.muted,
     fontWeight: '600',
   },
   loadMoreButton: {
-    marginTop: 6,
-    borderRadius: 10,
-    backgroundColor: '#0f172a',
-    paddingVertical: 11,
+    marginTop: spacing.sm,
+    borderRadius: radius.button,
+    backgroundColor: palette.brand[600],
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   loadMoreText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
 });

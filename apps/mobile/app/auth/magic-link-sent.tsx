@@ -1,5 +1,7 @@
 import { Link, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { LogoMark } from '@/components/Logo';
+import { palette, spacing, typography } from '@/constants/theme';
 
 export default function MagicLinkSentScreen() {
   const params = useLocalSearchParams<{ email?: string }>();
@@ -7,6 +9,7 @@ export default function MagicLinkSentScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <LogoMark size={48} />
         <Text style={styles.title}>Check your email</Text>
         <Text style={styles.body}>
           We sent a sign-in link to {params.email ?? 'your inbox'}. Open the link on this device to
@@ -23,27 +26,30 @@ export default function MagicLinkSentScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
+    padding: spacing.xl,
     justifyContent: 'center',
-    gap: 12,
+    alignItems: 'center',
+    gap: spacing.md,
   },
   title: {
-    fontSize: 28,
+    fontSize: typography.h2,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
+    textAlign: 'center',
   },
   body: {
-    fontSize: 16,
+    fontSize: typography.body,
     lineHeight: 24,
-    color: '#334155',
+    color: palette.neutral.muted,
+    textAlign: 'center',
   },
   link: {
-    marginTop: 8,
-    color: '#0f172a',
-    fontWeight: '600',
+    marginTop: spacing.sm,
+    color: palette.brand[600],
+    fontWeight: '700',
   },
 });

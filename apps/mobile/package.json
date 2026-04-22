@@ -39,6 +39,7 @@
     "zustand": "^5.0.12"
   },
   "devDependencies": {
+    "@types/node": "^20",
     "@types/react": "~19.1.0",
     "react-test-renderer": "19.1.0",
     "tsx": "^4.19.0",

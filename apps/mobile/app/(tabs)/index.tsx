@@ -15,6 +15,7 @@ import { discovery as d } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import { LogoMark } from '@/components/Logo';
 
 const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
 
@@ -141,10 +142,15 @@ export default function DiscoverScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
           <View style={styles.headerSection}>
-            <Text style={styles.brand}>IndLokal</Text>
+            <View style={styles.brandRow}>
+              <LogoMark size={32} />
+              <Text style={styles.brand}>IndLokal</Text>
+            </View>
             <Text style={styles.heading}>Discover</Text>
             <Text style={styles.sub}>
-              {selectedCity ? `What's alive in ${selectedCity.name}` : 'Pick a city to begin'}
+              {selectedCity
+                ? `Communities, events, and resources alive in ${selectedCity.name}`
+                : 'Pick a city to find communities, events, and resources'}
             </Text>
 
             {citiesError && <Text style={styles.errorText}>{citiesError}</Text>}
@@ -228,7 +234,13 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.neutral.background },
   container: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   headerSection: { gap: spacing.md, marginBottom: spacing.md },
-  brand: { fontSize: typography.small, fontWeight: '600', color: palette.brand[600] },
+  brandRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  brand: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: palette.brand[600],
+    letterSpacing: 0.2,
+  },
   heading: { fontSize: typography.h1, fontWeight: '800', color: palette.neutral.foreground },
   sub: { fontSize: typography.body, color: palette.neutral.muted },
   cityRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

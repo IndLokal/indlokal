@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function OnboardingCityScreen() {
   const [city, setCity] = useState('');
@@ -11,6 +12,7 @@ export default function OnboardingCityScreen() {
         <Text style={styles.title}>Which city are you in?</Text>
         <TextInput
           placeholder="e.g. Stuttgart"
+          placeholderTextColor={palette.neutral.muted}
           value={city}
           onChangeText={setCity}
           style={styles.input}
@@ -30,36 +32,39 @@ export default function OnboardingCityScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
+    padding: spacing.xl,
     justifyContent: 'center',
-    gap: 16,
+    gap: spacing.lg,
   },
   title: {
-    fontSize: 26,
+    fontSize: typography.h3,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
+    borderColor: palette.neutral.border,
+    borderRadius: radius.button,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: palette.neutral.surface,
+    color: palette.neutral.foreground,
+    fontSize: typography.body,
   },
   button: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: palette.brand[600],
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
   disabled: {
     opacity: 0.5,

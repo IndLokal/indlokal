@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { Pressable, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { notifications as n } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 function parseTimeToMinutes(value: string): number | null {
   const [hours, minutes] = value.split(':').map((part) => Number(part));
@@ -75,47 +76,49 @@ export default function QuietHoursScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
-    gap: 10,
+    padding: spacing.xl,
+    gap: spacing.sm,
   },
   title: {
-    fontSize: 28,
+    fontSize: typography.h2,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   subtitle: {
-    color: '#475569',
-    marginBottom: 8,
+    color: palette.neutral.muted,
+    marginBottom: spacing.sm,
   },
   label: {
-    color: '#334155',
-    fontWeight: '600',
+    color: palette.neutral.foreground,
+    fontWeight: '700',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    backgroundColor: '#fff',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderColor: palette.neutral.border,
+    borderRadius: radius.button,
+    backgroundColor: palette.neutral.surface,
+    color: palette.neutral.foreground,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
   },
   button: {
-    marginTop: 8,
-    borderRadius: 10,
-    backgroundColor: '#0f172a',
-    paddingVertical: 12,
+    marginTop: spacing.sm,
+    borderRadius: radius.button,
+    backgroundColor: palette.brand[600],
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
   error: {
-    color: '#991b1b',
+    color: palette.status.destructive,
     fontWeight: '500',
   },
 });

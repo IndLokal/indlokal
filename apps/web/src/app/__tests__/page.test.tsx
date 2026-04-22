@@ -17,6 +17,13 @@ vi.mock('@/components/layout', () => ({
   Footer: () => null,
 }));
 
+// CitySearch is a client component that calls useState; the page-test runs the
+// server HomePage in jsdom which doesn't dispatch React's client renderer for
+// nested client boundaries — mock it out.
+vi.mock('../CitySearch', () => ({
+  CitySearch: () => null,
+}));
+
 describe('HomePage', () => {
   it('renders the main heading', async () => {
     render(await HomePage());

@@ -1,4 +1,5 @@
 import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function DeleteAccountScreen() {
   return (
@@ -27,32 +28,33 @@ export default function DeleteAccountScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff5f5',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
-    gap: 12,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 26,
+    fontSize: typography.h3,
     fontWeight: '700',
-    color: '#7f1d1d',
+    color: palette.neutral.foreground,
   },
   text: {
-    color: '#7f1d1d',
-    fontSize: 16,
+    color: palette.neutral.muted,
+    fontSize: typography.body,
     lineHeight: 24,
   },
   button: {
-    marginTop: 12,
-    backgroundColor: '#991b1b',
-    borderRadius: 10,
-    paddingVertical: 12,
+    marginTop: spacing.md,
+    backgroundColor: palette.status.destructive,
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   buttonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
 });

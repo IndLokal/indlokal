@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { palette, spacing, typography } from '@/constants/theme';
 
 export default function MeTabScreen() {
   return (
@@ -26,23 +27,23 @@ export default function MeTabScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
-    gap: 12,
+    padding: spacing.xl,
+    gap: spacing.md,
   },
   title: {
-    fontSize: 26,
+    fontSize: typography.h3,
     fontWeight: '700',
-    color: '#0f172a',
+    color: palette.neutral.foreground,
   },
   link: {
-    paddingVertical: 12,
-    borderBottomColor: '#d8e0ee',
+    paddingVertical: spacing.md,
+    borderBottomColor: palette.neutral.border,
     borderBottomWidth: 1,
-    color: '#0f172a',
-    fontWeight: '500',
+    color: palette.brand[700],
+    fontWeight: '600',
   },
 });

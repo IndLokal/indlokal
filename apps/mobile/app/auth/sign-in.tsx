@@ -16,6 +16,8 @@ import { signInWithApple } from '@/lib/auth/apple';
 import { requestMagicLink } from '@/lib/auth/magic';
 import { signInWithGoogleCode, useGoogleCodeFlow } from '@/lib/auth/google';
 import { authFlags } from '@/lib/config/flags';
+import { LogoMark } from '@/components/Logo';
+import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -95,17 +97,26 @@ export default function SignInScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome to IndLokal</Text>
-        <Text style={styles.subtitle}>Sign in to save communities, events, and get reminders.</Text>
+        <View style={styles.brand}>
+          <LogoMark size={56} />
+          <Text style={styles.brandName}>IndLokal</Text>
+          <Text style={styles.tagline}>Your Indian community, locally.</Text>
+        </View>
+
+        <Text style={styles.subtitle}>
+          Sign in to save communities, follow events, and get reminders for what&apos;s happening in
+          your city.
+        </Text>
 
         {authFlags.magic.enabled ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Magic link</Text>
+            <Text style={styles.sectionTitle}>Email magic link</Text>
             <TextInput
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
               placeholder="you@example.com"
+              placeholderTextColor={palette.neutral.muted}
               value={email}
               onChangeText={setEmail}
               style={styles.input}
@@ -134,7 +145,7 @@ export default function SignInScreen() {
             disabled={googleLoading}
           >
             <Text style={styles.secondaryButtonText}>
-              {googleLoading ? 'Signing in with Google...' : 'Continue with Google'}
+              {googleLoading ? 'Signing in with Google…' : 'Continue with Google'}
             </Text>
           </Pressable>
         ) : null}
@@ -152,66 +163,83 @@ export default function SignInScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f6f8fc',
+    backgroundColor: palette.neutral.background,
   },
   container: {
     flex: 1,
-    padding: 24,
-    gap: 16,
+    padding: spacing.xl,
+    gap: spacing.lg,
   },
-  title: {
-    fontSize: 30,
-    fontWeight: '700',
-    color: '#0f172a',
+  brand: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    marginTop: spacing.lg,
+    marginBottom: spacing.sm,
+  },
+  brandName: {
+    fontSize: typography.h1,
+    fontWeight: '800',
+    color: palette.brand[900],
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: typography.body,
+    color: palette.accent[600],
+    fontWeight: '600',
   },
   subtitle: {
-    color: '#475569',
-    fontSize: 16,
+    color: palette.neutral.muted,
+    fontSize: typography.body,
     lineHeight: 22,
+    textAlign: 'center',
   },
   section: {
-    marginTop: 12,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: '#fff',
-    borderColor: '#dbe3f1',
+    marginTop: spacing.sm,
+    padding: spacing.lg,
+    borderRadius: radius.card,
+    backgroundColor: palette.neutral.surface,
+    borderColor: palette.neutral.border,
     borderWidth: 1,
-    gap: 12,
+    gap: spacing.md,
   },
   sectionTitle: {
-    fontWeight: '600',
-    fontSize: 16,
-    color: '#0f172a',
+    fontWeight: '700',
+    fontSize: typography.body,
+    color: palette.neutral.foreground,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#cbd5e1',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
+    borderColor: palette.neutral.border,
+    borderRadius: radius.button,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    backgroundColor: palette.neutral.surface,
+    color: palette.neutral.foreground,
+    fontSize: typography.body,
   },
   primaryButton: {
-    backgroundColor: '#0f172a',
-    borderRadius: 10,
-    paddingVertical: 12,
+    backgroundColor: palette.brand[600],
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   primaryButtonText: {
     color: '#fff',
-    fontWeight: '600',
+    fontWeight: '700',
+    fontSize: typography.body,
   },
   secondaryButton: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
+    backgroundColor: palette.neutral.surface,
+    borderRadius: radius.button,
     borderWidth: 1,
-    borderColor: '#d0d7e2',
-    paddingVertical: 12,
+    borderColor: palette.neutral.border,
+    paddingVertical: spacing.md,
     alignItems: 'center',
   },
   secondaryButtonText: {
-    fontWeight: '600',
-    color: '#1e293b',
+    fontWeight: '700',
+    color: palette.neutral.foreground,
+    fontSize: typography.body,
   },
   disabledButton: {
     opacity: 0.5,
