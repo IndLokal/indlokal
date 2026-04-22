@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   Linking,
   Pressable,
   SafeAreaView,
@@ -26,6 +27,21 @@ const PUBLIC_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://indloka
 
 type CommunityDetailWithFollowed = c.CommunityDetail & { followedByUser?: boolean };
 
+function PulseBar({ label, value }: { label: string; value: number }) {
+  const pct = Math.max(0, Math.min(100, Math.round(value)));
+  return (
+    <View style={styles.pulseRow}>
+      <View style={styles.pulseLabelRow}>
+        <Text style={styles.pulseLabel}>{label}</Text>
+        <Text style={styles.pulseValue}>{pct}</Text>
+      </View>
+      <View style={styles.pulseTrack}>
+        <View style={[styles.pulseFill, { width: `${pct}%` }]} />
+      </View>
+    </View>
+  );
+}
+
 const CHANNEL_LABEL: Record<c.ChannelType, string> = {
   WHATSAPP: 'WhatsApp',
   TELEGRAM: 'Telegram',
@@ -43,6 +59,8 @@ export default function CommunityDetailScreen() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
   const [data, setData] = useState<CommunityDetailWithFollowed | null>(null);
   const [events, setEvents] = useState<d.EventCard[]>([]);
+  const [related, setRelated] = useState<c.CommunitySummary[]>([]);
+  const [pulseExpanded, setPulseExpanded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -62,15 +80,26 @@ export default function CommunityDetailScreen() {
         followedByUser: (detail as CommunityDetailWithFollowed).followedByUser,
       });
 
-      const eventsRes = await queryCache(
-        `community:${slug}:events`,
-        () =>
-          authClient.getPublic<d.EventsPage>(
-            `/api/v1/communities/${encodeURIComponent(slug)}/events?limit=10`,
-          ),
-        { ttl: 2 * 60 * 1000 },
-      );
+      const [eventsRes, relatedRes] = await Promise.all([
+        queryCache(
+          `community:${slug}:events`,
+          () =>
+            authClient.getPublic<d.EventsPage>(
+              `/api/v1/communities/${encodeURIComponent(slug)}/events?limit=10`,
+            ),
+          { ttl: 2 * 60 * 1000 },
+        ),
+        queryCache(
+          `community:${slug}:related`,
+          () =>
+            authClient.getPublic<c.CommunitySummary[]>(
+              `/api/v1/communities/${encodeURIComponent(slug)}/related`,
+            ),
+          { ttl: 5 * 60 * 1000 },
+        ),
+      ]);
       setEvents(d.EventsPage.parse(eventsRes).items);
+      setRelated(relatedRes.map((r) => c.CommunitySummary.parse(r)));
     } catch (err) {
       setError(err instanceof AuthClientError ? err.message : 'Could not load community.');
     }
@@ -179,6 +208,27 @@ export default function CommunityDetailScreen() {
             Report this community
           </Link>
 
+          <Pressable onPress={() => setPulseExpanded((v) => !v)} style={styles.pulseCard}>
+            <View style={styles.pulseHeader}>
+              <Text style={styles.sectionTitle}>Pulse Score</Text>
+              <Text style={styles.pulseTotal}>
+                {Math.round((data.activityScore + data.completenessScore + data.trustScore) / 3)}
+                <Text style={styles.pulseTotalUnit}> / 100</Text>
+              </Text>
+            </View>
+            <PulseBar label="Activity" value={data.activityScore} />
+            <PulseBar label="Completeness" value={data.completenessScore} />
+            <PulseBar label="Trust" value={data.trustScore} />
+            {pulseExpanded && (
+              <Text style={styles.pulseHelp}>
+                Activity reflects recent posts and events. Completeness measures how filled-in the
+                profile is. Trust combines verification, claim state, and user reports. Tap to
+                collapse.
+              </Text>
+            )}
+            {!pulseExpanded && <Text style={styles.pulseHelpToggle}>How is this calculated?</Text>}
+          </Pressable>
+
           {data.descriptionLong || data.description ? (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>About</Text>
@@ -225,6 +275,39 @@ export default function CommunityDetailScreen() {
                   </View>
                 </Link>
               ))}
+            </View>
+          )}
+
+          {related.length > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Related communities</Text>
+              <FlatList
+                data={related}
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.relatedRail}
+                renderItem={({ item }) => (
+                  <Link
+                    href={{ pathname: '/communities/[slug]', params: { slug: item.slug } }}
+                    asChild
+                  >
+                    <Pressable style={styles.relatedCard}>
+                      <Text style={styles.relatedName} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={styles.relatedMeta} numberOfLines={2}>
+                        {item.description ?? item.city.name}
+                      </Text>
+                      <Text style={styles.relatedFooter}>
+                        {item.upcomingEventCount > 0
+                          ? `${item.upcomingEventCount} upcoming`
+                          : item.city.name}
+                      </Text>
+                    </Pressable>
+                  </Link>
+                )}
+              />
             </View>
           )}
         </ScrollView>
@@ -297,5 +380,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: typography.small,
   },
+  pulseCard: {
+    marginTop: spacing.lg,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.neutral.surface,
+    gap: spacing.sm,
+  },
+  pulseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  pulseTotal: { fontSize: typography.h3, fontWeight: '800', color: palette.brand[600] },
+  pulseTotalUnit: { fontSize: typography.small, color: palette.neutral.muted, fontWeight: '600' },
+  pulseRow: { gap: 4 },
+  pulseLabelRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  pulseLabel: { fontSize: typography.small, color: palette.neutral.foreground, fontWeight: '600' },
+  pulseValue: { fontSize: typography.small, color: palette.neutral.muted, fontWeight: '600' },
+  pulseTrack: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: palette.neutral.mutedBg,
+    overflow: 'hidden',
+  },
+  pulseFill: { height: '100%', backgroundColor: palette.brand[600] },
+  pulseHelp: { fontSize: typography.small, color: palette.neutral.muted, marginTop: spacing.xs },
+  pulseHelpToggle: {
+    fontSize: typography.small,
+    color: palette.brand[600],
+    fontWeight: '600',
+    marginTop: spacing.xs,
+  },
+  relatedRail: { gap: spacing.sm, paddingRight: spacing.lg },
+  relatedCard: {
+    width: 220,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.neutral.surface,
+    marginRight: spacing.sm,
+    gap: 4,
+  },
+  relatedName: { fontSize: typography.body, fontWeight: '700', color: palette.brand[700] },
+  relatedMeta: { fontSize: typography.small, color: palette.neutral.muted },
+  relatedFooter: { fontSize: 12, color: palette.brand[600], fontWeight: '600', marginTop: 4 },
   error: { color: palette.status.destructive },
 });

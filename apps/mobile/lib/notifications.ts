@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Notifications from 'expo-notifications';
 import * as SecureStore from 'expo-secure-store';
 import Constants from 'expo-constants';
@@ -6,6 +7,8 @@ import { notifications as n } from '@indlokal/shared';
 import { authClient } from './auth/client.expo';
 
 const INSTALLATION_ID_KEY = 'indlokal.installationId.v1';
+const REMINDER_INDEX_KEY = 'indlokal.eventReminders.v1';
+const REMINDER_LEAD_MS = 60 * 60 * 1000; // 1 hour
 
 type PushPermissionStatus = 'granted' | 'denied' | 'provisional';
 
@@ -103,4 +106,78 @@ export function usePushPermission() {
   return {
     requestPermission,
   };
+}
+
+// ─── Local in-app event reminders ─────────────────────────────────────────
+//
+// PRD-0005: when a user saves an event we schedule a one-shot local
+// notification 1h before it starts. These run client-side via
+// expo-notifications and are independent of the server outbox so the
+// reminder still fires even if push delivery is offline.
+
+type ReminderIndex = Record<string, string>; // eventId -> notificationId
+
+async function readReminderIndex(): Promise<ReminderIndex> {
+  try {
+    const raw = await AsyncStorage.getItem(REMINDER_INDEX_KEY);
+    return raw ? (JSON.parse(raw) as ReminderIndex) : {};
+  } catch {
+    return {};
+  }
+}
+
+async function writeReminderIndex(index: ReminderIndex): Promise<void> {
+  await AsyncStorage.setItem(REMINDER_INDEX_KEY, JSON.stringify(index));
+}
+
+export type ScheduleReminderResult = 'scheduled' | 'too_soon' | 'no_permission' | 'error';
+
+export async function scheduleEventReminder(
+  eventId: string,
+  title: string,
+  startsAtIso: string,
+): Promise<ScheduleReminderResult> {
+  const startsAt = new Date(startsAtIso).getTime();
+  if (Number.isNaN(startsAt)) return 'error';
+  const fireAt = startsAt - REMINDER_LEAD_MS;
+  if (fireAt <= Date.now()) return 'too_soon';
+
+  const perm = await Notifications.getPermissionsAsync();
+  if (perm.status !== Notifications.PermissionStatus.GRANTED) return 'no_permission';
+
+  try {
+    await cancelEventReminder(eventId);
+    const id = await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Starting soon',
+        body: `${title} starts in 1 hour.`,
+        data: { eventId, kind: 'event-reminder' },
+      },
+      trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(fireAt) },
+    });
+    const index = await readReminderIndex();
+    index[eventId] = id;
+    await writeReminderIndex(index);
+    return 'scheduled';
+  } catch {
+    return 'error';
+  }
+}
+
+export async function cancelEventReminder(eventId: string): Promise<void> {
+  const index = await readReminderIndex();
+  const id = index[eventId];
+  if (!id) return;
+  try {
+    await Notifications.cancelScheduledNotificationAsync(id);
+  } catch {
+    // notification may have already fired
+  }
+  delete index[eventId];
+  await writeReminderIndex(index);
+}
+
+export async function hasEventReminder(eventId: string): Promise<boolean> {
+  const index = await readReminderIndex();
+  return Boolean(index[eventId]);
 }

@@ -22,7 +22,16 @@ const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
 type FeedState = {
   events: d.EventCard[];
   communities: d.CommunityCard[];
+  trending: d.TrendingResponse | null;
 };
+
+type DiscoverTab = 'events' | 'communities' | 'trending';
+
+const TABS: Array<{ id: DiscoverTab; label: string }> = [
+  { id: 'events', label: 'Events' },
+  { id: 'communities', label: 'Communities' },
+  { id: 'trending', label: 'For you' },
+];
 
 export default function DiscoverScreen() {
   const [cities, setCities] = useState<d.City[] | null>(null);
@@ -32,6 +41,7 @@ export default function DiscoverScreen() {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<DiscoverTab>('events');
 
   // Load cities once.
   useEffect(() => {
@@ -82,7 +92,7 @@ export default function DiscoverScreen() {
     setFeedLoading(true);
     setFeedError(null);
     try {
-      const [eventsRes, communitiesRes] = await Promise.all([
+      const [eventsRes, communitiesRes, trendingRes] = await Promise.all([
         queryCache(
           `feed:events:${slug}`,
           () =>
@@ -99,10 +109,19 @@ export default function DiscoverScreen() {
             ),
           { ttl: 5 * 60 * 1000, force },
         ),
+        queryCache(
+          `feed:trending:${slug}`,
+          () =>
+            authClient.getPublic<d.TrendingResponse>(
+              `/api/v1/discovery/${encodeURIComponent(slug)}/trending`,
+            ),
+          { ttl: 5 * 60 * 1000, force },
+        ).catch(() => null),
       ]);
       setFeed({
         events: d.EventsPage.parse(eventsRes).items,
         communities: d.CommunitiesPage.parse(communitiesRes).items,
+        trending: trendingRes ? d.TrendingResponse.parse(trendingRes) : null,
       });
     } catch {
       setFeedError('Could not load this city right now.');
@@ -133,11 +152,27 @@ export default function DiscoverScreen() {
     [cities, selectedSlug],
   );
 
+  type FeedRow =
+    | { kind: 'event'; item: d.EventCard }
+    | { kind: 'community'; item: d.CommunityCard };
+
+  const rows = useMemo<FeedRow[]>(() => {
+    if (!feed) return [];
+    if (tab === 'events') return feed.events.map((item) => ({ kind: 'event' as const, item }));
+    if (tab === 'communities')
+      return feed.communities.map((item) => ({ kind: 'community' as const, item }));
+    if (!feed.trending) return [];
+    return [
+      ...feed.trending.events.map((item) => ({ kind: 'event' as const, item })),
+      ...feed.trending.communities.map((item) => ({ kind: 'community' as const, item })),
+    ];
+  }, [feed, tab]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <FlatList
-        data={feed?.events ?? []}
-        keyExtractor={(item) => item.id}
+        data={rows}
+        keyExtractor={(row) => `${row.kind}:${row.item.id}`}
         contentContainerStyle={styles.container}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         ListHeaderComponent={
@@ -176,55 +211,88 @@ export default function DiscoverScreen() {
               </View>
             )}
 
+            {feed?.trending && feed.trending.communities.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Trending right now</Text>
+                <FlatList
+                  data={feed.trending.communities.slice(0, 8)}
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  keyExtractor={(item) => item.id}
+                  contentContainerStyle={styles.rail}
+                  renderItem={({ item }) => (
+                    <Link
+                      href={{ pathname: '/communities/[slug]', params: { slug: item.slug } }}
+                      asChild
+                    >
+                      <Pressable style={styles.railCard}>
+                        <Text style={styles.railBadge}>Trending</Text>
+                        <Text style={styles.railTitle} numberOfLines={1}>
+                          {item.name}
+                        </Text>
+                        <Text style={styles.railMeta} numberOfLines={2}>
+                          {item.description ?? item.city.name}
+                        </Text>
+                      </Pressable>
+                    </Link>
+                  )}
+                />
+              </View>
+            )}
+
+            <View style={styles.tabRow}>
+              {TABS.map((t) => {
+                const active = t.id === tab;
+                return (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => setTab(t.id)}
+                    style={[styles.tab, active && styles.tabActive]}
+                  >
+                    <Text style={[styles.tabText, active && styles.tabTextActive]}>{t.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
             {feedLoading && !feed && (
               <ActivityIndicator color={palette.brand[600]} style={styles.loading} />
             )}
             {feedError && <Text style={styles.errorText}>{feedError}</Text>}
-
-            {feed && feed.communities.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Featured communities</Text>
-                <View style={styles.communityList}>
-                  {feed.communities.slice(0, 5).map((community) => (
-                    <Link
-                      key={community.id}
-                      href={{ pathname: '/communities/[slug]', params: { slug: community.slug } }}
-                      asChild
-                    >
-                      <Pressable style={styles.communityCard}>
-                        <Text style={styles.communityName}>{community.name}</Text>
-                        <Text style={styles.communityMeta} numberOfLines={2}>
-                          {community.description ?? community.city.name}
-                        </Text>
-                      </Pressable>
-                    </Link>
-                  ))}
-                </View>
-              </View>
-            )}
-
-            {feed && feed.events.length > 0 && (
-              <Text style={styles.sectionTitle}>Upcoming events</Text>
-            )}
           </View>
         }
-        renderItem={({ item }) => (
-          <Link href={{ pathname: '/events/[slug]', params: { slug: item.slug } }} asChild>
-            <Pressable style={styles.eventCard}>
-              <Text style={styles.eventTitle}>{item.title}</Text>
-              <Text style={styles.eventMeta}>
-                {new Date(item.startsAt).toLocaleString()} · {item.venueName ?? 'Online'}
-              </Text>
-              {item.community && (
-                <Text style={styles.eventCommunity}>by {item.community.name}</Text>
-              )}
-            </Pressable>
-          </Link>
-        )}
+        renderItem={({ item }) =>
+          item.kind === 'event' ? (
+            <Link href={{ pathname: '/events/[slug]', params: { slug: item.item.slug } }} asChild>
+              <Pressable style={styles.eventCard}>
+                <Text style={styles.eventTitle}>{item.item.title}</Text>
+                <Text style={styles.eventMeta}>
+                  {new Date(item.item.startsAt).toLocaleString()} ·{' '}
+                  {item.item.venueName ?? 'Online'}
+                </Text>
+                {item.item.community && (
+                  <Text style={styles.eventCommunity}>by {item.item.community.name}</Text>
+                )}
+              </Pressable>
+            </Link>
+          ) : (
+            <Link
+              href={{ pathname: '/communities/[slug]', params: { slug: item.item.slug } }}
+              asChild
+            >
+              <Pressable style={styles.communityCard}>
+                <Text style={styles.communityName}>{item.item.name}</Text>
+                <Text style={styles.communityMeta} numberOfLines={2}>
+                  {item.item.description ?? item.item.city.name}
+                </Text>
+              </Pressable>
+            </Link>
+          )
+        }
         ListEmptyComponent={
-          !feedLoading && feed && feed.events.length === 0 ? (
+          !feedLoading && feed && rows.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>No upcoming events for this city yet.</Text>
+              <Text style={styles.emptyText}>Nothing to show for this view yet.</Text>
             </View>
           ) : null
         }
@@ -275,6 +343,47 @@ const styles = StyleSheet.create({
     color: palette.neutral.foreground,
     marginTop: spacing.sm,
   },
+  rail: { gap: spacing.sm, paddingRight: spacing.lg },
+  railCard: {
+    width: 220,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.brand[50],
+    marginRight: spacing.sm,
+    gap: 4,
+  },
+  railBadge: {
+    alignSelf: 'flex-start',
+    fontSize: 11,
+    fontWeight: '700',
+    color: palette.accent[700],
+    backgroundColor: palette.accent[100],
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 2,
+    borderRadius: radius.badge,
+    overflow: 'hidden',
+  },
+  railTitle: { fontSize: typography.body, fontWeight: '700', color: palette.brand[700] },
+  railMeta: { fontSize: typography.small, color: palette.neutral.muted },
+  tabRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md,
+    backgroundColor: palette.neutral.mutedBg,
+    padding: spacing.xs,
+    borderRadius: radius.button,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    alignItems: 'center',
+    borderRadius: radius.button,
+  },
+  tabActive: { backgroundColor: '#fff' },
+  tabText: { fontSize: typography.small, fontWeight: '600', color: palette.neutral.muted },
+  tabTextActive: { color: palette.brand[700] },
   communityList: { gap: spacing.sm },
   communityCard: {
     backgroundColor: palette.neutral.surface,

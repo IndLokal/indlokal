@@ -7,7 +7,9 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Linking,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -16,10 +18,12 @@ import {
   Text,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { events as e } from '@indlokal/shared';
 import { authClient, AuthClientError } from '@/lib/auth/client.expo';
 import { invalidatePrefix, queryCache } from '@/lib/cache/query-cache';
+import { cancelEventReminder, hasEventReminder, scheduleEventReminder } from '@/lib/notifications';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const PUBLIC_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://indlokal.com';
@@ -31,6 +35,7 @@ export default function EventDetailScreen() {
   const [data, setData] = useState<EventDetailWithSaved | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reminderOn, setReminderOn] = useState(false);
 
   const load = useCallback(async () => {
     if (!slug) return;
@@ -45,6 +50,7 @@ export default function EventDetailScreen() {
       const res = await queryCache(`event:${slug}`, fetcher, { ttl: 2 * 60 * 1000 });
       const parsed = e.EventDetail.parse(res);
       setData({ ...parsed, savedByUser: (res as EventDetailWithSaved).savedByUser });
+      setReminderOn(await hasEventReminder(parsed.id));
     } catch (err) {
       setError(err instanceof AuthClientError ? err.message : 'Could not load event.');
     }
@@ -72,11 +78,31 @@ export default function EventDetailScreen() {
       }
       setData({ ...data, savedByUser: desired });
       invalidatePrefix('bookmarks:');
+      // PRD-0005: schedule a local reminder 1h before start when saving.
+      if (desired) {
+        const result = await scheduleEventReminder(data.id, data.title, data.startsAt);
+        setReminderOn(result === 'scheduled');
+      } else {
+        await cancelEventReminder(data.id);
+        setReminderOn(false);
+      }
     } catch {
       Alert.alert('Could not update save', 'Please try again.');
     } finally {
       setBusy(false);
     }
+  }
+
+  async function openMaps() {
+    if (!data) return;
+    const query = data.venueAddress ?? data.venueName;
+    if (!query) return;
+    const encoded = encodeURIComponent(query);
+    const url =
+      Platform.OS === 'ios' ? `http://maps.apple.com/?q=${encoded}` : `geo:0,0?q=${encoded}`;
+    const ok = await Linking.canOpenURL(url);
+    if (ok) await Linking.openURL(url);
+    else await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encoded}`);
   }
 
   async function onShare() {
@@ -133,6 +159,9 @@ export default function EventDetailScreen() {
       )}
       {data && (
         <ScrollView contentContainerStyle={styles.container}>
+          {data.imageUrl && (
+            <Image source={{ uri: data.imageUrl }} style={styles.hero} resizeMode="cover" />
+          )}
           <Text style={styles.title}>{data.title}</Text>
           <Text style={styles.meta}>
             {new Date(data.startsAt).toLocaleString()}
@@ -158,6 +187,14 @@ export default function EventDetailScreen() {
             </Pressable>
           </View>
 
+          {data.savedByUser && (
+            <Text style={styles.reminderHint}>
+              {reminderOn
+                ? '⏰ We’ll remind you 1 hour before this starts.'
+                : 'Enable notifications in Settings to get a 1-hour reminder.'}
+            </Text>
+          )}
+
           {(data.registrationUrl || data.onlineUrl) && (
             <Pressable onPress={onRegister} style={styles.actionLink}>
               <Text style={styles.actionLinkText}>
@@ -173,6 +210,25 @@ export default function EventDetailScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>About</Text>
               <Text style={styles.body}>{data.description}</Text>
+            </View>
+          )}
+
+          {!data.isOnline && (data.venueAddress || data.venueName) && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Where</Text>
+              <Pressable onPress={openMaps} style={styles.mapCard}>
+                <View style={styles.mapPin}>
+                  <Ionicons name="location" size={22} color={palette.brand[600]} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.mapVenue}>{data.venueName ?? data.venueAddress}</Text>
+                  {data.venueAddress && data.venueName && (
+                    <Text style={styles.mapAddress}>{data.venueAddress}</Text>
+                  )}
+                  <Text style={styles.mapCta}>Open in Maps</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={palette.neutral.muted} />
+              </Pressable>
             </View>
           )}
 
@@ -199,6 +255,12 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.neutral.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   container: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxl },
+  hero: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: radius.card,
+    backgroundColor: palette.neutral.mutedBg,
+  },
   title: { fontSize: typography.h1, fontWeight: '800', color: palette.neutral.foreground },
   meta: { fontSize: typography.body, color: palette.neutral.muted },
   community: { fontSize: typography.body, color: palette.brand[600], fontWeight: '600' },
@@ -232,6 +294,37 @@ const styles = StyleSheet.create({
   actionLinkText: { color: '#fff', fontWeight: '700' },
   actionGhost: { paddingVertical: spacing.sm, alignItems: 'center' },
   actionGhostText: { color: palette.brand[600], fontWeight: '600' },
+  reminderHint: {
+    fontSize: typography.small,
+    color: palette.neutral.muted,
+    marginTop: -spacing.xs,
+  },
+  mapCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.brand[50],
+  },
+  mapPin: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mapVenue: { fontSize: typography.body, fontWeight: '700', color: palette.neutral.foreground },
+  mapAddress: { fontSize: typography.small, color: palette.neutral.muted, marginTop: 2 },
+  mapCta: {
+    fontSize: typography.small,
+    color: palette.brand[600],
+    fontWeight: '600',
+    marginTop: 4,
+  },
   section: { gap: spacing.sm, marginTop: spacing.md },
   sectionTitle: { fontSize: typography.h4, fontWeight: '700', color: palette.neutral.foreground },
   body: { fontSize: typography.body, color: palette.neutral.foreground, lineHeight: 22 },
