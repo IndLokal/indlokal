@@ -15,6 +15,7 @@
     "openapi:generate": "tsx scripts/generate-openapi.ts"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
     "zod": "^3.24.0"
   },
   "devDependencies": {

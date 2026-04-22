@@ -1,0 +1,270 @@
+# AUTO-GENERATED — DO NOT EDIT BY HAND.
+# Source: packages/shared/src/contracts/*.ts
+# Regenerate with: pnpm openapi:generate
+
+openapi: 3.1.0
+info:
+  title: IndLokal API
+  version: 1.0.0-pre
+  description: Versioned REST API for IndLokal (web + mobile). Generated from Zod contracts in
+    @indlokal/shared per ADR-0002. Endpoint paths are added incrementally as each TDD lands its
+    handlers.
+servers:
+  - url: https://indlokal.com
+    description: Production
+  - url: http://localhost:3001
+    description: Local dev
+components:
+  schemas:
+    Ack:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          enum:
+            - true
+      required:
+        - ok
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: &a1
+                - BAD_REQUEST
+                - UNAUTHENTICATED
+                - FORBIDDEN
+                - NOT_FOUND
+                - CONFLICT
+                - RATE_LIMITED
+                - TOKEN_EXPIRED
+                - TOKEN_INVALID
+                - TOKEN_REUSED
+                - INTERNAL
+            message:
+              type: string
+            details: {}
+          required:
+            - code
+            - message
+      required:
+        - error
+    ApiErrorCode:
+      type: string
+      enum: *a1
+    UserRole:
+      type: string
+      enum: &a2
+        - USER
+        - COMMUNITY_ADMIN
+        - ADMIN
+    MeProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        email:
+          type: string
+          format: email
+        displayName:
+          type:
+            - string
+            - "null"
+        avatarUrl:
+          type:
+            - string
+            - "null"
+          format: uri
+        role:
+          type: string
+          enum: *a2
+        cityId:
+          type:
+            - string
+            - "null"
+          minLength: 20
+          maxLength: 40
+        personaSegments:
+          type: array
+          items:
+            type: string
+        preferredLanguages:
+          type: array
+          items:
+            type: string
+        onboardingComplete:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        lastActiveAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+      required:
+        - id
+        - email
+        - displayName
+        - avatarUrl
+        - role
+        - cityId
+        - personaSegments
+        - preferredLanguages
+        - onboardingComplete
+        - createdAt
+        - lastActiveAt
+    AuthTokens:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        accessExpiresAt:
+          type: string
+          format: date-time
+        refreshExpiresAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              minLength: 20
+              maxLength: 40
+            email:
+              type: string
+              format: email
+            displayName:
+              type:
+                - string
+                - "null"
+            avatarUrl:
+              type:
+                - string
+                - "null"
+              format: uri
+            role:
+              type: string
+              enum: *a2
+            cityId:
+              type:
+                - string
+                - "null"
+              minLength: 20
+              maxLength: 40
+            personaSegments:
+              type: array
+              items:
+                type: string
+            preferredLanguages:
+              type: array
+              items:
+                type: string
+            onboardingComplete:
+              type: boolean
+            createdAt:
+              type: string
+              format: date-time
+            lastActiveAt:
+              type:
+                - string
+                - "null"
+              format: date-time
+          required:
+            - id
+            - email
+            - displayName
+            - avatarUrl
+            - role
+            - cityId
+            - personaSegments
+            - preferredLanguages
+            - onboardingComplete
+            - createdAt
+            - lastActiveAt
+      required:
+        - accessToken
+        - refreshToken
+        - accessExpiresAt
+        - refreshExpiresAt
+        - user
+    MagicLinkRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 254
+          format: email
+        redirectTo:
+          type: string
+          maxLength: 500
+      required:
+        - email
+    MagicLinkVerify:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+        - token
+    GoogleAuth:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+        codeVerifier:
+          type: string
+          minLength: 1
+        redirectUri:
+          type: string
+          format: uri
+      required:
+        - code
+        - redirectUri
+    AppleAuth:
+      type: object
+      properties:
+        identityToken:
+          type: string
+          minLength: 1
+        authorizationCode:
+          type: string
+          minLength: 1
+        user:
+          type: object
+          properties:
+            email:
+              type: string
+              format: email
+            name:
+              type: object
+              properties:
+                firstName:
+                  type: string
+                lastName:
+                  type: string
+      required:
+        - identityToken
+        - authorizationCode
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          minLength: 1
+      required:
+        - refreshToken
+  parameters: {}
+paths: {}
+webhooks: {}

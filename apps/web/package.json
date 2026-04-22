@@ -29,6 +29,7 @@
     "@indlokal/shared": "workspace:*",
     "@prisma/client": "^6.6.0",
     "date-fns": "^4.1.0",
+    "jose": "^6.2.2",
     "next": "16.2.3",
     "nodemailer": "^8.0.5",
     "posthog-js": "^1.369.2",

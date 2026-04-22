@@ -10,4 +10,5 @@
  * except via the contracts directory.
  */
 
-export {};
+export * as common from './contracts/common.js';
+export * as auth from './contracts/auth.js';
