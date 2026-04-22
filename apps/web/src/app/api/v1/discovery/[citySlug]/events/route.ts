@@ -14,10 +14,7 @@ export const runtime = 'nodejs';
 
 const DEFAULT_LIMIT = 20;
 
-export async function GET(
-  req: NextRequest,
-  ctx: { params: Promise<{ citySlug: string }> },
-) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ citySlug: string }> }) {
   const { citySlug } = await ctx.params;
   const sp = new URL(req.url).searchParams;
 
@@ -28,7 +25,7 @@ export async function GET(
 
   const { from, to, cursor, limit = DEFAULT_LIMIT, categorySlug } = parsed.data;
 
-  const { items, hasMore } = await getEventsPage(citySlug, {
+  const { items, hasMore, nextCursor } = await getEventsPage(citySlug, {
     from: from ? new Date(from) : undefined,
     to: to ? new Date(to) : undefined,
     cursor,
@@ -36,7 +33,6 @@ export async function GET(
     categorySlug,
   });
 
-  const nextCursor = hasMore ? items[items.length - 1].id : undefined;
   return NextResponse.json({
     items: items.map(toEventCard),
     ...(nextCursor !== undefined ? { nextCursor } : {}),

@@ -26,6 +26,7 @@ import * as commonContracts from '../src/contracts/common.js';
 import * as notificationContracts from '../src/contracts/notifications.js';
 import * as discoveryContracts from '../src/contracts/discovery.js';
 import * as eventsContracts from '../src/contracts/events.js';
+import * as communityContracts from '../src/contracts/community.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -508,6 +509,94 @@ registry.registerPath({
       content: { 'application/json': { schema: commonContracts.Ack } },
     },
     400: errorResponse,
+  },
+});
+
+// ─── Community detail (TDD-0006) ───
+
+registry.register('ChannelType', communityContracts.ChannelType);
+registry.register('AccessChannel', communityContracts.AccessChannel);
+registry.register('CommunityTrustSignal', communityContracts.TrustSignal);
+registry.register('CommunityDetail', communityContracts.CommunityDetail);
+registry.register('CommunitySummary', communityContracts.CommunitySummary);
+registry.register('FollowState', communityContracts.FollowState);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/communities/{slug}',
+  summary: 'Community detail — optional auth for followedByUser flag',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [],
+  responses: {
+    200: {
+      description: 'Community detail',
+      content: { 'application/json': { schema: communityContracts.CommunityDetail } },
+    },
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/communities/{slug}/follow',
+  summary: 'Follow a community (requires auth)',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Follow state',
+      content: { 'application/json': { schema: communityContracts.FollowState } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/v1/communities/{slug}/follow',
+  summary: 'Unfollow a community (requires auth)',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Follow state',
+      content: { 'application/json': { schema: communityContracts.FollowState } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/communities/{slug}/events',
+  summary: 'Cursor-paginated upcoming events for a community',
+  request: {
+    params: z.object({ slug: z.string() }),
+    query: discoveryContracts.EventsQuery,
+  },
+  responses: {
+    200: {
+      description: 'Events page',
+      content: { 'application/json': { schema: discoveryContracts.EventsPage } },
+    },
+    400: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/communities/{slug}/related',
+  summary: 'Related communities via relationship graph',
+  request: { params: z.object({ slug: z.string() }) },
+  responses: {
+    200: {
+      description: 'Related community summaries',
+      content: { 'application/json': { schema: z.array(communityContracts.CommunitySummary) } },
+    },
+    404: errorResponse,
   },
 });
 

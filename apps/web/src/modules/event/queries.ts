@@ -91,8 +91,9 @@ export async function getEventsPage(
     cursor?: string;
     limit: number;
     categorySlug?: string;
+    communityId?: string;
   },
-): Promise<{ items: EventListItem[]; hasMore: boolean }> {
+): Promise<{ items: EventListItem[]; hasMore: boolean; nextCursor?: string }> {
   const cityIds = await resolveCityIds(citySlug);
   if (!cityIds.length) return { items: [], hasMore: false };
 
@@ -107,6 +108,7 @@ export async function getEventsPage(
       ...(opts.categorySlug && {
         categories: { some: { category: { slug: opts.categorySlug } } },
       }),
+      ...(opts.communityId && { communityId: opts.communityId }),
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
@@ -115,7 +117,8 @@ export async function getEventsPage(
   });
 
   const hasMore = rows.length > opts.limit;
-  return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+  const items = hasMore ? rows.slice(0, opts.limit) : rows;
+  return { items, hasMore, nextCursor: hasMore ? items[items.length - 1]?.id : undefined };
 }
 
 export async function getUpcomingEvents(

@@ -1,5 +1,10 @@
 import { db, resolveCityIds } from '@/lib/db';
-import type { CommunityWithRelations, CommunityListItem } from './types';
+import type {
+  CommunityWithRelations,
+  CommunityListItem,
+  CommunityDetailRow,
+  CommunitySummaryRow,
+} from './types';
 
 /**
  * Get a single community with all relations for the detail page.
@@ -145,4 +150,134 @@ export async function getCommunitiesPage(
 
   const hasMore = rows.length > opts.limit;
   return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+}
+
+const communityDetailSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  description: true,
+  descriptionLong: true,
+  status: true,
+  claimState: true,
+  logoUrl: true,
+  coverImageUrl: true,
+  personaSegments: true,
+  languages: true,
+  foundedYear: true,
+  memberCountApprox: true,
+  activityScore: true,
+  completenessScore: true,
+  trustScore: true,
+  isTrending: true,
+  lastActivityAt: true,
+  city: { select: { name: true, slug: true } },
+  categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
+  accessChannels: {
+    select: {
+      id: true,
+      channelType: true,
+      url: true,
+      label: true,
+      isPrimary: true,
+      isVerified: true,
+    },
+    orderBy: { isPrimary: 'desc' as const },
+  },
+  trustSignals: {
+    select: { id: true, signalType: true, createdAt: true },
+    orderBy: { createdAt: 'desc' as const },
+  },
+  _count: {
+    select: {
+      events: { where: { startsAt: { gte: new Date() }, status: { not: 'CANCELLED' as const } } },
+    },
+  },
+} as const;
+
+/**
+ * Full community detail for GET /api/v1/communities/:slug.
+ */
+export async function getCommunityDetail(slug: string): Promise<CommunityDetailRow | null> {
+  return db.community.findFirst({
+    where: { slug, status: { not: 'INACTIVE' }, mergedIntoId: null },
+    select: communityDetailSelect,
+  }) as Promise<CommunityDetailRow | null>;
+}
+
+/**
+ * Related communities via RelationshipEdge. Returns up to `limit` (default 5)
+ * communities connected to the given community id (either direction).
+ */
+export async function getRelatedCommunities(
+  communityId: string,
+  limit = 5,
+): Promise<CommunitySummaryRow[]> {
+  // Fetch edges from both directions
+  const edges = await db.relationshipEdge.findMany({
+    where: {
+      OR: [{ sourceCommunityId: communityId }, { targetCommunityId: communityId }],
+    },
+    select: { sourceCommunityId: true, targetCommunityId: true },
+    orderBy: { strength: 'desc' },
+    take: limit,
+  });
+
+  const relatedIds = [
+    ...new Set(
+      edges.map((e) =>
+        e.sourceCommunityId === communityId ? e.targetCommunityId : e.sourceCommunityId,
+      ),
+    ),
+  ].slice(0, limit);
+
+  if (!relatedIds.length) return [];
+
+  return db.community.findMany({
+    where: { id: { in: relatedIds }, status: { not: 'INACTIVE' }, mergedIntoId: null },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      logoUrl: true,
+      memberCountApprox: true,
+      city: { select: { name: true, slug: true } },
+      categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
+      _count: {
+        select: {
+          events: { where: { startsAt: { gte: new Date() }, status: { not: 'CANCELLED' } } },
+        },
+      },
+    },
+  }) as Promise<CommunitySummaryRow[]>;
+}
+
+/**
+ * Follow a community (upsert SavedCommunity). Idempotent.
+ */
+export async function followCommunity(userId: string, communityId: string): Promise<void> {
+  await db.savedCommunity.upsert({
+    where: { userId_communityId: { userId, communityId } },
+    create: { userId, communityId },
+    update: {},
+  });
+}
+
+/**
+ * Unfollow a community. Idempotent.
+ */
+export async function unfollowCommunity(userId: string, communityId: string): Promise<void> {
+  await db.savedCommunity.deleteMany({ where: { userId, communityId } });
+}
+
+/**
+ * Check whether a user follows a community.
+ */
+export async function isCommunityFollowed(userId: string, communityId: string): Promise<boolean> {
+  const row = await db.savedCommunity.findUnique({
+    where: { userId_communityId: { userId, communityId } },
+    select: { userId: true },
+  });
+  return row !== null;
 }
