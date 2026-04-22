@@ -8,6 +8,15 @@
  * Responsibilities:
  * - Free-text search across communities and events
  * - City-scoped search
+ * - Autocomplete suggestions from approved keywords
+ * - Trending keywords
  * - Search signal logging (zero-result tracking)
  */
-export { searchCommunities, searchEvents } from './queries';
+export {
+  searchCommunities,
+  searchEvents,
+  getSuggestions,
+  getTrendingKeywords,
+  searchAll,
+} from './queries';
+export type { SearchResultRow, SearchAllOptions, SearchAllResult } from './queries';

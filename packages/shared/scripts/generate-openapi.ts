@@ -27,6 +27,7 @@ import * as notificationContracts from '../src/contracts/notifications.js';
 import * as discoveryContracts from '../src/contracts/discovery.js';
 import * as eventsContracts from '../src/contracts/events.js';
 import * as communityContracts from '../src/contracts/community.js';
+import * as searchContracts from '../src/contracts/search.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -597,6 +598,64 @@ registry.registerPath({
       content: { 'application/json': { schema: z.array(communityContracts.CommunitySummary) } },
     },
     404: errorResponse,
+  },
+});
+
+// ─── TDD-0007 Search ────────────────────────────────────────────────────────
+
+registry.register('SearchType', searchContracts.SearchType);
+registry.register('Suggestion', searchContracts.Suggestion);
+registry.register('SearchQuery', searchContracts.SearchQuery);
+registry.register('SearchResultItem', searchContracts.SearchResultItem);
+registry.register('SearchPage', searchContracts.SearchPage);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/search',
+  summary: 'Full-text search across communities and events',
+  request: {
+    query: searchContracts.SearchQuery,
+  },
+  responses: {
+    200: {
+      description: 'Search results page',
+      content: { 'application/json': { schema: searchContracts.SearchPage } },
+    },
+    400: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/search/suggest',
+  summary: 'Autocomplete suggestions for a partial query',
+  request: {
+    query: z.object({
+      q: z.string().min(1),
+      citySlug: z.string().optional(),
+    }),
+  },
+  responses: {
+    200: {
+      description: 'Suggestion list',
+      content: { 'application/json': { schema: z.array(searchContracts.Suggestion) } },
+    },
+    400: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/search/trending',
+  summary: 'Trending search terms, optionally scoped to a city',
+  request: {
+    query: z.object({ citySlug: z.string().optional() }),
+  },
+  responses: {
+    200: {
+      description: 'Trending keyword list',
+      content: { 'application/json': { schema: z.array(z.string()) } },
+    },
   },
 });
 

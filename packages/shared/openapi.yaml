@@ -1732,7 +1732,7 @@ components:
           enum: *a10
         entityType:
           type: string
-          enum: &a13
+          enum: &a14
             - COMMUNITY
             - EVENT
             - RESOURCE
@@ -2046,6 +2046,483 @@ components:
           type: boolean
       required:
         - followed
+    SearchType:
+      type: string
+      enum: &a12
+        - COMMUNITY
+        - EVENT
+        - ALL
+    Suggestion:
+      type: object
+      properties:
+        text:
+          type: string
+        type:
+          type: string
+          enum: *a12
+      required:
+        - text
+        - type
+    SearchQuery:
+      type: object
+      properties:
+        q:
+          type: string
+          minLength: 1
+          maxLength: 200
+        citySlug:
+          type: string
+        category:
+          type: string
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        type:
+          type: string
+          enum: *a12
+          default: ALL
+        cursor:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+      required:
+        - q
+    SearchResultItem:
+      oneOf:
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - COMMUNITY
+            item:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 20
+                  maxLength: 40
+                name:
+                  type: string
+                slug:
+                  type: string
+                description:
+                  type:
+                    - string
+                    - "null"
+                status:
+                  type: string
+                  enum: *a6
+                activityScore:
+                  type: number
+                completenessScore:
+                  type: number
+                trustScore:
+                  type: number
+                isTrending:
+                  type: boolean
+                claimState:
+                  type: string
+                  enum: *a7
+                memberCountApprox:
+                  type:
+                    - integer
+                    - "null"
+                logoUrl:
+                  type:
+                    - string
+                    - "null"
+                lastActivityAt:
+                  type:
+                    - string
+                    - "null"
+                  format: date-time
+                languages:
+                  type: array
+                  items:
+                    type: string
+                city:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    slug:
+                      type: string
+                  required:
+                    - name
+                    - slug
+                categories:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      category:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                          icon:
+                            type:
+                              - string
+                              - "null"
+                        required:
+                          - name
+                          - slug
+                          - icon
+                    required:
+                      - category
+                upcomingEventCount:
+                  type: integer
+              required:
+                - id
+                - name
+                - slug
+                - description
+                - status
+                - activityScore
+                - completenessScore
+                - trustScore
+                - isTrending
+                - claimState
+                - memberCountApprox
+                - logoUrl
+                - lastActivityAt
+                - languages
+                - city
+                - categories
+                - upcomingEventCount
+          required:
+            - type
+            - item
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - EVENT
+            item:
+              type: object
+              properties:
+                id:
+                  type: string
+                  minLength: 20
+                  maxLength: 40
+                title:
+                  type: string
+                slug:
+                  type: string
+                startsAt:
+                  type: string
+                  format: date-time
+                endsAt:
+                  type:
+                    - string
+                    - "null"
+                  format: date-time
+                venueName:
+                  type:
+                    - string
+                    - "null"
+                isOnline:
+                  type: boolean
+                cost:
+                  type:
+                    - string
+                    - "null"
+                imageUrl:
+                  type:
+                    - string
+                    - "null"
+                isRecurring:
+                  type: boolean
+                community:
+                  type:
+                    - object
+                    - "null"
+                  properties:
+                    name:
+                      type: string
+                    slug:
+                      type: string
+                  required:
+                    - name
+                    - slug
+                city:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                    slug:
+                      type: string
+                  required:
+                    - name
+                    - slug
+                categories:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      category:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                          icon:
+                            type:
+                              - string
+                              - "null"
+                        required:
+                          - name
+                          - slug
+                          - icon
+                    required:
+                      - category
+              required:
+                - id
+                - title
+                - slug
+                - startsAt
+                - endsAt
+                - venueName
+                - isOnline
+                - cost
+                - imageUrl
+                - isRecurring
+                - community
+                - city
+                - categories
+          required:
+            - type
+            - item
+    SearchPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - COMMUNITY
+                  item:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      name:
+                        type: string
+                      slug:
+                        type: string
+                      description:
+                        type:
+                          - string
+                          - "null"
+                      status:
+                        type: string
+                        enum: *a6
+                      activityScore:
+                        type: number
+                      completenessScore:
+                        type: number
+                      trustScore:
+                        type: number
+                      isTrending:
+                        type: boolean
+                      claimState:
+                        type: string
+                        enum: *a7
+                      memberCountApprox:
+                        type:
+                          - integer
+                          - "null"
+                      logoUrl:
+                        type:
+                          - string
+                          - "null"
+                      lastActivityAt:
+                        type:
+                          - string
+                          - "null"
+                        format: date-time
+                      languages:
+                        type: array
+                        items:
+                          type: string
+                      city:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                        required:
+                          - name
+                          - slug
+                      categories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            category:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                slug:
+                                  type: string
+                                icon:
+                                  type:
+                                    - string
+                                    - "null"
+                              required:
+                                - name
+                                - slug
+                                - icon
+                          required:
+                            - category
+                      upcomingEventCount:
+                        type: integer
+                    required:
+                      - id
+                      - name
+                      - slug
+                      - description
+                      - status
+                      - activityScore
+                      - completenessScore
+                      - trustScore
+                      - isTrending
+                      - claimState
+                      - memberCountApprox
+                      - logoUrl
+                      - lastActivityAt
+                      - languages
+                      - city
+                      - categories
+                      - upcomingEventCount
+                required:
+                  - type
+                  - item
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - EVENT
+                  item:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      title:
+                        type: string
+                      slug:
+                        type: string
+                      startsAt:
+                        type: string
+                        format: date-time
+                      endsAt:
+                        type:
+                          - string
+                          - "null"
+                        format: date-time
+                      venueName:
+                        type:
+                          - string
+                          - "null"
+                      isOnline:
+                        type: boolean
+                      cost:
+                        type:
+                          - string
+                          - "null"
+                      imageUrl:
+                        type:
+                          - string
+                          - "null"
+                      isRecurring:
+                        type: boolean
+                      community:
+                        type:
+                          - object
+                          - "null"
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                        required:
+                          - name
+                          - slug
+                      city:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                        required:
+                          - name
+                          - slug
+                      categories:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            category:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                slug:
+                                  type: string
+                                icon:
+                                  type:
+                                    - string
+                                    - "null"
+                              required:
+                                - name
+                                - slug
+                                - icon
+                          required:
+                            - category
+                    required:
+                      - id
+                      - title
+                      - slug
+                      - startsAt
+                      - endsAt
+                      - venueName
+                      - isOnline
+                      - cost
+                      - imageUrl
+                      - isRecurring
+                      - community
+                      - city
+                      - categories
+                required:
+                  - type
+                  - item
+        nextCursor:
+          type: string
+      required:
+        - items
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -2083,13 +2560,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a12
+            application/json: &a13
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -2190,11 +2667,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -2301,15 +2778,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "500":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -2426,15 +2903,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "500":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -2534,11 +3011,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -2570,7 +3047,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -2642,11 +3119,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/devices:
     post:
       summary: Register or refresh the calling device
@@ -2731,11 +3208,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/devices/{installationId}:
     patch:
       summary: Update mutable device fields (push token, locale, ...)
@@ -2819,15 +3296,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
     delete:
       summary: Sign out from the given device
       security:
@@ -2855,7 +3332,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/notifications/preferences:
     get:
       summary: Read the full topic × channel preference matrix
@@ -2911,7 +3388,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
     put:
       summary: Patch preferences and/or quiet hours
       security:
@@ -3004,11 +3481,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/notifications/inbox:
     get:
       summary: List inbox items, newest first
@@ -3078,7 +3555,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/notifications/inbox/read:
     post:
       summary: Mark inbox items as read
@@ -3117,11 +3594,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/cities:
     get:
       summary: List all active cities
@@ -3274,7 +3751,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/discovery/{citySlug}/events:
     get:
       summary: Cursor-paginated event feed for a city
@@ -3423,7 +3900,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/discovery/{citySlug}/communities:
     get:
       summary: Cursor-paginated community feed for a city
@@ -3565,7 +4042,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/discovery/{citySlug}/trending:
     get:
       summary: Trending communities, upcoming events, and category grid for a city
@@ -3805,7 +4282,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/events/{slug}:
     get:
       summary: Event detail — optional auth for savedByUser flag
@@ -4062,7 +4539,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/events/{slug}/save:
     post:
       summary: Save an event (requires auth)
@@ -4089,11 +4566,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
     delete:
       summary: Unsave an event (requires auth)
       security:
@@ -4119,11 +4596,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/track:
     post:
       summary: Client-side behavioral event tracking (optional auth)
@@ -4139,7 +4616,7 @@ paths:
                   enum: *a10
                 entityType:
                   type: string
-                  enum: *a13
+                  enum: *a14
                 entityId:
                   type: string
                   minLength: 20
@@ -4168,7 +4645,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/communities/{slug}:
     get:
       summary: Community detail — optional auth for followedByUser flag
@@ -4355,7 +4832,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/communities/{slug}/follow:
     post:
       summary: Follow a community (requires auth)
@@ -4382,11 +4859,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
     delete:
       summary: Unfollow a community (requires auth)
       security:
@@ -4412,11 +4889,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/communities/{slug}/events:
     get:
       summary: Cursor-paginated upcoming events for a community
@@ -4565,11 +5042,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
   /api/v1/communities/{slug}/related:
     get:
       summary: Related communities via relationship graph
@@ -4656,5 +5133,341 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a12
+            application/json: *a13
+  /api/v1/search:
+    get:
+      summary: Full-text search across communities and events
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          required: true
+          name: q
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: citySlug
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: category
+          in: query
+        - schema:
+            type: string
+            format: date-time
+          required: false
+          name: from
+          in: query
+        - schema:
+            type: string
+            format: date-time
+          required: false
+          name: to
+          in: query
+        - schema:
+            type: string
+            enum: *a12
+            default: ALL
+          required: false
+          name: type
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          required: false
+          name: limit
+          in: query
+      responses:
+        "200":
+          description: Search results page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - COMMUNITY
+                            item:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                name:
+                                  type: string
+                                slug:
+                                  type: string
+                                description:
+                                  type:
+                                    - string
+                                    - "null"
+                                status:
+                                  type: string
+                                  enum: *a6
+                                activityScore:
+                                  type: number
+                                completenessScore:
+                                  type: number
+                                trustScore:
+                                  type: number
+                                isTrending:
+                                  type: boolean
+                                claimState:
+                                  type: string
+                                  enum: *a7
+                                memberCountApprox:
+                                  type:
+                                    - integer
+                                    - "null"
+                                logoUrl:
+                                  type:
+                                    - string
+                                    - "null"
+                                lastActivityAt:
+                                  type:
+                                    - string
+                                    - "null"
+                                  format: date-time
+                                languages:
+                                  type: array
+                                  items:
+                                    type: string
+                                city:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    slug:
+                                      type: string
+                                  required:
+                                    - name
+                                    - slug
+                                categories:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      category:
+                                        type: object
+                                        properties:
+                                          name:
+                                            type: string
+                                          slug:
+                                            type: string
+                                          icon:
+                                            type:
+                                              - string
+                                              - "null"
+                                        required:
+                                          - name
+                                          - slug
+                                          - icon
+                                    required:
+                                      - category
+                                upcomingEventCount:
+                                  type: integer
+                              required:
+                                - id
+                                - name
+                                - slug
+                                - description
+                                - status
+                                - activityScore
+                                - completenessScore
+                                - trustScore
+                                - isTrending
+                                - claimState
+                                - memberCountApprox
+                                - logoUrl
+                                - lastActivityAt
+                                - languages
+                                - city
+                                - categories
+                                - upcomingEventCount
+                          required:
+                            - type
+                            - item
+                        - type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - EVENT
+                            item:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                title:
+                                  type: string
+                                slug:
+                                  type: string
+                                startsAt:
+                                  type: string
+                                  format: date-time
+                                endsAt:
+                                  type:
+                                    - string
+                                    - "null"
+                                  format: date-time
+                                venueName:
+                                  type:
+                                    - string
+                                    - "null"
+                                isOnline:
+                                  type: boolean
+                                cost:
+                                  type:
+                                    - string
+                                    - "null"
+                                imageUrl:
+                                  type:
+                                    - string
+                                    - "null"
+                                isRecurring:
+                                  type: boolean
+                                community:
+                                  type:
+                                    - object
+                                    - "null"
+                                  properties:
+                                    name:
+                                      type: string
+                                    slug:
+                                      type: string
+                                  required:
+                                    - name
+                                    - slug
+                                city:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                    slug:
+                                      type: string
+                                  required:
+                                    - name
+                                    - slug
+                                categories:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      category:
+                                        type: object
+                                        properties:
+                                          name:
+                                            type: string
+                                          slug:
+                                            type: string
+                                          icon:
+                                            type:
+                                              - string
+                                              - "null"
+                                        required:
+                                          - name
+                                          - slug
+                                          - icon
+                                    required:
+                                      - category
+                              required:
+                                - id
+                                - title
+                                - slug
+                                - startsAt
+                                - endsAt
+                                - venueName
+                                - isOnline
+                                - cost
+                                - imageUrl
+                                - isRecurring
+                                - community
+                                - city
+                                - categories
+                          required:
+                            - type
+                            - item
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+  /api/v1/search/suggest:
+    get:
+      summary: Autocomplete suggestions for a partial query
+      parameters:
+        - schema:
+            type: string
+            minLength: 1
+          required: true
+          name: q
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: citySlug
+          in: query
+      responses:
+        "200":
+          description: Suggestion list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    text:
+                      type: string
+                    type:
+                      type: string
+                      enum: *a12
+                  required:
+                    - text
+                    - type
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+  /api/v1/search/trending:
+    get:
+      summary: Trending search terms, optionally scoped to a city
+      parameters:
+        - schema:
+            type: string
+          required: false
+          name: citySlug
+          in: query
+      responses:
+        "200":
+          description: Trending keyword list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
 webhooks: {}
