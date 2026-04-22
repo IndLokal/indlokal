@@ -10,6 +10,7 @@ set -euo pipefail
 #   packages/shared/  Zod contracts + generated OpenAPI
 
 WEB_DIR="apps/web"
+MOBILE_DIR="apps/mobile"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -266,6 +267,29 @@ cmd_test_coverage() {
   print_success "Coverage report saved to apps/web/coverage/"
 }
 
+cmd_mobile() {
+  print_header
+  ensure_pnpm
+
+  # Create .env if missing (points at local web server)
+  if [ ! -f "$MOBILE_DIR/.env" ]; then
+    echo "EXPO_PUBLIC_API_BASE_URL=http://localhost:3001" > "$MOBILE_DIR/.env"
+    print_success "Created $MOBILE_DIR/.env → http://localhost:3001"
+  else
+    print_success "$MOBILE_DIR/.env exists"
+  fi
+
+  # Ensure web server + DB are running
+  if ! docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
+    cmd_db_start
+  fi
+  ensure_database_exists "indlokal"
+
+  print_success "Starting Expo (press i for iOS Simulator, a for Android)..."
+  echo ""
+  (cd "$MOBILE_DIR" && pnpm start)
+}
+
 cmd_check() {
   print_header
   ensure_pnpm
@@ -319,6 +343,9 @@ cmd_help() {
   echo "  test:watch     Run tests in watch mode"
   echo "  test:coverage  Run tests with coverage report"
   echo ""
+  echo -e "${CYAN}Mobile${NC}"
+  echo "  mobile         Start Expo + Metro (iOS/Android simulator)"
+  echo ""
   echo -e "${CYAN}Quality${NC}"
   echo "  check          Run typecheck + lint + format check (turbo)"
   echo ""
@@ -344,6 +371,7 @@ case "${1:-help}" in
   test:watch)    cmd_test_watch ;;
   test:setup)    cmd_test_setup ;;
   test:coverage) cmd_test_coverage ;;
+  mobile)        cmd_mobile ;;
   check)         cmd_check ;;
   clean)         cmd_clean ;;
   help|--help|-h) cmd_help ;;
