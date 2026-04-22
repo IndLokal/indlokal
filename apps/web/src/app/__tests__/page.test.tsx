@@ -25,7 +25,7 @@ describe('HomePage', () => {
 
   it('renders the value proposition tagline', async () => {
     render(await HomePage());
-    expect(screen.getByText(/for the indian community in germany/i)).toBeInTheDocument();
+    expect(screen.getByText(/for the indian diaspora in germany/i)).toBeInTheDocument();
   });
 
   it('renders a link for every active city', async () => {

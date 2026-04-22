@@ -54,7 +54,7 @@ export default function NotificationsSettingsScreen() {
     setSaving(true);
     try {
       const payload = n.NotificationPreferencesUpdate.parse({ preferences: prefs.preferences });
-      const response = await authClient.postAuthed<typeof payload, n.NotificationPreferences>(
+      const response = await authClient.putAuthed<typeof payload, n.NotificationPreferences>(
         '/api/v1/notifications/preferences',
         payload,
       );

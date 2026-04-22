@@ -37,7 +37,7 @@ export default function QuietHoursScreen() {
         },
       });
 
-      await authClient.postAuthed<typeof payload, n.NotificationPreferences>(
+      await authClient.putAuthed<typeof payload, n.NotificationPreferences>(
         '/api/v1/notifications/preferences',
         payload,
       );

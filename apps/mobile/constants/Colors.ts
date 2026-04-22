@@ -1,19 +1,25 @@
-const tintColorLight = '#2f95dc';
-const tintColorDark = '#fff';
+/**
+ * Legacy Expo-template Colors export — now backed by the brand palette.
+ * Prefer importing from `@/constants/theme` directly in new code.
+ */
+import { palette } from './theme';
+
+const tintColorLight = palette.brand[600];
+const tintColorDark = palette.brand[300];
 
 export default {
   light: {
-    text: '#000',
-    background: '#fff',
+    text: palette.neutral.foreground,
+    background: palette.neutral.background,
     tint: tintColorLight,
-    tabIconDefault: '#ccc',
+    tabIconDefault: palette.neutral.muted,
     tabIconSelected: tintColorLight,
   },
   dark: {
-    text: '#fff',
-    background: '#000',
+    text: '#f8fafc',
+    background: '#0f172a',
     tint: tintColorDark,
-    tabIconDefault: '#ccc',
+    tabIconDefault: '#64748b',
     tabIconSelected: tintColorDark,
   },
 };

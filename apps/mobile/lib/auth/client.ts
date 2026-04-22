@@ -148,8 +148,24 @@ export function createAuthClient(options: CreateAuthClientOptions = {}) {
         { auth: true },
       );
     },
+    async putAuthed<TReq extends Record<string, unknown>, TRes>(path: string, body: TReq) {
+      return requestJson<TRes>(path, { method: 'PUT', body: JSON.stringify(body) }, { auth: true });
+    },
+    async patchAuthed<TReq extends Record<string, unknown>, TRes>(path: string, body: TReq) {
+      return requestJson<TRes>(
+        path,
+        { method: 'PATCH', body: JSON.stringify(body) },
+        { auth: true },
+      );
+    },
+    async deleteAuthed<TRes>(path: string) {
+      return requestJson<TRes>(path, { method: 'DELETE' }, { auth: true });
+    },
     async getAuthed<TRes>(path: string) {
       return requestJson<TRes>(path, { method: 'GET' }, { auth: true });
+    },
+    async getPublic<TRes>(path: string) {
+      return requestJson<TRes>(path, { method: 'GET' }, { auth: false });
     },
     refreshAccessToken,
   };
