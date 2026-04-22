@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 560" width="480" height="560" role="img" aria-label="IndLokal — your Indian community, locally">
+  <title>IndLokal</title>
+  <!-- Mark, centred -->
+  <g transform="translate(120,30)">
+    <rect width="240" height="240" rx="52" fill="#4F46E5"/>
+    <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="38,140 94,140 120,66" stroke="#FAFAF9"/>
+      <polyline points="120,66 146,140 202,140" stroke="#F59E0B"/>
+    </g>
+  </g>
+  <!-- Wordmark -->
+  <text x="240" y="370" text-anchor="middle"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700" font-size="78" letter-spacing="-2"
+        fill="#312E81">IndLokal</text>
+  <!-- Tagline -->
+  <text x="240" y="430" text-anchor="middle"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="500" font-size="26" letter-spacing="-0.3"
+        fill="#475569">Your Indian community, locally.</text>
+</svg>

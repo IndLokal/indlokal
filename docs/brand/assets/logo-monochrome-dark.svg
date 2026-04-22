@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220" role="img" aria-label="IndLokal">
+  <title>IndLokal — monochrome dark</title>
+  <!-- Mark in single indigo. The peak gets a filled disc to preserve the "pulse moment". -->
+  <g transform="translate(0,0)">
+    <rect width="220" height="220" rx="48" fill="#312E81"/>
+    <polyline points="36,128 86,128 110,60 134,128 184,128"
+              fill="none" stroke="#FAFAF9" stroke-width="18"
+              stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="110" cy="60" r="11" fill="#FAFAF9"/>
+  </g>
+  <text x="260" y="148" font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700" font-size="112" letter-spacing="-3"
+        fill="#312E81">IndLokal</text>
+</svg>

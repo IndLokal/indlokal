@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220" role="img" aria-label="IndLokal">
+  <title>IndLokal</title>
+  <!-- Mark -->
+  <g transform="translate(0,0)">
+    <rect width="220" height="220" rx="48" fill="#4F46E5"/>
+    <g fill="none" stroke-width="18" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="36,128 86,128 110,60" stroke="#FAFAF9"/>
+      <polyline points="110,60 134,128 184,128" stroke="#F59E0B"/>
+    </g>
+  </g>
+  <!-- Wordmark: IndLokal — capital I, capital L. Inter 700. -->
+  <text x="260" y="148" font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="700" font-size="112" letter-spacing="-3"
+        fill="#312E81">IndLokal</text>
+</svg>

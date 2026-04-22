@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400" role="img" aria-label="IndLokal">
+  <title>IndLokal — social profile avatar</title>
+  <!-- Full-bleed indigo so the avatar reads strongly inside the platform's circular crop. -->
+  <rect width="400" height="400" fill="#4F46E5"/>
+  <g fill="none" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="68,236 162,236 200,116" stroke="#FAFAF9"/>
+    <polyline points="200,116 238,236 332,236" stroke="#F59E0B"/>
+  </g>
+</svg>

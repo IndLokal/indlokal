@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1584 396" width="1584" height="396" role="img" aria-label="IndLokal — your Indian community, locally">
+  <title>IndLokal — LinkedIn cover</title>
+  <!--
+    LinkedIn places the company avatar at roughly x:48-328, y:240-396.
+    Everything important must sit ABOVE y=240 OR to the right of x=380.
+  -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#312E81"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1584" height="396" fill="url(#bg)"/>
+
+  <!-- Decorative pulse echoes on the right (subtle, off-axis) -->
+  <g opacity="0.18" fill="none" stroke="#F59E0B" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="1100,80 1180,80 1216,30 1252,130 1288,80 1370,80"/>
+    <polyline points="1140,340 1220,340 1256,290 1292,390 1328,340 1410,340" opacity="0.6"/>
+  </g>
+
+  <!-- Brand block: starts at x=380, well clear of the avatar overlay zone -->
+  <g transform="translate(380,86)">
+    <!-- Mark -->
+    <g>
+      <rect width="220" height="220" rx="48" fill="#FAFAF9"/>
+      <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="36,128 86,128 110,60" stroke="#312E81"/>
+        <polyline points="110,60 134,128 184,128" stroke="#F59E0B"/>
+      </g>
+    </g>
+    <!-- Wordmark + tagline -->
+    <text x="260" y="120" font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+          font-weight="700" font-size="86" letter-spacing="-2.5"
+          fill="#FAFAF9">IndLokal</text>
+    <text x="260" y="172" font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+          font-weight="500" font-size="28" letter-spacing="-0.4"
+          fill="#FCD34D">Your Indian community, locally.</text>
+    <text x="260" y="210" font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+          font-weight="400" font-size="20" letter-spacing="0.1"
+          fill="#FAFAF9" opacity="0.8">Communities · Events · Resources, active near you in Germany</text>
+  </g>
+
+  <!-- URL anchored to the bottom-right -->
+  <text x="1488" y="356" text-anchor="end"
+        font-family="Inter, 'Helvetica Neue', Arial, sans-serif"
+        font-weight="600" font-size="22" letter-spacing="0.5"
+        fill="#FAFAF9" opacity="0.85">indlokal.de · indlokal.com</text>
+</svg>

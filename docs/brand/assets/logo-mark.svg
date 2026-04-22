@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="IndLokal pulse mark">
+  <title>IndLokal</title>
+  <!--
+    The Pulse mark.
+    Indigo tile = the city, the platform, the local container.
+    Bi-colour pulse line = activity (the product is activity-led).
+      Cream half (left) = local / German city context.
+      Saffron half (right) = Indian community warmth rising.
+    They meet at a peak — the moment of discovery.
+  -->
+  <rect width="256" height="256" rx="56" fill="#4F46E5"/>
+  <g fill="none" stroke-width="20" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="40,150 100,150 128,68" stroke="#FAFAF9"/>
+    <polyline points="128,68 156,150 216,150" stroke="#F59E0B"/>
+  </g>
+</svg>
