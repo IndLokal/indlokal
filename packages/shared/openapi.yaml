@@ -1437,6 +1437,316 @@ components:
         - communities
         - events
         - categories
+    TrustSignalType:
+      type: string
+      enum: &a8
+        - ADMIN_VERIFIED
+        - COMMUNITY_CLAIMED
+        - USER_REPORTED_ACCURATE
+        - USER_REPORTED_STALE
+        - EDITORIAL_REVIEWED
+    TrustSignal:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        signalType:
+          type: string
+          enum: *a8
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - signalType
+        - createdAt
+    EventStatus:
+      type: string
+      enum: &a9
+        - UPCOMING
+        - ONGOING
+        - PAST
+        - CANCELLED
+    EventDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        title:
+          type: string
+        slug:
+          type: string
+        description:
+          type:
+            - string
+            - "null"
+        status:
+          type: string
+          enum: *a9
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        venueName:
+          type:
+            - string
+            - "null"
+        venueAddress:
+          type:
+            - string
+            - "null"
+        isOnline:
+          type: boolean
+        onlineUrl:
+          type:
+            - string
+            - "null"
+        cost:
+          type:
+            - string
+            - "null"
+        imageUrl:
+          type:
+            - string
+            - "null"
+        isRecurring:
+          type: boolean
+        registrationUrl:
+          type:
+            - string
+            - "null"
+        community:
+          type:
+            - object
+            - "null"
+          properties:
+            name:
+              type: string
+            slug:
+              type: string
+            logoUrl:
+              type:
+                - string
+                - "null"
+          required:
+            - name
+            - slug
+            - logoUrl
+        city:
+          type: object
+          properties:
+            name:
+              type: string
+            slug:
+              type: string
+          required:
+            - name
+            - slug
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                  icon:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - name
+                  - slug
+                  - icon
+            required:
+              - category
+        trustSignals:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              signalType:
+                type: string
+                enum: *a8
+              createdAt:
+                type: string
+                format: date-time
+            required:
+              - id
+              - signalType
+              - createdAt
+        relatedEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              title:
+                type: string
+              slug:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              venueName:
+                type:
+                  - string
+                  - "null"
+              isOnline:
+                type: boolean
+              cost:
+                type:
+                  - string
+                  - "null"
+              imageUrl:
+                type:
+                  - string
+                  - "null"
+              isRecurring:
+                type: boolean
+              community:
+                type:
+                  - object
+                  - "null"
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - name
+                        - slug
+                        - icon
+                  required:
+                    - category
+            required:
+              - id
+              - title
+              - slug
+              - startsAt
+              - endsAt
+              - venueName
+              - isOnline
+              - cost
+              - imageUrl
+              - isRecurring
+              - community
+              - city
+              - categories
+      required:
+        - id
+        - title
+        - slug
+        - description
+        - status
+        - startsAt
+        - endsAt
+        - venueName
+        - venueAddress
+        - isOnline
+        - onlineUrl
+        - cost
+        - imageUrl
+        - isRecurring
+        - registrationUrl
+        - community
+        - city
+        - categories
+        - trustSignals
+        - relatedEvents
+    SaveState:
+      type: object
+      properties:
+        saved:
+          type: boolean
+      required:
+        - saved
+    TrackEventType:
+      type: string
+      enum: &a10
+        - event.detail.viewed
+        - event.saved
+        - event.calendar_added
+        - event.shared
+        - event.register_clicked
+        - discover.feed.viewed
+        - discover.card.tapped
+    TrackEvent:
+      type: object
+      properties:
+        event:
+          type: string
+          enum: *a10
+        entityType:
+          type: string
+          enum: &a12
+            - COMMUNITY
+            - EVENT
+            - RESOURCE
+        entityId:
+          type: string
+          minLength: 20
+          maxLength: 40
+        citySlug:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: {}
+      required:
+        - event
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -1474,13 +1784,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a8
+            application/json: &a11
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -1581,11 +1891,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -1692,15 +2002,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "500":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -1817,15 +2127,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "500":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -1925,11 +2235,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -1961,7 +2271,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -2033,11 +2343,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "404":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/devices:
     post:
       summary: Register or refresh the calling device
@@ -2122,11 +2432,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/devices/{installationId}:
     patch:
       summary: Update mutable device fields (push token, locale, ...)
@@ -2210,15 +2520,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "404":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
     delete:
       summary: Sign out from the given device
       security:
@@ -2246,7 +2556,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/notifications/preferences:
     get:
       summary: Read the full topic × channel preference matrix
@@ -2302,7 +2612,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
     put:
       summary: Patch preferences and/or quiet hours
       security:
@@ -2395,11 +2705,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/notifications/inbox:
     get:
       summary: List inbox items, newest first
@@ -2469,7 +2779,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/notifications/inbox/read:
     post:
       summary: Mark inbox items as read
@@ -2508,11 +2818,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
         "401":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/cities:
     get:
       summary: List all active cities
@@ -2665,7 +2975,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/discovery/{citySlug}/events:
     get:
       summary: Cursor-paginated event feed for a city
@@ -2814,7 +3124,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/discovery/{citySlug}/communities:
     get:
       summary: Cursor-paginated community feed for a city
@@ -2956,7 +3266,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
   /api/v1/discovery/{citySlug}/trending:
     get:
       summary: Trending communities, upcoming events, and category grid for a city
@@ -3196,5 +3506,368 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a8
+            application/json: *a11
+  /api/v1/events/{slug}:
+    get:
+      summary: Event detail — optional auth for savedByUser flag
+      security: []
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: Event detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  title:
+                    type: string
+                  slug:
+                    type: string
+                  description:
+                    type:
+                      - string
+                      - "null"
+                  status:
+                    type: string
+                    enum: *a9
+                  startsAt:
+                    type: string
+                    format: date-time
+                  endsAt:
+                    type:
+                      - string
+                      - "null"
+                    format: date-time
+                  venueName:
+                    type:
+                      - string
+                      - "null"
+                  venueAddress:
+                    type:
+                      - string
+                      - "null"
+                  isOnline:
+                    type: boolean
+                  onlineUrl:
+                    type:
+                      - string
+                      - "null"
+                  cost:
+                    type:
+                      - string
+                      - "null"
+                  imageUrl:
+                    type:
+                      - string
+                      - "null"
+                  isRecurring:
+                    type: boolean
+                  registrationUrl:
+                    type:
+                      - string
+                      - "null"
+                  community:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      name:
+                        type: string
+                      slug:
+                        type: string
+                      logoUrl:
+                        type:
+                          - string
+                          - "null"
+                    required:
+                      - name
+                      - slug
+                      - logoUrl
+                  city:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      slug:
+                        type: string
+                    required:
+                      - name
+                      - slug
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        category:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                            icon:
+                              type:
+                                - string
+                                - "null"
+                          required:
+                            - name
+                            - slug
+                            - icon
+                      required:
+                        - category
+                  trustSignals:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        signalType:
+                          type: string
+                          enum: *a8
+                        createdAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - id
+                        - signalType
+                        - createdAt
+                  relatedEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        title:
+                          type: string
+                        slug:
+                          type: string
+                        startsAt:
+                          type: string
+                          format: date-time
+                        endsAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        venueName:
+                          type:
+                            - string
+                            - "null"
+                        isOnline:
+                          type: boolean
+                        cost:
+                          type:
+                            - string
+                            - "null"
+                        imageUrl:
+                          type:
+                            - string
+                            - "null"
+                        isRecurring:
+                          type: boolean
+                        community:
+                          type:
+                            - object
+                            - "null"
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        categories:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              category:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  slug:
+                                    type: string
+                                  icon:
+                                    type:
+                                      - string
+                                      - "null"
+                                required:
+                                  - name
+                                  - slug
+                                  - icon
+                            required:
+                              - category
+                      required:
+                        - id
+                        - title
+                        - slug
+                        - startsAt
+                        - endsAt
+                        - venueName
+                        - isOnline
+                        - cost
+                        - imageUrl
+                        - isRecurring
+                        - community
+                        - city
+                        - categories
+                required:
+                  - id
+                  - title
+                  - slug
+                  - description
+                  - status
+                  - startsAt
+                  - endsAt
+                  - venueName
+                  - venueAddress
+                  - isOnline
+                  - onlineUrl
+                  - cost
+                  - imageUrl
+                  - isRecurring
+                  - registrationUrl
+                  - community
+                  - city
+                  - categories
+                  - trustSignals
+                  - relatedEvents
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a11
+  /api/v1/events/{slug}/save:
+    post:
+      summary: Save an event (requires auth)
+      security:
+        - bearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: Save state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                required:
+                  - saved
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a11
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a11
+    delete:
+      summary: Unsave an event (requires auth)
+      security:
+        - bearerAuth: []
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: Save state
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                required:
+                  - saved
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a11
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a11
+  /api/v1/track:
+    post:
+      summary: Client-side behavioral event tracking (optional auth)
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event:
+                  type: string
+                  enum: *a10
+                entityType:
+                  type: string
+                  enum: *a12
+                entityId:
+                  type: string
+                  minLength: 20
+                  maxLength: 40
+                citySlug:
+                  type: string
+                metadata:
+                  type: object
+                  additionalProperties: {}
+              required:
+                - event
+      responses:
+        "200":
+          description: Acknowledged
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    enum:
+                      - true
+                required:
+                  - ok
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a11
 webhooks: {}

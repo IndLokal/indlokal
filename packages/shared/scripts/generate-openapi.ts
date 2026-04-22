@@ -25,6 +25,7 @@ import * as authContracts from '../src/contracts/auth.js';
 import * as commonContracts from '../src/contracts/common.js';
 import * as notificationContracts from '../src/contracts/notifications.js';
 import * as discoveryContracts from '../src/contracts/discovery.js';
+import * as eventsContracts from '../src/contracts/events.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -432,6 +433,81 @@ registry.registerPath({
       content: { 'application/json': { schema: discoveryContracts.TrendingResponse } },
     },
     404: errorResponse,
+  },
+});
+
+// ─── Events (TDD-0005) ───
+
+// Register schemas
+registry.register('TrustSignalType', eventsContracts.TrustSignalType);
+registry.register('TrustSignal', eventsContracts.TrustSignal);
+registry.register('EventStatus', eventsContracts.EventStatus);
+registry.register('EventDetail', eventsContracts.EventDetail);
+registry.register('SaveState', eventsContracts.SaveState);
+registry.register('TrackEventType', eventsContracts.TrackEventType);
+registry.register('TrackEvent', eventsContracts.TrackEvent);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/events/{slug}',
+  summary: 'Event detail — optional auth for savedByUser flag',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [],
+  responses: {
+    200: {
+      description: 'Event detail',
+      content: { 'application/json': { schema: eventsContracts.EventDetail } },
+    },
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/events/{slug}/save',
+  summary: 'Save an event (requires auth)',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Save state',
+      content: { 'application/json': { schema: eventsContracts.SaveState } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'delete',
+  path: '/api/v1/events/{slug}/save',
+  summary: 'Unsave an event (requires auth)',
+  request: { params: z.object({ slug: z.string() }) },
+  security: [{ bearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'Save state',
+      content: { 'application/json': { schema: eventsContracts.SaveState } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/track',
+  summary: 'Client-side behavioral event tracking (optional auth)',
+  request: {
+    body: { content: { 'application/json': { schema: eventsContracts.TrackEvent } } },
+  },
+  security: [],
+  responses: {
+    200: {
+      description: 'Acknowledged',
+      content: { 'application/json': { schema: commonContracts.Ack } },
+    },
+    400: errorResponse,
   },
 });
 

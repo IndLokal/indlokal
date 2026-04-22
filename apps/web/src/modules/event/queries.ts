@@ -1,7 +1,7 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { SCORING } from '@/lib/config';
 import { endOfWeek, endOfMonth } from 'date-fns';
-import type { EventWithRelations, EventListItem } from './types';
+import type { EventWithRelations, EventListItem, EventDetailRow } from './types';
 
 export const eventListSelect = {
   id: true,
@@ -143,4 +143,70 @@ export async function getUpcomingEvents(
     take: options?.limit ?? 20,
     skip: options?.offset ?? 0,
   });
+}
+
+/**
+ * Full event detail including trust signals and related upcoming events
+ * from the same community. Powers GET /api/v1/events/:slug.
+ */
+export async function getEventDetail(slug: string): Promise<EventDetailRow | null> {
+  const event = await db.event.findUnique({
+    where: { slug },
+    include: {
+      community: { select: { id: true, name: true, slug: true, logoUrl: true } },
+      city: { select: { name: true, slug: true } },
+      categories: { include: { category: { select: { name: true, slug: true, icon: true } } } },
+      trustSignals: {
+        select: { id: true, signalType: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+  if (!event) return null;
+
+  // Related: up to 3 upcoming events from the same community (excluding this one).
+  const relatedEvents = event.communityId
+    ? await db.event.findMany({
+        where: {
+          communityId: event.communityId,
+          id: { not: event.id },
+          startsAt: { gte: new Date() },
+          status: { not: 'CANCELLED' },
+        },
+        select: eventListSelect,
+        orderBy: { startsAt: 'asc' },
+        take: 3,
+      })
+    : [];
+
+  return { ...event, relatedEvents };
+}
+
+/**
+ * Save an event for a user. Idempotent (no error if already saved).
+ */
+export async function saveEvent(userId: string, eventId: string): Promise<void> {
+  await db.savedEvent.upsert({
+    where: { userId_eventId: { userId, eventId } },
+    create: { userId, eventId },
+    update: {},
+  });
+}
+
+/**
+ * Unsave an event for a user. Idempotent (no error if not saved).
+ */
+export async function unsaveEvent(userId: string, eventId: string): Promise<void> {
+  await db.savedEvent.deleteMany({ where: { userId, eventId } });
+}
+
+/**
+ * Check whether a user has saved a given event.
+ */
+export async function isEventSaved(userId: string, eventId: string): Promise<boolean> {
+  const row = await db.savedEvent.findUnique({
+    where: { userId_eventId: { userId, eventId } },
+    select: { userId: true },
+  });
+  return row !== null;
 }
