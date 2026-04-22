@@ -11,5 +11,5 @@
  * - Profile completeness computation
  * - Access channel management
  */
-export { getCommunityBySlug, getCommunityRedirectTarget, getCommunitiesByCity } from './queries';
+export { getCommunityBySlug, getCommunityRedirectTarget, getCommunitiesByCity, getCommunitiesPage } from './queries';
 export type { CommunityWithRelations, CommunityListItem } from './types';

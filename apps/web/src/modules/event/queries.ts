@@ -3,7 +3,7 @@ import { SCORING } from '@/lib/config';
 import { endOfWeek, endOfMonth } from 'date-fns';
 import type { EventWithRelations, EventListItem } from './types';
 
-const eventListSelect = {
+export const eventListSelect = {
   id: true,
   title: true,
   slug: true,
@@ -80,6 +80,44 @@ export async function getEventsThisWeek(
 /**
  * Get upcoming events for a city with optional filters.
  */
+/**
+ * Cursor-paginated event list — powers GET /api/v1/discovery/:citySlug/events.
+ */
+export async function getEventsPage(
+  citySlug: string,
+  opts: {
+    from?: Date;
+    to?: Date;
+    cursor?: string;
+    limit: number;
+    categorySlug?: string;
+  },
+): Promise<{ items: EventListItem[]; hasMore: boolean }> {
+  const cityIds = await resolveCityIds(citySlug);
+  if (!cityIds.length) return { items: [], hasMore: false };
+
+  const rows = await db.event.findMany({
+    where: {
+      cityId: { in: cityIds },
+      status: { not: 'CANCELLED' },
+      startsAt: {
+        gte: opts.from ?? new Date(),
+        ...(opts.to && { lte: opts.to }),
+      },
+      ...(opts.categorySlug && {
+        categories: { some: { category: { slug: opts.categorySlug } } },
+      }),
+    },
+    select: eventListSelect,
+    orderBy: { startsAt: 'asc' },
+    take: opts.limit + 1,
+    ...(opts.cursor && { cursor: { id: opts.cursor }, skip: 1 }),
+  });
+
+  const hasMore = rows.length > opts.limit;
+  return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+}
+
 export async function getUpcomingEvents(
   citySlug: string,
   options?: {

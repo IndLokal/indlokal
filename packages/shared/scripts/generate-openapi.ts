@@ -24,6 +24,7 @@ import { z } from 'zod';
 import * as authContracts from '../src/contracts/auth.js';
 import * as commonContracts from '../src/contracts/common.js';
 import * as notificationContracts from '../src/contracts/notifications.js';
+import * as discoveryContracts from '../src/contracts/discovery.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -336,6 +337,101 @@ registry.registerPath({
     },
     400: errorResponse,
     401: errorResponse,
+  },
+});
+
+// ─── Discovery (TDD-0003) ─────────────────────────────────────────────────
+
+registry.register('City', discoveryContracts.City);
+registry.register('CategorySummary', discoveryContracts.CategorySummary);
+registry.register('CityCounts', discoveryContracts.CityCounts);
+registry.register('CityDetail', discoveryContracts.CityDetail);
+registry.register('CommunityRef', discoveryContracts.CommunityRef);
+registry.register('CityRef', discoveryContracts.CityRef);
+registry.register('CategoryRef', discoveryContracts.CategoryRef);
+registry.register('EventCard', discoveryContracts.EventCard);
+registry.register('EventsQuery', discoveryContracts.EventsQuery);
+registry.register('EventsPage', discoveryContracts.EventsPage);
+registry.register('CommunityStatus', discoveryContracts.CommunityStatus);
+registry.register('ClaimState', discoveryContracts.ClaimState);
+registry.register('CommunityCard', discoveryContracts.CommunityCard);
+registry.register('CommunitiesQuery', discoveryContracts.CommunitiesQuery);
+registry.register('CommunitiesPage', discoveryContracts.CommunitiesPage);
+registry.register('TrendingResponse', discoveryContracts.TrendingResponse);
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/cities',
+  summary: 'List all active cities',
+  responses: {
+    200: {
+      description: 'City list',
+      content: {
+        'application/json': { schema: z.array(discoveryContracts.City) },
+      },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/cities/{slug}',
+  summary: 'City detail with counts and category grid',
+  request: { params: z.object({ slug: z.string() }) },
+  responses: {
+    200: {
+      description: 'City detail',
+      content: { 'application/json': { schema: discoveryContracts.CityDetail } },
+    },
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/discovery/{citySlug}/events',
+  summary: 'Cursor-paginated event feed for a city',
+  request: {
+    params: z.object({ citySlug: z.string() }),
+    query: discoveryContracts.EventsQuery,
+  },
+  responses: {
+    200: {
+      description: 'Events page',
+      content: { 'application/json': { schema: discoveryContracts.EventsPage } },
+    },
+    400: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/discovery/{citySlug}/communities',
+  summary: 'Cursor-paginated community feed for a city',
+  request: {
+    params: z.object({ citySlug: z.string() }),
+    query: discoveryContracts.CommunitiesQuery,
+  },
+  responses: {
+    200: {
+      description: 'Communities page',
+      content: { 'application/json': { schema: discoveryContracts.CommunitiesPage } },
+    },
+    400: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/discovery/{citySlug}/trending',
+  summary: 'Trending communities, upcoming events, and category grid for a city',
+  request: { params: z.object({ citySlug: z.string() }) },
+  responses: {
+    200: {
+      description: 'Trending feed',
+      content: { 'application/json': { schema: discoveryContracts.TrendingResponse } },
+    },
+    404: errorResponse,
   },
 });
 

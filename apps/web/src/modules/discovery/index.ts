@@ -11,5 +11,5 @@
  * - Past events as "recently happened" proof of activity
  * - Cross-module data aggregation
  */
-export { getCityFeed } from './queries';
+export { getCityFeed, getCitiesList, getCityDetail, getTrending } from './queries';
 export type { CityFeedData } from './types';

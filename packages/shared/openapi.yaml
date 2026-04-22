@@ -583,6 +583,860 @@ components:
           maxItems: 100
       required:
         - ids
+    City:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        name:
+          type: string
+        slug:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        isActive:
+          type: boolean
+        isMetroPrimary:
+          type: boolean
+        timezone:
+          type: string
+        diasporaDensityEstimate:
+          type:
+            - integer
+            - "null"
+        latitude:
+          type:
+            - number
+            - "null"
+        longitude:
+          type:
+            - number
+            - "null"
+      required:
+        - id
+        - name
+        - slug
+        - state
+        - country
+        - isActive
+        - isMetroPrimary
+        - timezone
+        - diasporaDensityEstimate
+        - latitude
+        - longitude
+    CategorySummary:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type:
+            - string
+            - "null"
+        communityCount:
+          type: integer
+      required:
+        - name
+        - slug
+        - icon
+        - communityCount
+    CityCounts:
+      type: object
+      properties:
+        communities:
+          type: integer
+        upcomingEvents:
+          type: integer
+        categories:
+          type: integer
+      required:
+        - communities
+        - upcomingEvents
+        - categories
+    CityDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        name:
+          type: string
+        slug:
+          type: string
+        state:
+          type: string
+        country:
+          type: string
+        isActive:
+          type: boolean
+        isMetroPrimary:
+          type: boolean
+        timezone:
+          type: string
+        diasporaDensityEstimate:
+          type:
+            - integer
+            - "null"
+        latitude:
+          type:
+            - number
+            - "null"
+        longitude:
+          type:
+            - number
+            - "null"
+        counts:
+          type: object
+          properties:
+            communities:
+              type: integer
+            upcomingEvents:
+              type: integer
+            categories:
+              type: integer
+          required:
+            - communities
+            - upcomingEvents
+            - categories
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              slug:
+                type: string
+              icon:
+                type:
+                  - string
+                  - "null"
+              communityCount:
+                type: integer
+            required:
+              - name
+              - slug
+              - icon
+              - communityCount
+      required:
+        - id
+        - name
+        - slug
+        - state
+        - country
+        - isActive
+        - isMetroPrimary
+        - timezone
+        - diasporaDensityEstimate
+        - latitude
+        - longitude
+        - counts
+        - categories
+    CommunityRef:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+      required:
+        - name
+        - slug
+    CityRef:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+      required:
+        - name
+        - slug
+    CategoryRef:
+      type: object
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        icon:
+          type:
+            - string
+            - "null"
+      required:
+        - name
+        - slug
+        - icon
+    EventCard:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        title:
+          type: string
+        slug:
+          type: string
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        venueName:
+          type:
+            - string
+            - "null"
+        isOnline:
+          type: boolean
+        cost:
+          type:
+            - string
+            - "null"
+        imageUrl:
+          type:
+            - string
+            - "null"
+        isRecurring:
+          type: boolean
+        community:
+          type:
+            - object
+            - "null"
+          properties:
+            name:
+              type: string
+            slug:
+              type: string
+          required:
+            - name
+            - slug
+        city:
+          type: object
+          properties:
+            name:
+              type: string
+            slug:
+              type: string
+          required:
+            - name
+            - slug
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                  icon:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - name
+                  - slug
+                  - icon
+            required:
+              - category
+      required:
+        - id
+        - title
+        - slug
+        - startsAt
+        - endsAt
+        - venueName
+        - isOnline
+        - cost
+        - imageUrl
+        - isRecurring
+        - community
+        - city
+        - categories
+    EventsQuery:
+      type: object
+      properties:
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        cursor:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+        categorySlug:
+          type: string
+    EventsPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              title:
+                type: string
+              slug:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              venueName:
+                type:
+                  - string
+                  - "null"
+              isOnline:
+                type: boolean
+              cost:
+                type:
+                  - string
+                  - "null"
+              imageUrl:
+                type:
+                  - string
+                  - "null"
+              isRecurring:
+                type: boolean
+              community:
+                type:
+                  - object
+                  - "null"
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - name
+                        - slug
+                        - icon
+                  required:
+                    - category
+            required:
+              - id
+              - title
+              - slug
+              - startsAt
+              - endsAt
+              - venueName
+              - isOnline
+              - cost
+              - imageUrl
+              - isRecurring
+              - community
+              - city
+              - categories
+        nextCursor:
+          type: string
+      required:
+        - items
+    CommunityStatus:
+      type: string
+      enum: &a6
+        - ACTIVE
+        - INACTIVE
+        - UNVERIFIED
+        - CLAIMED
+    ClaimState:
+      type: string
+      enum: &a7
+        - UNCLAIMED
+        - CLAIM_PENDING
+        - CLAIMED
+    CommunityCard:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 20
+          maxLength: 40
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type:
+            - string
+            - "null"
+        status:
+          type: string
+          enum: *a6
+        activityScore:
+          type: number
+        completenessScore:
+          type: number
+        trustScore:
+          type: number
+        isTrending:
+          type: boolean
+        claimState:
+          type: string
+          enum: *a7
+        memberCountApprox:
+          type:
+            - integer
+            - "null"
+        logoUrl:
+          type:
+            - string
+            - "null"
+        lastActivityAt:
+          type:
+            - string
+            - "null"
+          format: date-time
+        languages:
+          type: array
+          items:
+            type: string
+        city:
+          type: object
+          properties:
+            name:
+              type: string
+            slug:
+              type: string
+          required:
+            - name
+            - slug
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                  icon:
+                    type:
+                      - string
+                      - "null"
+                required:
+                  - name
+                  - slug
+                  - icon
+            required:
+              - category
+        upcomingEventCount:
+          type: integer
+      required:
+        - id
+        - name
+        - slug
+        - description
+        - status
+        - activityScore
+        - completenessScore
+        - trustScore
+        - isTrending
+        - claimState
+        - memberCountApprox
+        - logoUrl
+        - lastActivityAt
+        - languages
+        - city
+        - categories
+        - upcomingEventCount
+    CommunitiesQuery:
+      type: object
+      properties:
+        cursor:
+          type: string
+        limit:
+          type: integer
+          minimum: 1
+          maximum: 50
+        categorySlug:
+          type: string
+    CommunitiesPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              name:
+                type: string
+              slug:
+                type: string
+              description:
+                type:
+                  - string
+                  - "null"
+              status:
+                type: string
+                enum: *a6
+              activityScore:
+                type: number
+              completenessScore:
+                type: number
+              trustScore:
+                type: number
+              isTrending:
+                type: boolean
+              claimState:
+                type: string
+                enum: *a7
+              memberCountApprox:
+                type:
+                  - integer
+                  - "null"
+              logoUrl:
+                type:
+                  - string
+                  - "null"
+              lastActivityAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              languages:
+                type: array
+                items:
+                  type: string
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - name
+                        - slug
+                        - icon
+                  required:
+                    - category
+              upcomingEventCount:
+                type: integer
+            required:
+              - id
+              - name
+              - slug
+              - description
+              - status
+              - activityScore
+              - completenessScore
+              - trustScore
+              - isTrending
+              - claimState
+              - memberCountApprox
+              - logoUrl
+              - lastActivityAt
+              - languages
+              - city
+              - categories
+              - upcomingEventCount
+        nextCursor:
+          type: string
+      required:
+        - items
+    TrendingResponse:
+      type: object
+      properties:
+        communities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              name:
+                type: string
+              slug:
+                type: string
+              description:
+                type:
+                  - string
+                  - "null"
+              status:
+                type: string
+                enum: *a6
+              activityScore:
+                type: number
+              completenessScore:
+                type: number
+              trustScore:
+                type: number
+              isTrending:
+                type: boolean
+              claimState:
+                type: string
+                enum: *a7
+              memberCountApprox:
+                type:
+                  - integer
+                  - "null"
+              logoUrl:
+                type:
+                  - string
+                  - "null"
+              lastActivityAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              languages:
+                type: array
+                items:
+                  type: string
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - name
+                        - slug
+                        - icon
+                  required:
+                    - category
+              upcomingEventCount:
+                type: integer
+            required:
+              - id
+              - name
+              - slug
+              - description
+              - status
+              - activityScore
+              - completenessScore
+              - trustScore
+              - isTrending
+              - claimState
+              - memberCountApprox
+              - logoUrl
+              - lastActivityAt
+              - languages
+              - city
+              - categories
+              - upcomingEventCount
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              title:
+                type: string
+              slug:
+                type: string
+              startsAt:
+                type: string
+                format: date-time
+              endsAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+              venueName:
+                type:
+                  - string
+                  - "null"
+              isOnline:
+                type: boolean
+              cost:
+                type:
+                  - string
+                  - "null"
+              imageUrl:
+                type:
+                  - string
+                  - "null"
+              isRecurring:
+                type: boolean
+              community:
+                type:
+                  - object
+                  - "null"
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              city:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                required:
+                  - name
+                  - slug
+              categories:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    category:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                      required:
+                        - name
+                        - slug
+                        - icon
+                  required:
+                    - category
+            required:
+              - id
+              - title
+              - slug
+              - startsAt
+              - endsAt
+              - venueName
+              - isOnline
+              - cost
+              - imageUrl
+              - isRecurring
+              - community
+              - city
+              - categories
+        categories:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              slug:
+                type: string
+              icon:
+                type:
+                  - string
+                  - "null"
+              communityCount:
+                type: integer
+            required:
+              - name
+              - slug
+              - icon
+              - communityCount
+      required:
+        - communities
+        - events
+        - categories
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -620,13 +1474,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a6
+            application/json: &a8
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -727,11 +1581,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -838,15 +1692,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "500":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -963,15 +1817,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "500":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -1071,11 +1925,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -1107,7 +1961,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -1179,11 +2033,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "404":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/devices:
     post:
       summary: Register or refresh the calling device
@@ -1268,11 +2122,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/devices/{installationId}:
     patch:
       summary: Update mutable device fields (push token, locale, ...)
@@ -1356,15 +2210,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "404":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
     delete:
       summary: Sign out from the given device
       security:
@@ -1392,7 +2246,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/notifications/preferences:
     get:
       summary: Read the full topic × channel preference matrix
@@ -1448,7 +2302,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
     put:
       summary: Patch preferences and/or quiet hours
       security:
@@ -1541,11 +2395,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/notifications/inbox:
     get:
       summary: List inbox items, newest first
@@ -1615,7 +2469,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
   /api/v1/notifications/inbox/read:
     post:
       summary: Mark inbox items as read
@@ -1654,9 +2508,693 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
         "401":
           description: Error envelope
           content:
-            application/json: *a6
+            application/json: *a8
+  /api/v1/cities:
+    get:
+      summary: List all active cities
+      responses:
+        "200":
+          description: City list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 20
+                      maxLength: 40
+                    name:
+                      type: string
+                    slug:
+                      type: string
+                    state:
+                      type: string
+                    country:
+                      type: string
+                    isActive:
+                      type: boolean
+                    isMetroPrimary:
+                      type: boolean
+                    timezone:
+                      type: string
+                    diasporaDensityEstimate:
+                      type:
+                        - integer
+                        - "null"
+                    latitude:
+                      type:
+                        - number
+                        - "null"
+                    longitude:
+                      type:
+                        - number
+                        - "null"
+                  required:
+                    - id
+                    - name
+                    - slug
+                    - state
+                    - country
+                    - isActive
+                    - isMetroPrimary
+                    - timezone
+                    - diasporaDensityEstimate
+                    - latitude
+                    - longitude
+  /api/v1/cities/{slug}:
+    get:
+      summary: City detail with counts and category grid
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: slug
+          in: path
+      responses:
+        "200":
+          description: City detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  name:
+                    type: string
+                  slug:
+                    type: string
+                  state:
+                    type: string
+                  country:
+                    type: string
+                  isActive:
+                    type: boolean
+                  isMetroPrimary:
+                    type: boolean
+                  timezone:
+                    type: string
+                  diasporaDensityEstimate:
+                    type:
+                      - integer
+                      - "null"
+                  latitude:
+                    type:
+                      - number
+                      - "null"
+                  longitude:
+                    type:
+                      - number
+                      - "null"
+                  counts:
+                    type: object
+                    properties:
+                      communities:
+                        type: integer
+                      upcomingEvents:
+                        type: integer
+                      categories:
+                        type: integer
+                    required:
+                      - communities
+                      - upcomingEvents
+                      - categories
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                        communityCount:
+                          type: integer
+                      required:
+                        - name
+                        - slug
+                        - icon
+                        - communityCount
+                required:
+                  - id
+                  - name
+                  - slug
+                  - state
+                  - country
+                  - isActive
+                  - isMetroPrimary
+                  - timezone
+                  - diasporaDensityEstimate
+                  - latitude
+                  - longitude
+                  - counts
+                  - categories
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a8
+  /api/v1/discovery/{citySlug}/events:
+    get:
+      summary: Cursor-paginated event feed for a city
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: citySlug
+          in: path
+        - schema:
+            type: string
+            format: date-time
+          required: false
+          name: from
+          in: query
+        - schema:
+            type: string
+            format: date-time
+          required: false
+          name: to
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          required: false
+          name: limit
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: categorySlug
+          in: query
+      responses:
+        "200":
+          description: Events page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        title:
+                          type: string
+                        slug:
+                          type: string
+                        startsAt:
+                          type: string
+                          format: date-time
+                        endsAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        venueName:
+                          type:
+                            - string
+                            - "null"
+                        isOnline:
+                          type: boolean
+                        cost:
+                          type:
+                            - string
+                            - "null"
+                        imageUrl:
+                          type:
+                            - string
+                            - "null"
+                        isRecurring:
+                          type: boolean
+                        community:
+                          type:
+                            - object
+                            - "null"
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        categories:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              category:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  slug:
+                                    type: string
+                                  icon:
+                                    type:
+                                      - string
+                                      - "null"
+                                required:
+                                  - name
+                                  - slug
+                                  - icon
+                            required:
+                              - category
+                      required:
+                        - id
+                        - title
+                        - slug
+                        - startsAt
+                        - endsAt
+                        - venueName
+                        - isOnline
+                        - cost
+                        - imageUrl
+                        - isRecurring
+                        - community
+                        - city
+                        - categories
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a8
+  /api/v1/discovery/{citySlug}/communities:
+    get:
+      summary: Cursor-paginated community feed for a city
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: citySlug
+          in: path
+        - schema:
+            type: string
+          required: false
+          name: cursor
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+          required: false
+          name: limit
+          in: query
+        - schema:
+            type: string
+          required: false
+          name: categorySlug
+          in: query
+      responses:
+        "200":
+          description: Communities page
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        description:
+                          type:
+                            - string
+                            - "null"
+                        status:
+                          type: string
+                          enum: *a6
+                        activityScore:
+                          type: number
+                        completenessScore:
+                          type: number
+                        trustScore:
+                          type: number
+                        isTrending:
+                          type: boolean
+                        claimState:
+                          type: string
+                          enum: *a7
+                        memberCountApprox:
+                          type:
+                            - integer
+                            - "null"
+                        logoUrl:
+                          type:
+                            - string
+                            - "null"
+                        lastActivityAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        languages:
+                          type: array
+                          items:
+                            type: string
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        categories:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              category:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  slug:
+                                    type: string
+                                  icon:
+                                    type:
+                                      - string
+                                      - "null"
+                                required:
+                                  - name
+                                  - slug
+                                  - icon
+                            required:
+                              - category
+                        upcomingEventCount:
+                          type: integer
+                      required:
+                        - id
+                        - name
+                        - slug
+                        - description
+                        - status
+                        - activityScore
+                        - completenessScore
+                        - trustScore
+                        - isTrending
+                        - claimState
+                        - memberCountApprox
+                        - logoUrl
+                        - lastActivityAt
+                        - languages
+                        - city
+                        - categories
+                        - upcomingEventCount
+                  nextCursor:
+                    type: string
+                required:
+                  - items
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a8
+  /api/v1/discovery/{citySlug}/trending:
+    get:
+      summary: Trending communities, upcoming events, and category grid for a city
+      parameters:
+        - schema:
+            type: string
+          required: true
+          name: citySlug
+          in: path
+      responses:
+        "200":
+          description: Trending feed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  communities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        description:
+                          type:
+                            - string
+                            - "null"
+                        status:
+                          type: string
+                          enum: *a6
+                        activityScore:
+                          type: number
+                        completenessScore:
+                          type: number
+                        trustScore:
+                          type: number
+                        isTrending:
+                          type: boolean
+                        claimState:
+                          type: string
+                          enum: *a7
+                        memberCountApprox:
+                          type:
+                            - integer
+                            - "null"
+                        logoUrl:
+                          type:
+                            - string
+                            - "null"
+                        lastActivityAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        languages:
+                          type: array
+                          items:
+                            type: string
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        categories:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              category:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  slug:
+                                    type: string
+                                  icon:
+                                    type:
+                                      - string
+                                      - "null"
+                                required:
+                                  - name
+                                  - slug
+                                  - icon
+                            required:
+                              - category
+                        upcomingEventCount:
+                          type: integer
+                      required:
+                        - id
+                        - name
+                        - slug
+                        - description
+                        - status
+                        - activityScore
+                        - completenessScore
+                        - trustScore
+                        - isTrending
+                        - claimState
+                        - memberCountApprox
+                        - logoUrl
+                        - lastActivityAt
+                        - languages
+                        - city
+                        - categories
+                        - upcomingEventCount
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        title:
+                          type: string
+                        slug:
+                          type: string
+                        startsAt:
+                          type: string
+                          format: date-time
+                        endsAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                        venueName:
+                          type:
+                            - string
+                            - "null"
+                        isOnline:
+                          type: boolean
+                        cost:
+                          type:
+                            - string
+                            - "null"
+                        imageUrl:
+                          type:
+                            - string
+                            - "null"
+                        isRecurring:
+                          type: boolean
+                        community:
+                          type:
+                            - object
+                            - "null"
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        city:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                            slug:
+                              type: string
+                          required:
+                            - name
+                            - slug
+                        categories:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              category:
+                                type: object
+                                properties:
+                                  name:
+                                    type: string
+                                  slug:
+                                    type: string
+                                  icon:
+                                    type:
+                                      - string
+                                      - "null"
+                                required:
+                                  - name
+                                  - slug
+                                  - icon
+                            required:
+                              - category
+                      required:
+                        - id
+                        - title
+                        - slug
+                        - startsAt
+                        - endsAt
+                        - venueName
+                        - isOnline
+                        - cost
+                        - imageUrl
+                        - isRecurring
+                        - community
+                        - city
+                        - categories
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                        slug:
+                          type: string
+                        icon:
+                          type:
+                            - string
+                            - "null"
+                        communityCount:
+                          type: integer
+                      required:
+                        - name
+                        - slug
+                        - icon
+                        - communityCount
+                required:
+                  - communities
+                  - events
+                  - categories
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a8
 webhooks: {}

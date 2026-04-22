@@ -10,5 +10,5 @@
  * - Sparse-content resilience (auto-expand time window)
  * - Past event archival (not deletion — feeds activity scores)
  */
-export { getUpcomingEvents, getEventBySlug, getEventsThisWeek } from './queries';
+export { getUpcomingEvents, getEventBySlug, getEventsThisWeek, getEventsPage, eventListSelect } from './queries';
 export type { EventWithRelations, EventListItem } from './types';
