@@ -5,7 +5,7 @@ import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 export const metadata: Metadata = {
   title: `About — ${siteConfig.name}`,
   description:
-    'Learn about IndLokal — the platform connecting the Indian diaspora in Germany with communities, events, and resources.',
+    'Learn about IndLokal — the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
 };
 
 export default function AboutPage() {
@@ -19,14 +19,14 @@ export default function AboutPage() {
         </div>
         <div className="relative mx-auto max-w-2xl">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-sm">
-            🇮🇳 Built for Indians in Germany 🇩🇪
+            Built for Indians in Germany
           </span>
           <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             About {siteConfig.name}
           </h1>
           <p className="text-brand-200/80 mx-auto mt-4 max-w-xl text-lg leading-relaxed">
-            The central hub connecting the Indian diaspora with their local communities across
-            Germany.
+            The city-first discovery platform for the Indian diaspora in Germany — communities,
+            events and expat-life resources, active near you.
           </p>
         </div>
       </section>
@@ -35,47 +35,47 @@ export default function AboutPage() {
       <section className="mx-auto max-w-3xl px-4 py-16">
         <h2 className="text-foreground text-2xl font-extrabold">Our Mission</h2>
         <p className="text-muted mt-4 leading-relaxed">
-          Moving to Germany is exciting — but finding your community shouldn&apos;t be hard. Whether
-          you&apos;re looking for a Telugu association, a Diwali celebration, a cricket group, or
-          just a WhatsApp group of fellow Indians nearby, {siteConfig.name} makes it effortless to
-          discover what&apos;s happening around you.
+          Make Indian community life in Germany visible, fresh, and easy to join — and put the
+          practical resources around it within reach. Whether you&apos;re looking for a Tamil
+          Sangam, a Diwali celebration, a cricket league, or a plain-English walkthrough of your
+          first Anmeldung, {siteConfig.name} makes it effortless to discover what&apos;s happening
+          around you.
         </p>
         <p className="text-muted mt-4 leading-relaxed">
-          We aggregate communities, events, festivals, and practical expat resources across German
-          cities — so you can spend less time searching and more time connecting.
+          We aggregate communities, events, and consular &amp; expat-life resources across German
+          cities — ranked by what&apos;s actually alive, not by who paid for a directory listing.
         </p>
       </section>
 
-      {/* What we do */}
+      {/* Three pillars */}
       <section className="bg-white px-4 py-16">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-foreground text-2xl font-extrabold">What We Do</h2>
-          <div className="mt-8 grid gap-6 sm:grid-cols-2">
+          <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
+          <p className="text-muted mt-3 leading-relaxed">
+            For every German city we cover, {siteConfig.name} brings together three things in one
+            place — with equal weight.
+          </p>
+          <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {[
               {
-                icon: '🤝',
-                title: 'Community Discovery',
-                desc: 'Find cultural associations, student groups, WhatsApp communities, sports clubs, and professional networks — all in one place.',
+                icon: '🪷',
+                title: 'Communities',
+                desc: 'Cultural associations, language groups, religious organisations, student bodies, sports clubs, professional networks — ranked by activity.',
               },
               {
                 icon: '📅',
-                title: 'Event Aggregation',
-                desc: 'Never miss a Holi party, Navratri garba, Diwali celebration, or community meetup. See what\u2019s happening this week.',
+                title: 'Events',
+                desc: "What's happening this week — from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
               },
               {
-                icon: '📋',
-                title: 'Expat Resources',
-                desc: 'Practical guides for daily life — city registration, finding Indian grocery stores, doctors, tax advisors, and more.',
-              },
-              {
-                icon: '🏛️',
-                title: 'Consular Services',
-                desc: 'Quick access to passport services, visa information, and official Indian consulate resources in your region.',
+                icon: '🧭',
+                title: 'Resources',
+                desc: 'Plain-English guides for Anmeldung, EU Blue Card, Kindergeld, GKV vs PKV, Steuererklärung — plus Indian grocers, English-friendly doctors, CGI consular dates.',
               },
             ].map((item) => (
               <div
                 key={item.title}
-                className="from-muted-bg ring-border/40 rounded-2xl bg-gradient-to-br to-white p-6 ring-1"
+                className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-6 ring-1"
               >
                 <span className="text-3xl">{item.icon}</span>
                 <h3 className="text-foreground mt-3 text-lg font-bold">{item.title}</h3>

@@ -46,7 +46,7 @@ export default function ContactPage() {
 
           {/* Community submissions */}
           <div className="ring-border/40 rounded-2xl bg-white p-8 shadow-sm ring-1">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-2xl">
+            <div className="bg-accent-50 flex h-12 w-12 items-center justify-center rounded-xl text-2xl">
               🤝
             </div>
             <h2 className="text-foreground mt-4 text-lg font-bold">Community Submissions</h2>
@@ -55,7 +55,7 @@ export default function ContactPage() {
             </p>
             <Link
               href="/submit"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700 hover:underline"
+              className="text-accent-700 hover:text-accent-800 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
               Submit a community →
             </Link>
@@ -63,7 +63,7 @@ export default function ContactPage() {
 
           {/* Organizers */}
           <div className="ring-border/40 rounded-2xl bg-white p-8 shadow-sm ring-1">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-purple-50 text-2xl">
+            <div className="bg-brand-50 flex h-12 w-12 items-center justify-center rounded-xl text-2xl">
               🏛️
             </div>
             <h2 className="text-foreground mt-4 text-lg font-bold">For Organizers</h2>
@@ -72,7 +72,7 @@ export default function ContactPage() {
             </p>
             <Link
               href="/organizer/login"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-purple-600 hover:text-purple-700 hover:underline"
+              className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
               Organizer login →
             </Link>
@@ -80,7 +80,7 @@ export default function ContactPage() {
 
           {/* Bug reports */}
           <div className="ring-border/40 rounded-2xl bg-white p-8 shadow-sm ring-1">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-2xl">
+            <div className="bg-muted-bg flex h-12 w-12 items-center justify-center rounded-xl text-2xl">
               🐛
             </div>
             <h2 className="text-foreground mt-4 text-lg font-bold">Bug Reports</h2>
@@ -89,7 +89,7 @@ export default function ContactPage() {
             </p>
             <a
               href="mailto:support@indlokal.de"
-              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-amber-600 hover:text-amber-700 hover:underline"
+              className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
               support@indlokal.de →
             </a>
@@ -105,7 +105,7 @@ export default function ContactPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
-              href="https://instagram.com/indlokal.de"
+              href="https://instagram.com/indlokal"
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground ring-border/60 hover:ring-brand-300 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold ring-1 transition-all hover:-translate-y-0.5"

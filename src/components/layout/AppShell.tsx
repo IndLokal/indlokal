@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { MobileNav } from '@/components/MobileNav';
+import { LogoMark } from '@/components/Logo';
 import { Footer } from './Footer';
 
 type NavLink = {
@@ -37,9 +38,7 @@ export function AppShell({ children, subtitle, navLinks, maxWidth = 'max-w-7xl' 
               href="/"
               className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
             >
-              <span className="from-brand-500 to-brand-700 shadow-brand-500/20 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold text-white shadow-md">
-                L
-              </span>
+              <LogoMark size={36} className="rounded-xl shadow-sm" />
               <span className="text-foreground hidden text-xl font-bold tracking-tight sm:inline-block">
                 {siteConfig.name}
               </span>

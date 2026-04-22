@@ -1,24 +1,22 @@
 import Link from 'next/link';
 import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
+import { LogoMark } from '@/components/Logo';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
-const CITY_META: Record<string, { emoji: string; tagline: string; gradient: string }> = {
+const CITY_META: Record<string, { emoji: string; tagline: string }> = {
   stuttgart: {
     emoji: '🏰',
     tagline: "Baden-Württemberg's capital",
-    gradient: 'from-brand-500 to-brand-700',
   },
   karlsruhe: {
     emoji: '⚡',
     tagline: 'Tech hub of the south',
-    gradient: 'from-violet-500 to-purple-700',
   },
   mannheim: {
     emoji: '🎵',
     tagline: 'Culture at the Rhine-Neckar',
-    gradient: 'from-fuchsia-500 to-pink-700',
   },
 };
 
@@ -29,9 +27,7 @@ export default function HomePage() {
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <span className="from-brand-500 to-brand-700 shadow-brand-500/20 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold text-white shadow-md">
-              L
-            </span>
+            <LogoMark size={36} className="rounded-xl shadow-sm" />
             <span className="text-foreground text-xl font-bold tracking-tight">
               {siteConfig.name}
             </span>
@@ -46,34 +42,30 @@ export default function HomePage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero — big, bold, colorful */}
+        {/* Hero — indigo with single saffron accent */}
         <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pt-16 pb-20 text-center sm:pt-28 sm:pb-32">
-          {/* Decorative blobs */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="bg-brand-500/20 absolute -top-40 -right-40 hidden h-[500px] w-[500px] rounded-full blur-3xl sm:block" />
             <div className="bg-accent-400/15 absolute top-1/2 -left-40 hidden h-[400px] w-[400px] rounded-full blur-3xl sm:block" />
-            <div className="absolute right-1/4 -bottom-20 hidden h-[300px] w-[300px] rounded-full bg-fuchsia-500/10 blur-3xl sm:block" />
-            {/* Subtle grid pattern */}
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           </div>
 
           <div className="relative mx-auto max-w-3xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-5 py-2 text-sm font-medium text-white/90 backdrop-blur-sm">
               <span className="bg-accent-400 flex h-2 w-2 animate-pulse rounded-full" />
-              🇮🇳 For the Indian community in Germany 🇩🇪
+              For the Indian diaspora in Germany
             </span>
             <h1 className="mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:mt-8 sm:text-6xl lg:text-7xl">
-              Your Indian community{' '}
-              <span className="from-accent-300 via-accent-400 bg-gradient-to-r to-orange-300 bg-clip-text text-transparent">
-                in Germany
-              </span>{' '}
-              - all in one place
+              Your Indian community,{' '}
+              <span className="from-accent-300 to-accent-500 bg-gradient-to-r bg-clip-text text-transparent">
+                locally.
+              </span>
             </h1>
-            <p className="text-brand-200/80 mx-auto mt-6 max-w-xl text-lg leading-relaxed">
-              Find the communities, events, and resources that make Germany feel like home.
+            <p className="text-brand-200/90 mx-auto mt-6 max-w-xl text-lg leading-relaxed">
+              The communities active in your city, the events worth knowing about this week, and the
+              resources every Indian in Germany ends up needing — all in one place.
             </p>
 
-            {/* City search box */}
             <div className="mx-auto mt-10 max-w-md">
               <CitySearch />
             </div>
@@ -95,27 +87,19 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* City selector — overlapping hero */}
+        {/* City selector */}
         <section className="relative z-10 mx-auto -mt-14 max-w-5xl px-4 pb-12">
           <div className="grid gap-4 sm:grid-cols-3">
             {ACTIVE_CITIES.map((city) => {
-              const meta = CITY_META[city] ?? {
-                emoji: '🏙️',
-                tagline: '',
-                gradient: 'from-brand-500 to-brand-700',
-              };
+              const meta = CITY_META[city] ?? { emoji: '🏙️', tagline: '' };
               return (
                 <Link
                   key={city}
                   href={`/${city}`}
                   className="group relative flex flex-col items-center gap-3 overflow-hidden rounded-2xl bg-white p-7 text-center shadow-lg ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
                 >
-                  <div
-                    className={`absolute inset-x-0 top-0 h-1 bg-gradient-to-r ${meta.gradient}`}
-                  />
-                  <span
-                    className={`flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br ${meta.gradient} text-2xl shadow-sm transition-transform duration-200 group-hover:scale-105`}
-                  >
+                  <div className="from-brand-500 to-brand-700 absolute inset-x-0 top-0 h-1 bg-gradient-to-r" />
+                  <span className="from-brand-500 to-brand-700 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-2xl shadow-sm transition-transform duration-200 group-hover:scale-105">
                     {meta.emoji}
                   </span>
                   <span className="text-foreground group-hover:text-brand-600 text-lg font-bold capitalize transition-colors">
@@ -148,7 +132,8 @@ export default function HomePage() {
               Expanding across Germany
             </h2>
             <p className="text-muted mx-auto mt-2 max-w-md text-sm">
-              We&apos;re bringing IndLokal to more cities. Click a city to see what&apos;s planned.
+              We&apos;re bringing {siteConfig.name} to more cities. Click a city to see what&apos;s
+              planned.
             </p>
           </div>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
@@ -162,7 +147,7 @@ export default function HomePage() {
                 <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">
                   {city.name}
                 </span>
-                <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-600 ring-1 ring-amber-200/60">
+                <span className="bg-accent-50 text-accent-700 ring-accent-200/60 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1">
                   Soon
                 </span>
               </Link>
@@ -170,54 +155,44 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Value props — cards with colored backgrounds */}
+        {/* Three pillars */}
         <section className="bg-white px-4 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="text-center">
               <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
-                Made for Indians in Germany
+                Three pillars, one place
               </span>
               <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
-                Everything you need to feel at home
+                Communities. Events. Resources.
               </h2>
-              <p className="text-muted mx-auto mt-3 max-w-lg">
-                From festivals to flat-hunting tips — we&apos;ve got your city covered.
+              <p className="text-muted mx-auto mt-3 max-w-xl">
+                Everything in {siteConfig.name} ladders up to one of three pillars. Equal weight,
+                ranked by what&apos;s actually alive — not who paid for a listing.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-3">
               {[
                 {
+                  icon: '🪷',
+                  title: 'Communities',
+                  desc: 'A curated, activity-ranked map of the Indian cultural associations, language groups, religious organisations, student bodies and professional networks alive in your city.',
+                },
+                {
                   icon: '📅',
-                  bg: 'bg-gradient-to-br from-orange-50 to-amber-50',
-                  iconBg: 'bg-gradient-to-br from-orange-400 to-amber-500',
-                  border: 'ring-orange-200/60',
-                  title: 'Events & Festivals',
-                  desc: 'Never miss a celebration. From Holi to cricket tournaments — see everything happening near you this week.',
+                  title: 'Events',
+                  desc: "What's happening for Indians this week — from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
                 },
                 {
-                  icon: '🤝',
-                  bg: 'bg-gradient-to-br from-brand-50 to-violet-50',
-                  iconBg: 'bg-gradient-to-br from-brand-500 to-violet-500',
-                  border: 'ring-brand-200/60',
-                  title: 'Communities & Groups',
-                  desc: 'Your people are already here. Find the WhatsApp groups, associations, and networks where you belong.',
-                },
-                {
-                  icon: '📋',
-                  bg: 'bg-gradient-to-br from-emerald-50 to-teal-50',
-                  iconBg: 'bg-gradient-to-br from-emerald-400 to-teal-500',
-                  border: 'ring-emerald-200/60',
-                  title: 'Expat Resources',
-                  desc: 'Anmeldung guides, Indian grocery stores, doctors, tax tips — practical help so you can settle in faster.',
+                  icon: '🧭',
+                  title: 'Resources',
+                  desc: 'Plain-English guides to Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung — plus Indian grocers, English-friendly doctors and CGI consular dates.',
                 },
               ].map((item) => (
                 <div
                   key={item.title}
-                  className={`${item.bg} rounded-2xl p-8 ring-1 ${item.border} text-center transition-all hover:-translate-y-1 hover:shadow-lg`}
+                  className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-8 text-center ring-1 transition-all hover:-translate-y-1 hover:shadow-lg"
                 >
-                  <span
-                    className={`mx-auto flex h-14 w-14 items-center justify-center rounded-xl ${item.iconBg} text-2xl shadow-sm`}
-                  >
+                  <span className="from-brand-500 to-brand-700 mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-2xl shadow-sm">
                     {item.icon}
                   </span>
                   <h3 className="text-foreground mt-5 text-base font-semibold">{item.title}</h3>
@@ -228,17 +203,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* CTA — vibrant */}
+        {/* CTA */}
         <section className="relative overflow-hidden px-4 py-24 text-center">
           <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           <div className="relative mx-auto max-w-xl">
             <h2 className="text-2xl font-bold text-white sm:text-3xl">
-              Your community deserves to be found
+              The newcomers in your city are already searching for you.
             </h2>
             <p className="text-brand-200 mt-4 text-lg">
-              Claim your page, post events, and connect with Indians in your city — 100% free.
+              List your community in five minutes. Free, forever, for grassroots Indian groups in
+              Germany.
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link

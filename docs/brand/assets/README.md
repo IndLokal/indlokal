@@ -4,18 +4,18 @@ This folder is the source of truth for IndLokal’s visual identity. All files a
 
 ## Files
 
-| File                                                       | Purpose                                     | Recommended export                              |
-| ---------------------------------------------------------- | ------------------------------------------- | ----------------------------------------------- |
-| [`logo-primary.svg`](./logo-primary.svg)                   | Default horizontal lockup (mark + wordmark) | PNG @ 1440 × 400                                |
-| [`logo-stacked.svg`](./logo-stacked.svg)                   | Mark above wordmark + optional tagline      | PNG @ 960 × 1080                                |
-| [`logo-wordmark.svg`](./logo-wordmark.svg)                 | Wordmark only                               | PNG @ 1200 × 320                                |
-| [`logo-mark.svg`](./logo-mark.svg)                         | Pin + sun mark only                         | PNG @ 1024 × 1024                               |
-| [`logo-monochrome-dark.svg`](./logo-monochrome-dark.svg)   | Single-colour dark on light                 | PNG @ 1440 × 400                                |
-| [`logo-monochrome-light.svg`](./logo-monochrome-light.svg) | Single-colour light on dark                 | PNG @ 1440 × 400                                |
-| [`favicon.svg`](./favicon.svg)                             | Browser tab favicon                         | ICO + PNG @ 32 / 48 / 192 / 512                 |
-| [`social-profile.svg`](./social-profile.svg)               | LinkedIn / Instagram / X profile picture    | PNG @ 400 × 400 (LinkedIn requires ≥ 300 × 300) |
-| [`linkedin-cover.svg`](./linkedin-cover.svg)               | LinkedIn page cover                         | PNG @ 1584 × 396                                |
-| [`og-image.svg`](./og-image.svg)                           | Open Graph / link preview image             | PNG @ 1200 × 630                                |
+| File                                                       | Purpose                                         | Recommended export                              |
+| ---------------------------------------------------------- | ----------------------------------------------- | ----------------------------------------------- |
+| [`logo-primary.svg`](./logo-primary.svg)                   | Default horizontal lockup (mark + wordmark)     | PNG @ 1440 × 400                                |
+| [`logo-stacked.svg`](./logo-stacked.svg)                   | Mark above wordmark + optional tagline          | PNG @ 960 × 1080                                |
+| [`logo-wordmark.svg`](./logo-wordmark.svg)                 | Wordmark only                                   | PNG @ 1200 × 320                                |
+| [`logo-mark.svg`](./logo-mark.svg)                         | Pulse mark only (bicolour pulse on indigo tile) | PNG @ 1024 × 1024                               |
+| [`logo-monochrome-dark.svg`](./logo-monochrome-dark.svg)   | Single-colour dark on light                     | PNG @ 1440 × 400                                |
+| [`logo-monochrome-light.svg`](./logo-monochrome-light.svg) | Single-colour light on dark                     | PNG @ 1440 × 400                                |
+| [`favicon.svg`](./favicon.svg)                             | Browser tab favicon                             | ICO + PNG @ 32 / 48 / 192 / 512                 |
+| [`social-profile.svg`](./social-profile.svg)               | LinkedIn / Instagram / X profile picture        | PNG @ 400 × 400 (LinkedIn requires ≥ 300 × 300) |
+| [`linkedin-cover.svg`](./linkedin-cover.svg)               | LinkedIn page cover                             | PNG @ 1584 × 396                                |
+| [`og-image.svg`](./og-image.svg)                           | Open Graph / link preview image                 | PNG @ 1200 × 630                                |
 
 ## How to export to PNG
 

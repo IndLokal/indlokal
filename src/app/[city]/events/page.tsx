@@ -135,7 +135,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
               href={href}
               className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium capitalize transition-colors active:opacity-70 ${
                 isActive
-                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                  ? 'border-brand-600 bg-brand-50 text-brand-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >

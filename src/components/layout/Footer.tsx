@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES } from '@/lib/config';
+import { LogoMark } from '@/components/Logo';
 
 const NAV_COLUMNS = [
   {
@@ -51,20 +52,19 @@ export function Footer() {
               href="/"
               className="inline-flex items-center gap-2.5 transition-opacity hover:opacity-80"
             >
-              <span className="from-brand-500 to-brand-700 shadow-brand-500/20 flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br text-xs font-bold text-white shadow-md">
-                L
-              </span>
+              <LogoMark size={32} className="rounded-[10px] shadow-sm" />
               <span className="text-foreground text-lg font-bold tracking-tight">
                 {siteConfig.name}
               </span>
             </Link>
             <p className="text-muted max-w-xs text-sm leading-relaxed">
-              Because finding your people in a new country shouldn&apos;t be hard.
+              The city-first discovery platform for Indians in Germany. Communities, events &
+              expat-life resources, active near you.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 pt-1">
               <a
-                href="https://instagram.com/indlokal.de"
+                href="https://instagram.com/indlokal"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"

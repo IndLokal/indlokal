@@ -48,17 +48,17 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
   } = feed;
   const cityName = cityData.name;
 
-  // Distinct colors for category cards
+  // Category card palette — brand indigo with a saffron alternate per design system.
   const CAT_COLORS = [
     'from-brand-400 to-brand-600',
-    'from-violet-400 to-purple-500',
-    'from-fuchsia-400 to-pink-500',
-    'from-orange-400 to-red-400',
-    'from-emerald-400 to-teal-500',
-    'from-cyan-400 to-blue-500',
-    'from-amber-400 to-orange-400',
-    'from-rose-400 to-pink-400',
-    'from-sky-400 to-blue-500',
+    'from-brand-500 to-brand-700',
+    'from-accent-400 to-accent-600',
+    'from-brand-600 to-brand-800',
+    'from-accent-300 to-accent-500',
+    'from-brand-500 to-brand-700',
+    'from-accent-400 to-accent-600',
+    'from-brand-400 to-brand-600',
+    'from-brand-600 to-brand-800',
   ];
 
   return (
@@ -179,34 +179,36 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         </p>
       </section>
 
-      {/* Quick links — more colorful */}
+      {/* Quick links — brand palette */}
       <section className="grid gap-5 sm:grid-cols-2">
         <Link
           href={`/${city}/resources`}
-          className="group flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 p-5 ring-1 ring-emerald-200/50 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          className="group from-accent-50 ring-accent-200/50 flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r to-white p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-500 text-xl shadow-sm">
-            📋
+          <span className="from-accent-400 to-accent-600 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xl shadow-sm">
+            🧭
           </span>
           <div>
-            <p className="text-foreground text-sm font-semibold transition-colors group-hover:text-emerald-700">
-              Expat Resources
+            <p className="text-foreground group-hover:text-accent-700 text-sm font-semibold transition-colors">
+              Expat-life resources
             </p>
-            <p className="text-muted mt-0.5 text-xs">Guides, services &amp; useful links</p>
+            <p className="text-muted mt-0.5 text-xs">
+              Anmeldung, Kindergeld, doctors, grocers &amp; more
+            </p>
           </div>
         </Link>
         <Link
           href={`/${city}/consular-services`}
-          className="group from-brand-50 ring-brand-200/50 flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r to-violet-50 p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          className="group from-brand-50 ring-brand-200/50 flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r to-white p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="from-brand-400 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br to-violet-500 text-xl shadow-sm">
+          <span className="from-brand-500 to-brand-700 flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-xl shadow-sm">
             🏛️
           </span>
           <div>
             <p className="text-foreground group-hover:text-brand-700 text-sm font-semibold transition-colors">
-              Consular Services
+              Consular services
             </p>
-            <p className="text-muted mt-0.5 text-xs">Passport, visa &amp; official services</p>
+            <p className="text-muted mt-0.5 text-xs">CGI camps, passport, visa &amp; OCI</p>
           </div>
         </Link>
       </section>

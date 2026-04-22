@@ -1,8 +1,10 @@
 # IndLokal
 
-**Activity-led community discovery platform for the Indian diaspora in Germany.**
+**Your Indian community, locally — the city-first discovery platform for the Indian diaspora in Germany.**
 
-IndLokal helps Indian expats in Germany discover active communities, events, and resources — ranked by real activity signals rather than stale directory listings.
+IndLokal helps Indians in Germany discover the **communities** active in their city, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing — from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
+
+Brand source of truth: [`docs/brand/`](docs/brand/). Marketing copy: [`docs/brand/MARKETING_KIT.md`](docs/brand/MARKETING_KIT.md).
 
 > 🚀 Launch city: **Stuttgart** (metro region including Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen)
 
