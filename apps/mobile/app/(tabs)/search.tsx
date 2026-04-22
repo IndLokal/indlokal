@@ -9,7 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { router } from 'expo-router';
+import { Link, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { search as s } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
@@ -132,9 +132,20 @@ export default function SearchScreen() {
           autoCorrect={false}
           returnKeyType="search"
           onSubmitEditing={() => {
-            if (trimmed.length >= 2) void persistRecent(trimmed);
+            if (trimmed.length < 2) return;
+            void persistRecent(trimmed);
+            router.push({ pathname: '/search/results', params: { q: trimmed } });
           }}
         />
+
+        {trimmed.length >= 2 && (
+          <Link
+            href={{ pathname: '/search/results', params: { q: trimmed } }}
+            style={styles.viewAll}
+          >
+            See all results for “{trimmed}”
+          </Link>
+        )}
 
         {loading && <ActivityIndicator color={palette.brand[600]} />}
         {error && <Text style={styles.error}>{error}</Text>}
@@ -214,4 +225,9 @@ const styles = StyleSheet.create({
     backgroundColor: palette.neutral.mutedBg,
   },
   chipText: { color: palette.neutral.foreground, fontSize: typography.small, fontWeight: '600' },
+  viewAll: {
+    color: palette.brand[600],
+    fontWeight: '700',
+    fontSize: typography.small,
+  },
 });

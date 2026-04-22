@@ -172,6 +172,13 @@ export default function CommunityDetailScreen() {
             </Pressable>
           </View>
 
+          <Link
+            href={{ pathname: '/report/community/[id]', params: { id: data.id, name: data.name } }}
+            style={styles.reportLink}
+          >
+            Report this community
+          </Link>
+
           {data.descriptionLong || data.description ? (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>About</Text>
@@ -284,5 +291,11 @@ const styles = StyleSheet.create({
   },
   eventTitle: { fontSize: typography.body, color: palette.neutral.foreground, fontWeight: '600' },
   eventMeta: { fontSize: typography.small, color: palette.neutral.muted, marginTop: 2 },
+  reportLink: {
+    marginTop: spacing.md,
+    color: palette.status.destructive,
+    fontWeight: '600',
+    fontSize: typography.small,
+  },
   error: { color: palette.status.destructive },
 });

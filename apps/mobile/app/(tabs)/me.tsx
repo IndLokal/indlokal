@@ -19,6 +19,9 @@ export default function MeTabScreen() {
         <Link href="/resources" style={styles.link}>
           City resources
         </Link>
+        <Link href="/submit" style={styles.link}>
+          Submit an event or community
+        </Link>
         <Link href="/me/delete-account" style={styles.link}>
           Delete account
         </Link>

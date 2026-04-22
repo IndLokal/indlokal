@@ -49,10 +49,10 @@ column and is the single source of truth for what is shipped.
 | PRD/TDD-0004            | Push permission flow + topic preferences UI            | Draft    | Pre-prompt + preferences screen shipped                     |
 | PRD/TDD-0005            | Event detail: save, RSVP/registration, calendar, share | Draft    | v1 shipped (no hero image, no map, no in-app reminders yet) |
 | PRD/TDD-0006            | Community detail: follow, access channels, related     | Draft    | v1 shipped (no related rail, no Pulse-Score drill-in yet)   |
-| PRD/TDD-0007            | Search + filters (city, category, date)                | Draft    | Suggest + recents shipped; full results + filters pending   |
+| PRD/TDD-0007            | Search + filters (city, category, date)                | Draft    | Done — full results screen with type + date filters         |
 | PRD/TDD-0008            | Mobile auth: Apple, Google, magic link                 | Draft    | Done — incl. Universal-Link magic-link verify               |
-| PRD/TDD-0009            | Submit event/community (camera + gallery)              | Draft    | Web `/submit` shipped; mobile form pending                  |
-| PRD/TDD-0010            | Resources, Bookmarks, Report content                   | Draft    | Bookmarks + Resources shipped; Report sheet pending         |
+| PRD/TDD-0009            | Submit event/community (camera + gallery)              | Draft    | Done (text-only v1) — image picker pending                  |
+| PRD/TDD-0010            | Resources, Bookmarks, Report content                   | Draft    | Done — Resources, Bookmarks, Report sheet shipped           |
 | EVENTS/analytics.md     | Analytics event catalog                                | Draft    | —                                                           |
 | EVENTS/notifications.md | Notification matrix                                    | Draft    | —                                                           |
 

@@ -50,6 +50,15 @@ export default function RootLayout() {
       <Stack.Screen name="events/[slug]" options={{ title: 'Event' }} />
       <Stack.Screen name="communities/[slug]" options={{ title: 'Community' }} />
       <Stack.Screen name="resources" options={{ title: 'Resources' }} />
+      <Stack.Screen name="search/results" options={{ title: 'Results' }} />
+      <Stack.Screen name="submit/index" options={{ title: 'Submit' }} />
+      <Stack.Screen name="submit/event" options={{ title: 'Submit event' }} />
+      <Stack.Screen name="submit/community" options={{ title: 'Add community' }} />
+      <Stack.Screen name="submit/suggest" options={{ title: 'Suggest community' }} />
+      <Stack.Screen
+        name="report/community/[id]"
+        options={{ title: 'Report', presentation: 'modal' }}
+      />
       <Stack.Screen name="me/profile" options={{ title: 'Profile' }} />
       <Stack.Screen name="me/delete-account" options={{ title: 'Delete account' }} />
       <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
