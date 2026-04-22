@@ -9,15 +9,14 @@ import { discovery as d } from '@indlokal/shared';
 import { apiError } from '@/lib/api/error';
 import { getCommunitiesPage } from '@/modules/community';
 import { toCommunityCard } from '@/lib/discovery/mappers';
+import { withPublicCache } from '@/lib/api/cache';
 
 export const runtime = 'nodejs';
+export const revalidate = 300;
 
 const DEFAULT_LIMIT = 20;
 
-export async function GET(
-  req: NextRequest,
-  ctx: { params: Promise<{ citySlug: string }> },
-) {
+export async function GET(req: NextRequest, ctx: { params: Promise<{ citySlug: string }> }) {
   const { citySlug } = await ctx.params;
   const sp = new URL(req.url).searchParams;
 
@@ -31,8 +30,11 @@ export async function GET(
   const { items, hasMore } = await getCommunitiesPage(citySlug, { cursor, limit, categorySlug });
 
   const nextCursor = hasMore ? items[items.length - 1].id : undefined;
-  return NextResponse.json({
-    items: items.map(toCommunityCard),
-    ...(nextCursor !== undefined ? { nextCursor } : {}),
-  } satisfies d.CommunitiesPage);
+  return withPublicCache(
+    NextResponse.json({
+      items: items.map(toCommunityCard),
+      ...(nextCursor !== undefined ? { nextCursor } : {}),
+    } satisfies d.CommunitiesPage),
+    { sMaxAge: 300 },
+  );
 }

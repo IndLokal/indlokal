@@ -13,6 +13,7 @@ import { Link, useFocusEffect } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { discovery as d } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
@@ -34,8 +35,9 @@ export default function DiscoverScreen() {
   // Load cities once.
   useEffect(() => {
     let cancelled = false;
-    authClient
-      .getPublic<d.City[]>('/api/v1/cities')
+    queryCache('cities:list', () => authClient.getPublic<d.City[]>('/api/v1/cities'), {
+      ttl: 5 * 60 * 1000,
+    })
       .then((response) => {
         if (cancelled) return;
         const parsed = response.map((c) => d.City.parse(c));
@@ -75,16 +77,26 @@ export default function DiscoverScreen() {
     }
   }, [cities, selectedSlug]);
 
-  const loadFeed = useCallback(async (slug: string) => {
+  const loadFeed = useCallback(async (slug: string, force = false) => {
     setFeedLoading(true);
     setFeedError(null);
     try {
       const [eventsRes, communitiesRes] = await Promise.all([
-        authClient.getPublic<d.EventsPage>(
-          `/api/v1/discovery/${encodeURIComponent(slug)}/events?limit=10`,
+        queryCache(
+          `feed:events:${slug}`,
+          () =>
+            authClient.getPublic<d.EventsPage>(
+              `/api/v1/discovery/${encodeURIComponent(slug)}/events?limit=10`,
+            ),
+          { ttl: 5 * 60 * 1000, force },
         ),
-        authClient.getPublic<d.CommunitiesPage>(
-          `/api/v1/discovery/${encodeURIComponent(slug)}/communities?limit=10`,
+        queryCache(
+          `feed:communities:${slug}`,
+          () =>
+            authClient.getPublic<d.CommunitiesPage>(
+              `/api/v1/discovery/${encodeURIComponent(slug)}/communities?limit=10`,
+            ),
+          { ttl: 5 * 60 * 1000, force },
         ),
       ]);
       setFeed({
@@ -111,7 +123,7 @@ export default function DiscoverScreen() {
   async function onRefresh() {
     if (!selectedSlug) return;
     setRefreshing(true);
-    await loadFeed(selectedSlug);
+    await loadFeed(selectedSlug, true);
     setRefreshing(false);
   }
 

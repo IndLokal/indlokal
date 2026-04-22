@@ -11,6 +11,7 @@ import {
 import { useFocusEffect } from 'expo-router';
 import { resources as r } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type Tab = 'events' | 'communities';
@@ -31,11 +32,17 @@ export default function BookmarksScreen() {
     setError(null);
     try {
       if (tab === 'events') {
-        const res = await authClient.getAuthed<r.SavedEventsPage>('/api/v1/me/saves/events');
+        const res = await queryCache(
+          'bookmarks:events',
+          () => authClient.getAuthed<r.SavedEventsPage>('/api/v1/me/saves/events'),
+          { ttl: 60 * 1000 },
+        );
         setEvents(r.SavedEventsPage.parse(res));
       } else {
-        const res = await authClient.getAuthed<r.SavedCommunitiesPage>(
-          '/api/v1/me/saves/communities',
+        const res = await queryCache(
+          'bookmarks:communities',
+          () => authClient.getAuthed<r.SavedCommunitiesPage>('/api/v1/me/saves/communities'),
+          { ttl: 60 * 1000 },
         );
         setCommunities(r.SavedCommunitiesPage.parse(res));
       }

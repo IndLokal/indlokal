@@ -5,6 +5,9 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { getTrendingKeywords } from '@/modules/search';
+import { withPublicCache } from '@/lib/api/cache';
+
+export const revalidate = 60;
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const url = req.nextUrl;
@@ -12,5 +15,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
   const keywords = await getTrendingKeywords(citySlug);
 
-  return NextResponse.json(keywords);
+  return withPublicCache(NextResponse.json(keywords), { sMaxAge: 60 });
 }

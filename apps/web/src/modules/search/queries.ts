@@ -1,5 +1,6 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { unstable_cache } from 'next/cache';
 import type { CommunityListItem } from '@/modules/community/types';
 import type { EventListItem } from '@/modules/event/types';
 
@@ -262,9 +263,16 @@ export async function getSuggestions(
 
 /**
  * Return trending search terms — approved keywords ordered by confidence.
- * Falls back to trending community names if no keywords exist.
+ *
+ * Cached for 60s with tag-based invalidation.
  */
-export async function getTrendingKeywords(citySlug?: string, limit = 10): Promise<string[]> {
+export const getTrendingKeywords = unstable_cache(
+  async (citySlug?: string, limit = 10): Promise<string[]> => _getTrendingKeywords(citySlug, limit),
+  ['trending-keywords'],
+  { revalidate: 60, tags: ['trending', 'trending-keywords'] },
+);
+
+async function _getTrendingKeywords(citySlug?: string, limit = 10): Promise<string[]> {
   const cityIds = citySlug ? await resolveCityIds(citySlug) : [];
 
   const keywords = await db.keywordSuggestion.findMany({

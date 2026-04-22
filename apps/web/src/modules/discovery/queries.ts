@@ -147,16 +147,25 @@ const citySelect = {
 } as const;
 
 /** All active cities ordered by name — powers GET /api/v1/cities. */
-export async function getCitiesList() {
-  return db.city.findMany({
-    where: { isActive: true },
-    select: citySelect,
-    orderBy: { name: 'asc' },
-  });
-}
+export const getCitiesList = unstable_cache(
+  async () =>
+    db.city.findMany({
+      where: { isActive: true },
+      select: citySelect,
+      orderBy: { name: 'asc' },
+    }),
+  ['cities-list'],
+  { revalidate: 300, tags: ['cities'] },
+);
 
 /** City detail with counts + category grid — powers GET /api/v1/cities/:slug. */
-export async function getCityDetail(slug: string) {
+export const getCityDetail = unstable_cache(
+  async (slug: string) => _getCityDetail(slug),
+  ['city-detail'],
+  { revalidate: 300, tags: ['city-detail'] },
+);
+
+async function _getCityDetail(slug: string) {
   const city = await db.city.findUnique({
     where: { slug },
     select: {
@@ -239,7 +248,13 @@ const trendingCommunitySelect = {
 } as const;
 
 /** Trending communities + upcoming events — powers GET /api/v1/discovery/:citySlug/trending. */
-export async function getTrending(citySlug: string) {
+export const getTrending = unstable_cache(
+  async (citySlug: string) => _getTrending(citySlug),
+  ['trending'],
+  { revalidate: 60, tags: ['trending'] },
+);
+
+async function _getTrending(citySlug: string) {
   const cityIds = await resolveCityIds(citySlug);
   if (!cityIds.length) return null;
 

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { search as s } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 /**
@@ -36,8 +37,13 @@ export default function SearchScreen() {
     const handle = setTimeout(async () => {
       setLoading(true);
       try {
-        const response = await authClient.getPublic<s.Suggestion[]>(
-          `/api/v1/search/suggest?q=${encodeURIComponent(trimmed)}`,
+        const response = await queryCache(
+          `search:suggest:${trimmed.toLowerCase()}`,
+          () =>
+            authClient.getPublic<s.Suggestion[]>(
+              `/api/v1/search/suggest?q=${encodeURIComponent(trimmed)}`,
+            ),
+          { ttl: 5 * 60 * 1000 },
         );
         if (cancelled) return;
         setSuggestions(response.map((item) => s.Suggestion.parse(item)));

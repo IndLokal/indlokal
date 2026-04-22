@@ -208,49 +208,62 @@ export async function getCommunityDetail(slug: string): Promise<CommunityDetailR
 /**
  * Related communities via RelationshipEdge. Returns up to `limit` (default 5)
  * communities connected to the given community id (either direction).
+ *
+ * Single round-trip: pulls edges with both source/target community payloads
+ * pre-joined, then projects out the "other" side and de-duplicates.
  */
 export async function getRelatedCommunities(
   communityId: string,
   limit = 5,
 ): Promise<CommunitySummaryRow[]> {
-  // Fetch edges from both directions
+  const relatedSelect = {
+    id: true,
+    name: true,
+    slug: true,
+    description: true,
+    logoUrl: true,
+    memberCountApprox: true,
+    status: true,
+    mergedIntoId: true,
+    city: { select: { name: true, slug: true } },
+    categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
+    _count: {
+      select: {
+        events: { where: { startsAt: { gte: new Date() }, status: { not: 'CANCELLED' } } },
+      },
+    },
+  } as const;
+
   const edges = await db.relationshipEdge.findMany({
     where: {
       OR: [{ sourceCommunityId: communityId }, { targetCommunityId: communityId }],
     },
-    select: { sourceCommunityId: true, targetCommunityId: true },
+    select: {
+      sourceCommunityId: true,
+      targetCommunityId: true,
+      sourceCommunity: { select: relatedSelect },
+      targetCommunity: { select: relatedSelect },
+    },
     orderBy: { strength: 'desc' },
-    take: limit,
+    take: limit * 2, // pad in case some get filtered (INACTIVE / merged / dupes)
   });
 
-  const relatedIds = [
-    ...new Set(
-      edges.map((e) =>
-        e.sourceCommunityId === communityId ? e.targetCommunityId : e.sourceCommunityId,
-      ),
-    ),
-  ].slice(0, limit);
-
-  if (!relatedIds.length) return [];
-
-  return db.community.findMany({
-    where: { id: { in: relatedIds }, status: { not: 'INACTIVE' }, mergedIntoId: null },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      description: true,
-      logoUrl: true,
-      memberCountApprox: true,
-      city: { select: { name: true, slug: true } },
-      categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
-      _count: {
-        select: {
-          events: { where: { startsAt: { gte: new Date() }, status: { not: 'CANCELLED' } } },
-        },
-      },
-    },
-  }) as Promise<CommunitySummaryRow[]>;
+  const seen = new Set<string>();
+  const out: CommunitySummaryRow[] = [];
+  for (const edge of edges) {
+    const other =
+      edge.sourceCommunityId === communityId ? edge.targetCommunity : edge.sourceCommunity;
+    if (!other) continue;
+    if (other.status === 'INACTIVE' || other.mergedIntoId) continue;
+    if (seen.has(other.id)) continue;
+    seen.add(other.id);
+    // Strip the fields we only needed for filtering.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { status: _s, mergedIntoId: _m, ...row } = other;
+    out.push(row as unknown as CommunitySummaryRow);
+    if (out.length >= limit) break;
+  }
+  return out;
 }
 
 /**

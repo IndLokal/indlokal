@@ -6,6 +6,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSuggestions } from '@/modules/search';
 import { apiError } from '@/lib/api/error';
+import { withPublicCache } from '@/lib/api/cache';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   const url = req.nextUrl;
@@ -17,5 +18,5 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const citySlug = url.searchParams.get('citySlug') ?? undefined;
   const suggestions = await getSuggestions(q, citySlug);
 
-  return NextResponse.json(suggestions);
+  return withPublicCache(NextResponse.json(suggestions), { sMaxAge: 60, swr: 600 });
 }

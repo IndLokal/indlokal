@@ -39,3 +39,11 @@ vi.mock('next/headers', () => ({
   headers: () => new Headers(),
   cookies: () => ({ get: vi.fn(), set: vi.fn() }),
 }));
+
+// next/cache → make unstable_cache a passthrough in tests so route handlers
+// can be invoked outside the Next request runtime (no incrementalCache).
+vi.mock('next/cache', () => ({
+  unstable_cache: <Args extends unknown[], R>(fn: (...args: Args) => Promise<R>) => fn,
+  revalidateTag: vi.fn(),
+  revalidatePath: vi.fn(),
+}));

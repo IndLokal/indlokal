@@ -5,10 +5,12 @@
 
 import { NextResponse } from 'next/server';
 import { getCitiesList } from '@/modules/discovery';
+import { withPublicCache } from '@/lib/api/cache';
 
 export const runtime = 'nodejs';
+export const revalidate = 300;
 
 export async function GET() {
   const cities = await getCitiesList();
-  return NextResponse.json(cities);
+  return withPublicCache(NextResponse.json(cities), { sMaxAge: 300 });
 }

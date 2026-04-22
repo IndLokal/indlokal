@@ -115,14 +115,31 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
   const batchSize = opts.batchSize ?? 50;
   const now = opts.now ?? new Date();
 
-  const claimed = await db.notificationOutbox.findMany({
-    where: {
-      status: 'PENDING',
-      OR: [{ notBefore: null }, { notBefore: { lte: now } }],
-      scheduledAt: { lte: now },
-    },
-    orderBy: { scheduledAt: 'asc' },
-    take: batchSize,
+  // Atomically claim a batch using PostgreSQL `FOR UPDATE SKIP LOCKED` so that
+  // concurrent workers never claim the same rows. We bump `attempts` inside
+  // the same transaction as the claim marker — if the worker crashes before
+  // dispatching, the row stays PENDING and will be re-claimed on the next
+  // tick (at-least-once delivery).
+  const claimed = await db.$transaction(async (tx) => {
+    const candidates = await tx.$queryRaw<Array<{ id: string }>>`
+      SELECT id FROM notification_outbox
+      WHERE status = 'PENDING'
+        AND (not_before IS NULL OR not_before <= ${now})
+        AND scheduled_at <= ${now}
+      ORDER BY scheduled_at ASC
+      LIMIT ${batchSize}
+      FOR UPDATE SKIP LOCKED
+    `;
+    if (candidates.length === 0) return [];
+    const ids = candidates.map((c) => c.id);
+    await tx.notificationOutbox.updateMany({
+      where: { id: { in: ids } },
+      data: { attempts: { increment: 1 } },
+    });
+    return tx.notificationOutbox.findMany({
+      where: { id: { in: ids } },
+      orderBy: { scheduledAt: 'asc' },
+    });
   });
 
   const result: ProcessResult = { claimed: claimed.length, sent: 0, suppressed: 0, failed: 0 };
@@ -162,7 +179,6 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
         data: {
           status: 'FAILED' satisfies NotificationStatus,
           lastError: `no transport configured for channel ${row.channel}`,
-          attempts: { increment: 1 },
         },
       });
       result.failed += 1;
@@ -182,7 +198,6 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
         data: {
           status: 'SENT' satisfies NotificationStatus,
           sentAt: now,
-          attempts: { increment: 1 },
         },
       });
       result.sent += 1;
@@ -191,7 +206,6 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
         where: { id: row.id },
         data: {
           lastError: err instanceof Error ? err.message : String(err),
-          attempts: { increment: 1 },
           // Stay PENDING for retry until attempts exceed cap (handled by caller).
         },
       });

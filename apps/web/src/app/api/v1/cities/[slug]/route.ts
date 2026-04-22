@@ -7,15 +7,14 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { apiError } from '@/lib/api/error';
 import { getCityDetail } from '@/modules/discovery';
+import { withPublicCache } from '@/lib/api/cache';
 
 export const runtime = 'nodejs';
+export const revalidate = 300;
 
-export async function GET(
-  _req: NextRequest,
-  ctx: { params: Promise<{ slug: string }> },
-) {
+export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: string }> }) {
   const { slug } = await ctx.params;
   const city = await getCityDetail(slug);
   if (!city) return apiError('NOT_FOUND', 'city not found');
-  return NextResponse.json(city);
+  return withPublicCache(NextResponse.json(city), { sMaxAge: 300 });
 }
