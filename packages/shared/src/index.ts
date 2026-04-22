@@ -17,3 +17,4 @@ export * as discovery from './contracts/discovery.js';
 export * as events from './contracts/events.js';
 export * as community from './contracts/community.js';
 export * as search from './contracts/search.js';
+export * as submit from './contracts/submit.js';

@@ -2523,6 +2523,199 @@ components:
           type: string
       required:
         - items
+    PresignRequest:
+      type: object
+      properties:
+        contentType:
+          type: string
+          enum: &a15
+            - image/jpeg
+            - image/png
+            - image/webp
+            - image/heic
+            - image/heif
+        sizeBytes:
+          type: integer
+          minimum: 1
+          maximum: 10485760
+        sha256:
+          type: string
+          pattern: ^[0-9a-f]{64}$
+      required:
+        - contentType
+        - sizeBytes
+        - sha256
+    PresignResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        key:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+      required:
+        - url
+        - key
+        - expiresAt
+    EventSubmission:
+      type: object
+      properties:
+        title:
+          type: string
+          minLength: 3
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 5000
+        citySlug:
+          type: string
+          minLength: 1
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        venueName:
+          type: string
+          maxLength: 200
+        venueAddress:
+          type: string
+          maxLength: 500
+        isOnline:
+          type: boolean
+          default: false
+        cost:
+          type: string
+          maxLength: 100
+        imageKey:
+          type: string
+        categorySlugx:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        communitySlug:
+          type: string
+        contactEmail:
+          type: string
+          format: email
+        contactName:
+          type: string
+          maxLength: 200
+      required:
+        - title
+        - citySlug
+        - startsAt
+    CommunitySubmission:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        description:
+          type: string
+          minLength: 10
+          maxLength: 2000
+        citySlug:
+          type: string
+          minLength: 1
+        categories:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 20
+        languages:
+          type: array
+          items:
+            type: string
+          maxItems: 20
+          default: &a18 []
+        primaryChannelType:
+          type: string
+          minLength: 1
+        primaryChannelUrl:
+          type: string
+          format: uri
+        secondaryChannelType:
+          type: string
+        secondaryChannelUrl:
+          anyOf:
+            - type: string
+              format: uri
+            - type: string
+              enum:
+                - ""
+        contactEmail:
+          type: string
+          format: email
+        contactName:
+          type: string
+          minLength: 1
+          maxLength: 200
+        imageKey:
+          type: string
+      required:
+        - name
+        - description
+        - citySlug
+        - categories
+        - primaryChannelType
+        - primaryChannelUrl
+        - contactEmail
+        - contactName
+    SuggestSubmission:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 200
+        description:
+          type: string
+          maxLength: 2000
+        citySlug:
+          type: string
+          minLength: 1
+        contactEmail:
+          type: string
+          format: email
+        note:
+          type: string
+          maxLength: 500
+      required:
+        - name
+        - citySlug
+    SubmissionResult:
+      type: object
+      properties:
+        id:
+          type: string
+        entityType:
+          type: string
+          enum: &a16
+            - EVENT
+            - COMMUNITY
+        status:
+          type: string
+          enum: &a17
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - MERGED
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - entityType
+        - status
+        - createdAt
   parameters: {}
 paths:
   /api/v1/auth/magic-link/request:
@@ -5470,4 +5663,324 @@ paths:
                 type: array
                 items:
                   type: string
+  /api/v1/uploads/presign:
+    post:
+      summary: Request a presigned S3/R2 PUT URL for a media upload
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contentType:
+                  type: string
+                  enum: *a15
+                sizeBytes:
+                  type: integer
+                  minimum: 1
+                  maximum: 10485760
+                sha256:
+                  type: string
+                  pattern: ^[0-9a-f]{64}$
+              required:
+                - contentType
+                - sizeBytes
+                - sha256
+      responses:
+        "201":
+          description: Presigned URL details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                    format: uri
+                  key:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+                required:
+                  - url
+                  - key
+                  - expiresAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a13
+  /api/v1/submissions/event:
+    post:
+      summary: Submit a new event for review
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  minLength: 3
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 5000
+                citySlug:
+                  type: string
+                  minLength: 1
+                startsAt:
+                  type: string
+                  format: date-time
+                endsAt:
+                  type: string
+                  format: date-time
+                venueName:
+                  type: string
+                  maxLength: 200
+                venueAddress:
+                  type: string
+                  maxLength: 500
+                isOnline:
+                  type: boolean
+                  default: false
+                cost:
+                  type: string
+                  maxLength: 100
+                imageKey:
+                  type: string
+                categorySlugx:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 5
+                communitySlug:
+                  type: string
+                contactEmail:
+                  type: string
+                  format: email
+                contactName:
+                  type: string
+                  maxLength: 200
+              required:
+                - title
+                - citySlug
+                - startsAt
+      responses:
+        "201":
+          description: Pipeline item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  entityType:
+                    type: string
+                    enum: *a16
+                  status:
+                    type: string
+                    enum: *a17
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - entityType
+                  - status
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a13
+  /api/v1/submissions/community:
+    post:
+      summary: Submit a new community for review
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 200
+                description:
+                  type: string
+                  minLength: 10
+                  maxLength: 2000
+                citySlug:
+                  type: string
+                  minLength: 1
+                categories:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 20
+                languages:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 20
+                  default: *a18
+                primaryChannelType:
+                  type: string
+                  minLength: 1
+                primaryChannelUrl:
+                  type: string
+                  format: uri
+                secondaryChannelType:
+                  type: string
+                secondaryChannelUrl:
+                  anyOf:
+                    - type: string
+                      format: uri
+                    - type: string
+                      enum:
+                        - ""
+                contactEmail:
+                  type: string
+                  format: email
+                contactName:
+                  type: string
+                  minLength: 1
+                  maxLength: 200
+                imageKey:
+                  type: string
+              required:
+                - name
+                - description
+                - citySlug
+                - categories
+                - primaryChannelType
+                - primaryChannelUrl
+                - contactEmail
+                - contactName
+      responses:
+        "201":
+          description: Pipeline item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  entityType:
+                    type: string
+                    enum: *a16
+                  status:
+                    type: string
+                    enum: *a17
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - entityType
+                  - status
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "409":
+          description: Error envelope
+          content:
+            application/json: *a13
+  /api/v1/submissions/suggest:
+    post:
+      summary: Suggest a community for IndLokal to add
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 200
+                description:
+                  type: string
+                  maxLength: 2000
+                citySlug:
+                  type: string
+                  minLength: 1
+                contactEmail:
+                  type: string
+                  format: email
+                note:
+                  type: string
+                  maxLength: 500
+              required:
+                - name
+                - citySlug
+      responses:
+        "201":
+          description: Pipeline item created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  entityType:
+                    type: string
+                    enum: *a16
+                  status:
+                    type: string
+                    enum: *a17
+                  createdAt:
+                    type: string
+                    format: date-time
+                required:
+                  - id
+                  - entityType
+                  - status
+                  - createdAt
+        "400":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a13
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a13
 webhooks: {}

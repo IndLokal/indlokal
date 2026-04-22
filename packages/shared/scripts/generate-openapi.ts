@@ -28,6 +28,7 @@ import * as discoveryContracts from '../src/contracts/discovery.js';
 import * as eventsContracts from '../src/contracts/events.js';
 import * as communityContracts from '../src/contracts/community.js';
 import * as searchContracts from '../src/contracts/search.js';
+import * as submitContracts from '../src/contracts/submit.js';
 import { stringify as yamlStringify } from 'yaml';
 
 extendZodWithOpenApi(z);
@@ -656,6 +657,91 @@ registry.registerPath({
       description: 'Trending keyword list',
       content: { 'application/json': { schema: z.array(z.string()) } },
     },
+  },
+});
+
+// ─── TDD-0009 Submit ─────────────────────────────────────────────────────────
+
+registry.register('PresignRequest', submitContracts.PresignRequest);
+registry.register('PresignResponse', submitContracts.PresignResponse);
+registry.register('EventSubmission', submitContracts.EventSubmission);
+registry.register('CommunitySubmission', submitContracts.CommunitySubmission);
+registry.register('SuggestSubmission', submitContracts.SuggestSubmission);
+registry.register('SubmissionResult', submitContracts.SubmissionResult);
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/uploads/presign',
+  summary: 'Request a presigned S3/R2 PUT URL for a media upload',
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: submitContracts.PresignRequest } } },
+  },
+  responses: {
+    201: {
+      description: 'Presigned URL details',
+      content: { 'application/json': { schema: submitContracts.PresignResponse } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/submissions/event',
+  summary: 'Submit a new event for review',
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: submitContracts.EventSubmission } } },
+  },
+  responses: {
+    201: {
+      description: 'Pipeline item created',
+      content: { 'application/json': { schema: submitContracts.SubmissionResult } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/submissions/community',
+  summary: 'Submit a new community for review',
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: submitContracts.CommunitySubmission } } },
+  },
+  responses: {
+    201: {
+      description: 'Pipeline item created',
+      content: { 'application/json': { schema: submitContracts.SubmissionResult } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    404: errorResponse,
+    409: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'post',
+  path: '/api/v1/submissions/suggest',
+  summary: 'Suggest a community for IndLokal to add',
+  security: [{ bearerAuth: [] }],
+  request: {
+    body: { content: { 'application/json': { schema: submitContracts.SuggestSubmission } } },
+  },
+  responses: {
+    201: {
+      description: 'Pipeline item created',
+      content: { 'application/json': { schema: submitContracts.SubmissionResult } },
+    },
+    400: errorResponse,
+    401: errorResponse,
+    404: errorResponse,
   },
 });
 

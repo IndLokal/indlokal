@@ -793,6 +793,7 @@ enum PipelineSourceType {
   MEETUP
   COMMUNITY_SUGGESTION
   DB_COMMUNITY
+  USER_SUBMITTED
 }
 
 model PipelineItem {
@@ -829,6 +830,10 @@ model PipelineItem {
   // The entity created/updated after approval
   createdEntityId String?           @map("created_entity_id")
 
+  // User-submitted fields
+  imageKey       String?            @map("image_key")   // key of uploaded MediaAsset
+  submittedBy    String?            @map("submitted_by") // userId if authenticated
+
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 
@@ -837,6 +842,23 @@ model PipelineItem {
   @@index([entityType, status])
   @@index([reviewKind, status])
   @@map("pipeline_items")
+}
+
+// ─────────────────────────────────────────────────
+// Media assets (uploaded images for submissions)
+// ─────────────────────────────────────────────────
+
+model MediaAsset {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  contentType String   @map("content_type")
+  sizeBytes   Int      @map("size_bytes")
+  sha256      String
+  createdBy   String?  @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([createdBy])
+  @@map("media_assets")
 }
 
 enum KeywordSuggestionStatus {

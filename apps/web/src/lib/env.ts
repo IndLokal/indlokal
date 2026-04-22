@@ -38,6 +38,10 @@ export function validateEnv() {
   requireEnvInProduction('GOOGLE_CLIENT_ID');
   requireEnvInProduction('GOOGLE_CLIENT_SECRET');
   requireEnvInProduction('RESEND_API_KEY');
+  // Upload storage (S3 / R2) — required in production
+  requireEnvInProduction('UPLOAD_BUCKET');
+  requireEnvInProduction('UPLOAD_ACCESS_KEY_ID');
+  requireEnvInProduction('UPLOAD_SECRET_ACCESS_KEY');
 
   // Validate NEXT_PUBLIC_APP_URL is not localhost in production
   if (process.env.NODE_ENV === 'production') {

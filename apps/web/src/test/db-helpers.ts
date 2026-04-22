@@ -52,6 +52,7 @@ export async function cleanDb(): Promise<void> {
     testDb.device.deleteMany(),
     testDb.savedCommunity.deleteMany(),
     testDb.savedEvent.deleteMany(),
+    testDb.mediaAsset.deleteMany(),
     testDb.activitySignal.deleteMany(),
     testDb.trustSignal.deleteMany(),
     testDb.relationshipEdge.deleteMany(),

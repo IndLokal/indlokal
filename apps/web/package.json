@@ -26,6 +26,8 @@
     "pipeline:city": "tsx src/modules/pipeline/run.ts --city"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1034.0",
+    "@aws-sdk/s3-request-presigner": "^3.1034.0",
     "@indlokal/shared": "workspace:*",
     "@prisma/client": "^6.6.0",
     "date-fns": "^4.1.0",
