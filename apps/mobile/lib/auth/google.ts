@@ -2,7 +2,6 @@ import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { auth } from '@indlokal/shared';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import type { AuthClient } from './client';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -43,12 +42,6 @@ export function useGoogleCodeFlow() {
     redirectUri,
     enabled: Boolean(config.androidClientId || config.iosClientId || config.webClientId),
   };
-}
-
-export function configureNativeGoogleSignIn() {
-  GoogleSignin.configure({
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
-  });
 }
 
 export async function signInWithGoogleCode(

@@ -11,6 +11,7 @@ set -euo pipefail
 
 WEB_DIR="apps/web"
 MOBILE_DIR="apps/mobile"
+DB_HOST_PORT="${INDLOKAL_DB_PORT:-5434}"
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -49,6 +50,26 @@ ensure_database_exists() {
     docker compose exec -T db psql -U postgres -c "CREATE DATABASE \"$db_name\";" >/dev/null
     print_success "Created database '$db_name'"
   fi
+}
+
+ensure_db_port_published() {
+  local published
+  published=$(docker port indlokal-db 5432 2>/dev/null || true)
+  if [[ "$published" == *":${DB_HOST_PORT}" ]]; then
+    return 0
+  fi
+
+  print_error "indlokal-db is running but not published on localhost:${DB_HOST_PORT}"
+  print_warn "Another process/container is likely using port ${DB_HOST_PORT}."
+  if command -v lsof >/dev/null 2>&1; then
+    local listeners
+    listeners=$(lsof -nP -iTCP:${DB_HOST_PORT} -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$listeners" ]; then
+      echo "$listeners" | sed -n '1,5p'
+    fi
+  fi
+  print_warn "Free port ${DB_HOST_PORT} or change INDLOKAL_DB_PORT for this project."
+  exit 1
 }
 
 # Run a command inside apps/web with pnpm
@@ -109,7 +130,7 @@ cmd_setup() {
   echo ""
   echo "Setting up test database..."
   ensure_database_exists "indlokal_test"
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:${DB_HOST_PORT}/indlokal_test?schema=public}" \
     web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
   print_success "Test database ready"
 
@@ -155,11 +176,33 @@ cmd_stop() {
 
 cmd_db_start() {
   if docker compose ps --status running 2>/dev/null | grep -q "indlokal-db"; then
+    ensure_db_port_published
     print_success "PostgreSQL already running"
   else
     echo "Starting PostgreSQL (Docker)..."
-    docker compose up -d --wait
-    print_success "PostgreSQL running on localhost:5432"
+    if docker compose up -d --wait db; then
+      ensure_db_port_published
+      print_success "PostgreSQL running on localhost:${DB_HOST_PORT}"
+      return
+    fi
+
+    print_warn "Database start failed on first attempt; retrying once..."
+    if docker compose up -d --wait db; then
+      ensure_db_port_published
+      print_success "PostgreSQL running on localhost:${DB_HOST_PORT}"
+      return
+    fi
+
+    print_error "Could not start PostgreSQL container. Port ${DB_HOST_PORT} may already be in use."
+    if command -v lsof >/dev/null 2>&1; then
+      local listeners
+      listeners=$(lsof -nP -iTCP:${DB_HOST_PORT} -sTCP:LISTEN 2>/dev/null || true)
+      if [ -n "$listeners" ]; then
+        echo "$listeners" | sed -n '1,3p'
+        print_warn "Stop the process above (or change docker-compose port mapping) and retry."
+      fi
+    fi
+    exit 1
   fi
 }
 
@@ -215,7 +258,7 @@ cmd_test() {
   fi
 
   ensure_database_exists "indlokal_test"
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:${DB_HOST_PORT}/indlokal_test?schema=public}" \
     web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
 
   echo "Running unit + component tests..."
@@ -229,7 +272,7 @@ cmd_test_watch() {
     cmd_db_start
   fi
   ensure_database_exists "indlokal_test"
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:${DB_HOST_PORT}/indlokal_test?schema=public}" \
     web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
   pnpm -F web test:watch
 }
@@ -245,7 +288,7 @@ cmd_test_setup() {
 
   ensure_database_exists "indlokal_test"
 
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:${DB_HOST_PORT}/indlokal_test?schema=public}" \
     web pnpm exec prisma db push --skip-generate
 
   print_success "Test database ready"
@@ -258,7 +301,7 @@ cmd_test_coverage() {
     cmd_db_start
   fi
   ensure_database_exists "indlokal_test"
-  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public}" \
+  DATABASE_URL="${TEST_DATABASE_URL:-postgresql://postgres:postgres@localhost:${DB_HOST_PORT}/indlokal_test?schema=public}" \
     web pnpm exec prisma db push --skip-generate >/dev/null 2>&1
   echo "Running tests with coverage..."
   echo ""

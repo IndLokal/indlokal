@@ -21,9 +21,10 @@ import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import { community as c, discovery as d } from '@indlokal/shared';
 import { authClient, AuthClientError } from '@/lib/auth/client.expo';
 import { invalidatePrefix, queryCache } from '@/lib/cache/query-cache';
+import { getApiBaseUrl } from '@/lib/config/api-base-url';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
-const PUBLIC_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL ?? 'https://indlokal.com';
+const PUBLIC_BASE_URL = getApiBaseUrl();
 
 type CommunityDetailWithFollowed = c.CommunityDetail & { followedByUser?: boolean };
 
