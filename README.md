@@ -109,15 +109,15 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Deployment
 
-The recommended production setup is intentionally simple:
+The MVP deployment plan is intentionally small:
 
 - **Vercel** for the Next.js app
-- **Managed PostgreSQL** (preferably Neon) for Prisma
-- **Resend** for email
-- **PostHog Cloud** for analytics
-- **Scheduled HTTP cron jobs** for pipeline and scoring tasks
+- **Expo EAS** for iOS/Android mobile builds
+- **Neon** for managed PostgreSQL
+- **GitHub Actions** for optional scheduled cron calls
+- **Resend / PostHog / custom domain** only when those features are actually needed
 
-See [docs/DEPLOYMENT_STRATEGY.md](docs/DEPLOYMENT_STRATEGY.md) for the full deployment architecture, environment strategy, cron plan, and rollout sequence.
+See [docs/deployment/](docs/deployment/) for the current deployment runbooks.
 
 ## Git Workflow
 
