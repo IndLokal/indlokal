@@ -31,7 +31,13 @@ export function apiError(
 ): NextResponse {
   const status = options.status ?? STATUS_BY_CODE[code];
   return NextResponse.json(
-    { error: { code, message, ...(options.details !== undefined ? { details: options.details } : {}) } },
+    {
+      error: {
+        code,
+        message,
+        ...(options.details !== undefined ? { details: options.details } : {}),
+      },
+    },
     { status, headers: options.headers },
   );
 }

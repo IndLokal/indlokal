@@ -35,7 +35,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
           required
           maxLength={120}
           placeholder="e.g. Frankfurt Tamil Sangam"
-          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-1"
         />
       </div>
 
@@ -49,7 +49,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
           rows={3}
           maxLength={500}
           placeholder="WhatsApp link, website, description — anything useful"
-          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-1"
         />
       </div>
 
@@ -62,7 +62,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
           name="reporterEmail"
           type="email"
           placeholder="We'll let you know when it's live"
-          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
+          className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 mt-1.5 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-1"
         />
       </div>
 

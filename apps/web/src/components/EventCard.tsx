@@ -45,7 +45,7 @@ export function EventCard({ event, city, past = false }: Props) {
           )}
         </div>
         <span
-          className={`text-[11px] font-semibold tracking-wide uppercase ${past ? 'text-muted' : 'text-white/90'}`}
+          className={`text-[11px] font-semibold uppercase tracking-wide ${past ? 'text-muted' : 'text-white/90'}`}
         >
           {dateLabel}
         </span>
@@ -53,7 +53,7 @@ export function EventCard({ event, city, past = false }: Props) {
 
       <div className="flex flex-1 flex-col p-5">
         {/* Title */}
-        <h3 className="text-foreground group-hover:text-brand-600 line-clamp-2 text-[15px] leading-snug font-semibold transition-colors">
+        <h3 className="text-foreground group-hover:text-brand-600 line-clamp-2 text-[15px] font-semibold leading-snug transition-colors">
           {event.title}
         </h3>
 

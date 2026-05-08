@@ -154,10 +154,7 @@ export async function verifyAccessToken(token: string): Promise<VerifiedAccessTo
   } catch (err) {
     const message = err instanceof Error ? err.message : 'verification failed';
     const expired = /expired/i.test(message);
-    throw new TokenVerificationError(
-      expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID',
-      message,
-    );
+    throw new TokenVerificationError(expired ? 'TOKEN_EXPIRED' : 'TOKEN_INVALID', message);
   }
 
   if (

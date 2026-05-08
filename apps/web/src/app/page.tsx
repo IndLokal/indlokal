@@ -43,10 +43,10 @@ export default function HomePage() {
 
       <main className="flex-1">
         {/* Hero — indigo with single saffron accent */}
-        <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pt-16 pb-20 text-center sm:pt-28 sm:pb-32">
+        <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pb-20 pt-16 text-center sm:pb-32 sm:pt-28">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
-            <div className="bg-brand-500/20 absolute -top-40 -right-40 hidden h-[500px] w-[500px] rounded-full blur-3xl sm:block" />
-            <div className="bg-accent-400/15 absolute top-1/2 -left-40 hidden h-[400px] w-[400px] rounded-full blur-3xl sm:block" />
+            <div className="bg-brand-500/20 absolute -right-40 -top-40 hidden h-[500px] w-[500px] rounded-full blur-3xl sm:block" />
+            <div className="bg-accent-400/15 absolute -left-40 top-1/2 hidden h-[400px] w-[400px] rounded-full blur-3xl sm:block" />
             <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjAzKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
           </div>
 
@@ -55,7 +55,7 @@ export default function HomePage() {
               <span className="bg-accent-400 flex h-2 w-2 animate-pulse rounded-full" />
               For the Indian diaspora in Germany
             </span>
-            <h1 className="mt-6 text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:mt-8 sm:text-6xl lg:text-7xl">
+            <h1 className="mt-6 text-4xl font-extrabold leading-[1.1] tracking-tight text-white sm:mt-8 sm:text-6xl lg:text-7xl">
               Your Indian community,{' '}
               <span className="from-accent-300 to-accent-500 bg-gradient-to-r bg-clip-text text-transparent">
                 locally.
@@ -141,7 +141,7 @@ export default function HomePage() {
               <Link
                 key={city.slug}
                 href={`/${city.slug}`}
-                className="group hover:ring-brand-200 inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="hover:ring-brand-200 group inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
                 <span className="text-lg">{city.emoji}</span>
                 <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">
@@ -159,7 +159,7 @@ export default function HomePage() {
         <section className="bg-white px-4 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="text-center">
-              <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
+              <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider">
                 Three pillars, one place
               </span>
               <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">

@@ -83,7 +83,7 @@ export default async function AdminClaimsPage() {
                         )}
                         {evidenceLinks.length > 0 && (
                           <div className="border-border mt-2 border-t pt-2">
-                            <p className="text-muted text-xs font-medium tracking-wide uppercase">
+                            <p className="text-muted text-xs font-medium uppercase tracking-wide">
                               Evidence ({evidenceLinks.length}/3)
                             </p>
                             <div className="mt-1.5 flex flex-wrap gap-2">

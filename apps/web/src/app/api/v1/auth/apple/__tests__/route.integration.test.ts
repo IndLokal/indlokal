@@ -35,9 +35,7 @@ beforeAll(async () => {
     if (header.kid && header.kid !== KID) throw new Error('kid mismatch');
     const { importJWK } = await import('jose');
     return importJWK(publicJwk, 'RS256');
-  }) as unknown as ReturnType<
-    typeof import('jose').createRemoteJWKSet
-  >;
+  }) as unknown as ReturnType<typeof import('jose').createRemoteJWKSet>;
   __setAppleJwksForTests(jwksFn);
 });
 

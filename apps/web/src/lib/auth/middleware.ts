@@ -35,7 +35,10 @@ function extractBearer(req: NextRequest): string | null {
   return header.replace(BEARER_PREFIX, '').trim() || null;
 }
 
-function unauthorized(code: 'UNAUTHENTICATED' | 'TOKEN_EXPIRED' | 'TOKEN_INVALID', message: string) {
+function unauthorized(
+  code: 'UNAUTHENTICATED' | 'TOKEN_EXPIRED' | 'TOKEN_INVALID',
+  message: string,
+) {
   return NextResponse.json(
     { error: { code, message } },
     {

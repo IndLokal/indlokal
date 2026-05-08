@@ -11,9 +11,9 @@ export default function ContactPage() {
   return (
     <>
       {/* Hero */}
-      <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pt-20 pb-16 text-center">
+      <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pb-16 pt-20 text-center">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="bg-brand-500/20 absolute -top-32 -right-32 h-96 w-96 rounded-full blur-3xl" />
+          <div className="bg-brand-500/20 absolute -right-32 -top-32 h-96 w-96 rounded-full blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-xl">
           <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">

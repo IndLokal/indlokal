@@ -14,12 +14,8 @@ vi.mock('@/lib/db', async (importOriginal) => {
   return { ...mod, db: testDb };
 });
 
-const {
-  issueRefreshToken,
-  rotateRefreshToken,
-  revokeRefreshToken,
-  RefreshTokenError,
-} = await import('../refresh');
+const { issueRefreshToken, rotateRefreshToken, revokeRefreshToken, RefreshTokenError } =
+  await import('../refresh');
 
 async function createUser() {
   return testDb.user.create({
