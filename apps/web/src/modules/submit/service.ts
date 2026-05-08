@@ -3,7 +3,6 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, UPLOAD_BUCKET, UPLOAD_PRESIGN_TTL_SECONDS } from '@/lib/storage';
 import { computeSimilarity } from '@/modules/pipeline';
-import slugify from 'slugify';
 import type { ChannelType } from '@prisma/client';
 import { submit as s } from '@indlokal/shared';
 type EventSubmission = s.EventSubmission;
