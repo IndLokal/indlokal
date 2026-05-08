@@ -67,7 +67,7 @@ export default function AdminLoginPage() {
                 type="email"
                 required
                 autoComplete="email"
-                className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
+                className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-1"
                 placeholder="admin@indlokal.de"
               />
             </div>

@@ -83,7 +83,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
           defaultValue={query}
           placeholder="Search communities, events…"
           autoFocus
-          className="border-border text-foreground focus:border-brand-500 focus:ring-brand-100 flex-1 rounded-[var(--radius-card)] border px-4 py-3 text-base transition-colors outline-none focus:ring-2"
+          className="border-border text-foreground focus:border-brand-500 focus:ring-brand-100 flex-1 rounded-[var(--radius-card)] border px-4 py-3 text-base outline-none transition-colors focus:ring-2"
         />
         <button
           type="submit"

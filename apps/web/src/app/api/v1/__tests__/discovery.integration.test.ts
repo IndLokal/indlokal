@@ -61,7 +61,12 @@ async function seedCommunity(cityId: string, name: string, activityScore = 0, is
   });
 }
 
-async function seedEvent(cityId: string, communityId: string | null, title: string, startsAt: Date) {
+async function seedEvent(
+  cityId: string,
+  communityId: string | null,
+  title: string,
+  startsAt: Date,
+) {
   return testDb.event.create({
     data: {
       title,
@@ -89,7 +94,13 @@ describe('GET /api/v1/cities', () => {
   it('returns only active cities', async () => {
     await seedCity('stuttgart');
     await testDb.city.create({
-      data: { name: 'Berlin', slug: 'berlin', state: 'Berlin', isActive: false, timezone: 'Europe/Berlin' },
+      data: {
+        name: 'Berlin',
+        slug: 'berlin',
+        state: 'Berlin',
+        isActive: false,
+        timezone: 'Europe/Berlin',
+      },
     });
 
     const res = await citiesRoute.GET();
@@ -103,20 +114,18 @@ describe('GET /api/v1/cities', () => {
 
 describe('GET /api/v1/cities/:slug', () => {
   it('404 for unknown slug', async () => {
-    const res = await citySlugRoute.GET(
-      new Request('http://l/api/v1/cities/unknown') as never,
-      { params: Promise.resolve({ slug: 'unknown' }) },
-    );
+    const res = await citySlugRoute.GET(new Request('http://l/api/v1/cities/unknown') as never, {
+      params: Promise.resolve({ slug: 'unknown' }),
+    });
     expect(res.status).toBe(404);
   });
 
   it('returns city detail with counts and empty category list', async () => {
     const city = await seedCity();
 
-    const res = await citySlugRoute.GET(
-      new Request('http://l/api/v1/cities/stuttgart') as never,
-      { params: Promise.resolve({ slug: 'stuttgart' }) },
-    );
+    const res = await citySlugRoute.GET(new Request('http://l/api/v1/cities/stuttgart') as never, {
+      params: Promise.resolve({ slug: 'stuttgart' }),
+    });
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json.id).toBe(city.id);
@@ -131,10 +140,9 @@ describe('GET /api/v1/cities/:slug', () => {
     await seedCommunity(city.id, 'IndStuttgart B', 5);
     await seedEvent(city.id, null, 'Diwali Night', new Date(Date.now() + 86_400_000));
 
-    const res = await citySlugRoute.GET(
-      new Request('http://l/api/v1/cities/stuttgart') as never,
-      { params: Promise.resolve({ slug: 'stuttgart' }) },
-    );
+    const res = await citySlugRoute.GET(new Request('http://l/api/v1/cities/stuttgart') as never, {
+      params: Promise.resolve({ slug: 'stuttgart' }),
+    });
     const json = await res.json();
     expect(json.counts.communities).toBe(2);
     expect(json.counts.upcomingEvents).toBe(1);
@@ -173,7 +181,9 @@ describe('GET /api/v1/discovery/:citySlug/events', () => {
     expect(page1.nextCursor).toBeDefined();
 
     const res2 = await eventsRoute.GET(
-      new Request(`http://l/api/v1/discovery/stuttgart/events?limit=3&cursor=${page1.nextCursor}`) as never,
+      new Request(
+        `http://l/api/v1/discovery/stuttgart/events?limit=3&cursor=${page1.nextCursor}`,
+      ) as never,
       { params: Promise.resolve({ citySlug: 'stuttgart' }) },
     );
     const page2 = await res2.json();
@@ -221,7 +231,9 @@ describe('GET /api/v1/discovery/:citySlug/communities', () => {
     expect(page1.nextCursor).toBeDefined();
 
     const res2 = await communitiesRoute.GET(
-      new Request(`http://l/api/v1/discovery/stuttgart/communities?limit=2&cursor=${page1.nextCursor}`) as never,
+      new Request(
+        `http://l/api/v1/discovery/stuttgart/communities?limit=2&cursor=${page1.nextCursor}`,
+      ) as never,
       { params: Promise.resolve({ citySlug: 'stuttgart' }) },
     );
     const page2 = await res2.json();

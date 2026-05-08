@@ -39,12 +39,7 @@ afterAll(async () => {
   await testDb.$disconnect();
 });
 
-function mockGoogleHappy(profile: {
-  sub: string;
-  email: string;
-  name?: string;
-  picture?: string;
-}) {
+function mockGoogleHappy(profile: { sub: string; email: string; name?: string; picture?: string }) {
   globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString();
     if (url.includes('oauth2.googleapis.com/token')) {

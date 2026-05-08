@@ -112,7 +112,7 @@ export function CitySearch() {
     <div ref={ref} className="relative">
       <div className="relative">
         <svg
-          className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-white/40"
+          className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-white/40"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -135,12 +135,12 @@ export function CitySearch() {
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="Search your city or town…"
-          className="w-full rounded-xl border border-white/20 bg-white/10 py-3.5 pr-4 pl-12 text-sm text-white placeholder-white/50 backdrop-blur-sm transition-all outline-none focus:border-white/30 focus:bg-white/15 focus:ring-2 focus:ring-white/20"
+          className="w-full rounded-xl border border-white/20 bg-white/10 py-3.5 pl-12 pr-4 text-sm text-white placeholder-white/50 outline-none backdrop-blur-sm transition-all focus:border-white/30 focus:bg-white/15 focus:ring-2 focus:ring-white/20"
         />
       </div>
 
       {open && results.length > 0 && (
-        <ul className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/[0.08]">
+        <ul className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/[0.08]">
           {results.map((r, i) => (
             <li key={r.href + r.label}>
               <button
@@ -163,7 +163,7 @@ export function CitySearch() {
       )}
 
       {open && query.length > 1 && results.length === 0 && (
-        <div className="absolute top-full right-0 left-0 z-50 mt-2 rounded-xl bg-white px-4 py-4 text-center shadow-2xl ring-1 ring-black/[0.08]">
+        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl bg-white px-4 py-4 text-center shadow-2xl ring-1 ring-black/[0.08]">
           <p className="text-sm text-gray-500">No city found for &ldquo;{query}&rdquo;</p>
           <p className="mt-1 text-xs text-gray-400">
             We&apos;re expanding!{' '}

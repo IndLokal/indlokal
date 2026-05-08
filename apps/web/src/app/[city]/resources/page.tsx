@@ -120,7 +120,7 @@ export default async function ResourcesHubPage({ params }: Props) {
                 <Link
                   key={guide.slug}
                   href={`/${city}/resources/${categorySlug}#${guide.slug}`}
-                  className="group hover:ring-brand-200 inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  className="hover:ring-brand-200 group inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
                 >
                   <span>{guide.icon}</span>
                   <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">

@@ -73,7 +73,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
             aria-hidden="true"
           />
           {/* Dropdown — aligned to h-16 header bottom */}
-          <div className="border-border fixed top-16 right-0 left-0 z-50 border-b bg-white px-4 py-3 shadow-lg">
+          <div className="border-border fixed left-0 right-0 top-16 z-50 border-b bg-white px-4 py-3 shadow-lg">
             <nav className="flex flex-col gap-1">
               {links.map((link) => (
                 <Link

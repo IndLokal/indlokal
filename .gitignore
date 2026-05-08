@@ -20,6 +20,10 @@ coverage/
 .next/
 out/
 
+# expo generated files
+apps/mobile/.expo/
+apps/mobile/expo-env.d.ts
+
 # production
 build/
 dist/

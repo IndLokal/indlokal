@@ -70,7 +70,7 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
         </div>
 
         {/* Name */}
-        <h3 className="text-foreground group-hover:text-brand-600 mt-3 text-[15px] leading-snug font-semibold transition-colors">
+        <h3 className="text-foreground group-hover:text-brand-600 mt-3 text-[15px] font-semibold leading-snug transition-colors">
           {community.name}
         </h3>
 
@@ -113,7 +113,7 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
       </Link>
 
       {savedByUser !== undefined && (
-        <div className="absolute right-3 bottom-4 z-10">
+        <div className="absolute bottom-4 right-3 z-10">
           <BookmarkButton communityId={community.id} saved={savedByUser} />
         </div>
       )}

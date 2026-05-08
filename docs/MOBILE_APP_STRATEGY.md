@@ -45,12 +45,12 @@ Primary jobs-to-be-done on mobile:
 
 **Stack:** Expo SDK (latest stable) + React Native + TypeScript + EAS (Build, Submit, Update).
 
-| Option                  | Verdict                                                                                   |
-| ----------------------- | ----------------------------------------------------------------------------------------- |
-| PWA only                | ❌ Rejected — see §0                                                                      |
-| Native Swift + Kotlin   | ❌ Premature; doubles cost, splits a small team                                           |
-| Flutter                 | ❌ Team is TS/React; high ramp, no shared types with web                                  |
-| **Expo / React Native** | ✅ Shares TS + Zod schemas with `src/modules/*`; OTA via EAS Update; mature push pipeline |
+| Option                  | Verdict                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| PWA only                | ❌ Rejected — see §0                                                                           |
+| Native Swift + Kotlin   | ❌ Premature; doubles cost, splits a small team                                                |
+| Flutter                 | ❌ Team is TS/React; high ramp, no shared types with web                                       |
+| **Expo / React Native** | ✅ Shares TS + Zod schemas through `packages/shared`; OTA via EAS Update; mature push pipeline |
 
 Supporting choices:
 
@@ -58,20 +58,20 @@ Supporting choices:
 - **Data:** TanStack Query + Zod-validated API client generated from OpenAPI.
 - **State:** Zustand for UI state; server state lives in TanStack Query.
 - **Storage:** Expo SecureStore (tokens), MMKV (cache), React Query persist (offline feed).
-- **Auth:** Sign in with Apple (mandatory if Google is offered), Google Sign-In, Email magic link (reuses `src/lib/email.ts`).
+- **Auth:** Sign in with Apple (mandatory if Google is offered), Google Sign-In, Email magic link (reuses the web backend email flow).
 - **Push:** Expo Push Service → APNs + FCM.
-- **Crash & analytics:** Sentry + PostHog.
+- **Crash & analytics:** Vercel logs first for MVP, PostHog when funnel data is needed, Sentry when external users justify dedicated error tracking.
 - **Forms:** React Hook Form + Zod (shared schemas).
-- **CI/CD:** GitHub Actions → EAS Build → EAS Submit → staged rollout.
+- **CI/CD:** EAS Build/Submit for mobile releases; keep custom mobile CI/CD light until app-store traction justifies automation.
 
 **Repository layout (monorepo via pnpm workspaces or Turborepo):**
 
 ```
 apps/
   web/        # current Next.js app
-  mobile/     # new Expo app
+  mobile/     # Expo app
 packages/
-  shared/     # Zod schemas, types lifted from src/modules/*/types.ts, API client, analytics events
+  shared/     # Zod schemas, generated OpenAPI, API client, analytics events
   ui-tokens/  # design tokens from docs/brand/DESIGN_GUIDELINES.md
 ```
 
@@ -185,8 +185,8 @@ For every feature (mobile or shared backend):
 ### 3.4 Contract Source of Truth
 
 - All API request/response shapes are **Zod schemas in `packages/shared`**.
-- A CI job exports them to OpenAPI 3.1 and to a typed TS client used by both `apps/web` and `apps/mobile`.
-- A contract test (Pact or schema-diff) **fails CI** if the implementation diverges from the spec.
+- `pnpm openapi:generate` exports them to OpenAPI 3.1 for review and client usage.
+- Contract drift should fail CI once the generated client/contract test is wired.
 - Breaking changes require a new version (`/api/v2/...`) and an ADR.
 
 ### 3.5 Definition of Done (per feature)
@@ -196,8 +196,8 @@ For every feature (mobile or shared backend):
 - [ ] Contract tests green
 - [ ] Unit coverage ≥ 80% on new code
 - [ ] Detox E2E for the happy path on iOS + Android
-- [ ] Analytics events verified in PostHog staging
-- [ ] Sentry shows zero new error groups in 24h canary
+- [ ] Analytics events verified where analytics is enabled
+- [ ] No new high-severity runtime errors observed in logs or error tracking
 - [ ] Accessibility checks (VoiceOver/TalkBack labels, dynamic type, contrast)
 - [ ] Feature flag wired; rollout plan approved
 - [ ] Docs updated (`README`, in-app help if user-visible)
@@ -277,7 +277,7 @@ Each item below ships behind its own TDD:
 
 ## 7. Engagement & Growth Loops
 
-- **Deep links + share sheet** with branded OG cards (server-rendered in Next.js) → WhatsApp/Telegram → deferred deep link install (Branch.io or AppsFlyer).
+- **Deep links + share sheet** with branded OG cards (server-rendered in Next.js) → WhatsApp/Telegram → app/open-store path.
 - **Referrals** — "Invite a friend to {city}" tracked via `modules/pipeline`.
 - **Organizer loop** — push for RSVPs and approvals → daily opens → more content.
 - **Calendar integration** — "Add to Calendar" auto-creates a reminder trigger.
@@ -292,7 +292,7 @@ Each item below ships behind its own TDD:
 - Apple ATT prompt only if IDFA-based attribution is added.
 - Tokens in SecureStore/Keychain/Keystore; refresh-token rotation.
 - Certificate pinning for API calls.
-- Crash-free sessions ≥ 99.5% (Sentry).
+- Crash-free sessions ≥ 99.5% once mobile is in external testing.
 - Accessibility per `docs/brand/DESIGN_GUIDELINES.md` — dynamic type, VoiceOver/TalkBack, contrast.
 - Content moderation policy + report/block (App Store requirement for UGC).
 
@@ -300,10 +300,10 @@ Each item below ships behind its own TDD:
 
 ## 9. Release & Ops
 
-- EAS Build + EAS Submit; OTA via EAS Update on `production` and `staging` channels.
-- Native binary release cadence: every 2 weeks; OTA for JS-only fixes any time.
-- Feature flags (PostHog/Statsig) for dark-launches.
-- Staged rollout 1% → 10% → 50% → 100% with auto-halt on Sentry regression.
+- EAS Build + EAS Submit; start with internal preview builds, then store builds.
+- Native binary release cadence can stay manual during MVP; automate only after repeated releases.
+- Feature flags can remain simple config until usage requires a dedicated service.
+- Staged rollout through TestFlight and Play Console tracks; halt manually if crashes or feedback regress.
 - ASO — localized listings (en, hi, ta, te first); keywords from `docs/COMPETITIVE_ANALYSIS_*`.
 
 ---
@@ -325,7 +325,7 @@ Each item below ships behind its own TDD:
 - 0.5 PM
 - Shared QA + 1 part-time release manager
 
-Run-rate adds: EAS, Resend, R2/S3, Sentry, PostHog, Branch/AppsFlyer. All have free tiers sufficient until traction.
+Run-rate adds should stay minimal: EAS, Resend, object storage, PostHog, and Sentry only when each feature is actively needed. Avoid attribution tooling until paid acquisition exists.
 
 ---
 

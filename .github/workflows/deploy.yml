@@ -1,5 +1,9 @@
 name: Deploy
 
+env:
+  # Opt in now to GitHub Actions JavaScript runtime Node 24 to avoid the Node 20 deprecation cliff.
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 # Runs Prisma migrations against production immediately after a merge to main,
 # before Vercel starts the new deployment build.
 #
@@ -20,13 +24,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 9
+      - uses: pnpm/action-setup@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: pnpm

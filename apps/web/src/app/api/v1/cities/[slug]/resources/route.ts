@@ -4,7 +4,6 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { apiError } from '@/lib/api/error';
 import { getResourcesByCity } from '@/modules/resources';
 import { RESOURCE_SLUG_TO_TYPE } from '@/lib/config/resources';
 import type { ResourceType } from '@prisma/client';

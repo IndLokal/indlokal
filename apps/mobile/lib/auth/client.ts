@@ -1,5 +1,4 @@
 import { auth } from '@indlokal/shared';
-import { getApiBaseUrl } from '@/lib/config/api-base-url';
 import { createMemorySecureStore, createTokenStore, type AuthTokens } from './token-store';
 
 type RequestOptions = {
@@ -13,7 +12,7 @@ type CreateAuthClientOptions = {
   store?: ReturnType<typeof createTokenStore>;
 };
 
-const DEFAULT_API_BASE_URL = getApiBaseUrl();
+const DEFAULT_API_BASE_URL = 'https://indlokal.com';
 
 export class AuthClientError extends Error {
   status: number;
