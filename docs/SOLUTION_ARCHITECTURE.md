@@ -2,7 +2,7 @@
 
 **Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
 
-_Architecture Planning Document — April 2026_
+_Architecture Planning Document — April 2026. Updated May 2026 to reflect the monorepo and native mobile MVP path._
 
 ---
 
@@ -35,6 +35,8 @@ IndLokal is an **activity-led community discovery platform** for the Indian dias
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Activity-led, not directory-led**    | Retention comes from time-sensitive, fresh content — not static listings                                                                                   |
 | **Monolith-first, modular-internal**   | Ship fast, avoid distributed-system overhead; separate concerns at the module/domain boundary                                                              |
+| **Monorepo with one backend**          | `apps/web` owns API + Prisma, `apps/mobile` consumes the same backend, and `packages/shared` carries contracts; avoid a separate mobile backend            |
+| **Native mobile for recall**           | Web is the SEO and admin surface; Expo mobile app is required for member recall, push, and installed-app trust                                             |
 | **City-first data model**              | Hyperlocal density is the prerequisite for product-market fit; architecture must make city the primary partition                                           |
 | **Metro-region aware**                 | Stuttgart metro includes satellite cities (Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen); events in satellites must appear in main city feed |
 | **Graph-ready relational core**        | Start with PostgreSQL + structured relational schema; design edges and scores as first-class entities so graph queries are natural when needed             |
@@ -139,7 +141,7 @@ These relationships form the **community graph**. The architecture must model th
 
 ### Monolith-first, modular-internal
 
-**Recommendation: Start as a modular monolith.** Deploy as a single application with clearly separated internal modules aligned to product domains.
+**Recommendation: Start as a modular monolith inside a monorepo.** Deploy one web/backend application with clearly separated internal modules aligned to product domains, and ship the Expo mobile app against the same API and shared contracts.
 
 **Why not microservices:**
 
@@ -158,8 +160,8 @@ These relationships form the **community graph**. The architecture must model th
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                      API / Presentation                       │
-│  (REST API · Server-rendered pages or SPA · Public API)       │
+│                      Product Surfaces                         │
+│  Expo mobile app · Next.js web/SEO/admin · REST API           │
 ├──────────────────────────────────────────────────────────────┤
 │                      Application Layer                        │
 │  ┌────────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
@@ -192,22 +194,24 @@ These relationships form the **community graph**. The architecture must model th
 
 ### 5.1 Presentation Layer
 
-**Purpose:** Deliver the discovery experience to end users and provide admin/curation interfaces.
+**Purpose:** Deliver the discovery experience to end users, create mobile recall, and provide admin/curation interfaces.
 
 **Components:**
 
-- **Public web application** — responsive, mobile-first; the primary discovery surface
+- **Expo mobile app** — iOS and Android app for member recall, push notifications, saved items, submission flows, and repeated discovery
+- **Public web application** — SEO-first discovery surface, previewable public pages, and fallback mobile web experience
 - **Programmatic SEO pages** — auto-generated pages for long-tail queries: `/stuttgart/telugu-communities/`, `/stuttgart/indian-events-this-week/`, `/stuttgart/consular-services/`. Each page is a filtered view backed by real data, not thin content.
 - **Admin/curation dashboard** — for seeding, editing, verifying communities and events
-- **Public API** — for later integrations or potential mobile app
+- **Backend API** — owned by `apps/web` and consumed by both web and mobile through shared contracts
 
 **Key design decisions:**
 
 - Server-side rendering (SSR) or static generation for SEO — events and communities must be indexable by Google
+- Mobile app is not a second backend; it uses the same API and domain model as web
 - City as the top-level navigation primitive
 - Activity feed as the default landing experience (not a search box, not a directory listing)
 
-**Technology guidance:** Next.js (SSR, SEO, React ecosystem) or equivalent. Choose for SEO capability and speed of development.
+**Technology guidance:** Next.js for web/API/SEO/admin, Expo for native mobile, Prisma/PostgreSQL for persistence, and `packages/shared` for Zod/OpenAPI contracts.
 
 ### 5.2 Application / Service Layer
 
@@ -956,13 +960,13 @@ Beyond new content detection, AI helps keep existing content fresh:
 
 #### 10.4.6 Technology stack for AI pipeline
 
-| Component            | Recommendation                                                             | Rationale                                                         |
-| -------------------- | -------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| **Scheduler**        | Node.js cron jobs (node-cron) or Vercel Cron                               | Same stack as app; no new infrastructure                          |
-| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML | Handles modern SPAs; Playwright runs in Node                      |
-| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                       | Best cost/quality ratio; structured output mode for reliable JSON |
-| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                  | No new infrastructure; works with existing Prisma setup           |
-| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                 | Reduce API costs by resizing large images                         |
+| Component            | Recommendation                                                                 | Rationale                                                             |
+| -------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| **Scheduler**        | GitHub Actions/manual runs for MVP; Vercel Cron or a dedicated scheduler later | Keep MVP ops simple; upgrade only when freshness becomes user-visible |
+| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML     | Handles modern SPAs; Playwright runs in Node                          |
+| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                           | Best cost/quality ratio; structured output mode for reliable JSON     |
+| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                      | No new infrastructure; works with existing Prisma setup               |
+| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                     | Reduce API costs by resizing large images                             |
 
 **Total monthly cost estimate for Stuttgart:**
 
@@ -1006,7 +1010,8 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 | **Programmatic SEO pages**             | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.)                                                               |
 | **Basic activity scoring**             | Sort by last_updated, event count — just enough to avoid stale-first                                                                            |
 | **SEO-ready rendering**                | Communities and events must be Google-indexable                                                                                                 |
-| **Mobile-responsive web**              | Most diaspora users will access via mobile                                                                                                      |
+| **Native mobile app path**             | Expo builds are part of MVP because recall requires an installed app, push, and app-store trust                                                 |
+| **Mobile-responsive web**              | Web remains important for SEO, previews, admin, and users who arrive from search                                                                |
 | **Basic analytics**                    | Page views, clicks, search queries                                                                                                              |
 
 ### 11.2 What should be designed as future-ready but not overbuilt
@@ -1021,40 +1026,41 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 | **Community claims**   | `claim_state` field on community entity                                                                           | Full claim/verification workflow                                                                                                                    |
 | **Trust signals**      | `trust_signal` table in schema                                                                                    | Multi-signal trust computation                                                                                                                      |
 | **Event import**       | Design the ingestion pipeline interface                                                                           | Build adapters for external sources                                                                                                                 |
-| **Notifications**      | User entity with preferences                                                                                      | Email/push notifications                                                                                                                            |
+| **Notifications**      | Device and preference model; keep delivery simple first                                                           | Rich push/email/inbox automation when usage justifies it                                                                                            |
 | **Multi-city**         | City model supports multiple cities                                                                               | Cross-city discovery and comparison                                                                                                                 |
 | **Taxonomy depth**     | JSONB `metadata` field on community supports subcategories                                                        | Hierarchical taxonomy UI (Phase 4)                                                                                                                  |
 | **Data API**           | Normalized, structured data model                                                                                 | External API for integrations (Phase 4+)                                                                                                            |
 
 ### 11.3 What can be postponed entirely
 
-| Capability                | Why postpone                                          |
-| ------------------------- | ----------------------------------------------------- |
-| **Graph database**        | PostgreSQL handles relationship queries at this scale |
-| **ML-based ranking**      | Need behavioral data first; months away               |
-| **Recommendation engine** | Need user interaction data                            |
-| **Mobile app**            | Responsive web is sufficient initially                |
-| **Real-time features**    | No need for WebSockets or live updates                |
-| **Content CDN**           | Images can be served from object storage directly     |
-| **Multi-language UI**     | Start in English; add German and Hindi later          |
-| **Payments/monetization** | No business model features in MVP                     |
-| **API for third parties** | Internal API only                                     |
+| Capability                  | Why postpone                                                            |
+| --------------------------- | ----------------------------------------------------------------------- |
+| **Graph database**          | PostgreSQL handles relationship queries at this scale                   |
+| **ML-based ranking**        | Need behavioral data first; months away                                 |
+| **Recommendation engine**   | Need user interaction data                                              |
+| **Separate mobile backend** | The Expo app should reuse the existing Next.js API and shared contracts |
+| **Real-time features**      | No need for WebSockets or live updates                                  |
+| **Content CDN**             | Images can be served from object storage directly                       |
+| **Multi-language UI**       | Start in English; add German and Hindi later                            |
+| **Payments/monetization**   | No business model features in MVP                                       |
+| **API for third parties**   | Internal API only                                                       |
 
 ### 11.4 Architecture evolution diagram
 
 ```
 MVP                          Phase 2                      Phase 3+
 ────────────────────         ────────────────────         ────────────────────
-Next.js SSR                  Same                         Same + mobile app?
-     │                            │                            │
-Monolith API                 Monolith API                 Extract search &
-(all modules)                (+ submission,                scoring services
-     │                        claim flows)                     │
+Expo mobile app              Same                         Same + richer native
+Next.js web/API              Same                         engagement surfaces
+  │                            │                            │
+Modular monolith             Monolith API                 Extract search &
+(all modules)                (+ claim/admin                scoring services
+  │                        surfaces)                       │
 PostgreSQL                   PostgreSQL                   PostgreSQL
-(FTS, computed scores)       + Meilisearch               + Meilisearch
-                             + Redis cache               + Redis
-                                                         + Graph layer
-                                                         + Analytics warehouse
+(FTS, computed scores)       + Meilisearch                + Meilisearch
+GitHub Actions cron          + Redis cache                + Redis
+Expo EAS builds                                           + Graph layer
+                         + Analytics warehouse
 ```
 
 ---
@@ -1063,19 +1069,20 @@ PostgreSQL                   PostgreSQL                   PostgreSQL
 
 The following are explicitly **out of scope** for the initial architecture and should not influence design decisions:
 
-| Non-goal                         | Rationale                                                                                                 |
-| -------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Chat / messaging**             | Communities communicate on WhatsApp/Telegram; IndLokal is the discovery layer, not an engagement platform |
-| **Full social graph**            | Users do not need to friend/follow each other; this is not a social network                               |
-| **User-generated content feeds** | No posts, stories, or social feeds; content is structured (communities, events)                           |
-| **Payments / transactions**      | No ticketing, donations, or commerce                                                                      |
-| **Heavy workflow systems**       | No complex approval chains, multi-step forms, or enterprise admin tools                                   |
-| **Real-time collaboration**      | No live editing, co-planning, or shared workspaces                                                        |
-| **Content moderation AI**        | Manual moderation is sufficient at initial scale                                                          |
-| **Multi-country expansion**      | Design for Germany first; internationalization is a later concern                                         |
-| **Monetization features**        | No ads, premium listings, or subscription tiers in MVP                                                    |
-| **Mobile native apps**           | Responsive web is the correct investment at this stage                                                    |
-| **Email marketing platform**     | Simple transactional emails only; no newsletter platform                                                  |
+| Non-goal                          | Rationale                                                                                                 |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Chat / messaging**              | Communities communicate on WhatsApp/Telegram; IndLokal is the discovery layer, not an engagement platform |
+| **Full social graph**             | Users do not need to friend/follow each other; this is not a social network                               |
+| **User-generated content feeds**  | No posts, stories, or social feeds; content is structured (communities, events)                           |
+| **Payments / transactions**       | No ticketing, donations, or commerce                                                                      |
+| **Heavy workflow systems**        | No complex approval chains, multi-step forms, or enterprise admin tools                                   |
+| **Real-time collaboration**       | No live editing, co-planning, or shared workspaces                                                        |
+| **Content moderation AI**         | Manual moderation is sufficient at initial scale                                                          |
+| **Multi-country expansion**       | Design for Germany first; internationalization is a later concern                                         |
+| **Monetization features**         | No ads, premium listings, or subscription tiers in MVP                                                    |
+| **Separate mobile backend**       | The native app uses the same API and shared contracts as web                                              |
+| **PWA as primary mobile channel** | Native Expo apps are the recall path; PWA can remain a fallback, not the main product bet                 |
+| **Email marketing platform**      | Simple transactional emails only; no newsletter platform                                                  |
 
 ---
 
@@ -1127,7 +1134,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 **Architecture deliverables:**
 
-- Repository setup with monorepo or modular project structure
+- Repository setup with pnpm monorepo structure (`apps/web`, `apps/mobile`, `packages/shared`)
 - PostgreSQL schema: all core entities (community, event, city, category, access_channel, activity_signal, trust_signal, relationship_edge, user, user_interaction, **resource**)
 - City schema includes metro-region support (Stuttgart + satellite cities)
 - Database migrations framework
@@ -1135,12 +1142,12 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Authentication setup (simple email/password or social login)
 - Admin CRUD endpoints for communities, events, and resources
 - Basic CI/CD pipeline
-- Hosting infrastructure (single server or PaaS — Railway, Fly.io, Render, or similar)
+- MVP deployment path: Vercel for web/API, Neon for Postgres, Expo EAS for mobile builds
 
 **Key decisions to finalize:**
 
 - Tech stack (recommended: Next.js + TypeScript + PostgreSQL + Prisma/Drizzle)
-- Hosting provider
+- Production branch and deployment provider configuration
 - Domain and DNS
 
 ### Phase 1: MVP (Weeks 3-8)
@@ -1237,20 +1244,21 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ## Technology Recommendations Summary
 
-| Layer            | MVP Recommendation                               | Evolution                  |
-| ---------------- | ------------------------------------------------ | -------------------------- |
-| **Frontend**     | Next.js (App Router) + TypeScript + Tailwind CSS | Same                       |
-| **Backend**      | Next.js API routes / standalone Node.js API      | Extract services if needed |
-| **Database**     | PostgreSQL (via Supabase, Neon, or self-hosted)  | Same + extensions          |
-| **ORM**          | Prisma or Drizzle ORM                            | Same                       |
-| **Search**       | PostgreSQL full-text search                      | Meilisearch                |
-| **Cache**        | None                                             | Redis                      |
-| **Auth**         | NextAuth.js or Supabase Auth                     | Same                       |
-| **Analytics**    | PostHog or Plausible                             | PostHog + data warehouse   |
-| **Hosting**      | Vercel (frontend) + Railway/Fly.io (backend/DB)  | Same or AWS/GCP            |
-| **File storage** | Cloudflare R2 or S3                              | Same                       |
-| **CI/CD**        | GitHub Actions                                   | Same                       |
-| **Graph**        | SQL joins + CTEs                                 | Apache AGE or Neo4j        |
+| Layer            | MVP Recommendation                               | Evolution                                        |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------ |
+| **Frontend**     | Next.js (App Router) + TypeScript + Tailwind CSS | Same                                             |
+| **Mobile**       | Expo + React Native + Expo Router                | Same + richer native APIs                        |
+| **Backend**      | Next.js API routes / standalone Node.js API      | Extract services if needed                       |
+| **Database**     | PostgreSQL via Neon for MVP deployment           | Same + extensions                                |
+| **ORM**          | Prisma ORM                                       | Same                                             |
+| **Search**       | PostgreSQL full-text search                      | Meilisearch                                      |
+| **Cache**        | None                                             | Redis                                            |
+| **Auth**         | NextAuth.js or Supabase Auth                     | Same                                             |
+| **Analytics**    | PostHog or Plausible                             | PostHog + data warehouse                         |
+| **Hosting**      | Vercel for web/API + Expo EAS for mobile         | Dedicated accounts/tiers when usage justifies it |
+| **File storage** | Cloudflare R2 or S3                              | Same                                             |
+| **CI/CD**        | GitHub Actions                                   | Same                                             |
+| **Graph**        | SQL joins + CTEs                                 | Apache AGE or Neo4j                              |
 
 ---
 
@@ -1272,6 +1280,6 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 8. **SEO is distribution.** Server-side rendering and structured data are architectural requirements, not nice-to-haves.
 
-9. **Don't build what you don't need yet.** No graph DB, no ML, no real-time, no mobile app in MVP.
+9. **Don't build what you don't need yet.** No graph DB, no ML, no real-time collaboration, no separate mobile backend.
 
 10. **Freshness is trust.** If the platform shows stale content, users lose trust. Freshness monitoring is a core system responsibility.

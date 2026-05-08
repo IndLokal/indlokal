@@ -8,14 +8,14 @@
 
 The IndLokal web app (Next.js + Prisma/Postgres) is in active development and pre-launch. It is being built as a discovery surface, but web alone behaves like most web products do for a diaspora audience: high one-shot intent, low return-visit habit. Our growth thesis depends on turning sporadic visitors into a weekly habit around Indian events and communities in their city, and that requires reliable push, store presence, OS-level integrations, and an installed icon people trust.
 
-The team is small, TypeScript- and React-fluent, and already operates the Next.js codebase. Any client architecture we pick must be sustainable at this team size and must not fork the domain logic that already lives in `src/modules/*`.
+The team is small, TypeScript- and React-fluent, and already operates the Next.js codebase. Any client architecture we pick must be sustainable at this team size and must not fork the domain logic that lives in `apps/web/src/modules/*` and shared contracts in `packages/shared`.
 
 ## Decision
 
 Build native iOS and Android apps using **Expo (React Native) + EAS**, organized in a **pnpm + Turborepo monorepo** alongside the existing Next.js app. Web and mobile share a single backend and a single contract:
 
 - `apps/web` — current Next.js app (unchanged delivery model).
-- `apps/mobile` — new Expo app.
+- `apps/mobile` — Expo app.
 - `packages/shared` — Zod schemas, generated typed client, analytics and notification catalogs.
 - Backend is the existing Next.js stack, exposed under versioned `/api/v1/*` (per [ADR-0002](0002-zod-as-contract.md)).
 

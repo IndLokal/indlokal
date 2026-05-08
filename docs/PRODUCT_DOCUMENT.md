@@ -36,6 +36,8 @@ For any Indian living in Germany — whether a new arrival, a student, a working
 
 The product is designed as an **activity-led discovery layer**: users come for fresh, relevant, time-sensitive events and community activity. They don't come to browse a directory.
 
+Web gives IndLokal search visibility and shareable city pages. The native mobile app gives members recall: installed presence, push notifications, saved items, and a faster path back to what's happening this week.
+
 Behind the product experience, IndLokal builds a **trusted community graph** — a structured, scored, and evolving map of diaspora community life that becomes more valuable over time.
 
 ---
@@ -89,6 +91,7 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 - Has some community connections but knows they're missing others
 - Interested in events, cultural activities, networking
 - Moderate urgency, some network access
+- Most likely to become a repeat mobile user if event reminders and saved communities work well
 - **Key need:** "What's happening that I don't know about?"
 
 #### The Student
@@ -104,6 +107,7 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 - Indian family with children in Germany
 - Interested in cultural events, language classes, family-friendly activities, religious communities
 - Values trust and safety signals
+- Responds well to installed-app trust and timely reminders for family-friendly weekend plans
 - **Key need:** "Find family-appropriate communities and activities for our kids"
 
 #### The Professional
@@ -127,12 +131,13 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 
 ### What IndLokal IS
 
-| Positioning                         | Explanation                                                                         |
-| ----------------------------------- | ----------------------------------------------------------------------------------- |
-| **Activity-led discovery layer**    | Users experience fresh, time-sensitive content — not a static directory             |
-| **Community participation gateway** | The path from "I didn't know this existed" to "I'm now part of it"                  |
-| **Event and relevance engine**      | Surfaces the right events at the right time for the right person                    |
-| **Trusted guide to community life** | Over time, becomes the reliable source for "what's good" in diaspora community life |
+| Positioning                         | Explanation                                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------ |
+| **Activity-led discovery layer**    | Users experience fresh, time-sensitive content — not a static directory                    |
+| **Community participation gateway** | The path from "I didn't know this existed" to "I'm now part of it"                         |
+| **Event and relevance engine**      | Surfaces the right events at the right time for the right person                           |
+| **Mobile recall layer**             | Uses saved items, push, and app presence to bring members back when local activity changes |
+| **Trusted guide to community life** | Over time, becomes the reliable source for "what's good" in diaspora community life        |
 
 ### What IndLokal is NOT
 
@@ -177,14 +182,22 @@ IndLokal is a **gateway**, not a destination.
 - They engage (chat, RSVP, participate) on the community's own platform (WhatsApp, Telegram, etc.)
 - IndLokal succeeds when someone clicks "Join via WhatsApp" — that is the conversion event
 
-### 5.4 Low friction, high trust
+### 5.4 Mobile recall, not mobile bloat
+
+The native app exists because members need reminders and an installed surface, not because IndLokal should become a social network.
+
+- Push notifications should point to high-value local moments: saved event reminders, new relevant events, followed community updates, and weekly city digests
+- Mobile should reuse the same backend and shared contracts as web
+- Mobile should make discovery, saving, sharing, and submission faster; it should not add chat, feeds, or ticketing in MVP
+
+### 5.5 Low friction, high trust
 
 - No login required to browse and discover
 - Minimal interaction cost (browse → find → access)
 - Trust is built through freshness signals, verified badges, and activity indicators
 - The product should feel curated, not crowdsourced
 
-### 5.5 Communities are the unit of structure
+### 5.6 Communities are the unit of structure
 
 Events, access channels, and activity signals all connect back to communities. The community is the durable entity; events are temporal. The product structure reflects this:
 
@@ -230,7 +243,7 @@ Events, access channels, and activity signals all connect back to communities. T
 **Trigger:** Raj has been in Berlin for 2 years. It's Wednesday and he wants something to do this weekend.
 
 ```
-1. Raj opens IndLokal (bookmarked) → Berlin city feed
+1. Raj opens the IndLokal mobile app → Berlin city feed
 
 2. He filters: "This weekend"
    → 4 events: Bollywood night, South Indian food potluck, Hindi book club, Berlin Indians hiking trip
@@ -826,6 +839,8 @@ This metric captures:
 | Zero-result search rate            | < 20%         | Content coverage                                          |
 | Community organizer relationships  | 5+            | Supply-side engagement; content freshness                 |
 | Programmatic SEO pages indexed     | 15+           | Long-tail search capture                                  |
+| Mobile preview installs            | 25+           | Validates app recall before public store launch           |
+| Push opt-in among preview users    | 50%+          | Early signal that notifications can drive repeat usage    |
 
 ### 12.3 Phase 2 metrics
 
@@ -975,7 +990,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 | 2   | **Product name / domain**   | indlokal.de — validate with target users; secure domain early                                                                |
 | 3   | **Authentication approach** | No auth for MVP browsing; optional auth for saves (Phase 2)                                                                  |
 | 4   | **Content language**        | English for MVP (lingua franca for Indian diaspora in Germany)                                                               |
-| 5   | **Mobile approach**         | Responsive web for MVP; consider PWA for Phase 2                                                                             |
+| 5   | **Mobile approach**         | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                   |
 
 ### 15.2 Decisions still needed
 
