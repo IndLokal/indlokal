@@ -8,7 +8,9 @@ import { getCitiesList } from '@/modules/discovery';
 import { withPublicCache } from '@/lib/api/cache';
 
 export const runtime = 'nodejs';
-export const revalidate = 300;
+// Avoid build-time prerender (no DB available in CI). CDN caching is handled by
+// the `Cache-Control` header set via `withPublicCache` below.
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const cities = await getCitiesList();
