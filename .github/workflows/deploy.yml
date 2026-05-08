@@ -4,27 +4,31 @@ env:
   # Opt in now to GitHub Actions JavaScript runtime Node 24 to avoid the Node 20 deprecation cliff.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
-# Runs Prisma migrations against production immediately after a merge to main,
-# before Vercel starts the new deployment build.
+# Runs Prisma migrations against production only after the main-branch CI
+# workflow succeeds.
 #
 # Requires repository secrets:
 #   DATABASE_URL  — production database connection string (keep in GitHub secrets, NOT Vercel env, for this workflow only)
 #
-# Vercel picks up the push to main and deploys in parallel. Because Prisma
-# migrations are additive and backward-compatible by convention, the existing
-# app version is safe during the brief overlap.
+# Vercel still picks up the push to main in parallel, but the GitHub-managed
+# migration step no longer races ahead of the main CI gate.
 
 on:
-  push:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
     branches: [main]
 
 jobs:
   migrate:
     name: Run database migrations
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
       - uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
 
       - uses: pnpm/action-setup@v6
 
