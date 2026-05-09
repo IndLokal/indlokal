@@ -1,17 +1,19 @@
-name: Deploy
+name: Deploy Staging
 
 env:
   # Opt in now to GitHub Actions JavaScript runtime Node 24 to avoid the Node 20 deprecation cliff.
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
-# Runs Prisma migrations against production only after the main-branch CI
+# Runs Prisma migrations against staging only after the main-branch CI
 # workflow succeeds.
 #
 # Requires repository secrets:
-#   DATABASE_URL  — production database connection string (keep in GitHub secrets, NOT Vercel env, for this workflow only)
+#   STAGING_DATABASE_URL  — staging database connection string
 #
-# Vercel still picks up the push to main in parallel, but the GitHub-managed
-# migration step no longer races ahead of the main CI gate.
+# In the intended Vercel setup, `main` should be treated as a preview/staging
+# branch, not the production branch. Vercel will still create the staging
+# preview deployment for `main`, while this workflow updates the staging DB only
+# after the main CI gate passes.
 
 on:
   workflow_run:
@@ -21,7 +23,7 @@ on:
 
 jobs:
   migrate:
-    name: Run database migrations
+    name: Run staging database migrations
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
@@ -46,4 +48,4 @@ jobs:
       - name: Deploy migrations
         run: pnpm --filter web exec prisma migrate deploy
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}

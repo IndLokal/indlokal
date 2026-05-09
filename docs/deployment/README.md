@@ -4,6 +4,12 @@ This folder is the deployment source of truth for the current MVP stage.
 
 The goal is **simple but workable**: get the web backend online, ship the mobile app path needed for member recall, keep founder workload low, avoid paid infrastructure until there is real external usage, and make the upgrade path obvious when the product starts getting traction.
 
+Current release model:
+
+- `develop` is the active development branch
+- `main` is the staging branch and should produce Vercel preview deployments
+- production is released manually by creating a Git tag such as `v1.2.0`
+
 ## Current stage
 
 IndLokal is still being built. The deployment plan should support:
@@ -59,7 +65,7 @@ Optional:
 
 - No Kubernetes
 - No Docker production path
-- No staging environment
+- No always-on separate app stack beyond Vercel preview plus production
 - No Terraform
 - No separate worker service
 - No Redis or queue
