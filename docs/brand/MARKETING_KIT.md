@@ -177,7 +177,17 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 
 **CTA:** _Open {City} →_
 
-### 6.5 The Community Organiser
+### 6.5 The Settled Explorer (1–5+ years in Germany)
+
+> **You've been here years. We bet you're still missing things.**
+>
+> The new Tamil sangam in Esslingen. The Hindi book club that started last spring. A regional festival you didn't grow up with but would love. The Steuerberater everyone in your group started using. The CGI consular camp coming to your Land next month.
+>
+> IndLokal surfaces what's newly active in your city — communities, events and resources you don't yet know about — so the longer you've been here, the more useful it gets, not the less.
+
+**CTA:** _Open {City} →_
+
+### 6.6 The Community Organiser
 
 > **The people you're trying to reach are already searching for you.**
 >
@@ -476,6 +486,14 @@ When opening a new social channel or partner placement:
 - [ ] First post drafted from §7 templates, not freestyled
 - [ ] Hashtag set from §10
 - [ ] Wordmark spelling double-checked: `IndLokal` (capital I, capital L)
+
+---
+
+## 15. Spoken pitches → see the Pitch Playbook
+
+This kit covers what we **write** (web, social, email, press). For what we **say** out loud — the 10s handshake, the 30s/60s/5-min pitches, audience-specific opening doors, the locked FAQ for hard questions, and the default ask per stakeholder — see [`PITCH_PLAYBOOK.md`](./PITCH_PLAYBOOK.md).
+
+The two are aligned: same spine, same vocabulary, same three pillars. They're separated because written and spoken are different crafts and shouldn't share a file.
 
 ---
 
