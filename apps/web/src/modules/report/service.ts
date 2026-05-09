@@ -58,7 +58,7 @@ export async function createReport(
 
   // Fire-and-forget admin email notification
   const adminEmail =
-    process.env.ADMIN_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? 'admin@indlokal.de';
+    process.env.ADMIN_EMAIL ?? process.env.RESEND_FROM_EMAIL ?? 'admin@indlokal.com';
   sendReportNotificationEmail(adminEmail, {
     reportId: report.id,
     reportType: report.reportType,

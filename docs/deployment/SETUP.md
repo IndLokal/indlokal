@@ -155,7 +155,7 @@ Add these in your Vercel project → **Settings → Environment Variables**. App
 | Key                    | Value                                                                                                                                                        | Scope          |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
 | `NEXT_PUBLIC_APP_NAME` | `IndLokal`                                                                                                                                                   | All            |
-| `NEXT_PUBLIC_APP_URL`  | Production: your final URL (e.g. `https://indlokal.de`). Preview: leave the same or set per-env.                                                             | All (or split) |
+| `NEXT_PUBLIC_APP_URL`  | Production: your final URL (e.g. `https://indlokal.com`). Preview: leave the same or set per-env.                                                            | All (or split) |
 | `CRON_SECRET`          | Output of `openssl rand -hex 32`                                                                                                                             | All            |
 | `AUTH_JWT_PRIVATE_KEY` | RS256 PKCS#8 PEM. Generate with the snippet below. **Required** — without it every cold start mints a new ephemeral key and invalidates all mobile sessions. | All            |
 | `AUTH_JWT_PUBLIC_KEY`  | Matching SPKI PEM for the private key above.                                                                                                                 | All            |
@@ -188,10 +188,10 @@ openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
 
 Go to GitHub repo → **Settings → Secrets and variables → Actions → New repository secret**.
 
-| Secret        | Value                                            | Used by                                        |
-| ------------- | ------------------------------------------------ | ---------------------------------------------- |
-| `APP_URL`     | Your production URL (e.g. `https://indlokal.de`) | [`cron.yml`](../../.github/workflows/cron.yml) |
-| `CRON_SECRET` | Same value as in Vercel (step 6)                 | [`cron.yml`](../../.github/workflows/cron.yml) |
+| Secret        | Value                                             | Used by                                        |
+| ------------- | ------------------------------------------------- | ---------------------------------------------- |
+| `APP_URL`     | Your production URL (e.g. `https://indlokal.com`) | [`cron.yml`](../../.github/workflows/cron.yml) |
+| `CRON_SECRET` | Same value as in Vercel (step 6)                  | [`cron.yml`](../../.github/workflows/cron.yml) |
 
 That is the entire list. CI does **not** need any database secrets — it uses an ephemeral Postgres container per run.
 

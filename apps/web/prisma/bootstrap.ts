@@ -8,7 +8,7 @@
  * Seeds:
  *   - All metro + satellite cities defined in ACTIVE_CITY_DATA / SATELLITE_CITY_DATA
  *   - All categories + personas defined in CATEGORY_TAXONOMY / PERSONA_TAXONOMY
- *   - The platform admin user (email from ADMIN_EMAIL env, default admin@indlokal.de)
+ *   - The platform admin user (email from ADMIN_EMAIL env, default admin@indlokal.com)
  *
  * Run manually:   pnpm --filter web db:bootstrap
  * Run on deploy:  set RUN_BOOTSTRAP_SEED=true in Vercel env (build script
@@ -26,7 +26,7 @@ import {
 
 const prisma = new PrismaClient();
 
-const DEFAULT_ADMIN_EMAIL = 'admin@indlokal.de';
+const DEFAULT_ADMIN_EMAIL = 'admin@indlokal.com';
 
 export type BootstrapResult = {
   cities: { created: number; updated: number; total: number };
