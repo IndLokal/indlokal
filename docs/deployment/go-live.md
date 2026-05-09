@@ -51,10 +51,8 @@ DATABASE_URL='<neon-url>' pnpm --filter web db:seed
 1. Import the GitHub repo into Vercel.
 2. Keep root directory as the repository root.
 3. Let [../../vercel.json](../../vercel.json) provide install/build/output settings.
-4. **Required:** In Vercel → Project Settings → Git → **Production Branch**, set the value to `releases`.
-   This is a branch that will never receive direct pushes. It ensures that every `main` push stays in the Preview (staging) environment and never auto-promotes to production. Production is triggered exclusively by the `release-production.yml` workflow via `vercel deploy --prod`.
-5. Treat `main` as the staging branch — Vercel will build every `main` push as a Preview deployment backed by the `indlokal_staging` Neon database.
-6. Add the minimum env vars, setting each under the correct **Environment** scope (Preview vs Production) in Vercel:
+4. Leave the **Production Branch** as `main` (Vercel default). Every push to `main` deploys to production. Every PR/branch gets a Preview deployment backed by `indlokal-db-staging`.
+5. Add the minimum env vars, setting each under the correct **Environment** scope (Preview vs Production) in Vercel:
    - `DATABASE_URL` → set **separately** for Preview (`indlokal-db-staging` URL) and Production (`indlokal-db` URL)
    - All other keys below can be shared across environments unless the values differ:
 
@@ -80,29 +78,22 @@ Add these only when the features are active:
 
 ## 4. GitHub Actions
 
-Set these repository secrets if cron or migrations should run from GitHub:
+Set these repository secrets:
 
-| Secret                 | Value                                          | Used by                              |
-| ---------------------- | ---------------------------------------------- | ------------------------------------ |
-| `STAGING_DATABASE_URL` | `indlokal-db-staging` Neon pooled URL          | staging migration workflow on `main` |
-| `DATABASE_URL`         | `indlokal-db` Neon pooled URL                  | production release workflow          |
-| `APP_URL`              | production base URL e.g. `https://indlokal.de` | cron workflow                        |
-| `CRON_SECRET`          | same value as `CRON_SECRET` in Vercel          | cron workflow                        |
-| `VERCEL_TOKEN`         | Vercel account token                           | production deploy workflow           |
-| `VERCEL_ORG_ID`        | Vercel team/org ID (`team_…`)                  | production deploy workflow           |
-| `VERCEL_PROJECT_ID`    | Vercel project ID (`prj_…`)                    | production deploy workflow           |
+| Secret         | Value                                          | Used by                        |
+| -------------- | ---------------------------------------------- | ------------------------------ |
+| `DATABASE_URL` | `indlokal-db` Neon pooled URL                  | production migration job in CI |
+| `APP_URL`      | production base URL e.g. `https://indlokal.de` | cron workflow                  |
+| `CRON_SECRET`  | same value as `CRON_SECRET` in Vercel          | cron workflow                  |
 
-Also create a GitHub environment named `production` under repo Settings → Environments. Optionally add yourself as a required reviewer — this gives a one-click approval gate before the production migration and deploy run.
-
-The current cron workflow is intentionally simple. It can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
+The cron workflow can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
 
 Release flow:
 
-1. Merge to `main` to get a staging preview deployment and staging DB migration.
-2. Test the `main` preview URL.
-3. Create a release tag like `v1.2.0` on the tested `main` commit.
-4. Push the tag to trigger [../../.github/workflows/release-production.yml](../../.github/workflows/release-production.yml).
-5. That workflow applies production migrations and performs the manual Vercel production deployment.
+1. Merge a PR to `main`.
+2. CI runs quality → tests → build → migrations automatically.
+3. Vercel deploys to production automatically.
+4. Done.
 
 ## 5. Mobile app
 

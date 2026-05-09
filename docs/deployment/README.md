@@ -6,9 +6,8 @@ The goal is **simple but workable**: get the web backend online, ship the mobile
 
 Current release model:
 
-- `develop` is the active development branch
-- `main` is the staging branch and should produce Vercel preview deployments
-- production is released manually by creating a Git tag such as `v1.2.0`
+- `main` is the production branch — every merge deploys to production via Vercel and runs DB migrations via CI
+- feature branches and PRs produce Vercel Preview deployments backed by `indlokal-db-staging`
 
 ## Current stage
 

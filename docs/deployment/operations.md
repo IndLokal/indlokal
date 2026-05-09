@@ -4,39 +4,31 @@ This is intentionally small. If a founder cannot do it in a few minutes, it is t
 
 ## Weekly
 
-- Check the latest Vercel staging preview for `main`.
-- Check the latest Vercel production deployment.
-- Check Neon storage and connection errors.
-- Check GitHub Actions failures.
+- Check the latest Vercel production deployment for `main`.
+- Check Neon storage and connection errors for both `indlokal-db` and `indlokal-db-staging`.
+- Check GitHub Actions CI failures.
 - Check the latest EAS preview/production build status when a mobile build is active.
 - Check OpenAI usage if `OPENAI_API_KEY` is enabled.
 
 ## Before changing database schema
 
 1. Create and commit a Prisma migration locally.
-2. Run tests.
-3. Merge to `main` and confirm the staging preview is healthy.
-4. Let [../../.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) run staging `prisma migrate deploy`.
-5. When ready to ship, create and push a release tag on the tested `main` commit.
-6. Let [../../.github/workflows/release-production.yml](../../.github/workflows/release-production.yml) run production `prisma migrate deploy` and the manual Vercel production release.
+2. Run tests locally.
+3. Open a PR — CI runs against ephemeral Postgres, Vercel Preview deploys against `indlokal-db-staging`.
+4. Merge to `main` — CI runs migrations against production DB automatically, Vercel deploys to production.
 
 Do not use `prisma db push` against production.
 
 ## Production release
 
-1. Ensure the target commit is already merged to `main`.
-2. Ensure the `main` preview deployment is green and smoke-tested.
-3. Create a tag like `v1.2.0` on that commit.
-4. Push the tag.
-5. Watch [../../.github/workflows/release-production.yml](../../.github/workflows/release-production.yml) and Vercel production deployment logs.
+Merge to `main`. That’s it. CI and Vercel handle everything automatically.
 
 ## If deploy fails
 
 1. Open Vercel deployment logs.
-2. If staging preview failed, fix in a PR, merge again, and re-check `main`.
-3. If tagged production failed, fix on `develop`, merge through `main`, and cut a new tag.
-4. If runtime broke, promote the previous green Vercel deployment.
-5. If a migration caused it, stop and inspect the migration before changing production data.
+2. If the deploy failed, fix in a PR, merge to `main` again.
+3. If runtime broke, promote the previous green Vercel deployment from the Vercel dashboard.
+4. If a migration caused it, stop and inspect the migration before touching production data.
 
 ## If cron fails
 
