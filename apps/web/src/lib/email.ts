@@ -3,7 +3,7 @@ import nodemailer from 'nodemailer';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'IndLokal <noreply@indlokal.de>';
+const FROM = process.env.RESEND_FROM_EMAIL ?? 'IndLokal <noreply@indlokal.com>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
 // Dev SMTP transport — sends to Mailpit (or any local SMTP server)
@@ -22,6 +22,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
     const { error } = await resend.emails.send({ from: FROM, to, subject, html });
     if (error) {
       console.error('[Resend error]', error);
+      throw new Error(`Resend delivery failed: ${error.message ?? 'unknown error'}`);
     }
     return;
   }
