@@ -4,27 +4,32 @@ This is intentionally small. If a founder cannot do it in a few minutes, it is t
 
 ## Weekly
 
-- Check the latest Vercel production deployment.
-- Check Neon storage and connection errors.
-- Check GitHub Actions failures.
+- Check the latest Vercel production deployment for `main`.
+- Check Neon storage and connection errors for `indlokal-db` and `indlokal-db-staging`.
+- Check GitHub Actions CI failures.
 - Check the latest EAS preview/production build status when a mobile build is active.
 - Check OpenAI usage if `OPENAI_API_KEY` is enabled.
 
 ## Before changing database schema
 
-1. Create and commit a Prisma migration locally.
-2. Run tests.
-3. Merge to `main`.
-4. Let [../../.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) run `prisma migrate deploy`.
+1. Create and commit a Prisma migration locally (`pnpm --filter web exec prisma migrate dev --name <name>`).
+2. Run tests locally.
+3. Open a PR — CI runs against ephemeral Postgres (and validates the migration applies cleanly), and the Vercel Preview deployment applies the migration to `indlokal-db-staging`.
+4. Click the Preview deployment and verify the feature against the migrated staging database.
+5. Merge to `main` — Vercel applies the same migration to `indlokal-db` and deploys the app.
 
-Do not use `prisma db push` against production.
+Do not use `prisma db push` against production or staging.
+
+## Production release
+
+Merge to `main`. GitHub Actions validates the code, and Vercel handles the environment-specific migration plus deploy.
 
 ## If deploy fails
 
 1. Open Vercel deployment logs.
-2. If build failed, fix in a PR and redeploy.
-3. If runtime broke, promote the previous green Vercel deployment.
-4. If a migration caused it, stop and inspect the migration before changing production data.
+2. If the deploy failed, fix in a PR, merge to `main` again.
+3. If runtime broke, promote the previous green Vercel deployment from the Vercel dashboard.
+4. If a migration caused it, stop and inspect the migration before touching production data.
 
 ## If cron fails
 

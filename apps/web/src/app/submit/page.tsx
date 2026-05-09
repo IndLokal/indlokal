@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { SubmitForm } from './SubmitForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'List Your Community on IndLokal',
   description:

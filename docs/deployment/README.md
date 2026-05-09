@@ -2,7 +2,14 @@
 
 This folder is the deployment source of truth for the current MVP stage.
 
+**👉 Setting up from scratch?** Follow [SETUP.md](SETUP.md) end-to-end. It is the single, authoritative setup document.
+
 The goal is **simple but workable**: get the web backend online, ship the mobile app path needed for member recall, keep founder workload low, avoid paid infrastructure until there is real external usage, and make the upgrade path obvious when the product starts getting traction.
+
+Current release model:
+
+- `main` is the production branch — every merge deploys to production via Vercel
+- feature branches and PRs produce Vercel Preview deployments that share the `indlokal-db-staging` database
 
 ## Current stage
 
@@ -51,15 +58,16 @@ Optional:
 
 ## Files in this folder
 
-- [go-live.md](go-live.md) — the runbook for the web backend and mobile MVP release path
-- [operations.md](operations.md) — tiny ongoing ops checklist
-- [mobile.md](mobile.md) — lightweight Expo/EAS release notes
+- [SETUP.md](SETUP.md) — **start here** — end-to-end setup of Vercel + Neon + GitHub Actions
+- [go-live.md](go-live.md) — condensed launch runbook (web + mobile)
+- [operations.md](operations.md) — ongoing ops checklist
+- [mobile.md](mobile.md) — Expo/EAS release notes
 
 ## What we are intentionally not doing yet
 
 - No Kubernetes
 - No Docker production path
-- No staging environment
+- No always-on separate app stack beyond Vercel preview plus production
 - No Terraform
 - No separate worker service
 - No Redis or queue

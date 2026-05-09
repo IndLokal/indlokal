@@ -2,24 +2,62 @@ import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
 import { siteConfig, UPCOMING_CITIES, RESOURCE_CATEGORIES } from '@/lib/config';
 
+export const dynamic = 'force-dynamic';
+
+type SitemapCity = { slug: string; updatedAt: Date };
+type SitemapCommunity = {
+  slug: string;
+  updatedAt: Date;
+  city: { slug: string };
+  languages: string[] | null;
+};
+type SitemapEvent = {
+  slug: string;
+  updatedAt: Date;
+  city: { slug: string };
+};
+
+function isMissingTableError(error: unknown): boolean {
+  return typeof error === 'object' && error !== null && 'code' in error && error.code === 'P2021';
+}
+
+async function loadSitemapData(): Promise<{
+  cities: SitemapCity[];
+  communities: SitemapCommunity[];
+  events: SitemapEvent[];
+}> {
+  try {
+    const [cities, communities, events] = await Promise.all([
+      db.city.findMany({
+        where: { isActive: true },
+        select: { slug: true, updatedAt: true },
+      }),
+      db.community.findMany({
+        where: { status: { not: 'INACTIVE' } },
+        select: { slug: true, updatedAt: true, city: { select: { slug: true } }, languages: true },
+      }),
+      db.event.findMany({
+        where: { status: { not: 'CANCELLED' } },
+        select: { slug: true, updatedAt: true, city: { select: { slug: true } } },
+      }),
+    ]);
+
+    return { cities, communities, events };
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      console.warn(
+        '[sitemap] Database schema is not ready; returning static sitemap entries only.',
+      );
+      return { cities: [], communities: [], events: [] };
+    }
+    throw error;
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = siteConfig.url;
 
-  // Fetch all active data for sitemap generation
-  const [cities, communities, events] = await Promise.all([
-    db.city.findMany({
-      where: { isActive: true },
-      select: { slug: true, updatedAt: true },
-    }),
-    db.community.findMany({
-      where: { status: { not: 'INACTIVE' } },
-      select: { slug: true, updatedAt: true, city: { select: { slug: true } }, languages: true },
-    }),
-    db.event.findMany({
-      where: { status: { not: 'CANCELLED' } },
-      select: { slug: true, updatedAt: true, city: { select: { slug: true } } },
-    }),
-  ]);
+  const { cities, communities, events } = await loadSitemapData();
 
   const entries: MetadataRoute.Sitemap = [];
 

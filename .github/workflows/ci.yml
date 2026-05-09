@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
   # Opt in now to GitHub Actions JavaScript runtime Node 24 to avoid the Node 20 deprecation cliff.
@@ -82,8 +82,10 @@ jobs:
         env:
           PGPASSWORD: postgres
 
-      - name: Push schema to test database
-        run: pnpm --filter web exec prisma db push --skip-generate
+      - name: Apply migrations to test database
+        # Validates that the committed Prisma migrations apply cleanly.
+        # If this fails, Vercel will also fail — catch it here first.
+        run: pnpm --filter web exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public
 
@@ -127,11 +129,12 @@ jobs:
       - name: Generate Prisma client
         run: pnpm --filter web exec prisma generate
 
-      - name: Push schema to build database
+      - name: Apply migrations to build database
         # Next.js prerenders ISR routes and the sitemap at build time, which
-        # query the DB. Provide a real (empty) Postgres so those queries return
-        # cleanly instead of failing with ECONNREFUSED.
-        run: pnpm --filter web exec prisma db push --skip-generate
+        # query the DB. Provide a real Postgres so those queries return
+        # cleanly instead of failing with ECONNREFUSED. Using migrate deploy
+        # also validates that committed migrations apply against an empty DB.
+        run: pnpm --filter web exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/indlokal
 
