@@ -21,12 +21,18 @@ Use Vercel Pro and Neon paid plans only when the app is publicly/commercially la
 
 ## 2. Database
 
-1. Create a Neon project in an EU region.
-2. Create both staging and production databases or branches.
-3. Copy both pooled connection strings.
-4. Store the staging connection string as Vercel Preview `DATABASE_URL`.
-5. Store the production connection string as Vercel Production `DATABASE_URL`.
-6. Keep a local dev database through Docker, as already documented in the root [README.md](../../README.md).
+1. Create a single Neon project in an EU region (e.g. `eu-central-1`).
+2. Inside that project, create **two databases**:
+   - `indlokal-db` — production
+   - `indlokal-db-staging` — staging / preview
+3. For each database, copy the **pooled** connection string (Neon dashboard → Connection Details → Pooled connection).
+4. Store `indlokal-db-staging` pooled URL as the Vercel **Preview** `DATABASE_URL`.
+5. Store `indlokal-db` pooled URL as the Vercel **Production** `DATABASE_URL`.
+6. Store `indlokal-db-staging` pooled URL as the GitHub Actions secret `STAGING_DATABASE_URL`.
+7. Store `indlokal-db` pooled URL as the GitHub Actions secret `DATABASE_URL`.
+8. Keep a local dev database through Docker, as already documented in the root [README.md](../../README.md).
+
+> **Why two databases, not Neon branches?** Neon branches are useful for per-PR isolation but require automation. Two plain databases map cleanly to two Vercel environment scopes with zero tooling overhead — right for MVP stage.
 
 Production schema changes use migrations:
 
@@ -45,9 +51,12 @@ DATABASE_URL='<neon-url>' pnpm --filter web db:seed
 1. Import the GitHub repo into Vercel.
 2. Keep root directory as the repository root.
 3. Let [../../vercel.json](../../vercel.json) provide install/build/output settings.
-4. Set the Vercel Production Branch to a branch you do not use for normal merges, so pushes to `main` stay in Preview.
-5. Treat `main` as the staging preview branch.
-6. Add the minimum env vars:
+4. **Required:** In Vercel → Project Settings → Git → **Production Branch**, set the value to `releases`.
+   This is a branch that will never receive direct pushes. It ensures that every `main` push stays in the Preview (staging) environment and never auto-promotes to production. Production is triggered exclusively by the `release-production.yml` workflow via `vercel deploy --prod`.
+5. Treat `main` as the staging branch — Vercel will build every `main` push as a Preview deployment backed by the `indlokal_staging` Neon database.
+6. Add the minimum env vars, setting each under the correct **Environment** scope (Preview vs Production) in Vercel:
+   - `DATABASE_URL` → set **separately** for Preview (`indlokal-db-staging` URL) and Production (`indlokal-db` URL)
+   - All other keys below can be shared across environments unless the values differ:
 
 | Key                    | Value                                     |
 | ---------------------- | ----------------------------------------- |
@@ -67,21 +76,23 @@ Add these only when the features are active:
 | `EVENTBRITE_API_KEY`                                   | Eventbrite ingestion |
 | `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_ID`                 | Google CSE ingestion |
 
-Use separate Vercel environment values for Preview and Production where the database or URLs differ.
+> **Vercel environment scope reminder:** `DATABASE_URL` and `NEXT_PUBLIC_APP_URL` must be set as separate values per environment (Preview and Production). All other keys can use the same value across environments unless you have a reason to split them.
 
 ## 4. GitHub Actions
 
 Set these repository secrets if cron or migrations should run from GitHub:
 
-| Secret                 | Used by                              |
-| ---------------------- | ------------------------------------ |
-| `STAGING_DATABASE_URL` | staging migration workflow on `main` |
-| `DATABASE_URL`         | production release workflow          |
-| `APP_URL`              | cron workflow                        |
-| `CRON_SECRET`          | cron workflow                        |
-| `VERCEL_TOKEN`         | manual production Vercel deploy      |
-| `VERCEL_ORG_ID`        | manual production Vercel deploy      |
-| `VERCEL_PROJECT_ID`    | manual production Vercel deploy      |
+| Secret                 | Value                                          | Used by                              |
+| ---------------------- | ---------------------------------------------- | ------------------------------------ |
+| `STAGING_DATABASE_URL` | `indlokal-db-staging` Neon pooled URL          | staging migration workflow on `main` |
+| `DATABASE_URL`         | `indlokal-db` Neon pooled URL                  | production release workflow          |
+| `APP_URL`              | production base URL e.g. `https://indlokal.de` | cron workflow                        |
+| `CRON_SECRET`          | same value as `CRON_SECRET` in Vercel          | cron workflow                        |
+| `VERCEL_TOKEN`         | Vercel account token                           | production deploy workflow           |
+| `VERCEL_ORG_ID`        | Vercel team/org ID (`team_…`)                  | production deploy workflow           |
+| `VERCEL_PROJECT_ID`    | Vercel project ID (`prj_…`)                    | production deploy workflow           |
+
+Also create a GitHub environment named `production` under repo Settings → Environments. Optionally add yourself as a required reviewer — this gives a one-click approval gate before the production migration and deploy run.
 
 The current cron workflow is intentionally simple. It can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
 
