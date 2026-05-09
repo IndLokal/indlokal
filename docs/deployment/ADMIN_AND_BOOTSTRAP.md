@@ -92,7 +92,7 @@ Imports always go through a **preview** step that shows create/update/error coun
 Admin auth uses **passwordless magic links** sent by email. There is no password.
 
 1. Bootstrap creates exactly one platform admin user. Its email is whatever
-   `ADMIN_EMAIL` env var is set to. **Default: `admin@indlokal.de`**.
+   `ADMIN_EMAIL` env var is set to. **Default: `admin@indlokal.com`**.
    - Change it by setting `ADMIN_EMAIL=you@yourcompany.com` _before_ the first
      bootstrap (or before the next one — it will upsert with role
      `PLATFORM_ADMIN`).
@@ -112,29 +112,121 @@ If neither Resend nor Mailpit is reachable in dev, the magic link URL is
 **printed to the Next.js server console** as a last-ditch fallback so you can
 always get in.
 
-### Promoting another admin
+### Adding more admins
 
-There is no UI for this yet. From a Prisma shell or SQL:
+There is no UI for this yet. You have two options:
 
-```sql
-UPDATE "User" SET role = 'PLATFORM_ADMIN' WHERE email = 'someone@example.com';
+#### Option 1: Set `ADMIN_EMAIL` before first deploy (easiest for initial setup)
+
+Before the first Vercel production deploy, set `ADMIN_EMAIL` in Vercel env vars to
+the first admin you want to create. Bootstrap will upsert that user with
+`PLATFORM_ADMIN` role on build. If you need to change it later or add a second
+admin, use Option 2.
+
+#### Option 2: Promote existing users via SQL (for adding admins post-launch)
+
+1. Have the person log in at `/admin/login` first (they need a `User` row).
+2. They request a magic link, sign in once (creates their account).
+3. Then promote them via SQL:
+
+**Via Vercel Storage (Neon console):**
+
+- Go to Vercel → Storage → your production database → SQL Editor
+- Run:
+  ```sql
+  UPDATE "User" SET role = 'PLATFORM_ADMIN' WHERE email = 'jayjain88@gmail.com';
+  UPDATE "User" SET role = 'PLATFORM_ADMIN' WHERE email = 'founder@indlokal.de';
+  ```
+
+**Or via local `psql` if you have direct DB access:**
+
+```bash
+psql "your_production_database_url" -c "UPDATE \"User\" SET role = 'PLATFORM_ADMIN' WHERE email = 'jayjain88@gmail.com';"
 ```
 
-Or set `ADMIN_EMAIL` to that address and re-run bootstrap (idempotent — it
-upserts the role on the existing row).
+### Removing admin access
 
-## 6. Email environment variables
+```sql
+UPDATE "User" SET role = 'USER' WHERE email = 'someone@example.com';
+```
+
+Or delete the user entirely:
+
+```sql
+DELETE FROM "User" WHERE email = 'someone@example.com';
+```
+
+## 6. Production email setup (Resend)
+
+Production deploys send admin magic links via **Resend**, a transactional email
+service. Without this setup, production magic link emails will not arrive.
+
+### 6.1 Create a Resend account and get your API key
+
+1. Go to [resend.com](https://resend.com) and sign up.
+2. Navigate to **Tokens** in the dashboard.
+3. Create a new token (give it any name, e.g. "IndLokal").
+4. Copy the token (looks like `re_abc123…`).
+5. In Vercel project → **Settings → Environment Variables**:
+   - Add variable `RESEND_API_KEY` with value = your token.
+   - Scope: **Production** only (staging doesn't need real email).
+   - Save.
+
+### 6.2 Verify your sending domain
+
+Resend requires you to verify ownership of the domain you're sending from. You
+cannot send from arbitrary addresses in production.
+
+1. In Resend dashboard, go to **Domains**.
+2. Click **Add Domain**.
+3. Enter your domain (e.g. `indlokal.com` or `noreply.indlokal.com`).
+4. Resend shows DNS records (typically CNAME + SPF + DKIM).
+5. Add these records to your domain registrar (GoDaddy, Namecheap, etc.).
+6. Once DNS propagates, Resend verifies automatically within a few minutes.
+7. Once verified, set Vercel env var `RESEND_FROM_EMAIL`:
+   - Value: `IndLokal <noreply@indlokal.com>` (using your verified domain).
+   - Scope: **Production** only.
+   - Save.
+
+> If you use `indlokal.com` directly (not a subdomain), you may need to set up SPF
+> / DKIM on the root domain, which can be fiddly. A safer option is to use a
+> subdomain like `noreply.indlokal.com` or `mail.indlokal.com`, which isolates
+> Resend's DNS records.
+
+### 6.3 Test admin email delivery
+
+1. Trigger a Vercel production build (merge a PR to `main` or redeploy).
+2. Visit production `/admin/login`.
+3. Enter the admin email (e.g. `jayjain88@gmail.com`).
+4. Click **Get access link**.
+5. Check the inbox of that email address:
+   - Email should arrive from `IndLokal <noreply@indlokal.com>`.
+   - If it doesn't arrive in 1 minute, check Resend dashboard for bounces/failures.
+   - If Resend shows "invalid domain", the domain verification didn't complete.
+
+### 6.4 Resend troubleshooting
+
+| Problem                        | Solution                                                                                                            |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- |
+| Email never arrives            | Check Resend dashboard → **Emails** tab for bounce/failure logs. Usually DNS records not propagated or DKIM failed. |
+| `RESEND_API_KEY` error in logs | Verify the key is set in Vercel and matches your Resend token (no typos).                                           |
+| Emails go to spam              | Ensure SPF / DKIM records are correct. Test with a Gmail address; it's stricter.                                    |
+| Domain verification stuck      | Go to Resend dashboard, delete the domain, and try a subdomain (e.g. `noreply.indlokal.com`) instead.               |
+
+## 7. Email environment variables
+
+See [§6 Production email setup (Resend)](#6-production-email-setup-resend) for complete Resend configuration.
 
 These are the only env vars that influence admin login & outbound mail.
 
-| Variable              | Required in    | Default                          | Purpose                                                    |
-| --------------------- | -------------- | -------------------------------- | ---------------------------------------------------------- |
-| `ADMIN_EMAIL`         | both           | `admin@indlokal.de`              | Email of the bootstrap-created platform admin user.        |
-| `NEXT_PUBLIC_APP_URL` | both           | `http://localhost:3001`          | Base URL used to build magic-link URLs in the email body.  |
-| `RESEND_API_KEY`      | **production** | —                                | Resend API key. Without it, prod cannot send admin emails. |
-| `RESEND_FROM_EMAIL`   | production     | `IndLokal <noreply@indlokal.de>` | From address. Sender domain must be verified in Resend.    |
-| `SMTP_HOST`           | dev only       | `localhost`                      | Mailpit host (Docker compose service `mailpit`).           |
-| `SMTP_PORT`           | dev only       | `1026`                           | Mailpit SMTP port (UI is on `8026`).                       |
+| Variable              | Required in    | Default                           | Purpose                                                                                                                  |
+| --------------------- | -------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `ADMIN_EMAIL`         | both           | `admin@indlokal.com`              | Email of the bootstrap-created platform admin user.                                                                      |
+| `NEXT_PUBLIC_APP_URL` | both           | `http://localhost:3001`           | Base URL used to build magic-link URLs in the email body.                                                                |
+| `RESEND_API_KEY`      | **production** | —                                 | Resend API key. Without it, prod cannot send admin emails. See [§6.1](#61-create-a-resend-account-and-get-your-api-key). |
+| `RESEND_FROM_EMAIL`   | production     | `IndLokal <noreply@indlokal.com>` | From address. Sender domain must be verified in Resend. See [§6.2](#62-verify-your-sending-domain).                      |
+| `SMTP_HOST`           | dev only       | `localhost`                       | Mailpit host (Docker compose service `mailpit`).                                                                         |
+| `SMTP_PORT`           | dev only       | `1026`                            | Mailpit SMTP port (UI is on `8026`).                                                                                     |
 
 **Production checklist before going live:**
 
@@ -146,7 +238,7 @@ These are the only env vars that influence admin login & outbound mail.
 6. ✅ `RUN_DIRECTORY_SEED=true` so curated public listings are created on first deploy (safe to leave on — it never updates existing rows).
 7. ✅ Visit `/admin/login`, request a link, confirm delivery.
 
-## 7. Directory seed — editorial policy
+## 8. Directory seed — editorial policy
 
 [`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) holds
 curated, publicly-sourced community listings. It runs **after** bootstrap and
@@ -211,7 +303,7 @@ For each new metro:
 - ❌ Any unverified / scraped / AI-generated org descriptions
 - ❌ Any org you cannot point at a public URL for
 
-## 8. Resources tier
+## 9. Resources tier
 
 [`apps/web/prisma/resources.ts`](../../apps/web/prisma/resources.ts) holds
 curated public reference rows (consulates, university international offices,
@@ -230,7 +322,7 @@ To run only the resources tier locally:
 DATABASE_URL="<postgres-url>" pnpm --filter web db:resources
 ```
 
-## 9. Cron jobs (production)
+## 10. Cron jobs (production)
 
 Cron is run by **GitHub Actions** ([.github/workflows/cron.yml](../../.github/workflows/cron.yml)),
 not Vercel Cron. Each job POSTs to `/api/cron/{name}` with the
@@ -248,5 +340,5 @@ not Vercel Cron. Each job POSTs to `/api/cron/{name}` with the
 Required secrets (set in **both** Vercel project env and GitHub repo secrets):
 
 - `CRON_SECRET` — shared bearer token. Generate with `openssl rand -hex 32`.
-- `APP_URL` — production base URL, e.g. `https://indlokal.de` (GitHub repo
+- `APP_URL` — production base URL, e.g. `https://indlokal.com` (GitHub repo
   secret only; Vercel already knows its own URL).

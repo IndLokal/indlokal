@@ -82,10 +82,10 @@ Add these only when the features are active:
 
 Set these repository secrets:
 
-| Secret        | Value                                          | Used by       |
-| ------------- | ---------------------------------------------- | ------------- |
-| `APP_URL`     | production base URL e.g. `https://indlokal.de` | cron workflow |
-| `CRON_SECRET` | same value as `CRON_SECRET` in Vercel          | cron workflow |
+| Secret        | Value                                           | Used by       |
+| ------------- | ----------------------------------------------- | ------------- |
+| `APP_URL`     | production base URL e.g. `https://indlokal.com` | cron workflow |
+| `CRON_SECRET` | same value as `CRON_SECRET` in Vercel           | cron workflow |
 
 The CI workflow only validates code (typecheck, lint, test, build) against an ephemeral Postgres container. It does not write to any Neon database. Prisma migrations run inside the Vercel deployment for the connected environment, which keeps schema changes aligned with the exact Preview or Production deployment being built.
 
@@ -141,7 +141,7 @@ Skip this for internal demos. Use the Vercel preview URL.
 
 When public:
 
-1. Buy `indlokal.de` or use the chosen domain.
+1. Buy `indlokal.com` or use the chosen domain.
 2. Add the domain in Vercel.
 3. Add the DNS records Vercel asks for at the registrar or Cloudflare.
 4. Update `NEXT_PUBLIC_APP_URL` to the final HTTPS URL.
