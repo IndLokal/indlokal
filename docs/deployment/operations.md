@@ -5,23 +5,24 @@ This is intentionally small. If a founder cannot do it in a few minutes, it is t
 ## Weekly
 
 - Check the latest Vercel production deployment for `main`.
-- Check Neon storage and connection errors for both `indlokal-db` and `indlokal-db-staging`.
+- Check Neon storage and connection errors for `indlokal-db` and `indlokal-db-staging`.
 - Check GitHub Actions CI failures.
 - Check the latest EAS preview/production build status when a mobile build is active.
 - Check OpenAI usage if `OPENAI_API_KEY` is enabled.
 
 ## Before changing database schema
 
-1. Create and commit a Prisma migration locally.
+1. Create and commit a Prisma migration locally (`pnpm --filter web exec prisma migrate dev --name <name>`).
 2. Run tests locally.
-3. Open a PR — CI runs against ephemeral Postgres, Vercel Preview deploys against `indlokal-db-staging`.
-4. Merge to `main` — CI runs migrations against production DB automatically, Vercel deploys to production.
+3. Open a PR — CI runs against ephemeral Postgres (and validates the migration applies cleanly), and the Vercel Preview deployment applies the migration to `indlokal-db-staging`.
+4. Click the Preview deployment and verify the feature against the migrated staging database.
+5. Merge to `main` — Vercel applies the same migration to `indlokal-db` and deploys the app.
 
-Do not use `prisma db push` against production.
+Do not use `prisma db push` against production or staging.
 
 ## Production release
 
-Merge to `main`. That’s it. CI and Vercel handle everything automatically.
+Merge to `main`. GitHub Actions validates the code, and Vercel handles the environment-specific migration plus deploy.
 
 ## If deploy fails
 

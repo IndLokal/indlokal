@@ -1,5 +1,7 @@
 # MVP Go-Live Runbook
 
+> **First-time setup?** Follow [SETUP.md](SETUP.md) instead. This file is a condensed runbook covering accounts, mobile, custom domain, launch checklist, and upgrade triggers.
+
 Use this when IndLokal needs a real backend URL, a web surface for partners, and a mobile app path for member recall.
 
 ## 1. Accounts
@@ -21,24 +23,18 @@ Use Vercel Pro and Neon paid plans only when the app is publicly/commercially la
 
 ## 2. Database
 
-1. Create a single Neon project in an EU region (e.g. `eu-central-1`).
-2. Inside that project, create **two databases**:
-   - `indlokal-db` — production
-   - `indlokal-db-staging` — staging / preview
-3. For each database, copy the **pooled** connection string (Neon dashboard → Connection Details → Pooled connection).
-4. Store `indlokal-db-staging` pooled URL as the Vercel **Preview** `DATABASE_URL`.
-5. Store `indlokal-db` pooled URL as the Vercel **Production** `DATABASE_URL`.
-6. Store `indlokal-db-staging` pooled URL as the GitHub Actions secret `STAGING_DATABASE_URL`.
-7. Store `indlokal-db` pooled URL as the GitHub Actions secret `DATABASE_URL`.
-8. Keep a local dev database through Docker, as already documented in the root [README.md](../../README.md).
+Detailed steps live in [SETUP.md §4](SETUP.md#4-vercel-storage--create-both-neon-databases). Summary:
 
-> **Why two databases, not Neon branches?** Neon branches are useful for per-PR isolation but require automation. Two plain databases map cleanly to two Vercel environment scopes with zero tooling overhead — right for MVP stage.
+1. Create both databases from **Vercel → Storage → Create Database → Neon** (no need to visit the Neon console). Pick an EU region (e.g. Frankfurt).
+   - `indlokal-db` (production)
+   - `indlokal-db-staging` (staging/preview)
+2. In each database's "Connect Project" modal use env var prefix `DATABASE`:
+   - `indlokal-db` → Production scope only
+   - `indlokal-db-staging` → Preview scope only
+3. Leave **Create Database Branch For Deployment** unchecked. All previews share `indlokal-db-staging`.
+4. Keep a local dev database through Docker, as documented in the root [README.md](../../README.md).
 
-Production schema changes use migrations:
-
-```bash
-pnpm --filter web exec prisma migrate deploy
-```
+Migrations are applied automatically by `pnpm run build:vercel` during each Vercel deployment, against that deployment's `DATABASE_URL`.
 
 For the first MVP seed only:
 
@@ -48,17 +44,21 @@ DATABASE_URL='<neon-url>' pnpm --filter web db:seed
 
 ## 3. Vercel
 
-1. Import the GitHub repo into Vercel.
-2. Keep root directory as the repository root.
-3. Let [../../vercel.json](../../vercel.json) provide install/build/output settings.
-4. Leave the **Production Branch** as `main` (Vercel default). Every push to `main` deploys to production. Every PR/branch gets a Preview deployment backed by `indlokal-db-staging`.
-5. Add the minimum env vars, setting each under the correct **Environment** scope (Preview vs Production) in Vercel:
-   - `DATABASE_URL` → set **separately** for Preview (`indlokal-db-staging` URL) and Production (`indlokal-db` URL)
-   - All other keys below can be shared across environments unless the values differ:
+Detailed steps live in [SETUP.md §3, §5](SETUP.md#3-vercel--create-the-project). Summary:
+
+- Root Directory: `apps/web`
+- Framework Preset: Next.js
+- Install Command: `pnpm install --frozen-lockfile`
+- Build Command: `pnpm run build:vercel`
+- Output Directory: empty (Next.js default)
+- Include files outside the root directory in the Build Step: enabled
+- Node.js Version: 20.x
+- Production Branch: `main`
+
+Minimum env vars in Vercel:
 
 | Key                    | Value                                     |
 | ---------------------- | ----------------------------------------- |
-| `DATABASE_URL`         | Neon pooled URL                           |
 | `NEXT_PUBLIC_APP_URL`  | Vercel URL or custom domain               |
 | `NEXT_PUBLIC_APP_NAME` | `IndLokal`                                |
 | `CRON_SECRET`          | random string from `openssl rand -hex 32` |
@@ -74,26 +74,26 @@ Add these only when the features are active:
 | `EVENTBRITE_API_KEY`                                   | Eventbrite ingestion |
 | `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_ID`                 | Google CSE ingestion |
 
-> **Vercel environment scope reminder:** `DATABASE_URL` and `NEXT_PUBLIC_APP_URL` must be set as separate values per environment (Preview and Production). All other keys can use the same value across environments unless you have a reason to split them.
+`DATABASE_URL` is supplied by Vercel Storage when you create both databases with the `DATABASE` prefix — do not set it manually.
 
 ## 4. GitHub Actions
 
 Set these repository secrets:
 
-| Secret                 | Value                                          | Used by                        |
-| ---------------------- | ---------------------------------------------- | ------------------------------ |
-| `DATABASE_URL`         | `indlokal-db` Neon pooled URL                  | production migration job in CI |
-| `STAGING_DATABASE_URL` | `indlokal-db-staging` Neon pooled URL          | staging migration job in CI    |
-| `APP_URL`              | production base URL e.g. `https://indlokal.de` | cron workflow                  |
-| `CRON_SECRET`          | same value as `CRON_SECRET` in Vercel          | cron workflow                  |
+| Secret        | Value                                          | Used by       |
+| ------------- | ---------------------------------------------- | ------------- |
+| `APP_URL`     | production base URL e.g. `https://indlokal.de` | cron workflow |
+| `CRON_SECRET` | same value as `CRON_SECRET` in Vercel          | cron workflow |
+
+The CI workflow only validates code (typecheck, lint, test, build) against an ephemeral Postgres container. It does not write to any Neon database. Prisma migrations run inside the Vercel deployment for the connected environment, which keeps schema changes aligned with the exact Preview or Production deployment being built.
 
 The cron workflow can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
 
 Release flow:
 
-1. Merge a PR to `main`.
-2. CI runs quality → tests → build → migrations automatically.
-3. Vercel deploys to production automatically.
+1. Open a PR to `main` → GitHub Actions runs quality → tests → build, and Vercel builds a Preview against `indlokal-db-staging`.
+2. Verify the Preview URL.
+3. Merge to `main` → Vercel runs `pnpm run build:vercel`, applies Prisma migrations against `indlokal-db`, and deploys to production.
 4. Done.
 
 ## 5. Mobile app
