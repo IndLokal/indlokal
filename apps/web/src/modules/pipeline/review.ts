@@ -158,6 +158,7 @@ async function createEventFromExtraction(event: ExtractedEvent, cityId: string):
 async function createCommunityFromExtraction(
   community: ExtractedCommunity,
   cityId: string,
+  status: 'ACTIVE' | 'UNVERIFIED' = 'UNVERIFIED',
 ): Promise<string> {
   const categoryRecords = await db.category.findMany({
     where: { slug: { in: community.categories } },
@@ -174,7 +175,7 @@ async function createCommunityFromExtraction(
       cityId,
       languages: community.languages,
       source: 'IMPORTED',
-      status: 'UNVERIFIED',
+      status,
       metadata: {
         pipelineExtracted: true,
         confidence: community.confidence,
@@ -287,7 +288,15 @@ export async function approvePipelineItemRecord(
       await refreshCommunityScore(created.communityId);
     }
   } else {
-    createdEntityId = await createCommunityFromExtraction(data as ExtractedCommunity, item.cityId);
+    // Admin-approved pipeline items go straight to ACTIVE — they've already
+    // been reviewed here. Auto-approved items stay UNVERIFIED so a human
+    // still has a chance to vet them before they go public.
+    const newStatus: 'ACTIVE' | 'UNVERIFIED' = options.autoApproved ? 'UNVERIFIED' : 'ACTIVE';
+    createdEntityId = await createCommunityFromExtraction(
+      data as ExtractedCommunity,
+      item.cityId,
+      newStatus,
+    );
   }
 
   await db.pipelineItem.update({

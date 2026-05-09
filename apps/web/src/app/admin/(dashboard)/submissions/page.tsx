@@ -5,8 +5,11 @@ import { approveSubmission, rejectSubmission } from '../actions';
 export const metadata = { title: 'Review Submissions — Admin' };
 
 export default async function AdminSubmissionsPage() {
+  // Only show genuine user submissions awaiting first-touch review.
+  // - AI-pipeline imports have their own queue at /admin/pipeline.
+  // - Editorial seed/bootstrap rows are curated and should not appear here.
   const submissions = await db.community.findMany({
-    where: { status: 'UNVERIFIED' },
+    where: { status: 'UNVERIFIED', source: 'COMMUNITY_SUBMITTED' },
     include: {
       city: { select: { name: true } },
       categories: { include: { category: true } },
