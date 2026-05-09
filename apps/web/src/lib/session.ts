@@ -3,7 +3,34 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 
 const COOKIE_NAME = 'lp_session';
-const TOKEN_TTL_HOURS = 24;
+
+// One-time login links sent by email. Short-lived; single-use.
+const MAGIC_LINK_TTL_HOURS = 24;
+
+// How long a signed-in session stays valid without activity.
+const SESSION_TTL_DAYS = 7;
+
+// When a request comes in and the session expires within this window,
+// extend it by another full SESSION_TTL_DAYS (sliding session).
+const SESSION_REFRESH_THRESHOLD_HOURS = 24;
+
+function sessionMaxAgeSeconds(): number {
+  return SESSION_TTL_DAYS * 24 * 60 * 60;
+}
+
+/** Expiry timestamp for a magic-link token (one-time login link). */
+export function tokenExpiry(): Date {
+  const d = new Date();
+  d.setHours(d.getHours() + MAGIC_LINK_TTL_HOURS);
+  return d;
+}
+
+/** Expiry timestamp for a signed-in session. */
+export function sessionExpiry(): Date {
+  const d = new Date();
+  d.setDate(d.getDate() + SESSION_TTL_DAYS);
+  return d;
+}
 
 /** Hash a token with SHA-256 for safe DB storage (the raw token is only in the cookie) */
 export async function hashToken(token: string): Promise<string> {
@@ -25,11 +52,7 @@ export function generateSessionToken(): string {
 }
 
 /** Compute expiry timestamp for a new token */
-export function tokenExpiry(): Date {
-  const d = new Date();
-  d.setHours(d.getHours() + TOKEN_TTL_HOURS);
-  return d;
-}
+// (kept for backwards compatibility — magic-link callers use tokenExpiry above)
 
 /** Create a one-time magic-link token and persist only its hash. */
 export async function createMagicLinkToken(userId: string): Promise<string> {
@@ -55,7 +78,7 @@ export async function createSession(userId: string, rawToken: string) {
   const hashed = await hashToken(rawToken);
   await db.user.update({
     where: { id: userId },
-    data: { sessionToken: hashed, sessionTokenExpiry: tokenExpiry() },
+    data: { sessionToken: hashed, sessionTokenExpiry: sessionExpiry() },
   });
   await setSessionCookie(rawToken);
 }
@@ -68,7 +91,7 @@ export async function setSessionCookie(token: string) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/',
-    maxAge: TOKEN_TTL_HOURS * 60 * 60,
+    maxAge: sessionMaxAgeSeconds(),
   });
 }
 
@@ -99,6 +122,30 @@ export async function getSessionUser() {
   if (!user) return null;
   if (!user.sessionToken || !user.sessionTokenExpiry || user.sessionTokenExpiry < new Date())
     return null;
+
+  // Sliding session: when the expiry is close, extend it transparently.
+  // Failures here must not log the user out — swallow and continue.
+  const msUntilExpiry = user.sessionTokenExpiry.getTime() - Date.now();
+  if (msUntilExpiry < SESSION_REFRESH_THRESHOLD_HOURS * 60 * 60 * 1000) {
+    try {
+      const newExpiry = sessionExpiry();
+      await db.user.update({
+        where: { id: user.id },
+        data: { sessionTokenExpiry: newExpiry },
+      });
+      // Re-set cookie with refreshed maxAge so the browser also extends.
+      // Note: cookies().set() works in Server Components for Next 15+ via
+      // the modified-cookies API; if it throws (read-only context), ignore.
+      try {
+        await setSessionCookie(rawToken);
+      } catch {
+        // best-effort — some render contexts forbid mutating cookies
+      }
+      user.sessionTokenExpiry = newExpiry;
+    } catch {
+      // best-effort
+    }
+  }
 
   return user;
 }

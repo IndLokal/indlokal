@@ -5,7 +5,7 @@ import { ADMIN_NAV_LINKS } from './page';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  await requireAdmin();
+  const user = await requireAdmin();
 
   return (
     <div className="bg-background min-h-screen">
@@ -27,9 +27,25 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               ))}
             </nav>
           </div>
-          <Link href="/" className="text-muted hover:text-foreground text-sm transition-colors">
-            ← Back to site
-          </Link>
+          <div className="flex items-center gap-4">
+            <span
+              className="text-muted hidden max-w-[180px] truncate text-xs sm:inline"
+              title={user.email}
+            >
+              {user.email}
+            </span>
+            <Link href="/" className="text-muted hover:text-foreground text-sm transition-colors">
+              ← Back to site
+            </Link>
+            <form action="/admin/logout" method="POST">
+              <button
+                type="submit"
+                className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-md border px-2.5 py-1 text-xs transition-colors"
+              >
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
       </header>
       {children}
