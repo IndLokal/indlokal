@@ -195,6 +195,31 @@ Go to GitHub repo → **Settings → Secrets and variables → Actions → New r
 
 That is the entire list. CI does **not** need any database secrets — it uses an ephemeral Postgres container per run.
 
+### 6a. Protect `main` so CI must pass before deploy-triggering merges
+
+Vercel and GitHub CI run in parallel on PR updates. To guarantee that production
+deploys are only triggered by CI-green code, enforce branch protection on
+`main` so direct pushes are blocked and merges require CI success.
+
+In GitHub: **Repo Settings → Branches → Add branch protection rule**
+
+Use these settings:
+
+| Setting                                          | Value                                                                             |
+| ------------------------------------------------ | --------------------------------------------------------------------------------- |
+| Branch name pattern                              | `main`                                                                            |
+| Require a pull request before merging            | ✅ enabled                                                                        |
+| Require status checks to pass before merging     | ✅ enabled                                                                        |
+| Required checks                                  | Select all checks from `CI` workflow (typically `Code quality`, `Tests`, `Build`) |
+| Require branches to be up to date before merging | ✅ enabled                                                                        |
+| Include administrators                           | ✅ enabled                                                                        |
+| Allow force pushes                               | ❌ disabled                                                                       |
+| Allow deletions                                  | ❌ disabled                                                                       |
+| Restrict who can push to matching branches       | Optional but recommended: admins only                                             |
+
+Result: merges to `main` (the event that triggers Vercel production deploy)
+cannot happen until CI is fully green.
+
 ---
 
 ## 7. First deployment — verify the chain
