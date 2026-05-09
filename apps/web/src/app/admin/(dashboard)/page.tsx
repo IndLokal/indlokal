@@ -13,6 +13,11 @@ export default function AdminDashboardPage() {
       <p className="text-muted mt-2">Content management for IndLokal.</p>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <DashboardCard
+          title="Data Management"
+          description="Cities, categories, communities, events, bulk import, health"
+          href="/admin/data"
+        />
         <DashboardCard title="Scoring" description="Run score refresh" href="/admin/scoring" />
         <DashboardCard
           title="Submissions"
@@ -62,6 +67,7 @@ function DashboardCard({
 
 // Admin sub-page nav shown in layout
 export const ADMIN_NAV_LINKS = [
+  { href: '/admin/data', label: 'Data' },
   { href: '/admin/scoring', label: 'Scoring' },
   { href: '/admin/submissions', label: 'Submissions' },
   { href: '/admin/claims', label: 'Claims' },

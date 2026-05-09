@@ -47,11 +47,21 @@ export async function getEventsThisWeek(
   const now = new Date();
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Monday start
 
+  // Include events that have started but are still running (multi-day fests,
+  // ongoing campaigns). "This week" means "happens between now and weekEnd",
+  // not just "starts in that window".
+  const upcomingOrOngoing = {
+    OR: [
+      { startsAt: { gte: now, lte: weekEnd } },
+      { AND: [{ startsAt: { lt: now } }, { endsAt: { gte: now } }] },
+    ],
+  };
+
   // Try this week first
   const weekEvents = await db.event.findMany({
     where: {
       cityId: { in: cityIds },
-      startsAt: { gte: now, lte: weekEnd },
+      ...upcomingOrOngoing,
       status: { not: 'CANCELLED' },
     },
     select: eventListSelect,
@@ -67,7 +77,10 @@ export async function getEventsThisWeek(
   const monthEvents = await db.event.findMany({
     where: {
       cityId: { in: cityIds },
-      startsAt: { gte: now, lte: monthEnd },
+      OR: [
+        { startsAt: { gte: now, lte: monthEnd } },
+        { AND: [{ startsAt: { lt: now } }, { endsAt: { gte: now } }] },
+      ],
       status: { not: 'CANCELLED' },
     },
     select: eventListSelect,

@@ -152,11 +152,22 @@ Add these in your Vercel project → **Settings → Environment Variables**. App
 
 ### Required for any deployment
 
-| Key                    | Value                                                                                            | Scope          |
-| ---------------------- | ------------------------------------------------------------------------------------------------ | -------------- |
-| `NEXT_PUBLIC_APP_NAME` | `IndLokal`                                                                                       | All            |
-| `NEXT_PUBLIC_APP_URL`  | Production: your final URL (e.g. `https://indlokal.de`). Preview: leave the same or set per-env. | All (or split) |
-| `CRON_SECRET`          | Output of `openssl rand -hex 32`                                                                 | All            |
+| Key                    | Value                                                                                                                                                        | Scope          |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------- |
+| `NEXT_PUBLIC_APP_NAME` | `IndLokal`                                                                                                                                                   | All            |
+| `NEXT_PUBLIC_APP_URL`  | Production: your final URL (e.g. `https://indlokal.de`). Preview: leave the same or set per-env.                                                             | All (or split) |
+| `CRON_SECRET`          | Output of `openssl rand -hex 32`                                                                                                                             | All            |
+| `AUTH_JWT_PRIVATE_KEY` | RS256 PKCS#8 PEM. Generate with the snippet below. **Required** — without it every cold start mints a new ephemeral key and invalidates all mobile sessions. | All            |
+| `AUTH_JWT_PUBLIC_KEY`  | Matching SPKI PEM for the private key above.                                                                                                                 | All            |
+| `RUN_BOOTSTRAP_SEED`   | `true` — runs the idempotent bootstrap during build (cities, categories, personas, admin user).                                                              | All            |
+| `RUN_DIRECTORY_SEED`   | `true` — runs the create-only directory + resources seed during build.                                                                                       | All            |
+
+Generate the JWT keypair locally and paste both PEMs into Vercel (replace literal newlines with `\n` if the Vercel UI requires single-line values — the loader unescapes them):
+
+```bash
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out jwt-private.pem
+openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
+```
 
 ### Optional — add only when the feature is used
 
