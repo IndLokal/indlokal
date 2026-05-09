@@ -2,7 +2,9 @@
 
 **The real-time guide to Indian communities and events near you.**
 
-_Product Planning Document — April 2026_
+_Product Planning Document — April 2026. Updated May 2026 to reflect shipped admin/organizer auth, data console, submissions queue scoping, and the spec-driven workflow._
+
+> **Spec discipline:** Non-trivial product changes are specified as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding, and kept in sync through implementation. This document is the durable product narrative; specs are the source of truth for any individual capability.
 
 ---
 
@@ -455,24 +457,41 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Whether user clicked a result
 - Zero-result queries (signal missing content)
 
-### 7.8 Admin Dashboard
+### 7.8 Admin & Organizer Console
 
-**Description:** Internal tool for the founding team to manage content.
+**Description:** Authenticated internal surfaces for the founding team (PLATFORM_ADMIN) and community organizers (COMMUNITY_ADMIN).
 
-**Capabilities:**
+**Authentication (shipped):**
 
-- Create, edit, delete communities
-- Create, edit, delete events
-- Bulk import communities and events from CSV
-- View content by city
-- Mark communities as verified
-- View basic analytics (content counts, recent activity)
+- **Magic-link sign-in** at `/admin/login` and `/organizer/login` — no passwords. Email contains a single-use, SHA-256 hashed, 24h-TTL token; verify routes use a 303 See Other redirect after POST so email scanners and inline previewers cannot consume the token (a 2-minute grace window covers genuine races). See [PRD-0011](specs/PRD/0011-magic-link-admin-organizer-auth.md).
+- **7-day sliding sessions.** Cookies are httpOnly + DB-backed (hashed token); sessions auto-extend on activity within 24h of expiry, so daily users never re-authenticate. See [TDD-0011](specs/TDD/0011-magic-link-admin-organizer-auth.md).
+- **Visible sign-out** in the admin and organizer headers (POST → clear cookie + DB token → 303 to `/admin/login?signed_out=1`).
+- **Email transport:** Resend in production (FROM `noreply@indlokal.com`), Mailpit in local dev. Send failures throw rather than silently log — captured by [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md).
+
+**Platform Admin capabilities (shipped):**
+
+- **Data Management Console** (`/admin/data`) — full CRUD for communities, events, cities, and resources, with city/type/search filters and per-row delete actions. Deletes are transactional and cascade-safe: deleting a community removes its access channels, activity signals, trust signals, claims, and event references; cities refuse deletion when still referenced and explain why. See [PRD-0012](specs/PRD/0012-admin-data-management-console.md) and [TDD-0012](specs/TDD/0012-admin-data-management-console.md).
+- **Submissions queue** (`/admin/submissions`) — source-scoped to user-submitted communities only (`status='UNVERIFIED' AND source='COMMUNITY_SUBMITTED'`). Approving an entry promotes it to `ACTIVE` and removes it from the queue.
+- **AI Pipeline review queue** (`/admin/pipeline`) — separate from submissions. Items extracted by the content pipeline are reviewed here; admin approval lands the community as `UNVERIFIED` (still requires a verification pass) rather than auto-publishing. See [PRD-0013](specs/PRD/0013-pipeline-review-and-submissions-queue.md).
+- **Verification** — mark communities verified; toggle status (Active / Inactive / Unverified).
+- **Bulk import** — communities and events from CSV/JSON.
+- Basic counts and recent activity.
+
+**Community Organizer capabilities (shipped — MVP, originally scoped Phase 2):**
+
+- Sign in via magic link, claim ownership of a community listing.
+- Edit profile, manage access channels, add and edit events for owned communities.
+- See organizer-only signals (e.g., last activity, completeness hints).
+
+**Database seeding (operational, not user-facing):**
+
+Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory` (real Stuttgart communities and resources sourced from research), `demo` (synthetic content for local/preview only). The directory seed is the canonical content baseline; demo never runs in production. See [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md).
 
 **Not required for MVP:**
 
 - Public-facing admin features
-- Community self-management
-- Moderation queue
+- Per-organizer analytics dashboards (Phase 2)
+- Moderation rules engine
 
 ### 7.9 SEO & Discoverability
 
@@ -508,20 +527,21 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Saved/bookmarked communities and events
 - "My communities" view
 
-### 8.2 Community Self-Submission
+### 8.2 Community Self-Submission _(shipped in MVP — kept here for completeness)_
 
 - Public form: "List your community on IndLokal"
 - Required fields: name, city, category, description, at least one access channel
-- Goes into moderation queue
-- Admin approves or requests changes
-- Submitter gets notified on approval
+- Lands in the **Submissions queue** (`source='COMMUNITY_SUBMITTED'`, `status='UNVERIFIED'`), separate from the AI pipeline queue
+- Admin approves → status flips to `ACTIVE` and the entry leaves the queue
+- Phase 2 work remaining: submitter notification on approval/rejection; richer in-product status feedback
 
-### 8.3 Community Claim & Management
+### 8.3 Community Claim & Management _(shipped in MVP — magic-link organizer auth)_
 
-- "Claim this community" button on unclaimed listings
-- Verification via email (community's email) or admin approval
+- Organizers sign in at `/organizer/login` via magic link (no passwords)
+- Claim flow: select an unclaimed community → ownership verification → access to the organizer console for that listing
 - Claimed community admin can: edit profile, add events, update access channels
 - Claimed badge displayed on profile
+- Phase 2 work remaining: multi-organizer per community, organizer analytics, public "claim this listing" CTA polish
 
 ### 8.4 User-Contributed Signals
 
@@ -595,9 +615,10 @@ IndLokal
 │   ├── /[city]/consular-services/ (Programmatic SEO — consular/official)
 │   └── /[city]/resources/ (Indian expat services — groceries, doctors, tax, driving)
 ├── /about/ (About IndLokal)
-├── /submit/ (Submit a community — Phase 2)
-├── /login/ (User accounts — Phase 2)
-└── /admin/ (Admin dashboard — internal)
+├── /submit/ (Submit a community — shipped)
+├── /login/ (Member accounts — Phase 2; magic-link, mirrors admin/organizer flow)
+├── /organizer/ (Organizer console — magic-link auth, claim & manage owned communities)
+└── /admin/ (Platform admin console — magic-link auth, data + submissions + pipeline)
 ```
 
 **Programmatic SEO pages (MVP):**
@@ -633,11 +654,11 @@ Each page includes: filtered community/event list, brief intro paragraph, intern
 
 City-first URLs are critical for SEO and clarity:
 
-- `indlokal.de/munich/` — Munich city feed
-- `indlokal.de/munich/events/` — Munich events
-- `indlokal.de/munich/events/diwali-celebration-2026/` — Event detail
-- `indlokal.de/munich/communities/` — Munich communities
-- `indlokal.de/munich/communities/munich-indians-community/` — Community detail
+- `indlokal.com/munich/` — Munich city feed
+- `indlokal.com/munich/events/` — Munich events
+- `indlokal.com/munich/events/diwali-celebration-2026/` — Event detail
+- `indlokal.com/munich/communities/` — Munich communities
+- `indlokal.com/munich/communities/munich-indians-community/` — Community detail
 
 ---
 
@@ -984,13 +1005,16 @@ The community graph — structured, scored, city-dense data about diaspora commu
 
 ### 15.1 Decisions made
 
-| #   | Decision                    | Resolution                                                                                                                   |
-| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Launch city**             | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path |
-| 2   | **Product name / domain**   | indlokal.de — validate with target users; secure domain early                                                                |
-| 3   | **Authentication approach** | No auth for MVP browsing; optional auth for saves (Phase 2)                                                                  |
-| 4   | **Content language**        | English for MVP (lingua franca for Indian diaspora in Germany)                                                               |
-| 5   | **Mobile approach**         | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                   |
+| #   | Decision                    | Resolution                                                                                                                                                                                           |
+| --- | --------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Launch city**             | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path                                                                         |
+| 2   | **Product name / domain**   | **indlokal.com** (production: `main` → indlokal.com; preview: `develop` → preview.indlokal.com)                                                                                                      |
+| 3   | **Authentication approach** | **Magic-link, no passwords.** Browsing requires no auth. Admin (`PLATFORM_ADMIN`) and Organizer (`COMMUNITY_ADMIN`) sign in via magic link with 7-day sliding sessions. Member saves remain Phase 2. |
+| 4   | **Content language**        | English for MVP (lingua franca for Indian diaspora in Germany)                                                                                                                                       |
+| 5   | **Mobile approach**         | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                                                                                           |
+| 6   | **Email transport**         | Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev; send failures throw — see [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md)                                  |
+| 7   | **Database seeding**        | Three-tier pipeline (`bootstrap` / `directory` / `demo`); demo never runs in production — see [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md)                                              |
+| 8   | **Spec workflow**           | PRD/TDD pair (or ADR) under `docs/specs/` before non-trivial work; templates in `docs/specs/templates/`                                                                                              |
 
 ### 15.2 Decisions still needed
 
