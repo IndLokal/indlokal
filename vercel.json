@@ -3,6 +3,5 @@
   "framework": "nextjs",
   "installCommand": "pnpm install --frozen-lockfile",
   "buildCommand": "pnpm --filter web exec prisma generate && pnpm --filter web build",
-  "outputDirectory": "apps/web/.next",
-  "ignoreCommand": "git rev-parse --verify HEAD^ > /dev/null 2>&1 && git diff --quiet HEAD^ HEAD -- apps/web packages/shared pnpm-lock.yaml package.json vercel.json || exit 1"
+  "outputDirectory": "apps/web/.next"
 }
