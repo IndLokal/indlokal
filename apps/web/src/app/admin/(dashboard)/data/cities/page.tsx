@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { createCityAction, toggleCityActiveAction } from '../actions';
+import { createCityAction, deleteCityAction, toggleCityActiveAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Cities — Admin' };
@@ -102,6 +102,16 @@ export default async function AdminCitiesPage() {
                   >
                     edit
                   </Link>
+                  <form action={deleteCityAction} className="ml-3 inline-block">
+                    <input type="hidden" name="id" value={c.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-red-600 hover:underline"
+                      title="Permanently delete this city (only allowed when nothing references it)"
+                    >
+                      delete
+                    </button>
+                  </form>
                 </td>
               </tr>
             ))}

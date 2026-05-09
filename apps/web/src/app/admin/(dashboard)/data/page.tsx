@@ -6,15 +6,23 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Data Management — Admin' };
 
 export default async function DataHubPage() {
-  const [cityCount, activeCityCount, categoryCount, personaCount, communityCount, eventCount] =
-    await Promise.all([
-      db.city.count(),
-      db.city.count({ where: { isActive: true } }),
-      db.category.count({ where: { type: 'CATEGORY' } }),
-      db.category.count({ where: { type: 'PERSONA' } }),
-      db.community.count(),
-      db.event.count(),
-    ]);
+  const [
+    cityCount,
+    activeCityCount,
+    categoryCount,
+    personaCount,
+    communityCount,
+    eventCount,
+    resourceCount,
+  ] = await Promise.all([
+    db.city.count(),
+    db.city.count({ where: { isActive: true } }),
+    db.category.count({ where: { type: 'CATEGORY' } }),
+    db.category.count({ where: { type: 'PERSONA' } }),
+    db.community.count(),
+    db.event.count(),
+    db.resource.count(),
+  ]);
 
   const tiles = [
     {
@@ -29,6 +37,7 @@ export default async function DataHubPage() {
     },
     { href: '/admin/data/communities', label: 'Communities', value: communityCount.toString() },
     { href: '/admin/data/events', label: 'Events', value: eventCount.toString() },
+    { href: '/admin/data/resources', label: 'Resources', value: resourceCount.toString() },
     { href: '/admin/data/import', label: 'Bulk Import (CSV / JSON)', value: 'Upload & preview' },
     { href: '/admin/data/health', label: 'Data Health', value: 'Counts & integrity' },
   ];

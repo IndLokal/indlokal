@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { setEventStatusAction } from '../actions';
+import { deleteEventAction, setEventStatusAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events — Admin' };
@@ -94,6 +94,7 @@ export default async function AdminEventsPage({
               <th className="text-muted px-3 py-2 font-medium">City</th>
               <th className="text-muted px-3 py-2 font-medium">Community</th>
               <th className="text-muted px-3 py-2 font-medium">Status</th>
+              <th />
             </tr>
           </thead>
           <tbody>
@@ -126,6 +127,18 @@ export default async function AdminEventsPage({
                       className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
                     >
                       save
+                    </button>
+                  </form>
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <form action={deleteEventAction} className="inline-block">
+                    <input type="hidden" name="id" value={e.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-red-600 hover:underline"
+                      title="Permanently delete this event"
+                    >
+                      delete
                     </button>
                   </form>
                 </td>

@@ -20,6 +20,7 @@ export default function AdminLoginPage() {
   const searchParams = useSearchParams();
   const urlError = searchParams.get('error');
   const urlErrorMessage = urlError ? ERROR_MESSAGES[urlError] : null;
+  const signedOut = searchParams.get('signed_out') === '1';
 
   if (state?.success) {
     return (
@@ -51,6 +52,11 @@ export default function AdminLoginPage() {
           </p>
 
           <form action={formAction} className="mt-8 space-y-5 text-left">
+            {signedOut && !urlErrorMessage && (
+              <p className="rounded-[var(--radius-button)] border border-emerald-200/60 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800">
+                You&apos;ve been signed out. Request a new link to sign back in.
+              </p>
+            )}
             {urlErrorMessage && (
               <p className="rounded-[var(--radius-button)] border border-amber-200/50 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
                 {urlErrorMessage}

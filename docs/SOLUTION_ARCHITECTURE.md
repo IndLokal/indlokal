@@ -2,7 +2,9 @@
 
 **Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
 
-_Architecture Planning Document — April 2026. Updated May 2026 to reflect the monorepo and native mobile MVP path._
+_Architecture Planning Document — April 2026. Updated May 2026 to reflect the monorepo, the native mobile MVP path, magic-link admin/organizer auth with 7-day sliding sessions, the admin Data Management Console with cascade-safe deletes, source-scoped submissions, the three-tier seed pipeline, Resend transport, and the spec-driven workflow._
+
+> **Spec discipline:** Every non-trivial change is captured as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding. This document is the durable architectural narrative; the spec matrix in [docs/specs/README.md](specs/README.md) is the per-capability source of truth.
 
 ---
 
@@ -161,7 +163,7 @@ These relationships form the **community graph**. The architecture must model th
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                      Product Surfaces                         │
-│  Expo mobile app · Next.js web/SEO/admin · REST API           │
+│  Expo mobile app · Next.js web/SEO/admin/organizer · REST API │
 ├──────────────────────────────────────────────────────────────┤
 │                      Application Layer                        │
 │  ┌────────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
@@ -169,8 +171,9 @@ These relationships form the **community graph**. The architecture must model th
 │  │ Module      │ │ Module   │ │ Module   │ │ Module        │ │
 │  └────────────┘ └──────────┘ └──────────┘ └───────────────┘ │
 │  ┌────────────┐ ┌──────────┐ ┌──────────┐ ┌───────────────┐ │
-│  │ Search     │ │ Scoring  │ │ User     │ │ Admin /       │ │
-│  │ Module     │ │ Module   │ │ Module   │ │ Curation      │ │
+│  │ Search     │ │ Scoring  │ │ Identity │ │ Admin /       │ │
+│  │ Module     │ │ Module   │ │ & Session│ │ Curation /    │ │
+│  │            │ │          │ │ Module   │ │ Organizer     │ │
 │  └────────────┘ └──────────┘ └──────────┘ └───────────────┘ │
 ├──────────────────────────────────────────────────────────────┤
 │                      Data Layer                               │
@@ -201,8 +204,10 @@ These relationships form the **community graph**. The architecture must model th
 - **Expo mobile app** — iOS and Android app for member recall, push notifications, saved items, submission flows, and repeated discovery
 - **Public web application** — SEO-first discovery surface, previewable public pages, and fallback mobile web experience
 - **Programmatic SEO pages** — auto-generated pages for long-tail queries: `/stuttgart/telugu-communities/`, `/stuttgart/indian-events-this-week/`, `/stuttgart/consular-services/`. Each page is a filtered view backed by real data, not thin content.
-- **Admin/curation dashboard** — for seeding, editing, verifying communities and events
-- **Backend API** — owned by `apps/web` and consumed by both web and mobile through shared contracts
+- **Admin console** (`/admin/*`) — magic-link authenticated; data management, submissions queue, pipeline review, verification
+- **Organizer console** (`/organizer/*`) — magic-link authenticated; claim & manage owned communities, add events, edit access channels
+- **Edge proxy / middleware** (`apps/web/src/proxy.ts`) — single boundary for host/path normalisation, environment guards (e.g., demo seed gating), and request-scoped context before any handler runs
+- **Backend API** — owned by `apps/web` and consumed by both web and mobile through shared contracts in `packages/shared` (Zod schemas + generated OpenAPI)
 
 **Key design decisions:**
 
@@ -210,8 +215,9 @@ These relationships form the **community graph**. The architecture must model th
 - Mobile app is not a second backend; it uses the same API and domain model as web
 - City as the top-level navigation primitive
 - Activity feed as the default landing experience (not a search box, not a directory listing)
+- **Visitor surface is auth-free; operator surfaces (admin/organizer) are always behind magic-link sign-in** — the boundary is enforced at the route layer, not via UI hiding
 
-**Technology guidance:** Next.js for web/API/SEO/admin, Expo for native mobile, Prisma/PostgreSQL for persistence, and `packages/shared` for Zod/OpenAPI contracts.
+**Technology guidance:** Next.js for web/API/SEO/admin/organizer, Expo for native mobile, Prisma/PostgreSQL for persistence, and `packages/shared` for Zod/OpenAPI contracts (the contract package is what keeps web and mobile honest — not informal docs).
 
 ### 5.2 Application / Service Layer
 
@@ -219,16 +225,18 @@ These relationships form the **community graph**. The architecture must model th
 
 **Modules:**
 
-| Module             | Responsibility                                                                                                                                                                                                                                                                                                                 |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Discovery**      | Powers the feed, city view, "this week" view; applies filtering, ranking, and personalization. Includes sparse-content resilience: if "this week" has <3 items, auto-expands to "this month"; mixes content types (events + communities) to avoid empty sections; shows "recently happened" past events to prove city activity |
-| **Community**      | CRUD and lifecycle for community entities; ownership, claims, verification state                                                                                                                                                                                                                                               |
-| **Event**          | CRUD and lifecycle for events; temporal logic (upcoming, past, recurring); deduplication                                                                                                                                                                                                                                       |
-| **Search**         | Full-text and faceted search across communities and events                                                                                                                                                                                                                                                                     |
-| **Scoring**        | Computes activity scores, freshness signals, trust indicators; runs periodically or on write                                                                                                                                                                                                                                   |
-| **Ingestion**      | Handles content import from external sources, admin seeding, community submissions                                                                                                                                                                                                                                             |
-| **User**           | Authentication, preferences, saved items, city selection                                                                                                                                                                                                                                                                       |
-| **Admin/Curation** | Editorial tools, content moderation, claim review                                                                                                                                                                                                                                                                              |
+| Module                  | Responsibility                                                                                                                                                                                                                                                                                                                                          |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Discovery**           | Powers the feed, city view, "this week" view; applies filtering, ranking, and personalization. Includes sparse-content resilience: if "this week" has <3 items, auto-expands to "this month"; mixes content types (events + communities) to avoid empty sections; shows "recently happened" past events to prove city activity                          |
+| **Community**           | CRUD and lifecycle for community entities; ownership, claims, verification state                                                                                                                                                                                                                                                                        |
+| **Event**               | CRUD and lifecycle for events; temporal logic (upcoming, past, recurring); deduplication                                                                                                                                                                                                                                                                |
+| **Search**              | Full-text and faceted search across communities and events                                                                                                                                                                                                                                                                                              |
+| **Scoring**             | Computes activity scores, freshness signals, trust indicators; runs periodically or on write                                                                                                                                                                                                                                                            |
+| **Ingestion**           | Handles content import from external sources, admin seeding, community submissions, AI pipeline review queue                                                                                                                                                                                                                                            |
+| **Identity & Session**  | First-class module owning magic-link issuance/verification, hashed session tokens, 7-day sliding refresh, role gating (`USER` / `COMMUNITY_ADMIN` / `PLATFORM_ADMIN`), sign-out, and the `requireAdmin` / `requireOrganizer` guards used by route handlers and server actions. Backed by `User`, `MagicLinkToken`, `Session` entities. See PRD/TDD-0011 |
+| **User Preferences**    | City selection, persona/language interests, saved items — distinct from the Identity module so that auth changes don't ripple into preference logic. Member-side surfaces (Phase 2) live here                                                                                                                                                           |
+| **Admin/Curation**      | Editorial tools, content moderation, claim review, cascade-safe delete actions (PRD/TDD-0012), submissions queue (PRD/TDD-0013)                                                                                                                                                                                                                         |
+| **Organizer Workspace** | Surfaces only the communities a `COMMUNITY_ADMIN` owns; all writes go through the same domain modules above with an ownership check                                                                                                                                                                                                                     |
 
 ### 5.3 Data / Storage Layer
 
@@ -542,11 +550,38 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `persona_segments`    | Self-selected interests (student, family, etc.) |
 | `preferred_languages` | Language preferences                            |
 | `onboarding_complete` | Boolean                                         |
-| `role`                | user / community_admin / platform_admin         |
+| `role`                | `USER` / `COMMUNITY_ADMIN` / `PLATFORM_ADMIN`   |
 | `created_at`          | Registration date                               |
 | `last_active_at`      | Last visit                                      |
 
-**Why it matters:** Users are necessary for personalization, saved content, community claims, and later for behavioral signal collection. Keep lightweight initially.
+**Why it matters:** Users are necessary for personalization, saved content, community claims, and later for behavioral signal collection. Keep lightweight initially. The `role` enum gates the admin and organizer consoles; in MVP only the admin and organizer roles have an active sign-in surface (magic-link), while regular `USER` accounts remain a Phase 2 capability.
+
+### 6.9a Entity: MagicLinkToken
+
+| Attribute    | Description                                           |
+| ------------ | ----------------------------------------------------- |
+| `id`         | Unique identifier                                     |
+| `email`      | Address the link was sent to (lowercased)             |
+| `token_hash` | SHA-256 hash of the token (raw token never persisted) |
+| `purpose`    | `ADMIN_LOGIN` / `ORGANIZER_LOGIN`                     |
+| `expires_at` | 24h after creation                                    |
+| `used_at`    | Nullable; set atomically when consumed                |
+| `created_at` | Issue timestamp                                       |
+
+**Why it matters:** Magic-link auth removes password storage entirely. Tokens are single-use, hashed at rest, and consumed atomically (`updateMany WHERE used_at IS NULL`) to defeat double-submit and email-scanner races. A 2-minute grace window after first use covers genuine browser races. See [PRD-0011](specs/PRD/0011-magic-link-admin-organizer-auth.md) and [TDD-0011](specs/TDD/0011-magic-link-admin-organizer-auth.md).
+
+### 6.9b Entity: Session
+
+| Attribute      | Description                                                             |
+| -------------- | ----------------------------------------------------------------------- |
+| `id`           | Unique identifier                                                       |
+| `user_id`      | FK to User                                                              |
+| `token_hash`   | SHA-256 hash of the session token (cookie carries raw token, httpOnly)  |
+| `expires_at`   | Initially 7 days from creation; sliding-extended on activity within 24h |
+| `created_at`   | Session start                                                           |
+| `last_seen_at` | Updated on each authenticated render (best-effort)                      |
+
+**Why it matters:** 7-day sliding sessions keep daily users signed in without forcing re-auth, while still bounding cookie/server-token lifetime. Refresh is best-effort inside `getSessionUser()` (try/catch around DB write + cookie reset) so render paths never fail because of a session-extension error.
 
 ### 6.10 Entity: User Interaction Signal
 
@@ -586,19 +621,46 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 **Graph connections:** → City, → Categories
 
+### 6.12 Entity: PipelineItem
+
+| Attribute              | Description                                                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `id`                   | Unique identifier                                                                                                             |
+| `source`               | Source identifier (e.g., `eventbrite`, `facebook:stuttgart-tamil-sangam`, `cgi-munich`, `indoeuropean`, `instagram:<handle>`) |
+| `source_url`           | Specific URL or post id the item was extracted from                                                                           |
+| `source_payload`       | Raw fetched content (HTML, JSON, post text) retained for re-processing and provenance                                         |
+| `extracted`            | Structured JSON produced by the LLM (community or event shape, depending on `kind`)                                           |
+| `kind`                 | `COMMUNITY` / `EVENT` / `RESOURCE`                                                                                            |
+| `confidence`           | Composite LLM confidence (0–1); per-field confidence stored inside `extracted`                                                |
+| `dedup_match_id`       | Nullable FK to an existing Community/Event the dedup step thinks this matches                                                 |
+| `dedup_match_strategy` | `name+city` / `url` / `embedding` / `none`                                                                                    |
+| `status`               | `PENDING` / `APPROVED` / `REJECTED` / `MERGED`                                                                                |
+| `reviewed_by`          | FK to User (`PLATFORM_ADMIN`) who actioned the item                                                                           |
+| `reviewed_at`          | Decision timestamp                                                                                                            |
+| `result_entity_type`   | On approve/merge: `COMMUNITY` / `EVENT` / `RESOURCE` produced (or merged into)                                                |
+| `result_entity_id`     | FK to that produced/merged entity                                                                                             |
+| `created_at`           | When fetched + extracted                                                                                                      |
+
+**Why it matters:** The AI pipeline (§10.4) is referenced everywhere but was previously implicit in the schema. Modelling pipeline items as first-class rows gives us provenance, a real review queue, idempotent re-runs, and the dedup audit trail that a content platform needs. Critically: the `Submissions` queue (visitor-side, `Community.source='COMMUNITY_SUBMITTED'`) and the `Pipeline` queue (this entity) are **architecturally separate** — same review UX pattern, different data lifecycles, no cross-contamination. See PRD/TDD-0013.
+
+**Graph connections:** → User (reviewer), → Community/Event/Resource (result)
+
 ---
 
 ## 7. Data Strategy
 
 ### 7.1 Data sources and lifecycle
 
-| Data type               | Source                                                              | Lifecycle                        | Trust level                                    |
-| ----------------------- | ------------------------------------------------------------------- | -------------------------------- | ---------------------------------------------- |
-| **Seed data**           | Admin team manually researches and enters                           | One-time bootstrap, then updated | Medium (human-curated but may be incomplete)   |
-| **Community-submitted** | Community admins self-list                                          | Ongoing                          | Medium-high (first-party but unverified)       |
-| **Imported events**     | Scraped or API-imported from Eventbrite, Meetup, community websites | Periodic refresh                 | Low-medium (requires deduplication/validation) |
-| **User-contributed**    | "Suggest a community" or "report stale"                             | Ongoing                          | Low (must be moderated)                        |
-| **Inferred signals**    | Computed from activity, freshness, engagement                       | Continuous                       | Derived (depends on input quality)             |
+| Data type               | Source                                                             | Lifecycle                      | Trust level                                                                                                                                                                                 |
+| ----------------------- | ------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Bootstrap seed**      | `seed/bootstrap` — cities, categories, taxonomies                  | One-time, idempotent           | High (platform invariants; ADR-0003)                                                                                                                                                        |
+| **Directory seed**      | `seed/directory` — real Stuttgart communities and resources        | Replayable; canonical baseline | High (human-curated from research)                                                                                                                                                          |
+| **Demo seed**           | `seed/demo` — synthetic content for local + preview                | On-demand; gated off in prod   | None (never reaches production users)                                                                                                                                                       |
+| **Community-submitted** | Visitors via `/submit/`; lands as `source='COMMUNITY_SUBMITTED'`   | Ongoing                        | Medium (first-party but unverified — status `UNVERIFIED` until admin approves)                                                                                                              |
+| **AI pipeline**         | Sources scraped by ingestion module → LLM extract → `PipelineItem` | Daily (per source schedule)    | Confidence-graded per item; `APPROVED` items inherit reviewer trail and land as `Community.status='UNVERIFIED'` (still need a verification pass) — nothing publishes without human approval |
+| **Organizer-edited**    | `COMMUNITY_ADMIN` users editing their claimed communities/events   | Ongoing                        | High (first-party with magic-link verified ownership)                                                                                                                                       |
+| **User-contributed**    | "Suggest a community" or "report stale" (Phase 2)                  | Ongoing                        | Low (must be moderated)                                                                                                                                                                     |
+| **Inferred signals**    | Computed from activity, freshness, engagement                      | Continuous                     | Derived (depends on input quality)                                                                                                                                                          |
 
 ### 7.2 Structured vs semi-structured
 
@@ -960,13 +1022,13 @@ Beyond new content detection, AI helps keep existing content fresh:
 
 #### 10.4.6 Technology stack for AI pipeline
 
-| Component            | Recommendation                                                                 | Rationale                                                             |
-| -------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
-| **Scheduler**        | GitHub Actions/manual runs for MVP; Vercel Cron or a dedicated scheduler later | Keep MVP ops simple; upgrade only when freshness becomes user-visible |
-| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML     | Handles modern SPAs; Playwright runs in Node                          |
-| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                           | Best cost/quality ratio; structured output mode for reliable JSON     |
-| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                      | No new infrastructure; works with existing Prisma setup               |
-| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                     | Reduce API costs by resizing large images                             |
+| Component            | Recommendation                                                                                                                                                                           | Rationale                                                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scheduler**        | **Vercel Cron** for in-monorepo schedules; manual `pnpm` scripts as the local-dev fallback. Heavy / long-running jobs (e.g., bulk Playwright runs) move to GitHub Actions on a schedule. | We host on Vercel anyway, so Vercel Cron has zero new infrastructure; reserve GitHub Actions for jobs that exceed Vercel's serverless time limits. (Promote this to an ADR if/when we change schedulers.) |
+| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML                                                                                                               | Handles modern SPAs; Playwright runs in Node                                                                                                                                                              |
+| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                                                                                                                                     | Best cost/quality ratio; structured output mode for reliable JSON                                                                                                                                         |
+| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                                                                                                                                | No new infrastructure; works with existing Prisma setup                                                                                                                                                   |
+| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                                                                                                                               | Reduce API costs by resizing large images                                                                                                                                                                 |
 
 **Total monthly cost estimate for Stuttgart:**
 
@@ -995,41 +1057,47 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 
 ### 11.1 What must exist in MVP
 
-| Capability                             | Notes                                                                                                                                           |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Community entity with full schema**  | All fields from domain model, even if sparsely populated initially                                                                              |
-| **Event entity with temporal queries** | "This week in Berlin" must work from day 1                                                                                                      |
-| **City as primary partition**          | City selection is the first user action                                                                                                         |
-| **Category/persona tagging**           | At least 11 curated categories (including Consular & Official)                                                                                  |
-| **Access channels**                    | WhatsApp/Telegram/website links per community                                                                                                   |
-| **City feed / discovery page**         | The primary UX — activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events) |
-| **Event listing with time filters**    | This week, this month, upcoming                                                                                                                 |
-| **Community detail page**              | Full profile with events and access info                                                                                                        |
-| **Resource pages**                     | Consular services, VFS info, official events                                                                                                    |
-| **Admin CRUD + bulk import**           | Content seeding capability including historical events and institutional sources                                                                |
-| **Programmatic SEO pages**             | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.)                                                               |
-| **Basic activity scoring**             | Sort by last_updated, event count — just enough to avoid stale-first                                                                            |
-| **SEO-ready rendering**                | Communities and events must be Google-indexable                                                                                                 |
-| **Native mobile app path**             | Expo builds are part of MVP because recall requires an installed app, push, and app-store trust                                                 |
-| **Mobile-responsive web**              | Web remains important for SEO, previews, admin, and users who arrive from search                                                                |
-| **Basic analytics**                    | Page views, clicks, search queries                                                                                                              |
+| Capability                             | Notes                                                                                                                                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Community entity with full schema**  | All fields from domain model, even if sparsely populated initially                                                                                                        |
+| **Event entity with temporal queries** | "This week in Berlin" must work from day 1                                                                                                                                |
+| **City as primary partition**          | City selection is the first user action                                                                                                                                   |
+| **Category/persona tagging**           | At least 11 curated categories (including Consular & Official)                                                                                                            |
+| **Access channels**                    | WhatsApp/Telegram/website links per community                                                                                                                             |
+| **City feed / discovery page**         | The primary UX — activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events)                           |
+| **Event listing with time filters**    | This week, this month, upcoming                                                                                                                                           |
+| **Community detail page**              | Full profile with events and access info                                                                                                                                  |
+| **Resource pages**                     | Consular services, VFS info, official events                                                                                                                              |
+| **Magic-link admin auth**              | `/admin/login` magic link, single-use SHA-256 token, 24h TTL, 303 verify redirect, 7-day sliding session, visible sign-out (PRD/TDD-0011)                                 |
+| **Magic-link organizer auth**          | `/organizer/login` mirrors admin flow; powers the community claim & management capability that originally lived in Phase 2                                                |
+| **Admin Data Management Console**      | `/admin/data` with CRUD + cascade-safe deletes for communities, events, cities, resources; deletes refuse and explain when references exist (PRD/TDD-0012)                |
+| **Source-scoped submissions queue**    | `/admin/submissions` shows only `source='COMMUNITY_SUBMITTED' AND status='UNVERIFIED'`; pipeline-extracted items live in their own `/admin/pipeline` queue (PRD/TDD-0013) |
+| **Three-tier database seeding**        | `bootstrap` / `directory` / `demo` seeds; demo never runs in production (ADR-0003)                                                                                        |
+| **Email transport (Resend)**           | Resend in prod, Mailpit in dev, send failures throw — no silent drops (ADR-0004)                                                                                          |
+| **Admin CRUD + bulk import**           | Content seeding capability including historical events and institutional sources                                                                                          |
+| **Programmatic SEO pages**             | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.)                                                                                         |
+| **Basic activity scoring**             | Sort by last_updated, event count — just enough to avoid stale-first                                                                                                      |
+| **SEO-ready rendering**                | Communities and events must be Google-indexable                                                                                                                           |
+| **Native mobile app path**             | Expo builds are part of MVP because recall requires an installed app, push, and app-store trust                                                                           |
+| **Mobile-responsive web**              | Web remains important for SEO, previews, admin, and users who arrive from search                                                                                          |
+| **Basic analytics**                    | Page views, clicks, search queries                                                                                                                                        |
 
 ### 11.2 What should be designed as future-ready but not overbuilt
 
-| Capability             | Design now                                                                                                        | Build later                                                                                                                                         |
-| ---------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scoring system**     | Store activity signals as separate entities; compute simple scores; store score breakdown in JSONB for future use | Full weighted multi-signal scoring (Phase 2); branded "Pulse Score" visible to organizers (Phase 2); public Pulse Score with breakdown UI (Phase 3) |
-| **Relationship edges** | Include the `relationship_edge` table in schema                                                                   | Graph queries and recommendations (Phase 4); "Similar communities" feature (Phase 4)                                                                |
-| **Content provenance** | Include `ContentLog` table in schema (zero cost, high future value)                                               | Content pipeline tracking and source quality analytics (Phase 2)                                                                                    |
-| **Search index**       | Full-text search via PostgreSQL                                                                                   | Meilisearch/Elasticsearch migration                                                                                                                 |
-| **Personalization**    | User entity with city and interest preferences                                                                    | Behavioral personalization                                                                                                                          |
-| **Community claims**   | `claim_state` field on community entity                                                                           | Full claim/verification workflow                                                                                                                    |
-| **Trust signals**      | `trust_signal` table in schema                                                                                    | Multi-signal trust computation                                                                                                                      |
-| **Event import**       | Design the ingestion pipeline interface                                                                           | Build adapters for external sources                                                                                                                 |
-| **Notifications**      | Device and preference model; keep delivery simple first                                                           | Rich push/email/inbox automation when usage justifies it                                                                                            |
-| **Multi-city**         | City model supports multiple cities                                                                               | Cross-city discovery and comparison                                                                                                                 |
-| **Taxonomy depth**     | JSONB `metadata` field on community supports subcategories                                                        | Hierarchical taxonomy UI (Phase 4)                                                                                                                  |
-| **Data API**           | Normalized, structured data model                                                                                 | External API for integrations (Phase 4+)                                                                                                            |
+| Capability                  | Design now                                                                                                                                                                                                                                | Build later                                                                                                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scoring system**          | Store activity signals as separate entities; compute simple scores; store score breakdown in JSONB for future use                                                                                                                         | Full weighted multi-signal scoring (Phase 2); branded "Pulse Score" visible to organizers (Phase 2); public Pulse Score with breakdown UI (Phase 3)                                            |
+| **Relationship edges**      | Include the `relationship_edge` table in schema                                                                                                                                                                                           | Graph queries and recommendations (Phase 4); "Similar communities" feature (Phase 4)                                                                                                           |
+| **Content provenance**      | `PipelineItem` (§6.12) covers AI-pipeline provenance in MVP                                                                                                                                                                               | Generalised `ContentLog` covering organizer edits + admin actions for full audit history (Phase 2)                                                                                             |
+| **Search index**            | Full-text search via PostgreSQL                                                                                                                                                                                                           | Meilisearch/Elasticsearch migration                                                                                                                                                            |
+| **Personalization**         | User entity with city and interest preferences                                                                                                                                                                                            | Behavioral personalization                                                                                                                                                                     |
+| **Trust signals**           | `trust_signal` table in schema                                                                                                                                                                                                            | Multi-signal trust computation                                                                                                                                                                 |
+| **Event import**            | Design the ingestion pipeline interface                                                                                                                                                                                                   | Build adapters for external sources                                                                                                                                                            |
+| **Notifications**           | Device and preference model; keep delivery simple first                                                                                                                                                                                   | Rich push/email/inbox automation when usage justifies it                                                                                                                                       |
+| **Multi-city**              | City model supports multiple cities                                                                                                                                                                                                       | Cross-city discovery and comparison                                                                                                                                                            |
+| **Taxonomy depth**          | JSONB `metadata` field on community supports subcategories                                                                                                                                                                                | Hierarchical taxonomy UI (Phase 4)                                                                                                                                                             |
+| **Data API**                | Normalized, structured data model                                                                                                                                                                                                         | External API for integrations (Phase 4+)                                                                                                                                                       |
+| **Reporting & data export** | Schema already carries `created_at`, `source`, `status`, `last_activity_at`, `reviewed_at` — enough to produce monthly CSV/JSON exports of newcomer-reach, communities-indexed, and freshness metrics for grant reports without new infra | Hardened B2B data API for city tourism boards, integration offices, university international offices, and corporate HR onboarding (Phase B/C of the funding plan in `PRODUCT_DOCUMENT.md` §15) |
 
 ### 11.3 What can be postponed entirely
 
@@ -1048,19 +1116,36 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 ### 11.4 Architecture evolution diagram
 
 ```
-MVP                          Phase 2                      Phase 3+
-────────────────────         ────────────────────         ────────────────────
-Expo mobile app              Same                         Same + richer native
-Next.js web/API              Same                         engagement surfaces
-  │                            │                            │
-Modular monolith             Monolith API                 Extract search &
-(all modules)                (+ claim/admin                scoring services
-  │                        surfaces)                       │
-PostgreSQL                   PostgreSQL                   PostgreSQL
-(FTS, computed scores)       + Meilisearch                + Meilisearch
-GitHub Actions cron          + Redis cache                + Redis
-Expo EAS builds                                           + Graph layer
-                         + Analytics warehouse
+MVP                                Phase 2                      Phase 3+
+────────────────────────────────         ────────────────────         ────────────────────
+Expo mobile app (recall)           Same                         Same + richer native
+Next.js web (SSR/SEO/admin/        Same + member surface        engagement surfaces
+  organizer)                         on existing rails
+  │                                  │                            │
+Modular monolith                   Monolith API                 Extract search &
+(Discovery, Community, Event,      (+ Phase 2 deltas)             scoring services
+ Search, Scoring, Ingestion,                                      │
+ Identity & Session,
+ User Preferences,
+ Admin/Curation,
+ Organizer Workspace)
+  │                                  │                            │
+PostgreSQL                         PostgreSQL                   PostgreSQL
+(FTS, computed scores,             + Meilisearch                + Meilisearch
+ MagicLinkToken, Session,          + Redis cache                + Redis
+ PipelineItem)                                                  + Graph layer (Apache AGE)
+
+Magic-link auth (custom)           + WebAuthn / passkeys for    + organisation-scale
+ + 7-day sliding sessions             admin & organizer            audit retention
+ + visible sign-out
+Resend (prod) + Mailpit (dev)      Same                         Same + retry/queue
+ + throw-on-failure                                              if volume justifies
+Three-tier seed pipeline           Same                         Same
+ (bootstrap/directory/demo;
+  demo gated off in prod)
+Vercel Cron + manual pnpm          + Analytics warehouse        + ML feature store
+ scripts for ingestion
+Expo EAS builds                                                 + Graph layer
 ```
 
 ---
@@ -1116,17 +1201,30 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ### 13.3 Operational risks
 
-| Risk                       | Impact                                                                | Mitigation                                                                                                                                                      |
-| -------------------------- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Content accuracy**       | Wrong links, wrong event times erode trust                            | Verification workflows; user reporting; periodic link checks                                                                                                    |
-| **Community pushback**     | Communities don't want to be listed                                   | Claim flow allows removal; be respectful of community ownership                                                                                                 |
-| **No retention mechanism** | Users visit once, get the info they need, join WhatsApp, never return | Weekly digest email/WhatsApp (Phase 2); "new this week" section on city feed; event reminders; Tracxn retains via alerts and dashboards — we need an equivalent |
-| **Single-city fragility**  | If launch city doesn't work, product appears to fail                  | Stuttgart chosen for weakest competitor coverage + strong automotive pipeline + discoverable communities; BW region expansion if metro needs more density       |
-| **Founder bus factor**     | Platform depends on manual curation too long                          | Build community submission and claim flows in Phase 2 to distribute supply; establish 5+ organizer relationships pre-launch                                     |
+| Risk                       | Impact                                                                                                                                                               | Mitigation                                                                                                                                                                                                   |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Content accuracy**       | Wrong links, wrong event times erode trust                                                                                                                           | Verification workflows; user reporting; periodic link checks                                                                                                                                                 |
+| **Community pushback**     | Communities don't want to be listed                                                                                                                                  | Claim flow allows removal; be respectful of community ownership                                                                                                                                              |
+| **No retention mechanism** | Users visit once, get the info they need, join WhatsApp, never return                                                                                                | Weekly digest email/WhatsApp (Phase 2); "new this week" section on city feed; event reminders; Tracxn retains via alerts and dashboards — we need an equivalent                                              |
+| **Single-city fragility**  | If launch city doesn't work, product appears to fail                                                                                                                 | Stuttgart chosen for weakest competitor coverage + strong automotive pipeline + discoverable communities; BW region expansion if metro needs more density                                                    |
+| **Founder bus factor**     | Platform depends on manual curation too long                                                                                                                         | Build community submission and claim flows in Phase 2 to distribute supply; establish 5+ organizer relationships pre-launch                                                                                  |
+| **Auth misconfiguration**  | Wrong cookie domain in prod, leaked/rotated session secret invalidates everyone, or `Secure` flag dropped → either total lockout or session theft on shared networks | Cookie domain + `Secure` + `httpOnly` + `SameSite=Lax` are set centrally in `lib/session.ts`; secret rotation is a documented runbook; preview env uses a distinct cookie name to avoid cross-env collisions |
+| **Email deliverability**   | Magic links and (later) digests land in spam → admin/organizer onboarding silently fails                                                                             | Resend with verified `indlokal.com` sender + SPF/DKIM/DMARC; production smoke test post-deploy; delivery failures throw at the call site (ADR-0004) so we never silently drop a sign-in email                |
 
 ---
 
 ## 14. Phased Implementation Architecture Plan
+
+> **What actually shipped in MVP vs the original phased plan (May 2026 reconciliation):**
+>
+> Several capabilities the original plan put in Phase 2 shipped in MVP because they ride on top of the magic-link auth rail we built early:
+>
+> - Community **self-submission** (`/submit/` → source-scoped admin queue) — was Phase 2, **shipped MVP**
+> - Community **claim & organizer console** (`/organizer/*`) — was Phase 2, **shipped MVP**
+> - Admin **data management console** with cascade-safe deletes — was Phase 2, **shipped MVP**
+> - **AI pipeline review queue** (separate from submissions) — was Phase 2, **shipped MVP** (basic source set)
+>
+> The phases below reflect what's still ahead. Anything still labelled "Phase 2" here is _net-new_ on top of the shipped surface.
 
 ### Phase 0: Foundation (Weeks 1-3)
 
@@ -1135,14 +1233,16 @@ The following are explicitly **out of scope** for the initial architecture and s
 **Architecture deliverables:**
 
 - Repository setup with pnpm monorepo structure (`apps/web`, `apps/mobile`, `packages/shared`)
-- PostgreSQL schema: all core entities (community, event, city, category, access_channel, activity_signal, trust_signal, relationship_edge, user, user_interaction, **resource**)
+- PostgreSQL schema: all core entities (community, event, city, category, access_channel, activity_signal, trust_signal, relationship_edge, user, user_interaction, **resource**, **magic_link_token**, **session**)
 - City schema includes metro-region support (Stuttgart + satellite cities)
-- Database migrations framework
-- API framework with module structure (community, event, discovery, admin)
-- Authentication setup (simple email/password or social login)
-- Admin CRUD endpoints for communities, events, and resources
+- Database migrations framework + **three-tier seed pipeline** (`bootstrap` / `directory` / `demo`; demo gated off in production — ADR-0003)
+- API framework with module structure (community, event, discovery, admin, organizer)
+- **Authentication: magic-link** (no passwords) for `PLATFORM_ADMIN` and `COMMUNITY_ADMIN` roles, with 7-day sliding sessions and visible sign-out (PRD/TDD-0011). Member (`USER`) accounts are Phase 2.
+- **Email transport:** Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev, send failures throw (ADR-0004)
+- Admin CRUD endpoints for communities, events, resources, plus cascade-safe delete actions (PRD/TDD-0012)
+- **Grant-reportable analytics pack** — monthly CSV/JSON export of users-served, communities-indexed, AI-pipeline items reviewed, and median-freshness, produced from existing Postgres with a single SQL job (no new infra). Backs the Year-1 funder reporting commitments in `PRODUCT_DOCUMENT.md` §15.1.
 - Basic CI/CD pipeline
-- MVP deployment path: Vercel for web/API, Neon for Postgres, Expo EAS for mobile builds
+- MVP deployment path: Vercel for web/API (`main` → indlokal.com, `develop` → preview), Neon for Postgres, Expo EAS for mobile builds
 
 **Key decisions to finalize:**
 
@@ -1178,15 +1278,14 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ### Phase 2: Supply Activation (Weeks 8-14)
 
-**Goal:** Enable communities to participate and reduce dependency on manual curation.
+**Goal:** Enable communities to participate at scale and reduce dependency on manual curation. _(Note: the magic-link organizer auth and the basic claim flow shipped in MVP — this phase deepens the surface area.)_
 
 **Architecture deliverables:**
 
-- Community self-submission form with moderation queue
-- Community claim flow (ownership verification via email or link)
-- Community admin dashboard (edit profile, add events)
-- User accounts with city and interest preferences
+- Member (`USER`) accounts with city and interest preferences (magic-link, mirroring admin/organizer)
 - Saved/bookmarked communities and events
+- Submitter notifications on approval/rejection (currently silent post-decision)
+- Multi-organizer per community + organizer analytics dashboard
 - "Suggest a community" user flow
 - "Report stale/incorrect" user flow
 - Improved scoring: completeness score, engagement signals (view counts)
@@ -1196,7 +1295,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Stale content alerting and downranking
 - **Second city launch: Karlsruhe or Mannheim** (BW region — shared consular services, overlapping communities)
 
-**Architecture milestone:** The system can receive and process community-submitted content without manual intervention for every entry.
+**Architecture milestone:** The system can receive and process community-submitted content at scale, with notification feedback loops, without manual intervention for every entry.
 
 ### Phase 3: Trust & Relevance Evolution (Weeks 14-22)
 
@@ -1244,21 +1343,21 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ## Technology Recommendations Summary
 
-| Layer            | MVP Recommendation                               | Evolution                                        |
-| ---------------- | ------------------------------------------------ | ------------------------------------------------ |
-| **Frontend**     | Next.js (App Router) + TypeScript + Tailwind CSS | Same                                             |
-| **Mobile**       | Expo + React Native + Expo Router                | Same + richer native APIs                        |
-| **Backend**      | Next.js API routes / standalone Node.js API      | Extract services if needed                       |
-| **Database**     | PostgreSQL via Neon for MVP deployment           | Same + extensions                                |
-| **ORM**          | Prisma ORM                                       | Same                                             |
-| **Search**       | PostgreSQL full-text search                      | Meilisearch                                      |
-| **Cache**        | None                                             | Redis                                            |
-| **Auth**         | NextAuth.js or Supabase Auth                     | Same                                             |
-| **Analytics**    | PostHog or Plausible                             | PostHog + data warehouse                         |
-| **Hosting**      | Vercel for web/API + Expo EAS for mobile         | Dedicated accounts/tiers when usage justifies it |
-| **File storage** | Cloudflare R2 or S3                              | Same                                             |
-| **CI/CD**        | GitHub Actions                                   | Same                                             |
-| **Graph**        | SQL joins + CTEs                                 | Apache AGE or Neo4j                              |
+| Layer            | MVP Recommendation                                                                                              | Evolution                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| **Frontend**     | Next.js (App Router) + TypeScript + Tailwind CSS                                                                | Same                                                                   |
+| **Mobile**       | Expo + React Native + Expo Router                                                                               | Same + richer native APIs                                              |
+| **Backend**      | Next.js API routes / standalone Node.js API                                                                     | Extract services if needed                                             |
+| **Database**     | PostgreSQL via Neon for MVP deployment                                                                          | Same + extensions                                                      |
+| **ORM**          | Prisma ORM                                                                                                      | Same                                                                   |
+| **Search**       | PostgreSQL full-text search                                                                                     | Meilisearch                                                            |
+| **Cache**        | None                                                                                                            | Redis                                                                  |
+| **Auth**         | **Magic-link (custom)** — hashed single-use tokens, 24h TTL, 7-day sliding session, no passwords (PRD/TDD-0011) | Add WebAuthn / passkeys for admin & organizer once volume justifies it |
+| **Analytics**    | PostHog or Plausible                                                                                            | PostHog + data warehouse                                               |
+| **Hosting**      | Vercel for web/API + Expo EAS for mobile                                                                        | Dedicated accounts/tiers when usage justifies it                       |
+| **File storage** | Cloudflare R2 or S3                                                                                             | Same                                                                   |
+| **CI/CD**        | GitHub Actions                                                                                                  | Same                                                                   |
+| **Graph**        | SQL joins + CTEs                                                                                                | Apache AGE or Neo4j                                                    |
 
 ---
 
@@ -1283,3 +1382,11 @@ The following are explicitly **out of scope** for the initial architecture and s
 9. **Don't build what you don't need yet.** No graph DB, no ML, no real-time collaboration, no separate mobile backend.
 
 10. **Freshness is trust.** If the platform shows stale content, users lose trust. Freshness monitoring is a core system responsibility.
+
+11. **Spec before code.** Non-trivial changes start as a PRD/TDD pair (or ADR for cross-cutting decisions) under `docs/specs/`, kept in sync through implementation, and flipped to `Implemented` on merge. The doc tree under `docs/specs/` is part of the architecture, not commentary on it.
+
+12. **Visitor surface stays auth-free; operator surfaces stay authenticated.** The boundary between the two is enforced at the route layer, not by hiding UI. The operator surface (admin + organizer) is treated as a real product, not a back office.
+
+13. **Cost discipline matches the funding model.** Infra choices (Vercel, managed Postgres, Resend, Vercel Cron, no dedicated cluster, no always-on workers) keep monthly run-cost grant-fundable in Year 1 and B2B-margin-friendly in Year 2. No architectural decision is allowed to push us into VC-required burn before Phase C of `PRODUCT_DOCUMENT.md` §15.
+
+14. **AI is a product capability, not a back-office tool.** The AI content pipeline (§10.4) is what makes the freshness promise affordable for a small team — it must be built and operated as a first-class part of the product, with a real review queue, real provenance (§6.12 `PipelineItem`), and a hard rule that nothing publishes without human approval.

@@ -566,7 +566,7 @@ async function insertEntry(
       languages: entry.languages ?? [],
       foundedYear: entry.foundedYear,
       memberCountApprox: entry.memberCountApprox,
-      status: 'UNVERIFIED' satisfies CommunityStatus,
+      status: 'ACTIVE' satisfies CommunityStatus,
       claimState: 'UNCLAIMED' satisfies ClaimState,
       source: 'ADMIN_SEED',
       metadata: {
