@@ -44,5 +44,12 @@
     "*.{json,css,md}": [
       "prettier --write"
     ]
+  },
+  "pnpm": {
+    "overrides": {
+      "fast-xml-parser@<5.7.0": ">=5.7.0",
+      "fast-xml-builder@<1.1.7": ">=1.1.7",
+      "postcss@<8.5.10": ">=8.5.10"
+    }
   }
 }
