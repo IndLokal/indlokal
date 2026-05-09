@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -136,6 +136,39 @@ export async function toggleCityActiveAction(formData: FormData) {
   revalidatePath('/admin/data/cities');
 }
 
+/**
+ * Delete a city. Refuses if anything still references it (communities, events,
+ * resources, users, reports, child metro members). Admin must clear those first.
+ */
+export async function deleteCityAction(formData: FormData) {
+  await requireAdminAction();
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const [communities, events, resources, users, reports, children] = await Promise.all([
+    db.community.count({ where: { cityId: id } }),
+    db.event.count({ where: { cityId: id } }),
+    db.resource.count({ where: { cityId: id } }),
+    db.user.count({ where: { cityId: id } }),
+    db.contentReport.count({ where: { cityId: id } }),
+    db.city.count({ where: { metroRegionId: id } }),
+  ]);
+
+  const refs: string[] = [];
+  if (communities) refs.push(`${communities} communities`);
+  if (events) refs.push(`${events} events`);
+  if (resources) refs.push(`${resources} resources`);
+  if (users) refs.push(`${users} users`);
+  if (reports) refs.push(`${reports} reports`);
+  if (children) refs.push(`${children} child cities`);
+  if (refs.length > 0) {
+    throw new Error(`City still referenced by ${refs.join(', ')}. Reassign or delete those first.`);
+  }
+
+  await db.city.delete({ where: { id } });
+  revalidatePath('/admin/data/cities');
+}
+
 /* ───────────────────────────── Categories ───────────────────────────── */
 
 const CategoryInput = z.object({
@@ -200,6 +233,34 @@ export async function setCommunityStatusAction(formData: FormData) {
   revalidatePath('/admin/data/communities');
 }
 
+/**
+ * Hard-delete a community and all rows that depend on it.
+ *
+ * Use for true duplicates / spam only. Most cleanup should use status=INACTIVE.
+ * Cascading FKs handle: AccessChannel, ActivitySignal, TrustSignal, SavedCommunity,
+ * CommunityCategory, RelationshipEdge. We must manually clear the non-cascading
+ * relations: Event.communityId (nullable, no cascade), Community.mergedIntoId
+ * (self-relation), and ContentReport.communityId (nullable, no cascade).
+ */
+export async function deleteCommunityAction(formData: FormData) {
+  await requireAdminAction();
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  await db.$transaction([
+    // Detach events that pointed at this community (don't delete the events themselves).
+    db.event.updateMany({ where: { communityId: id }, data: { communityId: null } }),
+    // Clear merge pointers from any communities merged into this one.
+    db.community.updateMany({ where: { mergedIntoId: id }, data: { mergedIntoId: null } }),
+    // Drop reports tied to this community (no cascade in schema).
+    db.contentReport.deleteMany({ where: { communityId: id } }),
+    db.community.delete({ where: { id } }),
+  ]);
+
+  revalidatePath('/admin/data/communities');
+  revalidateTag('city-feed', 'max');
+}
+
 /* ───────────────────────────── Events ───────────────────────────────── */
 
 export async function setEventStatusAction(formData: FormData) {
@@ -212,6 +273,26 @@ export async function setEventStatusAction(formData: FormData) {
     data: { status: status as 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED' },
   });
   revalidatePath('/admin/data/events');
+}
+
+/** Hard-delete an event. EventCategory, TrustSignal, SavedEvent cascade. */
+export async function deleteEventAction(formData: FormData) {
+  await requireAdminAction();
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+  await db.event.delete({ where: { id } });
+  revalidatePath('/admin/data/events');
+}
+
+/* ───────────────────────────── Resources ────────────────────────────── */
+
+/** Hard-delete a resource (consular / official / guide entry). */
+export async function deleteResourceAction(formData: FormData) {
+  await requireAdminAction();
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+  await db.resource.delete({ where: { id } });
+  revalidatePath('/admin/data/resources');
 }
 
 /* ───────────────────────────── Bulk import ──────────────────────────── */
