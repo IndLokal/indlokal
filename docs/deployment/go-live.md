@@ -80,11 +80,12 @@ Add these only when the features are active:
 
 Set these repository secrets:
 
-| Secret         | Value                                          | Used by                        |
-| -------------- | ---------------------------------------------- | ------------------------------ |
-| `DATABASE_URL` | `indlokal-db` Neon pooled URL                  | production migration job in CI |
-| `APP_URL`      | production base URL e.g. `https://indlokal.de` | cron workflow                  |
-| `CRON_SECRET`  | same value as `CRON_SECRET` in Vercel          | cron workflow                  |
+| Secret                 | Value                                          | Used by                        |
+| ---------------------- | ---------------------------------------------- | ------------------------------ |
+| `DATABASE_URL`         | `indlokal-db` Neon pooled URL                  | production migration job in CI |
+| `STAGING_DATABASE_URL` | `indlokal-db-staging` Neon pooled URL          | staging migration job in CI    |
+| `APP_URL`              | production base URL e.g. `https://indlokal.de` | cron workflow                  |
+| `CRON_SECRET`          | same value as `CRON_SECRET` in Vercel          | cron workflow                  |
 
 The cron workflow can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
 
