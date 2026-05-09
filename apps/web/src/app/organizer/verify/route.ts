@@ -50,19 +50,46 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
   const rawToken = String(formData.get('token') ?? '').trim();
 
+  // POST→GET redirects must use 303 so the browser switches to GET on the
+  // target URL. NextResponse.redirect() defaults to 307 which preserves the
+  // method and would cause the destination page (GET-only) to 405.
+  const seeOther = (path: string) =>
+    NextResponse.redirect(new URL(path, request.url), { status: 303 });
+
   if (!rawToken) {
-    return NextResponse.redirect(new URL('/organizer/login?error=missing_token', request.url));
+    return seeOther('/organizer/login?error=missing_token');
   }
 
   const tokenHash = await hashToken(rawToken);
+  const now = new Date();
+  const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
 
   const claim = await db.magicLinkToken.updateMany({
-    where: { tokenHash, usedAt: null, expiresAt: { gt: new Date() } },
-    data: { usedAt: new Date() },
+    where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
+    data: { usedAt: now },
   });
 
   if (claim.count === 0) {
-    return NextResponse.redirect(new URL('/organizer/login?error=invalid_token', request.url));
+    const existing = await db.magicLinkToken.findUnique({
+      where: { tokenHash },
+      include: { user: { select: { id: true, role: true } } },
+    });
+
+    if (!existing || existing.user.role !== 'COMMUNITY_ADMIN') {
+      return seeOther('/organizer/login?error=invalid_token');
+    }
+
+    if (existing.expiresAt < now) {
+      return seeOther('/organizer/login?error=expired_token');
+    }
+
+    if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
+      const sessionToken = generateSessionToken();
+      await createSession(existing.user.id, sessionToken);
+      return seeOther('/organizer');
+    }
+
+    return seeOther('/organizer/login?error=invalid_token');
   }
 
   const magicLink = await db.magicLinkToken.findUnique({
@@ -71,12 +98,12 @@ export async function POST(request: NextRequest) {
   });
 
   if (!magicLink || magicLink.user.role !== 'COMMUNITY_ADMIN') {
-    return NextResponse.redirect(new URL('/organizer/login?error=invalid_token', request.url));
+    return seeOther('/organizer/login?error=invalid_token');
   }
 
   // Issue a fresh session token (hashed in DB, raw in cookie)
   const sessionToken = generateSessionToken();
   await createSession(magicLink.user.id, sessionToken);
 
-  return NextResponse.redirect(new URL('/organizer', request.url));
+  return seeOther('/organizer');
 }
