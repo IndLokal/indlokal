@@ -75,6 +75,8 @@ You do **not** need to visit [console.neon.tech](https://console.neon.tech) at a
 | Node.js Version                | `20.x`                                        |
 | Production Branch              | `main` (default)                              |
 
+Important: the Vercel Root Directory must be the filesystem path `apps/web`. Do not enter `web` there. `web` is only the pnpm workspace name used in commands like `pnpm --filter web`.
+
 4. Do **not** worry about env vars yet — you'll add them in step 5 after the database is created.
 5. Click **Deploy**. The first deploy will fail with a missing-`DATABASE_URL` error. That's expected and harmless — proceed to step 4.
 

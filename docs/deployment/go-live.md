@@ -55,6 +55,8 @@ Detailed steps live in [SETUP.md §3, §5](SETUP.md#3-vercel--create-the-project
 - Node.js Version: 20.x
 - Production Branch: `main`
 
+Use `apps/web` exactly for the Vercel Root Directory. Do not use `web` there. `web` is only the pnpm workspace name for commands such as `pnpm --filter web`.
+
 Minimum env vars in Vercel:
 
 | Key                    | Value                                     |
