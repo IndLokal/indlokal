@@ -1,9 +1,16 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { createMagicLinkToken } from '@/lib/session';
 import { sendAdminMagicLinkEmail } from '@/lib/email';
-import { checkRateLimit, magicLinkLimiter } from '@/lib/rate-limit';
+import {
+  checkRateLimit,
+  magicLinkLimiter,
+  magicLinkIpLimiter,
+  magicLinkGlobalLimiter,
+  MAGIC_LINK_GLOBAL_KEY,
+} from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const emailSchema = z.string().email();
@@ -18,6 +25,19 @@ export async function requestAdminMagicLink(
 
   if (!email || !emailSchema.safeParse(email).success) {
     return { success: false, error: 'Please enter a valid email address.' };
+  }
+
+  // IP + global checks first — before any DB work — so unbounded probes
+  // can't even reach the user lookup. Use a deliberately vague error so
+  // the response shape doesn't reveal which limit fired.
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const ipRl = checkRateLimit(magicLinkIpLimiter, ip);
+  const globalRl = checkRateLimit(magicLinkGlobalLimiter, MAGIC_LINK_GLOBAL_KEY);
+  if (!ipRl.allowed || !globalRl.allowed) {
+    return {
+      success: false,
+      error: 'Too many login requests. Please wait before retrying.',
+    };
   }
 
   const user = await db.user.findUnique({

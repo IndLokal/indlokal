@@ -85,6 +85,29 @@ export const magicLinkLimiter: RateLimitConfig = {
   windowMs: 15 * 60 * 1000, // 3 requests per 15 minutes per email
 };
 
+/**
+ * Per-IP cap for magic-link requests. Stops a single source from probing
+ * many emails or bypassing the per-email limit by varying the address.
+ */
+export const magicLinkIpLimiter: RateLimitConfig = {
+  name: 'magic-link-ip',
+  maxRequests: 10,
+  windowMs: 60 * 60 * 1000, // 10 requests per hour per IP
+};
+
+/**
+ * Hard global ceiling on magic-link emails sent system-wide. Caps Resend
+ * spend regardless of attacker pattern (many IPs, many emails). Use a
+ * single fixed key so all callers share the same window.
+ */
+export const magicLinkGlobalLimiter: RateLimitConfig = {
+  name: 'magic-link-global',
+  maxRequests: 50,
+  windowMs: 60 * 60 * 1000, // 50 magic-link emails per hour total
+};
+
+export const MAGIC_LINK_GLOBAL_KEY = '__global__';
+
 export const trackLimiter: RateLimitConfig = {
   name: 'track',
   maxRequests: 60,

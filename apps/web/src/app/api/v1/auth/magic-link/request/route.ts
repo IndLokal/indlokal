@@ -13,7 +13,13 @@ import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
 import { createMagicLinkToken } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
-import { checkRateLimit, magicLinkLimiter } from '@/lib/rate-limit';
+import {
+  checkRateLimit,
+  magicLinkLimiter,
+  magicLinkIpLimiter,
+  magicLinkGlobalLimiter,
+  MAGIC_LINK_GLOBAL_KEY,
+} from '@/lib/rate-limit';
 
 export const runtime = 'nodejs';
 
@@ -31,6 +37,24 @@ export async function POST(req: NextRequest) {
   }
 
   const email = parsed.data.email.trim().toLowerCase();
+
+  // IP + global caps first — bound abuse before any DB work.
+  const ip =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    req.headers.get('x-real-ip') ??
+    'unknown';
+  const ipRl = checkRateLimit(magicLinkIpLimiter, ip);
+  if (!ipRl.allowed) {
+    return apiError('RATE_LIMITED', 'too many magic-link requests from this source', {
+      headers: { 'Retry-After': String(Math.ceil(ipRl.retryAfterMs / 1000)) },
+    });
+  }
+  const globalRl = checkRateLimit(magicLinkGlobalLimiter, MAGIC_LINK_GLOBAL_KEY);
+  if (!globalRl.allowed) {
+    return apiError('RATE_LIMITED', 'magic-link service temporarily unavailable', {
+      headers: { 'Retry-After': String(Math.ceil(globalRl.retryAfterMs / 1000)) },
+    });
+  }
 
   const rl = checkRateLimit(magicLinkLimiter, email);
   if (!rl.allowed) {
