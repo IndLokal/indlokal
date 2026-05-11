@@ -1,6 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
+import { withAction } from '@/lib/api/handlers';
 import { claimCommunitySchema } from '@/lib/validation';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
@@ -42,70 +43,75 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
 
   const data = parsed.data;
 
-  // Verify community exists and is claimable
-  const community = await db.community.findUnique({
-    where: { id: data.communityId },
-    select: { id: true, claimState: true, metadata: true },
-  });
+  return withAction(
+    async () => {
+      // Verify community exists and is claimable
+      const community = await db.community.findUnique({
+        where: { id: data.communityId },
+        select: { id: true, claimState: true, metadata: true },
+      });
 
-  if (!community) {
-    return { success: false, errors: { communityId: ['Community not found'] } };
-  }
+      if (!community) {
+        return { success: false, errors: { communityId: ['Community not found'] } };
+      }
 
-  if (community.claimState !== 'UNCLAIMED') {
-    return {
-      success: false,
-      errors: { communityId: ['This community already has a pending or approved claim'] },
-    };
-  }
+      if (community.claimState !== 'UNCLAIMED') {
+        return {
+          success: false,
+          errors: { communityId: ['This community already has a pending or approved claim'] },
+        };
+      }
 
-  // Find or create user
-  let user = await db.user.findUnique({ where: { email: data.email } });
-  if (!user) {
-    user = await db.user.create({
-      data: {
-        email: data.email,
-        displayName: data.name,
-        role: 'USER',
-      },
-    });
-  }
+      // Find or create user
+      let user = await db.user.findUnique({ where: { email: data.email } });
+      if (!user) {
+        user = await db.user.create({
+          data: {
+            email: data.email,
+            displayName: data.name,
+            role: 'USER',
+          },
+        });
+      }
 
-  // Update community claim state — merge into existing metadata to avoid overwriting submission data
-  const existingMetadata = (community.metadata ?? {}) as Record<string, unknown>;
-  await db.community.update({
-    where: { id: data.communityId },
-    data: {
-      claimState: 'CLAIM_PENDING',
-      claimedByUserId: user.id,
-      metadata: {
-        ...existingMetadata,
-        claimRequest: {
-          relationship: data.relationship,
-          message: data.message,
-          whatsappUrl: data.whatsappUrl || undefined,
-          telegramUrl: data.telegramUrl || undefined,
-          socialUrl: data.socialUrl || undefined,
-          requestedAt: new Date().toISOString(),
+      // Update community claim state — merge into existing metadata to avoid overwriting submission data
+      const existingMetadata = (community.metadata ?? {}) as Record<string, unknown>;
+      await db.community.update({
+        where: { id: data.communityId },
+        data: {
+          claimState: 'CLAIM_PENDING',
+          claimedByUserId: user.id,
+          metadata: {
+            ...existingMetadata,
+            claimRequest: {
+              relationship: data.relationship,
+              message: data.message,
+              whatsappUrl: data.whatsappUrl || undefined,
+              telegramUrl: data.telegramUrl || undefined,
+              socialUrl: data.socialUrl || undefined,
+              requestedAt: new Date().toISOString(),
+            },
+          },
         },
-      },
+      });
+
+      // Record trust signal
+      await db.trustSignal.create({
+        data: {
+          entityType: 'COMMUNITY',
+          communityId: data.communityId,
+          signalType: 'COMMUNITY_CLAIMED',
+          createdBy: user.id,
+        },
+      });
+
+      await captureServerEvent(user.id, Events.CLAIM_SUBMITTED, {
+        community_id: data.communityId,
+        relationship: data.relationship,
+      });
+
+      return { success: true } as ClaimResult;
     },
-  });
-
-  // Record trust signal
-  await db.trustSignal.create({
-    data: {
-      entityType: 'COMMUNITY',
-      communityId: data.communityId,
-      signalType: 'COMMUNITY_CLAIMED',
-      createdBy: user.id,
-    },
-  });
-
-  await captureServerEvent(user.id, Events.CLAIM_SUBMITTED, {
-    community_id: data.communityId,
-    relationship: data.relationship,
-  });
-
-  return { success: true };
+    () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
+  );
 }

@@ -60,50 +60,54 @@ export async function POST(request: NextRequest) {
     return seeOther('/organizer/login?error=missing_token');
   }
 
-  const tokenHash = await hashToken(rawToken);
-  const now = new Date();
-  const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
+  try {
+    const tokenHash = await hashToken(rawToken);
+    const now = new Date();
+    const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
 
-  const claim = await db.magicLinkToken.updateMany({
-    where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
-    data: { usedAt: now },
-  });
+    const claim = await db.magicLinkToken.updateMany({
+      where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
+      data: { usedAt: now },
+    });
 
-  if (claim.count === 0) {
-    const existing = await db.magicLinkToken.findUnique({
+    if (claim.count === 0) {
+      const existing = await db.magicLinkToken.findUnique({
+        where: { tokenHash },
+        include: { user: { select: { id: true, role: true } } },
+      });
+
+      if (!existing || existing.user.role !== 'COMMUNITY_ADMIN') {
+        return seeOther('/organizer/login?error=invalid_token');
+      }
+
+      if (existing.expiresAt < now) {
+        return seeOther('/organizer/login?error=expired_token');
+      }
+
+      if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
+        const sessionToken = generateSessionToken();
+        await createSession(existing.user.id, sessionToken);
+        return seeOther('/organizer');
+      }
+
+      return seeOther('/organizer/login?error=invalid_token');
+    }
+
+    const magicLink = await db.magicLinkToken.findUnique({
       where: { tokenHash },
       include: { user: { select: { id: true, role: true } } },
     });
 
-    if (!existing || existing.user.role !== 'COMMUNITY_ADMIN') {
+    if (!magicLink || magicLink.user.role !== 'COMMUNITY_ADMIN') {
       return seeOther('/organizer/login?error=invalid_token');
     }
 
-    if (existing.expiresAt < now) {
-      return seeOther('/organizer/login?error=expired_token');
-    }
+    // Issue a fresh session token (hashed in DB, raw in cookie)
+    const sessionToken = generateSessionToken();
+    await createSession(magicLink.user.id, sessionToken);
 
-    if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
-      const sessionToken = generateSessionToken();
-      await createSession(existing.user.id, sessionToken);
-      return seeOther('/organizer');
-    }
-
-    return seeOther('/organizer/login?error=invalid_token');
+    return seeOther('/organizer');
+  } catch {
+    return seeOther('/organizer/login?error=server_error');
   }
-
-  const magicLink = await db.magicLinkToken.findUnique({
-    where: { tokenHash },
-    include: { user: { select: { id: true, role: true } } },
-  });
-
-  if (!magicLink || magicLink.user.role !== 'COMMUNITY_ADMIN') {
-    return seeOther('/organizer/login?error=invalid_token');
-  }
-
-  // Issue a fresh session token (hashed in DB, raw in cookie)
-  const sessionToken = generateSessionToken();
-  await createSession(magicLink.user.id, sessionToken);
-
-  return seeOther('/organizer');
 }

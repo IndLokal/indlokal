@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { withAction } from '@/lib/api/handlers';
 import type { ChannelType } from '@prisma/client';
 
 const addChannelSchema = z.object({
@@ -52,28 +53,33 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
 
   const { channelType, url, label, isPrimary } = parsed.data;
 
-  // If setting as primary, demote others
-  if (isPrimary) {
-    await db.accessChannel.updateMany({
-      where: { communityId: community.id },
-      data: { isPrimary: false },
-    });
-  }
+  return withAction(
+    async () => {
+      // If setting as primary, demote others
+      if (isPrimary) {
+        await db.accessChannel.updateMany({
+          where: { communityId: community.id },
+          data: { isPrimary: false },
+        });
+      }
 
-  await db.accessChannel.create({
-    data: {
-      communityId: community.id,
-      channelType: channelType as ChannelType,
-      url,
-      label: label || null,
-      isPrimary,
+      await db.accessChannel.create({
+        data: {
+          communityId: community.id,
+          channelType: channelType as ChannelType,
+          url,
+          label: label || null,
+          isPrimary,
+        },
+      });
+
+      revalidatePath('/organizer');
+      revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+
+      return { success: true } as ChannelResult;
     },
-  });
-
-  revalidatePath('/organizer');
-  revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
-
-  return { success: true };
+    () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
+  );
 }
 
 export async function deleteChannel(formData: FormData) {
@@ -84,15 +90,20 @@ export async function deleteChannel(formData: FormData) {
   const channelId = formData.get('channelId') as string;
   if (!channelId) return;
 
-  // Verify the channel belongs to this community
-  const channel = await db.accessChannel.findFirst({
-    where: { id: channelId, communityId: community.id },
-  });
-  if (!channel) return;
+  return withAction(
+    async () => {
+      // Verify the channel belongs to this community
+      const channel = await db.accessChannel.findFirst({
+        where: { id: channelId, communityId: community.id },
+      });
+      if (!channel) return;
 
-  await db.accessChannel.delete({ where: { id: channelId } });
+      await db.accessChannel.delete({ where: { id: channelId } });
 
-  revalidatePath('/organizer');
-  revalidatePath('/organizer/channels');
-  revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/channels');
+      revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+    },
+    () => undefined,
+  );
 }

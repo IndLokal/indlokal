@@ -5,6 +5,7 @@ import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { withAction } from '@/lib/api/handlers';
 import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
@@ -79,42 +80,47 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   const dateStr = new Date(data.startsAt).toISOString().slice(0, 10).replace(/-/g, '');
   let slug = `${baseSlug}-${dateStr}`;
 
-  const exists = await db.event.findUnique({ where: { slug } });
-  if (exists) {
-    slug = `${slug}-${Date.now()}`;
-  }
+  return withAction(
+    async () => {
+      const exists = await db.event.findUnique({ where: { slug } });
+      if (exists) {
+        slug = `${slug}-${Date.now()}`;
+      }
 
-  const event = await db.event.create({
-    data: {
-      title: data.title,
-      slug,
-      description: data.description || null,
-      communityId: community.id,
-      cityId: community.city.id,
-      venueName: data.venueName || null,
-      venueAddress: data.venueAddress || null,
-      startsAt: new Date(data.startsAt),
-      endsAt: data.endsAt ? new Date(data.endsAt) : null,
-      isOnline: data.isOnline,
-      onlineLink: data.onlineLink || null,
-      imageUrl: data.imageUrl || null,
-      registrationUrl: data.registrationUrl || null,
-      cost: data.cost,
-      status: 'UPCOMING',
-      source: 'COMMUNITY_SUBMITTED',
+      const event = await db.event.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description || null,
+          communityId: community.id,
+          cityId: community.city.id,
+          venueName: data.venueName || null,
+          venueAddress: data.venueAddress || null,
+          startsAt: new Date(data.startsAt),
+          endsAt: data.endsAt ? new Date(data.endsAt) : null,
+          isOnline: data.isOnline,
+          onlineLink: data.onlineLink || null,
+          imageUrl: data.imageUrl || null,
+          registrationUrl: data.registrationUrl || null,
+          cost: data.cost,
+          status: 'UPCOMING',
+          source: 'COMMUNITY_SUBMITTED',
+        },
+      });
+
+      await db.activitySignal.create({
+        data: {
+          communityId: community.id,
+          signalType: ActivitySignalType.EVENT_CREATED,
+        },
+      });
+
+      // Refresh scores so new events immediately affect rankings
+      await refreshCommunityScore(community.id);
+
+      revalidateTag('city-feed', 'max');
+      redirect(`/${community.city.slug}/events/${event.slug}`);
     },
-  });
-
-  await db.activitySignal.create({
-    data: {
-      communityId: community.id,
-      signalType: ActivitySignalType.EVENT_CREATED,
-    },
-  });
-
-  // Refresh scores so new events immediately affect rankings
-  await refreshCommunityScore(community.id);
-
-  revalidateTag('city-feed', 'max');
-  redirect(`/${community.city.slug}/events/${event.slug}`);
+    () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
+  );
 }

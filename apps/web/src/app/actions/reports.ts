@@ -90,21 +90,26 @@ export async function suggestCommunity(
 
   const { suggestedName, citySlug, details, reporterEmail } = parsed.data;
 
-  const city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
-  if (!city) return { success: false, error: 'City not found.' };
+  let city: { id: string } | null;
+  try {
+    city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
+    if (!city) return { success: false, error: 'City not found.' };
 
-  // Dedup check — look for existing communities with similar names in this city
-  const existing = await db.community.findMany({
-    where: { cityId: city.id, status: { not: 'INACTIVE' } },
-    select: { id: true, name: true, slug: true },
-  });
-  for (const c of existing) {
-    if (computeSimilarity(suggestedName.toLowerCase(), c.name.toLowerCase()) > 0.7) {
-      return {
-        success: false,
-        error: `A similar community "${c.name}" already exists. Did you mean that one?`,
-      };
+    // Dedup check — look for existing communities with similar names in this city
+    const existing = await db.community.findMany({
+      where: { cityId: city.id, status: { not: 'INACTIVE' } },
+      select: { id: true, name: true, slug: true },
+    });
+    for (const c of existing) {
+      if (computeSimilarity(suggestedName.toLowerCase(), c.name.toLowerCase()) > 0.7) {
+        return {
+          success: false,
+          error: `A similar community "${c.name}" already exists. Did you mean that one?`,
+        };
+      }
     }
+  } catch {
+    return { success: false, error: 'Something went wrong. Please try again.' };
   }
 
   try {

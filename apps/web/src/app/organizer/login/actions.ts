@@ -23,15 +23,25 @@ export async function requestMagicLink(
     return { success: false, error: 'Please enter a valid email address.' };
   }
 
-  const user = await db.user.findUnique({
-    where: { email },
-    include: {
-      claimedCommunities: {
-        where: { claimState: 'CLAIMED' },
-        select: { name: true },
+  let user: {
+    id: string;
+    email: string;
+    role: string;
+    claimedCommunities: { name: string }[];
+  } | null = null;
+  try {
+    user = await db.user.findUnique({
+      where: { email },
+      include: {
+        claimedCommunities: {
+          where: { claimState: 'CLAIMED' },
+          select: { name: true },
+        },
       },
-    },
-  });
+    });
+  } catch {
+    return { success: false, error: 'Something went wrong. Please try again.' };
+  }
 
   if (!user || user.role !== 'COMMUNITY_ADMIN') {
     // Vague error to prevent email enumeration
