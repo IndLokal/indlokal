@@ -86,7 +86,7 @@ afterAll(() => testDb.$disconnect());
 
 describe('GET /api/v1/cities', () => {
   it('returns an empty array when no active cities exist', async () => {
-    const res = await citiesRoute.GET();
+    const res = await citiesRoute.GET(new Request('http://localhost/api/v1/cities') as never);
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual([]);
   });
@@ -103,7 +103,7 @@ describe('GET /api/v1/cities', () => {
       },
     });
 
-    const res = await citiesRoute.GET();
+    const res = await citiesRoute.GET(new Request('http://localhost/api/v1/cities') as never);
     const json = await res.json();
     expect(json).toHaveLength(1);
     expect(json[0].slug).toBe('stuttgart');
