@@ -9,6 +9,7 @@ import { notifications as n } from '@indlokal/shared';
 import { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import { toDeviceContract } from '@/lib/notifications/devices';
 
@@ -16,7 +17,7 @@ export const runtime = 'nodejs';
 
 type Ctx = { params: Promise<{ installationId: string }> };
 
-export async function PATCH(req: NextRequest, ctx: Ctx) {
+export const PATCH = apiHandler(async (req: NextRequest, ctx: Ctx) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -57,9 +58,9 @@ export async function PATCH(req: NextRequest, ctx: Ctx) {
     }
     throw err;
   }
-}
+});
 
-export async function DELETE(req: NextRequest, ctx: Ctx) {
+export const DELETE = apiHandler(async (req: NextRequest, ctx: Ctx) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -70,4 +71,4 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

@@ -4,6 +4,7 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { withAction } from '@/lib/api/handlers';
 import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
 
@@ -61,32 +62,39 @@ export async function editCommunityProfile(
 
   const data = parsed.data;
 
-  await db.community.update({
-    where: { id: community.id },
-    data: {
-      name: data.name,
-      description: data.description,
-      descriptionLong: data.descriptionLong || null,
-      languages: data.languages,
-      foundedYear: data.foundedYear && !isNaN(data.foundedYear) ? data.foundedYear : null,
-      memberCountApprox:
-        data.memberCountApprox && !isNaN(data.memberCountApprox) ? data.memberCountApprox : null,
+  return withAction(
+    async () => {
+      await db.community.update({
+        where: { id: community.id },
+        data: {
+          name: data.name,
+          description: data.description,
+          descriptionLong: data.descriptionLong || null,
+          languages: data.languages,
+          foundedYear: data.foundedYear && !isNaN(data.foundedYear) ? data.foundedYear : null,
+          memberCountApprox:
+            data.memberCountApprox && !isNaN(data.memberCountApprox)
+              ? data.memberCountApprox
+              : null,
+        },
+      });
+
+      await db.activitySignal.create({
+        data: {
+          communityId: community.id,
+          signalType: ActivitySignalType.PROFILE_UPDATED,
+        },
+      });
+
+      // Refresh completeness score after profile edit
+      await refreshCommunityScore(community.id);
+
+      revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+      revalidatePath('/organizer');
+      revalidateTag('city-feed', 'max');
+
+      return { success: true } as EditProfileResult;
     },
-  });
-
-  await db.activitySignal.create({
-    data: {
-      communityId: community.id,
-      signalType: ActivitySignalType.PROFILE_UPDATED,
-    },
-  });
-
-  // Refresh completeness score after profile edit
-  await refreshCommunityScore(community.id);
-
-  revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
-  revalidatePath('/organizer');
-  revalidateTag('city-feed', 'max');
-
-  return { success: true };
+    () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
+  );
 }

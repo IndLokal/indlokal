@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 3001",
     "build": "next build",
-    "build:vercel": "prisma generate && prisma migrate deploy && node scripts/maybe-bootstrap.cjs && node scripts/maybe-directory.cjs && next build",
+    "build:vercel": "prisma generate && (prisma migrate deploy || (sleep 3 && prisma migrate deploy) || (sleep 3 && prisma migrate deploy)) && node scripts/maybe-bootstrap.cjs && node scripts/maybe-directory.cjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
+import { withAction } from '@/lib/api/handlers';
 
 export type PreferencesResult = { success: true } | { success: false; error: string } | null;
 
@@ -47,28 +48,29 @@ export async function updatePreferences(
     VALID_LANGUAGES.includes(l),
   );
 
-  // Validate cityId belongs to an active city if provided
-  if (cityId) {
-    const city = await db.city.findFirst({
-      where: { id: cityId, isActive: true },
-      select: { id: true },
-    });
-    if (!city) return { success: false, error: 'Invalid city selection' };
-  }
+  return withAction(
+    async () => {
+      // Validate cityId belongs to an active city if provided
+      if (cityId) {
+        const city = await db.city.findFirst({
+          where: { id: cityId, isActive: true },
+          select: { id: true },
+        });
+        if (!city) return { success: false, error: 'Invalid city selection' } as PreferencesResult;
+      }
 
-  try {
-    await db.user.update({
-      where: { id: user.id },
-      data: {
-        cityId: cityId ?? null,
-        personaSegments,
-        preferredLanguages,
-      },
-    });
-  } catch {
-    return { success: false, error: 'Failed to save preferences. Please try again.' };
-  }
+      await db.user.update({
+        where: { id: user.id },
+        data: {
+          cityId: cityId ?? null,
+          personaSegments,
+          preferredLanguages,
+        },
+      });
 
-  revalidatePath('/me');
-  return { success: true };
+      revalidatePath('/me');
+      return { success: true } as PreferencesResult;
+    },
+    () => ({ success: false, error: 'Something went wrong. Please try again.' }),
+  );
 }

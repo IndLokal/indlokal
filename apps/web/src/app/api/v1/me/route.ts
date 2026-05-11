@@ -8,12 +8,13 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import { toMeProfile } from '@/lib/auth/profile';
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -21,4 +22,4 @@ export async function GET(req: NextRequest) {
   if (!user) return apiError('NOT_FOUND', 'user not found');
 
   return NextResponse.json(toMeProfile(user));
-}
+});

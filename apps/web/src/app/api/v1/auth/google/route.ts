@@ -15,6 +15,7 @@ import { NextResponse } from 'next/server';
 import { auth as authContracts } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { issueRefreshToken } from '@/lib/auth/refresh';
 import { toMeProfile } from '@/lib/auth/profile';
@@ -36,7 +37,7 @@ type GoogleUserInfo = {
   picture?: string;
 };
 
-export async function POST(req: NextRequest) {
+export const POST = apiHandler(async (req: NextRequest) => {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
@@ -133,4 +134,4 @@ export async function POST(req: NextRequest) {
     user: toMeProfile(user),
   };
   return NextResponse.json(tokens);
-}
+});

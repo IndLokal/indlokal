@@ -97,57 +97,63 @@ export async function setSessionCookie(token: string) {
 
 /** Read the session cookie, hash it, and return the authenticated user or null */
 export async function getSessionUser() {
-  const jar = await cookies();
-  const rawToken = jar.get(COOKIE_NAME)?.value;
-  if (!rawToken) return null;
+  try {
+    const jar = await cookies();
+    const rawToken = jar.get(COOKIE_NAME)?.value;
+    if (!rawToken) return null;
 
-  const hashed = await hashToken(rawToken);
+    const hashed = await hashToken(rawToken);
 
-  const user = await db.user.findUnique({
-    where: { sessionToken: hashed },
-    include: {
-      claimedCommunities: {
-        where: { claimState: 'CLAIMED' },
-        include: {
-          city: { select: { id: true, name: true, slug: true } },
-          categories: { include: { category: true } },
-          accessChannels: true,
+    const user = await db.user.findUnique({
+      where: { sessionToken: hashed },
+      include: {
+        claimedCommunities: {
+          where: { claimState: 'CLAIMED' },
+          include: {
+            city: { select: { id: true, name: true, slug: true } },
+            categories: { include: { category: true } },
+            accessChannels: true,
+          },
         },
+        savedCommunities: { select: { communityId: true } },
+        savedEvents: { select: { eventId: true } },
       },
-      savedCommunities: { select: { communityId: true } },
-      savedEvents: { select: { eventId: true } },
-    },
-  });
+    });
 
-  if (!user) return null;
-  if (!user.sessionToken || !user.sessionTokenExpiry || user.sessionTokenExpiry < new Date())
-    return null;
+    if (!user) return null;
+    if (!user.sessionToken || !user.sessionTokenExpiry || user.sessionTokenExpiry < new Date())
+      return null;
 
-  // Sliding session: when the expiry is close, extend it transparently.
-  // Failures here must not log the user out — swallow and continue.
-  const msUntilExpiry = user.sessionTokenExpiry.getTime() - Date.now();
-  if (msUntilExpiry < SESSION_REFRESH_THRESHOLD_HOURS * 60 * 60 * 1000) {
-    try {
-      const newExpiry = sessionExpiry();
-      await db.user.update({
-        where: { id: user.id },
-        data: { sessionTokenExpiry: newExpiry },
-      });
-      // Re-set cookie with refreshed maxAge so the browser also extends.
-      // Note: cookies().set() works in Server Components for Next 15+ via
-      // the modified-cookies API; if it throws (read-only context), ignore.
+    // Sliding session: when the expiry is close, extend it transparently.
+    // Failures here must not log the user out — swallow and continue.
+    const msUntilExpiry = user.sessionTokenExpiry.getTime() - Date.now();
+    if (msUntilExpiry < SESSION_REFRESH_THRESHOLD_HOURS * 60 * 60 * 1000) {
       try {
-        await setSessionCookie(rawToken);
+        const newExpiry = sessionExpiry();
+        await db.user.update({
+          where: { id: user.id },
+          data: { sessionTokenExpiry: newExpiry },
+        });
+        // Re-set cookie with refreshed maxAge so the browser also extends.
+        // Note: cookies().set() works in Server Components for Next 15+ via
+        // the modified-cookies API; if it throws (read-only context), ignore.
+        try {
+          await setSessionCookie(rawToken);
+        } catch {
+          // best-effort — some render contexts forbid mutating cookies
+        }
+        user.sessionTokenExpiry = newExpiry;
       } catch {
-        // best-effort — some render contexts forbid mutating cookies
+        // best-effort
       }
-      user.sessionTokenExpiry = newExpiry;
-    } catch {
-      // best-effort
     }
-  }
 
-  return user;
+    return user;
+  } catch {
+    // DB unreachable (e.g. Neon cold start) — treat as no session so the
+    // page still renders instead of crashing on first request.
+    return null;
+  }
 }
 
 /** Require a valid session — redirect to login if missing */

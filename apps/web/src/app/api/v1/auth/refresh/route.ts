@@ -8,13 +8,14 @@ import { NextResponse } from 'next/server';
 import { auth as authContracts } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { rotateRefreshToken, RefreshTokenError } from '@/lib/auth/refresh';
 import { toMeProfile } from '@/lib/auth/profile';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export const POST = apiHandler(async (req: NextRequest) => {
   let body: unknown;
   try {
     body = await req.json();
@@ -61,4 +62,4 @@ export async function POST(req: NextRequest) {
     user: toMeProfile(user),
   };
   return NextResponse.json(tokens);
-}
+});

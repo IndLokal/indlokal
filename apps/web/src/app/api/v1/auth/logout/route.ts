@@ -7,11 +7,12 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { auth as authContracts } from '@indlokal/shared';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { revokeRefreshToken } from '@/lib/auth/refresh';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export const POST = apiHandler(async (req: NextRequest) => {
   let body: unknown;
   try {
     body = await req.json();
@@ -26,4 +27,4 @@ export async function POST(req: NextRequest) {
 
   await revokeRefreshToken(parsed.data.refreshToken);
   return NextResponse.json({ ok: true });
-}
+});

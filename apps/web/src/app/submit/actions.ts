@@ -59,41 +59,51 @@ export async function submitCommunity(
     };
   }
 
-  // Resolve city
-  const city = await db.city.findFirst({
-    where: { slug: data.citySlug, isActive: true },
-    select: { id: true },
-  });
-  if (!city) {
-    return { success: false, errors: { citySlug: ['City not found or not active'] } };
-  }
-
-  // Dedup check — prevent duplicate submissions
-  const existingCommunities = await db.community.findMany({
-    where: { cityId: city.id, status: { not: 'INACTIVE' } },
-    select: { name: true },
-  });
-  for (const c of existingCommunities) {
-    if (computeSimilarity(data.name.toLowerCase(), c.name.toLowerCase()) > 0.7) {
-      return {
-        success: false,
-        errors: { name: [`A similar community "${c.name}" already exists.`] },
-      };
+  // Resolve city, dedup-check, and resolve categories — all DB reads that
+  // must run before the write. Wrapped together so a cold-start DB error
+  // returns a graceful user-facing message instead of a 500.
+  let city: { id: string } | null;
+  let existingCommunities: { name: string }[];
+  let categoryRows: { id: string }[];
+  let slug: string;
+  try {
+    city = await db.city.findFirst({
+      where: { slug: data.citySlug, isActive: true },
+      select: { id: true },
+    });
+    if (!city) {
+      return { success: false, errors: { citySlug: ['City not found or not active'] } };
     }
-  }
 
-  // Generate unique slug
-  let slug = slugify(data.name, { lower: true, strict: true });
-  const existing = await db.community.findUnique({ where: { slug } });
-  if (existing) {
-    slug = `${slug}-${Date.now().toString(36)}`;
-  }
+    // Dedup check — prevent duplicate submissions
+    existingCommunities = await db.community.findMany({
+      where: { cityId: city.id, status: { not: 'INACTIVE' } },
+      select: { name: true },
+    });
+    for (const c of existingCommunities) {
+      if (computeSimilarity(data.name.toLowerCase(), c.name.toLowerCase()) > 0.7) {
+        return {
+          success: false,
+          errors: { name: [`A similar community "${c.name}" already exists.`] },
+        };
+      }
+    }
 
-  // Resolve category IDs
-  const categoryRows = await db.category.findMany({
-    where: { slug: { in: data.categories }, type: 'CATEGORY' },
-    select: { id: true },
-  });
+    // Generate unique slug
+    slug = slugify(data.name, { lower: true, strict: true });
+    const existingSlug = await db.community.findUnique({ where: { slug } });
+    if (existingSlug) {
+      slug = `${slug}-${Date.now().toString(36)}`;
+    }
+
+    // Resolve category IDs
+    categoryRows = await db.category.findMany({
+      where: { slug: { in: data.categories }, type: 'CATEGORY' },
+      select: { id: true },
+    });
+  } catch {
+    return { success: false, errors: { name: ['Something went wrong. Please try again.'] } };
+  }
 
   if (categoryRows.length !== data.categories.length) {
     return {

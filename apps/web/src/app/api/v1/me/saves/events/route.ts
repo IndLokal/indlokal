@@ -4,6 +4,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
+import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import { getSavedEvents } from '@/modules/event';
 
@@ -12,7 +13,7 @@ export const runtime = 'nodejs';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -38,4 +39,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].eventId : undefined;
 
   return NextResponse.json({ items: mapped, nextCursor });
-}
+});

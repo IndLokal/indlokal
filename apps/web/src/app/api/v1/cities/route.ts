@@ -4,6 +4,7 @@
  */
 
 import { NextResponse } from 'next/server';
+import { apiHandler } from '@/lib/api/handlers';
 import { getCitiesList } from '@/modules/discovery';
 import { withPublicCache } from '@/lib/api/cache';
 
@@ -12,7 +13,7 @@ export const runtime = 'nodejs';
 // the `Cache-Control` header set via `withPublicCache` below.
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = apiHandler(async () => {
   const cities = await getCitiesList();
   return withPublicCache(NextResponse.json(cities), { sMaxAge: 300 });
-}
+});

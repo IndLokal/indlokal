@@ -7,9 +7,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import { createCommunitySubmission } from '@/modules/submit';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { submit as s } from '@indlokal/shared';
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export const POST = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -48,4 +49,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     throw err;
   }
-}
+});

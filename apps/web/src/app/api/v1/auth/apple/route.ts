@@ -17,6 +17,7 @@ import { createRemoteJWKSet, jwtVerify } from 'jose';
 import { auth as authContracts } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { issueRefreshToken } from '@/lib/auth/refresh';
 import { toMeProfile } from '@/lib/auth/profile';
@@ -39,7 +40,7 @@ export function __setAppleJwksForTests(
   jwks = override;
 }
 
-export async function POST(req: NextRequest) {
+export const POST = apiHandler(async (req: NextRequest) => {
   const audience = process.env.APPLE_CLIENT_ID;
   if (!audience) {
     return apiError('INTERNAL', 'apple sign-in not configured');
@@ -134,4 +135,4 @@ export async function POST(req: NextRequest) {
     user: toMeProfile(user),
   };
   return NextResponse.json(tokens);
-}
+});

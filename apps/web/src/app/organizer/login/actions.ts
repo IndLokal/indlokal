@@ -1,9 +1,16 @@
 'use server';
 
+import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { createMagicLinkToken } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
-import { checkRateLimit, magicLinkLimiter } from '@/lib/rate-limit';
+import {
+  checkRateLimit,
+  magicLinkLimiter,
+  magicLinkIpLimiter,
+  magicLinkGlobalLimiter,
+  MAGIC_LINK_GLOBAL_KEY,
+} from '@/lib/rate-limit';
 import { z } from 'zod';
 
 const emailSchema = z.string().email();
@@ -23,15 +30,37 @@ export async function requestMagicLink(
     return { success: false, error: 'Please enter a valid email address.' };
   }
 
-  const user = await db.user.findUnique({
-    where: { email },
-    include: {
-      claimedCommunities: {
-        where: { claimState: 'CLAIMED' },
-        select: { name: true },
+  // IP + global checks before any DB work — caps abuse from a single
+  // source and bounds total Resend spend across all callers.
+  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const ipRl = checkRateLimit(magicLinkIpLimiter, ip);
+  const globalRl = checkRateLimit(magicLinkGlobalLimiter, MAGIC_LINK_GLOBAL_KEY);
+  if (!ipRl.allowed || !globalRl.allowed) {
+    return {
+      success: false,
+      error: 'Too many login requests. Please wait before retrying.',
+    };
+  }
+
+  let user: {
+    id: string;
+    email: string;
+    role: string;
+    claimedCommunities: { name: string }[];
+  } | null = null;
+  try {
+    user = await db.user.findUnique({
+      where: { email },
+      include: {
+        claimedCommunities: {
+          where: { claimState: 'CLAIMED' },
+          select: { name: true },
+        },
       },
-    },
-  });
+    });
+  } catch {
+    return { success: false, error: 'Something went wrong. Please try again.' };
+  }
 
   if (!user || user.role !== 'COMMUNITY_ADMIN') {
     // Vague error to prevent email enumeration
