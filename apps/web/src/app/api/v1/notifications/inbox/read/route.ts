@@ -10,10 +10,11 @@ import { notifications as n } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
 import { requireAccessToken } from '@/lib/auth/middleware';
+import { apiHandler } from '@/lib/api/handlers';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export const POST = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -39,4 +40,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ ok: true });
-}
+});

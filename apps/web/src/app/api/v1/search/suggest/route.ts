@@ -6,9 +6,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { getSuggestions } from '@/modules/search';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { withPublicCache } from '@/lib/api/cache';
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export const GET = apiHandler(async (req: NextRequest) => {
   const url = req.nextUrl;
   const q = url.searchParams.get('q') ?? '';
   if (!q.trim()) {
@@ -19,4 +20,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const suggestions = await getSuggestions(q, citySlug);
 
   return withPublicCache(NextResponse.json(suggestions), { sMaxAge: 60, swr: 600 });
-}
+});

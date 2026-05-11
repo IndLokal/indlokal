@@ -7,12 +7,13 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import { createReport } from '@/modules/report';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { FLAGS } from '@/lib/config/flags';
 import { resources as r } from '@indlokal/shared';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export const POST = apiHandler(async (req: NextRequest) => {
   if (!FLAGS.reportEnabled) {
     return apiError('NOT_FOUND', 'reports are not enabled');
   }
@@ -51,4 +52,4 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
     throw err;
   }
-}
+});

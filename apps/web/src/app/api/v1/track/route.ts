@@ -49,29 +49,33 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   // Skip writes that are missing entity context — they're pure analytics pings
   // not tied to a specific entity (e.g. page views).
   if (entityType && entityId) {
-    // Resolve city id if slug provided (best-effort, no hard error)
-    let cityId: string | undefined;
-    if (citySlug) {
-      const city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
-      cityId = city?.id;
-    }
+    try {
+      // Resolve city id if slug provided (best-effort, no hard error)
+      let cityId: string | undefined;
+      if (citySlug) {
+        const city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
+        cityId = city?.id;
+      }
 
-    await db.userInteraction.create({
-      data: {
-        userId: auth?.userId ?? null,
-        entityType,
-        entityId,
-        interactionType: interactionType as
-          | 'VIEW'
-          | 'CLICK_ACCESS'
-          | 'SAVE'
-          | 'SHARE'
-          | 'REPORT'
-          | 'SEARCH',
-        ...(cityId ? { cityId } : {}),
-        metadata: metadata as object | undefined,
-      },
-    });
+      await db.userInteraction.create({
+        data: {
+          userId: auth?.userId ?? null,
+          entityType,
+          entityId,
+          interactionType: interactionType as
+            | 'VIEW'
+            | 'CLICK_ACCESS'
+            | 'SAVE'
+            | 'SHARE'
+            | 'REPORT'
+            | 'SEARCH',
+          ...(cityId ? { cityId } : {}),
+          metadata: metadata as object | undefined,
+        },
+      });
+    } catch {
+      // Tracking is non-critical — always return ok.
+    }
   }
 
   return NextResponse.json({ ok: true });

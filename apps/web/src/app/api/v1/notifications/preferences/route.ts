@@ -11,6 +11,7 @@ import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
 import { notifications as n } from '@indlokal/shared';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
 import {
   getNotificationPreferences,
@@ -19,15 +20,15 @@ import {
 
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
   const prefs = await getNotificationPreferences(auth.user.userId);
   return NextResponse.json(prefs);
-}
+});
 
-export async function PUT(req: NextRequest) {
+export const PUT = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -45,4 +46,4 @@ export async function PUT(req: NextRequest) {
 
   const prefs = await updateNotificationPreferences(auth.user.userId, parsed.data);
   return NextResponse.json(prefs);
-}
+});

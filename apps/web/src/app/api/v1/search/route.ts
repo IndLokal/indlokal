@@ -9,8 +9,9 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { searchAll } from '@/modules/search';
 import { toCommunityCard, toEventCard } from '@/lib/discovery/mappers';
 import { apiError } from '@/lib/api/error';
+import { apiHandler } from '@/lib/api/handlers';
 
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export const GET = apiHandler(async (req: NextRequest) => {
   const url = req.nextUrl;
   const q = url.searchParams.get('q') ?? '';
   if (!q.trim()) {
@@ -49,4 +50,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     items,
     ...(result.nextCursor && { nextCursor: result.nextCursor }),
   });
-}
+});

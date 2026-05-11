@@ -41,14 +41,19 @@ export async function POST(req: NextRequest) {
 
   // Best-effort send: if the user exists, mint a token and email it.
   // Always respond 200 so callers cannot enumerate accounts.
-  const user = await db.user.findUnique({ where: { email }, select: { id: true } });
-  if (user) {
-    const token = await createMagicLinkToken(user.id);
-    // displayName at this stage is "your account" — the existing template
-    // takes a community name; we pass the email so the email isn't blank.
-    await sendMagicLinkEmail(email, token, email).catch((err) => {
-      console.error('[auth/magic-link/request] email send failed', err);
-    });
+  try {
+    const user = await db.user.findUnique({ where: { email }, select: { id: true } });
+    if (user) {
+      const token = await createMagicLinkToken(user.id);
+      // displayName at this stage is "your account" — the existing template
+      // takes a community name; we pass the email so the email isn't blank.
+      await sendMagicLinkEmail(email, token, email).catch((err) => {
+        console.error('[auth/magic-link/request] email send failed', err);
+      });
+    }
+  } catch (err) {
+    console.error('[auth/magic-link/request] db error', err);
+    // Fall through — always return 200 to prevent account enumeration.
   }
 
   return NextResponse.json({ ok: true } satisfies authContracts.MagicLinkRequestResponse);

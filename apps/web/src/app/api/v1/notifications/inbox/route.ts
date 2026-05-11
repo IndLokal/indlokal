@@ -11,13 +11,14 @@ import { NextResponse } from 'next/server';
 import type { notifications as n } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { requireAccessToken } from '@/lib/auth/middleware';
+import { apiHandler } from '@/lib/api/handlers';
 
 export const runtime = 'nodejs';
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 50;
 
-export async function GET(req: NextRequest) {
+export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
@@ -51,4 +52,4 @@ export async function GET(req: NextRequest) {
     ...(hasMore && page.length > 0 ? { nextCursor: page[page.length - 1].id } : {}),
   };
   return NextResponse.json(body);
-}
+});
