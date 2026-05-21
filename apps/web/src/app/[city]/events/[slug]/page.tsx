@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
+import { escapeJsonForHtmlScript } from '@/lib/html';
 
 /**
  * Event Detail Page
@@ -62,7 +63,7 @@ export default async function EventDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\u003c') }}
+        dangerouslySetInnerHTML={{ __html: escapeJsonForHtmlScript(jsonLd) }}
       />
       <ViewTracker
         entityType="EVENT"

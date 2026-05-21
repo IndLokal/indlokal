@@ -8,6 +8,7 @@ import { ReportIssueForm } from './ReportIssueForm';
 import { ViewTracker } from '@/components/analytics';
 import { ActivityBadge } from '@/components/ui';
 import { AccessChannelLink } from './AccessChannelLink';
+import { escapeJsonForHtmlScript } from '@/lib/html';
 
 /**
  * Community Detail Page
@@ -90,7 +91,7 @@ export default async function CommunityDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\u003c') }}
+        dangerouslySetInnerHTML={{ __html: escapeJsonForHtmlScript(jsonLd) }}
       />
       <ViewTracker
         entityType="COMMUNITY"

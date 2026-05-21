@@ -57,8 +57,9 @@ export default function TermsPage() {
           <section>
             <h2>3. User Accounts</h2>
             <p>
-              Some features require you to sign in via Google OAuth. By creating an account, you
-              agree to:
+              Some features require account access. User sign-in is currently available in the
+              mobile app, while organizer and admin access on web uses email-based magic links. By
+              creating an account, you agree to:
             </p>
             <ul>
               <li>Provide accurate information</li>
@@ -158,8 +159,8 @@ export default function TermsPage() {
             <h2>12. Contact</h2>
             <p>
               For questions about these Terms, contact us at{' '}
-              <a href="mailto:legal@indlokal.de" className="text-brand-600 hover:underline">
-                legal@indlokal.de
+              <a href="mailto:legal@indlokal.com" className="text-brand-600 hover:underline">
+                legal@indlokal.com
               </a>
             </p>
           </section>
