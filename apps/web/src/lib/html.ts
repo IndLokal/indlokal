@@ -15,11 +15,8 @@ export function escapeHtmlAttribute(value: string): string {
 }
 
 export function escapeJsonForHtmlScript(value: unknown): string {
-  return JSON.stringify(value).replace(/[<>&/]/g, (char) => {
-    const escaped = JSON_SCRIPT_ESCAPE_MAP[char];
-    if (!escaped) {
-      throw new Error(`Missing JSON script escape mapping for character: ${char}`);
-    }
-    return escaped;
-  });
+  return JSON.stringify(value).replace(
+    /[<>&/]/g,
+    (char) => JSON_SCRIPT_ESCAPE_MAP[char as keyof typeof JSON_SCRIPT_ESCAPE_MAP],
+  );
 }

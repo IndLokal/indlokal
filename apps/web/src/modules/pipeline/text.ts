@@ -2,6 +2,10 @@ export function collapseWhitespace(input: string): string {
   return input.trim().split(/\s+/).join(' ');
 }
 
+function normalizeMalformedTag(tagBuffer: string): string {
+  return tagBuffer.replace(/[<>]/g, ' ');
+}
+
 export function htmlToText(input: string): string {
   let output = '';
   let inTag = false;
@@ -30,7 +34,7 @@ export function htmlToText(input: string): string {
 
       if (tagBuffer.length > MAX_TAG_LENGTH) {
         // Treat suspiciously long pseudo-tags as plain text so content is not silently lost.
-        output += tagBuffer.replace(/[<>]/g, ' ');
+        output += normalizeMalformedTag(tagBuffer);
         inTag = false;
         tagBuffer = '';
         previousWasWhitespace = false;
@@ -52,7 +56,7 @@ export function htmlToText(input: string): string {
   }
 
   if (inTag && tagBuffer.length > 0) {
-    output += tagBuffer.replace(/[<>]/g, ' ');
+    output += normalizeMalformedTag(tagBuffer);
   }
 
   return output.trim();
