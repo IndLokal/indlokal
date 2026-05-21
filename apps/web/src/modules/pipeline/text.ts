@@ -29,6 +29,7 @@ export function htmlToText(input: string): string {
       }
 
       if (tagBuffer.length > MAX_TAG_LENGTH) {
+        // Drop suspiciously long pseudo-tags instead of treating them as plain text.
         inTag = false;
         tagBuffer = '';
       }
