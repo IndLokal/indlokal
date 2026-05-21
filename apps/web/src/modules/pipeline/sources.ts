@@ -338,8 +338,11 @@ export async function fetchDuckDuckGoSearch(
   const items: RawContent[] = [];
   const errors: string[] = [];
 
-  for (const keyword of strategy.keywords) {
+  for (const [index, keyword] of strategy.keywords.entries()) {
     try {
+      console.log(
+        `[Pipeline] DDG ${region.id}: keyword ${index + 1}/${strategy.keywords.length} (${keyword})`,
+      );
       const query = `${keyword} ${region.searchCenter}`;
       const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 

@@ -3,6 +3,15 @@ import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
 import { escapeHtmlAttribute } from '@/lib/html';
 
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token');
 
