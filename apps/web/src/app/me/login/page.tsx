@@ -34,18 +34,14 @@ export default async function LoginPage({
           </div>
         )}
 
-        {/*
-         * The browser-side sign-in UI is being rebuilt against the
-         * `/api/v1/auth/*` JWT endpoints (TDD-0001 §3). The legacy
-         * cookie-based Google redirect was removed in the same PR
-         * that introduced `/api/v1/auth/google` per TDD-0001 §10.
-         * The mobile app consumes the v1 endpoints directly; the web
-         * SPA flow lands in a follow-up PR.
-         */}
         <div className="card-base text-muted px-4 py-6 text-center text-sm">
-          Web sign-in is moving to the new <code>/api/v1/auth/*</code> flow.
+          Web sign-in is currently unavailable.
           <br />
-          Until then please use the mobile app or organizer login.
+          Please use the mobile app or{' '}
+          <Link href="/organizer/login" className="text-brand-600 hover:underline">
+            organizer login
+          </Link>
+          .
         </div>
 
         <p className="text-muted text-center text-xs">

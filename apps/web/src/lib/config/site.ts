@@ -5,6 +5,6 @@ export const siteConfig = {
     'IndLokal is the city-first discovery platform for the Indian diaspora in Germany — the active communities, the events worth knowing about this week, and the practical resources Indians actually need.',
   shortDescription:
     'Indian communities, events & expat-life resources, active near you in Germany.',
-  url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://indlokal.de',
+  url: process.env.NEXT_PUBLIC_APP_URL ?? 'https://indlokal.com',
   twitter: '@indlokal',
 } as const;
