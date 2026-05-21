@@ -36,12 +36,7 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
     console.log(
       `\n📧 [EMAIL – Mailpit unavailable, logging to console]\nTo: ${to}\nSubject: ${subject}\n`,
     );
-    console.log(
-      html
-        .replace(/<[^>]+>/g, '')
-        .replace(/\s+/g, ' ')
-        .trim(),
-    );
+    console.log(html);
     console.log('─'.repeat(60));
   }
 }

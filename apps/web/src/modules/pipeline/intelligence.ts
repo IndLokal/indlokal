@@ -3,6 +3,7 @@ import { CATEGORIES } from '@/lib/config';
 import { Prisma, type RelationshipType } from '@prisma/client';
 import { DIASPORA_KEYWORDS } from './config';
 import { callOpenAI } from './extraction';
+import { htmlToText } from './text';
 import type { ExtractedCommunity } from './types';
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
@@ -84,12 +85,7 @@ export async function semanticCommunityDuplicateCheck(
 }
 
 function stripHtml(input: string): string {
-  return input
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return htmlToText(input);
 }
 
 async function fetchSourceText(url: string): Promise<string | null> {
