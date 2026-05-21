@@ -29,10 +29,8 @@ export function htmlToText(input: string): string {
       }
 
       if (tagBuffer.length > MAX_TAG_LENGTH) {
-        output += tagBuffer;
         inTag = false;
         tagBuffer = '';
-        previousWasWhitespace = false;
       }
       continue;
     }
@@ -48,10 +46,6 @@ export function htmlToText(input: string): string {
 
     output += char;
     previousWasWhitespace = false;
-  }
-
-  if (inTag && tagBuffer.length > 0) {
-    output += tagBuffer;
   }
 
   return output.trim();
