@@ -29,9 +29,11 @@ export function htmlToText(input: string): string {
       }
 
       if (tagBuffer.length > MAX_TAG_LENGTH) {
-        // Drop suspiciously long pseudo-tags instead of treating them as plain text.
+        // Treat suspiciously long pseudo-tags as plain text so content is not silently lost.
+        output += tagBuffer.replace(/[<>]/g, ' ');
         inTag = false;
         tagBuffer = '';
+        previousWasWhitespace = false;
       }
       continue;
     }
@@ -47,6 +49,10 @@ export function htmlToText(input: string): string {
 
     output += char;
     previousWasWhitespace = false;
+  }
+
+  if (inTag && tagBuffer.length > 0) {
+    output += tagBuffer.replace(/[<>]/g, ' ');
   }
 
   return output.trim();
