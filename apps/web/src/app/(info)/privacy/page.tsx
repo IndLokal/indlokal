@@ -54,7 +54,7 @@ export default function PrivacyPolicyPage() {
               <br />
               Germany
               <br />
-              Email: privacy@indlokal.de
+              Email: privacy@indlokal.com
             </p>
           </section>
 
@@ -63,8 +63,8 @@ export default function PrivacyPolicyPage() {
             <h3>3.1 Information you provide</h3>
             <ul>
               <li>
-                <strong>Account data:</strong> When you sign in via Google OAuth, we receive your
-                name, email address, and profile picture.
+                <strong>Account data:</strong> When sign-in is available (currently in the mobile
+                app and for organizer/admin access on web), we process your name and email address.
               </li>
               <li>
                 <strong>Community submissions:</strong> Name, description, contact details, and
@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
             <p>We process your data for the following purposes:</p>
             <ul>
               <li>Providing and maintaining the Service</li>
-              <li>Authenticating user accounts (Google OAuth)</li>
+              <li>Authenticating user accounts</li>
               <li>Processing community submissions and claims</li>
               <li>Communicating with you about the Service</li>
               <li>Improving the Service through aggregated, anonymized analytics</li>
@@ -130,8 +130,8 @@ export default function PrivacyPolicyPage() {
                 within the EU.
               </li>
               <li>
-                <strong>Authentication providers:</strong> Google (for OAuth sign-in) — subject to
-                Google&apos;s Privacy Policy.
+                <strong>Authentication providers:</strong> Social sign-in providers such as Google
+                (where enabled) and our email delivery provider for magic-link sign-in.
               </li>
               <li>
                 <strong>Legal authorities:</strong> If required by law or to protect our rights.
@@ -176,8 +176,8 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               To exercise any of these rights, contact us at{' '}
-              <a href="mailto:privacy@indlokal.de" className="text-brand-600 hover:underline">
-                privacy@indlokal.de
+              <a href="mailto:privacy@indlokal.com" className="text-brand-600 hover:underline">
+                privacy@indlokal.com
               </a>
               .
             </p>
@@ -205,8 +205,8 @@ export default function PrivacyPolicyPage() {
             <h2>11. Contact</h2>
             <p>
               For privacy-related inquiries, contact us at:{' '}
-              <a href="mailto:privacy@indlokal.de" className="text-brand-600 hover:underline">
-                privacy@indlokal.de
+              <a href="mailto:privacy@indlokal.com" className="text-brand-600 hover:underline">
+                privacy@indlokal.com
               </a>
             </p>
             <p>

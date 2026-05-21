@@ -37,10 +37,10 @@ export default function ContactPage() {
               Questions about {siteConfig.name}, partnerships, or media inquiries.
             </p>
             <a
-              href="mailto:contact@indlokal.de"
+              href="mailto:contact@indlokal.com"
               className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
-              contact@indlokal.de →
+              contact@indlokal.com →
             </a>
           </div>
 
@@ -88,10 +88,10 @@ export default function ContactPage() {
               Found an issue or have technical feedback? Let us know.
             </p>
             <a
-              href="mailto:support@indlokal.de"
+              href="mailto:support@indlokal.com"
               className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
-              support@indlokal.de →
+              support@indlokal.com →
             </a>
           </div>
         </div>

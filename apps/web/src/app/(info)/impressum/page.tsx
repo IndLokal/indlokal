@@ -4,7 +4,7 @@ import { siteConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
   title: `Impressum — ${siteConfig.name}`,
-  description: `Legal notice (Impressum) for ${siteConfig.name} as required by German law (§ 5 TMG).`,
+  description: `Legal notice (Impressum) for ${siteConfig.name} in accordance with German law (§ 5 DDG).`,
 };
 
 export default function ImpressumPage() {
@@ -23,19 +23,15 @@ export default function ImpressumPage() {
         <h1 className="text-foreground text-3xl font-extrabold tracking-tight sm:text-4xl">
           Impressum
         </h1>
-        <p className="text-muted mt-2 text-sm">Legal Notice pursuant to § 5 TMG</p>
+        <p className="text-muted mt-2 text-sm">Legal Notice pursuant to § 5 DDG</p>
 
         <div className="prose-legal mt-10 space-y-8">
           <section>
-            <h2>Information pursuant to § 5 TMG</h2>
+            <h2>Information pursuant to § 5 DDG</h2>
             <p>
               {siteConfig.name}
               <br />
-              [Your Full Name / Company Name]
-              <br />
-              [Street Address]
-              <br />
-              [Postal Code] [City], Germany
+              Digital information platform for Indian communities and events in Germany.
             </p>
           </section>
 
@@ -43,8 +39,8 @@ export default function ImpressumPage() {
             <h2>Contact</h2>
             <p>
               Email:{' '}
-              <a href="mailto:contact@indlokal.de" className="text-brand-600 hover:underline">
-                contact@indlokal.de
+              <a href="mailto:contact@indlokal.com" className="text-brand-600 hover:underline">
+                contact@indlokal.com
               </a>
               <br />
               Website:{' '}
@@ -55,13 +51,13 @@ export default function ImpressumPage() {
           </section>
 
           <section>
-            <h2>Responsible for Content (§ 55 Abs. 2 RStV)</h2>
+            <h2>Responsible for Editorial Content pursuant to § 18 Abs. 2 MStV</h2>
             <p>
-              [Your Full Name]
+              IndLokal Editorial Team
               <br />
-              [Street Address]
-              <br />
-              [Postal Code] [City], Germany
+              <a href="mailto:contact@indlokal.com" className="text-brand-600 hover:underline">
+                contact@indlokal.com
+              </a>
             </p>
           </section>
 
@@ -88,9 +84,8 @@ export default function ImpressumPage() {
             <h2>Liability for Content</h2>
             <p>
               As a service provider, we are responsible for our own content on these pages under
-              general law pursuant to § 7 Para. 1 TMG. According to §§ 8 to 10 TMG, however, we are
-              not obliged as a service provider to monitor transmitted or stored third-party
-              information or to investigate circumstances that indicate illegal activity.
+              general law. We are not obliged to monitor transmitted or stored third-party
+              information unless statutory obligations apply.
             </p>
             <p>
               Obligations to remove or block the use of information under general law remain
@@ -131,15 +126,6 @@ export default function ImpressumPage() {
               Upon becoming aware of infringements, we will remove such content immediately.
             </p>
           </section>
-        </div>
-
-        <div className="mt-12 rounded-2xl bg-amber-50 p-6 ring-1 ring-amber-200/60">
-          <p className="text-sm font-bold text-amber-800">📝 Note for site operator</p>
-          <p className="mt-1 text-sm leading-relaxed text-amber-700">
-            Replace the placeholder fields (marked with brackets) with your actual legal information
-            before publishing. German law requires a complete Impressum with your real name and
-            address.
-          </p>
         </div>
       </div>
     </>
