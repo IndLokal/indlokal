@@ -1,15 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
-
-function escapeHtmlAttribute(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;');
-}
+import { escapeHtmlAttribute } from '@/lib/html';
 
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token');

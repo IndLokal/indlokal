@@ -5,22 +5,37 @@ export function collapseWhitespace(input: string): string {
 export function htmlToText(input: string): string {
   let output = '';
   let inTag = false;
+  let tagBuffer = '';
   let previousWasWhitespace = false;
+  const MAX_TAG_LENGTH = 512;
 
   for (const char of input) {
-    if (char === '<') {
+    if (!inTag && char === '<') {
       inTag = true;
+      tagBuffer = '<';
       if (!previousWasWhitespace) {
         output += ' ';
         previousWasWhitespace = true;
       }
       continue;
     }
-    if (char === '>') {
-      inTag = false;
+    if (inTag) {
+      tagBuffer += char;
+
+      if (char === '>') {
+        inTag = false;
+        tagBuffer = '';
+        continue;
+      }
+
+      if (tagBuffer.length > MAX_TAG_LENGTH) {
+        output += tagBuffer;
+        inTag = false;
+        tagBuffer = '';
+        previousWasWhitespace = false;
+      }
       continue;
     }
-    if (inTag) continue;
 
     const isWhitespace = /\s/.test(char);
     if (isWhitespace) {
@@ -33,6 +48,10 @@ export function htmlToText(input: string): string {
 
     output += char;
     previousWasWhitespace = false;
+  }
+
+  if (inTag && tagBuffer.length > 0) {
+    output += tagBuffer;
   }
 
   return output.trim();
