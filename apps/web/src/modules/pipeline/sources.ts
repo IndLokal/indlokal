@@ -10,6 +10,89 @@
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
 
+function collapseWhitespace(input: string): string {
+  return input.trim().split(/\s+/).join(' ');
+}
+
+function htmlToText(input: string): string {
+  let output = '';
+  let inTag = false;
+  let previousWasWhitespace = false;
+
+  for (const char of input) {
+    if (char === '<') {
+      inTag = true;
+      if (!previousWasWhitespace) {
+        output += ' ';
+        previousWasWhitespace = true;
+      }
+      continue;
+    }
+    if (char === '>') {
+      inTag = false;
+      continue;
+    }
+    if (inTag) continue;
+
+    const isWhitespace = /\s/.test(char);
+    if (isWhitespace) {
+      if (!previousWasWhitespace) {
+        output += ' ';
+        previousWasWhitespace = true;
+      }
+      continue;
+    }
+
+    output += char;
+    previousWasWhitespace = false;
+  }
+
+  return output.trim();
+}
+
+function parseHttpUrl(rawUrl: string): URL | null {
+  try {
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function isBlockedSearchHost(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return (
+    normalized === 'duckduckgo.com' ||
+    normalized.endsWith('.duckduckgo.com') ||
+    normalized === 'facebook.com' ||
+    normalized.endsWith('.facebook.com') ||
+    normalized === 'instagram.com' ||
+    normalized.endsWith('.instagram.com')
+  );
+}
+
+function extractImageUrls(html: string, baseUrl: string): string[] {
+  const imagePattern = /<img\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)'|([^\s>]+))/gi;
+  const urls: string[] = [];
+
+  for (const match of html.matchAll(imagePattern)) {
+    const rawSource = match[1] ?? match[2] ?? match[3];
+    if (!rawSource) continue;
+    let resolvedUrl: string;
+    try {
+      resolvedUrl = new URL(rawSource, baseUrl).toString();
+    } catch {
+      continue;
+    }
+    const parsed = parseHttpUrl(resolvedUrl);
+    if (!parsed) continue;
+    urls.push(parsed.toString());
+  }
+
+  return urls;
+}
+
 // ─── Keyword search: Eventbrite ────────────────────────
 
 export async function fetchEventbriteKeywords(
@@ -124,28 +207,13 @@ export async function fetchPinnedUrl(
 
     const html = await res.text();
 
-    // Strip noise tags
-    const cleaned = html
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
-      .replace(/<nav[^>]*>[\s\S]*?<\/nav>/gi, '')
-      .replace(/<footer[^>]*>[\s\S]*?<\/footer>/gi, '');
-
-    // Extract image URLs
-    const imgMatches = [...cleaned.matchAll(/<img[^>]+src=["']([^"']+)["']/gi)];
-    const imageUrls = imgMatches
-      .map((m) => m[1])
-      .filter((u) => u.startsWith('http'))
-      .slice(0, 5);
+    const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
+    const text = collapseWhitespace(htmlToText(html)).slice(0, 15_000);
 
     items.push({
       sourceType: strategy.sourceType,
       sourceUrl: strategy.url,
-      text: cleaned
-        .replace(/<[^>]+>/g, ' ')
-        .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 15_000),
+      text,
       imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       fetchedAt: new Date().toISOString(),
     });
@@ -283,19 +351,13 @@ export async function fetchDuckDuckGoSearch(
 
       for (const match of matches) {
         try {
-          const realUrl = decodeURIComponent(match[1]);
-          const linkText = match[2].replace(/<[^>]+>/g, '').trim();
+          const parsedRealUrl = parseHttpUrl(decodeURIComponent(match[1]));
+          if (!parsedRealUrl) continue;
+          if (isBlockedSearchHost(parsedRealUrl.hostname)) continue;
+          const realUrl = parsedRealUrl.toString();
+          const linkText = collapseWhitespace(htmlToText(match[2]));
 
           // Skip social media (they block scraping) and DDG internal links
-          if (
-            realUrl.includes('facebook.com') ||
-            realUrl.includes('instagram.com') ||
-            realUrl.includes('duckduckgo.com') ||
-            !realUrl.startsWith('http')
-          )
-            continue;
-
-          // Skip if no meaningful text
           if (linkText.length < 10) continue;
 
           items.push({

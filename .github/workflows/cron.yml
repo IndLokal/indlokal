@@ -19,6 +19,9 @@ on:
         required: false
         default: 'all'
 
+permissions:
+  contents: read
+
 jobs:
   scores:
     name: Refresh scores

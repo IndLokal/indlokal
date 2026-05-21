@@ -84,12 +84,39 @@ export async function semanticCommunityDuplicateCheck(
 }
 
 function stripHtml(input: string): string {
-  return input
-    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
-    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  let output = '';
+  let inTag = false;
+  let previousWasWhitespace = false;
+
+  for (const char of input) {
+    if (char === '<') {
+      inTag = true;
+      if (!previousWasWhitespace) {
+        output += ' ';
+        previousWasWhitespace = true;
+      }
+      continue;
+    }
+    if (char === '>') {
+      inTag = false;
+      continue;
+    }
+    if (inTag) continue;
+
+    const isWhitespace = /\s/.test(char);
+    if (isWhitespace) {
+      if (!previousWasWhitespace) {
+        output += ' ';
+        previousWasWhitespace = true;
+      }
+      continue;
+    }
+
+    output += char;
+    previousWasWhitespace = false;
+  }
+
+  return output.trim();
 }
 
 async function fetchSourceText(url: string): Promise<string | null> {

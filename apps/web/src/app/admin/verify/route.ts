@@ -2,6 +2,15 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
 
+function escapeHtmlAttribute(value: string): string {
+  return value
+    .replaceAll('&', '&amp;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;');
+}
+
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token');
 
@@ -9,6 +18,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login?error=missing_token', request.url));
   }
 
+  const escapedToken = escapeHtmlAttribute(rawToken);
   const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -30,7 +40,7 @@ export async function GET(request: NextRequest) {
       <h1>Confirm admin login</h1>
       <p>Click below to complete your one-time sign in.</p>
       <form method="POST" action="/admin/verify">
-        <input type="hidden" name="token" value="${rawToken}" />
+        <input type="hidden" name="token" value="${escapedToken}" />
         <button type="submit">Continue to admin dashboard</button>
       </form>
       <small>This extra step prevents email scanners from consuming your one-time link.</small>
