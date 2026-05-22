@@ -292,17 +292,21 @@ enum ActivitySignalType {
   LINK_VERIFIED
   EVENT_IMPORTED
   EXTERNAL_MENTION
+  EVENT_VERIFIED_ATTENDED  // ambassador check-in (PRD-0015)
 }
 
 model ActivitySignal {
   id          String             @id @default(cuid())
   communityId String             @map("community_id")
   community   Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  eventId     String?            @map("event_id")       // set for EVENT_VERIFIED_ATTENDED (PRD-0015)
+  createdBy   String?            @map("created_by")     // userId of ambassador / system
   signalType  ActivitySignalType @map("signal_type")
   occurredAt  DateTime           @default(now()) @map("occurred_at")
   metadata    Json?
 
   @@index([communityId, occurredAt])
+  @@index([createdBy])
   @@map("activity_signals")
 }
 
@@ -867,6 +871,7 @@ model PipelineItem {
   // User-submitted fields
   imageKey       String?            @map("image_key")   // key of uploaded MediaAsset
   submittedBy    String?            @map("submitted_by") // userId if authenticated
+  metadata       Json?              // flexible metadata (e.g. submittedByRole for ambassador fast-track)
 
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")

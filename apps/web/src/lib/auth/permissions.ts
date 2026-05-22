@@ -131,6 +131,8 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
 
 export type SessionUser = {
   id: string;
+  email: string;
+  displayName: string | null;
   role: UserRole;
   roleAssignments: Array<{
     role: UserRole;

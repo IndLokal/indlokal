@@ -45,6 +45,11 @@ export default function AdminDashboardPage() {
           description="Grant and revoke operator roles"
           href="/admin/team"
         />
+        <DashboardCard
+          title="Ambassadors"
+          description="City ambassador throughput and check-in stats"
+          href="/admin/ambassadors"
+        />
       </div>
     </div>
   );
