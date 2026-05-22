@@ -1,3 +1,5 @@
+import { normalizeCityLookupKey } from '@/lib/city-resolution';
+
 /**
  * Cities & taxonomy — single source of truth.
  *
@@ -15,6 +17,7 @@ export type CitySeed = {
   slug: string;
   state: string;
   country?: string;
+  aliases?: string[];
   latitude: number;
   longitude: number;
   population?: number;
@@ -76,6 +79,7 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
     name: 'Munich',
     slug: 'munich',
     state: 'Bavaria',
+    aliases: ['München', 'Munchen', 'München (München)'],
     latitude: 48.1351,
     longitude: 11.582,
     population: 1488202,
@@ -87,6 +91,7 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
   {
     name: 'Frankfurt',
     slug: 'frankfurt',
+    aliases: ['Frankfurt am Main', 'Frankfurt a. M.'],
     state: 'Hesse',
     latitude: 50.1109,
     longitude: 8.6821,
@@ -99,7 +104,6 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
 ];
 
 /* ─── Satellite cities (link to a metro, not publicly active) ─────────── */
-
 export const SATELLITE_CITY_DATA: CitySeed[] = [
   // Stuttgart metro
   {
@@ -127,6 +131,7 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
   {
     name: 'Ludwigsburg',
     slug: 'ludwigsburg',
+    aliases: ['Ludwigsburg (Württemberg)'],
     state: 'Baden-Württemberg',
     latitude: 48.8975,
     longitude: 9.1922,
@@ -138,6 +143,7 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
   {
     name: 'Esslingen',
     slug: 'esslingen',
+    aliases: ['Esslingen am Neckar'],
     state: 'Baden-Württemberg',
     latitude: 48.7397,
     longitude: 9.3108,
@@ -201,6 +207,39 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: false,
     metroSlug: 'stuttgart',
   },
+  {
+    name: 'Leinfelden-Echterdingen',
+    slug: 'leinfelden-echterdingen',
+    state: 'Baden-Württemberg',
+    latitude: 48.6928,
+    longitude: 9.1428,
+    population: 41185,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'stuttgart',
+  },
+  {
+    name: 'Filderstadt',
+    slug: 'filderstadt',
+    state: 'Baden-Württemberg',
+    latitude: 48.6803,
+    longitude: 9.2183,
+    population: 46243,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'stuttgart',
+  },
+  {
+    name: 'Ostfildern',
+    slug: 'ostfildern',
+    state: 'Baden-Württemberg',
+    latitude: 48.7333,
+    longitude: 9.25,
+    population: 39778,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'stuttgart',
+  },
   // Karlsruhe metro
   {
     name: 'Ettlingen',
@@ -238,6 +277,7 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
   {
     name: 'Pforzheim',
     slug: 'pforzheim',
+    aliases: ['Pforzheim (Enz)'],
     state: 'Baden-Württemberg',
     latitude: 48.8922,
     longitude: 8.6946,
@@ -537,6 +577,18 @@ export const METRO_REGIONS: Record<string, { satellites: { slug: string; name: s
 /** Reverse map: satellite slug → metro slug. Derived. */
 export const SATELLITE_TO_METRO: Record<string, string> = Object.fromEntries(
   SATELLITE_CITY_DATA.filter((s) => s.metroSlug).map((s) => [s.slug, s.metroSlug as string]),
+);
+
+/**
+ * Alternate city names keyed by normalized lookup string → canonical city slug.
+ * Most cities do not need explicit aliases because name/slug normalization already
+ * resolves spacing, hyphenation, and accent differences. This list is only for
+ * true alternate names like "München" → "munich" or "Frankfurt am Main" → "frankfurt".
+ */
+export const CITY_NAME_ALIASES: Record<string, string> = Object.fromEntries(
+  [...ACTIVE_CITY_DATA, ...SATELLITE_CITY_DATA].flatMap((city) =>
+    (city.aliases ?? []).map((alias) => [normalizeCityLookupKey(alias), city.slug] as const),
+  ),
 );
 
 /** Cities we plan to launch — shown as "Coming Soon" cards. Not seeded. */

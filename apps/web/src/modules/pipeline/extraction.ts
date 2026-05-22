@@ -8,7 +8,7 @@
  *   Drops 60-80% of Eventbrite noise before expensive extraction.
  *
  * Stage 2: STRUCTURED EXTRACTION (batched)
- *   Send 3-5 relevant items in one call.
+ *   Send a small batch of relevant items in one call.
  *   Prompt: "Extract structured event/community data + assign city."
  *   LLM outputs city name — orchestrator resolves to DB city.
  *
@@ -31,10 +31,15 @@ import type {
 
 // ─── Config ────────────────────────────────────────────
 
+function getPositiveIntEnv(name: string, fallback: number): number {
+  const parsed = Number.parseInt(process.env[name] ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 /** Max items per LLM call (filter stage) */
-const FILTER_BATCH_SIZE = 10;
+const FILTER_BATCH_SIZE = getPositiveIntEnv('PIPELINE_FILTER_BATCH_SIZE', 10);
 /** Max items per LLM call (extraction stage) */
-const EXTRACT_BATCH_SIZE = 5;
+const EXTRACT_BATCH_SIZE = getPositiveIntEnv('PIPELINE_EXTRACT_BATCH_SIZE', 3);
 
 // ─── OpenAI client ─────────────────────────────────────
 
@@ -42,14 +47,26 @@ type ChatMessage = { role: 'system' | 'user'; content: string };
 
 export async function callOpenAI(
   messages: ChatMessage[],
-  opts: { model?: string; maxTokens?: number } = {},
+  opts: { model?: string; maxTokens?: number; timeoutMs?: number } = {},
 ): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error('OPENAI_API_KEY not configured');
 
   const model = opts.model ?? process.env.PIPELINE_LLM_MODEL ?? 'gpt-4o-mini';
+  const envTimeoutMs = Number.parseInt(process.env.PIPELINE_LLM_TIMEOUT_MS ?? '', 10);
+  const timeoutMs =
+    opts.timeoutMs ?? (Number.isFinite(envTimeoutMs) && envTimeoutMs > 0 ? envTimeoutMs : 60_000);
+  const controller = new AbortController();
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
-  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+  const timeout = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`OpenAI request timed out after ${timeoutMs}ms`));
+    }, timeoutMs);
+  });
+
+  const request = fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,7 +79,11 @@ export async function callOpenAI(
       max_tokens: opts.maxTokens ?? 4000,
       response_format: { type: 'json_object' },
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: controller.signal,
+  });
+
+  const res = await Promise.race([request, timeout]).finally(() => {
+    if (timeoutId) clearTimeout(timeoutId);
   });
 
   if (!res.ok) {
@@ -125,7 +146,16 @@ export async function filterRelevance(items: RawContent[]): Promise<RelevanceRes
   // Process in batches
   for (let i = 0; i < items.length; i += FILTER_BATCH_SIZE) {
     const batch = items.slice(i, i + FILTER_BATCH_SIZE);
+    const batchNumber = Math.floor(i / FILTER_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(items.length / FILTER_BATCH_SIZE);
+    const startedAt = Date.now();
+    console.log(
+      `[Pipeline] Filter batch ${batchNumber}/${totalBatches}: ${batch.length} items starting`,
+    );
     const batchResults = await filterBatch(batch, i);
+    console.log(
+      `[Pipeline] Filter batch ${batchNumber}/${totalBatches}: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
+    );
     allResults.push(...batchResults);
   }
 
@@ -229,7 +259,16 @@ export async function extractBatch(
 
   for (let i = 0; i < items.length; i += EXTRACT_BATCH_SIZE) {
     const batch = items.slice(i, i + EXTRACT_BATCH_SIZE);
+    const batchNumber = Math.floor(i / EXTRACT_BATCH_SIZE) + 1;
+    const totalBatches = Math.ceil(items.length / EXTRACT_BATCH_SIZE);
+    const startedAt = Date.now();
+    console.log(
+      `[Pipeline] Extract batch ${batchNumber}/${totalBatches}: ${batch.length} items starting`,
+    );
     const batchResults = await extractBatchCall(batch, i);
+    console.log(
+      `[Pipeline] Extract batch ${batchNumber}/${totalBatches}: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
+    );
     allResults.push(...batchResults);
   }
 
@@ -237,6 +276,33 @@ export async function extractBatch(
 }
 
 async function extractBatchCall(
+  batch: RawContent[],
+  startIndex: number,
+): Promise<(ExtractedData & { sourceIndex: number })[]> {
+  try {
+    return await extractBatchCallOnce(batch, startIndex);
+  } catch (err) {
+    console.error(
+      `[Pipeline] Extract batch failed (size=${batch.length}, start=${startIndex}): ${String(err)}`,
+    );
+
+    // Recovery: split large/slow batches until they fit within timeout limits.
+    // If a single item still fails, skip it and continue pipeline progress.
+    if (batch.length <= 1) {
+      return [];
+    }
+
+    const midpoint = Math.ceil(batch.length / 2);
+    const firstHalf = batch.slice(0, midpoint);
+    const secondHalf = batch.slice(midpoint);
+
+    const firstResults = await extractBatchCall(firstHalf, startIndex);
+    const secondResults = await extractBatchCall(secondHalf, startIndex + midpoint);
+    return [...firstResults, ...secondResults];
+  }
+}
+
+async function extractBatchCallOnce(
   batch: RawContent[],
   startIndex: number,
 ): Promise<(ExtractedData & { sourceIndex: number })[]> {
@@ -248,34 +314,29 @@ async function extractBatchCall(
     })
     .join('\n\n════════════════════\n\n');
 
-  try {
-    const response = await callOpenAI(
-      [
-        { role: 'system', content: EXTRACT_SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-      { maxTokens: 4000 },
-    );
+  const response = await callOpenAI(
+    [
+      { role: 'system', content: EXTRACT_SYSTEM_PROMPT },
+      { role: 'user', content: userMessage },
+    ],
+    { maxTokens: 4000, timeoutMs: 120_000 },
+  );
 
-    const parsed = JSON.parse(response) as {
-      items?: Array<Record<string, unknown> & { index?: number; type?: string }>;
-    };
+  const parsed = JSON.parse(response) as {
+    items?: Array<Record<string, unknown> & { index?: number; type?: string }>;
+  };
 
-    if (!Array.isArray(parsed.items)) return [];
+  if (!Array.isArray(parsed.items)) return [];
 
-    return parsed.items
-      .filter((item) => item.type === 'EVENT' || item.type === 'COMMUNITY')
-      .map((item) => {
-        const sourceIndex = typeof item.index === 'number' ? item.index : startIndex;
-        if (item.type === 'EVENT') {
-          return { ...normalizeEvent(item), sourceIndex };
-        }
-        return { ...normalizeCommunity(item), sourceIndex };
-      });
-  } catch (err) {
-    console.error('[Pipeline] Extract batch failed:', String(err));
-    return [];
-  }
+  return parsed.items
+    .filter((item) => item.type === 'EVENT' || item.type === 'COMMUNITY')
+    .map((item) => {
+      const sourceIndex = typeof item.index === 'number' ? item.index : startIndex;
+      if (item.type === 'EVENT') {
+        return { ...normalizeEvent(item), sourceIndex };
+      }
+      return { ...normalizeCommunity(item), sourceIndex };
+    });
 }
 
 // ─── Normalizers ───────────────────────────────────────

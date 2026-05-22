@@ -160,4 +160,5 @@ export type PipelineRunResult = {
   llmCalls: number;
   llmTokensEstimate: number;
   duration: number; // ms
+  stageTimings?: Record<string, number>;
 };

@@ -15,10 +15,38 @@
 import { db } from '@/lib/db';
 import type { SearchStrategy } from './types';
 
-// Keywords that suggest a page lists events, regardless of language.
-// Matched against both the URL path and the visible link text.
 const EVENT_LINK_KEYWORDS =
-  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on/i;
+  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on|schedule/i;
+const EVENT_LINK_STRONG_POSITIVE_KEYWORDS =
+  /upcoming|next|calendar|kalender|schedule|termin|what.?s.?on|programme|programm/i;
+const EVENT_LINK_NEGATIVE_KEYWORDS =
+  /past|archive|archiv|gallery|eventgallery|album|photo|foto|bericht|review|recap/i;
+
+function getYearSignalScore(input: string): number {
+  const currentYear = new Date().getFullYear();
+  const years = [...input.matchAll(/\b20\d{2}\b/g)]
+    .map((match) => Number.parseInt(match[0], 10))
+    .filter(Number.isFinite);
+
+  if (years.length === 0) return 0;
+
+  const newestYear = Math.max(...years);
+  if (newestYear < currentYear) return -2;
+  if (newestYear === currentYear) return 1;
+  return 2;
+}
+
+export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
+  const urlScore = EVENT_LINK_KEYWORDS.test(url) ? 2 : 0;
+  const labelScore = EVENT_LINK_KEYWORDS.test(labelOrText) ? 1 : 0;
+  const strongPositiveScore = EVENT_LINK_STRONG_POSITIVE_KEYWORDS.test(`${url} ${labelOrText}`)
+    ? 2
+    : 0;
+  const negativeScore = EVENT_LINK_NEGATIVE_KEYWORDS.test(`${url} ${labelOrText}`) ? -3 : 0;
+  const yearScore = getYearSignalScore(`${url} ${labelOrText}`);
+
+  return urlScore + labelScore + strongPositiveScore + negativeScore + yearScore;
+}
 
 /**
  * Remove HTML tags from a string using repeated replacement until stable.
@@ -80,12 +108,9 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
       if (resolved.hostname !== parsed.hostname) continue;
       if (resolved.pathname === '/' || resolved.pathname === parsed.pathname) continue;
 
-      const pathMatch = EVENT_LINK_KEYWORDS.test(resolved.pathname);
-      const textMatch = EVENT_LINK_KEYWORDS.test(rawText);
-      if (!pathMatch && !textMatch) continue;
+      const score = scorePinnedEventUrl(resolved.pathname, rawText);
+      if (score <= 0) continue;
 
-      // Score: path match worth more (reliable signal) than link text
-      const score = (pathMatch ? 2 : 0) + (textMatch ? 1 : 0);
       const key = resolved.origin + resolved.pathname; // ignore query/hash
       if ((scored.get(key) ?? 0) < score) scored.set(key, score);
     }
