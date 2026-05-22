@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { requireAdmin } from '@/lib/session';
-import { ADMIN_NAV_LINKS } from './page';
+import { ADMIN_NAV_LINKS } from './nav-links';
 
 export const dynamic = 'force-dynamic';
 
