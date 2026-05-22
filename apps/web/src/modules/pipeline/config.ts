@@ -13,6 +13,15 @@
 
 import type { SearchStrategy, SearchRegion } from './types';
 import { assessEvidenceUrl } from '../../lib/source-policy';
+import { SATELLITE_CITY_DATA } from '../../lib/config/cities';
+
+function getRegionCitySlugs(metroSlugs: string[]): string[] {
+  const satellites = SATELLITE_CITY_DATA.filter(
+    (city) => city.metroSlug && metroSlugs.includes(city.metroSlug),
+  ).map((city) => city.slug);
+
+  return Array.from(new Set([...metroSlugs, ...satellites]));
+}
 
 // ─── Diaspora search keywords ──────────────────────────
 // Shared across all keyword_search strategies.
@@ -71,53 +80,21 @@ export const SEARCH_REGIONS: SearchRegion[] = [
     id: 'baden-wuerttemberg',
     label: 'Baden-Württemberg',
     searchCenter: 'Stuttgart, Germany',
-    citySlugs: [
-      'stuttgart',
-      'karlsruhe',
-      'mannheim',
-      'heidelberg-sat',
-      'ludwigshafen',
-      'weinheim',
-      'schwetzingen',
-      'speyer',
-      'worms',
-      'frankenthal',
-      'hockenheim',
-    ],
+    citySlugs: getRegionCitySlugs(['stuttgart', 'karlsruhe', 'mannheim']),
     enabled: true,
   },
   {
     id: 'bavaria',
     label: 'Bavaria',
     searchCenter: 'Munich, Germany',
-    citySlugs: [
-      'munich',
-      'garching',
-      'freising',
-      'augsburg',
-      'erding',
-      'dachau',
-      'fuerstenfeldbruck',
-      'unterschleissheim',
-      'starnberg',
-    ],
+    citySlugs: getRegionCitySlugs(['munich']),
     enabled: true,
   },
   {
     id: 'hesse',
     label: 'Hesse',
     searchCenter: 'Frankfurt, Germany',
-    citySlugs: [
-      'frankfurt',
-      'offenbach',
-      'darmstadt-sat',
-      'mainz',
-      'wiesbaden',
-      'hanau',
-      'ruesselsheim',
-      'bad-homburg',
-      'neu-isenburg',
-    ],
+    citySlugs: getRegionCitySlugs(['frankfurt']),
     enabled: true,
   },
 ];

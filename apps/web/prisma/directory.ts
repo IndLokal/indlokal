@@ -685,7 +685,7 @@ const MUNICH: DirectoryEntry[] = [
       'Student-led Indian association in the Munich region supporting onboarding, networking and cultural meetups for university students.',
     // TUM and nearby student communities extend into the north metro corridor.
     citySlug: 'garching',
-    categorySlugs: ['persona-student', 'networking-social', 'cultural'],
+    categorySlugs: ['student', 'networking-social', 'cultural'],
     personaSegments: ['persona-student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
