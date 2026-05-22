@@ -155,6 +155,7 @@ export type PipelineRunResult = {
   itemsQueued: number;
   itemsSkippedDuplicate: number;
   itemsSkippedNoCity: number;
+  itemsSkippedPast: number;
   errors: string[];
   llmCalls: number;
   llmTokensEstimate: number;

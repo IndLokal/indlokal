@@ -36,7 +36,7 @@ export type { PipelineRunResult } from './types';
  * Run the full generic-first pipeline.
  * No arguments needed — reads config from config.ts.
  */
-export async function runPipeline(): Promise<PipelineRunResult> {
+export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResult> {
   const start = Date.now();
   resetLlmStats();
 
@@ -49,6 +49,7 @@ export async function runPipeline(): Promise<PipelineRunResult> {
     itemsQueued: 0,
     itemsSkippedDuplicate: 0,
     itemsSkippedNoCity: 0,
+    itemsSkippedPast: 0,
     errors: [],
     llmCalls: 0,
     llmTokensEstimate: 0,
@@ -59,29 +60,44 @@ export async function runPipeline(): Promise<PipelineRunResult> {
   const regions = getEnabledRegions();
   const uniqueRaw = await fetchAllSources(regions, result);
 
-  if (uniqueRaw.length === 0) {
-    result.duration = Date.now() - start;
-    return result;
+  if (uniqueRaw.length > 0) {
+    // Phase 2: LLM relevance filter + structured extraction
+    const { extracted, relevantItems } = await filterAndExtract(uniqueRaw, result);
+
+    if (extracted.length > 0) {
+      // Phase 3: Resolve cities, dedup, queue for review
+      await resolveAndQueue(extracted, relevantItems, regions, result);
+    }
   }
-
-  // Phase 2: LLM relevance filter + structured extraction
-  const { extracted, relevantItems } = await filterAndExtract(uniqueRaw, result);
-
-  if (extracted.length === 0) {
-    const stats = getLlmStats();
-    result.llmCalls = stats.calls;
-    result.llmTokensEstimate = stats.tokensEstimate;
-    result.duration = Date.now() - start;
-    return result;
-  }
-
-  // Phase 3: Resolve cities, dedup, queue for review
-  await resolveAndQueue(extracted, relevantItems, regions, result);
 
   const stats = getLlmStats();
   result.llmCalls = stats.calls;
   result.llmTokensEstimate = stats.tokensEstimate;
   result.duration = Date.now() - start;
+
+  // Persist run history for observability
+  try {
+    await db.pipelineRun.create({
+      data: {
+        triggeredBy,
+        regionsScanned: result.regionsScanned,
+        sourcesProcessed: result.sourcesProcessed,
+        itemsFetched: result.itemsFetched,
+        itemsPassedFilter: result.itemsPassedFilter,
+        itemsExtracted: result.itemsExtracted,
+        itemsQueued: result.itemsQueued,
+        itemsSkippedDuplicate: result.itemsSkippedDuplicate,
+        itemsSkippedNoCity: result.itemsSkippedNoCity,
+        itemsSkippedPast: result.itemsSkippedPast,
+        llmCalls: result.llmCalls,
+        llmTokensEstimate: result.llmTokensEstimate,
+        durationMs: result.duration,
+        errors: result.errors,
+      },
+    });
+  } catch (persistErr) {
+    console.error('[Pipeline] Failed to persist run history:', persistErr);
+  }
 
   console.log(
     `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
@@ -116,42 +132,53 @@ async function fetchAllSources(
     `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${keywordStrategies.length}, Pinned: ${staticPinned.length} static + ${dbPinned.length} DB = ${pinnedStrategies.length} total`,
   );
 
-  // Keyword strategies × regions
-  for (const region of regions) {
-    result.regionsScanned++;
-    for (const strategy of keywordStrategies) {
-      try {
-        let fetchResult;
-        if (strategy.sourceType === 'GOOGLE_SEARCH') {
-          fetchResult = await fetchGoogleSearch(strategy, region);
-        } else if (strategy.sourceType === 'DUCKDUCKGO') {
-          fetchResult = await fetchDuckDuckGoSearch(strategy, region);
-        } else {
-          fetchResult = await fetchEventbriteKeywords(strategy, region);
-        }
-        allRaw.push(...fetchResult.items);
-        result.errors.push(...fetchResult.errors);
-        result.sourcesProcessed++;
-        console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
-      } catch (err) {
-        result.errors.push(`${strategy.id}:${region.id}: ${String(err)}`);
+  // Keyword strategies × regions — all combinations run in parallel.
+  // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
+  const keywordJobs = regions.flatMap((region) =>
+    keywordStrategies.map((strategy) => async () => {
+      let fetchResult;
+      if (strategy.sourceType === 'GOOGLE_SEARCH') {
+        fetchResult = await fetchGoogleSearch(strategy, region);
+      } else if (strategy.sourceType === 'DUCKDUCKGO') {
+        fetchResult = await fetchDuckDuckGoSearch(strategy, region);
+      } else {
+        fetchResult = await fetchEventbriteKeywords(strategy, region);
       }
+      console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
+      return fetchResult;
+    }),
+  );
+
+  const keywordOutcomes = await Promise.allSettled(keywordJobs.map((fn) => fn()));
+  result.regionsScanned = regions.length;
+  for (const outcome of keywordOutcomes) {
+    result.sourcesProcessed++;
+    if (outcome.status === 'fulfilled') {
+      allRaw.push(...outcome.value.items);
+      result.errors.push(...outcome.value.errors);
+    } else {
+      result.errors.push(String(outcome.reason));
     }
   }
 
-  // Pinned URLs (run regardless of regions)
-  for (const strategy of pinnedStrategies) {
-    try {
+  // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
+  const pinnedOutcomes = await Promise.allSettled(
+    pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
       }
-      allRaw.push(...fetchResult.items);
-      result.errors.push(...fetchResult.errors);
-      result.sourcesProcessed++;
       console.log(`[Pipeline] ${strategy.id} → ${fetchResult.items.length} items`);
-    } catch (err) {
-      result.errors.push(`${strategy.id}: ${String(err)}`);
+      return fetchResult;
+    }),
+  );
+  for (const outcome of pinnedOutcomes) {
+    result.sourcesProcessed++;
+    if (outcome.status === 'fulfilled') {
+      allRaw.push(...outcome.value.items);
+      result.errors.push(...outcome.value.errors);
+    } else {
+      result.errors.push(String(outcome.reason));
     }
   }
 
@@ -208,13 +235,34 @@ async function resolveAndQueue(
   result: PipelineRunResult,
 ): Promise<void> {
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
+  // Load region metros AND all their satellite cities so that communities
+  // in satellite cities (e.g. esslingen → stuttgart metro) resolve correctly.
+  // This avoids manually enumerating satellite slugs in config.ts.
   const cities = await db.city.findMany({
-    where: { slug: { in: allCitySlugs } },
+    where: {
+      OR: [{ slug: { in: allCitySlugs } }, { metroRegion: { slug: { in: allCitySlugs } } }],
+    },
     select: { id: true, slug: true, name: true },
   });
   const sourceReliabilityByType = await getSourceReliabilityMap();
   const cityByName = new Map<string, { id: string; slug: string }>();
   const cityBySlug = new Map<string, { id: string; name: string }>();
+
+  // LLM often returns local-language or full forms of city names while the DB
+  // stores English/short names. Map common variants to their canonical DB name
+  // so they resolve correctly instead of falling through to itemsSkippedNoCity.
+  const CITY_NAME_ALIASES: Record<string, string> = {
+    münchen: 'munich',
+    munchen: 'munich',
+    'münchen (münchen)': 'munich',
+    'frankfurt am main': 'frankfurt',
+    'frankfurt a. m.': 'frankfurt',
+    'esslingen am neckar': 'esslingen',
+    'ludwigsburg (württemberg)': 'ludwigsburg',
+    'heilbronn (neckar)': 'heilbronn',
+    'pforzheim (enz)': 'pforzheim',
+  };
+
   for (const c of cities) {
     cityByName.set(c.name.toLowerCase(), { id: c.id, slug: c.slug });
     cityBySlug.set(c.slug, { id: c.id, name: c.name });
@@ -229,7 +277,9 @@ async function resolveAndQueue(
     let cityId: string | null = null;
 
     if (item.cityName) {
-      const match = cityByName.get(item.cityName.toLowerCase());
+      const normalised = item.cityName.toLowerCase().trim();
+      const canonical = CITY_NAME_ALIASES[normalised] ?? normalised;
+      const match = cityByName.get(canonical);
       if (match) cityId = match.id;
     }
 
@@ -247,6 +297,15 @@ async function resolveAndQueue(
         `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName}`,
       );
       continue;
+    }
+
+    // Skip events that have already passed — no value in queuing stale content
+    if (item.type === 'EVENT' && item.date) {
+      const eventDate = new Date(`${item.date}T23:59:59`);
+      if (!Number.isNaN(eventDate.getTime()) && eventDate < new Date()) {
+        result.itemsSkippedPast++;
+        continue;
+      }
     }
 
     // Dedup check

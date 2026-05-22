@@ -18,7 +18,7 @@ export async function triggerPipelineRun(): Promise<PipelineRunResult> {
   await assertCan('pipeline.run');
   // Dynamic import to avoid bundling the pipeline in the client
   const { runPipeline } = await import('@/modules/pipeline/orchestrator');
-  const result = await runPipeline();
+  const result = await runPipeline('admin');
   revalidatePath('/admin/pipeline');
   return result;
 }

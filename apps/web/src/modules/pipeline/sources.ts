@@ -80,6 +80,8 @@ export async function fetchEventbriteKeywords(
       url.searchParams.set('location.within', `${strategy.radiusKm}km`);
       url.searchParams.set('expand', 'venue');
       url.searchParams.set('sort_by', 'date');
+      // Only return future events — no point queuing things that have already happened
+      url.searchParams.set('start_date.range_start', new Date().toISOString());
 
       const res = await fetch(url.toString(), {
         headers: { Authorization: `Bearer ${apiKey}` },
@@ -166,7 +168,13 @@ export async function fetchPinnedUrl(
       return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
     }
 
-    const html = await res.text();
+    const rawHtml = await res.text();
+
+    // Strip script and style blocks before text extraction — their content
+    // (JS code, CSS rules) leaks into the LLM context and degrades extraction.
+    const html = rawHtml
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
 
     const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
     const text = collapseWhitespace(htmlToText(html)).slice(0, 15_000);

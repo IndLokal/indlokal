@@ -6,12 +6,11 @@ name: Cron Jobs
 #   CRON_SECRET  — shared secret matching CRON_SECRET env var on Vercel
 
 on:
-  # Disabled: cron jobs paused for now (can re-enable below)
-  # schedule:
-  #   # Keep scores fresh enough for MVP demos.
-  #   - cron: '0 */6 * * *'
-  #   # Daily maintenance and pipeline.
-  #   - cron: '0 3 * * *'
+  schedule:
+    # Keep scores fresh enough for MVP demos.
+    - cron: '0 */6 * * *'
+    # Daily maintenance and pipeline.
+    - cron: '0 3 * * *'
   workflow_dispatch:
     inputs:
       job:
@@ -27,7 +26,8 @@ jobs:
     name: Refresh scores
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'scores' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'scores' || inputs.job == 'all')) ||
+      github.event_name == 'schedule'
     steps:
       - name: POST /api/cron/scores
         run: |
@@ -42,7 +42,8 @@ jobs:
     name: AI content pipeline
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/pipeline
         run: |
@@ -58,7 +59,8 @@ jobs:
     name: Verify join links
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'links' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'links' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/links
         run: |
@@ -73,7 +75,8 @@ jobs:
     name: Refresh keyword suggestions
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'keywords' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'keywords' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/keywords
         run: |
@@ -88,7 +91,8 @@ jobs:
     name: Infer community relationships
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'relationships' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'relationships' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/relationships
         run: |
@@ -103,7 +107,8 @@ jobs:
     name: Enrich sparse communities
     runs-on: ubuntu-latest
     if: >
-      github.event_name == 'workflow_dispatch' && (inputs.job == 'enrichment' || inputs.job == 'all')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'enrichment' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/enrichment
         run: |
