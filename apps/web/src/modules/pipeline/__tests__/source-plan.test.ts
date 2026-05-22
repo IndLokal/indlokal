@@ -413,6 +413,31 @@ describe('buildPipelineSourcePlan', () => {
     ]);
   });
 
+  it('caps DB pinned sources for admin-triggered runs like cron', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+    mocks.getDbCommunityStrategies.mockResolvedValue(
+      Array.from({ length: 55 }, (_, index) => ({
+        id: `db-community-${index}`,
+        sourceType: 'DB_COMMUNITY' as const,
+        kind: 'pinned_url' as const,
+        label: `DB Community ${index}`,
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: `https://example.org/community-${index}/events`,
+      })),
+    );
+
+    const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
+    const cliPlan = await buildPipelineSourcePlan(regions, 'cli');
+
+    expect(adminPlan.dbPinnedCount).toBe(40);
+    expect(cliPlan.dbPinnedCount).toBe(55);
+  });
+
   it('prioritizes event-starved metro cities ahead of empty satellites in the gap list', async () => {
     const { buildPipelineSourcePlan } = await import('../source-plan');
 
