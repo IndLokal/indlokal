@@ -112,7 +112,7 @@ function LeadCard({ lead, showCityBadge }: { lead: Lead; showCityBadge?: boolean
   );
 }
 
-export function OutreachKanban({ leads, showCityBadge: _showCityBadge }: Props) {
+export function OutreachKanban({ leads, showCityBadge }: Props) {
   const byStage = Object.fromEntries(
     STAGES.map((s) => [s, leads.filter((l) => l.stage === s)]),
   ) as Record<OutreachStage, Lead[]>;
