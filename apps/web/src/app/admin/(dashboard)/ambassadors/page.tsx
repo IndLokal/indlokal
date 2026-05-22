@@ -1,13 +1,15 @@
 import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { startOfISOWeek } from 'date-fns';
 
 export const metadata = { title: 'Ambassadors — Admin' };
 
 export default async function AdminAmbassadorsPage() {
   await requireCan('team.read');
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // Use ISO week start (Monday 00:00 UTC) to match ambassador scoreboard
+  const weekStart = startOfISOWeek(new Date());
 
   // Active ambassador assignments
   const ambassadorAssignments = await db.roleAssignment.findMany({
@@ -33,7 +35,7 @@ export default async function AdminAmbassadorsPage() {
       }),
       db.pipelineItem.groupBy({
         by: ['submittedBy'],
-        where: { submittedBy: { in: userIds }, createdAt: { gte: weekAgo } },
+        where: { submittedBy: { in: userIds }, createdAt: { gte: weekStart } },
         _count: { id: true },
       }),
       db.activitySignal.groupBy({
@@ -46,7 +48,7 @@ export default async function AdminAmbassadorsPage() {
         where: {
           createdBy: { in: userIds },
           signalType: 'EVENT_VERIFIED_ATTENDED',
-          occurredAt: { gte: weekAgo },
+          occurredAt: { gte: weekStart },
         },
         _count: { id: true },
       }),

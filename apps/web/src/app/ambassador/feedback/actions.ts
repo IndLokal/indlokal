@@ -24,7 +24,8 @@ export async function submitFeedback(
       reportType: 'OTHER',
       cityId: cityId || null,
       details: subject ? `[${subject}] ${details}` : details,
-      reporterEmail: user.email,
+      reporterEmail: user.email, // kept for display in admin views
+      reporterUserId: user.id, // indexed FK — used for scoreboard queries
       status: 'PENDING',
     },
   });

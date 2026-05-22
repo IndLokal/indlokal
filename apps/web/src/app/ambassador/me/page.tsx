@@ -1,5 +1,6 @@
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { startOfISOWeek, subWeeks } from 'date-fns';
 
 export const metadata = { title: 'My Score — Ambassador' };
 
@@ -26,8 +27,10 @@ function StatRow({
 export default async function AmbassadorMePage() {
   const user = await requireCan('ambassador.read');
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const prevWeekStart = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+  // Use ISO week boundaries (Monday 00:00 UTC) so "this week" and "last week"
+  // match the "resets every Monday" copy shown in the UI.
+  const thisWeekStart = startOfISOWeek(new Date());
+  const prevWeekStart = subWeeks(thisWeekStart, 1);
 
   const [
     submissionsThisWeek,
@@ -39,16 +42,16 @@ export default async function AmbassadorMePage() {
     feedbackThisWeek,
     feedbackAllTime,
   ] = await Promise.all([
-    db.pipelineItem.count({ where: { submittedBy: user.id, createdAt: { gte: weekAgo } } }),
+    db.pipelineItem.count({ where: { submittedBy: user.id, createdAt: { gte: thisWeekStart } } }),
     db.pipelineItem.count({ where: { submittedBy: user.id } }),
     db.pipelineItem.count({
-      where: { submittedBy: user.id, createdAt: { gte: prevWeekStart, lt: weekAgo } },
+      where: { submittedBy: user.id, createdAt: { gte: prevWeekStart, lt: thisWeekStart } },
     }),
     db.activitySignal.count({
       where: {
         createdBy: user.id,
         signalType: 'EVENT_VERIFIED_ATTENDED',
-        occurredAt: { gte: weekAgo },
+        occurredAt: { gte: thisWeekStart },
       },
     }),
     db.activitySignal.count({
@@ -58,15 +61,26 @@ export default async function AmbassadorMePage() {
       where: {
         createdBy: user.id,
         signalType: 'EVENT_VERIFIED_ATTENDED',
-        occurredAt: { gte: prevWeekStart, lt: weekAgo },
+        occurredAt: { gte: prevWeekStart, lt: thisWeekStart },
       },
     }),
-    db.contentReport.count({ where: { reporterEmail: user.email, createdAt: { gte: weekAgo } } }),
-    db.contentReport.count({ where: { reporterEmail: user.email } }),
+    // Feedback: query by reporterUserId when available, fall back to email
+    // (existing rows written before this migration may only have reporterEmail)
+    db.contentReport.count({
+      where: {
+        OR: [{ reporterUserId: user.id }, { reporterEmail: user.email }],
+        createdAt: { gte: thisWeekStart },
+      },
+    }),
+    db.contentReport.count({
+      where: {
+        OR: [{ reporterUserId: user.id }, { reporterEmail: user.email }],
+      },
+    }),
   ]);
 
   const totalThisWeek = submissionsThisWeek + checkInsThisWeek + feedbackThisWeek;
-  const totalLastWeek = submissionsLastWeek + checkInsLastWeek;
+  const totalLastWeek = submissionsLastWeek + checkInsLastWeek; // feedbackLastWeek not tracked — omit for parity
   const wowChange =
     totalLastWeek > 0 ? Math.round(((totalThisWeek - totalLastWeek) / totalLastWeek) * 100) : null;
 

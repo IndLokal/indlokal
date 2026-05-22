@@ -307,6 +307,10 @@ model ActivitySignal {
   occurredAt  DateTime           @default(now()) @map("occurred_at")
   metadata    Json?
 
+  // Prevent duplicate ambassador check-ins for the same event.
+  // NULL values are not matched by Postgres unique constraints, so system
+  // signals (createdBy/eventId = null) are unaffected.
+  @@unique([createdBy, eventId, signalType], name: "activity_signals_checkin_dedup")
   @@index([communityId, occurredAt])
   @@index([createdBy])
   @@map("activity_signals")
@@ -500,6 +504,7 @@ model User {
   magicLinkTokens    MagicLinkToken[]
   refreshTokens      RefreshToken[]
   roleAssignments    RoleAssignment[]
+  contentReports     ContentReport[]  @relation("ReporterUser")
   devices                 Device[]
   notificationPreferences NotificationPreference[]
   quietHours              QuietHours?
@@ -739,12 +744,17 @@ model ContentReport {
 
   details        String?
   reporterEmail  String?      @map("reporter_email")
+  // Structured FK — preferred over reporterEmail for ambassador stats queries.
+  // Nullable so existing rows without a userId remain valid.
+  reporterUserId String?      @map("reporter_user_id")
+  reporter       User?        @relation("ReporterUser", fields: [reporterUserId], references: [id])
   status         ReportStatus @default(PENDING)
 
   createdAt      DateTime @default(now()) @map("created_at")
 
   @@index([status, createdAt])
   @@index([communityId])
+  @@index([reporterUserId])
   @@map("content_reports")
 }
 
