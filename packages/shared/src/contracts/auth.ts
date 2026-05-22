@@ -129,3 +129,18 @@ export const AccessTokenClaims = z.object({
   aud: z.string(),
 });
 export type AccessTokenClaims = z.infer<typeof AccessTokenClaims>;
+
+// ─── PATCH /api/v1/me/onboarding — TDD-0019 ───
+
+/**
+ * Partial update accepted by PATCH /api/v1/me/onboarding.
+ * All fields are optional; the handler applies only those present.
+ * On success the server sets onboardingComplete = true.
+ */
+export const OnboardingUpdate = z.object({
+  cityId: Cuid.optional(),
+  displayName: z.string().min(1).max(80).trim().optional(),
+  personaSegments: z.array(z.string().min(1).max(40)).max(10).optional(),
+  preferredLanguages: z.array(z.string().min(2).max(10)).max(10).optional(),
+});
+export type OnboardingUpdate = z.infer<typeof OnboardingUpdate>;

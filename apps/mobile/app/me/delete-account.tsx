@@ -1,7 +1,56 @@
-import { Alert, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+/**
+ * Delete account screen — PRD-0019 / TDD-0019.
+ * Calls DELETE /api/v1/me, clears session, navigates to sign-in.
+ */
+
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { router } from 'expo-router';
+import { authClient } from '@/lib/auth/client.expo';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function DeleteAccountScreen() {
+  const [loading, setLoading] = useState(false);
+  const { signOut } = useAuth();
+
+  function confirmDelete() {
+    Alert.alert(
+      'Delete account',
+      'This permanently removes your profile and all saved items. This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => void performDelete(),
+        },
+      ],
+    );
+  }
+
+  async function performDelete() {
+    setLoading(true);
+    try {
+      await authClient.deleteAuthed('/api/v1/me');
+      await signOut();
+      router.replace('/auth/sign-in');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      Alert.alert('Could not delete account', message + '. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -10,15 +59,15 @@ export default function DeleteAccountScreen() {
           This permanently removes your profile and saved items. This action cannot be undone.
         </Text>
         <Pressable
-          style={styles.button}
-          onPress={() => {
-            Alert.alert(
-              'Delete account',
-              'Account deletion endpoint will be connected in a follow-up task.',
-            );
-          }}
+          style={[styles.button, loading && styles.disabled]}
+          disabled={loading}
+          onPress={confirmDelete}
         >
-          <Text style={styles.buttonText}>Delete account</Text>
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.buttonText}>Delete account</Text>
+          )}
         </Pressable>
       </View>
     </SafeAreaView>
@@ -56,5 +105,8 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: typography.body,
+  },
+  disabled: {
+    opacity: 0.6,
   },
 });

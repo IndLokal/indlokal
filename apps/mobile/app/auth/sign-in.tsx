@@ -16,14 +16,21 @@ import { signInWithApple } from '@/lib/auth/apple';
 import { requestMagicLink } from '@/lib/auth/magic';
 import { signInWithGoogleCode, useGoogleCodeFlow } from '@/lib/auth/google';
 import { authFlags } from '@/lib/config/flags';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { LogoMark } from '@/components/Logo';
 import { palette, radius, spacing, typography } from '@/constants/theme';
+import type { AuthTokens } from '@/lib/auth/token-store';
+
+function routeAfterAuth(tokens: AuthTokens) {
+  router.replace(tokens.user.onboardingComplete ? '/(tabs)' : '/auth/onboarding/city');
+}
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  const { onSignIn } = useAuth();
   const googleFlow = useGoogleCodeFlow();
 
   useEffect(() => {
@@ -38,8 +45,9 @@ export default function SignInScreen() {
       redirectUri: googleFlow.redirectUri,
       codeVerifier: googleFlow.request?.codeVerifier,
     })
-      .then(() => {
-        router.replace('/(tabs)');
+      .then((tokens) => {
+        onSignIn(tokens.user);
+        routeAfterAuth(tokens);
       })
       .catch((error: unknown) => {
         const message = error instanceof Error ? error.message : 'Google sign-in failed';
@@ -48,7 +56,7 @@ export default function SignInScreen() {
       .finally(() => {
         setGoogleLoading(false);
       });
-  }, [googleFlow.redirectUri, googleFlow.request?.codeVerifier, googleFlow.response]);
+  }, [googleFlow.redirectUri, googleFlow.request?.codeVerifier, googleFlow.response, onSignIn]);
 
   const canSubmitMagicLink = useMemo(() => email.includes('@'), [email]);
 
@@ -84,8 +92,9 @@ export default function SignInScreen() {
       }
 
       setLoading(true);
-      await signInWithApple(authClient);
-      router.replace('/(tabs)');
+      const tokens = await signInWithApple(authClient);
+      onSignIn(tokens.user);
+      routeAfterAuth(tokens);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Apple sign-in failed';
       Alert.alert('Apple sign-in failed', message);
