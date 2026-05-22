@@ -52,6 +52,7 @@ export async function createReport(
       cityId: cityId ?? null,
       details: input.details ?? null,
       reporterEmail: input.reporterEmail ?? null,
+      reporterUserId: userId,
     },
     select: { id: true, reportType: true, status: true, createdAt: true },
   });

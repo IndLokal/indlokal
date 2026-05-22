@@ -70,3 +70,48 @@ export async function createEvent(
     },
   });
 }
+// ─── User ──────────────────────────────────────────────────────────────────
+
+export async function createUser(db: PrismaClient, overrides: Record<string, unknown> = {}) {
+  return db.user.create({
+    data: {
+      email: 'test-user@example.com',
+      role: 'USER',
+      ...overrides,
+    },
+  });
+}
+
+// ─── RoleAssignment ────────────────────────────────────────────────────────
+
+export async function createRoleAssignment(
+  db: PrismaClient,
+  overrides: { userId: string; grantedBy: string } & Record<string, unknown>,
+) {
+  const { userId, grantedBy, ...rest } = overrides;
+  return db.roleAssignment.create({
+    data: {
+      userId,
+      role: 'CITY_AMBASSADOR',
+      grantedBy,
+      ...rest,
+    },
+  });
+}
+
+// ─── ActivitySignal ────────────────────────────────────────────────────────
+
+export async function createActivitySignal(
+  db: PrismaClient,
+  overrides: { communityId: string } & Record<string, unknown>,
+) {
+  const { communityId, ...rest } = overrides;
+  return db.activitySignal.create({
+    data: {
+      communityId,
+      signalType: 'EVENT_CREATED',
+      occurredAt: new Date(),
+      ...rest,
+    },
+  });
+}
