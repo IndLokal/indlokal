@@ -185,6 +185,36 @@ export async function requireCommunityAdmin() {
   return user;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace cookie — remembers which community is active for multi-org organizers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COMMUNITY_COOKIE = 'lp_community';
+
+/** Return the currently-selected communityId from the workspace cookie, or null */
+export async function getCurrentCommunityId(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(COMMUNITY_COOKIE)?.value ?? null;
+}
+
+/** Persist the active community in a short-lived cookie scoped to /organizer */
+export async function setCurrentCommunityId(communityId: string) {
+  const jar = await cookies();
+  jar.set(COMMUNITY_COOKIE, communityId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/organizer',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
+}
+
+/** Clear the community workspace cookie */
+export async function clearCurrentCommunityId() {
+  const jar = await cookies();
+  jar.delete(COMMUNITY_COOKIE);
+}
+
 /** Clear the session cookie and invalidate the token in the DB */
 export async function clearSessionCookie() {
   const jar = await cookies();

@@ -4,15 +4,14 @@ import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
+import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { ActivitySignalType } from '@prisma/client';
-import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
 
-const addEventSchema = z.object({
+const addHostEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
+  cityId: z.string().min(1),
   startsAt: z
     .string()
     .min(1, 'Start date is required')
@@ -26,40 +25,63 @@ const addEventSchema = z.object({
   venueAddress: z.string().max(500).optional().or(z.literal('')),
   isOnline: z.coerce.boolean().default(false),
   onlineLink: z.string().url().optional().or(z.literal('')),
-  imageUrl: z.string().url().optional().or(z.literal('')),
   registrationUrl: z.string().url().optional().or(z.literal('')),
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
 });
 
-export type AddEventResult =
+export type AddHostEventResult =
   | { success: true; eventSlug: string }
   | { success: false; errors: Record<string, string[]> }
   | null;
 
-export async function addEvent(_prev: AddEventResult, formData: FormData): Promise<AddEventResult> {
+const HOST_UNVERIFIED_CAP = 5;
+
+export async function addHostEvent(
+  _prev: AddHostEventResult,
+  formData: FormData,
+): Promise<AddHostEventResult> {
   const user = await getSessionUser();
-  if (!user || user.claimedCommunities.length === 0) {
-    return { success: false, errors: { _: ['Not authenticated'] } };
+  if (!user || (user.role !== 'EVENT_HOST' && user.role !== 'PLATFORM_ADMIN')) {
+    return { success: false, errors: { _: ['Not authenticated as event host'] } };
   }
-  const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+
+  // Enforce unverified event cap
+  if (user.role === 'EVENT_HOST') {
+    const unverifiedCount = await db.event.count({
+      where: {
+        metadata: { path: ['hostUserId'], equals: user.id },
+        startsAt: { gte: new Date() },
+        status: 'UPCOMING',
+        trustSignals: { none: {} },
+      },
+    });
+    if (unverifiedCount >= HOST_UNVERIFIED_CAP) {
+      return {
+        success: false,
+        errors: {
+          _: [
+            `You have reached the cap of ${HOST_UNVERIFIED_CAP} unverified upcoming events. Please wait for a team member to review your events before posting more.`,
+          ],
+        },
+      };
+    }
+  }
 
   const raw = {
     title: formData.get('title') as string,
     description: (formData.get('description') as string) || '',
+    cityId: formData.get('cityId') as string,
     startsAt: formData.get('startsAt') as string,
     endsAt: (formData.get('endsAt') as string) || '',
     venueName: (formData.get('venueName') as string) || '',
     venueAddress: (formData.get('venueAddress') as string) || '',
     isOnline: formData.get('isOnline') === 'true',
     onlineLink: (formData.get('onlineLink') as string) || '',
-    imageUrl: (formData.get('imageUrl') as string) || '',
     registrationUrl: (formData.get('registrationUrl') as string) || '',
     cost: (formData.get('cost') as string) || 'free',
   };
 
-  const parsed = addEventSchema.safeParse(raw);
+  const parsed = addHostEventSchema.safeParse(raw);
   if (!parsed.success) {
     return {
       success: false,
@@ -69,24 +91,16 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
 
   const data = parsed.data;
 
-  // Validate ordering: endsAt must be after startsAt
-  if (data.endsAt && data.endsAt !== '' && new Date(data.endsAt) <= new Date(data.startsAt)) {
-    return {
-      success: false,
-      errors: { endsAt: ['End time must be after start time'] },
-    };
-  }
-
-  // Generate slug
-  const baseSlug = slugify(data.title, { lower: true, strict: true });
-  const dateStr = new Date(data.startsAt).toISOString().slice(0, 10).replace(/-/g, '');
-  let slug = `${baseSlug}-${dateStr}`;
-
   return withAction(
     async () => {
-      const exists = await db.event.findUnique({ where: { slug } });
-      if (exists) {
-        slug = `${slug}-${Date.now()}`;
+      // Generate a unique slug
+      const baseSlug = slugify(data.title, { lower: true, strict: true });
+      const year = new Date(data.startsAt).getFullYear();
+      let slug = `${baseSlug}-${year}`;
+      const existing = await db.event.findUnique({ where: { slug }, select: { id: true } });
+      if (existing) {
+        const suffix = Math.random().toString(36).slice(2, 6);
+        slug = `${baseSlug}-${year}-${suffix}`;
       }
 
       const event = await db.event.create({
@@ -94,35 +108,30 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           title: data.title,
           slug,
           description: data.description || null,
-          communityId: community.id,
-          cityId: community.city.id,
-          venueName: data.venueName || null,
-          venueAddress: data.venueAddress || null,
+          communityId: null, // host events have no community
+          cityId: data.cityId,
           startsAt: new Date(data.startsAt),
           endsAt: data.endsAt ? new Date(data.endsAt) : null,
+          venueName: data.venueName || null,
+          venueAddress: data.venueAddress || null,
           isOnline: data.isOnline,
           onlineLink: data.onlineLink || null,
-          imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
-          status: 'UPCOMING',
           source: 'COMMUNITY_SUBMITTED',
+          metadata: { hostUserId: user.id },
         },
       });
 
-      await db.activitySignal.create({
-        data: {
-          communityId: community.id,
-          signalType: ActivitySignalType.EVENT_CREATED,
-        },
-      });
+      revalidateTag(`city-events-${data.cityId}`, 'max');
 
-      // Refresh scores so new events immediately affect rankings
-      await refreshCommunityScore(community.id);
-
-      revalidateTag('city-feed', 'max');
-      redirect(`/${community.city.slug}/events/${event.slug}`);
+      redirect(`/organizer/host/events`);
+      return { success: true, eventSlug: event.slug } as AddHostEventResult;
     },
-    () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
+    () =>
+      ({
+        success: false,
+        errors: { _: ['Something went wrong. Please try again.'] },
+      }) as AddHostEventResult,
   );
 }

@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import type { ChannelType } from '@prisma/client';
 
@@ -35,7 +35,9 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
   if (!user || user.claimedCommunities.length === 0) {
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
-  const community = user.claimedCommunities[0];
+  const currentId = await getCurrentCommunityId();
+  const community =
+    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
 
   const parsed = addChannelSchema.safeParse({
     channelType: formData.get('channelType'),
@@ -85,7 +87,9 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
 export async function deleteChannel(formData: FormData) {
   const user = await getSessionUser();
   if (!user || user.claimedCommunities.length === 0) return;
-  const community = user.claimedCommunities[0];
+  const currentId = await getCurrentCommunityId();
+  const community =
+    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
 
   const channelId = formData.get('channelId') as string;
   if (!channelId) return;
