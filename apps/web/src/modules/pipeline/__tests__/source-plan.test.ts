@@ -4,6 +4,7 @@ import type { SearchRegion, SearchStrategy } from '../types';
 const mocks = vi.hoisted(() => ({
   findCities: vi.fn(),
   groupCommunities: vi.fn(),
+  groupEvents: vi.fn(),
   getKeywordStrategies: vi.fn(),
   getPinnedStrategies: vi.fn(),
   getDbCommunityStrategies: vi.fn(),
@@ -14,6 +15,7 @@ vi.mock('@/lib/db', () => ({
   db: {
     city: { findMany: mocks.findCities },
     community: { groupBy: mocks.groupCommunities },
+    event: { groupBy: mocks.groupEvents },
   },
 }));
 
@@ -90,6 +92,7 @@ describe('buildPipelineSourcePlan', () => {
     mocks.getPinnedStrategies.mockReturnValue([]);
     mocks.getDbCommunityStrategies.mockResolvedValue([]);
     mocks.getApprovedDynamicKeywords.mockResolvedValue([]);
+    mocks.groupEvents.mockResolvedValue([]);
   });
 
   afterAll(() => {
@@ -107,6 +110,10 @@ describe('buildPipelineSourcePlan', () => {
       { cityId: 'city-1', _count: { _all: 5 } },
       { cityId: 'city-2', _count: { _all: 4 } },
     ]);
+    mocks.groupEvents.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 3 } },
+      { cityId: 'city-2', _count: { _all: 3 } },
+    ]);
 
     const plan = await buildPipelineSourcePlan(regions, 'cli');
 
@@ -122,11 +129,22 @@ describe('buildPipelineSourcePlan', () => {
       { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
       { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
     ]);
-    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 4 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
 
     const plan = await buildPipelineSourcePlan(regions, 'cli');
 
-    expect(plan.cityGaps).toEqual([{ slug: 'karlsruhe', name: 'Karlsruhe', communityCount: 0 }]);
+    expect(plan.cityGaps).toEqual([
+      {
+        slug: 'karlsruhe',
+        name: 'Karlsruhe',
+        communityCount: 4,
+        upcomingEventCount: 0,
+      },
+    ]);
     expect(plan.keywordStrategies).toHaveLength(1);
     expect(plan.keywordStrategies[0]?.id).toBe('duckduckgo-keyword');
     expect(plan.keywordStrategies[0]?.keywords).toContain('Indian event Karlsruhe');
@@ -147,6 +165,7 @@ describe('buildPipelineSourcePlan', () => {
       { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
     ]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
 
     const plan = await buildPipelineSourcePlan(regions, 'cli');
 
@@ -162,6 +181,7 @@ describe('buildPipelineSourcePlan', () => {
     process.env.PIPELINE_DB_PINNED_LIMIT = '2';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
     mocks.getDbCommunityStrategies.mockResolvedValue([
       {
         id: 'community-homepage',
@@ -204,6 +224,7 @@ describe('buildPipelineSourcePlan', () => {
     process.env.PIPELINE_DB_PINNED_LIMIT = '3';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
     mocks.getDbCommunityStrategies.mockResolvedValue([
       {
         id: 'community-past-events',
@@ -245,6 +266,185 @@ describe('buildPipelineSourcePlan', () => {
       'community-upcoming-events',
       'community-2025-schedule',
       'community-past-events',
+    ]);
+  });
+
+  it('spreads capped DB pinned sources across cities instead of letting one city dominate', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.PIPELINE_DB_PINNED_LIMIT = '3';
+    mocks.findCities.mockResolvedValue([
+      { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+      { id: 'city-2', slug: 'frankfurt', name: 'Frankfurt' },
+    ]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 6 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 3 } },
+      { cityId: 'city-2', _count: { _all: 3 } },
+    ]);
+    mocks.getDbCommunityStrategies.mockResolvedValue([
+      {
+        id: 'stuttgart-events',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'Stuttgart events',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://stuttgart.example.org/events',
+      },
+      {
+        id: 'stuttgart-homepage',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'Stuttgart homepage',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://stuttgart.example.org/',
+      },
+      {
+        id: 'stuttgart-about',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'Stuttgart about',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://stuttgart.example.org/about',
+      },
+      {
+        id: 'frankfurt-events',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'Frankfurt events',
+        enabled: true,
+        hintCitySlug: 'frankfurt',
+        url: 'https://frankfurt.example.org/events',
+      },
+    ]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    expect(plan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'stuttgart-events',
+      'frankfurt-events',
+      'stuttgart-homepage',
+    ]);
+  });
+
+  it('spreads capped DB pinned sources across communities within the same city', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.PIPELINE_DB_PINNED_LIMIT = '2';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+    mocks.getDbCommunityStrategies.mockResolvedValue([
+      {
+        id: 'db-jito-stuttgart-website-events',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'JITO Stuttgart events',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://jitostuttgart.de/events/',
+      },
+      {
+        id: 'db-jito-stuttgart-website',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'JITO Stuttgart homepage',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://jitostuttgart.de/',
+      },
+      {
+        id: 'db-tamil-sangam-stuttgart-website-events',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'Tamil Sangam Stuttgart events',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://tamil.example.org/events/',
+      },
+    ]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    expect(plan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'db-jito-stuttgart-website-events',
+      'db-tamil-sangam-stuttgart-website-events',
+    ]);
+  });
+
+  it('prefers future event detail pages over generic event listings for the same community', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.PIPELINE_DB_PINNED_LIMIT = '1';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+    mocks.getDbCommunityStrategies.mockResolvedValue([
+      {
+        id: 'db-jito-stuttgart-website-events',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'JITO Stuttgart (/events/)',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://jitostuttgart.de/events/',
+      },
+      {
+        id: 'db-jito-stuttgart-website-jito-stuttgart-summit-2026',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'JITO Stuttgart (/jito-stuttgart-summit-2026/)',
+        enabled: true,
+        hintCitySlug: 'stuttgart',
+        url: 'https://jitostuttgart.de/jito-stuttgart-summit-2026/',
+      },
+    ]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    expect(plan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'db-jito-stuttgart-website-jito-stuttgart-summit-2026',
+    ]);
+  });
+
+  it('prioritizes event-starved metro cities ahead of empty satellites in the gap list', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    const broaderRegions: SearchRegion[] = [
+      {
+        id: 'mixed',
+        label: 'Mixed',
+        searchCenter: 'Germany',
+        citySlugs: ['stuttgart', 'munich', 'frankfurt', 'bad-homburg'],
+        enabled: true,
+      },
+    ];
+
+    mocks.findCities.mockResolvedValue([
+      { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart', isMetroPrimary: true },
+      { id: 'city-2', slug: 'munich', name: 'Munich', isMetroPrimary: true },
+      { id: 'city-3', slug: 'frankfurt', name: 'Frankfurt', isMetroPrimary: true },
+      { id: 'city-4', slug: 'bad-homburg', name: 'Bad Homburg', isMetroPrimary: false },
+    ]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 5 } },
+      { cityId: 'city-3', _count: { _all: 9 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+
+    const plan = await buildPipelineSourcePlan(broaderRegions, 'cron');
+
+    expect(plan.cityGaps.slice(0, 3).map((city) => city.slug)).toEqual([
+      'frankfurt',
+      'munich',
+      'bad-homburg',
     ]);
   });
 });

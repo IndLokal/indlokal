@@ -240,6 +240,8 @@ CRITICAL RULES:
 - cityName: Extract the city from venue address, page content, or event location. Output the city NAME (e.g. "Stuttgart", "München", "Amsterdam"), NOT a slug.
 - categories: Use ONLY from this list: ${CATEGORY_LIST}
 - dates: Convert DD.MM.YYYY → YYYY-MM-DD. Use current year (${new Date().getFullYear()}) if missing.
+- Registration forms, RSVP pages, agenda pages, and single-event landing pages are still EVENTs when they clearly name one event and date. Do not skip them just because much of the page is form fields or boilerplate.
+- If the current page URL is the event or registration page, use that same URL as registrationUrl. Do not replace it with unrelated navigation links from the page.
 - If an item contains BOTH event and community data, return separate entries for each.
 - If an item has no extractable event or community, return {"index": N, "type": "SKIP", "reason": "..."}.
 - confidence: 0.0-1.0. Lower if fields are inferred rather than explicit.
@@ -330,16 +332,60 @@ async function extractBatchCallOnce(
 
   return parsed.items
     .filter((item) => item.type === 'EVENT' || item.type === 'COMMUNITY')
-    .map((item) => {
-      const sourceIndex = typeof item.index === 'number' ? item.index : startIndex;
-      if (item.type === 'EVENT') {
-        return { ...normalizeEvent(item), sourceIndex };
-      }
-      return { ...normalizeCommunity(item), sourceIndex };
-    });
+    .map((item) => normalizeParsedItem(item, startIndex, batch.length));
 }
 
 // ─── Normalizers ───────────────────────────────────────
+
+function hasNonEmptyString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function shouldNormalizeAsEvent(raw: Record<string, unknown>): boolean {
+  if (raw.type === 'EVENT') return true;
+  if (raw.type !== 'COMMUNITY') return false;
+
+  const eventSignalCount = [
+    raw.title,
+    raw.date,
+    raw.time,
+    raw.endDate,
+    raw.endTime,
+    raw.registrationUrl,
+    raw.venueName,
+    raw.venueAddress,
+    raw.hostCommunity,
+  ].filter(hasNonEmptyString).length;
+
+  return hasNonEmptyString(raw.title) && hasNonEmptyString(raw.date) && eventSignalCount >= 3;
+}
+
+function normalizeParsedItem(
+  raw: Record<string, unknown> & { index?: number; type?: string },
+  startIndex: number,
+  batchLength = 1,
+): ExtractedData & { sourceIndex: number } {
+  const sourceIndex = normalizeSourceIndex(raw.index, startIndex, batchLength);
+  if (shouldNormalizeAsEvent(raw)) {
+    return { ...normalizeEvent(raw), sourceIndex };
+  }
+  return { ...normalizeCommunity(raw), sourceIndex };
+}
+
+function normalizeSourceIndex(index: unknown, startIndex: number, batchLength: number): number {
+  if (typeof index !== 'number' || !Number.isInteger(index)) return startIndex;
+  if (index >= startIndex && index < startIndex + batchLength) return index;
+  if (index >= 0 && index < batchLength) return startIndex + index;
+  return startIndex;
+}
+
+export function normalizeParsedItemForTest(
+  raw: Record<string, unknown> & { index?: number; type?: string },
+  startIndex = 0,
+  batchLength = 1,
+): ExtractedData & { sourceIndex: number } {
+  return normalizeParsedItem(raw, startIndex, batchLength);
+}
 
 function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
   return {
