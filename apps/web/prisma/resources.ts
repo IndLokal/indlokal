@@ -135,6 +135,33 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
       'Baden-Württemberg falls under the jurisdiction of the Consulate General of India, Munich. There is no full consulate in Stuttgart. For urgent assistance, contact CGI Munich directly.',
   },
   {
+    title: 'Frankfurt Welcome & Information Center',
+    slug: 'frankfurt-welcome-information-center',
+    resourceType: 'GOVERNMENT_INFO',
+    url: 'https://frankfurt-welcome-information-center.de/',
+    citySlug: 'frankfurt',
+    description:
+      "Official city service from Frankfurt's Office for Multicultural Affairs (AmkA) for arrival guidance, orientation and referrals on residence, work, family, health and language support.",
+  },
+  {
+    title: 'Frankfurt Service Portal — Bürgeramt & Online Appointments',
+    slug: 'frankfurt-service-rathaus-portal',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://frankfurt.de/service-und-rathaus/service',
+    citySlug: 'frankfurt',
+    description:
+      'Official Frankfurt city portal for resident services, forms and appointment booking. Use this as the primary entry point for Anmeldung-related and other Bürgeramt procedures.',
+  },
+  {
+    title: 'Frankfurt Immigration Office (Ausländerangelegenheiten)',
+    slug: 'frankfurt-auslaenderangelegenheiten',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://frankfurt.de/auslaenderangelegenheiten',
+    citySlug: 'frankfurt',
+    description:
+      'Official Frankfurt immigration office information page for residence permits, visa extensions and related foreigner authority processes. Check current requirements before appointments.',
+  },
+  {
     title: 'CGI Munich — Republic Day & Independence Day Celebrations',
     slug: 'cgi-munich-national-day-celebrations',
     resourceType: 'OFFICIAL_EVENT',
