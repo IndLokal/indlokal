@@ -46,10 +46,10 @@
  *    organiser's personal email or phone unless it is already published on
  *    the org's own public website.
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
- * 5. Idempotent and create-only. Existing rows are NEVER updated by this
- *    script — admin/organiser edits must survive every redeploy.
- *    Exception: unclaimed ADMIN_SEED rows with weak, stale, or retired evidence
- *    are moved to INACTIVE so production does not keep showing known-bad seed data.
+ * 5. Idempotent and create-only. Existing rows are NEVER updated or retired by
+ *    this script — admin/organiser edits must survive every redeploy. Live-data
+ *    cleanup must happen via the explicit seed-cleanup script, never as an
+ *    implicit side effect of editing this file.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
  *    derives those from real signals.
  *
@@ -68,18 +68,6 @@ import { runResourcesSeed, type ResourcesResult } from './resources';
 import { assessEvidenceUrl } from '../src/lib/source-policy';
 
 const prisma = new PrismaClient();
-const RETIRED_DIRECTORY_SLUGS = [
-  {
-    slug: 'dig-munich',
-    reason:
-      'Retired by directory seed: local DIG Munich domain is parked and no replacement qualifying source is currently verified.',
-  },
-  {
-    slug: 'hindu-mandir-frankfurt',
-    reason:
-      'Retired by directory seed: public website did not resolve during source audit and no replacement qualifying source is currently verified.',
-  },
-] as const;
 
 export type DirectoryChannel = {
   channelType: ChannelType;
@@ -650,59 +638,8 @@ export type DirectoryResult = {
   totalCreated: number;
   totalSkipped: number;
   totalInvalid: number;
-  retiredInvalidExisting: number;
   resources: ResourcesResult;
 };
-
-function getMetadataString(metadata: unknown, key: string): string | null {
-  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
-  const value = (metadata as Record<string, unknown>)[key];
-  return typeof value === 'string' ? value : null;
-}
-
-async function retireInvalidExistingSeedRows(activeSeedSlugs: Set<string>): Promise<number> {
-  const retiredReasonBySlug = new Map(
-    RETIRED_DIRECTORY_SLUGS.map((retired) => [retired.slug, retired.reason]),
-  ) as Map<string, string>;
-  const candidates = await prisma.community.findMany({
-    where: {
-      source: 'ADMIN_SEED',
-      claimState: 'UNCLAIMED',
-      status: { not: 'INACTIVE' },
-    },
-    select: { id: true, slug: true, metadata: true },
-  });
-
-  let retired = 0;
-  for (const candidate of candidates) {
-    const retiredReason = retiredReasonBySlug.get(candidate.slug);
-    if (retiredReason) {
-      await prisma.community.update({
-        where: { id: candidate.id },
-        data: { status: 'INACTIVE' },
-      });
-      retired++;
-      continue;
-    }
-
-    if (activeSeedSlugs.has(candidate.slug)) continue;
-
-    const editorialSource = getMetadataString(candidate.metadata, 'editorialSource');
-    if (editorialSource !== 'directory-seed') continue;
-
-    const sourceUrl = getMetadataString(candidate.metadata, 'sourceUrl');
-    const evidence = sourceUrl ? assessEvidenceUrl(sourceUrl) : null;
-    if (evidence?.isQualifying) continue;
-
-    await prisma.community.update({
-      where: { id: candidate.id },
-      data: { status: 'INACTIVE' },
-    });
-    retired++;
-  }
-
-  return retired;
-}
 
 async function insertEntry(
   entry: DirectoryEntry,
@@ -790,14 +727,11 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     totalCreated: 0,
     totalSkipped: 0,
     totalInvalid: 0,
-    retiredInvalidExisting: 0,
     resources: {
       created: 0,
       skippedExisting: 0,
       skippedMissingCity: 0,
       skippedInvalid: 0,
-      hiddenInvalidExisting: 0,
-      hiddenRetiredExisting: 0,
     },
   };
 
@@ -829,13 +763,6 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     result.totalInvalid += tally.skippedInvalid;
   }
 
-  const activeSeedSlugs = new Set(
-    Object.values(METRO_DIRECTORIES)
-      .flat()
-      .map((entry) => entry.slug),
-  );
-  result.retiredInvalidExisting = await retireInvalidExistingSeedRows(activeSeedSlugs);
-
   // Resources are part of the same editorial tier — same hard rules,
   // same create-only / idempotent contract. One env flag, one build step.
   result.resources = await runResourcesSeed();
@@ -857,13 +784,8 @@ async function main() {
   console.log(
     `   ─── totals: ${r.totalCreated} new community rows, ${r.totalSkipped} preserved, ${r.totalInvalid} invalid skipped`,
   );
-  if (r.retiredInvalidExisting > 0) {
-    console.log(
-      `   retired ${r.retiredInvalidExisting} existing unclaimed rows with weak evidence`,
-    );
-  }
   console.log(
-    `   resources    created ${r.resources.created}, skipped ${r.resources.skippedExisting} (already present)${r.resources.skippedMissingCity ? `, ${r.resources.skippedMissingCity} missing city` : ''}${r.resources.skippedInvalid ? `, ${r.resources.skippedInvalid} invalid` : ''}${r.resources.hiddenInvalidExisting ? `, ${r.resources.hiddenInvalidExisting} hidden invalid existing` : ''}${r.resources.hiddenRetiredExisting ? `, ${r.resources.hiddenRetiredExisting} hidden retired existing` : ''}\n`,
+    `   resources    created ${r.resources.created}, skipped ${r.resources.skippedExisting} (already present)${r.resources.skippedMissingCity ? `, ${r.resources.skippedMissingCity} missing city` : ''}${r.resources.skippedInvalid ? `, ${r.resources.skippedInvalid} invalid` : ''}\n`,
   );
 }
 

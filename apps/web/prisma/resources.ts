@@ -17,10 +17,9 @@
  * 2. Every resource needs evidence: either a public `url` or an official
  *    evidence URL from the resource-type fallback table below. Never republish
  *    copyrighted prose without attribution.
- * 3. Idempotent and create-only. Existing rows are NEVER updated by this
- *    script — admin edits must survive every redeploy. Exception: invalid
- *    ADMIN_SEED resources without qualifying evidence are hidden, not deleted,
- *    so production keeps an audit trail.
+ * 3. Idempotent and create-only. Existing rows are NEVER updated or hidden by
+ *    this script — admin edits must survive every redeploy. Live-data cleanup
+ *    belongs in the explicit seed-cleanup script, not in this seed runner.
  * 4. No personal data. No event dates that go stale.
  * 5. When facts change (fees, deadlines, addresses), update via the admin
  *    UI in prod or fix here and bump the slug — do NOT silently rewrite
@@ -37,13 +36,6 @@ const prisma = new PrismaClient();
 
 const SEED_REVIEWED_AT = new Date('2026-05-22T00:00:00.000Z');
 const DEFAULT_REVIEW_CADENCE_DAYS = 180;
-
-const RETIRED_RESOURCE_SLUGS = [
-  {
-    slug: 'cgi-munich-cultural-night-2026',
-    reason: 'Renamed to cgi-munich-national-day-celebrations to avoid event-like dated seed slugs.',
-  },
-] as const;
 
 const RESOURCE_TYPE_EVIDENCE_URLS: Partial<Record<ResourceType, string[]>> = {
   CONSULAR_SERVICE: ['https://www.cgimunich.gov.in/pages/Mjc2'],
@@ -475,8 +467,6 @@ export type ResourcesResult = {
   skippedExisting: number;
   skippedMissingCity: number;
   skippedInvalid: number;
-  hiddenInvalidExisting: number;
-  hiddenRetiredExisting: number;
 };
 
 function evidenceUrlsFor(entry: ResourceEntry): string[] {
@@ -487,26 +477,12 @@ function evidenceUrlsFor(entry: ResourceEntry): string[] {
   ].filter((url): url is string => Boolean(url));
 }
 
-async function hideRetiredResourceSlugs(): Promise<number> {
-  let hidden = 0;
-  for (const retired of RETIRED_RESOURCE_SLUGS) {
-    const result = await prisma.resource.updateMany({
-      where: { slug: retired.slug, source: 'ADMIN_SEED', isHidden: false },
-      data: { isHidden: true, hiddenReason: retired.reason },
-    });
-    hidden += result.count;
-  }
-  return hidden;
-}
-
 export async function runResourcesSeed(): Promise<ResourcesResult> {
   const result: ResourcesResult = {
     created: 0,
     skippedExisting: 0,
     skippedMissingCity: 0,
     skippedInvalid: 0,
-    hiddenInvalidExisting: 0,
-    hiddenRetiredExisting: 0,
   };
 
   const cities = await prisma.city.findMany({ select: { id: true, slug: true } });
@@ -520,14 +496,6 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       console.warn(
         `  ⚠ ${entry.slug}: missing qualifying resource evidence${firstAssessment ? ` (${firstAssessment.label})` : ''} — skipped`,
       );
-      const hidden = await prisma.resource.updateMany({
-        where: { slug: entry.slug, source: 'ADMIN_SEED', isHidden: false },
-        data: {
-          isHidden: true,
-          hiddenReason: 'Hidden by resources seed: missing qualifying source evidence.',
-        },
-      });
-      result.hiddenInvalidExisting += hidden.count;
       result.skippedInvalid++;
       continue;
     }
@@ -585,8 +553,6 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
     }
   }
 
-  result.hiddenRetiredExisting = await hideRetiredResourceSlugs();
-
   return result;
 }
 
@@ -602,14 +568,6 @@ async function main() {
   }
   if (r.skippedInvalid > 0) {
     console.log(`   ⚠ ${r.skippedInvalid} skipped because source evidence was missing/weak`);
-  }
-  if (r.hiddenInvalidExisting > 0) {
-    console.log(
-      `   hidden ${r.hiddenInvalidExisting} existing ADMIN_SEED resources with weak evidence`,
-    );
-  }
-  if (r.hiddenRetiredExisting > 0) {
-    console.log(`   hidden ${r.hiddenRetiredExisting} retired ADMIN_SEED resources`);
   }
 }
 
