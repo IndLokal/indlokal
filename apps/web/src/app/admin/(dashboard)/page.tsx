@@ -55,6 +55,11 @@ export default function AdminDashboardPage() {
           description="Lead pipeline for community onboarding across cities"
           href="/admin/outreach"
         />
+        <DashboardCard
+          title="Audit Log"
+          description="Who changed what, when — full write history across all entities"
+          href="/admin/audit"
+        />
       </div>
     </div>
   );
@@ -90,4 +95,5 @@ export const ADMIN_NAV_LINKS = [
   { href: '/admin/pipeline', label: 'Pipeline' },
   { href: '/admin/merge', label: 'Merge' },
   { href: '/admin/team', label: 'Team' },
+  { href: '/admin/audit', label: 'Audit' },
 ];
