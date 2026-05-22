@@ -106,7 +106,7 @@ You will receive a numbered list of content snippets from various sources (Event
 
 For EACH item, decide: is this relevant to the Indian/South Asian diaspora?
 
-RELEVANT examples: Indian cultural events, Bollywood dance, Diwali celebrations, Tamil Sangam meetings, Indian student associations, cricket clubs with Indian members, yoga events by Indian teachers, Indian food festivals, consular services for Indian citizens, community meetups, Jain Sangh gatherings, JITO events, Telugu/Bengali/Odia association events, religious gatherings (Janma Kalyanak, Paryushana, Baisakhi), WhatsApp-based community groups.
+RELEVANT examples: Indian cultural events, Bollywood dance, Diwali celebrations, Tamil Sangam meetings, Indian student associations, cricket clubs with Indian members, yoga events by Indian teachers, Indian food festivals, consular services for Indian citizens, community meetups, Jain Sangh gatherings, JITO events, Telugu/Bengali/Odia association events, religious gatherings (Janma Kalyanak, Paryushana, Baisakhi), registered legal entities (e.V., gUG/UG, gGmbH), and city/umbrella portal listings for migrant associations.
 
 NOT RELEVANT: Indian restaurants (commercial), generic "curry" cooking classes not community-run, events that mention India incidentally, non-diaspora cultural events.
 
@@ -209,12 +209,12 @@ For EACH item, extract structured data and determine the city. Return JSON:
 CRITICAL RULES:
 - cityName: Extract the city from venue address, page content, or event location. Output the city NAME (e.g. "Stuttgart", "München", "Amsterdam"), NOT a slug.
 - categories: Use ONLY from this list: ${CATEGORY_LIST}
-- dates: Convert DD.MM.YYYY → YYYY-MM-DD. Use current year (2026) if missing.
+- dates: Convert DD.MM.YYYY → YYYY-MM-DD. Use current year (${new Date().getFullYear()}) if missing.
 - If an item contains BOTH event and community data, return separate entries for each.
 - If an item has no extractable event or community, return {"index": N, "type": "SKIP", "reason": "..."}.
 - confidence: 0.0-1.0. Lower if fields are inferred rather than explicit.
-- WhatsApp-only communities are VALID — extract whatsappUrl if present. Many diaspora communities (JITO, regional Sangams, religious groups) operate primarily via WhatsApp.
-- Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V. — these are community organisers, not just event names.`;
+- Extract WhatsApp/Telegram links if present, but do not treat them as sufficient proof for a community. Prefer websiteUrl, registry/institutional listing, or a public organiser page as the evidence anchor.
+- Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V., gUG, UG (haftungsbeschränkt), gGmbH — these are community organisers, not just event names.`;
 
 /**
  * Stage 2: Extract structured data from pre-filtered relevant items.

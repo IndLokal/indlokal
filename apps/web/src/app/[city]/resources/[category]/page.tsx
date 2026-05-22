@@ -47,6 +47,7 @@ export default async function ResourceCategoryPage({ params }: Props) {
     where: {
       cityId: { in: cityIds },
       resourceType: resourceType as ResourceType,
+      isHidden: false,
       OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
     },
     orderBy: { title: 'asc' },

@@ -124,6 +124,33 @@ describe('GET /api/v1/cities/:slug/resources', () => {
     );
   });
 
+  it('does not return hidden resources', async () => {
+    await testDb.resource.create({
+      data: {
+        title: 'Visible Guide',
+        slug: 'visible-guide',
+        resourceType: 'CITY_REGISTRATION',
+        cityId,
+      },
+    });
+    await testDb.resource.create({
+      data: {
+        title: 'Hidden Guide',
+        slug: 'hidden-guide',
+        resourceType: 'CITY_REGISTRATION',
+        cityId,
+        isHidden: true,
+        hiddenReason: 'weak source evidence',
+      },
+    });
+
+    const res = await makeResourcesRequest(citySlug);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+    expect(body[0].slug).toBe('visible-guide');
+  });
+
   it('filters by type parameter (enum value)', async () => {
     await testDb.resource.create({
       data: {

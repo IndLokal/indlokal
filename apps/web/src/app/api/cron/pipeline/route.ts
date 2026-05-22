@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const result = await runPipeline();
+    const result = await runPipeline('cron');
     return NextResponse.json({ ok: true, result });
   } catch (err) {
     console.error('[cron/pipeline]', err);

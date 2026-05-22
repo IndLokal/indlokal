@@ -13,7 +13,7 @@
 
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { jwtVerify } from 'jose';
 import { auth as authContracts } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
@@ -21,24 +21,11 @@ import { apiHandler } from '@/lib/api/handlers';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { issueRefreshToken } from '@/lib/auth/refresh';
 import { toMeProfile } from '@/lib/auth/profile';
+import { getAppleJwks } from './jwks';
 
 export const runtime = 'nodejs';
 
 const APPLE_ISSUER = 'https://appleid.apple.com';
-const APPLE_JWKS_URL = new URL('https://appleid.apple.com/auth/keys');
-
-let jwks: ReturnType<typeof createRemoteJWKSet> | null = null;
-function getAppleJwks() {
-  jwks ??= createRemoteJWKSet(APPLE_JWKS_URL);
-  return jwks;
-}
-
-/** Test-only: swap the JWKS resolver. */
-export function __setAppleJwksForTests(
-  override: ReturnType<typeof createRemoteJWKSet> | null,
-): void {
-  jwks = override;
-}
 
 export const POST = apiHandler(async (req: NextRequest) => {
   const audience = process.env.APPLE_CLIENT_ID;

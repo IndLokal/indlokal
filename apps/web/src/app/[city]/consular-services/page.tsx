@@ -54,6 +54,7 @@ export default async function ConsularServicesPage({ params }: Props) {
   const resources = await db.resource.findMany({
     where: {
       cityId: { in: cityIds },
+      isHidden: false,
       resourceType: {
         in: ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'],
       },

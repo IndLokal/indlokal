@@ -15,7 +15,8 @@ vi.mock('@/lib/db', async (importOriginal) => {
   return { ...mod, db: testDb };
 });
 
-const { POST, __setAppleJwksForTests } = await import('../route');
+const { POST } = await import('../route');
+const { __setAppleJwksForTests } = await import('../jwks');
 
 const APPLE_AUD = 'com.indlokal.app';
 const APPLE_ISS = 'https://appleid.apple.com';

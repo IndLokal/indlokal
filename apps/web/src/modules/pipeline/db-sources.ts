@@ -15,6 +15,90 @@
 import { db } from '@/lib/db';
 import type { SearchStrategy } from './types';
 
+// Keywords that suggest a page lists events, regardless of language.
+// Matched against both the URL path and the visible link text.
+const EVENT_LINK_KEYWORDS =
+  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on/i;
+
+/**
+ * Remove HTML tags from a string using repeated replacement until stable.
+ * This avoids incomplete multi-character sanitization edge cases where
+ * dangerous fragments can reappear after a single pass.
+ */
+function stripHtmlTags(input: string): string {
+  let current = input;
+  let previous: string;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]+>/g, '');
+  } while (current !== previous);
+  return current;
+}
+
+/**
+ * Fetch a community homepage and extract internal links that look like they
+ * lead to an events or programme page.
+ *
+ * Strategy:
+ *  - Parse all <a href> tags from the HTML
+ *  - Keep only same-host links (not external)
+ *  - Score each by whether the URL path and/or link text matches event keywords
+ *  - Return the top 5 highest-scored URLs
+ *
+ * Returns [] on any fetch/parse failure — caller must handle gracefully.
+ */
+async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
+  try {
+    const res = await fetch(websiteUrl, {
+      headers: { 'User-Agent': 'IndLokal-ContentBot/1.0 (+https://indlokal.de)' },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) return [];
+
+    const html = await res.text();
+    const parsed = new URL(websiteUrl);
+
+    // Match <a href="...">link text</a> — captures href and inner content
+    const linkPattern =
+      /<a\b[^>]*?\bhref=(?:"([^"#][^"]*?)"|'([^'#][^']*?)'|([^\s>"'#][^\s>]*))[^>]*>([\s\S]*?)<\/a>/gi;
+
+    const scored = new Map<string, number>(); // canonical URL → best score
+
+    for (const match of html.matchAll(linkPattern)) {
+      const rawHref = match[1] ?? match[2] ?? match[3];
+      const rawText = stripHtmlTags(match[4] ?? '').trim();
+      if (!rawHref) continue;
+
+      let resolved: URL;
+      try {
+        resolved = new URL(rawHref, websiteUrl);
+      } catch {
+        continue;
+      }
+
+      // Internal links only; skip root and the current page
+      if (resolved.hostname !== parsed.hostname) continue;
+      if (resolved.pathname === '/' || resolved.pathname === parsed.pathname) continue;
+
+      const pathMatch = EVENT_LINK_KEYWORDS.test(resolved.pathname);
+      const textMatch = EVENT_LINK_KEYWORDS.test(rawText);
+      if (!pathMatch && !textMatch) continue;
+
+      // Score: path match worth more (reliable signal) than link text
+      const score = (pathMatch ? 2 : 0) + (textMatch ? 1 : 0);
+      const key = resolved.origin + resolved.pathname; // ignore query/hash
+      if ((scored.get(key) ?? 0) < score) scored.set(key, score);
+    }
+
+    return [...scored.entries()]
+      .sort(([, a], [, b]) => b - a)
+      .slice(0, 5)
+      .map(([url]) => url);
+  } catch {
+    return [];
+  }
+}
+
 /**
  * Query the database for all active communities with scrapeable access channels,
  * and return a SearchStrategy[] of pinned_url entries.
@@ -45,18 +129,72 @@ export async function getDbCommunityStrategies(): Promise<
 
   const strategies: (SearchStrategy & { kind: 'pinned_url' })[] = [];
 
+  // Phase 1: generate all strategies that don't require extra HTTP fetches
+  // (Meetup events pages + Website homepages), and collect the Website channels
+  // whose homepages we need to crawl for event-sub-page links.
+  type WebsiteJob = { community: (typeof communities)[number]; url: string };
+  const websiteJobs: WebsiteJob[] = [];
+
   for (const community of communities) {
     for (const channel of community.accessChannels) {
-      // Skip empty/invalid URLs
-      if (!channel.url || !channel.url.startsWith('http')) continue;
+      if (!channel.url?.startsWith('http')) continue;
 
+      const base = channel.url.replace(/\/$/, '');
+
+      if (channel.channelType === 'MEETUP') {
+        // Scrape /events/ — the group homepage has org info (→ COMMUNITY,
+        // deduped); the events page has upcoming event listings (→ EVENTs).
+        const eventsUrl = base.endsWith('/events') ? `${base}/` : `${base}/events/`;
+        strategies.push({
+          id: `db-${community.slug}-meetup`,
+          sourceType: 'DB_COMMUNITY',
+          kind: 'pinned_url',
+          label: `${community.name} (Meetup events)`,
+          url: eventsUrl,
+          hintCitySlug: community.city.slug,
+          enabled: true,
+        });
+      } else {
+        // Homepage: always include (useful for community discovery)
+        strategies.push({
+          id: `db-${community.slug}-website`,
+          sourceType: 'DB_COMMUNITY',
+          kind: 'pinned_url',
+          label: `${community.name} (website)`,
+          url: channel.url,
+          hintCitySlug: community.city.slug,
+          enabled: true,
+        });
+        // Queue this channel for parallel event-link discovery below
+        websiteJobs.push({ community, url: channel.url });
+      }
+    }
+  }
+
+  // Phase 2: discover event sub-pages from all WEBSITE homepages in parallel.
+  // Running these concurrently instead of sequentially avoids adding 10-30s
+  // of serial HTTP latency before the pipeline main fetch phase starts.
+  const discoveryResults = await Promise.allSettled(
+    websiteJobs.map(({ url }) => discoverEventLinks(url)),
+  );
+
+  for (let i = 0; i < websiteJobs.length; i++) {
+    const job = websiteJobs[i];
+    const outcome = discoveryResults[i];
+    if (!job || outcome?.status !== 'fulfilled') continue;
+
+    for (const eventUrl of outcome.value) {
+      const pathKey = new URL(eventUrl).pathname
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30);
       strategies.push({
-        id: `db-${community.slug}-${channel.channelType.toLowerCase()}`,
+        id: `db-${job.community.slug}-website-${pathKey}`,
         sourceType: 'DB_COMMUNITY',
         kind: 'pinned_url',
-        label: `${community.name} (${channel.channelType})`,
-        url: channel.url,
-        hintCitySlug: community.city.slug,
+        label: `${job.community.name} (${new URL(eventUrl).pathname})`,
+        url: eventUrl,
+        hintCitySlug: job.community.city.slug,
         enabled: true,
       });
     }

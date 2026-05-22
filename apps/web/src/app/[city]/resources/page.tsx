@@ -52,6 +52,7 @@ export default async function ResourcesHubPage({ params }: Props) {
     by: ['resourceType'],
     where: {
       cityId: { in: cityIds },
+      isHidden: false,
       OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
     },
     _count: true,
@@ -66,6 +67,7 @@ export default async function ResourcesHubPage({ params }: Props) {
     where: {
       slug: { in: POPULAR_GUIDES.map((g) => g.slug) },
       cityId: { in: cityIds },
+      isHidden: false,
     },
     select: { slug: true, resourceType: true },
   });
@@ -75,6 +77,7 @@ export default async function ResourcesHubPage({ params }: Props) {
   const consularCount = await db.resource.count({
     where: {
       cityId: { in: cityIds },
+      isHidden: false,
       resourceType: {
         in: ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'],
       },

@@ -10,6 +10,11 @@
  *   - All categories + personas defined in CATEGORY_TAXONOMY / PERSONA_TAXONOMY
  *   - The platform admin user (email from ADMIN_EMAIL env, default admin@indlokal.com)
  *
+ * Data-quality boundary:
+ *   - Bootstrap is structural reference data only.
+ *   - Do not add communities, resources, events, or externally sourced facts here.
+ *     Those belong in directory.ts/resources.ts where source evidence is enforced.
+ *
  * Run manually:   pnpm --filter web db:bootstrap
  * Run on deploy:  set RUN_BOOTSTRAP_SEED=true in Vercel env (build script
  *                 invokes scripts/maybe-bootstrap.cjs which calls this).

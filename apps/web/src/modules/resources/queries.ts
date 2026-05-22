@@ -10,6 +10,10 @@ export interface ResourceRow {
   description: string | null;
   validFrom: Date | null;
   validUntil: Date | null;
+  isHidden: boolean;
+  hiddenReason: string | null;
+  lastReviewedAt: Date | null;
+  reviewCadenceDays: number;
   metadata: unknown;
   createdAt: Date;
 }
@@ -28,6 +32,7 @@ export async function getResourcesByCity(
   return db.resource.findMany({
     where: {
       cityId: city.id,
+      isHidden: false,
       ...(type && { resourceType: type }),
     },
     select: {
@@ -39,6 +44,10 @@ export async function getResourcesByCity(
       description: true,
       validFrom: true,
       validUntil: true,
+      isHidden: true,
+      hiddenReason: true,
+      lastReviewedAt: true,
+      reviewCadenceDays: true,
       metadata: true,
       createdAt: true,
     },

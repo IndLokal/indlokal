@@ -421,6 +421,10 @@ model Resource {
   description  String?
   validFrom    DateTime?    @map("valid_from")
   validUntil   DateTime?    @map("valid_until")
+  isHidden      Boolean      @default(false) @map("is_hidden")
+  hiddenReason  String?      @map("hidden_reason")
+  lastReviewedAt DateTime?   @map("last_reviewed_at")
+  reviewCadenceDays Int      @default(180) @map("review_cadence_days")
   source       ContentSource @default(ADMIN_SEED)
   metadata     Json?
 
@@ -429,6 +433,7 @@ model Resource {
 
   @@index([cityId])
   @@index([resourceType])
+  @@index([isHidden])
   @@map("resources")
 }
 
@@ -898,6 +903,32 @@ model PipelineItem {
   @@index([entityType, status])
   @@index([reviewKind, status])
   @@map("pipeline_items")
+}
+
+// ─────────────────────────────────────────────────
+// Pipeline run history
+// ─────────────────────────────────────────────────
+
+model PipelineRun {
+  id                    String   @id @default(cuid())
+  triggeredBy           String   @default("cron") @map("triggered_by")
+  regionsScanned        Int      @map("regions_scanned")
+  sourcesProcessed      Int      @map("sources_processed")
+  itemsFetched          Int      @map("items_fetched")
+  itemsPassedFilter     Int      @map("items_passed_filter")
+  itemsExtracted        Int      @map("items_extracted")
+  itemsQueued           Int      @map("items_queued")
+  itemsSkippedDuplicate Int      @map("items_skipped_duplicate")
+  itemsSkippedNoCity    Int      @map("items_skipped_no_city")
+  itemsSkippedPast      Int      @default(0) @map("items_skipped_past")
+  llmCalls              Int      @map("llm_calls")
+  llmTokensEstimate     Int      @map("llm_tokens_estimate")
+  durationMs            Int      @map("duration_ms")
+  errors                String[]
+  createdAt             DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@map("pipeline_runs")
 }
 
 // ─────────────────────────────────────────────────

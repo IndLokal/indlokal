@@ -67,7 +67,7 @@ async function main() {
   }
 
   console.log('\n🚀 Running pipeline...\n');
-  const result = await runPipeline();
+  const result = await runPipeline('cli');
 
   console.log('\n═══════════════════════════════════════');
   console.log('Pipeline Run Summary');

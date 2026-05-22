@@ -54,6 +54,52 @@ function extractImageUrls(html: string, baseUrl: string): string[] {
   return urls;
 }
 
+function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
+  let output = input;
+
+  for (const tagName of tags) {
+    const openToken = `<${tagName.toLowerCase()}`;
+    const closeToken = `</${tagName.toLowerCase()}`;
+    const lower = output.toLowerCase();
+    let cursor = 0;
+    let cleaned = '';
+
+    while (cursor < output.length) {
+      const openIndex = lower.indexOf(openToken, cursor);
+      if (openIndex === -1) {
+        cleaned += output.slice(cursor);
+        break;
+      }
+
+      cleaned += output.slice(cursor, openIndex);
+
+      const openEnd = lower.indexOf('>', openIndex + openToken.length);
+      if (openEnd === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      const closeIndex = lower.indexOf(closeToken, openEnd + 1);
+      if (closeIndex === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      const closeEnd = lower.indexOf('>', closeIndex + closeToken.length);
+      if (closeEnd === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      cursor = closeEnd + 1;
+    }
+
+    output = cleaned;
+  }
+
+  return output;
+}
+
 // ─── Keyword search: Eventbrite ────────────────────────
 
 export async function fetchEventbriteKeywords(
@@ -80,6 +126,8 @@ export async function fetchEventbriteKeywords(
       url.searchParams.set('location.within', `${strategy.radiusKm}km`);
       url.searchParams.set('expand', 'venue');
       url.searchParams.set('sort_by', 'date');
+      // Only return future events — no point queuing things that have already happened
+      url.searchParams.set('start_date.range_start', new Date().toISOString());
 
       const res = await fetch(url.toString(), {
         headers: { Authorization: `Bearer ${apiKey}` },
@@ -166,7 +214,11 @@ export async function fetchPinnedUrl(
       return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
     }
 
-    const html = await res.text();
+    const rawHtml = await res.text();
+
+    // Strip script/style blocks before text extraction. Their contents are
+    // mostly noise for extraction and can drown useful page signals.
+    const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
 
     const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
     const text = collapseWhitespace(htmlToText(html)).slice(0, 15_000);

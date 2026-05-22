@@ -12,14 +12,23 @@
  */
 
 import type { SearchStrategy, SearchRegion } from './types';
+import { assessEvidenceUrl } from '../../lib/source-policy';
+import { SATELLITE_CITY_DATA } from '../../lib/config/cities';
+
+function getRegionCitySlugs(metroSlugs: string[]): string[] {
+  const satellites = SATELLITE_CITY_DATA.filter(
+    (city) => city.metroSlug && metroSlugs.includes(city.metroSlug),
+  ).map((city) => city.slug);
+
+  return Array.from(new Set([...metroSlugs, ...satellites]));
+}
 
 // ─── Diaspora search keywords ──────────────────────────
 // Shared across all keyword_search strategies.
 // These are intentionally broad — the LLM relevance filter narrows later.
 
 export const DIASPORA_KEYWORDS = [
-  // Community / cultural identifiers
-  'Indian',
+  // Community / cultural identifiers (specific — avoids "Indian restaurant" noise)
   'Bollywood',
   'Desi',
   'South Asian',
@@ -41,7 +50,6 @@ export const DIASPORA_KEYWORDS = [
   'Navratri',
   'Durga Puja',
   'Ganesh Chaturthi',
-  'Eid',
   'Janmashtami',
   'Janma Kalyanak', // Jain festival
   'Paryushana', // Jain festival
@@ -56,30 +64,10 @@ export const DIASPORA_KEYWORDS = [
   'Gurdwara',
   'Hindu Temple',
   'Kovil', // Tamil temple
-  // Regional / language communities (comprehensive)
-  'Tamil',
-  'Telugu',
-  'Malayalam',
-  'Kannada',
-  'Hindi',
-  'Gujarati',
-  'Punjabi',
-  'Bengali',
-  'Marathi',
-  'Odia', // Odisha community
-  'Assamese',
-  'Konkani',
-  'Rajasthani',
-  'Sindhi',
-  'Kashmiri',
-  // Activities
-  'Cricket',
+  // Performing arts (specific to South Asian diaspora)
   'Bhangra',
   'Kathak',
   'Bharatanatyam',
-  'Yoga India',
-  'Curry festival',
-  'Indian food',
   // Student / professional
   'Indian student association',
   'Indian professionals',
@@ -92,21 +80,21 @@ export const SEARCH_REGIONS: SearchRegion[] = [
     id: 'baden-wuerttemberg',
     label: 'Baden-Württemberg',
     searchCenter: 'Stuttgart, Germany',
-    citySlugs: ['stuttgart', 'karlsruhe', 'mannheim'],
+    citySlugs: getRegionCitySlugs(['stuttgart', 'karlsruhe', 'mannheim']),
     enabled: true,
   },
   {
     id: 'bavaria',
     label: 'Bavaria',
     searchCenter: 'Munich, Germany',
-    citySlugs: ['munich'],
+    citySlugs: getRegionCitySlugs(['munich']),
     enabled: true,
   },
   {
     id: 'hesse',
     label: 'Hesse',
     searchCenter: 'Frankfurt, Germany',
-    citySlugs: ['frankfurt'],
+    citySlugs: getRegionCitySlugs(['frankfurt']),
     enabled: true,
   },
 ];
@@ -129,25 +117,17 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     sourceType: 'GOOGLE_SEARCH',
     kind: 'keyword_search',
     label: 'Google Custom Search — diaspora communities',
-    // Targeted compound queries — these find WhatsApp-only groups
-    // mentioned on blogs, directories, university pages, etc.
+    // Compound OR queries reduce API calls while covering English names,
+    // German Verein names, and official portal vocabulary.
     keywords: [
-      'Indian community',
-      'Indian association',
-      'Indian Verein', // German: association
-      'Telugu association',
-      'Tamil Sangam',
-      'Bengali association',
-      'Odia association',
-      'Jain Sangh',
-      'JITO chapter',
-      'Gujarati Samaj',
-      'Punjabi association',
-      'Marathi Mandal',
-      'Malayalam association',
-      'Kannada Sangha',
-      'Indian WhatsApp group',
-      'Desi community',
+      '"Indian community" OR "Indian association" OR "Indian Verein" OR "Desi community"',
+      '"Tamil Sangam" OR "Telugu association" OR "Bengali association" OR "Odia association"',
+      '"JITO chapter" OR "Jain Sangh" OR "Gujarati Samaj" OR "Marathi Mandal"',
+      '"Punjabi association" OR "Malayalam association" OR "Kannada Sangha" OR "Hindu Mandir"',
+      // German-language Verein naming — finds registered e.V. orgs on city portals,
+      // umbrella org sites, and local news that use German rather than English.
+      '"indischer Verein" OR "indische Gesellschaft" OR "Deutsch-Indische" OR "indisches Kulturzentrum"',
+      '"Mitgliedsvereine" OR "Migrantenorganisationen" OR "Vereinsberatung" "indisch"',
     ],
     radiusKm: 100, // not used by Google CSE, kept for interface compat
     enabled: true,
@@ -162,6 +142,10 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     keywords: [
       'Indian community',
       'Indian association Verein',
+      'Indischer Verein e.V.',
+      'Deutsch-Indische Gesellschaft',
+      'Indisches Kulturzentrum',
+      'Migrantenorganisationen indisch',
       'Telugu association',
       'Tamil Sangam',
       'JITO chapter Jain',
@@ -263,6 +247,72 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     enabled: true,
   },
 
+  // ── German government & umbrella org listings ──
+  // City/state portals and Dachverbände maintain official directories of
+  // registered migrant Vereine. The LLM extraction pass picks out Indian /
+  // South Asian orgs automatically. High yield: orgs without their own
+  // website are still listed here.
+  //
+  // Note: vereinsregister.de / handelsregister.de are search-driven (POST
+  // forms) and cannot be added as static pinned URLs. They are referenced in
+  // directory.ts for humans doing manual research.
+  {
+    id: 'web-forum-der-kulturen-stuttgart',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'Forum der Kulturen Stuttgart — Member Associations (160+ Vereine)',
+    url: 'https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/',
+    enabled: true,
+  },
+  {
+    id: 'web-house-of-resources-stuttgart-map',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'House of Resources Stuttgart — Stadtteilkarte migrantischer Vereine',
+    url: 'https://house-of-resources-stuttgart.de/stadtteilkarte-kontakt-zu-vereinen/',
+    enabled: true,
+  },
+  {
+    id: 'web-amka-frankfurt',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'AMKA Frankfurt — Amt für multikulturelle Angelegenheiten (official city office)',
+    url: 'https://www.amka.de/',
+    enabled: true,
+  },
+  {
+    id: 'web-amka-frankfurt-vereine',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'AMKA Frankfurt — Registered Multicultural Associations directory',
+    url: 'https://www.amka.de/vereine',
+    enabled: true,
+  },
+  {
+    id: 'web-vielfalt-bewegt-frankfurt',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'Vielfalt bewegt Frankfurt — official diversity portal',
+    url: 'https://www.vielfalt-bewegt-frankfurt.de/',
+    enabled: true,
+  },
+  {
+    id: 'web-integrationsbeauftragter-bw',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'Baden-Württemberg Integrationsministerium — Migrant Organisations',
+    url: 'https://sozialministerium.baden-wuerttemberg.de/de/integration/',
+    enabled: true,
+  },
+  {
+    id: 'web-morgen-muenchen-mitglieder',
+    sourceType: 'WEBSITE_SCRAPE',
+    kind: 'pinned_url',
+    label: 'MORGEN München — migrant organisation member associations',
+    url: 'https://morgen-muenchen.de/thema/mitgliedervereine/',
+    enabled: true,
+  },
+
   // ── Community-specific URLs now come from the database automatically ──
   // See db-sources.ts — communities with WEBSITE/MEETUP access channels
   // are auto-generated as pinned_url strategies at runtime.
@@ -285,5 +335,14 @@ export function getKeywordStrategies(): (SearchStrategy & { kind: 'keyword_searc
 export function getPinnedStrategies(): (SearchStrategy & { kind: 'pinned_url' })[] {
   return SEARCH_STRATEGIES.filter(
     (s): s is SearchStrategy & { kind: 'pinned_url' } => s.enabled && s.kind === 'pinned_url',
-  );
+  ).filter((strategy) => {
+    const evidence = assessEvidenceUrl(strategy.url);
+    if (!evidence.isQualifying) {
+      console.warn(
+        `[Pipeline] Disabled pinned URL ${strategy.id}: ${evidence.label} (${strategy.url})`,
+      );
+      return false;
+    }
+    return true;
+  });
 }
