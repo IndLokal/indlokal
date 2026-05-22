@@ -22,6 +22,16 @@ function requireEnvInProduction(name: string): string | undefined {
   return value;
 }
 
+function warnIfMissingInProduction(name: string): string | undefined {
+  const value = process.env[name];
+  if (process.env.NODE_ENV === 'production' && !value) {
+    console.warn(
+      `[env] Optional integration env var is missing in production: ${name} (feature may be disabled)`,
+    );
+  }
+  return value;
+}
+
 let validated = false;
 
 export function validateEnv() {
@@ -35,13 +45,14 @@ export function validateEnv() {
 
   // Required in production
   requireEnvInProduction('NEXT_PUBLIC_APP_URL');
-  requireEnvInProduction('GOOGLE_CLIENT_ID');
-  requireEnvInProduction('GOOGLE_CLIENT_SECRET');
-  requireEnvInProduction('RESEND_API_KEY');
-  // Upload storage (S3 / R2) — required in production
-  requireEnvInProduction('UPLOAD_BUCKET');
-  requireEnvInProduction('UPLOAD_ACCESS_KEY_ID');
-  requireEnvInProduction('UPLOAD_SECRET_ACCESS_KEY');
+
+  // Optional integrations — route-level handlers enforce these where needed.
+  warnIfMissingInProduction('GOOGLE_CLIENT_ID');
+  warnIfMissingInProduction('GOOGLE_CLIENT_SECRET');
+  warnIfMissingInProduction('RESEND_API_KEY');
+  warnIfMissingInProduction('UPLOAD_BUCKET');
+  warnIfMissingInProduction('UPLOAD_ACCESS_KEY_ID');
+  warnIfMissingInProduction('UPLOAD_SECRET_ACCESS_KEY');
 
   // Validate NEXT_PUBLIC_APP_URL is not localhost in production
   if (process.env.NODE_ENV === 'production') {
