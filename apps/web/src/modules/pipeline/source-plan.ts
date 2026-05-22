@@ -73,7 +73,7 @@ function getDbPinnedBucketKey(strategy: PinnedStrategy): string {
   try {
     const parsed = new URL(strategy.url);
     const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
-    if (host.endsWith('meetup.com')) {
+    if (host === 'meetup.com' || host.endsWith('.meetup.com')) {
       const firstPathSegment = parsed.pathname.split('/').filter(Boolean)[0];
       if (firstPathSegment) return `origin:${host}/${firstPathSegment.toLowerCase()}`;
     }
