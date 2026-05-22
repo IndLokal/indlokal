@@ -2,9 +2,11 @@
 
 **The real-time guide to Indian communities and events near you.**
 
-_Product Planning Document — April 2026. Updated May 2026 to reflect shipped admin/organizer auth, data console, submissions queue scoping, and the spec-driven workflow._
+_Product Planning Document — April 2026. Updated May 2026 to reflect shipped admin/organizer auth, data console, submissions queue scoping, and the spec-driven workflow. Updated 11 May 2026 to integrate the operating-team layer (Strategic Partner / Ops / City Ambassadors / Content) into the product surfaces and Phase 2 plan._
 
 > **Spec discipline:** Non-trivial product changes are specified as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding, and kept in sync through implementation. This document is the durable product narrative; specs are the source of truth for any individual capability.
+>
+> **Operating-team layer:** The full audit of every interface, persona (external + internal + system), and the concrete build gaps to support the upcoming team grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support, freelance engineering) lives in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md). The role/permission decision is captured in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md); the four operator-facing PRDs are [PRD-0014 RBAC](specs/PRD/0014-roles-and-rbac.md), [PRD-0015 City Ambassador console](specs/PRD/0015-city-ambassador-console.md), [PRD-0016 Outreach CRM](specs/PRD/0016-outreach-crm.md), [PRD-0017 Multi-community + Event Host](specs/PRD/0017-organizer-multi-community-and-event-host.md), [PRD-0018 Audit log viewer](specs/PRD/0018-audit-log-viewer.md). This document references but does not duplicate them.
 
 ---
 
@@ -83,6 +85,8 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 ## 3. Target Users
 
 > **MVP focus.** IndLokal is a two-sided product. **Newcomers**, **Settled Explorers**, and **Community Organizers** are the three personas the MVP product surfaces are actually designed for today. Student / Family / Professional remain on the validation backlog — we use them to shape content (categories, taxonomy, resource topics), not to build dedicated UX yet.
+>
+> **Operator personas are first-class too** but live in §3.3 below. Treat them as product users — the City Ambassador console (PRD-0015), Outreach CRM (PRD-0016), and admin RBAC (PRD-0014) all have PRDs, success metrics, and acceptance criteria. The full persona × interface matrix is in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md).
 
 ### 3.1 Primary personas (MVP)
 
@@ -138,6 +142,21 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 - Time-constrained; values curation and relevance
 - **Key need:** "Find high-quality networking opportunities without scrolling through noise"
 - _MVP treatment:_ surfaced via "Professional" / "Networking" categories; no professional-specific surface
+
+### 3.3 Operator personas (the operating team that runs the platform)
+
+These are the personas behind the team-growth grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support, AI/Eng support). They are not end-users in the demand-side sense, but they are first-class **product users** of operator-facing surfaces. Each maps to a role in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and to one or more operator PRDs.
+
+| Persona                             | Hire stage                | Primary surface                                               | Role                  | Source PRD                                                                                                                               |
+| ----------------------------------- | ------------------------- | ------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Founder / Product (JP)**          | Q2'26 → FT 2028           | Admin console + DB + scripts                                  | `PLATFORM_ADMIN`      | All                                                                                                                                      |
+| **X — Partnerships & Community**    | Q2'26 → Strategic         | Admin (claims, pipeline curation), Outreach CRM               | `PARTNERSHIPS_LEAD`   | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md)                                                 |
+| **Y — Ops & Community Growth**      | Q2'26 PT → FT 2028        | Admin console + Outreach CRM + content composer               | `OPS_LEAD`            | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md), [PRD-0018](specs/PRD/0018-audit-log-viewer.md) |
+| **City Ambassador**                 | 2-3 Q3'26 → 15-20 by 2028 | **City-scoped Ambassador console** (`/ambassador/*`) + mobile | `CITY_AMBASSADOR`     | [PRD-0015](specs/PRD/0015-city-ambassador-console.md)                                                                                    |
+| **Content & Social Support**        | PT from Q3'26             | Highlight queue + asset library                               | `CONTENT_EDITOR`      | [PRD-0014](specs/PRD/0014-roles-and-rbac.md) (deferred social composer)                                                                  |
+| **Freelance Engineer / AI Support** | Adhoc → 2-3 by 2028       | GitHub + Vercel + DB read-only (out-of-band)                  | _no platform UI role_ | n/a                                                                                                                                      |
+
+**Why operator personas matter to the product narrative.** The supply side of IndLokal is a flywheel of (i) AI-discovered candidates, (ii) ambassador-discovered candidates, and (iii) outreach-onboarded organisers. Without first-class operator surfaces, the operating team works in spreadsheets and DMs disconnected from production data, and we lose the strongest training signal for the AI pipeline. The operator surfaces are the difference between hiring an Ambassador to use Notion and hiring an Ambassador to **operate IndLokal in their city**.
 
 ---
 
@@ -563,6 +582,14 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Edit profile, manage access channels, add and edit events for owned communities.
 - See organizer-only signals (e.g., last activity, completeness hints).
 
+**Operator surfaces — planned (Phase 2 onward, see §8.11–§8.14):**
+
+- **Scoped roles + admin RBAC** — replace the single `PLATFORM_ADMIN` gate with role-scoped access so the Strategic Partner (X), Ops Lead (Y), Ambassadors, and Content support can each be granted only what they need, scoped to a city or org where applicable. See [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and [PRD-0014](specs/PRD/0014-roles-and-rbac.md).
+- **City Ambassador console** (`/ambassador/*`) — city-scoped dashboard, quick-add wizards that auto-fast-track ambassador submissions, event check-in with photo, personal scoreboard mapped to the JD success metrics. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).
+- **Outreach CRM** (`/admin/outreach` + `/ambassador/outreach`) — first-class lead pipeline (Lead → Contacted → In Conversation → Onboarded) replacing today's spreadsheet workflow; auto-links to communities when the pipeline approves a matching item. See [PRD-0016](specs/PRD/0016-outreach-crm.md).
+- **Multi-community ownership + Event Host flow** — workspace switcher for organisers running multiple communities; a lightweight event-only sign-up for independent hosts. See [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
+- **Audit log viewer** (`/admin/audit`) — readable surface over `ContentLog` so role-scoped delegation is reviewable. See [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
+
 **Database seeding (operational, not user-facing):**
 
 Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory` (real Stuttgart communities and resources sourced from research), `demo` (synthetic content for local/preview only). The directory seed is the canonical content baseline; demo never runs in production. See [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md).
@@ -634,8 +661,9 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 ### 8.3 Multi-Organizer per Community + Organizer Analytics
 
 - Allow more than one `COMMUNITY_ADMIN` to manage a single community (today: one)
-- Per-organizer audit trail (who edited what, when)
+- Per-organizer audit trail (who edited what, when) — surfaced via the audit log viewer (§8.14, [PRD-0018](specs/PRD/0018-audit-log-viewer.md))
 - Organizer dashboard surfaces: views in last 30d, access-channel clicks, completeness checklist, Pulse Score breakdown (organizer-only)
+- The complementary **multi-community-per-organizer** workspace switcher and the **event-only Host** sign-up are scoped in §8.13 / [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md)
 
 ### 8.4 User-Contributed Signals
 
@@ -684,6 +712,60 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - **SEO value:** Indian-specific service pages are a content moat — Stuttgart Expats links to generic expat services; IndLokal links to Indian-specific ones.
 
 ### 8.10 Multi-Channel Distribution (informed by Stuttgart Expats analysis)
+
+- **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
+- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.
+- **Social proof & testimonials:** Community organisers can add short testimonials visible on community detail pages. Social proof drives trust for newcomers deciding whether to join a group.
+
+> **\u00a78.11–\u00a78.16 below — Operator surfaces (Phase 2).** Build plan supporting the operating-team grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support). Each is backed by a PRD; this document only summarises.
+
+### 8.11 Operator-side: Scoped roles + admin RBAC _(P0 once we hire X / Y)_
+
+- Replace the single `PLATFORM_ADMIN` gate with a role + scope model so X (Partnerships), Y (Ops), Ambassadors, and Content support can each be granted only what they need.
+- New roles: `EVENT_HOST`, `PARTNER_ORG_ADMIN`, `CITY_AMBASSADOR`, `CONTENT_EDITOR`, `OPS_LEAD`, `PARTNERSHIPS_LEAD` (alongside existing `USER`, `COMMUNITY_ADMIN`, `PLATFORM_ADMIN`).
+- New `RoleAssignment` table carries `(userId, role, cityId?, orgId?, grantedBy, grantedAt, revokedAt?)` to support per-city ambassadors and a future Partner Org tier.
+- Admin route guards migrate from "is platform admin?" to a central `can(user, action, resource)` helper, behind a `rbac_v2` flag during cutover.
+- Source: [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md), [PRD-0014](specs/PRD/0014-roles-and-rbac.md). Unblocks every internal hire after the Founder.
+
+### 8.12 City Ambassador console _(P0 for the Q3'26 ambassador wave)_
+
+- New surface `/ambassador/*` gated by `CITY_AMBASSADOR`, scoped to assigned cities.
+- Dashboard, mobile-first quick-add wizards (community / event / resource) that mark submissions for fast-track review, event check-in + photo, personal scoreboard against the JD success metrics (communities/events identified, outreach contribution, social/content contribution, consistency).
+- Weekly digest to Ops with per-ambassador throughput.
+- Source: [PRD-0015](specs/PRD/0015-city-ambassador-console.md). Maps directly to the City Ambassador role description.
+
+### 8.13 Outreach CRM _(P1 — the Ops pipeline)_
+
+- First-class `OutreachLead` and `OutreachNote` entities replace the spreadsheets X / Y / ambassadors otherwise default to.
+- Stages: `NEW → RESEARCHING → CONTACTED → IN_CONVERSATION → ONBOARDED` (plus `DECLINED`, `DORMANT`).
+- Kanban + table at `/admin/outreach`; city-scoped slice at `/ambassador/outreach`.
+- Pipeline integration auto-links onboarded communities back to their originating lead (training signal for the AI pipeline).
+- Source: [PRD-0016](specs/PRD/0016-outreach-crm.md).
+
+### 8.14 Multi-community ownership + Event-only Host flow _(P1)_
+
+- Workspace switcher in the organizer portal for `COMMUNITY_ADMIN`s with multiple claimed communities.
+- New `EVENT_HOST` self-onboarding at `/organizer/host/start` for independent organisers (concert promoters, freelance teachers) who host events but don't run a community.
+- Source: [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
+
+### 8.15 Audit log viewer _(P1)_
+
+- `/admin/audit` paginated table over `ContentLog`, filterable by entityType / entityId / action / changedBy / date range.
+- Renders pretty diffs and role-grant / role-revoke entries.
+- Precondition for trusting role-scoped delegation: granting `OPS_LEAD` to Y is only safe if reviewable.
+- Source: [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
+
+### 8.16 Deferred operator-side capabilities (P2 / P3 — not built yet, intentionally)
+
+- Partner Org accounts (Consulate / university Indian Society / Indo-German chamber as parent of N communities + resources)
+- Organizer analytics dashboard (impressions, saves, channel clicks)
+- Verified-badge request workflow
+- Social / content highlight export queue
+- Read-only Partner API + `ApiKey` model (press, research, sponsor pitches)
+- Sponsor portal
+- Mobile ambassador field-mode (after web ambassador console)
+
+Full priority + persona mapping: [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md) §5 gap matrix.
 
 - **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
 - **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.

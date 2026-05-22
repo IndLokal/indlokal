@@ -45,6 +45,7 @@ column and is the single source of truth for what is shipped.
 | ADR-0002                | Zod-as-contract; OpenAPI generated                            | Accepted | Done                                                                    |
 | ADR-0003                | Three-tier database seeding (bootstrap/directory/demo)        | Accepted | Done                                                                    |
 | ADR-0004                | Email transport: Resend with throw-on-failure                 | Accepted | Done                                                                    |
+| ADR-0005                | Role + scoped permission model (city / org)                   | Proposed | Not started                                                             |
 | PRD/TDD-0001            | `/api/v1` cutover + JWT/refresh auth                          | Draft    | Done — all `/api/v1/*` routes shipped                                   |
 | PRD/TDD-0002            | Device registry + NotificationPreference + Outbox             | Draft    | Server: Done. Worker channel adapters partial                           |
 | PRD/TDD-0003            | Mobile Discover feed (city + events + communities)            | Draft    | Done — Events / Communities / For-you tabs + trending rail              |
@@ -57,6 +58,12 @@ column and is the single source of truth for what is shipped.
 | PRD/TDD-0010            | Resources, Bookmarks, Report content                          | Draft    | Done — Resources, Bookmarks, Report sheet shipped                       |
 | PRD/TDD-0011            | Magic-link admin & organizer auth (sign-out, sliding session) | Draft    | Done — 24h links, 7d sliding session, scanner-safe verify               |
 | PRD/TDD-0012            | Admin data management console (CRUD + safe delete)            | Draft    | Done — `/admin/data` + delete actions for city/community/event/resource |
+| PRD-0014                | Expanded roles, scoped assignments, and admin RBAC            | Draft    | Not started                                                             |
+| PRD-0015                | City Ambassador console                                       | Draft    | Not started                                                             |
+| PRD-0016                | Outreach CRM module                                           | Draft    | Not started                                                             |
+| PRD-0017                | Multi-community ownership + event-only host flow              | Draft    | Not started                                                             |
+| PRD-0018                | Audit log viewer                                              | Draft    | Not started                                                             |
+| PRD/TDD-0019            | Admin Auth v2 minimal hardening (gate-first, no new auth)     | Draft    | In progress (spec-first)                                                |
 | PRD/TDD-0013            | Pipeline review & submissions queue scoping                   | Draft    | Done — queue scoped to user submissions; admin-approved → ACTIVE        |
 | EVENTS/analytics.md     | Analytics event catalog                                       | Draft    | —                                                                       |
 | EVENTS/notifications.md | Notification matrix                                           | Draft    | —                                                                       |
