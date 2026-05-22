@@ -1,398 +1,343 @@
 # IndLokal AI Content Agent — Technical Architecture
 
+## Current Architecture Summary
+
+The current pipeline is known-source-first.
+
+It plans the fetch surface before doing network or LLM work, prioritizes DB-derived and curated pinned sources, filters stale event pages deterministically, and only widens into keyword search for low-coverage cities or explicit forced runs.
+
+This is a deliberate shift away from the older generic-search-first architecture.
+
 ## Module Structure
 
-```
+```text
 src/modules/pipeline/
-├── types.ts          # All types — SourceType, SearchStrategy, SearchRegion, ExtractedData, etc.
-├── config.ts         # Region + strategy config, DIASPORA_KEYWORDS, helper functions
-├── db-sources.ts     # DB-driven source generation — reads community access channels from DB
-├── sources.ts        # Source adapters — fetchEventbriteKeywords, fetchPinnedUrl, fetchGoogleSearch, fetchDuckDuckGoSearch
-├── extraction.ts     # Two-stage LLM — filterRelevance (Stage 1), extractBatch (Stage 2)
-├── orchestrator.ts   # Pipeline brain — coordinates fetch → filter → extract → dedup → queue
-├── run.ts            # CLI entry point (npx tsx src/modules/pipeline/run.ts)
+├── config.ts         # Regions, fallback keyword seeds, static pinned URLs
+├── db-sources.ts     # DB-derived pinned sources + event-page discovery/scoring
+├── extraction.ts     # Two-stage LLM filter/extract with batching + timeout handling
 ├── index.ts          # Public exports
+├── intelligence.ts   # Semantic duplicate checks + keyword suggestion intelligence
+├── orchestrator.ts   # Executes plan: fetch → prefilter → filter → extract → resolve → dedup → queue
+├── reliability.ts    # Source review statistics + confidence adjustments
+├── review.ts         # Approval, auto-approval policy, entity creation/enrichment
+├── run.ts            # CLI entrypoint
+├── source-plan.ts    # Source planning: DB gaps, source caps, API gating, keyword fallback
+├── sources.ts        # Fetch adapters for pinned URLs and keyword sources
+├── text.ts           # Text helpers used by fetch/extraction pipeline
+├── types.ts          # Pipeline types and run metrics
 └── __tests__/
-    └── orchestrator.test.ts   # computeSimilarity unit tests
+    ├── orchestrator.test.ts
+    └── source-plan.test.ts
 
-src/app/admin/pipeline/
-├── page.tsx              # Admin review queue UI
-├── actions.ts            # Server actions — approve, reject, batch approve, trigger pipeline
-└── RunPipelineButton.tsx # Client component — "Run Pipeline Now" button with live results
+src/lib/
+├── city-resolution.ts     # Shared city normalization + alias-aware matching
+└── config/cities.ts       # Seeded city source of truth + city alias map
+
+src/app/admin/(dashboard)/pipeline/
+├── actions.ts             # Run, approve, reject, enrichment, keyword actions
+├── page.tsx               # Pipeline queue page
+└── RunPipelineButton.tsx  # On-demand pipeline trigger + summary UI
 ```
 
-## Pipeline Flow
+## Runtime Flow
 
 ```mermaid
 flowchart TD
-    subgraph Config
-        R[Regions]
-        S[Strategies]
-    end
+    A[Regions from config.ts] --> B[source-plan.ts]
+    C[Static pinned URLs] --> B
+    D[DB community website / Meetup channels] --> B
+    E[DB city coverage analysis] --> B
 
-    subgraph Step1["Step 1 — FETCH"]
-        EB[Eventbrite]
-        GC[Google CSE]
-        DDG[DuckDuckGo]
-        DB["DB Communities\n(auto-discovered)"]
-        WEB[External Aggregators]
-    end
+    B --> F[Planned pinned sources]
+    B --> G[Optional keyword strategies]
 
-    subgraph Step2["Step 2 — FILTER"]
-        RAW["RawContent[]\n(all items)"]
-        S1["Stage 1 LLM\n(cheap yes/no)"]
-        DROP["Drop 60-80%\nirrelevant"]
-        RAW --> S1 --> DROP
-    end
+    F --> H[Fetch pinned URLs in parallel]
+    G --> I[Fetch keyword sources in parallel]
 
-    subgraph Step3["Step 3 — EXTRACT"]
-        S2["Stage 2 LLM\n(batch extract\n+ city assignment)"]
-    end
+    H --> J[Dedup by sourceUrl]
+    I --> J
 
-    subgraph Step456["Steps 4-6 — RESOLVE → DEDUP → QUEUE"]
-        RES["Resolve cityName\n→ DB city ID\n(+ hintSlug fallback)"]
-        DED["Dedup check\nBigram Dice similarity\nvs DB + queue"]
-        QUE["PipelineItem\n→ admin review queue"]
-        RES --> DED --> QUE
-    end
-
-    R & S --> Step1
-    EB & GC & DDG & DB & WEB --> RAW
-    DROP --> S2
-    S2 --> RES
-
-    US["User Suggestions"] -.->|"bypass pipeline"| QUE
+    J --> K[Prefilter stale event pages]
+    K --> L[Stage 1 LLM relevance filter]
+    L --> M[Stage 2 LLM structured extraction]
+    M --> N[Resolve city via shared city-resolution]
+    N --> O[Dedup and review policy]
+    O --> P[PipelineItem queue / auto-approval]
+    P --> Q[Persist PipelineRun metrics]
 ```
 
 ## Core Design Decisions
 
-### 1. Generic-First (Search Broad, Filter with AI)
+### 1. Known-source-first planning
 
-Previous design: every source was hardcoded to a city. Adding Stuttgart meant configuring 10 sources manually for Stuttgart.
+`source-plan.ts` is now the planning brain.
 
-Current design: strategies define WHAT to search (keywords, APIs), regions define WHERE. They combine at runtime. The LLM assigns the city from content.
+It decides:
 
-```typescript
-// Config — strategies × regions = automatic combination
-SearchStrategy { id, sourceType, kind: 'keyword_search' | 'pinned_url', ... }
-SearchRegion   { id, searchCenter, citySlugs[], enabled }
+- which pinned sources always run
+- which DB-derived community sources are included
+- whether keyword search should run at all
+- whether credentials are available for Eventbrite / Google CSE
+- whether DuckDuckGo is enabled
+- how many DB-pinned sources are allowed under runtime caps
 
-// Runtime — orchestrator loops:
-for region of enabledRegions:
-  for strategy of keywordStrategies:
-    fetch(strategy, region)  // e.g. Eventbrite × Baden-Württemberg
-```
+This keeps planning policy out of `orchestrator.ts`.
 
-Adding a country = 1 region entry + city DB records. No code changes.
+### 2. Keyword search is fallback, not default
 
-### 2. Two-Stage LLM
+Keyword search only runs when one of these is true:
 
-**Stage 1: Relevance Filter** (`filterRelevance`)
+- a region contains **low-coverage DB city gaps**
+- `PIPELINE_FORCE_KEYWORD_SEARCH=1`
 
-- Model: gpt-4o-mini
-- Batch size: 10 items per call
-- Input: 500 chars per item (just enough for relevance)
-- Output: `{index, isRelevant, reason}` per item
-- Cost: ~$0.001 per batch
-- Purpose: Drop noise (Indian restaurants, "Indiana Jones" events)
-- Fallback: On LLM failure, marks all as relevant (safe — humans review later)
+The low-coverage test is currently based on DB community counts per covered city and uses env-tunable thresholds and limits.
 
-**Stage 2: Structured Extraction** (`extractBatch`)
+### 3. DB-derived pinned sources are prioritized
 
-- Model: gpt-4o-mini (configurable via `PIPELINE_LLM_MODEL`)
-- Batch size: 5 items per call
-- Input: 3000 chars per item
-- Output: Structured `ExtractedEvent` or `ExtractedCommunity` with `cityName`
-- Cost: ~$0.005-0.01 per batch
-- Outputs `confidence` (0-1) and per-field `fieldConfidence`
+`db-sources.ts` now discovers event-looking sub-pages from community websites and scores them so that likely live pages rank above stale ones.
 
-**Why two stages?** Eventbrite search for "Indian" returns ~100 results, 70-80% irrelevant. Sending all through full extraction = 20× the tokens. Stage 1 costs 1/10th of Stage 2.
+Signals that increase priority:
 
-### 3. Batch Processing
+- `events`, `calendar`, `upcoming`, `termin`, `schedule`
+- current-year or future-year references
 
-System prompt tokens are the expensive part of LLM calls. Batching amortises them:
+Signals that reduce priority:
 
-| Approach         | Items | LLM Calls | System Prompt Tokens | Total   |
-| ---------------- | ----- | --------- | -------------------- | ------- |
-| One-at-a-time    | 50    | 50        | 50 × 800 = 40,000    | ~60,000 |
-| Batched (5/call) | 50    | 10        | 10 × 800 = 8,000     | ~28,000 |
+- `past`, `archive`, `gallery`, `review`, `recap`
+- old-year-only pages
 
-**53% token savings** from batching alone.
+This matters because `PIPELINE_DB_PINNED_LIMIT` can cap the fetch surface. The best event pages should survive the cap first.
 
-### 4. City Assignment by LLM
+### 4. Deterministic stale-page prefilter before LLM
 
-The LLM extracts `cityName` from content (venue address, page text, event location). The orchestrator resolves it:
+`orchestrator.ts` now removes likely stale event pages before the LLM filter stage.
 
-```mermaid
-flowchart TD
-    A["LLM output:\ncityName = 'Stuttgart'"] --> B{"cityByName.get('stuttgart')"}
-    B -->|match| C["{ id: 'clx...', slug: 'stuttgart' }"]
-    B -->|no match| D{hintCitySlug from\npinned URL config?}
-    D -->|match| C
-    D -->|no match| E["itemsSkippedNoCity++\n(logged, not lost)"]
-```
+That prefilter combines:
 
-## Source Adapters (`sources.ts`)
+- stale-path markers
+- event-page markers
+- year signals
+- `scorePinnedEventUrl()` from `db-sources.ts`
 
-### `fetchEventbriteKeywords(strategy, region)`
+This saves LLM time and tokens on archive pages that were previously consuming extraction budget.
 
-- Iterates strategy.keywords × region.searchCenter
-- Uses Eventbrite `/v3/events/search/` API with location radius
-- Returns structured `RawContent[]` with venue, description, dates
-- Deduplicates by `sourceUrl` (same event from multiple keyword hits)
+### 5. Two-stage LLM remains, but with tighter operational controls
 
-### `fetchGoogleSearch(strategy, region)`
+`extraction.ts` still uses a two-stage design:
 
-- Uses Google Custom Search API (`googleapis.com/customsearch/v1`)
-- Combines each keyword with `region.searchCenter` for location context
-- Returns title + snippet + OG description as `RawContent`
-- Discovers WhatsApp-only groups mentioned on blogs, directories, university pages
-- Free tier: 100 queries/day
+- **Stage 1**: cheap relevance filter
+- **Stage 2**: structured extraction
 
-### `fetchDuckDuckGoSearch(strategy, region)`
+Current operational details:
 
-- Uses DuckDuckGo HTML lite endpoint — **no API key needed**
-- Parses HTML search results page for links, titles, snippets
-- 15 targeted keywords per region (e.g. "Indian community", "Tamil Sangam", "JITO chapter Jain")
-- Rate-limited by DDG (pipeline adds delays between queries)
-- Serves as the free fallback when Google CSE/Eventbrite keys aren't configured
+- filter batch size defaults to `10`
+- extraction batch size defaults to `3`
+- OpenAI requests use JSON mode
+- extraction calls use a higher timeout than filter calls
+- extraction failures trigger recursive batch splitting instead of failing the whole run
+- LLM calls track approximate token usage and call counts
 
-### `fetchPinnedUrl(strategy)`
+### 6. Shared city resolution
 
-- Fetches a single known-high-value URL
-- Facebook variant: uses mobile User-Agent, strips to `m.facebook.com`
-- Generic variant: strips `<script>`, `<style>`, `<nav>`, `<footer>` tags
-- Extracts up to 5 image URLs
-- Caps text at 15K characters
+City matching is no longer pipeline-local string handling.
 
-## Extraction Module (`extraction.ts`)
+It now uses:
 
-### OpenAI Client
+- `src/lib/city-resolution.ts`
+- `src/lib/config/cities.ts`
 
-- Endpoint: `https://api.openai.com/v1/chat/completions`
-- JSON mode: `response_format: { type: 'json_object' }`
-- Temperature: 0.1 (deterministic extraction)
-- Timeout: 60 seconds
-- Token tracking: counts `prompt_tokens + completion_tokens` per call
+The resolver currently supports:
 
-### Relevance Filter Prompt
+- exact DB city name matches
+- normalized slug/name matches
+- configured aliases for true alternate names such as `München` and `Frankfurt am Main`
 
-Tells the LLM to classify each item as relevant/not-relevant to Indian/South Asian diaspora. Explicitly includes community types:
+This is intentionally narrower than a fuzzy geographic resolver.
 
-- Cultural events, festivals (Diwali through Janma Kalyanak)
-- Organisation types (Sangam, Sangh, JITO)
-- WhatsApp-based groups
-- Excludes: restaurants, incidental mentions
+### 7. Review policy is not purely manual anymore
 
-### Extraction Prompt
+The queue is still the primary review surface, but `review.ts` can auto-approve items when all of the following are true:
 
-Extracts structured fields into `ExtractedEvent` or `ExtractedCommunity`:
+- the source has enough review history
+- source approval rate is high enough
+- the extracted item confidence is at least `0.9`
+- the item has the required core fields
+- no duplicate or matched entity is already present
 
-- Events: title, date, time, venue, city, cost, registration URL, host community, categories, languages
-- Communities: name, description, city, categories, languages, website/Facebook/Instagram/WhatsApp/Telegram/email
-- Recognises organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V.
-- Both include `confidence` and `fieldConfidence` scores
+This uses source-level reliability stats from `reliability.ts`.
 
-### Normalizers
+## Source Planning (`source-plan.ts`)
 
-Raw LLM output is normalized through type-safe functions:
+### Inputs
 
-- `normalizeEvent()` / `normalizeCommunity()` — coerce all fields to expected types
-- `normalizeConfidence()` — clamp to 0-1, default 0.5
-- `normalizeFieldConfidence()` — per-field confidence map
-- `normalizeStringArray()` — filters non-string elements
+- enabled regions from `config.ts`
+- static pinned URLs from `config.ts`
+- DB community strategies from `db-sources.ts`
+- approved dynamic keywords from `intelligence.ts`
+- runtime env vars
 
-## Orchestrator (`orchestrator.ts`)
+### Outputs
 
-### Run Flow
+`buildPipelineSourcePlan()` returns:
 
-```typescript
-async function runPipeline(): Promise<PipelineRunResult>;
-```
+- keyword strategies to run
+- pinned strategies to run
+- static pinned count
+- DB pinned count
+- total DB pinned count before cap
+- low-coverage city gap list
+- operator notes describing what was skipped or capped
 
-1. **Fetch** — Loops keyword strategies × regions, dispatching to `fetchEventbriteKeywords`, `fetchGoogleSearch`, or `fetchDuckDuckGoSearch` based on `sourceType`. Then merges static pinned URLs (external aggregators) with DB-driven community sources (`getDbCommunityStrategies()`). Tags pinned URL items with `_hintCitySlug`.
+### Important runtime flags
 
-2. **URL Dedup** — `Set<sourceUrl>` removes duplicates from overlapping keyword searches.
+- `PIPELINE_DB_PINNED_LIMIT`
+- `PIPELINE_DB_GAP_CITY_THRESHOLD`
+- `PIPELINE_DB_GAP_CITY_LIMIT`
+- `PIPELINE_FORCE_KEYWORD_SEARCH`
+- `PIPELINE_ENABLE_DDG`
 
-3. **Stage 1 Filter** — `filterRelevance(uniqueRaw)` → keeps only `isRelevant: true` items.
+## Regions and coverage (`config.ts`)
 
-4. **Stage 2 Extract** — `extractBatch(relevantItems)` → structured `ExtractedData[]` with `sourceIndex` back-reference.
+Current enabled regions:
 
-5. **City Resolution** — Pre-loads all cities from DB. Resolves `cityName` → `cityId` via case-insensitive name lookup. Falls back to `_hintCitySlug`. Logs and skips items with no match.
+- Baden-Württemberg
+- Bavaria
+- Hesse
 
-6. **Dedup Check** — Three layers:
-   - Exact `sourceUrl` match in pending/approved queue → skip
-   - Event: same date + title similarity > 0.7 (Dice coefficient on bigrams) → flag
-   - Community: name similarity > 0.7 → flag
-   - High-confidence dupes (> 0.9) auto-skip, borderline dupes attach `matchScore` for admin review
+Region city coverage is derived from seeded metro and satellite city data. The pipeline does not keep a separate city-coverage list by hand.
 
-7. **Queue** — Creates `PipelineItem` in PostgreSQL with extracted data, confidence, city, match info.
+## Source adapters (`sources.ts`)
 
-### Deduplication: `computeSimilarity()`
+The current fetch layer supports:
 
-Bigram Dice coefficient. Fast, no dependencies, good enough for near-duplicate detection:
+- pinned URL fetches
+- Eventbrite keyword search
+- Google Custom Search keyword search
+- DuckDuckGo keyword search
 
-```
-similarity = (2 × |bigrams(a) ∩ bigrams(b)|) / (|bigrams(a)| + |bigrams(b)|)
-```
+Important operational reality:
 
-Threshold: 0.7 for flagging, 0.9 for auto-skip.
+- Eventbrite runs only if `EVENTBRITE_API_KEY` is configured
+- Google CSE runs only if `GOOGLE_CSE_API_KEY` and `GOOGLE_CSE_ID` are configured
+- DuckDuckGo is implemented but disabled by default unless `PIPELINE_ENABLE_DDG=1`
 
-## Database Model
+## DB-driven source generation (`db-sources.ts`)
 
-```prisma
-model PipelineItem {
-  id              String              @id @default(cuid())
-  entityType      PipelineEntityType  // EVENT | COMMUNITY
-  status          PipelineItemStatus  // PENDING | APPROVED | REJECTED | MERGED
-  sourceType      PipelineSourceType  // EVENTBRITE | FACEBOOK | GOOGLE_SEARCH | COMMUNITY_SUGGESTION | ...
-  sourceUrl       String?
-  rawContent      String?             // original text (audit trail)
-  extractedData   Json                // structured ExtractedEvent or ExtractedCommunity
-  confidence      Float
-  cityId          String
-  matchedEntityId String?             // existing entity if dupe detected
-  matchScore      Float?              // similarity score
-  reviewedBy      String?
-  reviewedAt      DateTime?
-  reviewNotes     String?
-  createdEntityId String?             // entity ID created on approval
-}
-```
+`getDbCommunityStrategies()` currently:
 
-Source types: `EVENTBRITE`, `FACEBOOK`, `INSTAGRAM`, `WEBSITE_SCRAPE`, `CGI_MUNICH`, `INDOEUROPEAN`, `GOOGLE_ALERT`, `GOOGLE_SEARCH`, `DUCKDUCKGO`, `MEETUP`, `COMMUNITY_SUGGESTION`, `DB_COMMUNITY`
+- includes communities with `ACTIVE`, `CLAIMED`, or `UNVERIFIED` status
+- uses scrapeable `WEBSITE` and `MEETUP` channels
+- always includes the homepage or Meetup events page
+- crawls website homepages for likely event/calendar sub-pages
+- attaches `hintCitySlug` from the owning community city
 
-## Community Suggestion Bridge
+This is the self-improving discovery loop: approved communities create future fetch sources automatically.
 
-When a user submits via `/[city]/suggest`, the action (`reports.ts`) does two things:
+## Orchestration (`orchestrator.ts`)
 
-1. Creates a `ContentReport` (existing behaviour — shows in admin reports)
-2. Creates a `PipelineItem` with `sourceType: COMMUNITY_SUGGESTION` and `confidence: 0.6`
+### Phase 1 — Fetch
 
-This means WhatsApp-only communities enter the structured pipeline with whatever the user provided (name, details, email). Admin reviews alongside AI-discovered content.
+- builds a source plan
+- logs planning notes
+- fetches pinned URLs in parallel
+- fetches keyword strategies only when the plan includes them
+- deduplicates by `sourceUrl`
 
-## DB-Driven Source Discovery (`db-sources.ts`)
+### Phase 2 — Prefilter, Filter, Extract
 
-Instead of hardcoding community website URLs in config, the pipeline **automatically reads community access channels from the database** at runtime.
+- removes likely stale pages before LLM
+- runs relevance filtering in batches
+- runs structured extraction in batches
+- captures stage timings for fetch, prefilter, filter, extract, and resolveQueue
 
-### How It Works
+### Phase 3 — Resolve, Dedup, Queue
 
-```mermaid
-flowchart LR
-    DB["Community DB"] --> Q["Query ACTIVE/CLAIMED\nwith WEBSITE/MEETUP\naccess channels"]
-    Q --> GEN["Generate\npinned_url strategies"]
-    GEN --> ORCH["Merge with\nstatic pinned URLs"]
-    ORCH --> FETCH["fetchPinnedUrl()"]
-```
+- loads covered metros and satellites from the DB
+- resolves extracted `cityName` via shared resolver and configured aliases
+- falls back to `_hintCitySlug` from pinned strategies when needed
+- skips past events
+- merges into pending event pipeline items when an exact queued duplicate exists
+- skips or flags duplicates using date/title similarity for events and semantic/name checks for communities
+- applies source-confidence adjustments and review policy
+- persists `PipelineRun` history
 
-`getDbCommunityStrategies()` queries the database for all ACTIVE or CLAIMED communities that have scrapeable access channels (WEBSITE, MEETUP), and generates a `SearchStrategy[]` of `pinned_url` entries with:
+## Duplicate handling
 
-- `sourceType: 'DB_COMMUNITY'` — tracks provenance
-- `hintCitySlug` from the community's city — always accurate
-- `url` from the AccessChannel record
+Current duplicate handling layers:
 
-### Benefits
+1. exact `sourceUrl` match in pending or approved queue
+2. event duplicate check using date window plus Dice similarity on titles
+3. pending event merge when the same event already exists in the queue
+4. community duplicate check using name similarity plus semantic review of borderline candidates
 
-- **Zero maintenance** — new communities added via admin, submit form, or pipeline approval with a WEBSITE channel automatically become pipeline sources
-- **Self-improving loop** — pipeline discovers community → admin approves → community gets WEBSITE channel → next pipeline run scrapes that website for events
-- **No stale URLs in config** — if a community is marked INACTIVE, its website stops being scraped
+## Admin and trigger surfaces
 
-## Configuration (`config.ts`)
+The pipeline can currently be triggered by:
 
-### Keywords (65+)
+- `/admin/pipeline` via `RunPipelineButton`
+- cron route at `/api/cron/pipeline`
+- CLI via `pnpm --filter web pipeline`
 
-Organised by category:
+The admin button returns a structured run summary to the UI.
 
-- Cultural identifiers: Indian, Bollywood, Desi, South Asian
-- Organisation types: Sangam, Sangh, Samaj, Mandal, Mandir, Sabha, Verein, JITO
-- Festivals: Diwali through Rath Yatra (20+ festivals including Jain and Sikh)
-- Religious: Jain, Sikh, Gurdwara, Hindu Temple, Kovil
-- Languages: Tamil through Kashmiri (15 languages)
-- Activities: Cricket, Bhangra, Kathak, Bharatanatyam, etc.
+The CLI supports:
 
-### Regions
+- `--dry-run` for config preview
+- `--strict` or `PIPELINE_STRICT=1` for non-zero exit on warnings/errors
 
-```typescript
-{ id: 'baden-wuerttemberg', searchCenter: 'Stuttgart, Germany', citySlugs: ['stuttgart', 'karlsruhe', 'mannheim'] }
-```
+## Community suggestions and submission bridge
 
-Expand by adding entries. Commented-out examples for Bavaria, Netherlands.
+Community suggestions do not rely on the fetch pipeline to enter the system.
 
-### Strategies
+User-facing suggestion flows create `PipelineItem` rows directly with `sourceType: COMMUNITY_SUGGESTION`, so the review queue can act on them even when no web source exists yet.
 
-- **Eventbrite keyword search** — 58 keywords × 50km radius per region
-- **Google CSE keyword search** — 16 targeted compound queries per region
-- **DuckDuckGo keyword search** — 15 keywords per region (free, no API key)
-- **9 static pinned URLs** — CGI Munich, IndoEuropean (5), Indians in Germany, AIGEV, DIZ BW
-- **DB community sources** — auto-generated from community WEBSITE/MEETUP access channels
+## Environment variables
 
-## Environment Variables
+Required:
 
-| Variable             | Required | Purpose                                     |
-| -------------------- | -------- | ------------------------------------------- |
-| `OPENAI_API_KEY`     | Yes      | LLM calls (filter + extraction)             |
-| `DATABASE_URL`       | Yes      | PostgreSQL connection                       |
-| `EVENTBRITE_API_KEY` | No       | Eventbrite event search                     |
-| `GOOGLE_CSE_API_KEY` | No       | Google Custom Search                        |
-| `GOOGLE_CSE_ID`      | No       | Google Custom Search engine ID              |
-| `PIPELINE_LLM_MODEL` | No       | Override LLM model (default: `gpt-4o-mini`) |
+- `OPENAI_API_KEY`
+- `DATABASE_URL`
 
-## Running the Pipeline
+Optional fetch inputs:
 
-### Admin UI (recommended)
+- `EVENTBRITE_API_KEY`
+- `GOOGLE_CSE_API_KEY`
+- `GOOGLE_CSE_ID`
 
-The admin pipeline page at `/admin/pipeline` has a **"Run Pipeline Now"** button:
+Optional runtime tuning:
 
-- Triggers the full pipeline via a server action
-- Shows a spinner while in progress (~60s typical run)
-- Displays a live results summary (sources processed, items queued, LLM usage, errors)
-- Page auto-refreshes to show new pipeline items in the review queue
+- `PIPELINE_LLM_MODEL`
+- `PIPELINE_LLM_TIMEOUT_MS`
+- `PIPELINE_FILTER_BATCH_SIZE`
+- `PIPELINE_EXTRACT_BATCH_SIZE`
+- `PIPELINE_DB_PINNED_LIMIT`
+- `PIPELINE_DB_GAP_CITY_THRESHOLD`
+- `PIPELINE_DB_GAP_CITY_LIMIT`
+- `PIPELINE_FORCE_KEYWORD_SEARCH`
+- `PIPELINE_ENABLE_DDG`
+- `PIPELINE_STRICT`
 
-### CLI
+## Testing status to document accurately
 
-```bash
-# Full pipeline run
-npx tsx src/modules/pipeline/run.ts
+Current focused tests cover more than the original docs described, including:
 
-# Config preview only — shows regions, strategies, DB sources (no API calls)
-npx tsx src/modules/pipeline/run.ts --dry-run
-```
+- source planning behavior
+- stale-page prefilter behavior
+- city resolution behavior
+- duplicate similarity helper behavior
 
-Output includes: regions scanned, items fetched/filtered/extracted/queued, duplicates skipped, LLM calls, token estimate, duration.
+The older documentation that described the pipeline as primarily generic-search-first and always broadening via keywords is no longer accurate.
 
-## Token Efficiency at Scale
+## Practical takeaway
 
-Current (1 region, ~50 items):
+The current system is not a generic all-Europe crawler with a thin config layer.
 
-- ~5 filter calls + ~3 extraction calls = 8 LLM calls
-- ~4,000 tokens estimated
+It is a staged, cost-controlled discovery pipeline that:
 
-Europe scale (50 regions, ~2,500 items):
+- starts from trusted known sources
+- widens only when DB coverage is thin
+- suppresses stale pages before AI cost is spent
+- resolves cities through seeded city data
+- keeps the admin queue as the main control surface
 
-- ~250 filter calls + ~100 extraction calls = 350 LLM calls
-- ~200,000 tokens estimated ≈ $30-60/month on gpt-4o-mini
-
-Key savings:
-
-- Two-stage design: 60-80% of items never reach expensive extraction
-- Batching: 53% token reduction vs one-at-a-time
-- URL dedup before LLM: same event from 5 keyword searches = 1 LLM call, not 5
-
-## Error Handling
-
-- **Source fetch failures**: Logged in `errors[]`, pipeline continues with other sources
-- **LLM filter failure**: Falls back to marking all items as relevant (safe — humans review)
-- **LLM extraction failure**: Returns empty array, error logged, pipeline continues
-- **City not resolved**: Item logged and skipped (`itemsSkippedNoCity` metric)
-- **API timeout**: 15s for sources, 60s for LLM calls
-- **Token tracking**: All calls tracked, reported in run summary
-
-## Testing
-
-```bash
-npx vitest run
-```
-
-- `orchestrator.test.ts`: 8 tests covering `computeSimilarity()` — identical strings, completely different strings, near-duplicates, cross-source duplicates, edge cases (empty/single-char)
-- Integration tests: community queries (6 tests), scoring (25 tests), page rendering (5 tests)
-- All 44 tests pass with 0 type errors
+That is the implementation these docs should describe.

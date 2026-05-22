@@ -1,13 +1,14 @@
 /**
- * Pipeline orchestrator — generic-first content discovery pipeline.
+ * Pipeline orchestrator — known-source-first content discovery pipeline.
  *
  * Flow:
- *   1. FETCH — keyword strategies × regions (parallel) + pinned URLs (parallel)
- *   2. FILTER — Stage 1 LLM: cheap batch relevance check (drops 60-80% noise)
- *   3. EXTRACT — Stage 2 LLM: structured extraction with city assignment
- *   4. RESOLVE — map LLM cityName → DB city ID
- *   5. DEDUP — bigram similarity check against existing DB entities + queue
- *   6. QUEUE — store in PipelineItem for admin review
+ *   1. PLAN — DB + pinned sources first, keyword search only for DB coverage gaps
+ *   2. FETCH — execute planned pinned URLs, then planned keyword searches
+ *   3. FILTER — Stage 1 LLM: cheap batch relevance check
+ *   4. EXTRACT — Stage 2 LLM: structured extraction with city assignment
+ *   5. RESOLVE — map LLM cityName → DB city ID
+ *   6. DEDUP — semantic/name similarity check against existing DB entities + queue
+ *   7. QUEUE — store in PipelineItem for admin review
  *
  * Adding a new country: add region + keyword strategies in config.ts. Done.
  * No orchestrator changes needed for new regions.
@@ -15,25 +16,77 @@
 
 import { db } from '@/lib/db';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
-import { getEnabledRegions, getKeywordStrategies, getPinnedStrategies } from './config';
-import { getDbCommunityStrategies } from './db-sources';
+import { CITY_NAME_ALIASES } from '@/lib/config/cities';
+import { resolveCityMatch } from '@/lib/city-resolution';
+import { getEnabledRegions } from './config';
 import {
   fetchEventbriteKeywords,
   fetchPinnedUrl,
   fetchGoogleSearch,
   fetchDuckDuckGoSearch,
 } from './sources';
+import { scorePinnedEventUrl } from './db-sources';
+import { buildPipelineSourcePlan } from './source-plan';
 import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
-import { getApprovedDynamicKeywords, semanticCommunityDuplicateCheck } from './intelligence';
+import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
 import type { ExtractedData, ExtractedEvent, RawContent, PipelineRunResult } from './types';
 
 // Re-export PipelineRunResult type from types.ts
 export type { PipelineRunResult } from './types';
 
+const STALE_EVENT_MARKERS =
+  /past|archive|archiv|gallery|eventgallery|album|photo|foto|bericht|review|recap/i;
+const EVENT_PAGE_MARKERS =
+  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on|schedule/i;
+const FRESH_EVENT_MARKERS = /upcoming|next|current|ongoing|neu|latest|new this year/i;
+
+function extractMentionedYears(input: string): number[] {
+  return [...input.matchAll(/\b20\d{2}\b/g)]
+    .map((match) => Number.parseInt(match[0], 10))
+    .filter(Number.isFinite);
+}
+
+export function isLikelyStaleEventPage(item: RawContent): boolean {
+  const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`;
+  const lowerPreview = preview.toLowerCase();
+  const years = extractMentionedYears(lowerPreview);
+  const currentYear = new Date().getFullYear();
+  const hasEventMarkers = EVENT_PAGE_MARKERS.test(lowerPreview);
+  const hasStaleMarkers = STALE_EVENT_MARKERS.test(lowerPreview);
+  const hasFreshMarkers =
+    FRESH_EVENT_MARKERS.test(lowerPreview) || years.some((year) => year >= currentYear);
+  const onlyPastYears = years.length > 0 && years.every((year) => year < currentYear);
+  const score = scorePinnedEventUrl(item.sourceUrl, item.text.slice(0, 400));
+
+  if (hasStaleMarkers && !hasFreshMarkers) return true;
+  if (onlyPastYears && hasEventMarkers && !hasFreshMarkers) return true;
+  if (score < 0 && hasEventMarkers && !hasFreshMarkers) return true;
+  return false;
+}
+
+export function prefilterLikelyCurrentItems(items: RawContent[]): RawContent[] {
+  return items.filter((item) => !isLikelyStaleEventPage(item));
+}
+
+async function timePipelineStage<T>(
+  result: PipelineRunResult,
+  name: string,
+  run: () => Promise<T>,
+): Promise<T> {
+  const startedAt = Date.now();
+  try {
+    return await run();
+  } finally {
+    const duration = Date.now() - startedAt;
+    result.stageTimings = { ...(result.stageTimings ?? {}), [name]: duration };
+    console.log(`[Pipeline] Stage timing: ${name} ${duration}ms`);
+  }
+}
+
 /**
- * Run the full generic-first pipeline.
+ * Run the full known-source-first pipeline.
  * No arguments needed — reads config from config.ts.
  */
 export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResult> {
@@ -54,19 +107,40 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
     llmCalls: 0,
     llmTokensEstimate: 0,
     duration: 0,
+    stageTimings: {},
   };
 
-  // Phase 1: Fetch from all sources + URL dedup
   const regions = getEnabledRegions();
-  const uniqueRaw = await fetchAllSources(regions, result);
+  const uniqueRaw = await timePipelineStage(result, 'fetch', () =>
+    fetchAllSources(regions, result, triggeredBy),
+  );
+  const candidateRaw = await timePipelineStage(result, 'prefilter', async () => {
+    const currentItems = prefilterLikelyCurrentItems(uniqueRaw);
+    const skippedCount = uniqueRaw.length - currentItems.length;
+    if (skippedCount > 0) {
+      console.log(
+        `[Pipeline] Prefilter: kept ${currentItems.length}/${uniqueRaw.length}; skipped ${skippedCount} likely-stale event pages before LLM`,
+      );
+    }
+    return currentItems;
+  });
 
-  if (uniqueRaw.length > 0) {
-    // Phase 2: LLM relevance filter + structured extraction
-    const { extracted, relevantItems } = await filterAndExtract(uniqueRaw, result);
+  if (candidateRaw.length > 0) {
+    const relevantItems = await timePipelineStage(result, 'filter', () =>
+      filterRelevantItems(candidateRaw, result),
+    );
+
+    const extracted =
+      relevantItems.length > 0
+        ? await timePipelineStage(result, 'extract', () =>
+            extractRelevantItems(relevantItems, result),
+          )
+        : [];
 
     if (extracted.length > 0) {
-      // Phase 3: Resolve cities, dedup, queue for review
-      await resolveAndQueue(extracted, relevantItems, regions, result);
+      await timePipelineStage(result, 'resolveQueue', () =>
+        resolveAndQueue(extracted, relevantItems, regions, result),
+      );
     }
   }
 
@@ -113,57 +187,22 @@ type Region = ReturnType<typeof getEnabledRegions>[number];
 async function fetchAllSources(
   regions: Region[],
   result: PipelineRunResult,
+  triggeredBy: string,
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
-  const approvedKeywords = await getApprovedDynamicKeywords();
-  const keywordStrategies = getKeywordStrategies().map((strategy) =>
-    strategy.kind === 'keyword_search'
-      ? {
-          ...strategy,
-          keywords: [...new Set([...strategy.keywords, ...approvedKeywords])],
-        }
-      : strategy,
-  );
-  const staticPinned = getPinnedStrategies();
-  const dbPinned = await getDbCommunityStrategies();
-  const pinnedStrategies = [...staticPinned, ...dbPinned];
+  const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy);
+
+  for (const note of sourcePlan.notes) {
+    console.log(`[Pipeline] Plan: ${note}`);
+  }
 
   console.log(
-    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${keywordStrategies.length}, Pinned: ${staticPinned.length} static + ${dbPinned.length} DB = ${pinnedStrategies.length} total`,
+    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${sourcePlan.pinnedStrategies.length} total`,
   );
-
-  // Keyword strategies × regions — all combinations run in parallel.
-  // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
-  const keywordJobs = regions.flatMap((region) =>
-    keywordStrategies.map((strategy) => async () => {
-      let fetchResult;
-      if (strategy.sourceType === 'GOOGLE_SEARCH') {
-        fetchResult = await fetchGoogleSearch(strategy, region);
-      } else if (strategy.sourceType === 'DUCKDUCKGO') {
-        fetchResult = await fetchDuckDuckGoSearch(strategy, region);
-      } else {
-        fetchResult = await fetchEventbriteKeywords(strategy, region);
-      }
-      console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
-      return fetchResult;
-    }),
-  );
-
-  const keywordOutcomes = await Promise.allSettled(keywordJobs.map((fn) => fn()));
-  result.regionsScanned = regions.length;
-  for (const outcome of keywordOutcomes) {
-    result.sourcesProcessed++;
-    if (outcome.status === 'fulfilled') {
-      allRaw.push(...outcome.value.items);
-      result.errors.push(...outcome.value.errors);
-    } else {
-      result.errors.push(String(outcome.reason));
-    }
-  }
 
   // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
-    pinnedStrategies.map(async (strategy) => {
+    sourcePlan.pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
@@ -181,6 +220,38 @@ async function fetchAllSources(
       result.errors.push(String(outcome.reason));
     }
   }
+
+  if (sourcePlan.keywordStrategies.length > 0) {
+    // Keyword strategies × regions — all combinations run in parallel.
+    // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
+    const keywordJobs = regions.flatMap((region) =>
+      sourcePlan.keywordStrategies.map((strategy) => async () => {
+        let fetchResult;
+        if (strategy.sourceType === 'GOOGLE_SEARCH') {
+          fetchResult = await fetchGoogleSearch(strategy, region);
+        } else if (strategy.sourceType === 'DUCKDUCKGO') {
+          fetchResult = await fetchDuckDuckGoSearch(strategy, region);
+        } else {
+          fetchResult = await fetchEventbriteKeywords(strategy, region);
+        }
+        console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
+        return fetchResult;
+      }),
+    );
+
+    const keywordOutcomes = await Promise.allSettled(keywordJobs.map((fn) => fn()));
+    for (const outcome of keywordOutcomes) {
+      result.sourcesProcessed++;
+      if (outcome.status === 'fulfilled') {
+        allRaw.push(...outcome.value.items);
+        result.errors.push(...outcome.value.errors);
+      } else {
+        result.errors.push(String(outcome.reason));
+      }
+    }
+  }
+
+  result.regionsScanned = regions.length;
 
   result.itemsFetched = allRaw.length;
   console.log(`[Pipeline] Total fetched: ${allRaw.length} raw items`);
@@ -200,10 +271,10 @@ type ExtractedItem = ExtractedData & { sourceIndex: number };
 
 // ─── Phase 2: Filter & Extract ─────────────────────────
 
-async function filterAndExtract(
+async function filterRelevantItems(
   uniqueRaw: RawContent[],
   result: PipelineRunResult,
-): Promise<{ extracted: ExtractedItem[]; relevantItems: RawContent[] }> {
+): Promise<RawContent[]> {
   console.log('[Pipeline] Stage 1: Relevance filter...');
   const relevanceResults = await filterRelevance(uniqueRaw);
   const relevantItems = relevanceResults
@@ -214,16 +285,23 @@ async function filterAndExtract(
   result.itemsPassedFilter = relevantItems.length;
   console.log(`[Pipeline] Passed filter: ${relevantItems.length}/${uniqueRaw.length}`);
 
-  if (relevantItems.length === 0) {
-    return { extracted: [], relevantItems: [] };
-  }
+  return relevantItems;
+}
 
+async function extractRelevantItems(
+  relevantItems: RawContent[],
+  result: PipelineRunResult,
+): Promise<ExtractedItem[]> {
   console.log('[Pipeline] Stage 2: Batch extraction...');
   const extracted = await extractBatch(relevantItems);
   result.itemsExtracted = extracted.length;
-  console.log(`[Pipeline] Extracted: ${extracted.length} structured items`);
+  const eventCount = extracted.filter((item) => item.type === 'EVENT').length;
+  const communityCount = extracted.filter((item) => item.type === 'COMMUNITY').length;
+  console.log(
+    `[Pipeline] Extracted: ${extracted.length} structured items (${eventCount} events, ${communityCount} communities)`,
+  );
 
-  return { extracted, relevantItems };
+  return extracted;
 }
 
 // ─── Phase 3: Resolve, Dedup & Queue ───────────────────
@@ -245,28 +323,21 @@ async function resolveAndQueue(
     select: { id: true, slug: true, name: true },
   });
   const sourceReliabilityByType = await getSourceReliabilityMap();
-  const cityByName = new Map<string, { id: string; slug: string }>();
   const cityBySlug = new Map<string, { id: string; name: string }>();
 
-  // LLM often returns local-language or full forms of city names while the DB
-  // stores English/short names. Map common variants to their canonical DB name
-  // so they resolve correctly instead of falling through to itemsSkippedNoCity.
-  const CITY_NAME_ALIASES: Record<string, string> = {
-    münchen: 'munich',
-    munchen: 'munich',
-    'münchen (münchen)': 'munich',
-    'frankfurt am main': 'frankfurt',
-    'frankfurt a. m.': 'frankfurt',
-    'esslingen am neckar': 'esslingen',
-    'ludwigsburg (württemberg)': 'ludwigsburg',
-    'heilbronn (neckar)': 'heilbronn',
-    'pforzheim (enz)': 'pforzheim',
-  };
-
   for (const c of cities) {
-    cityByName.set(c.name.toLowerCase(), { id: c.id, slug: c.slug });
     cityBySlug.set(c.slug, { id: c.id, name: c.name });
   }
+
+  const decisionCounts = {
+    queuedEvents: 0,
+    queuedCommunities: 0,
+    duplicateEvents: 0,
+    duplicateCommunities: 0,
+    noCityEvents: 0,
+    noCityCommunities: 0,
+    pastEvents: 0,
+  };
 
   for (const item of extracted) {
     const sourceRaw = relevantItems[item.sourceIndex];
@@ -277,9 +348,7 @@ async function resolveAndQueue(
     let cityId: string | null = null;
 
     if (item.cityName) {
-      const normalised = item.cityName.toLowerCase().trim();
-      const canonical = CITY_NAME_ALIASES[normalised] ?? normalised;
-      const match = cityByName.get(canonical);
+      const match = resolveCityMatch(item.cityName, cities, CITY_NAME_ALIASES);
       if (match) cityId = match.id;
     }
 
@@ -293,6 +362,11 @@ async function resolveAndQueue(
 
     if (!cityId) {
       result.itemsSkippedNoCity++;
+      if (item.type === 'EVENT') {
+        decisionCounts.noCityEvents++;
+      } else {
+        decisionCounts.noCityCommunities++;
+      }
       console.log(
         `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName}`,
       );
@@ -304,6 +378,7 @@ async function resolveAndQueue(
       const eventDate = new Date(`${item.date}T23:59:59`);
       if (!Number.isNaN(eventDate.getTime()) && eventDate < new Date()) {
         result.itemsSkippedPast++;
+        decisionCounts.pastEvents++;
         continue;
       }
     }
@@ -318,11 +393,17 @@ async function resolveAndQueue(
     ) {
       await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
       result.itemsSkippedDuplicate++;
+      decisionCounts.duplicateEvents++;
       continue;
     }
 
     if (isDupe.isDuplicate && isDupe.matchScore && isDupe.matchScore > 0.9) {
       result.itemsSkippedDuplicate++;
+      if (item.type === 'EVENT') {
+        decisionCounts.duplicateEvents++;
+      } else {
+        decisionCounts.duplicateCommunities++;
+      }
       continue;
     }
 
@@ -349,6 +430,11 @@ async function resolveAndQueue(
     });
 
     result.itemsQueued++;
+    if (item.type === 'EVENT') {
+      decisionCounts.queuedEvents++;
+    } else {
+      decisionCounts.queuedCommunities++;
+    }
 
     const autoApprove = shouldAutoApprovePipelineItem({
       item: { ...item, confidence },
@@ -365,6 +451,10 @@ async function resolveAndQueue(
       });
     }
   }
+
+  console.log(
+    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities; duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
+  );
 }
 
 // ─── Deduplication ─────────────────────────────────────

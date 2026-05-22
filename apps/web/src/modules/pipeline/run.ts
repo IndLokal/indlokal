@@ -18,12 +18,18 @@ import { getDbCommunityStrategies } from './db-sources';
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
+  const strictMode = args.includes('--strict') || process.env.PIPELINE_STRICT === '1';
 
   console.log('╔══════════════════════════════════════════╗');
   console.log('║  IndLokal AI Content Pipeline          ║');
-  console.log('║  Generic-first · Two-stage LLM           ║');
+  console.log('║  Known-source-first · Two-stage LLM      ║');
   console.log('╚══════════════════════════════════════════╝');
   console.log(`Mode: ${dryRun ? 'DRY RUN (config preview)' : 'LIVE'}`);
+  if (!dryRun) {
+    console.log(
+      `Exit behavior: ${strictMode ? 'STRICT (non-zero on pipeline errors)' : 'TOLERANT (warnings do not fail run)'}`,
+    );
+  }
 
   // Check required env vars
   if (!process.env.OPENAI_API_KEY) {
@@ -85,6 +91,13 @@ async function main() {
   console.log(`  Errors:               ${result.errors.length}`);
   console.log(`  Duration:             ${result.duration}ms`);
 
+  if (result.stageTimings && Object.keys(result.stageTimings).length > 0) {
+    console.log('\nStage timings:');
+    for (const [stage, duration] of Object.entries(result.stageTimings)) {
+      console.log(`  ${stage.padEnd(18)} ${duration}ms`);
+    }
+  }
+
   if (result.errors.length > 0) {
     console.log('\n⚠️  Errors:');
     for (const err of result.errors) {
@@ -100,7 +113,18 @@ async function main() {
     console.log('\nNo new items to queue.');
   }
 
-  process.exit(result.errors.length > 0 ? 1 : 0);
+  if (result.errors.length > 0 && strictMode) {
+    console.log('\n❌ Strict mode enabled: exiting with non-zero status due to pipeline errors.');
+    process.exit(1);
+  }
+
+  if (result.errors.length > 0 && !strictMode) {
+    console.log(
+      '\n⚠️  Completed with warnings (exit code 0). Use --strict or PIPELINE_STRICT=1 to fail on warnings.',
+    );
+  }
+
+  process.exit(0);
 }
 
 main().catch((err) => {
