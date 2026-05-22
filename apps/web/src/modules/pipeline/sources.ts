@@ -173,8 +173,8 @@ export async function fetchPinnedUrl(
     // Strip script and style blocks before text extraction — their content
     // (JS code, CSS rules) leaks into the LLM context and degrades extraction.
     // Apply repeatedly until stable to avoid incomplete multi-character sanitization.
-    let html = rawHtml;
-    for (;;) {
+      .replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '')
+      .replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '');
       const next = html
         .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
         .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
