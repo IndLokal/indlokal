@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { triggerPipelineRun } from './actions';
+import { useRouter } from 'next/navigation';
 import type { PipelineRunResult } from '@/modules/pipeline';
 
 export default function RunPipelineButton() {
+  const router = useRouter();
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -15,10 +16,25 @@ export default function RunPipelineButton() {
     setError(null);
 
     try {
-      const res = await triggerPipelineRun();
-      setResult(res);
+      const response = await fetch('/api/admin/pipeline/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      const payload = (await response.json()) as
+        | { ok: true; result: PipelineRunResult }
+        | { ok: false; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        throw new Error(
+          payload.ok ? 'Pipeline run failed' : (payload.error ?? 'Pipeline run failed'),
+        );
+      }
+
+      setResult(payload.result);
+      router.refresh();
     } catch (err) {
-      setError(String(err));
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setRunning(false);
     }

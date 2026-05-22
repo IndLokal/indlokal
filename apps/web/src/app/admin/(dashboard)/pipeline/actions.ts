@@ -3,7 +3,6 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
-import type { PipelineRunResult } from '@/modules/pipeline';
 import {
   approvePipelineItemRecord,
   enrichSparseCommunities,
@@ -11,17 +10,6 @@ import {
   refreshKeywordSuggestions,
   revertAutoApprovedPipelineItems,
 } from '@/modules/pipeline';
-
-/* ——— Run the pipeline on demand ——— */
-
-export async function triggerPipelineRun(): Promise<PipelineRunResult> {
-  await assertCan('pipeline.run');
-  // Dynamic import to avoid bundling the pipeline in the client
-  const { runPipeline } = await import('@/modules/pipeline/orchestrator');
-  const result = await runPipeline('admin');
-  revalidatePath('/admin/pipeline');
-  return result;
-}
 
 /* ——— Approve: create entity from pipeline item ——— */
 
