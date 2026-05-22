@@ -25,9 +25,9 @@ export default async function AmbassadorDashboardPage() {
   const cityFilter = cityIds.length > 0 ? { cityId: { in: cityIds } } : {};
   const cityFilterEvents = cityIds.length > 0 ? { community: { cityId: { in: cityIds } } } : {};
 
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const now = new Date();
-  const in7Days = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
   const [
     mySubmissionsThisWeek,
@@ -65,7 +65,7 @@ export default async function AmbassadorDashboardPage() {
       where: {
         status: 'ACTIVE',
         lastActivityAt: {
-          lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          lt: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000),
         },
         ...cityFilter,
       },

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { AuditTable } from './AuditTable';
@@ -156,12 +157,12 @@ export default async function AdminAuditPage({
         >
           Filter
         </button>
-        <a
+        <Link
           href="/admin/audit"
           className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
         >
           Clear
-        </a>
+        </Link>
       </form>
 
       {/* Table + drawer */}

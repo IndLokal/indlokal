@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { OutreachKanban } from './OutreachKanban';
@@ -32,11 +33,12 @@ export default async function AdminOutreachPage({
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};
+  const now = new Date();
   if (filterCity) where.cityId = filterCity;
   if (filterOwner) where.ownerUserId = filterOwner;
   if (filterSource) where.source = filterSource;
   if (filterAge > 0)
-    where.updatedAt = { lt: new Date(Date.now() - filterAge * 24 * 60 * 60 * 1000) };
+    where.updatedAt = { lt: new Date(now.getTime() - filterAge * 24 * 60 * 60 * 1000) };
 
   const [leads, cities, operators] = await Promise.all([
     db.outreachLead.findMany({
@@ -149,12 +151,12 @@ export default async function AdminOutreachPage({
           Filter
         </button>
         {(filterCity || filterOwner || filterSource || filterAge > 0) && (
-          <a
+          <Link
             href="/admin/outreach"
             className="text-muted rounded-lg px-4 py-2 text-sm hover:text-gray-700"
           >
             Clear
-          </a>
+          </Link>
         )}
       </form>
 

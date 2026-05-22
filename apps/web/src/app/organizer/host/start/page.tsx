@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { db } from '@/lib/db';
 import { HostStartForm } from './HostStartForm';
 
@@ -33,9 +34,9 @@ export default async function HostStartPage() {
 
         <p className="text-muted mt-6 text-center text-xs">
           Already an organizer?{' '}
-          <a href="/organizer/login" className="underline hover:text-gray-700">
+          <Link href="/organizer/login" className="underline hover:text-gray-700">
             Log in here
-          </a>
+          </Link>
         </p>
       </div>
     </div>
