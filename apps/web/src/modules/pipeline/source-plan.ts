@@ -221,7 +221,7 @@ export async function buildPipelineSourcePlan(
   regions: SearchRegion[],
   triggeredBy: string,
 ): Promise<PipelineSourcePlan> {
-  const isCronRun = triggeredBy === 'cron';
+  const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';
   const notes: string[] = [];
   const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
 
@@ -229,11 +229,11 @@ export async function buildPipelineSourcePlan(
   const dbPinnedAll = await getDbCommunityStrategies();
   const dbPinnedLimit = getPositiveIntEnv(
     'PIPELINE_DB_PINNED_LIMIT',
-    isCronRun ? 40 : dbPinnedAll.length,
+    isTimeBoundRun ? 40 : dbPinnedAll.length,
   );
   const prioritizedDbPinned = prioritizeDbPinnedSources(dbPinnedAll);
   const dbPinned = limitDbPinnedSources(prioritizedDbPinned, dbPinnedLimit);
-  const cityGaps = await getLowCoverageCities(regions, isCronRun);
+  const cityGaps = await getLowCoverageCities(regions, isTimeBoundRun);
 
   if (dbPinned.length < dbPinnedAll.length) {
     notes.push(`limited DB pinned sources to ${dbPinned.length}/${dbPinnedAll.length}`);
@@ -276,7 +276,7 @@ export async function buildPipelineSourcePlan(
         const keywords = unique([...gapKeywords, ...approvedKeywords, ...fallbackKeywords]);
         const limitedKeywords =
           strategy.sourceType === 'DUCKDUCKGO'
-            ? limitDuckDuckGoKeywords(keywords, isCronRun)
+            ? limitDuckDuckGoKeywords(keywords, isTimeBoundRun)
             : keywords;
 
         if (limitedKeywords.length === 0) return [];
