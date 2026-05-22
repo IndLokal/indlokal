@@ -37,7 +37,7 @@ function handleIncomingUrl(url: string | null) {
  */
 function OnboardingGate() {
   const { user, isLoading } = useAuth();
-  const segments = useSegments();
+  const segments = useSegments() as string[];
 
   useEffect(() => {
     if (isLoading) return;
