@@ -158,6 +158,17 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'stuttgart',
   },
   {
+    name: 'Renningen',
+    slug: 'renningen',
+    state: 'Baden-Württemberg',
+    latitude: 48.7697,
+    longitude: 8.935,
+    population: 18652,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'stuttgart',
+  },
+  {
     name: 'Göppingen',
     slug: 'goeppingen',
     state: 'Baden-Württemberg',
