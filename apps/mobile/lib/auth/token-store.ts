@@ -16,6 +16,7 @@ export type AuthUser = {
     | 'PARTNERSHIPS_LEAD'
     | 'PLATFORM_ADMIN';
   cityId: string | null;
+  cityName: string | null;
   personaSegments: string[];
   preferredLanguages: string[];
   onboardingComplete: boolean;

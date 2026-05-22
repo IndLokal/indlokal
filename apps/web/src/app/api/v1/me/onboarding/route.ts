@@ -57,6 +57,7 @@ export const PATCH = apiHandler(async (req: NextRequest) => {
       onboardingComplete: true,
       lastActiveAt: new Date(),
     },
+    include: { city: { select: { name: true } } },
   });
 
   return NextResponse.json(toMeProfile(user));

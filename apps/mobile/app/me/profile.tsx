@@ -8,6 +8,13 @@ import { router } from 'expo-router';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
+const PERSONA_LABELS: Record<string, string> = {
+  new_arrival: 'New to this city',
+  student: 'Student',
+  family: 'Family',
+  professional: 'Working professional',
+};
+
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
 
@@ -46,9 +53,12 @@ export default function ProfileScreen() {
         <View style={styles.card}>
           <ProfileRow label="Name" value={user.displayName ?? '—'} />
           <ProfileRow label="Email" value={user.email} />
-          {user.cityId && <ProfileRow label="City" value={user.cityId} />}
+          {user.cityName && <ProfileRow label="City" value={user.cityName} />}
           {user.personaSegments.length > 0 && (
-            <ProfileRow label="Interests" value={user.personaSegments.join(', ')} />
+            <ProfileRow
+              label="Interests"
+              value={user.personaSegments.map((s) => PERSONA_LABELS[s] ?? s).join(', ')}
+            />
           )}
         </View>
 

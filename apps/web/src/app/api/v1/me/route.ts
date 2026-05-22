@@ -23,7 +23,10 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
-  const user = await db.user.findUnique({ where: { id: auth.user.userId } });
+  const user = await db.user.findUnique({
+    where: { id: auth.user.userId },
+    include: { city: { select: { name: true } } },
+  });
   if (!user) return apiError('NOT_FOUND', 'user not found');
 
   return NextResponse.json(toMeProfile(user));

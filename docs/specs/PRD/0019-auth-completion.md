@@ -1,6 +1,6 @@
 # PRD-0019: Auth Completion — Onboarding, Session Restore, Profile & Account Management
 
-- **Status:** Draft
+- **Status:** Implemented
 - **Owner:** Product Lead
 - **Reviewers:** Mobile Lead, Backend Lead, Design
 - **Linked:** TDD-0019, ADR-0005

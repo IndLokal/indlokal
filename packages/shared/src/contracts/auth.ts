@@ -31,6 +31,7 @@ export const MeProfile = z.object({
   avatarUrl: z.string().url().nullable(),
   role: UserRole,
   cityId: Cuid.nullable(),
+  cityName: z.string().nullable(),
   personaSegments: z.array(z.string()),
   preferredLanguages: z.array(z.string()),
   onboardingComplete: z.boolean(),

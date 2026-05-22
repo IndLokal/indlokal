@@ -3,7 +3,7 @@
  * Calls DELETE /api/v1/me, clears session, navigates to sign-in.
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,7 +20,16 @@ import { palette, radius, spacing, typography } from '@/constants/theme';
 
 export default function DeleteAccountScreen() {
   const [loading, setLoading] = useState(false);
-  const { signOut } = useAuth();
+  const { signOut, user, isLoading } = useAuth();
+
+  // Redirect anonymous users — they have nothing to delete.
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.replace('/auth/sign-in');
+    }
+  }, [user, isLoading]);
+
+  if (!user) return null;
 
   function confirmDelete() {
     Alert.alert(

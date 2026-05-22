@@ -1,10 +1,29 @@
+import { useState } from 'react';
+import { ActivityIndicator, Pressable } from 'react-native';
 import { Link, useLocalSearchParams } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { LogoMark } from '@/components/Logo';
+import { authClient } from '@/lib/auth/client.expo';
+import { requestMagicLink } from '@/lib/auth/magic';
 import { palette, spacing, typography } from '@/constants/theme';
 
 export default function MagicLinkSentScreen() {
   const params = useLocalSearchParams<{ email?: string }>();
+  const [resending, setResending] = useState(false);
+  const [resent, setResent] = useState(false);
+
+  async function onResend() {
+    if (!params.email || resending) return;
+    setResending(true);
+    try {
+      await requestMagicLink(authClient, params.email);
+      setResent(true);
+    } catch {
+      // Best effort — back-to-sign-in link remains available.
+    } finally {
+      setResending(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -15,6 +34,21 @@ export default function MagicLinkSentScreen() {
           We sent a sign-in link to {params.email ?? 'your inbox'}. Open the link on this device to
           continue.
         </Text>
+
+        {params.email && (
+          <Pressable
+            style={[styles.resendButton, resending && styles.resendDisabled]}
+            disabled={resending || resent}
+            onPress={() => void onResend()}
+          >
+            {resending ? (
+              <ActivityIndicator color={palette.brand[600]} />
+            ) : (
+              <Text style={styles.resendText}>{resent ? 'Link sent again' : 'Re-send link'}</Text>
+            )}
+          </Pressable>
+        )}
+
         <Link href="/auth/sign-in" style={styles.link}>
           Back to sign in
         </Link>
@@ -46,6 +80,24 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: palette.neutral.muted,
     textAlign: 'center',
+  },
+  resendButton: {
+    marginTop: spacing.sm,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    borderWidth: 1,
+    borderColor: palette.brand[600],
+    borderRadius: 8,
+    minWidth: 130,
+    alignItems: 'center',
+  },
+  resendDisabled: {
+    opacity: 0.5,
+  },
+  resendText: {
+    color: palette.brand[600],
+    fontWeight: '600',
+    fontSize: typography.body,
   },
   link: {
     marginTop: spacing.sm,

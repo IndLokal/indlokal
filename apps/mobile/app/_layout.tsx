@@ -1,10 +1,14 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
 import { Stack, router, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { authClient } from '@/lib/auth/client.expo';
 import { extractMagicLinkToken } from '@/lib/auth/magic';
 import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
+
+// Hold the native splash until session restore finishes.
+SplashScreen.preventAutoHideAsync();
 
 function handleIncomingUrl(url: string | null) {
   if (!url) return;
@@ -38,6 +42,13 @@ function handleIncomingUrl(url: string | null) {
 function OnboardingGate() {
   const { user, isLoading } = useAuth();
   const segments = useSegments() as string[];
+
+  // Hide the native splash once session restore completes (success or failure).
+  useEffect(() => {
+    if (!isLoading) {
+      void SplashScreen.hideAsync();
+    }
+  }, [isLoading]);
 
   useEffect(() => {
     if (isLoading) return;
