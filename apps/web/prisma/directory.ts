@@ -566,7 +566,7 @@ const MANNHEIM: DirectoryEntry[] = [
     name: 'Deutsch-Indische Gesellschaft Heidelberg e.V.',
     description:
       "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft — lectures, music, film and cultural programming focused on India and Indo-German exchange.",
-    // Heidelberg sits in the Mannheim / Rhein-Neckar metro catchment for launch.
+    // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -587,7 +587,7 @@ const MANNHEIM: DirectoryEntry[] = [
     name: 'ISKCON Heidelberg',
     description:
       'Vaishnava temple community in the Heidelberg / Rhein-Neckar area with regular Sunday programs, kirtan and festival celebrations.',
-    // Meckesheim / Heidelberg is the best current owned-site-backed entry for the metro.
+    // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['religious', 'cultural'],
     personaSegments: ['family', 'working-professional', 'persona-student'],
@@ -606,6 +606,19 @@ const MANNHEIM: DirectoryEntry[] = [
         label: 'YouTube',
       },
     ],
+    needsReview: true,
+  },
+  {
+    slug: 'malayalee-deutsches-treffen-rhein-neckar',
+    name: 'Malayalee Deutsches Treffen e.V.',
+    description:
+      'Malayali cultural association active in the wider Rhein-Neckar/Baden region, with family-oriented festivals and community gatherings.',
+    citySlug: 'schwetzingen',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
     needsReview: true,
   },
 ];
@@ -737,6 +750,90 @@ const FRANKFURT: DirectoryEntry[] = [
         label: 'Website',
       },
     ],
+    needsReview: true,
+  },
+  {
+    slug: 'darmstadt-indian-association',
+    name: 'Darmstadt Indian Association (DIA) e.V.',
+    description:
+      'Indian community association serving students and families in the Darmstadt area with cultural meetups and diaspora support.',
+    citySlug: 'darmstadt-sat',
+    categorySlugs: ['networking-social', 'cultural'],
+    personaSegments: ['persona-student', 'working-professional', 'family'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'mainz-wiesbaden-indian-association',
+    name: 'Mainz-Wiesbaden Indian Association e.V.',
+    description:
+      'Community association connecting Indian residents across Mainz and Wiesbaden with social and cultural activities.',
+    citySlug: 'mainz',
+    categorySlugs: ['networking-social', 'cultural'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'rhein-main-kannada-association',
+    name: 'Rhein Main Kannada Association e.V.',
+    description:
+      'Kannada-speaking community in the Rhein-Main area organising language, cultural and family events.',
+    citySlug: 'offenbach',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Kannada', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://rheinmainkannadasangha.org/',
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'rhein-main-bengali-cultural-association',
+    name: 'Rhein-Main Bengali Cultural Association e.V.',
+    description:
+      'Bengali cultural association in Rhein-Main running festival celebrations and community programs for families.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Bengali', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'indischer-sport-und-familienverein-frankfurt',
+    name: 'Indischer Sport- und Familienverein Frankfurt e.V.',
+    description:
+      'Frankfurt-based Indian sports and family association for regular social, recreational and community activities.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['sports-fitness', 'family-kids', 'networking-social'],
+    personaSegments: ['family', 'working-professional', 'single'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'kerala-samajam-frankfurt',
+    name: 'Kerala Samajam e.V. (Frankfurt)',
+    description:
+      'Malayali community association in the Frankfurt metro with cultural and family-oriented gatherings.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
     needsReview: true,
   },
 ];
