@@ -4,25 +4,17 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { assertCan } from '@/lib/auth/permissions';
 import { runBootstrap } from '../../../../../prisma/bootstrap';
 
 /* ───────────────────────────── Auth guard ───────────────────────────── */
-
-async function requireAdminAction() {
-  const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
-  }
-  return user;
-}
 
 const slugRe = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 /* ───────────────────────────── Bootstrap ────────────────────────────── */
 
 export async function runBootstrapAction() {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   await runBootstrap();
   revalidatePath('/admin/data');
   revalidatePath('/admin/data/health');
@@ -70,7 +62,7 @@ function fdToCityInput(fd: FormData) {
 }
 
 export async function createCityAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const input = fdToCityInput(formData);
   const metroId = input.metroRegionSlug
     ? (await db.city.findUnique({ where: { slug: input.metroRegionSlug }, select: { id: true } }))
@@ -97,7 +89,7 @@ export async function createCityAction(formData: FormData) {
 }
 
 export async function updateCityAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   if (!id) throw new Error('Missing city id');
   const input = fdToCityInput(formData);
@@ -127,7 +119,7 @@ export async function updateCityAction(formData: FormData) {
 }
 
 export async function toggleCityActiveAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   if (!id) return;
   const city = await db.city.findUnique({ where: { id }, select: { isActive: true } });
@@ -141,7 +133,7 @@ export async function toggleCityActiveAction(formData: FormData) {
  * resources, users, reports, child metro members). Admin must clear those first.
  */
 export async function deleteCityAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
 
@@ -192,7 +184,7 @@ function fdToCategoryInput(fd: FormData) {
 }
 
 export async function createCategoryAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const input = fdToCategoryInput(formData);
   await db.category.create({ data: input });
   revalidatePath('/admin/data/categories');
@@ -200,7 +192,7 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function updateCategoryAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   if (!id) throw new Error('Missing category id');
   const input = fdToCategoryInput(formData);
@@ -209,7 +201,7 @@ export async function updateCategoryAction(formData: FormData) {
 }
 
 export async function deleteCategoryAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
   // Refuse if referenced — admin-safe.
@@ -222,7 +214,7 @@ export async function deleteCategoryAction(formData: FormData) {
 /* ───────────────────────────── Communities ──────────────────────────── */
 
 export async function setCommunityStatusAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
   if (!id || !['ACTIVE', 'INACTIVE', 'UNVERIFIED', 'CLAIMED'].includes(status)) return;
@@ -243,7 +235,7 @@ export async function setCommunityStatusAction(formData: FormData) {
  * (self-relation), and ContentReport.communityId (nullable, no cascade).
  */
 export async function deleteCommunityAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
 
@@ -264,7 +256,7 @@ export async function deleteCommunityAction(formData: FormData) {
 /* ───────────────────────────── Events ───────────────────────────────── */
 
 export async function setEventStatusAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
   if (!id || !['UPCOMING', 'ONGOING', 'PAST', 'CANCELLED'].includes(status)) return;
@@ -277,7 +269,7 @@ export async function setEventStatusAction(formData: FormData) {
 
 /** Hard-delete an event. EventCategory, TrustSignal, SavedEvent cascade. */
 export async function deleteEventAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
   await db.event.delete({ where: { id } });
@@ -288,7 +280,7 @@ export async function deleteEventAction(formData: FormData) {
 
 /** Hard-delete a resource (consular / official / guide entry). */
 export async function deleteResourceAction(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
   await db.resource.delete({ where: { id } });
@@ -444,7 +436,7 @@ function coerceCsvValue(raw: string): unknown {
 }
 
 export async function planImportAction(formData: FormData): Promise<ImportPlan> {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const resource = String(formData.get('resource') || '') as 'city' | 'category' | 'community';
   const text = String(formData.get('payload') || '');
   if (!['city', 'category', 'community'].includes(resource)) {
@@ -517,7 +509,7 @@ async function planRows(
 }
 
 export async function applyImportAction(formData: FormData): Promise<ImportPlan> {
-  await requireAdminAction();
+  await assertCan('admin.data.write');
   const resource = String(formData.get('resource') || '') as 'city' | 'category' | 'community';
   const text = String(formData.get('payload') || '');
   if (!['city', 'category', 'community'].includes(resource)) {

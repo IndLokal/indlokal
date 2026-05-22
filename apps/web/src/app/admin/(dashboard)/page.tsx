@@ -40,6 +40,11 @@ export default function AdminDashboardPage() {
           description="Consolidate duplicates into a canonical record"
           href="/admin/merge"
         />
+        <DashboardCard
+          title="Team"
+          description="Grant and revoke operator roles"
+          href="/admin/team"
+        />
       </div>
     </div>
   );
@@ -74,4 +79,5 @@ export const ADMIN_NAV_LINKS = [
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/pipeline', label: 'Pipeline' },
   { href: '/admin/merge', label: 'Merge' },
+  { href: '/admin/team', label: 'Team' },
 ];

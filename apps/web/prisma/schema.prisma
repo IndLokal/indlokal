@@ -424,12 +424,45 @@ model Resource {
 
 // ─────────────────────────────────────────────────
 // User — lightweight initially; grows with Phase 2
+// Role model: ADR-0005 / PRD-0014
 // ─────────────────────────────────────────────────
 
 enum UserRole {
   USER
   COMMUNITY_ADMIN
+  EVENT_HOST          // owns events, no community (PRD-0017)
+  PARTNER_ORG_ADMIN   // owns N communities under an org (future)
+  CITY_AMBASSADOR     // city-scoped field operator (PRD-0015)
+  CONTENT_EDITOR      // social/content support (PRD-0014)
+  OPS_LEAD            // ops & community growth (PRD-0014)
+  PARTNERSHIPS_LEAD   // strategic partner (PRD-0014)
   PLATFORM_ADMIN
+}
+
+// ─────────────────────────────────────────────────
+// RoleAssignment — scoped, auditable role grants
+// ADR-0005 / PRD-0014
+// One user may hold many role assignments.
+// cityId scopes CITY_AMBASSADOR to a specific city.
+// orgId is reserved for PARTNER_ORG_ADMIN (future).
+// User.role stays as the primary/display role;
+// can() reads RoleAssignment for authorization.
+// ─────────────────────────────────────────────────
+
+model RoleAssignment {
+  id        String    @id @default(cuid())
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      UserRole
+  cityId    String?   @map("city_id")    // scope for CITY_AMBASSADOR
+  orgId     String?   @map("org_id")     // scope for PARTNER_ORG_ADMIN (future)
+  grantedBy String    @map("granted_by") // userId of granting admin
+  grantedAt DateTime  @default(now()) @map("granted_at")
+  revokedAt DateTime? @map("revoked_at") // null = active
+
+  @@index([userId])
+  @@index([role, cityId])
+  @@map("role_assignments")
 }
 
 model User {
@@ -460,6 +493,7 @@ model User {
   savedEvents        SavedEvent[]
   magicLinkTokens    MagicLinkToken[]
   refreshTokens      RefreshToken[]
+  roleAssignments    RoleAssignment[]
   devices                 Device[]
   notificationPreferences NotificationPreference[]
   quietHours              QuietHours?

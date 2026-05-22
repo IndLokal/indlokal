@@ -3,17 +3,9 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
 import { Prisma } from '@prisma/client';
-
-async function requireAdminAction() {
-  const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
-  }
-  return user;
-}
 
 function getMetadataObject(metadata: unknown): Record<string, unknown> {
   if (metadata && typeof metadata === 'object' && !Array.isArray(metadata)) {
@@ -23,7 +15,7 @@ function getMetadataObject(metadata: unknown): Record<string, unknown> {
 }
 
 export async function mergeCommunities(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('merge.execute');
 
   const primaryId = (formData.get('primaryId') as string | null)?.trim();
   const secondaryId = (formData.get('secondaryId') as string | null)?.trim();

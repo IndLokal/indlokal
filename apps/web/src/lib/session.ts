@@ -107,6 +107,10 @@ export async function getSessionUser() {
     const user = await db.user.findUnique({
       where: { sessionToken: hashed },
       include: {
+        roleAssignments: {
+          where: { revokedAt: null },
+          select: { role: true, cityId: true, orgId: true, revokedAt: true },
+        },
         claimedCommunities: {
           where: { claimState: 'CLAIMED' },
           include: {
@@ -163,10 +167,21 @@ export async function requireSessionUser() {
   return user;
 }
 
-/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized */
+/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized.
+ * Preserved for backward-compat. New code should use requireCan() from
+ * lib/auth/permissions.ts for granular, role-scoped checks.
+ */
 export async function requireAdmin() {
   const user = await getSessionUser();
   if (!user || user.role !== 'PLATFORM_ADMIN') redirect('/admin/login');
+  return user;
+}
+
+/** Require COMMUNITY_ADMIN (organizer) — redirect if not authorized */
+export async function requireCommunityAdmin() {
+  const user = await getSessionUser();
+  if (!user || (user.role !== 'COMMUNITY_ADMIN' && user.role !== 'PLATFORM_ADMIN'))
+    redirect('/organizer/login');
   return user;
 }
 
