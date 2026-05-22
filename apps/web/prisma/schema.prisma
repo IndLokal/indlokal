@@ -310,7 +310,7 @@ model ActivitySignal {
   // Prevent duplicate ambassador check-ins for the same event.
   // NULL values are not matched by Postgres unique constraints, so system
   // signals (createdBy/eventId = null) are unaffected.
-  @@unique([createdBy, eventId, signalType], name: "activity_signals_checkin_dedup")
+  @@unique([createdBy, eventId, signalType], name: "activity_signals_checkin_dedup", map: "activity_signals_checkin_dedup")
   @@index([communityId, occurredAt])
   @@index([createdBy])
   @@map("activity_signals")
@@ -471,7 +471,7 @@ model RoleAssignment {
   revokedAt DateTime? @map("revoked_at") // null = active
 
   @@index([userId])
-  @@index([role, cityId])
+  @@index([role, cityId], map: "role_assignments_role_city_idx")
   @@map("role_assignments")
 }
 
