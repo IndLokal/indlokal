@@ -78,7 +78,10 @@ export async function POST(request: NextRequest) {
         include: { user: { select: { id: true, role: true } } },
       });
 
-      if (!existing || existing.user.role !== 'COMMUNITY_ADMIN') {
+      if (
+        !existing ||
+        !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(existing.user.role)
+      ) {
         return seeOther('/organizer/login?error=invalid_token');
       }
 
@@ -89,7 +92,8 @@ export async function POST(request: NextRequest) {
       if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
         const sessionToken = generateSessionToken();
         await createSession(existing.user.id, sessionToken);
-        return seeOther('/organizer');
+        const dest = existing.user.role === 'EVENT_HOST' ? '/organizer/host' : '/organizer';
+        return seeOther(dest);
       }
 
       return seeOther('/organizer/login?error=invalid_token');
@@ -100,7 +104,10 @@ export async function POST(request: NextRequest) {
       include: { user: { select: { id: true, role: true } } },
     });
 
-    if (!magicLink || magicLink.user.role !== 'COMMUNITY_ADMIN') {
+    if (
+      !magicLink ||
+      !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(magicLink.user.role)
+    ) {
       return seeOther('/organizer/login?error=invalid_token');
     }
 
@@ -108,7 +115,8 @@ export async function POST(request: NextRequest) {
     const sessionToken = generateSessionToken();
     await createSession(magicLink.user.id, sessionToken);
 
-    return seeOther('/organizer');
+    const dest = magicLink.user.role === 'EVENT_HOST' ? '/organizer/host' : '/organizer';
+    return seeOther(dest);
   } catch {
     return seeOther('/organizer/login?error=server_error');
   }

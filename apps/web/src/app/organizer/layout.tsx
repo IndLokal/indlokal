@@ -1,9 +1,18 @@
 import Link from 'next/link';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { MobileNav } from '@/components/MobileNav';
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
+
+  // Resolve active community for workspace switcher display
+  const currentCommunityId = user ? await getCurrentCommunityId() : null;
+  const activeCommunity = user
+    ? (user.claimedCommunities.find((c) => c.id === currentCommunityId) ??
+      user.claimedCommunities[0] ??
+      null)
+    : null;
+  const isMultiOrg = (user?.claimedCommunities.length ?? 0) > 1;
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
@@ -17,12 +26,30 @@ export default async function OrganizerLayout({ children }: { children: React.Re
             >
               L
             </Link>
-            <Link
-              href="/organizer"
-              className="text-foreground hover:text-brand-600 text-base font-bold tracking-tight transition-colors"
-            >
-              Organizer Portal
-            </Link>
+
+            {/* Workspace switcher — shows active community name + chevron for multi-org */}
+            {activeCommunity ? (
+              isMultiOrg ? (
+                <Link
+                  href="/organizer/communities"
+                  className="text-foreground hover:text-brand-600 flex items-center gap-1.5 text-base font-bold tracking-tight transition-colors"
+                >
+                  {activeCommunity.name}
+                  <span className="text-muted text-sm">⌄</span>
+                </Link>
+              ) : (
+                <span className="text-foreground text-base font-bold tracking-tight">
+                  {activeCommunity.name}
+                </span>
+              )
+            ) : (
+              <Link
+                href="/organizer"
+                className="text-foreground hover:text-brand-600 text-base font-bold tracking-tight transition-colors"
+              >
+                Organizer Portal
+              </Link>
+            )}
 
             {user && (
               <div className="ml-4 hidden items-center gap-2 sm:flex">
@@ -34,6 +61,14 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                   >
                     Overview
                   </Link>
+                  {isMultiOrg && (
+                    <Link
+                      href="/organizer/communities"
+                      className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
+                    >
+                      Communities
+                    </Link>
+                  )}
                   <Link
                     href="/organizer/edit"
                     className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
@@ -60,6 +95,9 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                 <MobileNav
                   links={[
                     { href: '/organizer', label: 'Overview' },
+                    ...(isMultiOrg
+                      ? [{ href: '/organizer/communities', label: 'Communities' }]
+                      : []),
                     { href: '/organizer/edit', label: 'Edit Profile' },
                     { href: '/organizer/channels', label: 'Channels' },
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },

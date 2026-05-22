@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
@@ -41,7 +41,9 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   if (!user || user.claimedCommunities.length === 0) {
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
-  const community = user.claimedCommunities[0];
+  const currentId = await getCurrentCommunityId();
+  const community =
+    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
 
   const raw = {
     title: formData.get('title') as string,

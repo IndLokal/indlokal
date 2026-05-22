@@ -11,7 +11,17 @@ import { Ack, Cuid, IsoDateTime } from './common';
 
 // ─── Profile returned by GET /api/v1/me ───
 
-export const UserRole = z.enum(['USER', 'COMMUNITY_ADMIN', 'PLATFORM_ADMIN']);
+export const UserRole = z.enum([
+  'USER',
+  'COMMUNITY_ADMIN',
+  'EVENT_HOST',
+  'PARTNER_ORG_ADMIN',
+  'CITY_AMBASSADOR',
+  'CONTENT_EDITOR',
+  'OPS_LEAD',
+  'PARTNERSHIPS_LEAD',
+  'PLATFORM_ADMIN',
+]);
 export type UserRole = z.infer<typeof UserRole>;
 
 export const MeProfile = z.object({
