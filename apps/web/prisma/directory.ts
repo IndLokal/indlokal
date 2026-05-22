@@ -21,8 +21,9 @@
  *
  *    TIER B — German official registries
  *      • Vereinsregister / Handelsregister (vereinsregister.de or
- *        handelsregister.de) — sufficient for any registered e.V. even
- *        without a website. Record VR number in a code comment.
+ *        handelsregister.de) — sufficient for registered legal entities
+ *        (e.V., gUG/UG, gGmbH, etc.) even without a website. Record VR/HRB
+ *        number in a code comment.
  *
  *    TIER C — official umbrella / institutional listings
  *      • Forum der Kulturen Stuttgart — forum-der-kulturen.de/mitgliedsvereine
@@ -222,6 +223,37 @@ const STUTTGART: DirectoryEntry[] = [
     ],
   },
   {
+    slug: 'jito-stuttgart',
+    name: 'JITO Stuttgart',
+    description:
+      'Jain International Trade Organization chapter in Stuttgart focused on networking, mentorship, knowledge sharing, and ethical business growth.',
+    descriptionLong:
+      'JITO Stuttgart brings together Jain entrepreneurs, professionals, students, and philanthropists in Germany through business networking, community programs, and economic-empowerment initiatives.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional', 'persona-student'],
+    languages: ['English', 'Hindi', 'Gujarati'],
+    sourceUrl: 'https://jitostuttgart.de/about-us',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://jitostuttgart.de/about-us',
+        isPrimary: true,
+        label: 'About Us',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/jito-stuttgart-germany/',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/jito_stuttgart?igsh=bWh1eHB5dHBuYmtr',
+        label: 'Instagram',
+      },
+    ],
+  },
+  {
     slug: 'bindi-ev-stuttgart',
     name: 'Bindi e.V.',
     description:
@@ -237,6 +269,94 @@ const STUTTGART: DirectoryEntry[] = [
       { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/bindi.ev/' },
       { channelType: 'FACEBOOK', url: 'https://www.facebook.com/100070137490845/' },
     ],
+  },
+  {
+    slug: 'sri-sithivinayagar-kovil-stuttgart',
+    name: 'Sri Sithivinayagar Kovil e.V.',
+    description:
+      'Tamil Hindu temple community in Stuttgart-Bad Cannstatt with regular puja, festival observances, and multilingual outreach for families.',
+    descriptionLong:
+      'Also referred to publicly as Sri Sitti-Vinayagar Hindu-Tempel and ஸ்ரீ சித்திவிநாயகர் ஆலயம். The registered Verein maintains its temple at Lehmfeldstraße 18, Stuttgart.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional', 'newcomer'],
+    languages: ['Tamil', 'English', 'German'],
+    sourceUrl: 'https://www.sri-sithivinayagar-kovil-ev.de/impressum',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.sri-sithivinayagar-kovil-ev.de/startseite',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/srisithivinayagarkovilev/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@SriSithivinayagarKovile.V',
+        label: 'YouTube',
+      },
+    ],
+  },
+  {
+    slug: 'vedische-kultur-zentrum-stuttgart',
+    name: 'Vedische Kultur Zentrum Stuttgart e.V.',
+    description:
+      'Hindu temple and Vedic-culture community hub in Stuttgart with weekly Sunday mandir program, festival events, and volunteer-led family activities.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional', 'newcomer'],
+    languages: ['Hindi', 'English', 'German'],
+    sourceUrl: 'https://stuttgart-hindutemple.org/about-us/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://stuttgart-hindutemple.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+  },
+  {
+    slug: 'sri-venkateshwara-temple-renningen',
+    name: 'Sri Venkateshwara Temple Stuttgart gUG',
+    description:
+      'Hindu temple initiative for the Stuttgart region with a dedicated site in Renningen, focused on worship, rituals, and community spiritual life.',
+    descriptionLong:
+      'Temple project in Renningen (Wankelstrasse 4/A, 71272) led by Sri Venkateshwara Temple Stuttgart gUG (haftungsbeschraenkt), registered at Amtsgericht Stuttgart (HRB 802996).',
+    citySlug: 'renningen',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional', 'newcomer'],
+    languages: ['English', 'German', 'Telugu'],
+    foundedYear: 2025,
+    sourceUrl: 'https://svtstuttgart.de/impressum/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://svtstuttgart.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/svt_stuttgart',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@svtstuttgart',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/people/Sri-Venkateshwara-Temple/61568532123940/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
   },
   // ── Additional Stuttgart orgs — sourced from Forum der Kulturen Stuttgart e.V.
   //    membership list (official Dachverband of 160+ registered Vereine).

@@ -14,6 +14,29 @@ export type EvidenceAssessment = {
   normalizedUrl: string;
 };
 
+/**
+ * Common German legal-form markers seen in diaspora organisation pages.
+ * These are supporting trust signals in text/impressum checks and do not
+ * replace the requirement for a qualifying public evidence URL.
+ */
+export const GERMAN_LEGAL_ENTITY_MARKERS = [
+  'e.v.',
+  'ev',
+  'verein',
+  'gug',
+  'gug (haftungsbeschrankt)',
+  'gug (haftungsbeschraenkt)',
+  'gug (haftungsbeschränkt)',
+  'ug',
+  'ug (haftungsbeschrankt)',
+  'ug (haftungsbeschraenkt)',
+  'ug (haftungsbeschränkt)',
+  'ggmbh',
+  'gmbh',
+  'kg',
+  'eg',
+] as const;
+
 const BLOCKED_HOST_SUFFIXES = [
   'facebook.com',
   'fb.com',
@@ -31,6 +54,8 @@ const SUPPLEMENTARY_HOST_SUFFIXES = [
   'linkedin.com',
   'youtube.com',
   'youtu.be',
+  'gofundme.com',
+  'gofund.me',
   'maps.google.com',
   'google.com',
   'maps.app.goo.gl',
@@ -175,4 +200,14 @@ export function hasQualifyingEvidence(urls: readonly string[]): boolean {
 
 export function getQualifyingEvidence(urls: readonly string[]): EvidenceAssessment[] {
   return urls.map((url) => assessEvidenceUrl(url)).filter((assessment) => assessment.isQualifying);
+}
+
+export function hasGermanLegalEntityMarker(input: string): boolean {
+  const text = input
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss');
+  return GERMAN_LEGAL_ENTITY_MARKERS.some((marker) => text.includes(marker));
 }
