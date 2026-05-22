@@ -1,9 +1,9 @@
 /**
- * Pipeline configuration — regions + search strategies.
+ * Pipeline configuration — regions + fallback source strategies.
  *
- * KEY DESIGN: Separate WHAT to search (strategies) from WHERE to search (regions).
- * Adding a new country = add a region. Adding a new source = add a strategy.
- * They combine at runtime via the orchestrator.
+ * KEY DESIGN: DB and pinned sources are the primary discovery surface.
+ * Keyword strategies are fallback discovery intents; source-plan.ts decides
+ * whether to use them based on DB coverage gaps.
  *
  * Token efficiency:
  *  - Keyword strategies search broad → cheap pre-filter drops irrelevant items
@@ -24,53 +24,26 @@ function getRegionCitySlugs(metroSlugs: string[]): string[] {
 }
 
 // ─── Diaspora search keywords ──────────────────────────
-// Shared across all keyword_search strategies.
-// These are intentionally broad — the LLM relevance filter narrows later.
+// Fallback seeds for forced/gap keyword search. City-specific gap keywords are
+// generated in source-plan.ts from DB coverage, so this list should stay small.
 
 export const DIASPORA_KEYWORDS = [
-  // Community / cultural identifiers (specific — avoids "Indian restaurant" noise)
-  'Bollywood',
-  'Desi',
-  'South Asian',
-  // Organisation types (catches JITO, Tamil Sangam, Jain Sangh, etc.)
-  'Indian Sangam',
-  'Indian Sangh',
-  'Indian Samaj',
-  'Indian Mandal',
-  'Indian Mandir',
-  'Indian Sabha',
-  'Indian Association',
-  'Indian Verein', // German for association
-  'JITO', // Jain International Trade Organisation
-  // Festivals (strongest event signals)
-  'Diwali',
-  'Holi',
-  'Pongal',
-  'Onam',
-  'Navratri',
-  'Durga Puja',
-  'Ganesh Chaturthi',
-  'Janmashtami',
-  'Janma Kalyanak', // Jain festival
-  'Paryushana', // Jain festival
-  'Baisakhi',
-  'Lohri',
-  'Ugadi',
-  'Bihu',
-  'Rath Yatra',
-  // Religious / spiritual communities
-  'Jain',
-  'Sikh',
-  'Gurdwara',
-  'Hindu Temple',
-  'Kovil', // Tamil temple
-  // Performing arts (specific to South Asian diaspora)
-  'Bhangra',
-  'Kathak',
-  'Bharatanatyam',
-  // Student / professional
-  'Indian student association',
-  'Indian professionals',
+  // Baseline discovery intent (city context is appended at runtime)
+  'Indian community meetup',
+  'South Asian community meetup',
+  'Indian networking meetup',
+  'Indian cultural workshop',
+  'Indian volunteer group',
+  'Indian student club',
+  'South Asian student association',
+  'Indian professionals network',
+  'new Indian chapter',
+  'new Indian association',
+  'Indian cultural event',
+  'South Asian festival',
+  'indische Community Treffen',
+  'indischer Kulturverein Gruendung',
+  'suedasiatische Community Veranstaltung',
 ] as const;
 
 // ─── Search regions ────────────────────────────────────
@@ -118,16 +91,15 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     kind: 'keyword_search',
     label: 'Google Custom Search — diaspora communities',
     // Compound OR queries reduce API calls while covering English names,
-    // German Verein names, and official portal vocabulary.
+    // German discovery phrasing, and launch/join signals.
     keywords: [
-      '"Indian community" OR "Indian association" OR "Indian Verein" OR "Desi community"',
-      '"Tamil Sangam" OR "Telugu association" OR "Bengali association" OR "Odia association"',
-      '"JITO chapter" OR "Jain Sangh" OR "Gujarati Samaj" OR "Marathi Mandal"',
-      '"Punjabi association" OR "Malayalam association" OR "Kannada Sangha" OR "Hindu Mandir"',
-      // German-language Verein naming — finds registered e.V. orgs on city portals,
-      // umbrella org sites, and local news that use German rather than English.
-      '"indischer Verein" OR "indische Gesellschaft" OR "Deutsch-Indische" OR "indisches Kulturzentrum"',
-      '"Mitgliedsvereine" OR "Migrantenorganisationen" OR "Vereinsberatung" "indisch"',
+      '"Indian community meetup" OR "South Asian community meetup" OR "Indian networking meetup"',
+      '"new Indian chapter" OR "new Indian association" OR "community launch" "Indian"',
+      '"Indian student club" OR "South Asian student association" OR "Indian alumni group"',
+      '"Indian volunteer group" OR "join Indian community" OR "Indian professionals network"',
+      // German-language discovery phrasing for newly formed or informal groups.
+      '"indische Community Treffen" OR "indischer Kulturverein Gruendung" OR "indische Gruppe"',
+      '"suedasiatische Community Veranstaltung" OR "kulturelles Indien Event"',
     ],
     radiusKm: 100, // not used by Google CSE, kept for interface compat
     enabled: true,
@@ -140,25 +112,19 @@ export const SEARCH_STRATEGIES: SearchStrategy[] = [
     kind: 'keyword_search',
     label: 'DuckDuckGo web search — diaspora communities',
     keywords: [
-      'Indian community',
-      'Indian association Verein',
-      'Indischer Verein e.V.',
-      'Deutsch-Indische Gesellschaft',
-      'Indisches Kulturzentrum',
-      'Migrantenorganisationen indisch',
-      'Telugu association',
-      'Tamil Sangam',
-      'JITO chapter Jain',
-      'Marathi Mandal',
-      'Kannada Koota',
-      'Malayalam association',
-      'Gujarati Samaj',
-      'Indian Diwali festival',
-      'Holi celebration Indian',
-      'Hindu temple Mandir',
-      'Indian student association',
-      'Bollywood event',
-      'Indian cricket club',
+      'Indian community meetup',
+      'South Asian community meetup',
+      'Indian networking meetup',
+      'Indian cultural event',
+      'Indian volunteer group',
+      'Indian student club',
+      'South Asian student association',
+      'Indian professionals network',
+      'new Indian chapter',
+      'new Indian association',
+      'indische Community Treffen',
+      'indischer Kulturverein Gruendung',
+      'suedasiatische Community Veranstaltung',
     ],
     radiusKm: 100,
     enabled: true,
