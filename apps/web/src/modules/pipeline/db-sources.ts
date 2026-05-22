@@ -64,21 +64,6 @@ function stripHtmlTags(input: string): string {
 }
 
 /**
- * Remove HTML tags from a string using repeated replacement until stable.
- * This avoids incomplete multi-character sanitization edge cases where
- * dangerous fragments can reappear after a single pass.
- */
-function stripHtmlTags(input: string): string {
-  let current = input;
-  let previous: string;
-  do {
-    previous = current;
-    current = current.replace(/<[^>]+>/g, '');
-  } while (current !== previous);
-  return current;
-}
-
-/**
  * Fetch a community homepage and extract internal links that look like they
  * lead to an events or programme page.
  *

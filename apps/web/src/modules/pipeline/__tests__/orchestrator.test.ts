@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { computeSimilarity } from '../orchestrator';
+import {
+  computeSimilarity,
+  isLikelyStaleEventPage,
+  prefilterLikelyCurrentItems,
+} from '../orchestrator';
 
 describe('computeSimilarity', () => {
   it('returns 1 for identical strings', () => {
@@ -49,5 +53,73 @@ describe('computeSimilarity', () => {
     // Bigram similarity is high because the names share most words.
     // In practice, date-based dedup catches these — same community, different dates.
     expect(score).toBeGreaterThan(0.8);
+  });
+});
+
+describe('isLikelyStaleEventPage', () => {
+  it('flags past-events pages without fresh signals', () => {
+    expect(
+      isLikelyStaleEventPage({
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/past-events/',
+        text: 'Past events from 2024 and 2025.',
+        fetchedAt: new Date().toISOString(),
+      }),
+    ).toBe(true);
+  });
+
+  it('flags old-year event schedules without current-year references', () => {
+    expect(
+      isLikelyStaleEventPage({
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/2025-event-schedule/',
+        text: 'Festival schedule for 2025 only.',
+        fetchedAt: new Date().toISOString(),
+      }),
+    ).toBe(true);
+  });
+
+  it('keeps upcoming or current-year event pages', () => {
+    expect(
+      isLikelyStaleEventPage({
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/upcoming-events/',
+        text: 'Upcoming events for 2026 and 2027.',
+        fetchedAt: new Date().toISOString(),
+      }),
+    ).toBe(false);
+  });
+
+  it('keeps mixed-year pages when current-year events are present', () => {
+    expect(
+      isLikelyStaleEventPage({
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/2025/12/festival-31-01-2026/',
+        text: 'Programme update for 31.01.2026.',
+        fetchedAt: new Date().toISOString(),
+      }),
+    ).toBe(false);
+  });
+});
+
+describe('prefilterLikelyCurrentItems', () => {
+  it('removes likely stale event pages before LLM stages', () => {
+    const kept = prefilterLikelyCurrentItems([
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/past-events/',
+        text: 'Past events from 2024 and 2025.',
+        fetchedAt: new Date().toISOString(),
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/upcoming-events/',
+        text: 'Upcoming events for 2026.',
+        fetchedAt: new Date().toISOString(),
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+    expect(kept[0]?.sourceUrl).toBe('https://example.org/upcoming-events/');
   });
 });
