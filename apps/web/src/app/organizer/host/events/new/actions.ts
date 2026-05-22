@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import slugify from 'slugify';
+import { Prisma } from '@prisma/client';
 
 const addHostEventSchema = z.object({
   title: z.string().min(3).max(200),
@@ -93,40 +94,53 @@ export async function addHostEvent(
 
   return withAction(
     async () => {
-      // Generate a unique slug
+      // Generate a unique slug with retry on collision (avoids TOCTOU race)
       const baseSlug = slugify(data.title, { lower: true, strict: true });
       const year = new Date(data.startsAt).getFullYear();
-      let slug = `${baseSlug}-${year}`;
-      const existing = await db.event.findUnique({ where: { slug }, select: { id: true } });
-      if (existing) {
-        const suffix = Math.random().toString(36).slice(2, 6);
-        slug = `${baseSlug}-${year}-${suffix}`;
-      }
 
-      const event = await db.event.create({
-        data: {
-          title: data.title,
-          slug,
-          description: data.description || null,
-          communityId: null, // host events have no community
-          cityId: data.cityId,
-          startsAt: new Date(data.startsAt),
-          endsAt: data.endsAt ? new Date(data.endsAt) : null,
-          venueName: data.venueName || null,
-          venueAddress: data.venueAddress || null,
-          isOnline: data.isOnline,
-          onlineLink: data.onlineLink || null,
-          registrationUrl: data.registrationUrl || null,
-          cost: data.cost,
-          source: 'COMMUNITY_SUBMITTED',
-          metadata: { hostUserId: user.id },
-        },
-      });
+      let event: Awaited<ReturnType<typeof db.event.create>> | undefined;
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const suffix = attempt === 0 ? '' : `-${Math.random().toString(36).slice(2, 6)}`;
+        const slug = `${baseSlug}-${year}${suffix}`;
+        try {
+          event = await db.event.create({
+            data: {
+              title: data.title,
+              slug,
+              description: data.description || null,
+              communityId: null, // host events have no community
+              cityId: data.cityId,
+              startsAt: new Date(data.startsAt),
+              endsAt: data.endsAt ? new Date(data.endsAt) : null,
+              venueName: data.venueName || null,
+              venueAddress: data.venueAddress || null,
+              isOnline: data.isOnline,
+              onlineLink: data.onlineLink || null,
+              registrationUrl: data.registrationUrl || null,
+              cost: data.cost,
+              source: 'USER_SUGGESTED', // unverified host submission — needs review
+              metadata: { hostUserId: user.id },
+            },
+          });
+          break;
+        } catch (err) {
+          if (
+            err instanceof Prisma.PrismaClientKnownRequestError &&
+            err.code === 'P2002' &&
+            attempt < 4
+          ) {
+            continue; // slug collision — retry with new random suffix
+          }
+          throw err;
+        }
+      }
+      if (!event) throw new Error('Could not generate unique slug after 5 attempts');
+      const createdEvent = event;
 
       revalidateTag(`city-events-${data.cityId}`, 'max');
 
       redirect(`/organizer/host/events`);
-      return { success: true, eventSlug: event.slug } as AddHostEventResult;
+      return { success: true, eventSlug: createdEvent.slug } as AddHostEventResult;
     },
     () =>
       ({

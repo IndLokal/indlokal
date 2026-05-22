@@ -13,7 +13,9 @@ export default async function AdminAuditPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  await requireCan('audit.read');
+  const viewer = await requireCan('audit.read');
+  // CSV export is founder-only (PRD-0018 §4)
+  const canExport = viewer.role === 'PLATFORM_ADMIN';
 
   const sp = await searchParams;
   const filterEntityType = sp.entityType ?? '';
@@ -73,12 +75,14 @@ export default async function AdminAuditPage({
             {Object.keys(where).length > 0 ? ' matching filters' : ' total'}
           </p>
         </div>
-        <a
-          href={`/admin/audit/export?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo }).toString()}`}
-          className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
-        >
-          Export CSV
-        </a>
+        {canExport && (
+          <a
+            href={`/admin/audit/export?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo }).toString()}`}
+            className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
+          >
+            Export CSV
+          </a>
+        )}
       </div>
 
       {/* Filters */}

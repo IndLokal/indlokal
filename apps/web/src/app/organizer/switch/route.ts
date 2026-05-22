@@ -24,10 +24,25 @@ export async function POST(request: NextRequest) {
 
   await setCurrentCommunityId(communityId);
 
-  // Honor a ?next= redirect param for deep links
-  const next = request.nextUrl.searchParams.get('next');
-  const safePath =
-    next && next.startsWith('/organizer') && !next.includes('//') ? next : '/organizer';
+  // Honor a ?next= redirect param for deep links.
+  // Normalize via URL parsing to prevent path-traversal (e.g. /organizer/../../admin).
+  const nextParam = request.nextUrl.searchParams.get('next');
+  let safePath = '/organizer';
+  if (nextParam) {
+    try {
+      const resolved = new URL(nextParam, request.url);
+      // Only allow same-origin paths that stay within /organizer
+      if (
+        resolved.origin === new URL(request.url).origin &&
+        resolved.pathname.startsWith('/organizer') &&
+        !resolved.pathname.includes('//')
+      ) {
+        safePath = resolved.pathname + resolved.search;
+      }
+    } catch {
+      // malformed next param — fall back to /organizer
+    }
+  }
 
   return seeOther(safePath);
 }

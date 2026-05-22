@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireCan } from '@/lib/auth/permissions';
+import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import type { ContentLogAction } from '@prisma/client';
 
 const MAX_EXPORT_ROWS = 10_000;
 
 export async function GET(request: NextRequest) {
-  // Only PLATFORM_ADMIN has audit.read (and thus export access)
-  await requireCan('audit.read');
+  // CSV export is founder-only (PRD-0018 §4). audit.read is granted to OPS_LEAD
+  // and PARTNERSHIPS_LEAD too, but export access is intentionally tighter.
+  const user = await getSessionUser();
+  if (!user || user.role !== 'PLATFORM_ADMIN') {
+    return new NextResponse('Forbidden', { status: 403 });
+  }
 
   const sp = request.nextUrl.searchParams;
   const filterEntityType = sp.get('entityType') ?? '';

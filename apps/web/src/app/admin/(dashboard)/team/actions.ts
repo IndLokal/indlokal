@@ -52,13 +52,12 @@ export async function grantRole(formData: FormData) {
         grantedBy: granter.id,
       },
     }),
-    // Also update User.role as the primary/display role when the incoming
-    // role ranks higher than USER (simple heuristic — the granter can always
-    // change User.role separately).
-    db.user.update({
-      where: { id: target.id },
-      data: { role: role !== 'USER' ? role : undefined },
-    }),
+    // Only promote User.role when the user is currently an unprivileged USER.
+    // If they already hold a higher role (e.g. COMMUNITY_ADMIN), preserve it —
+    // the permission system checks RoleAssignment rows for any additional grants.
+    ...(target.role === 'USER' && role !== 'USER'
+      ? [db.user.update({ where: { id: target.id }, data: { role } })]
+      : []),
   ]);
 
   revalidatePath('/admin/team');
