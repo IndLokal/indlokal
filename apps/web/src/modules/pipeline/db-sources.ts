@@ -21,6 +21,21 @@ const EVENT_LINK_KEYWORDS =
   /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on/i;
 
 /**
+ * Remove HTML tags from a string using repeated replacement until stable.
+ * This avoids incomplete multi-character sanitization edge cases where
+ * dangerous fragments can reappear after a single pass.
+ */
+function stripHtmlTags(input: string): string {
+  let current = input;
+  let previous: string;
+  do {
+    previous = current;
+    current = current.replace(/<[^>]+>/g, '');
+  } while (current !== previous);
+  return current;
+}
+
+/**
  * Fetch a community homepage and extract internal links that look like they
  * lead to an events or programme page.
  *
@@ -51,7 +66,7 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
 
     for (const match of html.matchAll(linkPattern)) {
       const rawHref = match[1] ?? match[2] ?? match[3];
-      const rawText = (match[4] ?? '').replace(/<[^>]+>/g, '').trim();
+      const rawText = stripHtmlTags(match[4] ?? '').trim();
       if (!rawHref) continue;
 
       let resolved: URL;
