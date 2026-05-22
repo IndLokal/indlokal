@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireSessionUser } from '@/lib/session';
+import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 
 const CHANNEL_ICONS: Record<string, string> = {
   WHATSAPP: '💬',
@@ -16,7 +16,9 @@ const CHANNEL_ICONS: Record<string, string> = {
 
 export default async function OrganizerDashboardPage() {
   const user = await requireSessionUser();
-  const community = user.claimedCommunities[0];
+  const currentId = await getCurrentCommunityId();
+  const community =
+    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
 
   if (!community) {
     return (

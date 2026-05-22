@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
 import {
   sendClaimApprovedEmail,
@@ -10,19 +10,10 @@ import {
   sendSubmissionApprovedEmail,
 } from '@/lib/email';
 
-/** Guard: reject if caller is not PLATFORM_ADMIN */
-async function requireAdminAction() {
-  const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
-  }
-  return user;
-}
-
 /* ——— Submission actions ——— */
 
 export async function approveSubmission(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -69,7 +60,7 @@ export async function approveSubmission(formData: FormData) {
 }
 
 export async function rejectSubmission(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.reject');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -84,7 +75,7 @@ export async function rejectSubmission(formData: FormData) {
 /* ——— Claim actions ——— */
 
 export async function approveClaim(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('claims.approve');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -142,7 +133,7 @@ export async function approveClaim(formData: FormData) {
 }
 
 export async function rejectClaim(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('claims.reject');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -180,7 +171,7 @@ export async function rejectClaim(formData: FormData) {
 /* ——— Report actions ——— */
 
 export async function reviewReport(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('reports.read');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -193,7 +184,7 @@ export async function reviewReport(formData: FormData) {
 }
 
 export async function resolveReport(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('reports.resolve');
   const id = formData.get('id') as string;
   if (!id) return;
 

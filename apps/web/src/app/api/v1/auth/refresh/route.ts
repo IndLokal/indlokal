@@ -42,7 +42,10 @@ export const POST = apiHandler(async (req: NextRequest) => {
     throw err;
   }
 
-  const user = await db.user.findUnique({ where: { id: result.userId } });
+  const user = await db.user.findUnique({
+    where: { id: result.userId },
+    include: { city: { select: { name: true } } },
+  });
   if (!user) {
     return apiError('TOKEN_INVALID', 'user no longer exists');
   }

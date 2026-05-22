@@ -62,16 +62,16 @@ export async function requestMagicLink(
     return { success: false, error: 'Something went wrong. Please try again.' };
   }
 
-  if (!user || user.role !== 'COMMUNITY_ADMIN') {
+  if (!user || !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(user.role)) {
     // Vague error to prevent email enumeration
     return {
       success: false,
       error:
-        'No organizer account found for that email. Have you claimed a community and been approved?',
+        'No organizer account found for that email. Have you claimed a community or signed up as an event host?',
     };
   }
 
-  if (user.claimedCommunities.length === 0) {
+  if (user.role === 'COMMUNITY_ADMIN' && user.claimedCommunities.length === 0) {
     return {
       success: false,
       error: 'Your account exists but has no approved community claim yet.',
@@ -90,14 +90,15 @@ export async function requestMagicLink(
   // Generate a one-time magic link token (separate from session token)
   const rawToken = await createMagicLinkToken(user.id);
 
+  const label = user.claimedCommunities[0]?.name ?? user.email;
   try {
-    await sendMagicLinkEmail(user.email, rawToken, user.claimedCommunities[0].name);
+    await sendMagicLinkEmail(user.email, rawToken, label);
   } catch {
     return { success: false, error: 'Failed to send login email. Please try again.' };
   }
 
   return {
     success: true,
-    communityName: user.claimedCommunities[0].name,
+    communityName: label,
   };
 }

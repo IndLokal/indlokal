@@ -60,6 +60,11 @@ export async function cleanDb(): Promise<void> {
     testDb.keywordSuggestion.deleteMany(),
     testDb.contentLog.deleteMany(),
     testDb.contentReport.deleteMany(),
+    // outreach_notes → outreach_leads → cities/communities (city_id is RESTRICT)
+    testDb.outreachNote.deleteMany(),
+    testDb.outreachLead.deleteMany(),
+    // role_assignments → users (CASCADE, but explicit for clarity)
+    testDb.roleAssignment.deleteMany(),
     testDb.communityCategory.deleteMany(),
     testDb.eventCategory.deleteMany(),
     testDb.accessChannel.deleteMany(),

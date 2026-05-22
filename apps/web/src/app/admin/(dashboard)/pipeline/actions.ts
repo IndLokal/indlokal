@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { assertCan } from '@/lib/auth/permissions';
 import type { PipelineRunResult } from '@/modules/pipeline';
 import {
   approvePipelineItemRecord,
@@ -12,19 +12,10 @@ import {
   revertAutoApprovedPipelineItems,
 } from '@/modules/pipeline';
 
-/** Guard: reject if caller is not PLATFORM_ADMIN */
-async function requireAdminAction() {
-  const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
-  }
-  return user;
-}
-
 /* ——— Run the pipeline on demand ——— */
 
 export async function triggerPipelineRun(): Promise<PipelineRunResult> {
-  await requireAdminAction();
+  await assertCan('pipeline.run');
   // Dynamic import to avoid bundling the pipeline in the client
   const { runPipeline } = await import('@/modules/pipeline/orchestrator');
   const result = await runPipeline();
@@ -35,7 +26,7 @@ export async function triggerPipelineRun(): Promise<PipelineRunResult> {
 /* ——— Approve: create entity from pipeline item ——— */
 
 export async function approvePipelineItem(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   if (!id) return;
   await approvePipelineItemRecord(id, { reviewedBy: 'admin' });
@@ -47,7 +38,7 @@ export async function approvePipelineItem(formData: FormData) {
 /* ——— Reject pipeline item ——— */
 
 export async function rejectPipelineItem(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.reject');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -67,7 +58,7 @@ export async function rejectPipelineItem(formData: FormData) {
 /* ——— Batch approve high-confidence items ——— */
 
 export async function batchApprovePipelineItems(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.approve');
   const ids = (formData.get('ids') as string)?.split(',').filter(Boolean);
   if (!ids?.length) return;
 
@@ -81,26 +72,26 @@ export async function batchApprovePipelineItems(formData: FormData) {
 }
 
 export async function runEnrichmentPass() {
-  await requireAdminAction();
+  await assertCan('pipeline.run');
   await enrichSparseCommunities();
   revalidatePath('/admin/pipeline');
 }
 
 export async function runRelationshipInference() {
-  await requireAdminAction();
+  await assertCan('pipeline.run');
   await inferCommunityRelationships();
   revalidateTag('city-feed', 'max');
   revalidatePath('/admin/pipeline');
 }
 
 export async function runKeywordExpansionPass() {
-  await requireAdminAction();
+  await assertCan('pipeline.run');
   await refreshKeywordSuggestions();
   revalidatePath('/admin/pipeline');
 }
 
 export async function approveKeywordSuggestion(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   if (!id) return;
   await db.keywordSuggestion.update({
@@ -111,7 +102,7 @@ export async function approveKeywordSuggestion(formData: FormData) {
 }
 
 export async function rejectKeywordSuggestion(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.reject');
   const id = formData.get('id') as string;
   if (!id) return;
   await db.keywordSuggestion.update({
@@ -122,7 +113,7 @@ export async function rejectKeywordSuggestion(formData: FormData) {
 }
 
 export async function revertAutoApprovedItems(formData: FormData) {
-  await requireAdminAction();
+  await assertCan('pipeline.approve');
   const ids = (formData.get('ids') as string)?.split(',').filter(Boolean);
   if (!ids?.length) return;
   await revertAutoApprovedPipelineItems(ids, 'admin');

@@ -14,6 +14,7 @@ const TOKENS = {
     avatarUrl: null,
     role: 'USER' as const,
     cityId: null,
+    cityName: null,
     personaSegments: [],
     preferredLanguages: [],
     onboardingComplete: false,

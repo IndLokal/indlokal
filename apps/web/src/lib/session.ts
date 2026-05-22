@@ -107,6 +107,10 @@ export async function getSessionUser() {
     const user = await db.user.findUnique({
       where: { sessionToken: hashed },
       include: {
+        roleAssignments: {
+          where: { revokedAt: null },
+          select: { role: true, cityId: true, orgId: true, revokedAt: true },
+        },
         claimedCommunities: {
           where: { claimState: 'CLAIMED' },
           include: {
@@ -163,11 +167,52 @@ export async function requireSessionUser() {
   return user;
 }
 
-/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized */
+/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized.
+ * Preserved for backward-compat. New code should use requireCan() from
+ * lib/auth/permissions.ts for granular, role-scoped checks.
+ */
 export async function requireAdmin() {
   const user = await getSessionUser();
   if (!user || user.role !== 'PLATFORM_ADMIN') redirect('/admin/login');
   return user;
+}
+
+/** Require COMMUNITY_ADMIN (organizer) — redirect if not authorized */
+export async function requireCommunityAdmin() {
+  const user = await getSessionUser();
+  if (!user || (user.role !== 'COMMUNITY_ADMIN' && user.role !== 'PLATFORM_ADMIN'))
+    redirect('/organizer/login');
+  return user;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace cookie — remembers which community is active for multi-org organizers
+// ─────────────────────────────────────────────────────────────────────────────
+
+const COMMUNITY_COOKIE = 'lp_community';
+
+/** Return the currently-selected communityId from the workspace cookie, or null */
+export async function getCurrentCommunityId(): Promise<string | null> {
+  const jar = await cookies();
+  return jar.get(COMMUNITY_COOKIE)?.value ?? null;
+}
+
+/** Persist the active community in a short-lived cookie scoped to /organizer */
+export async function setCurrentCommunityId(communityId: string) {
+  const jar = await cookies();
+  jar.set(COMMUNITY_COOKIE, communityId, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/organizer',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+  });
+}
+
+/** Clear the community workspace cookie */
+export async function clearCurrentCommunityId() {
+  const jar = await cookies();
+  jar.delete(COMMUNITY_COOKIE);
 }
 
 /** Clear the session cookie and invalidate the token in the DB */

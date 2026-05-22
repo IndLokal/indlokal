@@ -103,6 +103,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
           avatarUrl: existing.avatarUrl ?? profile.picture ?? null,
           lastActiveAt: new Date(),
         },
+        include: { city: { select: { name: true } } },
       })
     : await db.user.create({
         data: {
@@ -112,6 +113,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
           avatarUrl: profile.picture ?? null,
           lastActiveAt: new Date(),
         },
+        include: { city: { select: { name: true } } },
       });
 
   const userAgent = req.headers.get('user-agent');

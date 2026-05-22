@@ -11,11 +11,13 @@ import { ActivityIndicator, SafeAreaView, StyleSheet, Text, View } from 'react-n
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { authClient } from '@/lib/auth/client.expo';
 import { verifyMagicLinkToken } from '@/lib/auth/magic';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { palette, spacing, typography } from '@/constants/theme';
 
 export default function MagicLinkVerifyScreen() {
   const params = useLocalSearchParams<{ token?: string }>();
   const [error, setError] = useState<string | null>(null);
+  const { onSignIn } = useAuth();
 
   useEffect(() => {
     const token = typeof params.token === 'string' ? params.token : null;
@@ -25,9 +27,10 @@ export default function MagicLinkVerifyScreen() {
     }
     let cancelled = false;
     verifyMagicLinkToken(authClient, token)
-      .then(() => {
+      .then((tokens) => {
         if (cancelled) return;
-        router.replace('/(tabs)');
+        onSignIn(tokens.user);
+        router.replace(tokens.user.onboardingComplete ? '/(tabs)' : '/auth/onboarding/city');
       })
       .catch(() => {
         if (cancelled) return;
@@ -36,7 +39,7 @@ export default function MagicLinkVerifyScreen() {
     return () => {
       cancelled = true;
     };
-  }, [params.token]);
+  }, [params.token, onSignIn]);
 
   return (
     <SafeAreaView style={styles.safeArea}>

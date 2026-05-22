@@ -3,10 +3,12 @@
  * Centralizes the shape so handlers don't accidentally leak fields.
  */
 
-import type { User } from '@prisma/client';
+import type { City, User } from '@prisma/client';
 import type { auth } from '@indlokal/shared';
 
-export function toMeProfile(user: User): auth.MeProfile {
+type UserWithCity = User & { city?: Pick<City, 'name'> | null };
+
+export function toMeProfile(user: UserWithCity): auth.MeProfile {
   return {
     id: user.id,
     email: user.email,
@@ -14,6 +16,7 @@ export function toMeProfile(user: User): auth.MeProfile {
     avatarUrl: user.avatarUrl,
     role: user.role,
     cityId: user.cityId,
+    cityName: user.city?.name ?? null,
     personaSegments: user.personaSegments,
     preferredLanguages: user.preferredLanguages,
     onboardingComplete: user.onboardingComplete,

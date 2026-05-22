@@ -1,9 +1,14 @@
 import { useEffect } from 'react';
 import { Linking } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { Stack, router, useSegments } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import 'react-native-reanimated';
 import { authClient } from '@/lib/auth/client.expo';
 import { extractMagicLinkToken } from '@/lib/auth/magic';
+import { AuthProvider, useAuth } from '@/lib/auth/AuthContext';
+
+// Hold the native splash until session restore finishes.
+SplashScreen.preventAutoHideAsync();
 
 function handleIncomingUrl(url: string | null) {
   if (!url) return;
@@ -29,6 +34,37 @@ function handleIncomingUrl(url: string | null) {
   }
 }
 
+/**
+ * Reads auth state after session restore and routes the user to onboarding
+ * if their account is not yet complete. Lives inside the navigation tree
+ * so it has access to the router.
+ */
+function OnboardingGate() {
+  const { user, isLoading } = useAuth();
+  const segments = useSegments() as string[];
+
+  // Hide the native splash once session restore completes (success or failure).
+  useEffect(() => {
+    if (!isLoading) {
+      void SplashScreen.hideAsync();
+    }
+  }, [isLoading]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (!user) return;
+
+    const onOnboarding =
+      segments[0] === 'auth' && (segments[1] === 'onboarding' || segments[1] === 'magic-link');
+
+    if (!user.onboardingComplete && !onOnboarding) {
+      router.replace('/auth/onboarding/city');
+    }
+  }, [user, isLoading, segments]);
+
+  return null;
+}
+
 export default function RootLayout() {
   // Keep authClient referenced so module-side effects (token store) initialize.
   void authClient;
@@ -40,30 +76,36 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <Stack>
-      <Stack.Screen name="auth/sign-in" options={{ title: 'Sign in' }} />
-      <Stack.Screen name="auth/magic-link-sent" options={{ title: 'Check your email' }} />
-      <Stack.Screen name="auth/magic-link/verify" options={{ title: 'Signing you in' }} />
-      <Stack.Screen name="auth/onboarding/city" options={{ title: 'Pick your city' }} />
-      <Stack.Screen name="auth/onboarding/persona" options={{ title: 'Tell us about you' }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="events/[slug]" options={{ title: 'Event' }} />
-      <Stack.Screen name="communities/[slug]" options={{ title: 'Community' }} />
-      <Stack.Screen name="resources" options={{ title: 'Resources' }} />
-      <Stack.Screen name="search/results" options={{ title: 'Results' }} />
-      <Stack.Screen name="submit/index" options={{ title: 'Submit' }} />
-      <Stack.Screen name="submit/event" options={{ title: 'Submit event' }} />
-      <Stack.Screen name="submit/community" options={{ title: 'Add community' }} />
-      <Stack.Screen name="submit/suggest" options={{ title: 'Suggest community' }} />
-      <Stack.Screen
-        name="report/community/[id]"
-        options={{ title: 'Report', presentation: 'modal' }}
-      />
-      <Stack.Screen name="me/profile" options={{ title: 'Profile' }} />
-      <Stack.Screen name="me/delete-account" options={{ title: 'Delete account' }} />
-      <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
-      <Stack.Screen name="settings/notifications/quiet-hours" options={{ title: 'Quiet hours' }} />
-      <Stack.Screen name="inbox/index" options={{ title: 'Inbox' }} />
-    </Stack>
+    <AuthProvider>
+      <Stack>
+        <Stack.Screen name="auth/sign-in" options={{ title: 'Sign in' }} />
+        <Stack.Screen name="auth/magic-link-sent" options={{ title: 'Check your email' }} />
+        <Stack.Screen name="auth/magic-link/verify" options={{ title: 'Signing you in' }} />
+        <Stack.Screen name="auth/onboarding/city" options={{ title: 'Pick your city' }} />
+        <Stack.Screen name="auth/onboarding/persona" options={{ title: 'Tell us about you' }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="events/[slug]" options={{ title: 'Event' }} />
+        <Stack.Screen name="communities/[slug]" options={{ title: 'Community' }} />
+        <Stack.Screen name="resources" options={{ title: 'Resources' }} />
+        <Stack.Screen name="search/results" options={{ title: 'Results' }} />
+        <Stack.Screen name="submit/index" options={{ title: 'Submit' }} />
+        <Stack.Screen name="submit/event" options={{ title: 'Submit event' }} />
+        <Stack.Screen name="submit/community" options={{ title: 'Add community' }} />
+        <Stack.Screen name="submit/suggest" options={{ title: 'Suggest community' }} />
+        <Stack.Screen
+          name="report/community/[id]"
+          options={{ title: 'Report', presentation: 'modal' }}
+        />
+        <Stack.Screen name="me/profile" options={{ title: 'Profile' }} />
+        <Stack.Screen name="me/delete-account" options={{ title: 'Delete account' }} />
+        <Stack.Screen name="settings/notifications" options={{ title: 'Notifications' }} />
+        <Stack.Screen
+          name="settings/notifications/quiet-hours"
+          options={{ title: 'Quiet hours' }}
+        />
+        <Stack.Screen name="inbox/index" options={{ title: 'Inbox' }} />
+      </Stack>
+      <OnboardingGate />
+    </AuthProvider>
   );
 }

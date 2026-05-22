@@ -5,6 +5,7 @@ import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
+import { db } from '@/lib/db';
 
 /**
  * Event Detail Page
@@ -34,6 +35,23 @@ export default async function EventDetailPage({ params }: Props) {
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
   const isPast = startsAt < new Date();
+
+  // Host attribution for host-posted events (no community)
+  const hostUserId =
+    !event.communityId && (event.metadata as Record<string, unknown> | null)?.hostUserId;
+  let hostDisplayName: string | null = null;
+  if (hostUserId && typeof hostUserId === 'string') {
+    const hostUser = await db.user.findUnique({
+      where: { id: hostUserId },
+      select: { displayName: true, email: true, metadata: true },
+    });
+    if (hostUser) {
+      const hostProfile = (hostUser.metadata as Record<string, unknown> | null)?.hostProfile as
+        | { displayName?: string }
+        | undefined;
+      hostDisplayName = hostProfile?.displayName ?? hostUser.displayName ?? hostUser.email;
+    }
+  }
 
   // JSON-LD Event schema
   const jsonLd = {
@@ -193,7 +211,7 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* Organiser */}
+        {/* Organiser — community */}
         {event.community && (
           <div>
             <h2 className="text-lg font-semibold">Organised by</h2>
@@ -210,6 +228,19 @@ export default async function EventDetailPage({ params }: Props) {
             <p className="text-muted mt-2 text-sm">
               View the community page to join their WhatsApp, Facebook, or other channels.
             </p>
+          </div>
+        )}
+
+        {/* Hosted by — independent event host */}
+        {!event.community && hostDisplayName && (
+          <div>
+            <h2 className="text-lg font-semibold">Hosted by</h2>
+            <div className="card-base mt-2 inline-flex items-center gap-2 px-4 py-3 text-sm font-medium">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700">
+                {hostDisplayName.charAt(0).toUpperCase()}
+              </span>
+              {hostDisplayName}
+            </div>
           </div>
         )}
       </div>

@@ -11,7 +11,17 @@ import { Ack, Cuid, IsoDateTime } from './common';
 
 // ─── Profile returned by GET /api/v1/me ───
 
-export const UserRole = z.enum(['USER', 'COMMUNITY_ADMIN', 'PLATFORM_ADMIN']);
+export const UserRole = z.enum([
+  'USER',
+  'COMMUNITY_ADMIN',
+  'EVENT_HOST',
+  'PARTNER_ORG_ADMIN',
+  'CITY_AMBASSADOR',
+  'CONTENT_EDITOR',
+  'OPS_LEAD',
+  'PARTNERSHIPS_LEAD',
+  'PLATFORM_ADMIN',
+]);
 export type UserRole = z.infer<typeof UserRole>;
 
 export const MeProfile = z.object({
@@ -21,6 +31,7 @@ export const MeProfile = z.object({
   avatarUrl: z.string().url().nullable(),
   role: UserRole,
   cityId: Cuid.nullable(),
+  cityName: z.string().nullable(),
   personaSegments: z.array(z.string()),
   preferredLanguages: z.array(z.string()),
   onboardingComplete: z.boolean(),
@@ -119,3 +130,18 @@ export const AccessTokenClaims = z.object({
   aud: z.string(),
 });
 export type AccessTokenClaims = z.infer<typeof AccessTokenClaims>;
+
+// ─── PATCH /api/v1/me/onboarding — TDD-0019 ───
+
+/**
+ * Partial update accepted by PATCH /api/v1/me/onboarding.
+ * All fields are optional; the handler applies only those present.
+ * On success the server sets onboardingComplete = true.
+ */
+export const OnboardingUpdate = z.object({
+  cityId: Cuid.optional(),
+  displayName: z.string().min(1).max(80).trim().optional(),
+  personaSegments: z.array(z.string().min(1).max(40)).max(10).optional(),
+  preferredLanguages: z.array(z.string().min(2).max(10)).max(10).optional(),
+});
+export type OnboardingUpdate = z.infer<typeof OnboardingUpdate>;

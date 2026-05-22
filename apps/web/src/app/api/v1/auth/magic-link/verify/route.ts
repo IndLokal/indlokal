@@ -45,7 +45,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
 
   const row = await db.magicLinkToken.findUnique({
     where: { tokenHash },
-    select: { user: true },
+    include: { user: { include: { city: { select: { name: true } } } } },
   });
   if (!row?.user) {
     return apiError('TOKEN_INVALID', 'magic link no longer valid');

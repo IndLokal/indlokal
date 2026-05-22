@@ -12,6 +12,7 @@ import { Link, useFocusEffect } from 'expo-router';
 import { resources as r } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type Tab = 'events' | 'communities';
@@ -25,10 +26,12 @@ type CardItem = {
 };
 
 /**
- * Mobile bookmarks shell — TDD-0010.
+ * Mobile bookmarks shell — TDD-0010 / PRD-0019.
  * Lists the signed-in user's saved events and communities.
+ * Anonymous users see a sign-in CTA.
  */
 export default function BookmarksScreen() {
+  const { user } = useAuth();
   const [tab, setTab] = useState<Tab>('events');
   const [events, setEvents] = useState<r.SavedEventsPage | null>(null);
   const [communities, setCommunities] = useState<r.SavedCommunitiesPage | null>(null);
@@ -66,6 +69,22 @@ export default function BookmarksScreen() {
       void load();
     }, [load]),
   );
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.container}>
+          <Text style={styles.title}>Saved</Text>
+          <Text style={styles.anonBody}>Sign in to save events and communities.</Text>
+          <Link href="/auth/sign-in" asChild>
+            <Pressable style={styles.signInButton}>
+              <Text style={styles.signInButtonText}>Sign in</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const items: ReadonlyArray<CardItem> =
     tab === 'events'
@@ -160,4 +179,12 @@ const styles = StyleSheet.create({
   cardMeta: { fontSize: typography.small, color: palette.neutral.muted, marginTop: 4 },
   empty: { color: palette.neutral.muted },
   error: { color: palette.status.destructive },
+  anonBody: { color: palette.neutral.muted, fontSize: typography.body, lineHeight: 24 },
+  signInButton: {
+    backgroundColor: palette.brand[600],
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  signInButtonText: { color: '#fff', fontWeight: '700', fontSize: typography.body },
 });

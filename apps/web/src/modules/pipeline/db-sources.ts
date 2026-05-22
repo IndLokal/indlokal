@@ -26,7 +26,10 @@ export async function getDbCommunityStrategies(): Promise<
 > {
   const communities = await db.community.findMany({
     where: {
-      status: { in: ['ACTIVE', 'CLAIMED'] },
+      // Include UNVERIFIED: directory-seed entries have verified public URLs even
+      // though the org's identity claim hasn't been confirmed yet. Excluding them
+      // means none of our curated community websites are ever scraped.
+      status: { in: ['ACTIVE', 'CLAIMED', 'UNVERIFIED'] },
     },
     include: {
       accessChannels: {

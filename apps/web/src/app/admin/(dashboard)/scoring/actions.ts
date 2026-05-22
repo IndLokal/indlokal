@@ -2,23 +2,14 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { assertCan } from '@/lib/auth/permissions';
 import { refreshAllScores } from '@/modules/scoring';
-
-/** Guard: reject if caller is not PLATFORM_ADMIN */
-async function requireAdminAction() {
-  const user = await getSessionUser();
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    throw new Error('Unauthorized');
-  }
-  return user;
-}
 
 export type JobResult = { ok: true; message: string } | { ok: false; error: string };
 
 /** Trigger a full score refresh across all non-inactive communities */
 export async function runScoreRefresh(): Promise<JobResult> {
-  await requireAdminAction();
+  await assertCan('scoring.run');
   try {
     const { updated, demoted } = await refreshAllScores();
     revalidatePath('/admin/scoring');
@@ -34,7 +25,7 @@ export async function runScoreRefresh(): Promise<JobResult> {
 
 /** Check access channel links for reachability */
 export async function runLinkCheck(): Promise<JobResult> {
-  await requireAdminAction();
+  await assertCan('scoring.run');
   try {
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
 

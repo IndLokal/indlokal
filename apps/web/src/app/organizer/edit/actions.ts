@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser } from '@/lib/session';
+import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
@@ -37,7 +37,9 @@ export async function editCommunityProfile(
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
 
-  const community = user.claimedCommunities[0];
+  const currentId = await getCurrentCommunityId();
+  const community =
+    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
 
   const languagesRaw = formData.getAll('languages') as string[];
 

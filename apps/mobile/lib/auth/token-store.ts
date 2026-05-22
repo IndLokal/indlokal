@@ -5,8 +5,18 @@ export type AuthUser = {
   email: string;
   displayName: string | null;
   avatarUrl: string | null;
-  role: 'USER' | 'COMMUNITY_ADMIN' | 'PLATFORM_ADMIN';
+  role:
+    | 'USER'
+    | 'COMMUNITY_ADMIN'
+    | 'EVENT_HOST'
+    | 'PARTNER_ORG_ADMIN'
+    | 'CITY_AMBASSADOR'
+    | 'CONTENT_EDITOR'
+    | 'OPS_LEAD'
+    | 'PARTNERSHIPS_LEAD'
+    | 'PLATFORM_ADMIN';
   cityId: string | null;
+  cityName: string | null;
   personaSegments: string[];
   preferredLanguages: string[];
   onboardingComplete: boolean;

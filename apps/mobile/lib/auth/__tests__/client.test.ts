@@ -18,6 +18,7 @@ function makeAuthTokens(accessToken: string, refreshToken: string) {
       avatarUrl: null,
       role: 'USER' as const,
       cityId: null,
+      cityName: null,
       personaSegments: [],
       preferredLanguages: [],
       onboardingComplete: false,

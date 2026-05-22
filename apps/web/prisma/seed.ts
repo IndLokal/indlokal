@@ -390,6 +390,91 @@ async function main() {
   const { updated } = await refreshAllScores();
   console.log(`✅ Scores refreshed: ${updated} communities updated`);
 
+  // ─── Ambassador role assignment + outreach CRM demo data ────────────────
+  // Idempotent: uses upsert/findOrCreate patterns.
+
+  const adminEmail = (process.env.ADMIN_EMAIL ?? 'admin@indlokal.com').trim().toLowerCase();
+  const adminUser = await prisma.user.findUnique({
+    where: { email: adminEmail },
+    select: { id: true },
+  });
+
+  // Demo ambassador user (separate from admin so the ambassador console is testable)
+  const ambassadorEmail = 'ambassador@indlokal.com';
+  const existingAmbassador = await prisma.user.findUnique({ where: { email: ambassadorEmail } });
+  const ambassador =
+    existingAmbassador ??
+    (await prisma.user.create({
+      data: {
+        email: ambassadorEmail,
+        displayName: 'Demo Ambassador',
+        role: 'CITY_AMBASSADOR',
+        cityId: stuttgart.id,
+      },
+    }));
+
+  // Role assignment: CITY_AMBASSADOR for Stuttgart (idempotent)
+  const existingRoleAssignment = await prisma.roleAssignment.findFirst({
+    where: {
+      userId: ambassador.id,
+      role: 'CITY_AMBASSADOR',
+      cityId: stuttgart.id,
+      revokedAt: null,
+    },
+  });
+  if (!existingRoleAssignment && adminUser) {
+    await prisma.roleAssignment.create({
+      data: {
+        userId: ambassador.id,
+        role: 'CITY_AMBASSADOR',
+        cityId: stuttgart.id,
+        grantedBy: adminUser.id,
+      },
+    });
+  }
+
+  // Sample outreach leads for the Stuttgart pipeline
+  const sampleLeads = [
+    {
+      suggestedName: 'Tamil Cultural Association BW',
+      channelHint: 'https://www.instagram.com/tamilbw/',
+      source: 'ambassador',
+      stage: 'RESEARCHING' as const,
+    },
+    {
+      suggestedName: 'Pakistani Community Stuttgart',
+      channelHint: 'https://chat.whatsapp.com/sample1',
+      source: 'ambassador',
+      stage: 'CONTACTED' as const,
+    },
+    {
+      suggestedName: 'Bengali Association Stuttgart',
+      channelHint: 'https://www.facebook.com/groups/bengalistuttgart',
+      source: 'manual',
+      stage: 'NEW' as const,
+    },
+  ];
+
+  let leadsSeeded = 0;
+  for (const lead of sampleLeads) {
+    const existing = await prisma.outreachLead.findFirst({
+      where: { cityId: stuttgart.id, suggestedName: lead.suggestedName },
+    });
+    if (!existing) {
+      await prisma.outreachLead.create({
+        data: {
+          cityId: stuttgart.id,
+          ownerUserId: ambassador.id,
+          ...lead,
+          updatedAt: new Date(),
+        },
+      });
+      leadsSeeded++;
+    }
+  }
+  console.log(`✅ Ambassador seed: 1 role assignment, ${leadsSeeded} new outreach leads`);
+  // ────────────────────────────────────────────────────────────────────────
+
   const resourceCount = await prisma.resource.count();
 
   console.log('\n✅ Seed complete!');
