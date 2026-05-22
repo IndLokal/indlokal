@@ -54,6 +54,52 @@ function extractImageUrls(html: string, baseUrl: string): string[] {
   return urls;
 }
 
+function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
+  let output = input;
+
+  for (const tagName of tags) {
+    const openToken = `<${tagName.toLowerCase()}`;
+    const closeToken = `</${tagName.toLowerCase()}`;
+    const lower = output.toLowerCase();
+    let cursor = 0;
+    let cleaned = '';
+
+    while (cursor < output.length) {
+      const openIndex = lower.indexOf(openToken, cursor);
+      if (openIndex === -1) {
+        cleaned += output.slice(cursor);
+        break;
+      }
+
+      cleaned += output.slice(cursor, openIndex);
+
+      const openEnd = lower.indexOf('>', openIndex + openToken.length);
+      if (openEnd === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      const closeIndex = lower.indexOf(closeToken, openEnd + 1);
+      if (closeIndex === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      const closeEnd = lower.indexOf('>', closeIndex + closeToken.length);
+      if (closeEnd === -1) {
+        cursor = output.length;
+        break;
+      }
+
+      cursor = closeEnd + 1;
+    }
+
+    output = cleaned;
+  }
+
+  return output;
+}
+
 // ─── Keyword search: Eventbrite ────────────────────────
 
 export async function fetchEventbriteKeywords(
@@ -172,14 +218,7 @@ export async function fetchPinnedUrl(
 
     // Strip script/style blocks before text extraction. Their contents are
     // mostly noise for extraction and can drown useful page signals.
-    let html = rawHtml;
-    for (let i = 0; i < 3; i++) {
-      const next = html
-        .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
-        .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
-      if (next === html) break;
-      html = next;
-    }
+    const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
 
     const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
     const text = collapseWhitespace(htmlToText(html)).slice(0, 15_000);
