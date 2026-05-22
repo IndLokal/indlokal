@@ -678,6 +678,85 @@ const MUNICH: DirectoryEntry[] = [
       },
     ],
   },
+  {
+    slug: 'munich-indian-students-association-misa',
+    name: 'Munich Indian Students Association (MISA)',
+    description:
+      'Student-led Indian association in the Munich region supporting onboarding, networking and cultural meetups for university students.',
+    // TUM and nearby student communities extend into the north metro corridor.
+    citySlug: 'garching',
+    categorySlugs: ['persona-student', 'networking-social', 'cultural'],
+    personaSegments: ['persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'muenchen-tamil-sangam',
+    name: 'München Tamil Sangam e.V.',
+    description:
+      'Tamil cultural association in the Munich metro organising Tamil language, festival and family-community activities.',
+    citySlug: 'freising',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'munich-gujarati-samaj',
+    name: 'Munich Gujarati Samaj e.V.',
+    description:
+      'Gujarati community association serving families and professionals in the Munich and western metro area.',
+    citySlug: 'augsburg',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Gujarati', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'mana-telugu-association-munich',
+    name: 'Mana Telugu Association (Munich)',
+    description:
+      'Telugu-speaking community in the Munich metro with recurring cultural gatherings and festival celebrations.',
+    citySlug: 'unterschleissheim',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Telugu', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'sampriti-muenchen-ev',
+    name: 'Sampriti München e.V.',
+    description:
+      'Bengali cultural association in the Munich metro organising arts, festivals and social community programs.',
+    citySlug: 'starnberg',
+    categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Bengali', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'maratha-association-munich',
+    name: 'Maratha Association in Munich',
+    description:
+      'Marathi cultural association in the Munich metro community with regional-language and festival activities.',
+    citySlug: 'dachau',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Marathi', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
 ];
 
 const FRANKFURT: DirectoryEntry[] = [

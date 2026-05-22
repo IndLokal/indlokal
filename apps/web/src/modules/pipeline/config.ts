@@ -90,7 +90,17 @@ export const SEARCH_REGIONS: SearchRegion[] = [
     id: 'bavaria',
     label: 'Bavaria',
     searchCenter: 'Munich, Germany',
-    citySlugs: ['munich'],
+    citySlugs: [
+      'munich',
+      'garching',
+      'freising',
+      'augsburg',
+      'erding',
+      'dachau',
+      'fuerstenfeldbruck',
+      'unterschleissheim',
+      'starnberg',
+    ],
     enabled: true,
   },
   {
