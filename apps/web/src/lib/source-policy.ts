@@ -112,7 +112,7 @@ function isGoogleMaps(url: URL): boolean {
   return (
     host === 'maps.app.goo.gl' ||
     host === 'maps.google.com' ||
-    (host.endsWith('google.com') && url.pathname.toLowerCase().includes('/maps'))
+    (matchesHost(host, ['google.com']) && url.pathname.toLowerCase().includes('/maps'))
   );
 }
 
