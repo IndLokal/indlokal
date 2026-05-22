@@ -16,6 +16,9 @@
 --     · ContentLogAction.ROLE_GRANTED / ROLE_REVOKED enum values
 --     · content_logs (changed_by, created_at) composite index
 --
+--   Base schema gaps (missing from init migration):
+--     · users.metadata JSONB column
+--
 --   Ambassador hardening (quality pass):
 --     · activity_signals unique index on (created_by, event_id, signal_type)
 --       to prevent duplicate check-ins
@@ -23,6 +26,13 @@
 --
 -- Every statement is idempotent so the migration is safe to re-run after
 -- a prior failed attempt.
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- 0. users: add metadata JSONB column (missing from init migration)
+-- ─────────────────────────────────────────────────────────────────────────────
+
+ALTER TABLE "users"
+  ADD COLUMN IF NOT EXISTS "metadata" JSONB;
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- 1. activity_signals: add created_by + event_id columns (PRD-0015)
