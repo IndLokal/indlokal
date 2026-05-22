@@ -36,6 +36,28 @@ function getYearSignalScore(input: string): number {
   return 2;
 }
 
+function getDetailPageScore(url: string, labelOrText = ''): number {
+  const combined = `${url} ${labelOrText}`;
+  const yearScore = getYearSignalScore(combined);
+  if (yearScore <= 0) return 0;
+
+  const path = (() => {
+    try {
+      return new URL(url).pathname;
+    } catch {
+      return url;
+    }
+  })();
+
+  const segments = path.split('/').filter(Boolean);
+  const hasDescriptiveDetailSlug = segments.some(
+    (segment) => segment.split('-').filter(Boolean).length >= 3,
+  );
+  const hasRegistrationSignal = /registration|register|anmeldung|ticket|rsvp/i.test(combined);
+
+  return hasDescriptiveDetailSlug || hasRegistrationSignal ? 3 : 0;
+}
+
 export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
   const urlScore = EVENT_LINK_KEYWORDS.test(url) ? 2 : 0;
   const labelScore = EVENT_LINK_KEYWORDS.test(labelOrText) ? 1 : 0;
@@ -44,8 +66,9 @@ export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
     : 0;
   const negativeScore = EVENT_LINK_NEGATIVE_KEYWORDS.test(`${url} ${labelOrText}`) ? -3 : 0;
   const yearScore = getYearSignalScore(`${url} ${labelOrText}`);
+  const detailPageScore = getDetailPageScore(url, labelOrText);
 
-  return urlScore + labelScore + strongPositiveScore + negativeScore + yearScore;
+  return urlScore + labelScore + strongPositiveScore + negativeScore + yearScore + detailPageScore;
 }
 
 /**
@@ -61,6 +84,14 @@ function stripHtmlTags(input: string): string {
     current = current.replace(/<[^>]+>/g, '');
   } while (current !== previous);
   return current;
+}
+
+function isMalformedDiscoveredHref(rawHref: string, resolved: URL): boolean {
+  const decodedHref = rawHref.replace(/&quot;|&#34;|&#x22;/gi, '"');
+  if (/["'<>]/.test(decodedHref)) return true;
+  if (/%22|%27/i.test(resolved.href)) return true;
+  if (/https?:/i.test(resolved.pathname)) return true;
+  return false;
 }
 
 /**
@@ -103,6 +134,7 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
       } catch {
         continue;
       }
+      if (isMalformedDiscoveredHref(rawHref, resolved)) continue;
 
       // Internal links only; skip root and the current page
       if (resolved.hostname !== parsed.hostname) continue;
