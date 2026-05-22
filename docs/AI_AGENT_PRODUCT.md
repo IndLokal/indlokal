@@ -2,165 +2,208 @@
 
 ## What It Is
 
-The AI Content Agent is an automated pipeline that discovers, validates, and queues Indian diaspora community content (events and communities) across European cities — replacing manual content curation.
+The AI Content Agent is IndLokal's automated discovery and review pipeline for diaspora events and communities.
 
-It searches public sources, uses AI to filter and structure what it finds, and presents everything in an admin review queue. A human approves or rejects each item in one click.
+It does not operate as an open-ended web crawler. The current product is intentionally known-source-first:
+
+- curated pinned pages are fetched every run
+- community websites already in the database are fetched automatically
+- broad keyword search is used only as a fallback for low-coverage cities, or when explicitly forced
+- every discovered item goes into the pipeline review system, with optional auto-approval only for trusted high-confidence cases
+
+This keeps the pipeline cheaper, faster, and less noisy than the earlier broad-search design.
 
 ## The Problem It Solves
 
-| Without Agent                                                 | With Agent                                                          |
-| ------------------------------------------------------------- | ------------------------------------------------------------------- |
-| Admin manually checks 10+ websites weekly                     | Agent scans all sources in minutes                                  |
-| New communities discovered by word-of-mouth only              | Google CSE finds scattered mentions of WhatsApp-only groups         |
-| Adding a new city means setting up fresh manual workflows     | Add a region config entry — done                                    |
-| Content goes stale between manual checks                      | Scheduled runs catch updates within days                            |
-| WhatsApp-only groups (JITO, Jain Sangh, Maitri) are invisible | User suggestions auto-seed the pipeline + Google discovers mentions |
+Without the agent:
 
-## How It Works (Non-Technical)
+- admins have to keep revisiting community websites and city directories manually
+- event pages go stale quickly, especially when organisations publish only to a calendar subpage
+- newly approved communities do not automatically become future discovery sources
+- low-coverage cities are easy to neglect because no one knows when discovery should widen beyond existing sources
+
+With the agent:
+
+- approved and seeded community websites become reusable discovery sources automatically
+- pinned high-value sources are checked in minutes, not manually
+- only low-coverage cities trigger broader fallback search
+- results land in the admin queue with confidence, duplicate signals, and source provenance
+
+## Current Operating Model
 
 ```mermaid
 flowchart LR
-    subgraph Sources
-        EB[Eventbrite events]
-        DDG[DuckDuckGo search]
-        GS[Google CSE search]
-        DB["DB community\nwebsites"]
-        WS[External aggregators]
-        US[User suggestions]
+    subgraph Plan
+        A[Static pinned URLs]
+        B[DB community websites and Meetup pages]
+        C[Low-coverage city gaps]
     end
 
-    subgraph AI["AI Processing"]
-        F["Filter\n(relevant?)"]
-        E["Extract\n(structured data)"]
-        C[Assign city]
-        D[Check duplicates]
-        F --> E --> C --> D
+    subgraph Fetch
+        D[Fetch pinned sources]
+        E[Optional keyword fallback]
     end
 
-    subgraph Review["Human Review"]
-        Q["Admin queue\nwith confidence %"]
-        AP[Approve]
-        RJ[Reject]
-        Q --> AP
-        Q --> RJ
+    subgraph AI
+        F[Prefilter stale event pages]
+        G[LLM relevance filter]
+        H[LLM structured extraction]
+        I[Resolve city]
+        J[Dedup and review policy]
     end
 
-    EB & DDG & GS & DB & WS & US --> F
-    D --> Q
+    subgraph Review
+        K[Pipeline queue]
+        L[Admin review]
+        M[Trusted-source auto-approval in limited cases]
+    end
+
+    A --> D
+    B --> D
+    C --> E
+    D --> F
+    E --> F
+    F --> G --> H --> I --> J --> K
+    K --> L
+    J --> M
 ```
 
-1. **Discover** — The agent searches Eventbrite, DuckDuckGo, Google, external aggregator websites, and community websites from the database using 65+ diaspora keywords.
+## How It Works
 
-2. **Filter** — AI makes a fast yes/no call: "Is this about the Indian diaspora?" Drops irrelevant results (Indian restaurants, coincidental mentions).
+1. **Plan sources**
+   The pipeline starts with curated pinned URLs and DB-derived community sources. It only adds keyword search when a region contains low-coverage cities or when keyword search is explicitly forced.
 
-3. **Extract** — AI reads each relevant item and extracts structured fields: event title, date, venue, city, community name, WhatsApp link, categories, languages.
+2. **Fetch known sources first**
+   Static aggregators, official directories, and community websites are fetched in parallel. Community websites can also yield discovered event sub-pages such as calendar or upcoming-events URLs.
 
-4. **Deduplicate** — Checks against existing database entries and the pending queue. Same event from two different sources? Caught automatically.
+3. **Drop obviously stale event pages before AI**
+   Pages that look like archives, galleries, past-event listings, or old-year schedules are filtered out before the LLM stages.
 
-5. **Queue** — Items land in `/admin/pipeline` with a confidence score. Admin approves to publish or rejects with a note.
+4. **Run a cheap relevance filter**
+   A first LLM pass keeps likely diaspora-relevant items and drops obvious noise.
 
-6. **Self-improving** — Approved communities with websites automatically become sources for future pipeline runs.
+5. **Run structured extraction**
+   A second LLM pass extracts event or community fields, including `cityName`, categories, access links, confidence, and field-level confidence.
 
-## What It Discovers
+6. **Resolve city and check duplicates**
+   The extracted city name is matched against seeded DB cities, including normalized names and configured aliases. Exact URL matches, date-title similarity for events, and name similarity for communities are used to suppress duplicates.
+
+7. **Queue or auto-approve**
+   Most items land in `/admin/pipeline`. A small subset can be auto-approved when the source has strong historical approval rates and the extracted item is both high-confidence and complete.
+
+## What It Discovers Today
 
 ### Events
 
-- Cultural festivals (Diwali, Holi, Pongal, Navratri, Janma Kalyanak)
-- Community meetups and gatherings
-- Student association events
-- Religious celebrations
-- Sports events (cricket tournaments, etc.)
+- cultural and festival listings from community calendars
+- upcoming programme pages and event sub-pages discovered from community websites
+- public event-platform listings when fallback keyword search is enabled and configured
+- city and umbrella-organisation listings that mention diaspora events
 
 ### Communities
 
-- Language-based groups (Tamil Sangam, Telugu Association, Bengali Maitri, Odia groups)
-- Religious organisations (Jain Sangh, Sikh Gurdwara, Hindu temples)
-- Professional networks (JITO chapters)
-- Student associations
-- WhatsApp-only groups with no web presence (discovered via Google mentions + user suggestions)
+- registered or publicly listed diaspora organisations
+- community websites already in the DB that expose additional organiser or programme pages
+- public mentions found through Google CSE or Eventbrite fallback where configured
+- community suggestions submitted by users or ambassadors, which are added directly to the pipeline queue
 
 ## Source Channels
 
-| Source                    | What It Finds                                                                   | API Needed                             |
-| ------------------------- | ------------------------------------------------------------------------------- | -------------------------------------- |
-| **DuckDuckGo search**     | Free web search for diaspora keywords — no API key needed                       | None                                   |
-| **DB community websites** | Auto-scraped from community WEBSITE/MEETUP access channels in the database      | None                                   |
-| **Eventbrite**            | Public events with diaspora keywords                                            | `EVENTBRITE_API_KEY`                   |
-| **Google Custom Search**  | Blog posts, directories, university pages mentioning diaspora groups            | `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_ID` |
-| **External aggregators**  | CGI Munich events, IndoEuropean.eu (5 pages), Indians in Germany, AIGEV, DIZ BW | None                                   |
-| **User suggestions**      | "Suggest a Community" form submissions auto-enter as pipeline items             | None                                   |
+| Source                             | Current role              | Current behavior                                                                                                         |
+| ---------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| **DB community websites / Meetup** | Primary discovery surface | Always used when scrapeable channels exist in the DB                                                                     |
+| **Static pinned URLs**             | Primary discovery surface | Always used                                                                                                              |
+| **Eventbrite**                     | Keyword fallback          | Only runs when low-coverage city gaps exist or forced, and only if `EVENTBRITE_API_KEY` is configured                    |
+| **Google Custom Search**           | Keyword fallback          | Only runs when low-coverage city gaps exist or forced, and only if `GOOGLE_CSE_API_KEY` + `GOOGLE_CSE_ID` are configured |
+| **DuckDuckGo**                     | Optional keyword fallback | Implemented, but disabled by default; enable with `PIPELINE_ENABLE_DDG=1`                                                |
+| **User / ambassador suggestions**  | Direct queue seeding      | Creates pipeline items immediately; does not depend on web discovery                                                     |
 
-## Scaling Model
+## Current Coverage
 
-The agent is designed for all-Europe expansion with zero code changes.
+The currently enabled search regions are:
 
-**Adding a new country/region:**
+- Baden-Württemberg
+- Bavaria
+- Hesse
 
-1. Add one entry to the region config (name, center city, covered cities)
-2. Add city records to the database
-3. Done — all keyword strategies automatically run for the new region
+City coverage inside those regions is derived from the seeded city and satellite-city config, not maintained separately inside the pipeline.
 
-**Current:** Baden-Württemberg (Stuttgart, Karlsruhe, Mannheim)
+## Human Review Experience
 
-**Future examples:** Bavaria (Munich), NRW (Düsseldorf, Cologne), Netherlands (Amsterdam, Rotterdam), UK (London, Birmingham)
+The admin pipeline page at `/admin/pipeline` currently supports:
 
-## Cost Model
+- on-demand runs via **Run Pipeline Now**
+- run summaries including fetched, filtered, extracted, queued, duplicate, no-city, token, and error counts
+- per-item approve and reject actions
+- batch approve flows
+- additional enrichment and keyword-suggestion review actions
 
-| Component            | Cost                         | Notes                                                            |
-| -------------------- | ---------------------------- | ---------------------------------------------------------------- |
-| OpenAI (gpt-4o-mini) | ~$2-5/month at current scale | Two-stage design: cheap filter saves 60-80% of extraction tokens |
-| DuckDuckGo           | Free                         | HTML scraping, no API key                                        |
-| Eventbrite API       | Free tier                    | 1000 calls/day                                                   |
-| Google CSE           | Free tier                    | 100 queries/day (sufficient for weekly runs)                     |
-| Community websites   | Free                         | Auto-scraped from DB access channels                             |
+The queue is still the main moderation surface. Auto-approval exists, but only for trusted-source, high-confidence items with enough structured fields.
 
-At full Europe scale (50 regions), estimated $30-60/month for LLM costs due to batching optimisation.
+## The WhatsApp-Only Problem
 
-## Admin Experience
+This is still a hard problem, and the current implementation is deliberately honest about it.
 
-The admin review queue at `/admin/pipeline` shows:
+The agent helps in three practical ways:
 
-- **"Run Pipeline Now" button** — triggers the full pipeline from the UI with live progress and results summary
-- Entity type (EVENT / COMMUNITY)
-- Source (Eventbrite, DuckDuckGo, DB Community, Google, User Suggestion, etc.)
-- Extracted data with all structured fields
-- AI confidence score (0-100%)
-- Duplicate match warning if similar entity exists
-- One-click Approve / Reject actions
-- Batch approve for high-confidence items
+1. **Suggestion bridge**
+   User and ambassador submissions create `COMMUNITY_SUGGESTION` pipeline items immediately.
 
-## The WhatsApp Problem — Solved
+2. **Public mention discovery**
+   When keyword fallback is active, Google CSE and optional DuckDuckGo can still pick up scattered public mentions.
 
-Most diaspora communities in Germany operate primarily via WhatsApp. They have no website, no Eventbrite page, no Facebook presence. Traditional scraping is blind to them.
+3. **Self-improving website loop**
+   Once a community is approved with a website or Meetup channel, that URL becomes a future discovery source automatically.
 
-The agent solves this four ways:
+What it does **not** do today is magically discover truly private WhatsApp-only communities without any public footprint or user suggestion.
 
-1. **DuckDuckGo search** — Free web search for scattered mentions of diaspora communities. No API key needed. Finds blog posts, directory listings, and forum mentions.
+## Self-Improving Loop
 
-2. **Google CSE** — Searches for scattered mentions ("JITO Stuttgart", "Bengali group Mannheim") on blogs, directories, university bulletin boards. Even a single mention is enough to create a pipeline item.
+The current pipeline improves itself through database feedback:
 
-3. **User Suggestions → Pipeline Bridge** — When someone submits "JITO Stuttgart" via the suggest form, it automatically creates a `COMMUNITY_SUGGESTION` pipeline item with whatever details were provided. The admin reviews and publishes.
+1. a community is approved or seeded with a scrapeable channel
+2. that channel is picked up by `db-sources.ts`
+3. the next pipeline run fetches it automatically
+4. discovered event sub-pages from that site are added as higher-priority pinned sources
 
-4. **Expanded Keywords** — 65+ keywords covering organisation types (Sangam, Sangh, Samaj, Mandal, JITO), all major Indian languages, religious communities (Jain, Sikh), and festivals (Janma Kalyanak, Paryushana, Baisakhi) — so any public mention anywhere gets caught.
+The database is therefore not just storage. It is an active source registry for future pipeline runs.
 
-## Self-Improving Pipeline
+## Run Modes
 
-The agent gets smarter over time through a **feedback loop**:
+The pipeline currently runs in three ways:
 
-1. Pipeline discovers a new community or event from web search
-2. Admin approves → community created in DB with access channels (website, social links)
-3. On next pipeline run, `db-sources.ts` automatically reads that community's WEBSITE/MEETUP channels
-4. Those URLs become pipeline sources → discover new events from that community
-5. More events found → community activity score rises → ranks higher in discovery
+- **Admin-triggered** from `/admin/pipeline`
+- **Cron-triggered** through the app route
+- **CLI-triggered** with `pnpm --filter web pipeline`
 
-No manual URL maintenance. The database IS the source configuration.
+The CLI is tolerant by default and only exits non-zero on warnings when run with `--strict` or `PIPELINE_STRICT=1`.
 
 ## Metrics Tracked Per Run
 
-- Regions scanned
-- Sources processed
-- Items fetched / passed filter / extracted / queued
-- Duplicates skipped
-- Items skipped (no city match)
-- LLM calls made and estimated token usage
-- Total duration
+Each run records and/or returns:
+
+- regions scanned
+- sources processed
+- items fetched
+- items passed filter
+- items extracted
+- items queued
+- duplicates skipped
+- no-city skips
+- past-event skips
+- LLM calls and token estimate
+- total duration
+- per-stage timings
+- source and fetch errors
+
+## What Changed From The Earlier Vision
+
+The current implementation is intentionally narrower than the earlier generic-search story:
+
+- discovery is known-source-first, not broad-search-first
+- keyword search is conditional, not always-on
+- DuckDuckGo exists but is off by default
+- stale event pages are filtered before AI cost is spent
+- some items can be auto-approved based on review history and confidence
+
+That is the correct current product shape for this stage.
