@@ -54,13 +54,13 @@ export default async function HostEventsPage() {
           {upcoming.length > 0 && (
             <section>
               <h2 className="mb-3 text-sm font-semibold">Upcoming ({upcoming.length})</h2>
-              <EventTable events={upcoming} citySlug="" />
+              <EventTable events={upcoming} />
             </section>
           )}
           {past.length > 0 && (
             <section>
               <h2 className="text-muted mb-3 text-sm font-semibold">Past ({past.length})</h2>
-              <EventTable events={past} citySlug="" dim />
+              <EventTable events={past} dim />
             </section>
           )}
         </>
@@ -81,15 +81,7 @@ type EventRow = {
   trustSignals: { id: string }[];
 };
 
-function EventTable({
-  events,
-  citySlug: _citySlug,
-  dim,
-}: {
-  events: EventRow[];
-  citySlug: string;
-  dim?: boolean;
-}) {
+function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
   return (
     <div className="border-border overflow-hidden rounded-[var(--radius-card)] border">
       <table className={`w-full text-sm ${dim ? 'opacity-60' : ''}`}>

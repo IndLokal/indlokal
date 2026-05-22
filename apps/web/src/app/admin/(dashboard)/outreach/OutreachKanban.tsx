@@ -55,7 +55,7 @@ type Props = {
   showCityBadge?: boolean;
 };
 
-function LeadCard({ lead }: { lead: Lead }) {
+function LeadCard({ lead, showCityBadge }: { lead: Lead; showCityBadge?: boolean }) {
   const [isPending, startTransition] = useTransition();
 
   const name = lead.community?.name ?? lead.suggestedName ?? '—';
@@ -74,7 +74,7 @@ function LeadCard({ lead }: { lead: Lead }) {
         </Link>
         <span className="text-muted shrink-0 text-[10px]">{lead.source}</span>
       </div>
-      <p className="text-muted mt-1 text-xs">{lead.city.name}</p>
+      {showCityBadge && <p className="text-muted mt-1 text-xs">{lead.city.name}</p>}
       {lead.channelHint && <p className="text-muted mt-0.5 truncate text-xs">{lead.channelHint}</p>}
       <div className="mt-2 flex items-center gap-2">
         {lead.nextActionAt && (
@@ -112,7 +112,7 @@ function LeadCard({ lead }: { lead: Lead }) {
   );
 }
 
-export function OutreachKanban({ leads, showCityBadge: _showCityBadge }: Props) {
+export function OutreachKanban({ leads, showCityBadge }: Props) {
   const byStage = Object.fromEntries(
     STAGES.map((s) => [s, leads.filter((l) => l.stage === s)]),
   ) as Record<OutreachStage, Lead[]>;
@@ -133,7 +133,7 @@ export function OutreachKanban({ leads, showCityBadge: _showCityBadge }: Props) 
             </div>
             <div className="space-y-2">
               {stageleads.map((lead) => (
-                <LeadCard key={lead.id} lead={lead} />
+                <LeadCard key={lead.id} lead={lead} showCityBadge={showCityBadge} />
               ))}
               {stageleads.length === 0 && (
                 <div className="border-border rounded-lg border border-dashed py-6 text-center">
