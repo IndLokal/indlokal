@@ -274,6 +274,7 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
       id: true,
       name: true,
       status: true,
+      createdAt: true,
       description: true,
       descriptionLong: true,
       slug: true,
@@ -380,8 +381,11 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
       computedAt: new Date().toISOString(),
     };
 
-    // Auto-demote DORMANT communities (180d+ no activity) to INACTIVE
-    const shouldDemote = freshnessState === 'DORMANT' && c.status === 'ACTIVE';
+    // Auto-demote DORMANT communities (180d+ no activity) to INACTIVE.
+    // Grace period: never demote a community created less than 90 days ago —
+    // freshly seeded or newly approved listings need time to accumulate activity.
+    const isNew = now.getTime() - c.createdAt.getTime() < 90 * 24 * 60 * 60 * 1000;
+    const shouldDemote = freshnessState === 'DORMANT' && c.status === 'ACTIVE' && !isNew;
 
     await db.community.update({
       where: { id: c.id },

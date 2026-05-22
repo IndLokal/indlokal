@@ -13,15 +13,43 @@
  *
  * Hard rules — DO NOT BEND
  * ─────────────────────────
- * 1. Public source only. Org must have a public website / Meetup page /
- *    Vereinsregister entry / official institutional listing.
- * 2. Every entry MUST have a `sourceUrl` we can point at if challenged.
+ * 1. Every entry needs at least ONE verifiable public source:
+ *
+ *    TIER A — org's own web presence (strongest; prefer these)
+ *      • Own website / domain
+ *      • Meetup.com group page
+ *
+ *    TIER B — German official registries
+ *      • Vereinsregister / Handelsregister (vereinsregister.de or
+ *        handelsregister.de) — sufficient for any registered e.V. even
+ *        without a website. Record VR number in a code comment.
+ *
+ *    TIER C — official umbrella / institutional listings
+ *      • Forum der Kulturen Stuttgart — forum-der-kulturen.de/mitgliedsvereine
+ *      • aigev.org national Indian associations directory
+ *      • IndoEuropean.eu organisation listings
+ *      • City government integration / multicultural portals
+ *        (e.g. amka.de Frankfurt, muenchen.de, stuttgart.de)
+ *      • Indian Embassy / Consulate official directories
+ *      • University club portal (for student associations)
+ *
+ *    NOT acceptable as the sole source:
+ *      ✗ Facebook groups  — user-created, renamed or deleted without notice
+ *      ✗ Instagram / LinkedIn / YouTube social profiles without Tier A/B/C proof
+ *      ✗ WhatsApp group links
+ *      ✗ Google Maps / Google Business Profile alone (unstable; easily faked)
+ *      ✗ "I believe this exists" — if you can't find a URL, leave it out
+ *
+ * 2. `sourceUrl` must point at the specific evidence page (not a homepage).
+ *    Prefer Tier A > Tier B > Tier C. If using Tier C set needsReview: true.
  * 3. No personal data. Name + public URL + city + category. Never an
  *    organiser's personal email or phone unless it is already published on
  *    the org's own public website.
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
  * 5. Idempotent and create-only. Existing rows are NEVER updated by this
  *    script — admin/organiser edits must survive every redeploy.
+ *    Exception: unclaimed ADMIN_SEED rows with weak, stale, or retired evidence
+ *    are moved to INACTIVE so production does not keep showing known-bad seed data.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
  *    derives those from real signals.
  *
@@ -37,8 +65,21 @@ import {
 } from '@prisma/client';
 
 import { runResourcesSeed, type ResourcesResult } from './resources';
+import { assessEvidenceUrl } from '../src/lib/source-policy';
 
 const prisma = new PrismaClient();
+const RETIRED_DIRECTORY_SLUGS = [
+  {
+    slug: 'dig-munich',
+    reason:
+      'Retired by directory seed: local DIG Munich domain is parked and no replacement qualifying source is currently verified.',
+  },
+  {
+    slug: 'hindu-mandir-frankfurt',
+    reason:
+      'Retired by directory seed: public website did not resolve during source audit and no replacement qualifying source is currently verified.',
+  },
+] as const;
 
 export type DirectoryChannel = {
   channelType: ChannelType;
@@ -64,12 +105,11 @@ export type DirectoryEntry = {
   /** Languages the org operates in. */
   languages?: string[];
   foundedYear?: number;
-  memberCountApprox?: number;
   /** Public URL we used as evidence this org exists. REQUIRED. */
   sourceUrl: string;
   /** Public-facing channels (website, social, etc.). All must be public. */
   channels: DirectoryChannel[];
-  /** Set true if editor is unsure or only one source exists. Surfaced to admins. */
+  /** Set true if editor is unsure or only institutional/registry proof exists. */
   needsReview?: boolean;
 };
 
@@ -94,7 +134,6 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Hindi', 'English', 'Gujarati'],
     foundedYear: 2005,
-    memberCountApprox: 250,
     sourceUrl: 'https://hssgermany.org/',
     channels: [
       { channelType: 'WEBSITE', url: 'https://hssgermany.org/', isPrimary: true, label: 'Website' },
@@ -118,7 +157,6 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Telugu', 'English'],
     foundedYear: 2010,
-    memberCountApprox: 320,
     sourceUrl: 'https://stvgermany.de/',
     channels: [
       { channelType: 'WEBSITE', url: 'https://stvgermany.de/', isPrimary: true, label: 'Website' },
@@ -135,124 +173,6 @@ const STUTTGART: DirectoryEntry[] = [
     ],
   },
   {
-    slug: 'tamil-sangam-stuttgart',
-    name: 'Tamil Sangam Stuttgart',
-    description:
-      'Cultural association for the Tamil-speaking community in Stuttgart — Tamil New Year, Pongal, and language classes for children.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
-    languages: ['Tamil', 'English'],
-    foundedYear: 2008,
-    memberCountApprox: 180,
-    sourceUrl: 'https://facebook.com/TamilSangamStuttgart',
-    channels: [
-      {
-        channelType: 'FACEBOOK',
-        url: 'https://facebook.com/TamilSangamStuttgart',
-        isPrimary: true,
-        label: 'Facebook Page',
-      },
-    ],
-    needsReview: true,
-  },
-  {
-    slug: 'indians-in-stuttgart',
-    name: 'Indians in Stuttgart',
-    description:
-      'Open social community for all Indians in Stuttgart — meetups, newcomer help, restaurant recommendations and city guides.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['networking-social'],
-    personaSegments: ['newcomer', 'working-professional', 'single'],
-    languages: ['Hindi', 'English'],
-    foundedYear: 2012,
-    memberCountApprox: 1200,
-    sourceUrl: 'https://facebook.com/groups/IndiansinStuttgart',
-    channels: [
-      {
-        channelType: 'FACEBOOK',
-        url: 'https://facebook.com/groups/IndiansinStuttgart',
-        isPrimary: true,
-        label: 'Facebook Group',
-      },
-      {
-        channelType: 'MEETUP',
-        url: 'https://meetup.com/indians-in-stuttgart',
-        label: 'Meetup.com',
-      },
-    ],
-  },
-  {
-    slug: 'ipn-stuttgart',
-    name: 'Indian Professionals Network Stuttgart',
-    description:
-      'Professional networking for Indian engineers, managers, and entrepreneurs in Stuttgart and the automotive corridor.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional'],
-    languages: ['English', 'Hindi'],
-    foundedYear: 2016,
-    memberCountApprox: 420,
-    sourceUrl: 'https://linkedin.com/groups/ipn-stuttgart',
-    channels: [
-      {
-        channelType: 'LINKEDIN',
-        url: 'https://linkedin.com/groups/ipn-stuttgart',
-        isPrimary: true,
-        label: 'LinkedIn Group',
-      },
-    ],
-    needsReview: true,
-  },
-  {
-    slug: 'kannada-koota-stuttgart',
-    name: 'Kasturi Kannada Koota Stuttgart',
-    description:
-      "Kannada Rajyotsava, Yugadi and cultural events for the Kannada-speaking community in Stuttgart's tech and auto sectors.",
-    citySlug: 'stuttgart',
-    categorySlugs: ['language-regional', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
-    languages: ['Kannada', 'English'],
-    foundedYear: 2014,
-    memberCountApprox: 140,
-    sourceUrl: 'https://www.facebook.com/groups/kasturikannadakootastuttgart/',
-    channels: [
-      {
-        channelType: 'INSTAGRAM',
-        url: 'https://instagram.com/kasturikannadakootastuttgart/',
-        isPrimary: true,
-        label: 'Instagram',
-      },
-      {
-        channelType: 'FACEBOOK',
-        url: 'https://www.facebook.com/groups/kasturikannadakootastuttgart/',
-        label: 'Facebook Group',
-      },
-    ],
-  },
-  {
-    slug: 'indian-students-stuttgart',
-    name: 'Indian Students Stuttgart',
-    description:
-      'Community for Indian students at University of Stuttgart and HFT — orientation help, study groups, housing tips and social events.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['student', 'networking-social'],
-    personaSegments: ['persona-student', 'newcomer'],
-    languages: ['Hindi', 'English', 'Telugu'],
-    foundedYear: 2018,
-    memberCountApprox: 380,
-    sourceUrl: 'https://instagram.com/indianstudentsstuttgart',
-    channels: [
-      {
-        channelType: 'INSTAGRAM',
-        url: 'https://instagram.com/indianstudentsstuttgart',
-        isPrimary: true,
-        label: 'Instagram',
-      },
-    ],
-    needsReview: true,
-  },
-  {
     slug: 'indian-film-festival-stuttgart',
     name: 'Indian Film Festival Stuttgart Community',
     description:
@@ -262,7 +182,6 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['working-professional', 'single', 'persona-student'],
     languages: ['English', 'Hindi'],
     foundedYear: 2003,
-    memberCountApprox: 200,
     sourceUrl: 'https://indisches-filmfestival.de',
     channels: [
       {
@@ -279,40 +198,6 @@ const STUTTGART: DirectoryEntry[] = [
     ],
   },
   {
-    slug: 'bihar-fraternity-stuttgart',
-    name: 'Bihar Fraternity Stuttgart',
-    description:
-      'Bihari community in Stuttgart celebrating festivals like Makar Sankranti and Chhath Puja. Part of the Bharatiya Parivar umbrella of 24 Vereine.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['cultural', 'language-regional'],
-    personaSegments: ['family', 'working-professional'],
-    languages: ['Hindi', 'Bhojpuri', 'Maithili'],
-    sourceUrl: 'https://www.instagram.com/stuttgartbiharfraternity/',
-    channels: [
-      {
-        channelType: 'INSTAGRAM',
-        url: 'https://www.instagram.com/stuttgartbiharfraternity/',
-        isPrimary: true,
-      },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/groups/bihariingermany/' },
-    ],
-  },
-  {
-    slug: 'ezenz-ev',
-    name: 'Ezenz e.V.',
-    description:
-      'EZENZ — Einheit in Zivilisatorischen wErten uNd Zusammenarbeit. Indo-German cultural dialogue organisation.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
-    languages: ['Hindi', 'German'],
-    sourceUrl: 'https://www.instagram.com/ezenz.ev/',
-    channels: [
-      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/ezenz.ev/', isPrimary: true },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/Ezenz.de/' },
-    ],
-  },
-  {
     slug: 'icf-ev-stuttgart',
     name: 'India Culture Forum e.V. (ICF)',
     description:
@@ -322,7 +207,6 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Hindi', 'German'],
     foundedYear: 2006,
-    memberCountApprox: 200,
     sourceUrl: 'https://indiacultureforum.de/',
     channels: [
       { channelType: 'WEBSITE', url: 'https://indiacultureforum.de/', isPrimary: true },
@@ -365,6 +249,71 @@ const STUTTGART: DirectoryEntry[] = [
       { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/bindi.ev/' },
       { channelType: 'FACEBOOK', url: 'https://www.facebook.com/100070137490845/' },
     ],
+  },
+  // ── Additional Stuttgart orgs — sourced from Forum der Kulturen Stuttgart e.V.
+  //    membership list (official Dachverband of 160+ registered Vereine).
+  //    Source page: https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/
+  {
+    slug: 'dig-stuttgart',
+    name: 'Deutsch-Indische Gesellschaft Zweiggesellschaft Stuttgart e.V.',
+    description:
+      "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft — cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
+    citySlug: 'stuttgart',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'http://www.digstuttgart.de/',
+    channels: [{ channelType: 'WEBSITE', url: 'http://www.digstuttgart.de/', isPrimary: true }],
+  },
+  {
+    slug: 'bharat-majlis-stuttgart',
+    name: 'Indischer Verein Bharat Majlis e.V.',
+    description:
+      'Registered Indian community association in Stuttgart — cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English'],
+    sourceUrl: 'http://www.indischerverein-stuttgart.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'http://www.indischerverein-stuttgart.de/',
+        isPrimary: true,
+      },
+    ],
+  },
+  {
+    slug: 'tamilische-bildungsvereinigung-stuttgart',
+    name: 'Tamilische Bildungsvereinigung e.V.',
+    description:
+      'Tamil educational and cultural association based in Stuttgart — promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'German'],
+    sourceUrl: 'https://tbvgermany.com/de/',
+    channels: [{ channelType: 'WEBSITE', url: 'https://tbvgermany.com/de/', isPrimary: true }],
+  },
+  {
+    slug: 'maharashtra-mandal-stuttgart',
+    name: 'Maharashtra Mandal Stuttgart e.V.',
+    description:
+      'Marathi community association in Stuttgart — Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['language-regional', 'cultural'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Marathi', 'Hindi', 'English'],
+    sourceUrl: 'https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/Maharashtramandalstuttgart/',
+        isPrimary: true,
+        label: 'Facebook Page',
+      },
+    ],
+    needsReview: true,
   },
   {
     slug: 'maitree-ev-esslingen',
@@ -413,25 +362,6 @@ const STUTTGART: DirectoryEntry[] = [
       { channelType: 'WEBSITE', url: 'https://squirrels.de/', isPrimary: true },
       { channelType: 'FACEBOOK', url: 'https://www.facebook.com/SindelfingenSquirrels/' },
     ],
-  },
-  {
-    slug: 'indians-in-the-laend',
-    name: 'Indians in The Länd',
-    description:
-      'BW-wide informal community for Indians living, studying, or working across Baden-Württemberg.',
-    citySlug: 'stuttgart',
-    categorySlugs: ['networking-social'],
-    personaSegments: ['newcomer', 'working-professional'],
-    languages: ['Hindi', 'English', 'German'],
-    sourceUrl: 'https://www.facebook.com/groups/1393064338860177/',
-    channels: [
-      {
-        channelType: 'FACEBOOK',
-        url: 'https://www.facebook.com/groups/1393064338860177/',
-        isPrimary: true,
-      },
-    ],
-    needsReview: true,
   },
   {
     slug: 'german-tamil-sangam',
@@ -486,34 +416,221 @@ const STUTTGART: DirectoryEntry[] = [
 ];
 
 const KARLSRUHE: DirectoryEntry[] = [
-  // TODO: Add curated entries. Suggested anchors (verify URLs first):
-  //   - Indian Students Association at KIT
-  //   - Tamil Sangam Karlsruhe (if active)
-  //   - Local Indo-German Society chapter
+  {
+    slug: 'hss-karlsruhe',
+    name: 'HSS Karlsruhe',
+    description:
+      'Hindu Swayamsevak Sangh Karlsruhe unit — weekly shakha, Diwali and Holi celebrations for the Hindu community.',
+    citySlug: 'karlsruhe',
+    categorySlugs: ['cultural', 'religious'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English'],
+    sourceUrl: 'https://hssgermany.org/',
+    channels: [
+      { channelType: 'WEBSITE', url: 'https://hssgermany.org/', isPrimary: true, label: 'Website' },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'dig-karlsruhe',
+    name: 'Deutsch-Indische Gesellschaft Karlsruhe e.V.',
+    description:
+      "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft — lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
+    citySlug: 'karlsruhe',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://digkarlsruhe.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://digkarlsruhe.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+  },
 ];
 
 const MANNHEIM: DirectoryEntry[] = [
-  // TODO: Add curated entries. Suggested anchors (verify URLs first):
-  //   - Indian Students Association — University of Mannheim
-  //   - Indian Students Association — Heidelberg University (counts under metro)
-  //   - Hindu temple / cultural Vereine in the Rhein-Neckar region
+  {
+    slug: 'dig-heidelberg',
+    name: 'Deutsch-Indische Gesellschaft Heidelberg e.V.',
+    description:
+      "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft — lectures, music, film and cultural programming focused on India and Indo-German exchange.",
+    // Heidelberg sits in the Mannheim / Rhein-Neckar metro catchment for launch.
+    citySlug: 'mannheim',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://www.dig-heidelberg.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.dig-heidelberg.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'iskcon-heidelberg',
+    name: 'ISKCON Heidelberg',
+    description:
+      'Vaishnava temple community in the Heidelberg / Rhein-Neckar area with regular Sunday programs, kirtan and festival celebrations.',
+    // Meckesheim / Heidelberg is the best current owned-site-backed entry for the metro.
+    citySlug: 'mannheim',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://iskcon-heidelberg.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://iskcon-heidelberg.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/channel/UC7kaA28p4iF22C6YIFA8mSw/videos',
+        label: 'YouTube',
+      },
+    ],
+    needsReview: true,
+  },
 ];
 
 const MUNICH: DirectoryEntry[] = [
-  // TODO: Add curated entries. Suggested anchors (verify URLs first):
-  //   - Indian Students Association — TUM
-  //   - Indian Students Association — LMU
-  //   - ISKCON München / Hindu temples (public)
-  //   - Bavarian Indian Business / professional associations
-  //   - Indo-German Society München chapter
+  {
+    slug: 'hss-munich',
+    name: 'HSS München',
+    description:
+      'Hindu Swayamsevak Sangh München — weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
+    citySlug: 'munich',
+    categorySlugs: ['cultural', 'religious'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English', 'Gujarati'],
+    sourceUrl: 'https://hssgermany.org/',
+    channels: [
+      { channelType: 'WEBSITE', url: 'https://hssgermany.org/', isPrimary: true, label: 'Website' },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'iskcon-munich',
+    name: 'ISKCON München (Hare Krishna München)',
+    description:
+      'International Society for Krishna Consciousness Munich center — Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
+    citySlug: 'munich',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.iskcon.de/',
+    channels: [
+      { channelType: 'WEBSITE', url: 'https://www.iskcon.de/', isPrimary: true, label: 'Website' },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'kerala-samajam-munich',
+    name: 'Kerala Samajam Munich',
+    description:
+      'Malayali community association in Munich organising Onam, Vishu and other cultural gatherings, with member services and community activities year-round.',
+    citySlug: 'munich',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://keralasamajammunich.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://keralasamajammunich.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/KeralaSamajamMunich/',
+        label: 'Facebook',
+      },
+    ],
+  },
 ];
 
 const FRANKFURT: DirectoryEntry[] = [
-  // TODO: Add curated entries. Suggested anchors (verify URLs first):
-  //   - Indo-German Society Frankfurt chapter
-  //   - Hindu Mandir Frankfurt
-  //   - Indian Students Association — Goethe University
-  //   - Indian Professionals Frankfurt (banking/finance niche)
+  {
+    slug: 'dig-rhein-main',
+    name: 'Deutsch-Indische Gesellschaft Rhein-Main e.V. (DIG)',
+    description:
+      "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area — lectures, film screenings and cultural exchanges.",
+    citySlug: 'frankfurt',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://www.dig-ev.de/home-2/zweiggesellschaften/darmstadtfrankfurt/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.dig-ev.de/home-2/zweiggesellschaften/darmstadtfrankfurt/',
+        isPrimary: true,
+        label: 'DIG branch page',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'frankfurt-tamil-sangam',
+    name: 'Frankfurt Tamil Sangam e.V.',
+    description:
+      'Tamil cultural association in Frankfurt organising Pongal, Tamil New Year, Diwali, sports days and arts programming for families in the Rhein-Main region.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'English', 'German'],
+    foundedYear: 2015,
+    sourceUrl: 'https://frankfurttamilsangam.com/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://frankfurttamilsangam.com/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/frankfurttamilsangam',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/c/FrankfurtTamilSangam',
+        label: 'YouTube',
+      },
+    ],
+  },
+  {
+    slug: 'telugu-velugu-germany',
+    name: 'Telugu Velugu Germany (TVG) e.V.',
+    description:
+      'Germany-wide Telugu association with a listed Frankfurt address and a long-running program of Telugu cultural gatherings and Ugadi celebrations.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Telugu', 'English', 'German'],
+    foundedYear: 2006,
+    sourceUrl: 'https://teluguvelugu.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://teluguvelugu.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
 ];
 
 export const METRO_DIRECTORIES: Record<string, DirectoryEntry[]> = {
@@ -529,23 +646,81 @@ export const METRO_DIRECTORIES: Record<string, DirectoryEntry[]> = {
  * ──────────────────────────────────────────────────────────────────────── */
 
 export type DirectoryResult = {
-  perMetro: Record<string, { skippedExisting: number; created: number }>;
+  perMetro: Record<string, { skippedExisting: number; skippedInvalid: number; created: number }>;
   totalCreated: number;
   totalSkipped: number;
+  totalInvalid: number;
+  retiredInvalidExisting: number;
   resources: ResourcesResult;
 };
+
+function getMetadataString(metadata: unknown, key: string): string | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+  const value = (metadata as Record<string, unknown>)[key];
+  return typeof value === 'string' ? value : null;
+}
+
+async function retireInvalidExistingSeedRows(activeSeedSlugs: Set<string>): Promise<number> {
+  const retiredReasonBySlug = new Map(
+    RETIRED_DIRECTORY_SLUGS.map((retired) => [retired.slug, retired.reason]),
+  ) as Map<string, string>;
+  const candidates = await prisma.community.findMany({
+    where: {
+      source: 'ADMIN_SEED',
+      claimState: 'UNCLAIMED',
+      status: { not: 'INACTIVE' },
+    },
+    select: { id: true, slug: true, metadata: true },
+  });
+
+  let retired = 0;
+  for (const candidate of candidates) {
+    const retiredReason = retiredReasonBySlug.get(candidate.slug);
+    if (retiredReason) {
+      await prisma.community.update({
+        where: { id: candidate.id },
+        data: { status: 'INACTIVE' },
+      });
+      retired++;
+      continue;
+    }
+
+    if (activeSeedSlugs.has(candidate.slug)) continue;
+
+    const editorialSource = getMetadataString(candidate.metadata, 'editorialSource');
+    if (editorialSource !== 'directory-seed') continue;
+
+    const sourceUrl = getMetadataString(candidate.metadata, 'sourceUrl');
+    const evidence = sourceUrl ? assessEvidenceUrl(sourceUrl) : null;
+    if (evidence?.isQualifying) continue;
+
+    await prisma.community.update({
+      where: { id: candidate.id },
+      data: { status: 'INACTIVE' },
+    });
+    retired++;
+  }
+
+  return retired;
+}
 
 async function insertEntry(
   entry: DirectoryEntry,
   cityIdBySlug: Map<string, string>,
   categoryIdBySlug: Map<string, string>,
 ) {
+  const evidence = assessEvidenceUrl(entry.sourceUrl);
+  if (!evidence.isQualifying) {
+    console.warn(`  ⚠ ${entry.slug}: invalid source evidence (${evidence.label}) — skipped`);
+    return { created: false, skippedInvalid: true };
+  }
+
   const cityId = cityIdBySlug.get(entry.citySlug);
   if (!cityId) {
     console.warn(
       `  ⚠ ${entry.slug}: city "${entry.citySlug}" not found (run bootstrap?) — skipped`,
     );
-    return { created: false };
+    return { created: false, skippedInvalid: false };
   }
 
   // Create-only. If a row with this slug already exists we leave it alone.
@@ -553,7 +728,7 @@ async function insertEntry(
     where: { slug: entry.slug },
     select: { id: true },
   });
-  if (existing) return { created: false };
+  if (existing) return { created: false, skippedInvalid: false };
 
   const community = await prisma.community.create({
     data: {
@@ -565,15 +740,19 @@ async function insertEntry(
       personaSegments: entry.personaSegments ?? [],
       languages: entry.languages ?? [],
       foundedYear: entry.foundedYear,
-      memberCountApprox: entry.memberCountApprox,
       status: 'ACTIVE' satisfies CommunityStatus,
       claimState: 'UNCLAIMED' satisfies ClaimState,
       source: 'ADMIN_SEED',
       metadata: {
         editorialSource: 'directory-seed',
         sourceUrl: entry.sourceUrl,
+        sourceEvidence: {
+          tier: evidence.tier,
+          label: evidence.label,
+          requiresReview: evidence.requiresReview,
+        },
         seededAt: new Date().toISOString(),
-        needsReview: entry.needsReview ?? false,
+        needsReview: entry.needsReview ?? evidence.requiresReview,
       },
     },
   });
@@ -602,7 +781,7 @@ async function insertEntry(
     });
   }
 
-  return { created: true };
+  return { created: true, skippedInvalid: false };
 }
 
 export async function runDirectorySeed(): Promise<DirectoryResult> {
@@ -610,7 +789,16 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     perMetro: {},
     totalCreated: 0,
     totalSkipped: 0,
-    resources: { created: 0, skippedExisting: 0, skippedMissingCity: 0 },
+    totalInvalid: 0,
+    retiredInvalidExisting: 0,
+    resources: {
+      created: 0,
+      skippedExisting: 0,
+      skippedMissingCity: 0,
+      skippedInvalid: 0,
+      hiddenInvalidExisting: 0,
+      hiddenRetiredExisting: 0,
+    },
   };
 
   const cities = await prisma.city.findMany({ select: { id: true, slug: true } });
@@ -620,11 +808,16 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
   const categoryIdBySlug = new Map(categories.map((c) => [c.slug, c.id]));
 
   for (const [metroSlug, entries] of Object.entries(METRO_DIRECTORIES)) {
-    const tally = { skippedExisting: 0, created: 0 };
+    const tally = { skippedExisting: 0, skippedInvalid: 0, created: 0 };
     for (const entry of entries) {
       try {
-        const { created } = await insertEntry(entry, cityIdBySlug, categoryIdBySlug);
+        const { created, skippedInvalid } = await insertEntry(
+          entry,
+          cityIdBySlug,
+          categoryIdBySlug,
+        );
         if (created) tally.created++;
+        else if (skippedInvalid) tally.skippedInvalid++;
         else tally.skippedExisting++;
       } catch (err) {
         console.error(`  ❌ Failed to seed ${entry.slug}:`, err);
@@ -633,7 +826,15 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     result.perMetro[metroSlug] = tally;
     result.totalCreated += tally.created;
     result.totalSkipped += tally.skippedExisting;
+    result.totalInvalid += tally.skippedInvalid;
   }
+
+  const activeSeedSlugs = new Set(
+    Object.values(METRO_DIRECTORIES)
+      .flat()
+      .map((entry) => entry.slug),
+  );
+  result.retiredInvalidExisting = await retireInvalidExistingSeedRows(activeSeedSlugs);
 
   // Resources are part of the same editorial tier — same hard rules,
   // same create-only / idempotent contract. One env flag, one build step.
@@ -650,12 +851,19 @@ async function main() {
   console.log(`\n✅ Directory seed complete in ${ms}ms`);
   for (const [metro, tally] of Object.entries(r.perMetro)) {
     console.log(
-      `   ${metro.padEnd(12)} created ${tally.created}, skipped ${tally.skippedExisting} (already present)`,
+      `   ${metro.padEnd(12)} created ${tally.created}, skipped ${tally.skippedExisting} (already present), invalid ${tally.skippedInvalid}`,
     );
   }
-  console.log(`   ─── totals: ${r.totalCreated} new community rows, ${r.totalSkipped} preserved`);
   console.log(
-    `   resources    created ${r.resources.created}, skipped ${r.resources.skippedExisting} (already present)${r.resources.skippedMissingCity ? `, ${r.resources.skippedMissingCity} missing city` : ''}\n`,
+    `   ─── totals: ${r.totalCreated} new community rows, ${r.totalSkipped} preserved, ${r.totalInvalid} invalid skipped`,
+  );
+  if (r.retiredInvalidExisting > 0) {
+    console.log(
+      `   retired ${r.retiredInvalidExisting} existing unclaimed rows with weak evidence`,
+    );
+  }
+  console.log(
+    `   resources    created ${r.resources.created}, skipped ${r.resources.skippedExisting} (already present)${r.resources.skippedMissingCity ? `, ${r.resources.skippedMissingCity} missing city` : ''}${r.resources.skippedInvalid ? `, ${r.resources.skippedInvalid} invalid` : ''}${r.resources.hiddenInvalidExisting ? `, ${r.resources.hiddenInvalidExisting} hidden invalid existing` : ''}${r.resources.hiddenRetiredExisting ? `, ${r.resources.hiddenRetiredExisting} hidden retired existing` : ''}\n`,
   );
 }
 
