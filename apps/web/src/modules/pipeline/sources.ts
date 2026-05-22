@@ -9,7 +9,7 @@
  */
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
-import { collapseWhitespace, htmlToText } from './text';
+import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {
@@ -221,7 +221,7 @@ export async function fetchPinnedUrl(
     const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
 
     const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
-    const text = collapseWhitespace(htmlToText(html)).slice(0, 15_000);
+    const text = collapseWhitespace(decodeHtmlEntities(htmlToText(html))).slice(0, 15_000);
 
     items.push({
       sourceType: strategy.sourceType,
