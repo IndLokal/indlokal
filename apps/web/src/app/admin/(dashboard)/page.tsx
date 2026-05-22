@@ -50,6 +50,11 @@ export default function AdminDashboardPage() {
           description="City ambassador throughput and check-in stats"
           href="/admin/ambassadors"
         />
+        <DashboardCard
+          title="Outreach CRM"
+          description="Lead pipeline for community onboarding across cities"
+          href="/admin/outreach"
+        />
       </div>
     </div>
   );

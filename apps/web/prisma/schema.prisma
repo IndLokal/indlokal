@@ -40,6 +40,7 @@ model City {
   userInteractions       UserInteraction[]
   contentReports         ContentReport[] @relation("CityReports")
   pipelineItems          PipelineItem[]
+  outreachLeads          OutreachLead[]
 
   createdAt              DateTime @default(now()) @map("created_at")
   updatedAt              DateTime @updatedAt @map("updated_at")
@@ -150,6 +151,7 @@ model Community {
   // Edges — relationships to other entities
   sourceEdges      RelationshipEdge[] @relation("SourceEdges")
   targetEdges      RelationshipEdge[] @relation("TargetEdges")
+  outreachLeads    OutreachLead[]
 
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -920,4 +922,53 @@ model KeywordSuggestion {
 
   @@index([status, createdAt])
   @@map("keyword_suggestions")
+}
+
+// ─────────────────────────────────────────────────
+// Outreach CRM (PRD-0016)
+// ─────────────────────────────────────────────────
+
+enum OutreachStage {
+  NEW
+  RESEARCHING
+  CONTACTED
+  IN_CONVERSATION
+  ONBOARDED
+  DECLINED
+  DORMANT
+}
+
+model OutreachLead {
+  id            String        @id @default(cuid())
+  cityId        String        @map("city_id")
+  city          City          @relation(fields: [cityId], references: [id])
+  communityId   String?       @map("community_id")   // set when linked / promoted
+  community     Community?    @relation(fields: [communityId], references: [id])
+  suggestedName String?       @map("suggested_name")  // raw name before community exists
+  channelHint   String?       @map("channel_hint")    // WA link / IG handle / email
+  ownerUserId   String        @map("owner_user_id")   // assigned operator
+  source        String        // 'ambassador' | 'pipeline' | 'manual' | 'partner'
+  stage         OutreachStage @default(NEW)
+  nextActionAt  DateTime?     @map("next_action_at")
+  metadata      Json?         // flexible extension bag
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+
+  notes         OutreachNote[]
+
+  @@index([cityId, stage])
+  @@index([ownerUserId, stage])
+  @@map("outreach_leads")
+}
+
+model OutreachNote {
+  id        String       @id @default(cuid())
+  leadId    String       @map("lead_id")
+  lead      OutreachLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  authorId  String       @map("author_id")
+  body      String
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@index([leadId, createdAt])
+  @@map("outreach_notes")
 }

@@ -8,6 +8,7 @@ export const dynamic = 'force-dynamic';
 const NAV = [
   { href: '/ambassador', label: 'Dashboard' },
   { href: '/ambassador/submit', label: 'Submit' },
+  { href: '/ambassador/outreach', label: 'Outreach' },
   { href: '/ambassador/feedback', label: 'Feedback' },
   { href: '/ambassador/me', label: 'My Score' },
 ];
