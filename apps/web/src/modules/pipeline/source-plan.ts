@@ -213,7 +213,12 @@ async function getLowCoverageCities(
 
       return a.communityCount - b.communityCount || a.name.localeCompare(b.name);
     })
-    .map(({ isMetroPrimary: _isMetroPrimary, ...city }) => city)
+    .map((city) => ({
+      slug: city.slug,
+      name: city.name,
+      communityCount: city.communityCount,
+      upcomingEventCount: city.upcomingEventCount,
+    }))
     .slice(0, limit);
 }
 
