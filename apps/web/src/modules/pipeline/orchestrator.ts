@@ -385,13 +385,10 @@ async function resolveAndQueue(
 
     // Dedup check
     const isDupe = await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
-    if (
-      item.type === 'EVENT' &&
-      isDupe.isDuplicate &&
-      isDupe.matchKind === 'PIPELINE_ITEM' &&
-      isDupe.matchedId
-    ) {
-      await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
+    if (item.type === 'EVENT' && isDupe.isDuplicate) {
+      if (isDupe.matchKind === 'PIPELINE_ITEM' && isDupe.matchedId) {
+        await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
+      }
       result.itemsSkippedDuplicate++;
       decisionCounts.duplicateEvents++;
       continue;
