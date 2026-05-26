@@ -2511,6 +2511,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
       skippedExisting: 0,
       skippedMissingCity: 0,
       skippedInvalid: 0,
+      skippedDuplicate: 0,
     },
   };
 

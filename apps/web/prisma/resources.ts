@@ -35,8 +35,16 @@ import {
   type ResourceScope,
   type ResourceAudience,
   type ResourceStage,
+  type Prisma,
 } from '@prisma/client';
 import { assessEvidenceUrl, getQualifyingEvidence } from '../src/lib/source-policy';
+import {
+  CONSULATE_TAGS,
+  COUNTRY_SCOPE_SLUGS,
+  DUPLICATE_SLUG_SET,
+  ESSENTIAL_SLUG_SET,
+  TITLE_REWRITES,
+} from './resource-classification';
 
 const prisma = new PrismaClient();
 
@@ -832,6 +840,7 @@ export type ResourcesResult = {
   skippedExisting: number;
   skippedMissingCity: number;
   skippedInvalid: number;
+  skippedDuplicate: number;
 };
 
 function evidenceUrlsFor(entry: ResourceEntry): string[] {
@@ -848,12 +857,21 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
     skippedExisting: 0,
     skippedMissingCity: 0,
     skippedInvalid: 0,
+    skippedDuplicate: 0,
   };
 
   const cities = await prisma.city.findMany({ select: { id: true, slug: true } });
   const cityIdBySlug = new Map(cities.map((c) => [c.slug, c.id]));
 
   for (const entry of RESOURCE_DEFS) {
+    // PRD/TDD-0030 — duplicates are pruned at the source. The canonical
+    // COUNTRY-scoped row supersedes each city-fanout copy; see
+    // `prisma/resource-classification.ts`.
+    if (DUPLICATE_SLUG_SET.has(entry.slug)) {
+      result.skippedDuplicate++;
+      continue;
+    }
+
     const evidenceUrls = evidenceUrlsFor(entry);
     const qualifyingEvidence = getQualifyingEvidence(evidenceUrls);
     if (qualifyingEvidence.length === 0) {
@@ -865,16 +883,24 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       continue;
     }
 
+    // PRD/TDD-0030 — derive scope tier and the region identifier.
+    //   - If the slug is in COUNTRY_SCOPE_SLUGS or CONSULATE_TAGS, force COUNTRY.
+    //   - Otherwise honour `entry.scope`, defaulting to CITY.
+    const isCountryByClassification =
+      COUNTRY_SCOPE_SLUGS.includes(entry.slug) || entry.slug in CONSULATE_TAGS;
+    const scope: ResourceScope = isCountryByClassification ? 'COUNTRY' : (entry.scope ?? 'CITY');
+
+    // CITY/METRO rows need a city slug to derive the cityId; COUNTRY/STATE/
+    // GLOBAL rows do not.
     const citySlug = entry.citySlug ?? 'stuttgart';
+    const needsCityId = scope === 'CITY';
     const cityId = cityIdBySlug.get(citySlug);
-    if (!cityId) {
+    if (needsCityId && !cityId) {
       console.warn(`  ⚠ ${entry.slug}: city "${citySlug}" not found (run bootstrap?) — skipped`);
       result.skippedMissingCity++;
       continue;
     }
 
-    // PRD/TDD-0030 — derive scope tier and the region identifier.
-    const scope: ResourceScope = entry.scope ?? 'CITY';
     const scopeRegion =
       entry.scopeRegion !== undefined
         ? entry.scopeRegion
@@ -887,7 +913,7 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
               : null;
     // cityId remains set for CITY scope (back-compat with code still reading
     // `Resource.cityId`); Phase B will drop the column entirely.
-    const cityIdForRow = scope === 'CITY' ? cityId : null;
+    const cityIdForRow = scope === 'CITY' ? (cityId ?? null) : null;
 
     const existing = await prisma.resource.findUnique({
       where: { slug: entry.slug },
@@ -898,14 +924,39 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       continue;
     }
 
+    // Apply classification-driven overrides for title, essentials,
+    // consulate tagging.
+    const rewrite = TITLE_REWRITES[entry.slug];
+    const title = rewrite?.title ?? entry.title;
+    const description = rewrite?.description ?? entry.description;
+    const isEssential =
+      entry.isEssential !== undefined ? entry.isEssential : ESSENTIAL_SLUG_SET.has(entry.slug);
+    const priority =
+      entry.priority !== undefined ? entry.priority : ESSENTIAL_SLUG_SET.has(entry.slug) ? 80 : 50;
+    const consulate = CONSULATE_TAGS[entry.slug as keyof typeof CONSULATE_TAGS];
+
     try {
+      const baseMetadata: Prisma.JsonObject = {
+        editorialSource: 'resources-seed',
+        sourceEvidence: qualifyingEvidence.map((evidence) => ({
+          url: evidence.normalizedUrl,
+          tier: evidence.tier,
+          label: evidence.label,
+          requiresReview: evidence.requiresReview,
+        })),
+        seededAt: new Date().toISOString(),
+        lastReviewedAt: (entry.lastReviewedAt ?? SEED_REVIEWED_AT).toISOString(),
+        reviewCadenceDays: entry.reviewCadenceDays ?? DEFAULT_REVIEW_CADENCE_DAYS,
+      };
+      if (consulate) baseMetadata.consulate = consulate;
+
       await prisma.resource.create({
         data: {
-          title: entry.title,
+          title,
           slug: entry.slug,
           resourceType: entry.resourceType,
           url: entry.url,
-          description: entry.description,
+          description,
           validFrom: entry.validFrom ?? null,
           validUntil: entry.validUntil ?? null,
           isHidden: false,
@@ -917,21 +968,10 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
           scopeRegion,
           audiences: entry.audiences ?? [],
           lifecycleStage: entry.lifecycleStage ?? [],
-          priority: entry.priority ?? 50,
-          isEssential: entry.isEssential ?? false,
+          priority,
+          isEssential,
           source: 'ADMIN_SEED',
-          metadata: {
-            editorialSource: 'resources-seed',
-            sourceEvidence: qualifyingEvidence.map((evidence) => ({
-              url: evidence.normalizedUrl,
-              tier: evidence.tier,
-              label: evidence.label,
-              requiresReview: evidence.requiresReview,
-            })),
-            seededAt: new Date().toISOString(),
-            lastReviewedAt: (entry.lastReviewedAt ?? SEED_REVIEWED_AT).toISOString(),
-            reviewCadenceDays: entry.reviewCadenceDays ?? DEFAULT_REVIEW_CADENCE_DAYS,
-          },
+          metadata: baseMetadata,
         },
       });
       result.created++;
@@ -950,6 +990,9 @@ async function main() {
   const ms = Date.now() - started;
   console.log(`\n✅ Resources seed complete in ${ms}ms`);
   console.log(`   created ${r.created}, skipped ${r.skippedExisting} (already present)`);
+  if (r.skippedDuplicate > 0) {
+    console.log(`   ⊘ ${r.skippedDuplicate} skipped as known duplicates (PRD/TDD-0030)`);
+  }
   if (r.skippedMissingCity > 0) {
     console.log(`   ⚠ ${r.skippedMissingCity} skipped because city was missing`);
   }

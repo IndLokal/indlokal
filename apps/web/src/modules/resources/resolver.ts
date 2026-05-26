@@ -20,8 +20,13 @@
  */
 
 import { db } from '@/lib/db';
-import { Prisma } from '@prisma/client';
-import type { ResourceType, ResourceScope, ResourceAudience, ResourceStage } from '@prisma/client';
+import type {
+  Prisma,
+  ResourceType,
+  ResourceScope,
+  ResourceAudience,
+  ResourceStage,
+} from '@prisma/client';
 
 // ── Consular jurisdiction map ────────────────────────────────────────────
 //
@@ -35,9 +40,40 @@ import type { ResourceType, ResourceScope, ResourceAudience, ResourceStage } fro
 //  - CGI Munich                   → BY, BW (incl. Stuttgart/Karlsruhe/
 //                                    Mannheim/Heidelberg)
 //
-// This is the high-level mapping. Per-state edge cases (e.g. NRW under
-// Frankfurt) are encoded by state code → consulate.
+// This is the high-level mapping. Keys are the canonical Bundesland names
+// as stored on `city.state` (German names; the same values the cities
+// bootstrap uses). We accept ISO codes (DE-XX) too for forward-compat.
 const CONSULAR_JURISDICTION_BY_STATE: Record<string, 'berlin' | 'frankfurt' | 'munich'> = {
+  // Embassy Berlin
+  Berlin: 'berlin',
+  Brandenburg: 'berlin',
+  'Mecklenburg-Vorpommern': 'berlin',
+  'Mecklenburg-Western Pomerania': 'berlin',
+  Sachsen: 'berlin',
+  Saxony: 'berlin',
+  'Sachsen-Anhalt': 'berlin',
+  'Saxony-Anhalt': 'berlin',
+  Thüringen: 'berlin',
+  Thuringia: 'berlin',
+  Niedersachsen: 'berlin',
+  'Lower Saxony': 'berlin',
+  Bremen: 'berlin',
+  'Schleswig-Holstein': 'berlin',
+  Hamburg: 'berlin',
+  // CGI Frankfurt
+  Hessen: 'frankfurt',
+  Hesse: 'frankfurt',
+  'Nordrhein-Westfalen': 'frankfurt',
+  'North Rhine-Westphalia': 'frankfurt',
+  'Rheinland-Pfalz': 'frankfurt',
+  'Rhineland-Palatinate': 'frankfurt',
+  Saarland: 'frankfurt',
+  // CGI Munich
+  Bayern: 'munich',
+  Bavaria: 'munich',
+  'Baden-Württemberg': 'munich',
+  'Baden-Wuerttemberg': 'munich',
+  // ISO aliases (forward-compat)
   'DE-BE': 'berlin',
   'DE-BB': 'berlin',
   'DE-MV': 'berlin',
@@ -150,26 +186,12 @@ export async function getResourcesForCity(
   const metroSlug = city.isMetroPrimary ? city.slug : (city.metroRegion?.slug ?? null);
   const consulate = consulateForState(city.state);
 
-  // Build the OR clause across scope tiers.
+  // Build the OR clause across scope tiers. Note: the consular jurisdiction
+  // filter is applied in JS post-query because Prisma's JSON path filter
+  // can't cleanly express "key absent OR key equals X" in a single where.
   const scopeOr: Prisma.ResourceWhereInput[] = [
     { scope: 'GLOBAL' },
-    // COUNTRY rows are filtered by consular jurisdiction: rows with a
-    // metadata.consulate tag must match this city's consulate. Untagged
-    // COUNTRY rows fall through.
-    {
-      AND: [
-        { scope: 'COUNTRY' },
-        consulate
-          ? {
-              OR: [
-                { metadata: { equals: Prisma.DbNull } },
-                { metadata: { path: ['consulate'], equals: Prisma.DbNull } },
-                { metadata: { path: ['consulate'], equals: consulate } },
-              ],
-            }
-          : { metadata: { path: ['consulate'], equals: Prisma.DbNull } },
-      ],
-    },
+    { scope: 'COUNTRY' },
     { scope: 'STATE', scopeRegion: city.state ?? '__none__' },
     ...(metroSlug ? [{ scope: 'METRO' as const, scopeRegion: metroSlug }] : []),
     { scope: 'CITY', scopeRegion: city.slug },
@@ -214,6 +236,13 @@ export async function getResourcesForCity(
   // Dedup by slug — most specific scope wins.
   const bySlug = new Map<string, ResolvedResource>();
   for (const row of rows) {
+    // Consular jurisdiction filter (TDD §3) — COUNTRY rows tagged with
+    // metadata.consulate are only visible when the city's consulate
+    // matches. Untagged COUNTRY rows are always visible.
+    if (row.scope === 'COUNTRY') {
+      const tag = (row.metadata as { consulate?: unknown } | null)?.consulate;
+      if (typeof tag === 'string' && tag !== consulate) continue;
+    }
     const candidate: ResolvedResource = { ...row, resolvedScope: row.scope };
     const existing = bySlug.get(row.slug);
     if (!existing || SCOPE_RANK[candidate.scope] > SCOPE_RANK[existing.scope]) {
