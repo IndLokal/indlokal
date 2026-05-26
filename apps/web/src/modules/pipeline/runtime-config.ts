@@ -1,0 +1,429 @@
+/**
+ * Runtime pipeline source configuration.
+ *
+ * Single source of truth for keywords, regions, and strategies:
+ *
+ *   1. The DB table `pipeline_source_configs` (managed via
+ *      `pnpm pipeline:sources:sync`, which upserts from JSON), OR
+ *   2. The bundled JSON defaults at
+ *      `apps/web/prisma/data/pipeline-source-defaults.json` (fallback
+ *      when the table is missing or empty — keeps fresh deployments and
+ *      test environments working without a manual sync step).
+ *
+ * The DB row is always preferred when present, so admins can disable or
+ * tweak entries without redeploying. The bundled JSON is the canonical
+ * baseline that bootstrap seeds and that runtime falls back to.
+ *
+ * All four getters share a single per-process read of the underlying
+ * config rows so a pipeline run never hits the DB more than once for
+ * planning data.
+ */
+
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Prisma, type PipelineSourceType } from '@prisma/client';
+import { db } from '@/lib/db';
+import { assessEvidenceUrl } from '@/lib/source-policy';
+import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
+import type { SearchRegion, SearchStrategy, SourceType } from './types';
+
+type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
+type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
+export type KeywordStrategyTemplate = Omit<KeywordStrategy, 'keywords'>;
+
+type ConfigRow = {
+  configType: 'REGION' | 'STRATEGY' | 'KEYWORD';
+  key: string;
+  label: string;
+  enabled: boolean;
+  sourceType: PipelineSourceType | null;
+  kind: string | null;
+  payload: unknown;
+};
+
+type ConfigSource = 'db' | 'json-fallback';
+
+const VALID_SOURCE_TYPES = new Set<SourceType>([
+  'EVENTBRITE',
+  'FACEBOOK',
+  'INSTAGRAM',
+  'WEBSITE_SCRAPE',
+  'CGI_MUNICH',
+  'INDOEUROPEAN',
+  'GOOGLE_ALERT',
+  'GOOGLE_SEARCH',
+  'DUCKDUCKGO',
+  'MEETUP',
+  'COMMUNITY_SUGGESTION',
+  'DB_COMMUNITY',
+]);
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value != null && !Array.isArray(value);
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(
+    (entry): entry is string => typeof entry === 'string' && entry.trim().length > 0,
+  );
+}
+
+function normalizeSourceType(value: PipelineSourceType | string | null): SourceType | null {
+  if (!value) return null;
+  return VALID_SOURCE_TYPES.has(value as SourceType) ? (value as SourceType) : null;
+}
+
+// ── DB read ────────────────────────────────────────────
+
+async function readConfigRowsFromDb(): Promise<ConfigRow[]> {
+  return db.$queryRaw<ConfigRow[]>(Prisma.sql`
+    SELECT
+      config_type as "configType",
+      key,
+      label,
+      enabled,
+      source_type as "sourceType",
+      kind,
+      payload
+    FROM pipeline_source_configs
+    ORDER BY config_type ASC, key ASC
+  `);
+}
+
+// ── JSON fallback ──────────────────────────────────────
+// Mirrors the bootstrap loader in apps/web/prisma/pipeline-source-config.ts
+// but applies only the lightweight checks runtime needs (full validation
+// stays in the bootstrap script so bad data fails the seed, not requests).
+
+type JsonRegion = {
+  id?: unknown;
+  label?: unknown;
+  searchCenter?: unknown;
+  state?: unknown;
+  enabled?: unknown;
+};
+
+type JsonStrategy = {
+  id?: unknown;
+  sourceType?: unknown;
+  kind?: unknown;
+  label?: unknown;
+  enabled?: unknown;
+  radiusKm?: unknown;
+  url?: unknown;
+  hintCitySlug?: unknown;
+};
+
+type JsonDefaults = {
+  baselineKeywords?: unknown;
+  regions?: unknown;
+  strategies?: unknown;
+};
+
+function normalizeKeyword(keyword: string): string {
+  return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function resolveDefaultsJsonPath(): string {
+  // runtime-config.ts lives in `apps/web/src/modules/pipeline/`.
+  // The bundled defaults live in `apps/web/prisma/data/`.
+  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(moduleDir, '../../../prisma/data/pipeline-source-defaults.json');
+}
+
+/**
+ * Derive city slugs for a region by state. Mirrors the bootstrap loader so
+ * runtime fallback matches what `pnpm pipeline:sources:sync` would have
+ * written to the DB.
+ */
+function getCitySlugsForState(state: string): string[] {
+  const slugs: string[] = [];
+  for (const city of ACTIVE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  for (const city of SATELLITE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  for (const city of UPCOMING_CITIES) if (city.state === state) slugs.push(city.slug);
+  return Array.from(new Set(slugs));
+}
+
+async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
+  const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
+  const parsed = JSON.parse(raw) as JsonDefaults;
+
+  const rows: ConfigRow[] = [];
+
+  const baselineKeywords = normalizeStringArray(parsed.baselineKeywords);
+  for (const keyword of baselineKeywords) {
+    rows.push({
+      configType: 'KEYWORD',
+      key: normalizeKeyword(keyword),
+      label: keyword,
+      enabled: true,
+      sourceType: null,
+      kind: null,
+      payload: { origin: 'json-fallback' },
+    });
+  }
+
+  const regionsRaw = Array.isArray(parsed.regions) ? (parsed.regions as JsonRegion[]) : [];
+  for (const region of regionsRaw) {
+    if (!isObject(region)) continue;
+    if (region.enabled === false) continue;
+    const id = typeof region.id === 'string' ? region.id : '';
+    const label = typeof region.label === 'string' ? region.label : '';
+    const searchCenter = typeof region.searchCenter === 'string' ? region.searchCenter : '';
+    const state = typeof region.state === 'string' ? region.state : '';
+    if (!id || !label || !searchCenter || !state) continue;
+
+    const citySlugs = getCitySlugsForState(state);
+    if (citySlugs.length === 0) continue;
+
+    rows.push({
+      configType: 'REGION',
+      key: id,
+      label,
+      enabled: true,
+      sourceType: null,
+      kind: null,
+      payload: {
+        searchCenter,
+        state,
+        citySlugs,
+      },
+    });
+  }
+
+  const strategiesRaw = Array.isArray(parsed.strategies)
+    ? (parsed.strategies as JsonStrategy[])
+    : [];
+  for (const strategy of strategiesRaw) {
+    if (!isObject(strategy)) continue;
+    if (strategy.enabled === false) continue;
+    const id = typeof strategy.id === 'string' ? strategy.id : '';
+    const label = typeof strategy.label === 'string' ? strategy.label : '';
+    const sourceType = typeof strategy.sourceType === 'string' ? strategy.sourceType : '';
+    const kind = strategy.kind;
+    if (!id || !label || !sourceType) continue;
+    if (kind !== 'keyword_search' && kind !== 'pinned_url') continue;
+
+    const payload: Record<string, unknown> = {};
+    if (kind === 'keyword_search') {
+      const radius = typeof strategy.radiusKm === 'number' ? strategy.radiusKm : 50;
+      payload.radiusKm = radius > 0 ? radius : 50;
+    } else {
+      if (typeof strategy.url !== 'string') continue;
+      payload.url = strategy.url;
+      if (typeof strategy.hintCitySlug === 'string' && strategy.hintCitySlug.trim().length > 0) {
+        payload.hintCitySlug = strategy.hintCitySlug.trim();
+      }
+    }
+
+    rows.push({
+      configType: 'STRATEGY',
+      key: id,
+      label,
+      enabled: true,
+      sourceType: sourceType as PipelineSourceType,
+      kind,
+      payload,
+    });
+  }
+
+  return rows;
+}
+
+// ── Cached loader ──────────────────────────────────────
+
+let cachedRows: { rows: ConfigRow[]; source: ConfigSource } | null = null;
+let inflight: Promise<{ rows: ConfigRow[]; source: ConfigSource }> | null = null;
+
+async function loadConfigRows(): Promise<{ rows: ConfigRow[]; source: ConfigSource }> {
+  if (cachedRows) return cachedRows;
+  if (inflight) return inflight;
+
+  inflight = (async () => {
+    let dbError: unknown = null;
+    let dbRows: ConfigRow[] = [];
+    try {
+      dbRows = await readConfigRowsFromDb();
+    } catch (error) {
+      dbError = error;
+    }
+
+    if (dbRows.length > 0) {
+      return { rows: dbRows, source: 'db' as const };
+    }
+
+    if (dbError) {
+      console.warn(
+        `[Pipeline] pipeline_source_configs unavailable, falling back to bundled defaults. Apply the migration and run pnpm pipeline:sources:sync to enable DB-managed config. Cause: ${String(
+          dbError,
+        )}`,
+      );
+    } else {
+      console.warn(
+        '[Pipeline] pipeline_source_configs is empty; using bundled defaults. Run pnpm pipeline:sources:sync to seed the table.',
+      );
+    }
+
+    const jsonRows = await readConfigRowsFromJson();
+    return { rows: jsonRows, source: 'json-fallback' as const };
+  })();
+
+  try {
+    cachedRows = await inflight;
+    return cachedRows;
+  } finally {
+    inflight = null;
+  }
+}
+
+/** Clear the in-process cache. Intended for tests and long-lived workers. */
+export function resetRuntimeConfigCache(): void {
+  cachedRows = null;
+  inflight = null;
+}
+
+// ── Parsers (operate on either source) ────────────────
+
+function parseRegions(rows: ConfigRow[]): SearchRegion[] {
+  const regions: SearchRegion[] = [];
+  for (const row of rows) {
+    if (row.configType !== 'REGION' || !row.enabled) continue;
+    if (!isObject(row.payload)) continue;
+
+    const searchCenter =
+      typeof row.payload.searchCenter === 'string' ? row.payload.searchCenter.trim() : '';
+    const citySlugs = normalizeStringArray(row.payload.citySlugs);
+    if (!searchCenter || citySlugs.length === 0) continue;
+
+    regions.push({
+      id: row.key,
+      label: row.label,
+      searchCenter,
+      citySlugs,
+      enabled: true,
+    });
+  }
+
+  return regions;
+}
+
+function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
+  const strategies: KeywordStrategyTemplate[] = [];
+
+  for (const row of rows) {
+    if (row.configType !== 'STRATEGY' || !row.enabled || row.kind !== 'keyword_search') continue;
+    const sourceType = normalizeSourceType(row.sourceType);
+    if (!sourceType) continue;
+    if (!isObject(row.payload)) continue;
+
+    const radiusRaw = row.payload.radiusKm;
+    const radiusKm =
+      typeof radiusRaw === 'number' && Number.isFinite(radiusRaw) && radiusRaw > 0 ? radiusRaw : 50;
+
+    strategies.push({
+      id: row.key,
+      sourceType,
+      kind: 'keyword_search',
+      label: row.label,
+      radiusKm,
+      enabled: true,
+    });
+  }
+
+  return strategies;
+}
+
+function parseKeywordSeeds(rows: ConfigRow[]): string[] {
+  return rows
+    .filter((row) => row.configType === 'KEYWORD' && row.enabled)
+    .map((row) => row.label.trim())
+    .filter(Boolean);
+}
+
+function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
+  const strategies: PinnedStrategy[] = [];
+
+  for (const row of rows) {
+    if (row.configType !== 'STRATEGY' || !row.enabled || row.kind !== 'pinned_url') continue;
+    const sourceType = normalizeSourceType(row.sourceType);
+    if (!sourceType) continue;
+    if (!isObject(row.payload)) continue;
+
+    const url = typeof row.payload.url === 'string' ? row.payload.url.trim() : '';
+    const hintCitySlug =
+      typeof row.payload.hintCitySlug === 'string' ? row.payload.hintCitySlug.trim() : undefined;
+    if (!url) continue;
+
+    const evidence = assessEvidenceUrl(url);
+    if (!evidence.isQualifying) {
+      console.warn(`[Pipeline] Disabled DB pinned URL ${row.key}: ${evidence.label} (${url})`);
+      continue;
+    }
+
+    strategies.push({
+      id: row.key,
+      sourceType,
+      kind: 'pinned_url',
+      label: row.label,
+      url,
+      hintCitySlug: hintCitySlug || undefined,
+      enabled: true,
+    });
+  }
+
+  return strategies;
+}
+
+// ── Public API ─────────────────────────────────────────
+
+export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
+  const { rows } = await loadConfigRows();
+  const parsed = parseRegions(rows);
+  if (parsed.length === 0) {
+    throw new Error(
+      '[Pipeline] No enabled REGION rows in pipeline_source_configs and no fallback regions found in pipeline-source-defaults.json.',
+    );
+  }
+  return parsed;
+}
+
+export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemplate[]> {
+  const { rows } = await loadConfigRows();
+  const parsed = parseKeywordStrategies(rows);
+  if (parsed.length === 0) {
+    throw new Error(
+      '[Pipeline] No enabled keyword_search STRATEGY rows in pipeline_source_configs and no fallback found in pipeline-source-defaults.json.',
+    );
+  }
+  return parsed;
+}
+
+export async function getRuntimeKeywordSeeds(): Promise<string[]> {
+  const { rows } = await loadConfigRows();
+  const parsed = parseKeywordSeeds(rows);
+  if (parsed.length === 0) {
+    throw new Error(
+      '[Pipeline] No enabled KEYWORD rows in pipeline_source_configs and no fallback baselineKeywords found in pipeline-source-defaults.json.',
+    );
+  }
+  return parsed;
+}
+
+export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
+  const { rows } = await loadConfigRows();
+  const parsed = parsePinnedStrategies(rows);
+  if (parsed.length === 0) {
+    throw new Error(
+      '[Pipeline] No enabled pinned_url STRATEGY rows in pipeline_source_configs and no fallback found in pipeline-source-defaults.json.',
+    );
+  }
+  return parsed;
+}
+
+/** Diagnostic: which source the runtime loader is currently serving from. */
+export async function getRuntimeConfigSource(): Promise<ConfigSource> {
+  const { source } = await loadConfigRows();
+  return source;
+}
