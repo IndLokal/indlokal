@@ -25,6 +25,7 @@ import {
   fetchGoogleSearch,
   fetchDuckDuckGoSearch,
 } from './sources';
+import { extractCalendarEventFromRawContent, isEmbeddedCalendarEventRawContent } from './calendar';
 import { scorePinnedEventUrl } from './db-sources';
 import {
   STALE_EVENT_MARKERS,
@@ -203,7 +204,7 @@ async function fetchAllSources(
   // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
     sourcePlan.pinnedStrategies.map(async (strategy) => {
-      const fetchResult = await fetchPinnedUrl(strategy);
+      const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
       }
@@ -276,11 +277,16 @@ async function filterRelevantItems(
   result: PipelineRunResult,
 ): Promise<RawContent[]> {
   console.log('[Pipeline] Stage 1: Relevance filter...');
-  const relevanceResults = await filterRelevance(uniqueRaw);
-  const relevantItems = relevanceResults
+  const directCalendarItems = uniqueRaw.filter(isEmbeddedCalendarEventRawContent);
+  const llmCandidates = uniqueRaw.filter((item) => !isEmbeddedCalendarEventRawContent(item));
+
+  const relevanceResults = await filterRelevance(llmCandidates);
+  const llmRelevantItems = relevanceResults
     .filter((r) => r.isRelevant)
-    .map((r) => uniqueRaw[r.index])
+    .map((r) => llmCandidates[r.index])
     .filter((item): item is RawContent => item != null);
+
+  const relevantItems = [...directCalendarItems, ...llmRelevantItems];
 
   result.itemsPassedFilter = relevantItems.length;
   console.log(`[Pipeline] Passed filter: ${relevantItems.length}/${uniqueRaw.length}`);
@@ -293,7 +299,31 @@ async function extractRelevantItems(
   result: PipelineRunResult,
 ): Promise<ExtractedItem[]> {
   console.log('[Pipeline] Stage 2: Batch extraction...');
-  const extracted = await extractBatch(relevantItems);
+  const directExtracted: ExtractedItem[] = [];
+  const llmItems: RawContent[] = [];
+  const llmSourceIndices: number[] = [];
+
+  relevantItems.forEach((item, index) => {
+    const calendarEvent = extractCalendarEventFromRawContent(item);
+    if (calendarEvent) {
+      directExtracted.push({ ...calendarEvent, sourceIndex: index });
+      return;
+    }
+
+    llmItems.push(item);
+    llmSourceIndices.push(index);
+  });
+
+  const llmExtracted = llmItems.length > 0 ? await extractBatch(llmItems) : [];
+
+  const extracted = [
+    ...directExtracted,
+    ...llmExtracted.map((item) => ({
+      ...item,
+      sourceIndex: llmSourceIndices[item.sourceIndex] ?? item.sourceIndex,
+    })),
+  ];
+
   result.itemsExtracted = extracted.length;
   const eventCount = extracted.filter((item) => item.type === 'EVENT').length;
   const communityCount = extracted.filter((item) => item.type === 'COMMUNITY').length;
@@ -441,15 +471,20 @@ async function resolveAndQueue(
       item.confidence,
       reliability?.confidenceAdjustment ?? 0,
     );
+    const resolvedCity = cityId
+      ? (cities.find((candidate) => candidate.id === cityId) ?? null)
+      : null;
+    const queuedItem =
+      !item.cityName && resolvedCity ? { ...item, cityName: resolvedCity.name } : item;
 
     // Queue for review
     const createdItem = await db.pipelineItem.create({
       data: {
-        entityType: item.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
+        entityType: queuedItem.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
         sourceType: sourceRaw.sourceType as import('@prisma/client').PipelineSourceType,
         sourceUrl: sourceRaw.sourceUrl,
         rawContent: sourceRaw.text.slice(0, 50_000),
-        extractedData: item as unknown as import('@prisma/client').Prisma.InputJsonValue,
+        extractedData: queuedItem as unknown as import('@prisma/client').Prisma.InputJsonValue,
         confidence,
         cityId,
         matchedEntityId: isDupe.matchedId ?? undefined,
@@ -477,7 +512,7 @@ async function resolveAndQueue(
     });
 
     result.itemsQueued++;
-    if (item.type === 'EVENT') {
+    if (queuedItem.type === 'EVENT') {
       decisionCounts.queuedEvents++;
       if (isCityPending) decisionCounts.queuedPendingCityEvents++;
     } else {
@@ -486,10 +521,10 @@ async function resolveAndQueue(
     }
 
     const autoApprove =
-      item.type === 'EVENT'
+      queuedItem.type === 'EVENT'
         ? { eligible: false, reason: 'event-admin-approval-required' }
         : shouldAutoApprovePipelineItem({
-            item: { ...item, confidence },
+            item: { ...queuedItem, confidence },
             sourceType: sourceRaw.sourceType as PipelineSourceType,
             reliability,
             matchedEntityId: isDupe.matchedId,
@@ -538,7 +573,10 @@ function normalizeSourceUrlForDedup(sourceUrl: string | null | undefined): strin
   try {
     const url = new URL(sourceUrl);
     const pathname = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
-    return `${url.hostname.toLowerCase()}${pathname}`;
+    const eventIdentityFragment = url.hash.startsWith('#uid=')
+      ? `#uid=${decodeURIComponent(url.hash.slice(5))}`
+      : '';
+    return `${url.hostname.toLowerCase()}${pathname}${eventIdentityFragment}`;
   } catch {
     return sourceUrl.toLowerCase().replace(/\/+$/, '');
   }

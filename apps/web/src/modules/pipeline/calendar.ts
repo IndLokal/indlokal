@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { PIPELINE_USER_AGENT } from './http';
 import { decodeHtmlEntities } from './text';
-import type { RawContent } from './types';
+import type { ExtractedEvent, RawContent } from './types';
 
 type IcsParsedDate = {
   date: string;
@@ -191,11 +191,16 @@ function getCalendarSyncCadence(): 'monthly' | 'always' {
   return raw === 'always' ? 'always' : 'monthly';
 }
 
+function shouldApplyMonthlyCalendarFeedGate(triggeredBy: string): boolean {
+  return getCalendarSyncCadence() === 'monthly' && triggeredBy === 'cron';
+}
+
 async function hasCalendarFeedSyncedThisMonth(
   sourceType: RawContent['sourceType'],
   feedUrl: string,
+  triggeredBy: string,
 ): Promise<boolean> {
-  if (getCalendarSyncCadence() !== 'monthly') return false;
+  if (!shouldApplyMonthlyCalendarFeedGate(triggeredBy)) return false;
 
   const now = new Date();
   const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
@@ -240,9 +245,69 @@ function toCalendarEventRawContent(
   };
 }
 
+export function isEmbeddedCalendarEventRawContent(
+  item: Pick<RawContent, 'sourceUrl' | 'text'>,
+): boolean {
+  return (
+    item.sourceUrl.includes('/calendar/ical/') &&
+    item.sourceUrl.includes('#uid=') &&
+    item.text.includes('Event UID:')
+  );
+}
+
+function getCalendarRawField(text: string, label: string): string | null {
+  const escapedLabel = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = text.match(new RegExp(`^${escapedLabel}:\\s*(.+)$`, 'm'));
+  return match?.[1]?.trim() || null;
+}
+
+export function extractCalendarEventFromRawContent(item: RawContent): ExtractedEvent | null {
+  if (!isEmbeddedCalendarEventRawContent(item)) return null;
+
+  const title = getCalendarRawField(item.text, 'Title');
+  const date = getCalendarRawField(item.text, 'Date');
+  const time = getCalendarRawField(item.text, 'Time');
+  const endDate = getCalendarRawField(item.text, 'End Date');
+  const endTime = getCalendarRawField(item.text, 'End Time');
+  const venue = getCalendarRawField(item.text, 'Venue');
+  const description = getCalendarRawField(item.text, 'Description');
+  const registrationUrl = getCalendarRawField(item.text, 'Registration URL');
+
+  if (!title || !date) return null;
+
+  return {
+    type: 'EVENT',
+    title,
+    description,
+    date,
+    time,
+    endDate,
+    endTime,
+    venueName: venue,
+    venueAddress: venue,
+    cityName: null,
+    isOnline: false,
+    isFree: null,
+    cost: null,
+    registrationUrl,
+    imageUrl: null,
+    hostCommunity: null,
+    categories: [],
+    languages: [],
+    confidence: 0.99,
+    fieldConfidence: {
+      title: 0.99,
+      date: 0.99,
+      ...(time ? { time: 0.98 } : {}),
+      ...(venue ? { venue: 0.95 } : {}),
+    },
+  };
+}
+
 export async function fetchEmbeddedGoogleCalendarEvents(
   sourceType: RawContent['sourceType'],
   rawHtml: string,
+  triggeredBy = 'cron',
 ): Promise<{ items: RawContent[]; errors: string[] }> {
   const items: RawContent[] = [];
   const errors: string[] = [];
@@ -259,7 +324,7 @@ export async function fetchEmbeddedGoogleCalendarEvents(
     const feedUrl = buildGoogleCalendarIcsUrl(calendarId);
 
     try {
-      const alreadySynced = await hasCalendarFeedSyncedThisMonth(sourceType, feedUrl);
+      const alreadySynced = await hasCalendarFeedSyncedThisMonth(sourceType, feedUrl, triggeredBy);
       if (alreadySynced) continue;
 
       const feedRes = await fetch(feedUrl, {

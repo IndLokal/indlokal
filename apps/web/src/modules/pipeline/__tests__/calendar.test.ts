@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildGoogleCalendarIcsUrl,
+  extractCalendarEventFromRawContent,
   extractGoogleCalendarIdsFromHtml,
   isHolidayCalendarId,
+  isEmbeddedCalendarEventRawContent,
   parseGoogleCalendarIcsEvents,
 } from '../calendar';
 
@@ -67,6 +69,35 @@ describe('embedded calendar helpers', () => {
       title: 'Zoom Info Session',
       registrationUrl: 'https://example.org/register',
       startsAt: { date: '2026-06-01', time: '17:00', isAllDay: false },
+    });
+  });
+
+  it('recognizes and deterministically extracts structured calendar raw items', () => {
+    const rawItem = {
+      sourceType: 'DB_COMMUNITY' as const,
+      sourceUrl:
+        'https://calendar.google.com/calendar/ical/ev.mmstuttgart%40gmail.com/public/basic.ics#uid=sofe-2026%40google.com',
+      text: [
+        'Calendar ID: ev.mmstuttgart@gmail.com',
+        'Event UID: sofe-2026@google.com',
+        'Title: Sommerfest (SoFe)',
+        'Date: 2026-07-18',
+        'All-day: yes',
+        'End Date: 2026-07-20',
+        'Venue: Stuttgart',
+        'Description: Summer gathering',
+      ].join('\n'),
+      fetchedAt: new Date().toISOString(),
+    };
+
+    expect(isEmbeddedCalendarEventRawContent(rawItem)).toBe(true);
+    expect(extractCalendarEventFromRawContent(rawItem)).toMatchObject({
+      type: 'EVENT',
+      title: 'Sommerfest (SoFe)',
+      date: '2026-07-18',
+      endDate: '2026-07-20',
+      venueName: 'Stuttgart',
+      confidence: 0.99,
     });
   });
 });

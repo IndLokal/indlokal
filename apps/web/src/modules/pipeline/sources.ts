@@ -290,6 +290,7 @@ export async function fetchEventbriteKeywords(
 
 export async function fetchPinnedUrl(
   strategy: SearchStrategy & { kind: 'pinned_url' },
+  triggeredBy = 'cron',
 ): Promise<FetchResult> {
   const items: RawContent[] = [];
   const errors: string[] = [];
@@ -334,6 +335,7 @@ export async function fetchPinnedUrl(
     const calendarFeedResult = await fetchEmbeddedGoogleCalendarEvents(
       strategy.sourceType,
       rawHtml,
+      triggeredBy,
     );
     if (calendarFeedResult.items.length > 0) {
       items.push(...calendarFeedResult.items);
