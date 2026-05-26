@@ -238,6 +238,8 @@ For EACH item, extract structured data and determine the city. Return JSON:
 
 CRITICAL RULES:
 - cityName: Extract the city from venue address, page content, or event location. Output the city NAME (e.g. "Stuttgart", "München", "Amsterdam"), NOT a slug.
+- cityName precedence: venueAddress > venueName/host organization name > event title > generic page context. If venue or host explicitly contains a different city than the surrounding page context, use the explicit venue/host city.
+- Never infer city from source coverage region alone. If city is ambiguous, set cityName to null and reduce confidence.
 - categories: Use ONLY from this list: ${CATEGORY_LIST}
 - dates: Convert DD.MM.YYYY → YYYY-MM-DD. Use current year (${new Date().getFullYear()}) if missing.
 - Registration forms, RSVP pages, agenda pages, and single-event landing pages are still EVENTs when they clearly name one event and date. Do not skip them just because much of the page is form fields or boilerplate.
