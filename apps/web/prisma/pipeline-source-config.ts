@@ -518,18 +518,18 @@ export async function runPipelineSourceConfigBootstrap(
   const defaults = await loadSourceDefaults();
   const rows = buildConfigRows(defaults);
 
-  return prisma.$transaction(async (tx) => {
-    for (const row of rows) {
-      await upsertConfigRow(tx, row);
-    }
+  // Avoid interactive transactions here: serverless/pooled Postgres setups can
+  // invalidate callback transaction handles (P2028) during long seed/bootstrap runs.
+  for (const row of rows) {
+    await upsertConfigRow(prisma, row);
+  }
 
-    const disabledMissing = options.disableMissing ? await disableMissingRows(tx, rows) : 0;
+  const disabledMissing = options.disableMissing ? await disableMissingRows(prisma, rows) : 0;
 
-    return {
-      upserted: rows.length,
-      disabledMissing,
-    };
-  });
+  return {
+    upserted: rows.length,
+    disabledMissing,
+  };
 }
 
 async function main() {
