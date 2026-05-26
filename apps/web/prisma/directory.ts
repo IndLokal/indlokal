@@ -152,12 +152,17 @@ const STUTTGART: DirectoryEntry[] = [
       {
         channelType: 'FACEBOOK',
         url: 'https://www.facebook.com/groups/stvgermany/',
-        label: 'Facebook Group',
+        label: 'Facebook',
       },
       {
         channelType: 'YOUTUBE',
         url: 'https://www.youtube.com/@samaikyateluguvedika239',
         label: 'YouTube',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/stvgermany/',
+        label: 'Instagram',
       },
     ],
   },
@@ -177,12 +182,22 @@ const STUTTGART: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'https://indisches-filmfestival.de',
         isPrimary: true,
-        label: 'Official Website',
+        label: 'Website',
       },
       {
         channelType: 'INSTAGRAM',
-        url: 'https://instagram.com/indianfilmfestival',
+        url: 'https://www.instagram.com/iff.stuttgart/',
         label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/iffstuttgart/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/playlist?list=PLW4vIhVEhLeC9ZkAO1aJO_eqyeDaGzpw3',
+        label: 'YouTube',
       },
     ],
   },
@@ -198,10 +213,19 @@ const STUTTGART: DirectoryEntry[] = [
     foundedYear: 2006,
     sourceUrl: 'https://indiacultureforum.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://indiacultureforum.de/', isPrimary: true },
-      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/icfev/' },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/icfev/' },
-      { channelType: 'YOUTUBE', url: 'https://www.youtube.com/@indiacultureforum' },
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indiacultureforum.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/icfev/', label: 'Instagram' },
+      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/icfev/', label: 'Facebook' },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@indiacultureforum',
+        label: 'YouTube',
+      },
     ],
   },
   {
@@ -215,10 +239,16 @@ const STUTTGART: DirectoryEntry[] = [
     languages: ['Hindi', 'German', 'English'],
     sourceUrl: 'https://www.samvadgermany.org/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://www.samvadgermany.org/', isPrimary: true },
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.samvadgermany.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
       {
         channelType: 'FACEBOOK',
         url: 'https://www.facebook.com/people/Samvad-Germany/100068660136672/',
+        label: 'Facebook',
       },
     ],
   },
@@ -239,7 +269,7 @@ const STUTTGART: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'https://jitostuttgart.de/about-us',
         isPrimary: true,
-        label: 'About Us',
+        label: 'Website',
       },
       {
         channelType: 'LINKEDIN',
@@ -265,9 +295,13 @@ const STUTTGART: DirectoryEntry[] = [
     foundedYear: 2015,
     sourceUrl: 'https://bindi-ev.org/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://bindi-ev.org/', isPrimary: true },
-      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/bindi.ev/' },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/100070137490845/' },
+      { channelType: 'WEBSITE', url: 'https://bindi-ev.org/', isPrimary: true, label: 'Website' },
+      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/bindi.ev/', label: 'Instagram' },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/100070137490845/',
+        label: 'Facebook',
+      },
     ],
   },
   {
@@ -317,6 +351,16 @@ const STUTTGART: DirectoryEntry[] = [
         url: 'https://stuttgart-hindutemple.org/',
         isPrimary: true,
         label: 'Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/stuttgarthindutemple/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/groups/177723988906903/',
+        label: 'Facebook',
       },
     ],
   },
@@ -371,7 +415,21 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['working-professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'http://www.digstuttgart.de/',
-    channels: [{ channelType: 'WEBSITE', url: 'http://www.digstuttgart.de/', isPrimary: true }],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'http://www.digstuttgart.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      { channelType: 'WEBSITE', url: 'https://www.dig-stuttgart.net/', label: 'Website' },
+      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/DIGStuttgart', label: 'Facebook' },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/dig_region_stuttgart/',
+        label: 'Instagram',
+      },
+    ],
   },
   {
     slug: 'bharat-majlis-stuttgart',
@@ -388,6 +446,7 @@ const STUTTGART: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'http://www.indischerverein-stuttgart.de/',
         isPrimary: true,
+        label: 'Website',
       },
     ],
   },
@@ -401,7 +460,14 @@ const STUTTGART: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Tamil', 'German'],
     sourceUrl: 'https://tbvgermany.com/de/',
-    channels: [{ channelType: 'WEBSITE', url: 'https://tbvgermany.com/de/', isPrimary: true }],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://tbvgermany.com/de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
   },
   {
     slug: 'maharashtra-mandal-stuttgart',
@@ -412,13 +478,18 @@ const STUTTGART: DirectoryEntry[] = [
     categorySlugs: ['language-regional', 'cultural'],
     personaSegments: ['family', 'working-professional'],
     languages: ['Marathi', 'Hindi', 'English'],
-    sourceUrl: 'https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/',
+    sourceUrl: 'https://www.mmstuttgart.de',
     channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.mmstuttgart.de',
+        isPrimary: true,
+        label: 'Website',
+      },
       {
         channelType: 'FACEBOOK',
         url: 'https://www.facebook.com/Maharashtramandalstuttgart/',
-        isPrimary: true,
-        label: 'Facebook Page',
+        label: 'Facebook',
       },
     ],
     needsReview: true,
@@ -434,10 +505,18 @@ const STUTTGART: DirectoryEntry[] = [
     languages: ['Bengali', 'German'],
     sourceUrl: 'https://maitree-ev.org/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://maitree-ev.org/', isPrimary: true },
-      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/maitree.ev/' },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/MaitreeStuttgart/' },
-      { channelType: 'YOUTUBE', url: 'https://www.youtube.com/@maitree_ev' },
+      { channelType: 'WEBSITE', url: 'https://maitree-ev.org/', isPrimary: true, label: 'Website' },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/maitree.ev/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/MaitreeStuttgart/',
+        label: 'Facebook',
+      },
+      { channelType: 'YOUTUBE', url: 'https://www.youtube.com/@maitree_ev', label: 'YouTube' },
     ],
   },
   {
@@ -451,9 +530,13 @@ const STUTTGART: DirectoryEntry[] = [
     languages: ['Bengali', 'German'],
     sourceUrl: 'https://www.debiev.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://www.debiev.de/', isPrimary: true },
-      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/debi_ev/' },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/61555151894316/' },
+      { channelType: 'WEBSITE', url: 'https://www.debiev.de/', isPrimary: true, label: 'Website' },
+      { channelType: 'INSTAGRAM', url: 'https://www.instagram.com/debi_ev/', label: 'Instagram' },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/61555151894316/',
+        label: 'Facebook',
+      },
     ],
   },
   {
@@ -467,8 +550,12 @@ const STUTTGART: DirectoryEntry[] = [
     languages: ['English', 'Hindi'],
     sourceUrl: 'https://squirrels.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://squirrels.de/', isPrimary: true },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/SindelfingenSquirrels/' },
+      { channelType: 'WEBSITE', url: 'https://squirrels.de/', isPrimary: true, label: 'Website' },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/SindelfingenSquirrels/',
+        label: 'Facebook',
+      },
     ],
   },
   {
@@ -482,9 +569,17 @@ const STUTTGART: DirectoryEntry[] = [
     languages: ['Tamil', 'German'],
     sourceUrl: 'https://tamilsangam.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://tamilsangam.de/', isPrimary: true },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/103474994944223/' },
-      { channelType: 'YOUTUBE', url: 'https://www.youtube.com/c/GermanTamilSangam' },
+      { channelType: 'WEBSITE', url: 'https://tamilsangam.de/', isPrimary: true, label: 'Website' },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/103474994944223/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/c/GermanTamilSangam',
+        label: 'YouTube',
+      },
     ],
   },
   {
@@ -499,10 +594,27 @@ const STUTTGART: DirectoryEntry[] = [
     foundedYear: 2019,
     sourceUrl: 'https://cricket.tsv-malmsheim.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://cricket.tsv-malmsheim.de/', isPrimary: true },
-      { channelType: 'FACEBOOK', url: 'https://www.facebook.com/Malmsheimcricket/' },
-      { channelType: 'YOUTUBE', url: 'https://www.youtube.com/@TSVMalmsheimCricket' },
-      { channelType: 'LINKEDIN', url: 'https://de.linkedin.com/company/tsv-malmsheim-cricket' },
+      {
+        channelType: 'WEBSITE',
+        url: 'https://cricket.tsv-malmsheim.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/Malmsheimcricket/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@TSVMalmsheimCricket',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://de.linkedin.com/company/tsv-malmsheim-cricket',
+        label: 'LinkedIn',
+      },
     ],
   },
   {
@@ -556,7 +668,99 @@ const KARLSRUHE: DirectoryEntry[] = [
         isPrimary: true,
         label: 'Website',
       },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/DeutscheIndischeGesselschaftKarlsruhe/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/digkarlsruhe/',
+        label: 'Instagram',
+      },
     ],
+  },
+  {
+    slug: 'karlsruhe-indian-students-association',
+    name: 'Indian Students Association Karlsruhe',
+    description:
+      'Student-led Indian community around KIT Karlsruhe supporting onboarding, networking, cultural exchange and Indian festival celebrations.',
+    citySlug: 'karlsruhe',
+    categorySlugs: ['student', 'networking-social', 'cultural'],
+    personaSegments: ['persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.linkedin.com/',
+    channels: [
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/',
+        isPrimary: true,
+        label: 'LinkedIn (Needs Verification)',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/',
+        label: 'Instagram (Needs Verification)',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'iskcon-karlsruhe',
+    name: 'ISKCON Karlsruhe',
+    description:
+      'Krishna devotional and Hindu spiritual community in Karlsruhe with kirtan, Bhagavad Gita sessions and festival celebrations.',
+    citySlug: 'karlsruhe',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://www.iskcon.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.iskcon.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/iskconkarlsruhe/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'karlsruhe-tamil-sangam',
+    name: 'Karlsruhe Tamil Sangam',
+    description:
+      'Tamil-speaking cultural community in Karlsruhe organising Pongal, Tamil New Year and family-oriented social activities.',
+    citySlug: 'karlsruhe',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/',
+        label: 'Facebook (Needs Verification)',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'malayalee-association-karlsruhe',
+    name: 'Malayalee Association Karlsruhe',
+    description:
+      'Malayali community network in Karlsruhe with Onam celebrations, cultural programs and social support for families and students.',
+    citySlug: 'karlsruhe',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'persona-student', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
   },
 ];
 
@@ -605,6 +809,16 @@ const MANNHEIM: DirectoryEntry[] = [
         url: 'https://www.youtube.com/channel/UC7kaA28p4iF22C6YIFA8mSw/videos',
         label: 'YouTube',
       },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/iskcon_heidelberg.de/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/groups/237324312991971/',
+        label: 'Facebook',
+      },
     ],
     needsReview: true,
   },
@@ -617,6 +831,123 @@ const MANNHEIM: DirectoryEntry[] = [
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
     personaSegments: ['family', 'working-professional'],
     languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.malayalee.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'hss-rhein-neckar',
+    name: 'HSS Rhein-Neckar',
+    description:
+      'Hindu Swayamsevak Sangh unit serving the Mannheim-Heidelberg-Rhein-Neckar region with weekly shakha, yoga and Hindu cultural programs.',
+    citySlug: 'mannheim',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://hssgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://hssgermany.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/hssdeutschland/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'heidelberg-indian-students-community',
+    name: 'Indian Students Heidelberg',
+    description:
+      'Indian student network in Heidelberg supporting onboarding, housing guidance, networking and cultural activities.',
+    citySlug: 'mannheim',
+    categorySlugs: ['student', 'networking-social'],
+    personaSegments: ['persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.indianstudentsgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.indianstudentsgermany.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'rhein-neckar-telugu-association',
+    name: 'Rhein-Neckar Telugu Association',
+    description:
+      'Telugu-speaking community organisation in the Rhein-Neckar region organising Ugadi, Sankranti and cultural family gatherings.',
+    citySlug: 'mannheim',
+    categorySlugs: ['language-regional', 'cultural'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Telugu', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [],
+    needsReview: true,
+  },
+  {
+    slug: 'rhein-neckar-gujarati-samaj',
+    name: 'Rhein-Neckar Gujarati Samaj',
+    description:
+      'Gujarati cultural and social community serving Indian families in the Mannheim-Heidelberg region.',
+    citySlug: 'mannheim',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Gujarati', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/gujaratisamajgermany/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'bharatiya-temple-rhein-neckar',
+    name: 'Bharatiya Temple Rhein-Neckar Community',
+    description:
+      'Indian Hindu spiritual and cultural community connected to temple activities and festival celebrations in the Rhein-Neckar region.',
+    citySlug: 'mannheim',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'Tamil', 'English', 'German'],
+    sourceUrl: 'https://www.bharatiya-temple.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.bharatiya-temple.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'rhein-neckar-bengali-association',
+    name: 'Rhein-Neckar Bengali Association',
+    description:
+      'Bengali cultural association in the Mannheim-Heidelberg area organising Durga Puja, Saraswati Puja and Bengali arts programs.',
+    citySlug: 'mannheim',
+    categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
     needsReview: true,
@@ -639,7 +970,270 @@ const MUNICH: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'https://www.cgimunich.gov.in/',
         isPrimary: true,
-        label: 'Official Website',
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/ConsulateGeneralofIndiaMunichGermany',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/cgimunich/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/channel/UCRjRYyfnbhOPipC1CWhCYHg',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'OTHER',
+        url: 'https://twitter.com/cgmunich',
+        label: 'Other',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'german-indian-association-munich-gdiz',
+    name: 'German-Indian Association (Munich)',
+    description:
+      'Indo-German civic and cultural association listed for Munich in institutional diaspora directories, with regular cross-cultural community activities.',
+    citySlug: 'munich',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.dig-muenchen.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/digmuenchen/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'indo-german-cultural-association-munich-igca',
+    name: 'Indo-German Cultural Association (IGCA) Munich',
+    description:
+      'Munich-based Indo-German cultural association listed in institutional directories for Indian diaspora organisations in Germany.',
+    citySlug: 'munich',
+    categorySlugs: ['cultural', 'arts-entertainment', 'networking-social'],
+    personaSegments: ['working-professional', 'family', 'persona-student'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://igcamunich.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/igcamunich/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/groups/428728773855753/',
+        label: 'Facebook Group',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'dig-munich-bavaria',
+    name: 'Deutsch-Indische Gesellschaft München (DIG)',
+    description:
+      'Munich chapter of Indo-German civic exchange activity listed in institutional directories for Indian associations in Germany.',
+    citySlug: 'munich',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.dig-muenchen.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/digmuenchen/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'dig-augsburg-bavaria',
+    name: 'Deutsch-Indische Gesellschaft Augsburg e.V.',
+    description:
+      'Regional Indo-German association in Bavaria (Augsburg) that serves the wider Munich-Bavaria diaspora corridor through cultural and civic exchange.',
+    citySlug: 'augsburg',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/DIGAugsburg/',
+        isPrimary: true,
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/digaugsburg/',
+        label: 'Instagram',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'indisch-deutscher-verein-ingolstadt-ev',
+    name: 'Indisch Deutscher Verein Ingolstadt e.V.',
+    description:
+      'Bavaria-based Indo-German association in the Ingolstadt-Munich belt listed in institutional community directories.',
+    citySlug: 'munich',
+    categorySlugs: ['cultural', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['German', 'English', 'Hindi'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'kanasu-germany-bavaria',
+    name: 'Kanasu Germany (Karnataka Anivasigal Antarashtriya Sangh)',
+    description:
+      'Kannada-speaking community organisation active in Germany and listed in institutional directories used for Munich/Bavaria diaspora discovery.',
+    citySlug: 'garching',
+    categorySlugs: ['language-regional', 'cultural', 'networking-social'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Kannada', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/kanasugermany/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/kanasugermany/',
+        label: 'Instagram',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'german-malayalee-council-bavaria',
+    name: 'German Malayalee Council (GMC)',
+    description:
+      'Malayali umbrella community listed in institutional directories and relevant to the Munich-Bavaria regional diaspora network.',
+    citySlug: 'munich',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.gmcgermany.com/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/gmcgermany/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@gmcgermany',
+        label: 'YouTube',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'gujarati-samaj-germany-ev-bavaria',
+    name: 'Gujarati Samaj Germany e.V.',
+    description:
+      'Germany-wide Gujarati community association listed in institutional directories with participation across major metros including Munich.',
+    citySlug: 'munich',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Gujarati', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/gujaratisamajgermany/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'vishwa-hindu-parishad-germany-ev',
+    name: 'Vishwa Hindu Parishad e.V. Germany',
+    description:
+      'Germany-wide Hindu community organisation listed in institutional directories and relevant for Munich-area religious and cultural network discovery.',
+    citySlug: 'munich',
+    categorySlugs: ['religious', 'cultural', 'networking-social'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://vhp-germany.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/vhpgermany/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'indian-students-germany-network-munich',
+    name: 'Indian Students Germany Network (Munich-linked)',
+    description:
+      'Indian student support network linked from official consular resources and used by students in Munich and Bavaria for onboarding and coordination.',
+    citySlug: 'garching',
+    categorySlugs: ['student', 'networking-social'],
+    personaSegments: ['persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.indianstudentsgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.indianstudentsgermany.org/',
+        isPrimary: true,
+        label: 'Website',
       },
     ],
     needsReview: true,
@@ -656,6 +1250,16 @@ const MUNICH: DirectoryEntry[] = [
     sourceUrl: 'https://hssgermany.org/',
     channels: [
       { channelType: 'WEBSITE', url: 'https://hssgermany.org/', isPrimary: true, label: 'Website' },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/hssgermany/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/hss_germany/',
+        label: 'Instagram',
+      },
     ],
     needsReview: true,
   },
@@ -670,7 +1274,27 @@ const MUNICH: DirectoryEntry[] = [
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.iskcon.de/',
     channels: [
-      { channelType: 'WEBSITE', url: 'https://www.iskcon.de/', isPrimary: true, label: 'Website' },
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.iskcon.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/iskconmunich/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/iskconmunich/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@iskconmunich',
+        label: 'YouTube',
+      },
     ],
     needsReview: true,
   },
@@ -696,6 +1320,16 @@ const MUNICH: DirectoryEntry[] = [
         url: 'https://www.facebook.com/KeralaSamajamMunich/',
         label: 'Facebook',
       },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/keralasamajammunich/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/c/KeralaSamajamMunich',
+        label: 'YouTube',
+      },
     ],
   },
   {
@@ -709,7 +1343,18 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['persona-student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/misa_munich/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/misa-munich/',
+        label: 'LinkedIn',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -722,7 +1367,24 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://muenchentamilsangam.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/muenchensangam/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/muenchentamilsangam/',
+        label: 'Instagram',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -735,7 +1397,24 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Gujarati', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://mgs-ev.com/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/MunichGujaratiSamaj/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/munich.gujarati.samaj/',
+        label: 'Instagram',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -748,7 +1427,19 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Telugu', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.matagermany.com/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/MATAGermany/',
+        label: 'Facebook',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -761,7 +1452,13 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/sampritimunich/',
+        label: 'Facebook',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -774,7 +1471,14 @@ const MUNICH: DirectoryEntry[] = [
     personaSegments: ['family', 'working-professional'],
     languages: ['Marathi', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+        isPrimary: true,
+        label: 'Website',
+      },
+    ],
     needsReview: true,
   },
 ];
@@ -795,7 +1499,7 @@ const FRANKFURT: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'https://www.dig-ev.de/home-2/zweiggesellschaften/darmstadtfrankfurt/',
         isPrimary: true,
-        label: 'DIG branch page',
+        label: 'Website',
       },
     ],
     needsReview: true,
@@ -828,6 +1532,16 @@ const FRANKFURT: DirectoryEntry[] = [
         url: 'https://www.youtube.com/c/FrankfurtTamilSangam',
         label: 'YouTube',
       },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/1201205893342632',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://de.linkedin.com/in/ftsangam',
+        label: 'LinkedIn',
+      },
     ],
   },
   {
@@ -848,6 +1562,16 @@ const FRANKFURT: DirectoryEntry[] = [
         isPrimary: true,
         label: 'Website',
       },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/teluguvelugugermany/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/TeluguVeluguGermany/',
+        label: 'Facebook',
+      },
     ],
     needsReview: true,
   },
@@ -861,7 +1585,24 @@ const FRANKFURT: DirectoryEntry[] = [
     personaSegments: ['persona-student', 'working-professional', 'family'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.dia-darmstadt.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/DarmstadtIndianAssociation/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/dia_darmstadt/',
+        label: 'Instagram',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -874,7 +1615,24 @@ const FRANKFURT: DirectoryEntry[] = [
     personaSegments: ['working-professional', 'family'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
-    channels: [],
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indianassociation-mainz-wiesbaden.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/p/Mainz-Wiesbaden-Indian-Association-eV-100057276015975/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/mainz_wiesbaden_indian_verein/',
+        label: 'Instagram',
+      },
+    ],
     needsReview: true,
   },
   {
@@ -892,6 +1650,7 @@ const FRANKFURT: DirectoryEntry[] = [
         channelType: 'WEBSITE',
         url: 'https://rheinmainkannadasangha.org/',
         label: 'Website',
+        isPrimary: true,
       },
     ],
     needsReview: true,
@@ -934,6 +1693,205 @@ const FRANKFURT: DirectoryEntry[] = [
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
     needsReview: true,
+  },
+  {
+    slug: 'hss-frankfurt',
+    name: 'HSS Frankfurt',
+    description:
+      'Hindu Swayamsevak Sangh Frankfurt — weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['cultural', 'religious'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English', 'German'],
+    sourceUrl: 'https://hssgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://hssgermany.org/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/hssdeutschland/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/hss_germany/',
+        label: 'Instagram',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'iskcon-frankfurt',
+    name: 'ISKCON Frankfurt',
+    description:
+      'Hare Krishna temple and Vaishnava spiritual community in Frankfurt with Sunday feast programs, kirtan, Bhagavad Gita classes and major Hindu festival celebrations.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.krishna-frankfurt.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.krishna-frankfurt.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/ISKCONFrankfurt/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/iskconfrankfurt/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@iskconfrankfurt',
+        label: 'YouTube',
+      },
+    ],
+  },
+  {
+    slug: 'gujarati-samaj-frankfurt',
+    name: 'Gujarati Samaj Frankfurt Rhein-Main',
+    description:
+      'Gujarati cultural and family community in the Frankfurt Rhein-Main region organising Navratri, Diwali and social networking activities.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Gujarati', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/gujaratisamajgermany/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'malayalee-association-frankfurt',
+    name: 'Malayalee Association Frankfurt',
+    description:
+      'Malayali cultural and social association in the Frankfurt region organising Onam, Vishu and family-oriented community gatherings.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/groups/malayaleesinfrankfurt/',
+        label: 'Facebook Group',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'bharatiya-temple-frankfurt',
+    name: 'Bharatiya Temple Frankfurt',
+    description:
+      'Hindu temple and spiritual-cultural center serving the Indian diaspora in Frankfurt with puja, festivals and family religious activities.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Hindi', 'English', 'Tamil', 'German'],
+    sourceUrl: 'https://www.bharatiya-temple.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.bharatiya-temple.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/BharatiyaTempleFrankfurt/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'baps-frankfurt',
+    name: 'BAPS Shri Swaminarayan Mandir Frankfurt',
+    description:
+      'Swaminarayan Hindu mandir and volunteer-driven spiritual community serving Indian families in the Frankfurt Rhein-Main area.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['religious', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Gujarati', 'Hindi', 'English', 'German'],
+    sourceUrl: 'https://www.baps.org/Global-Network/Europe/Frankfurt.aspx',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.baps.org/Global-Network/Europe/Frankfurt.aspx',
+        isPrimary: true,
+        label: 'Official Page',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@BAPS',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/baps/',
+        label: 'Instagram',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'indian-business-forum-frankfurt',
+    name: 'Indian Business Forum Frankfurt',
+    description:
+      'Professional networking community for Indian entrepreneurs, consultants and professionals in the Frankfurt financial and technology ecosystem.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
+    channels: [
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/',
+        label: 'LinkedIn (Needs Verification)',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'frankfurt-cricket-club',
+    name: 'Frankfurt Cricket Club',
+    description:
+      'Indian-subcontinent-led cricket club ecosystem in Frankfurt participating in regional cricket leagues and community tournaments.',
+    citySlug: 'frankfurt',
+    categorySlugs: ['sports-fitness'],
+    personaSegments: ['working-professional', 'single', 'persona-student'],
+    languages: ['English', 'Hindi'],
+    sourceUrl: 'https://www.frankfurt-cricket.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.frankfurt-cricket.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/frankfurtcricketclub/',
+        label: 'Facebook',
+      },
+    ],
   },
 ];
 
