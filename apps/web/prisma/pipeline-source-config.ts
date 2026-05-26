@@ -97,8 +97,21 @@ const KNOWN_CITY_SLUGS = new Set(
  */
 function getCitySlugsForState(state: string): string[] {
   const slugs: string[] = [];
-  for (const city of ACTIVE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
-  for (const city of SATELLITE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  const metroSlugsForState = new Set<string>();
+
+  for (const city of ACTIVE_CITY_DATA) {
+    if (city.state === state) {
+      slugs.push(city.slug);
+      metroSlugsForState.add(city.slug);
+    }
+  }
+
+  for (const city of SATELLITE_CITY_DATA) {
+    const isInState = city.state === state;
+    const isMetroSatellite = Boolean(city.metroSlug && metroSlugsForState.has(city.metroSlug));
+    if (isInState || isMetroSatellite) slugs.push(city.slug);
+  }
+
   for (const city of UPCOMING_CITIES) if (city.state === state) slugs.push(city.slug);
   return Array.from(new Set(slugs));
 }
