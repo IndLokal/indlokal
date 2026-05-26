@@ -2,27 +2,52 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { PipelineRunResult } from '@/modules/pipeline';
+import type { PipelineRunResult, PipelineRunScope } from '@/modules/pipeline';
 
-export default function RunPipelineButton() {
+type RegionOption = {
+  id: string;
+  label: string;
+};
+
+type RunPipelineButtonProps = {
+  regions: RegionOption[];
+};
+
+function getScopeLabel(scope: PipelineRunScope | null, regions: RegionOption[]): string {
+  if (!scope?.regionIds?.length && !scope?.citySlugs?.length) return 'All enabled regions';
+
+  if (scope?.regionIds?.length) {
+    const regionLabels = scope.regionIds.map(
+      (regionId) => regions.find((region) => region.id === regionId)?.label ?? regionId,
+    );
+    return regionLabels.join(', ');
+  }
+
+  return `Cities: ${(scope.citySlugs ?? []).join(', ')}`;
+}
+
+export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
   const router = useRouter();
-  const [running, setRunning] = useState(false);
+  const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
+  const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  async function handleRun() {
-    setRunning(true);
+  async function handleRun(nextScope?: PipelineRunScope, scopeKey = 'all') {
+    setRunningKey(scopeKey);
     setResult(null);
+    setScope(null);
     setError(null);
 
     try {
       const response = await fetch('/api/admin/pipeline/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(nextScope ?? {}),
       });
 
       const payload = (await response.json()) as
-        | { ok: true; result: PipelineRunResult }
+        | { ok: true; scope: PipelineRunScope | null; result: PipelineRunResult }
         | { ok: false; error?: string };
 
       if (!response.ok || !payload.ok) {
@@ -32,29 +57,43 @@ export default function RunPipelineButton() {
       }
 
       setResult(payload.result);
+      setScope(payload.scope);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setRunning(false);
+      setRunningKey(null);
     }
   }
 
   return (
     <div>
-      <button
-        onClick={handleRun}
-        disabled={running}
-        className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        {running ? '⏳ Running Pipeline…' : '🚀 Run Pipeline Now'}
-      </button>
+      <div className="flex flex-wrap items-center gap-2">
+        <button
+          onClick={() => handleRun(undefined, 'all')}
+          disabled={runningKey != null}
+          className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {runningKey === 'all' ? '⏳ Running All…' : '🚀 Run All Regions'}
+        </button>
+        {regions.map((region) => (
+          <button
+            key={region.id}
+            onClick={() => handleRun({ regionIds: [region.id] }, region.id)}
+            disabled={runningKey != null}
+            className="btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {runningKey === region.id ? `⏳ ${region.label}…` : region.label}
+          </button>
+        ))}
+      </div>
 
       {result && (
         <div className="border-border bg-muted-bg mt-3 rounded-[var(--radius-button)] border p-4 text-sm">
           <p className="text-foreground font-semibold">
             Pipeline Complete ({(result.duration / 1000).toFixed(1)}s)
           </p>
+          <p className="text-muted mt-1 text-xs">Scope: {getScopeLabel(scope, regions)}</p>
           <div className="text-muted mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
             <span>Sources processed:</span>
             <span className="font-medium">{result.sourcesProcessed}</span>

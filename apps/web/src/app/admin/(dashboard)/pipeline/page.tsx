@@ -13,11 +13,13 @@ import {
 } from './actions';
 import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 
 export const metadata = { title: 'Content Pipeline — Admin' };
 
 export default async function AdminPipelinePage() {
+  const regions = await getRuntimeEnabledRegions();
   const sourceStats = await getSourceReliabilityStats();
   const items = await db.pipelineItem.findMany({
     where: { status: 'PENDING' },
@@ -58,7 +60,9 @@ export default async function AdminPipelinePage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <RunPipelineButton />
+          <RunPipelineButton
+            regions={regions.map((region) => ({ id: region.id, label: region.label }))}
+          />
           <Link
             href="/admin"
             className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
