@@ -32,7 +32,10 @@ export async function tryAdvisoryLock(key: string): Promise<AdvisoryLock> {
       try {
         await db.$executeRaw`SELECT pg_advisory_unlock(hashtextextended(${key}, 0))`;
       } catch (err) {
-        console.warn(`[advisory-lock] release failed for key=${key}:`, String(err));
+        console.warn('[advisory-lock] release failed', {
+          key,
+          error: String(err),
+        });
       }
     },
   };
