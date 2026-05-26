@@ -29,7 +29,13 @@
  * Run on deploy:  invoked transitively by runDirectorySeed().
  */
 
-import { PrismaClient, type ResourceType } from '@prisma/client';
+import {
+  PrismaClient,
+  type ResourceType,
+  type ResourceScope,
+  type ResourceAudience,
+  type ResourceStage,
+} from '@prisma/client';
 import { assessEvidenceUrl, getQualifyingEvidence } from '../src/lib/source-policy';
 
 const prisma = new PrismaClient();
@@ -73,6 +79,21 @@ export type ResourceEntry = {
   validUntil?: Date | null;
   lastReviewedAt?: Date | null;
   reviewCadenceDays?: number;
+  // PRD/TDD-0030 additions — defaults derived in the seeder when absent.
+  scope?: ResourceScope;
+  /**
+   * Region identifier for the scope:
+   *  - GLOBAL  → null
+   *  - COUNTRY → 'DE'
+   *  - STATE   → ISO state code, e.g. 'DE-BW'
+   *  - METRO   → metro city slug, e.g. 'stuttgart' (covers satellites)
+   *  - CITY    → city slug (defaults to `citySlug` when omitted)
+   */
+  scopeRegion?: string | null;
+  audiences?: ResourceAudience[];
+  lifecycleStage?: ResourceStage[];
+  priority?: number;
+  isEssential?: boolean;
 };
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -852,6 +873,22 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       continue;
     }
 
+    // PRD/TDD-0030 — derive scope tier and the region identifier.
+    const scope: ResourceScope = entry.scope ?? 'CITY';
+    const scopeRegion =
+      entry.scopeRegion !== undefined
+        ? entry.scopeRegion
+        : scope === 'GLOBAL'
+          ? null
+          : scope === 'COUNTRY'
+            ? 'DE'
+            : scope === 'CITY' || scope === 'METRO'
+              ? citySlug
+              : null;
+    // cityId remains set for CITY scope (back-compat with code still reading
+    // `Resource.cityId`); Phase B will drop the column entirely.
+    const cityIdForRow = scope === 'CITY' ? cityId : null;
+
     const existing = await prisma.resource.findUnique({
       where: { slug: entry.slug },
       select: { id: true },
@@ -875,7 +912,13 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
           hiddenReason: null,
           lastReviewedAt: entry.lastReviewedAt ?? SEED_REVIEWED_AT,
           reviewCadenceDays: entry.reviewCadenceDays ?? DEFAULT_REVIEW_CADENCE_DAYS,
-          cityId,
+          cityId: cityIdForRow,
+          scope,
+          scopeRegion,
+          audiences: entry.audiences ?? [],
+          lifecycleStage: entry.lifecycleStage ?? [],
+          priority: entry.priority ?? 50,
+          isEssential: entry.isEssential ?? false,
           source: 'ADMIN_SEED',
           metadata: {
             editorialSource: 'resources-seed',

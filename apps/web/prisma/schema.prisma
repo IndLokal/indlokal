@@ -408,14 +408,54 @@ enum ResourceType {
   COMMUNITY_RESOURCE
 }
 
+// PRD/TDD-0030, ADR-0007 — resource scope determines which cities a row applies to.
+enum ResourceScope {
+  GLOBAL
+  COUNTRY
+  STATE
+  METRO
+  CITY
+  DISTRICT
+}
+
+enum ResourceAudience {
+  NEWCOMER
+  FAMILY
+  FOUNDER
+  EMPLOYEE
+  STUDENT
+  STUDENT_VISA
+  SENIOR
+  RETURNEE
+}
+
+enum ResourceStage {
+  PRE_ARRIVAL
+  FIRST_30_DAYS
+  FIRST_90_DAYS
+  SETTLED
+  ANYTIME
+}
+
 model Resource {
   id           String       @id @default(cuid())
   title        String
   slug         String       @unique
   resourceType ResourceType @map("resource_type")
 
-  cityId       String       @map("city_id")
-  city         City         @relation(fields: [cityId], references: [id])
+  // Phase A (TDD-0030 §2): cityId becomes nullable. The resolver uses
+  // scope + scopeRegion as the source of truth. Phase B will drop this
+  // column in a follow-up migration.
+  cityId       String?      @map("city_id")
+  city         City?        @relation(fields: [cityId], references: [id])
+
+  // ── PRD/TDD-0030 — scope-based resolution ──
+  scope          ResourceScope      @default(CITY)
+  scopeRegion    String?            @map("scope_region")
+  audiences      ResourceAudience[] @default([])
+  lifecycleStage ResourceStage[]    @default([])  @map("lifecycle_stage")
+  priority       Int                @default(50)
+  isEssential    Boolean            @default(false) @map("is_essential")
 
   url          String?
   description  String?
@@ -434,6 +474,8 @@ model Resource {
   @@index([cityId])
   @@index([resourceType])
   @@index([isHidden])
+  @@index([isEssential])
+  @@index([scope, scopeRegion])
   @@map("resources")
 }
 
