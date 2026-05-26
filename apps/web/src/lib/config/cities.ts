@@ -40,6 +40,44 @@ export type UpcomingCity = {
 
 export const ACTIVE_CITY_DATA: CitySeed[] = [
   {
+    name: 'Berlin',
+    slug: 'berlin',
+    state: 'Berlin',
+    latitude: 52.52,
+    longitude: 13.405,
+    population: 3780000,
+    diasporaDensityEstimate: 22000,
+    isActive: true,
+    isMetroPrimary: true,
+    emoji: '🐻',
+  },
+  {
+    name: 'Munich',
+    slug: 'munich',
+    state: 'Bavaria',
+    aliases: ['München', 'Munchen'],
+    latitude: 48.1351,
+    longitude: 11.582,
+    population: 1488202,
+    diasporaDensityEstimate: 18000,
+    isActive: true,
+    isMetroPrimary: true,
+    emoji: '🥨',
+  },
+  {
+    name: 'Frankfurt',
+    slug: 'frankfurt',
+    aliases: ['Frankfurt am Main', 'Frankfurt a. M.'],
+    state: 'Hesse',
+    latitude: 50.1109,
+    longitude: 8.6821,
+    population: 773068,
+    diasporaDensityEstimate: 14000,
+    isActive: true,
+    isMetroPrimary: true,
+    emoji: '🏦',
+  },
+  {
     name: 'Stuttgart',
     slug: 'stuttgart',
     state: 'Baden-Württemberg',
@@ -75,37 +113,124 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: true,
     emoji: '🏭',
   },
-  {
-    name: 'Munich',
-    slug: 'munich',
-    state: 'Bavaria',
-    aliases: ['München', 'Munchen'],
-    latitude: 48.1351,
-    longitude: 11.582,
-    population: 1488202,
-    diasporaDensityEstimate: 18000,
-    isActive: true,
-    isMetroPrimary: true,
-    emoji: '🥨',
-  },
-  {
-    name: 'Frankfurt',
-    slug: 'frankfurt',
-    aliases: ['Frankfurt am Main', 'Frankfurt a. M.'],
-    state: 'Hesse',
-    latitude: 50.1109,
-    longitude: 8.6821,
-    population: 773068,
-    diasporaDensityEstimate: 14000,
-    isActive: true,
-    isMetroPrimary: true,
-    emoji: '🏦',
-  },
 ];
 
 /* ─── Satellite cities (nearby expansion around each active metro) ───── */
 
 export const SATELLITE_CITY_DATA: CitySeed[] = [
+  // Berlin metro
+  {
+    name: 'Potsdam',
+    slug: 'potsdam',
+    state: 'Brandenburg',
+    latitude: 52.39,
+    longitude: 13.0645,
+    population: 187441,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Falkensee',
+    slug: 'falkensee',
+    state: 'Brandenburg',
+    latitude: 52.5601,
+    longitude: 13.0927,
+    population: 45839,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Oranienburg',
+    slug: 'oranienburg',
+    state: 'Brandenburg',
+    latitude: 52.7537,
+    longitude: 13.2369,
+    population: 47495,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Bernau bei Berlin',
+    slug: 'bernau-bei-berlin',
+    state: 'Brandenburg',
+    latitude: 52.679,
+    longitude: 13.5871,
+    population: 43236,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Koenigs Wusterhausen',
+    slug: 'koenigs-wusterhausen',
+    aliases: ['Königs Wusterhausen'],
+    state: 'Brandenburg',
+    latitude: 52.2964,
+    longitude: 13.625,
+    population: 39417,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Teltow',
+    slug: 'teltow',
+    state: 'Brandenburg',
+    latitude: 52.3958,
+    longitude: 13.2561,
+    population: 28523,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Hennigsdorf',
+    slug: 'hennigsdorf',
+    state: 'Brandenburg',
+    latitude: 52.6376,
+    longitude: 13.204,
+    population: 27357,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Kleinmachnow',
+    slug: 'kleinmachnow',
+    state: 'Brandenburg',
+    latitude: 52.407,
+    longitude: 13.2255,
+    population: 20838,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Schoenefeld',
+    slug: 'schoenefeld',
+    aliases: ['Schönefeld'],
+    state: 'Brandenburg',
+    latitude: 52.3887,
+    longitude: 13.5183,
+    population: 20657,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
+  {
+    name: 'Erkner',
+    slug: 'erkner',
+    state: 'Brandenburg',
+    latitude: 52.4245,
+    longitude: 13.7568,
+    population: 12176,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'berlin',
+  },
   // Stuttgart metro
   {
     name: 'Sindelfingen',
@@ -605,7 +730,6 @@ export const CITY_NAME_ALIASES: Record<string, string> = Object.fromEntries(
  * These should stay focused on larger expansion metros, not secondary cities.
  */
 export const UPCOMING_CITIES: readonly UpcomingCity[] = [
-  { slug: 'berlin', name: 'Berlin', state: 'Berlin', emoji: '🐻' },
   { slug: 'hamburg', name: 'Hamburg', state: 'Hamburg', emoji: '⚓' },
   { slug: 'dusseldorf', name: 'Düsseldorf', state: 'NRW', emoji: '🗼' },
   { slug: 'cologne', name: 'Cologne', state: 'NRW', emoji: '⛪' },
@@ -618,6 +742,17 @@ export const ALL_CITY_SLUGS = [
   ...ACTIVE_CITIES,
   ...UPCOMING_CITIES.map((c) => c.slug),
 ] as readonly string[];
+
+export const CITY_DISPLAY_NAME_BY_SLUG: Record<string, string> = Object.fromEntries([
+  ...ACTIVE_CITY_DATA.map((city) => [city.slug, city.name] as const),
+  ...SATELLITE_CITY_DATA.map((city) => [city.slug, city.name] as const),
+  ...UPCOMING_CITIES.map((city) => [city.slug, city.name] as const),
+]);
+
+/** Resolve a human-friendly configured city name for a slug, when known. */
+export function getConfiguredCityName(slug: string): string | undefined {
+  return CITY_DISPLAY_NAME_BY_SLUG[slug];
+}
 
 /* ─── Taxonomy: Categories & Personas ────────────────────────────────── */
 

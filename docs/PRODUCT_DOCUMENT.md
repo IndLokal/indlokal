@@ -692,8 +692,8 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 
 ### 8.7 Multi-City Support
 
-- **Phase 2a:** Expand to Karlsruhe + Mannheim (BW region — natural geographic extension, shared consular services, some communities already span BW)
-- **Phase 2b:** Munich (largest Indian population, proven demand, but strongest competition)
+- **Implementation status (May 2026):** Active metros are Berlin, Munich, Frankfurt, Stuttgart, Karlsruhe, and Mannheim (with metro satellites configured, including the Berlin ring in Brandenburg).
+- **Next expansion focus:** Increase per-metro density and satellite coverage before adding additional metro primaries.
 - Cross-city community linking (same community in multiple cities — e.g., HSS chapters)
 - Metro-region concept: Stuttgart metro includes Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen — events in satellite cities appear in Stuttgart feed
 - City comparison ("Stuttgart has 60 communities, Karlsruhe has 25")
@@ -916,6 +916,13 @@ The launch city must have enough communities, upcoming events, complete profiles
 5. **Admin review queue** — Extracted items appear in a review queue. High-confidence items can be batch-approved. Low-confidence or duplicate-flagged items require individual review. **Nothing publishes without human approval** (prevents hallucinated events)
 6. **Freshness monitoring** — AI periodically checks community link health, detects activity drops, and flags stale profiles
 
+#### Implementation status (May 2026)
+
+- **Scoped runs are implemented end-to-end.** Pipeline accepts `city` and `region` scope in CLI and cron API routes, and only matching regions are executed.
+- **Pinned URL scope is implemented.** Runtime config supports `scope` (`CITY` / `REGION` / `GENERIC`) plus `hintCitySlug` / `hintState`; scoped runs include only relevant city/region pinned sources.
+- **Sharded cron is implemented via GitHub Actions.** The production schedule runs pipeline shards at 02:05 (`region=berlin`), 02:20 (`region=baden-wuerttemberg`), 02:35 (`region=bavaria`), and 02:50 (`region=hesse`) UTC.
+- **Berlin institutional coverage was expanded.** Official Berlin and Brandenburg institutional pinned sources were added to defaults with explicit CITY/REGION metadata to reduce noisy fetches.
+
 #### Content cost comparison
 
 | Approach                                                 | Effort per week               | Monthly cost estimate                   |
@@ -1012,7 +1019,7 @@ Stuttgart was selected based on:
 
 **AI-assisted workflow (not manual research):**
 
-- **Daily (automated):** AI pipeline scans configured sources (Facebook pages, Eventbrite, community websites), extracts new events/updates, populates admin review queue
+- **Daily (automated):** AI pipeline runs as region shards through GitHub Actions cron (`berlin`, `baden-wuerttemberg`, `bavaria`, `hesse`), scans configured sources, and populates the admin review queue
 - **Daily (human, ~15-20 min):** Review and approve/reject items in the queue. High-confidence items can be batch-approved in one click
 - **Weekly (automated):** Access link health check on all community channels. Broken links auto-flagged
 - **Weekly (human, ~30 min):** Review flagged broken links, update or remove. Check for any sources the pipeline missed

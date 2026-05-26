@@ -6,7 +6,7 @@ import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';
 import { SectionHeader, EmptyState } from '@/components/ui';
-import { UPCOMING_CITIES } from '@/lib/config';
+import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
 
 /**
  * City Feed — the primary discovery surface.
@@ -19,7 +19,7 @@ type CityFeedPageProps = {
 
 export async function generateMetadata({ params }: CityFeedPageProps): Promise<Metadata> {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  const cityName = getConfiguredCityName(city) ?? city.charAt(0).toUpperCase() + city.slice(1);
   return {
     title: `Indian Communities & Events in ${cityName}`,
     description: `What's happening for Indians in ${cityName} this week? Discover communities, events, and activities.`,

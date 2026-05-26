@@ -62,22 +62,40 @@ export async function submitCommunity(
   // Resolve city, dedup-check, and resolve categories — all DB reads that
   // must run before the write. Wrapped together so a cold-start DB error
   // returns a graceful user-facing message instead of a 500.
-  let city: { id: string } | null;
+  let city: {
+    id: string;
+    slug: string;
+    metroRegionId: string | null;
+    metroRegion: { slug: string } | null;
+  } | null;
+  let targetCityId: string;
+  let normalizedCitySlug: string;
   let existingCommunities: { name: string }[];
   let categoryRows: { id: string }[];
   let slug: string;
   try {
     city = await db.city.findFirst({
-      where: { slug: data.citySlug, isActive: true },
-      select: { id: true },
+      where: {
+        slug: data.citySlug,
+        OR: [{ isActive: true }, { metroRegionId: { not: null } }],
+      },
+      select: {
+        id: true,
+        slug: true,
+        metroRegionId: true,
+        metroRegion: { select: { slug: true } },
+      },
     });
     if (!city) {
       return { success: false, errors: { citySlug: ['City not found or not active'] } };
     }
 
+    targetCityId = city.metroRegionId ?? city.id;
+    normalizedCitySlug = city.metroRegion?.slug ?? city.slug;
+
     // Dedup check — prevent duplicate submissions
     existingCommunities = await db.community.findMany({
-      where: { cityId: city.id, status: { not: 'INACTIVE' } },
+      where: { cityId: targetCityId, status: { not: 'INACTIVE' } },
       select: { name: true },
     });
     for (const c of existingCommunities) {
@@ -137,7 +155,9 @@ export async function submitCommunity(
         name: data.name,
         slug,
         description: data.description,
-        cityId: city.id,
+        // Normalize satellite submissions to their metro primary city so
+        // discovery and scoring stay partitioned by metro.
+        cityId: targetCityId,
         languages: data.languages,
         status: 'UNVERIFIED',
         claimState: 'UNCLAIMED',
@@ -147,6 +167,10 @@ export async function submitCommunity(
             name: data.contactName,
             email: data.contactEmail,
             submittedAt: new Date().toISOString(),
+          },
+          city: {
+            submittedCitySlug: city.slug,
+            normalizedCitySlug,
           },
         },
         categories: {
@@ -169,7 +193,8 @@ export async function submitCommunity(
   // Analytics — fire-and-forget, non-critical
   // Use 'anonymous' as distinctId for unauthenticated submissions to avoid PII in PostHog
   await captureServerEvent('anonymous-submitter', Events.COMMUNITY_SUBMITTED, {
-    city: data.citySlug,
+    city: city.slug,
+    normalized_city_slug: normalizedCitySlug,
     channel_types: channels.map((c) => c.channelType.toLowerCase()),
   });
 
