@@ -67,59 +67,95 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
   }
 
   return (
-    <div>
-      <div className="flex flex-wrap items-center gap-2">
-        <button
-          onClick={() => handleRun(undefined, 'all')}
-          disabled={runningKey != null}
-          className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {runningKey === 'all' ? '⏳ Running All…' : '🚀 Run All Regions'}
-        </button>
-        {regions.map((region) => (
-          <button
-            key={region.id}
-            onClick={() => handleRun({ regionIds: [region.id] }, region.id)}
-            disabled={runningKey != null}
-            className="btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {runningKey === region.id ? `⏳ ${region.label}…` : region.label}
-          </button>
-        ))}
+    <div className="card-base w-full max-w-2xl p-5">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p className="text-brand-700 text-xs font-semibold uppercase tracking-[0.18em]">
+              Manual Run Controls
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">Run pipeline by shard</h2>
+            <p className="text-muted mt-1 max-w-xl text-sm">
+              Manual runs now follow the same regional scope model as cron. Run one region to debug
+              yield, or run all enabled regions for a full pass.
+            </p>
+          </div>
+          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+            {regions.length} enabled regions
+          </div>
+        </div>
+
+        <div className="rounded-[var(--radius-card)] border border-slate-200 bg-slate-50/80 p-3">
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => handleRun(undefined, 'all')}
+              disabled={runningKey != null}
+              className="btn-primary w-full px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {runningKey === 'all' ? '⏳ Running all regions…' : 'Run all enabled regions'}
+            </button>
+
+            <div>
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                Regional shards
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                {regions.map((region) => (
+                  <button
+                    key={region.id}
+                    onClick={() => handleRun({ regionIds: [region.id] }, region.id)}
+                    disabled={runningKey != null}
+                    className="btn-secondary justify-center px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {runningKey === region.id ? `⏳ ${region.label}…` : region.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {result && (
-        <div className="border-border bg-muted-bg mt-3 rounded-[var(--radius-button)] border p-4 text-sm">
-          <p className="text-foreground font-semibold">
-            Pipeline Complete ({(result.duration / 1000).toFixed(1)}s)
-          </p>
-          <p className="text-muted mt-1 text-xs">Scope: {getScopeLabel(scope, regions)}</p>
-          <div className="text-muted mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
-            <span>Sources processed:</span>
-            <span className="font-medium">{result.sourcesProcessed}</span>
-            <span>Items fetched:</span>
-            <span className="font-medium">{result.itemsFetched}</span>
-            <span>Passed filter:</span>
-            <span className="font-medium">{result.itemsPassedFilter}</span>
-            <span>Extracted:</span>
-            <span className="font-medium">{result.itemsExtracted}</span>
-            <span>Queued for review:</span>
-            <span className="font-medium text-green-700">{result.itemsQueued}</span>
-            <span>Duplicates skipped:</span>
-            <span className="font-medium">{result.itemsSkippedDuplicate}</span>
-            <span>No city (skipped):</span>
-            <span className="font-medium">{result.itemsSkippedNoCity}</span>
-            <span>LLM calls:</span>
-            <span className="font-medium">{result.llmCalls}</span>
-            <span>Est. tokens:</span>
-            <span className="font-medium">~{result.llmTokensEstimate}</span>
+        <div className="mt-4 rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50/70 p-4 text-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p className="font-semibold text-emerald-900">
+                Pipeline complete in {(result.duration / 1000).toFixed(1)}s
+              </p>
+              <p className="mt-1 text-xs text-emerald-800/80">
+                Scope: {getScopeLabel(scope, regions)}
+              </p>
+            </div>
+            <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
+              {result.errors.length === 0
+                ? 'No fetch errors'
+                : `${result.errors.length} issues logged`}
+            </div>
           </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
+            <MetricCard label="Fetched" value={result.itemsFetched} />
+            <MetricCard label="Extracted" value={result.itemsExtracted} />
+            <MetricCard label="LLM calls" value={result.llmCalls} />
+          </div>
+
+          <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+            <StatLine label="Sources processed" value={result.sourcesProcessed} />
+            <StatLine label="Passed filter" value={result.itemsPassedFilter} />
+            <StatLine label="Duplicates skipped" value={result.itemsSkippedDuplicate} />
+            <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
+            <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
+            <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
+          </div>
+
           {result.errors.length > 0 && (
-            <details className="mt-3">
-              <summary className="cursor-pointer text-xs text-amber-600">
-                ⚠️ {result.errors.length} errors
+            <details className="mt-4 rounded-[var(--radius-button)] border border-amber-200 bg-white/70 p-3">
+              <summary className="cursor-pointer text-xs font-medium text-amber-700">
+                View {result.errors.length} logged fetch/runtime issues
               </summary>
-              <ul className="text-muted mt-1 space-y-0.5 text-xs">
+              <ul className="text-muted mt-2 max-h-48 space-y-1 overflow-auto text-xs">
                 {result.errors.map((e, i) => (
                   <li key={i}>• {e}</li>
                 ))}
@@ -134,6 +170,38 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
           Pipeline failed: {error}
         </div>
       )}
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string;
+  value: number;
+  tone?: 'default' | 'success';
+}) {
+  return (
+    <div
+      className={`rounded-[var(--radius-button)] border px-3 py-3 ${
+        tone === 'success'
+          ? 'border-emerald-200 bg-white text-emerald-900'
+          : 'border-slate-200 bg-white text-slate-900'
+      }`}
+    >
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-xl font-semibold">{value}</p>
+    </div>
+  );
+}
+
+function StatLine({ label, value }: { label: string; value: number | string }) {
+  return (
+    <div>
+      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 font-medium text-slate-800">{value}</p>
     </div>
   );
 }
