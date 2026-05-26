@@ -951,10 +951,44 @@ model PipelineRun {
   llmTokensEstimate     Int      @map("llm_tokens_estimate")
   durationMs            Int      @map("duration_ms")
   errors                String[]
+  filterFailures          Int               @default(0) @map("filter_failures")
+  extractRetriesExhausted Int               @default(0) @map("extract_retries_exhausted")
+  itemsDroppedBadIndex    Int               @default(0) @map("items_dropped_bad_index")
+  budgetExceeded          Boolean           @default(false) @map("budget_exceeded")
+  circuitBreakerTripped   Boolean           @default(false) @map("circuit_breaker_tripped")
   createdAt             DateTime @default(now()) @map("created_at")
+  llmCallAudits         PipelineLlmCall[]
 
   @@index([createdAt])
   @@map("pipeline_runs")
+}
+
+enum PipelineLlmStage {
+  filter
+  extract
+  dedup
+  enrich
+  keyword
+}
+
+model PipelineLlmCall {
+  id               String           @id @default(cuid())
+  runId            String           @map("run_id")
+  run              PipelineRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stage            PipelineLlmStage
+  model            String
+  promptTokens     Int              @default(0) @map("prompt_tokens")
+  completionTokens Int              @default(0) @map("completion_tokens")
+  totalTokens      Int              @default(0) @map("total_tokens")
+  durationMs       Int              @map("duration_ms")
+  ok               Boolean
+  errorCode        String?          @map("error_code")
+  batchSize        Int?             @map("batch_size")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([createdAt, stage])
+  @@map("pipeline_llm_calls")
 }
 
 // ─────────────────────────────────────────────────

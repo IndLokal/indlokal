@@ -167,4 +167,14 @@ export type PipelineRunResult = {
   llmTokensEstimate: number;
   duration: number; // ms
   stageTimings?: Record<string, number>;
+  /** PRD-0026: filter batches that failed LLM call and were fail-closed dropped. */
+  filterFailures: number;
+  /** PRD-0026: extract batches that exhausted RetryBudget (depth or wall-clock). */
+  extractRetriesExhausted: number;
+  /** PRD-0026: items whose LLM-assigned sourceIndex was out of range. */
+  itemsDroppedBadIndex: number;
+  /** PRD-0028: run hit the per-run token budget and bailed out of LLM stages. */
+  budgetExceeded: boolean;
+  /** PRD-0028: consecutive LLM failures tripped the circuit breaker. */
+  circuitBreakerTripped: boolean;
 };

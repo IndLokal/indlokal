@@ -34,7 +34,15 @@ import {
   extractMentionedYears,
 } from './freshness';
 import { buildPipelineSourcePlan } from './source-plan';
-import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
+import {
+  filterRelevance,
+  extractBatch,
+  resetLlmStats,
+  getLlmStats,
+  PipelineBudgetExceededError,
+  PipelineCircuitOpenError,
+} from './extraction';
+import { withLlmContext } from './llm-context';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
@@ -55,18 +63,6 @@ export type PipelineRunScope = {
   citySlugs?: string[];
   regionIds?: string[];
 };
-
-function isMissingPipelineRunScopeColumnError(error: unknown): boolean {
-  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
-  if (error.code !== 'P2022') return false;
-
-  const column =
-    error.meta && typeof error.meta === 'object' && 'column' in error.meta
-      ? String((error.meta as { column?: unknown }).column ?? '')
-      : '';
-
-  return column === 'scope_region_ids' || column === 'scope_city_slugs';
-}
 
 function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
   if (!scope) return regions;
@@ -154,7 +150,49 @@ export async function runPipeline(
     llmTokensEstimate: 0,
     duration: 0,
     stageTimings: {},
+    filterFailures: 0,
+    extractRetriesExhausted: 0,
+    itemsDroppedBadIndex: 0,
+    budgetExceeded: false,
+    circuitBreakerTripped: false,
   };
+
+  const scopeRegionIds = Array.from(
+    new Set((scope?.regionIds ?? []).map((id) => id.trim()).filter(Boolean)),
+  );
+  const scopeCitySlugs = Array.from(
+    new Set((scope?.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean)),
+  );
+
+  // Create PipelineRun row UP-FRONT so we have an id to attribute per-LLM-call
+  // audit rows to (PRD-0027). Counters are zero initially and patched on
+  // completion via update().
+  let pipelineRunId: string | null = null;
+  try {
+    const created = await db.pipelineRun.create({
+      data: {
+        triggeredBy,
+        scopeRegionIds,
+        scopeCitySlugs,
+        regionsScanned: 0,
+        sourcesProcessed: 0,
+        itemsFetched: 0,
+        itemsPassedFilter: 0,
+        itemsExtracted: 0,
+        itemsQueued: 0,
+        itemsSkippedDuplicate: 0,
+        itemsSkippedNoCity: 0,
+        itemsSkippedPast: 0,
+        llmCalls: 0,
+        llmTokensEstimate: 0,
+        durationMs: 0,
+        errors: [],
+      },
+    });
+    pipelineRunId = created.id;
+  } catch (createErr) {
+    console.error('[Pipeline] Failed to create up-front PipelineRun:', createErr);
+  }
 
   const baseRegions = await getRuntimeEnabledRegions();
   const regions = filterRegionsByScope(baseRegions, scope);
@@ -192,65 +230,123 @@ export async function runPipeline(
   });
 
   if (candidateRaw.length > 0) {
-    const relevantItems = await timePipelineStage(result, 'filter', () =>
-      filterRelevantItems(candidateRaw, result),
-    );
-
-    const extracted =
-      relevantItems.length > 0
-        ? await timePipelineStage(result, 'extract', () =>
-            extractRelevantItems(relevantItems, result),
+    try {
+      const relevantItems = pipelineRunId
+        ? await withLlmContext({ runId: pipelineRunId, stage: 'filter' }, () =>
+            timePipelineStage(result, 'filter', () => filterRelevantItems(candidateRaw, result)),
           )
-        : [];
+        : await timePipelineStage(result, 'filter', () =>
+            filterRelevantItems(candidateRaw, result),
+          );
 
-    if (extracted.length > 0) {
-      await timePipelineStage(result, 'resolveQueue', () =>
-        resolveAndQueue(extracted, relevantItems, regions, result),
-      );
+      const runExtract = async () =>
+        timePipelineStage(result, 'extract', () => extractRelevantItems(relevantItems, result));
+      const extracted =
+        relevantItems.length > 0
+          ? pipelineRunId
+            ? await withLlmContext({ runId: pipelineRunId, stage: 'extract' }, runExtract)
+            : await runExtract()
+          : [];
+
+      if (extracted.length > 0) {
+        const runResolve = async () =>
+          timePipelineStage(result, 'resolveQueue', () =>
+            resolveAndQueue(extracted, relevantItems, regions, result),
+          );
+        // Semantic dedup inside resolveAndQueue may call LLM — tag stage='dedup'.
+        if (pipelineRunId) {
+          await withLlmContext({ runId: pipelineRunId, stage: 'dedup' }, runResolve);
+        } else {
+          await runResolve();
+        }
+      }
+    } catch (guardErr) {
+      // PRD/TDD-0028: budget or circuit guard tripped. Record it on the run
+      // and let the persistence block below write whatever we already have.
+      if (guardErr instanceof PipelineBudgetExceededError) {
+        result.budgetExceeded = true;
+        result.errors.push(`budget_exceeded:tokens=${guardErr.tokensConsumed}`);
+        console.warn(
+          `[Pipeline] budget exceeded (tokens=${guardErr.tokensConsumed} >= ${guardErr.limit}); halting LLM stages`,
+        );
+      } else if (guardErr instanceof PipelineCircuitOpenError) {
+        result.circuitBreakerTripped = true;
+        result.errors.push(
+          `circuit_breaker_tripped:consecutive_failures=${guardErr.consecutiveFailures}`,
+        );
+        console.warn(
+          `[Pipeline] circuit breaker tripped after ${guardErr.consecutiveFailures} consecutive failures; halting LLM stages`,
+        );
+      } else {
+        throw guardErr;
+      }
     }
   }
 
   const stats = getLlmStats();
   result.llmCalls = stats.calls;
   result.llmTokensEstimate = stats.tokensEstimate;
+  result.filterFailures = stats.filterFailures;
+  result.extractRetriesExhausted = stats.extractRetriesExhausted;
+  result.itemsDroppedBadIndex = stats.itemsDroppedBadIndex;
   result.duration = Date.now() - start;
 
-  // Persist run history for observability
+  // Persist run history for observability.
+  // If the up-front row exists, patch it; otherwise create one (migration not yet applied path).
   try {
-    const scopeRegionIds = Array.from(
-      new Set((scope?.regionIds ?? []).map((id) => id.trim()).filter(Boolean)),
-    );
-    const scopeCitySlugs = Array.from(
-      new Set((scope?.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean)),
-    );
-    await db.pipelineRun.create({
-      data: {
-        triggeredBy,
-        scopeRegionIds,
-        scopeCitySlugs,
-        regionsScanned: result.regionsScanned,
-        sourcesProcessed: result.sourcesProcessed,
-        itemsFetched: result.itemsFetched,
-        itemsPassedFilter: result.itemsPassedFilter,
-        itemsExtracted: result.itemsExtracted,
-        itemsQueued: result.itemsQueued,
-        itemsSkippedDuplicate: result.itemsSkippedDuplicate,
-        itemsSkippedNoCity: result.itemsSkippedNoCity,
-        itemsSkippedPast: result.itemsSkippedPast,
-        llmCalls: result.llmCalls,
-        llmTokensEstimate: result.llmTokensEstimate,
-        durationMs: result.duration,
-        errors: result.errors,
-      },
-    });
-  } catch (persistErr) {
-    if (isMissingPipelineRunScopeColumnError(persistErr)) {
-      console.warn(
-        '[Pipeline] Run history persistence skipped: scope columns missing. Apply the latest migration.',
-      );
+    if (pipelineRunId) {
+      await db.pipelineRun.update({
+        where: { id: pipelineRunId },
+        data: {
+          regionsScanned: result.regionsScanned,
+          sourcesProcessed: result.sourcesProcessed,
+          itemsFetched: result.itemsFetched,
+          itemsPassedFilter: result.itemsPassedFilter,
+          itemsExtracted: result.itemsExtracted,
+          itemsQueued: result.itemsQueued,
+          itemsSkippedDuplicate: result.itemsSkippedDuplicate,
+          itemsSkippedNoCity: result.itemsSkippedNoCity,
+          itemsSkippedPast: result.itemsSkippedPast,
+          llmCalls: result.llmCalls,
+          llmTokensEstimate: result.llmTokensEstimate,
+          durationMs: result.duration,
+          errors: result.errors,
+          filterFailures: result.filterFailures,
+          extractRetriesExhausted: result.extractRetriesExhausted,
+          itemsDroppedBadIndex: result.itemsDroppedBadIndex,
+          budgetExceeded: result.budgetExceeded,
+          circuitBreakerTripped: result.circuitBreakerTripped,
+        },
+      });
     } else {
-      console.error('[Pipeline] Failed to persist run history:', persistErr);
+      await db.pipelineRun.create({
+        data: {
+          triggeredBy,
+          scopeRegionIds,
+          scopeCitySlugs,
+          regionsScanned: result.regionsScanned,
+          sourcesProcessed: result.sourcesProcessed,
+          itemsFetched: result.itemsFetched,
+          itemsPassedFilter: result.itemsPassedFilter,
+          itemsExtracted: result.itemsExtracted,
+          itemsQueued: result.itemsQueued,
+          itemsSkippedDuplicate: result.itemsSkippedDuplicate,
+          itemsSkippedNoCity: result.itemsSkippedNoCity,
+          itemsSkippedPast: result.itemsSkippedPast,
+          llmCalls: result.llmCalls,
+          llmTokensEstimate: result.llmTokensEstimate,
+          durationMs: result.duration,
+          errors: result.errors,
+          filterFailures: result.filterFailures,
+          extractRetriesExhausted: result.extractRetriesExhausted,
+          itemsDroppedBadIndex: result.itemsDroppedBadIndex,
+          budgetExceeded: result.budgetExceeded,
+          circuitBreakerTripped: result.circuitBreakerTripped,
+        },
+      });
     }
+  } catch (persistErr) {
+    console.error('[Pipeline] Failed to persist run history:', persistErr);
   }
 
   console.log(
