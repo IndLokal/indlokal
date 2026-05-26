@@ -123,7 +123,8 @@ cmd_setup() {
   # Seed
   echo ""
   echo "Seeding database..."
-  pnpm db:seed
+  # Seed demo events by default in local setup so /[city]/events is immediately useful.
+  SEED_DEMO_EVENTS="${SEED_DEMO_EVENTS:-1}" pnpm db:seed
   print_success "Database seeded"
 
   # Test DB
@@ -224,7 +225,7 @@ cmd_db_reset() {
     docker compose up -d --wait
     ensure_database_exists "indlokal"
     web pnpm exec prisma db push --skip-generate
-    pnpm db:seed
+    SEED_DEMO_EVENTS="${SEED_DEMO_EVENTS:-1}" pnpm db:seed
     print_success "Database reset and re-seeded"
   else
     echo "Cancelled."
