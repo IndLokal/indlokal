@@ -6,6 +6,7 @@ const calendarId = `mmstuttgart-${runId}@example.com`;
 const encodedCalendarId = encodeURIComponent(calendarId);
 const testCitySlug = `stuttgart-calendar-${runId}`;
 const testCityName = `Stuttgart Calendar ${runId}`;
+let extractionMode: 'calendar-event' | 'duplicate-community' = 'calendar-event';
 
 vi.mock('../runtime-config', () => ({
   getRuntimeEnabledRegions: vi.fn(async () => [
@@ -47,6 +48,26 @@ vi.mock('../extraction', () => ({
     items.map((_, index) => ({ index, isRelevant: true, reason: 'calendar-relevant' })),
   ),
   extractBatch: vi.fn(async (items: Array<{ sourceUrl: string }>) => {
+    if (extractionMode === 'duplicate-community') {
+      return items.slice(0, 2).map((_, index) => ({
+        type: 'COMMUNITY',
+        name: index === 0 ? 'Maharashtra Mandal Stuttgart e.V.' : 'Maharashtra Mandal Stuttgart',
+        description: 'Marathi cultural association in Stuttgart',
+        cityName: testCityName,
+        categories: ['cultural-association'],
+        languages: ['Marathi'],
+        websiteUrl: 'https://www.mmstuttgart.de/',
+        facebookUrl: null,
+        instagramUrl: null,
+        whatsappUrl: null,
+        telegramUrl: null,
+        contactEmail: null,
+        confidence: 0.94,
+        fieldConfidence: { name: 0.99, description: 0.9 },
+        sourceIndex: index,
+      }));
+    }
+
     const extracted: Array<Record<string, unknown>> = [];
 
     items.forEach((item, index) => {
@@ -104,13 +125,26 @@ const icsBody = [
 
 describe('@db pipeline calendar ingestion integration', () => {
   beforeEach(async () => {
+    extractionMode = 'calendar-event';
+    vi.restoreAllMocks();
     await db.pipelineItem.deleteMany({
-      where: { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
+      where: {
+        OR: [
+          { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
+          { sourceUrl: 'https://www.mmstuttgart.de/' },
+        ],
+      },
     });
-    await db.city.deleteMany({ where: { slug: testCitySlug } });
-
-    await db.city.create({
-      data: {
+    await db.city.upsert({
+      where: { slug: testCitySlug },
+      update: {
+        name: testCityName,
+        state: 'Baden-Wuerttemberg',
+        country: 'Germany',
+        isActive: true,
+        isMetroPrimary: true,
+      },
+      create: {
         name: testCityName,
         slug: testCitySlug,
         state: 'Baden-Wuerttemberg',
@@ -146,7 +180,6 @@ describe('@db pipeline calendar ingestion integration', () => {
     await db.pipelineItem.deleteMany({
       where: { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
     });
-    await db.city.deleteMany({ where: { slug: testCitySlug } });
     vi.restoreAllMocks();
     await db.$disconnect();
   });
@@ -175,5 +208,29 @@ describe('@db pipeline calendar ingestion integration', () => {
     expect(extracted.type).toBe('EVENT');
     expect(extracted.title).toBe('FoFe 2026');
     expect(extracted.cityName).toBe(testCityName);
+  });
+
+  it('does not queue duplicate community entries within the same run', async () => {
+    extractionMode = 'duplicate-community';
+    const { runPipeline } = await import('../orchestrator');
+    const result = await runPipeline('test-community-dedup');
+
+    expect(result.itemsQueued).toBe(1);
+    expect(result.itemsSkippedDuplicate).toBeGreaterThanOrEqual(1);
+
+    const city = await db.city.findUniqueOrThrow({
+      where: { slug: testCitySlug },
+      select: { id: true },
+    });
+
+    const queuedCommunities = await db.pipelineItem.findMany({
+      where: {
+        cityId: city.id,
+        entityType: 'COMMUNITY',
+        status: { in: ['PENDING', 'APPROVED'] },
+      },
+    });
+
+    expect(queuedCommunities).toHaveLength(1);
   });
 });

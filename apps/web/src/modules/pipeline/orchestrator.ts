@@ -416,9 +416,7 @@ async function resolveAndQueue(
     }
 
     // Dedup check
-    const isDupe = isCityPending
-      ? await checkSourceUrlDuplicate(sourceRaw.sourceUrl)
-      : await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
+    const isDupe = await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
     if (item.type === 'EVENT' && isDupe.isDuplicate) {
       if (isDupe.matchKind === 'PIPELINE_ITEM' && isDupe.matchedId) {
         await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
@@ -525,7 +523,7 @@ async function checkDuplicate(
   cityId: string,
   sourceUrl: string,
 ): Promise<DedupResult> {
-  const existingQueueItem = await checkSourceUrlDuplicate(sourceUrl);
+  const existingQueueItem = await checkSourceUrlDuplicate(sourceUrl, cityId, item.type);
   if (existingQueueItem.isDuplicate) return existingQueueItem;
 
   if (item.type === 'EVENT') {
@@ -535,16 +533,44 @@ async function checkDuplicate(
   return checkCommunityDuplicate(item, cityId);
 }
 
-async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> {
+function normalizeSourceUrlForDedup(sourceUrl: string | null | undefined): string | null {
+  if (!sourceUrl) return null;
+  try {
+    const url = new URL(sourceUrl);
+    const pathname = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
+    return `${url.hostname.toLowerCase()}${pathname}`;
+  } catch {
+    return sourceUrl.toLowerCase().replace(/\/+$/, '');
+  }
+}
+
+async function checkSourceUrlDuplicate(
+  sourceUrl: string,
+  cityId: string,
+  itemType: ExtractedData['type'],
+): Promise<DedupResult> {
+  const entityType = itemType === 'EVENT' ? 'EVENT' : 'COMMUNITY';
   const existingQueueItem = await db.pipelineItem.findFirst({
     where: {
       sourceUrl,
+      cityId,
+      entityType,
       status: { in: ['PENDING', 'APPROVED'] },
     },
     select: { id: true },
   });
 
-  if (!existingQueueItem) {
+  if (existingQueueItem) {
+    return {
+      isDuplicate: true,
+      matchedId: existingQueueItem.id,
+      matchScore: 1.0,
+      matchKind: 'PIPELINE_ITEM',
+    };
+  }
+
+  const normalizedIncoming = normalizeSourceUrlForDedup(sourceUrl);
+  if (!normalizedIncoming) {
     return {
       isDuplicate: false,
       matchedId: null,
@@ -553,11 +579,34 @@ async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> 
     };
   }
 
+  const recentQueueItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType,
+      status: { in: ['PENDING', 'APPROVED'] },
+      sourceUrl: { not: null },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 300,
+    select: { id: true, sourceUrl: true },
+  });
+
+  for (const candidate of recentQueueItems) {
+    if (normalizeSourceUrlForDedup(candidate.sourceUrl) === normalizedIncoming) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: 1.0,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+  }
+
   return {
-    isDuplicate: true,
-    matchedId: existingQueueItem.id,
-    matchScore: 1.0,
-    matchKind: 'PIPELINE_ITEM',
+    isDuplicate: false,
+    matchedId: null,
+    matchScore: null,
+    matchKind: null,
   };
 }
 
@@ -686,7 +735,7 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     where: {
       cityId,
       entityType: 'EVENT',
-      status: 'PENDING',
+      status: { in: ['PENDING', 'APPROVED'] },
     },
     select: { id: true, extractedData: true },
   });
@@ -773,6 +822,47 @@ async function checkCommunityDuplicate(
       matchScore: semanticMatch.confidence,
       matchKind: 'ENTITY',
     };
+  }
+
+  const pendingCommunityItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType: 'COMMUNITY',
+      status: { in: ['PENDING', 'APPROVED'] },
+    },
+    select: { id: true, extractedData: true },
+  });
+
+  const normalizedIncomingName = community.name
+    .toLowerCase()
+    .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  for (const pending of pendingCommunityItems) {
+    const pendingCommunity = pending.extractedData as unknown as Partial<ExtractedData>;
+    if (pendingCommunity.type !== 'COMMUNITY' || !pendingCommunity.name) continue;
+
+    const pendingName = String(pendingCommunity.name)
+      .toLowerCase()
+      .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+    const score = computeSimilarity(normalizedIncomingName, pendingName);
+    if (
+      score > 0.7 ||
+      (normalizedIncomingName.length >= 8 && normalizedIncomingName === pendingName)
+    ) {
+      return {
+        isDuplicate: true,
+        matchedId: pending.id,
+        matchScore: score,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
   }
 
   return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
