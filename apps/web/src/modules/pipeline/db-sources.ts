@@ -78,6 +78,17 @@ function isMalformedDiscoveredHref(rawHref: string, resolved: URL): boolean {
   return false;
 }
 
+function isStableEventListingUrl(url: string): boolean {
+  try {
+    const path = new URL(url).pathname.toLowerCase().replace(/\/+$/, '');
+    return /\/(events?|calendar|activities|programme|program|agenda|schedule|upcoming-events?|veranstaltungen|termine)$/.test(
+      path,
+    );
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Fetch a community homepage and extract internal links that look like they
  * lead to an events or programme page.
@@ -225,6 +236,8 @@ export async function getDbCommunityStrategies(): Promise<
     if (!job || outcome?.status !== 'fulfilled') continue;
 
     for (const eventUrl of outcome.value) {
+      if (!isStableEventListingUrl(eventUrl)) continue;
+
       const pathKey = new URL(eventUrl).pathname
         .replace(/[^a-z0-9]+/gi, '-')
         .replace(/^-|-$/g, '')

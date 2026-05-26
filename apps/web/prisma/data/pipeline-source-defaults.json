@@ -136,37 +136,6 @@
       "enabled": true
     },
     {
-      "id": "web-berlin-welcome-center",
-      "sourceType": "WEBSITE_SCRAPE",
-      "kind": "pinned_url",
-      "contentScope": "official_portal",
-      "label": "Berlin Welcome Center — Official Expat Services Portal",
-      "url": "https://www.berlin.de/welcome/",
-      "scope": "CITY",
-      "hintCitySlug": "berlin",
-      "enabled": true
-    },
-    {
-      "id": "web-brandenburg-migs",
-      "sourceType": "WEBSITE_SCRAPE",
-      "kind": "pinned_url",
-      "contentScope": "official_portal",
-      "label": "Brandenburg Integration Portal — Official State Integration Portal",
-      "url": "https://integration.brandenburg.de/",
-      "scope": "CITY",
-      "hintCitySlug": "berlin",
-      "enabled": true
-    },
-    {
-      "id": "web-mea-germany-missions",
-      "sourceType": "WEBSITE_SCRAPE",
-      "kind": "pinned_url",
-      "contentScope": "directory_listing",
-      "label": "MEA India — Germany Missions Directory",
-      "url": "https://www.mea.gov.in/indian-missions-abroad-new.htm?country=Germany",
-      "enabled": true
-    },
-    {
       "id": "indoeuropean-events",
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
