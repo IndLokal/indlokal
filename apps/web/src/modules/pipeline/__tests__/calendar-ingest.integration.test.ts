@@ -11,6 +11,19 @@ const embeddedHolidayCalendarId = Buffer.from(
 const testCitySlug = `stuttgart-calendar-${runId}`;
 const testCityName = `Stuttgart Calendar ${runId}`;
 let extractionMode: 'calendar-event' | 'duplicate-community' = 'calendar-event';
+let hasPipelineItemsTable = true;
+
+async function detectPipelineItemsTable() {
+  const result = (await db.$queryRaw`
+    SELECT EXISTS (
+      SELECT 1
+      FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_name = 'pipeline_items'
+    ) AS "exists"
+  `) as Array<{ exists: boolean }>;
+
+  return Boolean(result[0]?.exists);
+}
 
 vi.mock('../runtime-config', () => ({
   getRuntimeEnabledRegions: vi.fn(async () => [
@@ -209,6 +222,13 @@ const autumnEventsIcs = [
 let icsBody = juneEventIcs;
 
 describe('@db pipeline calendar ingestion integration', () => {
+  beforeEach(async (ctx) => {
+    hasPipelineItemsTable = await detectPipelineItemsTable();
+    if (!hasPipelineItemsTable) {
+      ctx.skip();
+    }
+  });
+
   beforeEach(async () => {
     extractionMode = 'calendar-event';
     icsBody = juneEventIcs;
@@ -263,6 +283,12 @@ describe('@db pipeline calendar ingestion integration', () => {
   });
 
   afterAll(async () => {
+    if (!hasPipelineItemsTable) {
+      vi.restoreAllMocks();
+      await db.$disconnect();
+      return;
+    }
+
     await db.pipelineItem.deleteMany({
       where: { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
     });
