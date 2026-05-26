@@ -81,7 +81,7 @@ export default async function AdminCommunitiesPage({
           </select>
         </label>
         <label className="text-sm">
-          <div className="text-muted">Status</div>
+          <div className="text-muted">Lifecycle Status</div>
           <select
             name="status"
             defaultValue={sp.status ?? ''}
@@ -94,7 +94,7 @@ export default async function AdminCommunitiesPage({
           </select>
         </label>
         <label className="text-sm">
-          <div className="text-muted">Claim State</div>
+          <div className="text-muted">Claim Status</div>
           <select
             name="claimState"
             defaultValue={sp.claimState ?? ''}
@@ -122,8 +122,8 @@ export default async function AdminCommunitiesPage({
             <tr>
               <th className="text-muted px-3 py-2 font-medium">Community</th>
               <th className="text-muted px-3 py-2 font-medium">City</th>
-              <th className="text-muted px-3 py-2 font-medium">Status</th>
-              <th className="text-muted px-3 py-2 font-medium">Claim</th>
+              <th className="text-muted px-3 py-2 font-medium">Lifecycle Status</th>
+              <th className="text-muted px-3 py-2 font-medium">Claim Status</th>
               <th className="text-muted px-3 py-2 font-medium">Events</th>
               <th className="text-muted px-3 py-2 font-medium">Channels</th>
               <th />
