@@ -12,8 +12,13 @@
  */
 
 import { runPipeline } from './orchestrator';
-import { getEnabledRegions, getKeywordStrategies, getPinnedStrategies } from './config';
 import { getDbCommunityStrategies } from './db-sources';
+import {
+  getRuntimeEnabledRegions,
+  getRuntimeKeywordSeeds,
+  getRuntimeKeywordStrategies,
+  getRuntimePinnedStrategies,
+} from './runtime-config';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -42,18 +47,21 @@ async function main() {
     process.exit(1);
   }
 
-  const regions = getEnabledRegions();
-  const keywordStrategies = getKeywordStrategies();
-  const pinnedStrategies = getPinnedStrategies();
+  const regions = await getRuntimeEnabledRegions();
+  const keywordSeeds = await getRuntimeKeywordSeeds();
+  const keywordStrategies = await getRuntimeKeywordStrategies();
+  const pinnedStrategies = await getRuntimePinnedStrategies();
 
   console.log(`\n📍 Regions (${regions.length}):`);
   for (const r of regions) {
     console.log(`   • ${r.label} — cities: ${r.citySlugs.join(', ')}`);
   }
 
-  console.log(`\n🔍 Keyword strategies (${keywordStrategies.length}):`);
+  console.log(
+    `\n🔍 Keyword templates (${keywordStrategies.length}) · canonical seeds (${keywordSeeds.length}):`,
+  );
   for (const s of keywordStrategies) {
-    console.log(`   • ${s.label} — ${s.keywords.length} keywords, ${s.radiusKm}km radius`);
+    console.log(`   • ${s.label} — ${s.radiusKm}km radius`);
   }
 
   console.log(`\n📌 Pinned URLs (${pinnedStrategies.length} static):`);
