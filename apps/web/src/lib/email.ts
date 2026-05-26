@@ -124,7 +124,7 @@ export async function sendClaimApprovedEmail(
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">You're now the organizer of ${communityName}!</h2>
-  <p>Your ownership claim has been reviewed and approved. Your community now displays a <strong>Verified</strong> badge on IndLokal.</p>
+  <p>Your ownership claim has been reviewed and approved. Your community listing is now shown as <strong>Claimed by organizer</strong> on IndLokal.</p>
   <p>You can now:</p>
   <ul style="line-height:1.7">
     <li>Edit your community profile (description, logo, channels)</li>
@@ -221,7 +221,7 @@ export async function sendSubmissionApprovedEmail(
       View your community page →
     </a>
   </p>
-  <p style="font-size:13px">Want to manage your listing, add events, and earn a Verified badge? 
+  <p style="font-size:13px">Want to manage your listing and add events as the organizer? 
     <a href="${APP_URL}/${citySlug}/communities/${communitySlug}" style="color:#4f46e5">Claim your community →</a>
   </p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">

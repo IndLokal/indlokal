@@ -60,9 +60,14 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
                 🔥 Trending
               </span>
             )}
+            {community.status === 'UNVERIFIED' && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">
+                Provisional
+              </span>
+            )}
             {community.claimState === 'CLAIMED' && (
               <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
-                ✓ Verified
+                Claimed by organizer
               </span>
             )}
             <ActivityBadge score={community.activityScore ?? 0} />
