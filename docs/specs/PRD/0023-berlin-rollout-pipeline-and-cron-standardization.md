@@ -51,7 +51,6 @@ Without this baseline, onboarding additional regions creates inconsistent city h
 ## 7. Acceptance Criteria (Gherkin)
 
 ```text
-Given a pipeline cron call with ?region=berlin
 Given a submit request for a metro satellite city
 When validation succeeds
 Then the submission is accepted
