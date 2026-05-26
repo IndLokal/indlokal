@@ -103,9 +103,10 @@ export default function JourneyScreen() {
     try {
       const res = await queryCache(
         `journey:${slug}`,
-        () => authClient.getPublic<JourneyResponse>(
-          `/api/v1/cities/${encodeURIComponent(slug)}/resources/journey`,
-        ),
+        () =>
+          authClient.getPublic<JourneyResponse>(
+            `/api/v1/cities/${encodeURIComponent(slug)}/resources/journey`,
+          ),
         { ttl: 10 * 60 * 1000 },
       );
       setData(res);
@@ -138,10 +139,7 @@ export default function JourneyScreen() {
         if (next.has(id)) next.delete(id);
         else next.add(id);
         if (citySlug) {
-          void AsyncStorage.setItem(
-            CHECKED_KEY(citySlug),
-            JSON.stringify(Array.from(next)),
-          );
+          void AsyncStorage.setItem(CHECKED_KEY(citySlug), JSON.stringify(Array.from(next)));
         }
         return next;
       });
@@ -156,15 +154,10 @@ export default function JourneyScreen() {
     else Alert.alert("Couldn't open link", url);
   }
 
-  const populated = useMemo(
-    () => (data?.stages ?? []).filter((s) => s.items.length > 0),
-    [data],
-  );
+  const populated = useMemo(() => (data?.stages ?? []).filter((s) => s.items.length > 0), [data]);
   const total = useMemo(() => {
     if (!data) return 0;
-    return (
-      data.stages.reduce((acc, s) => acc + s.items.length, 0) + data.unscheduled.length
-    );
+    return data.stages.reduce((acc, s) => acc + s.items.length, 0) + data.unscheduled.length;
   }, [data]);
   const done = checked.size;
 
@@ -174,8 +167,7 @@ export default function JourneyScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Your Newcomer Journey</Text>
         <Text style={styles.sub}>
-          The official steps Indian newcomers need to complete - grouped by when they
-          matter.
+          The official steps Indian newcomers need to complete - grouped by when they matter.
         </Text>
 
         {total > 0 && (
@@ -195,7 +187,7 @@ export default function JourneyScreen() {
           return (
             <View key={s.stage} style={styles.group}>
               <Text style={styles.groupTitle}>
-                {meta.icon}  {meta.title}
+                {meta.icon} {meta.title}
               </Text>
               <Text style={styles.groupBlurb}>{meta.blurb}</Text>
               {s.items.map((item) => {

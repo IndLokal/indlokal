@@ -154,9 +154,7 @@ export default async function JourneyPage({ params }: Props) {
       {rows.length === 0 && (
         <div className="border-border rounded-xl border border-dashed p-10 text-center">
           <p className="text-muted text-lg">No journey items yet</p>
-          <p className="text-muted mt-1 text-sm">
-            Browse the full resource library instead.
-          </p>
+          <p className="text-muted mt-1 text-sm">Browse the full resource library instead.</p>
           <Link
             href={`/${city}/resources`}
             className="btn-primary mt-4 inline-block px-4 py-2 text-sm"

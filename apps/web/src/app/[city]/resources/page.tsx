@@ -100,8 +100,8 @@ export default async function ResourcesHubPage({ params }: Props) {
                 New to {cityName}? Start here
               </h2>
               <p className="text-brand-700 mt-1 text-sm">
-                {essentialsCount} essential step{essentialsCount === 1 ? '' : 's'} for your first
-                30 days - the official ones every Indian newcomer needs.
+                {essentialsCount} essential step{essentialsCount === 1 ? '' : 's'} for your first 30
+                days - the official ones every Indian newcomer needs.
               </p>
             </div>
             <Link

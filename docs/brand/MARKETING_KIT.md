@@ -312,7 +312,7 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 > Anything missing from your city? Reply to this email - a real person reads it.
 >
 > - The IndLokal team
-> indlokal.de
+>   indlokal.de
 
 ### Newsletter - _The Weekly Lokal_ subject template
 
@@ -323,15 +323,19 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 > # The Weekly Lokal · {City} · {date}
 >
 > **What's alive this week**
+>
 > - 3-5 event cards, sorted by date.
 >
 > **Communities just posted something new**
+>
 > - 2-3 community cards.
 >
 > **Newly added to the resources hub**
+>
 > - 1-3 guides relevant to {city}.
 >
 > **One thing worth knowing**
+>
 > - A short, useful nugget - e.g. "CGI Munich consular camp in Mannheim, {date}" or "Anmeldung wait times dropped at {Bürgeramt} this month."
 >
 > _You're getting this because you signed up at indlokal.de. Unsubscribe → {link}._

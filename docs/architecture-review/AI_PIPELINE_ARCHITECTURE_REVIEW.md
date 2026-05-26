@@ -172,7 +172,7 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 **Fix.**
 
 - Add `PipelineSourceRun` (one row per source per run: bytes, items, errors, duration).
-- Add `PipelineLlmCall` (one row per LLM call: stage, model, prompt_tokens, completion_tokens, duration_ms, ok, error, runId, sourceId, batchSize). This is the _single highest-leverage_ observability change.
+- Add `PipelineLlmCall` (one row per LLM call: stage, model, prompt*tokens, completion_tokens, duration_ms, ok, error, runId, sourceId, batchSize). This is the \_single highest-leverage* observability change.
 - Persist prompt + response _hash_ (not body) on `PipelineItem` for forensics. Body in cold storage (S3/Blob) keyed by hash, behind a feature flag.
 - Replace `console.log` with a structured logger (pino) emitting JSON. Vercel + Logflare/Axiom ingests this natively.
 - Wire two PostHog/metric alerts: `filter_fail_open_rate > 5%`, `extract_circuit_open == true`.
