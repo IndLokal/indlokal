@@ -2151,7 +2151,7 @@ const FRANKFURT: DirectoryEntry[] = [
     channels: [
       {
         channelType: 'WEBSITE',
-        url: 'https://rheinmainkannadasangha.org/',
+        url: 'https://www.rmksgermany.org',
         label: 'Website',
         isPrimary: true,
       },
