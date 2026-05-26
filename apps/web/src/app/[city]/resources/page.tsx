@@ -3,14 +3,17 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
+import { getResourcesForCity } from '@/modules/resources';
 
 /**
- * Resources Hub — category card grid linking to sub-pages.
+ * Resources Hub — category card grid + journey checklist.
  *
  * Route: /[city]/resources/
  * Example: /stuttgart/resources/
  *
- * Each category card links to /[city]/resources/[category]/.
+ * Now driven by the resolver (PRD/TDD-0030), so counts include CITY +
+ * METRO + STATE + COUNTRY rows (with consulate filtering) — satellite
+ * cities like Karlsruhe inherit Stuttgart's metro rows automatically.
  */
 
 type Props = { params: Promise<{ city: string }> };
@@ -24,6 +27,8 @@ const POPULAR_GUIDES = [
   { slug: 'guide-steuererklaerung-basics', label: 'Tax Return', icon: '💰' },
   { slug: 'guide-apartment-search-stuttgart', label: 'Apartment Search', icon: '🏠' },
 ];
+
+const CONSULAR_TYPES = ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city } = await params;
@@ -40,52 +45,30 @@ export default async function ResourcesHubPage({ params }: Props) {
 
   const cityRow = await db.city.findUnique({
     where: { slug: city },
-    select: { name: true, isActive: true, id: true, satelliteCities: { select: { id: true } } },
+    select: { name: true, isActive: true },
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const cityIds = [cityRow.id, ...cityRow.satelliteCities.map((s: { id: string }) => s.id)];
   const cityName = cityRow.name;
 
-  // Count resources per type for badge numbers
-  const counts = await db.resource.groupBy({
-    by: ['resourceType'],
-    where: {
-      cityId: { in: cityIds },
-      isHidden: false,
-      OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
-    },
-    _count: true,
-  });
+  // Single resolver call → full resource set (CITY+METRO+STATE+COUNTRY).
+  const resources = await getResourcesForCity(city);
+
+  // Count by resourceType.
   const countMap: Record<string, number> = {};
-  for (const c of counts) {
-    countMap[c.resourceType] = c._count;
+  for (const r of resources) {
+    countMap[r.resourceType] = (countMap[r.resourceType] ?? 0) + 1;
   }
 
-  // Check which popular guides actually exist
-  const popularResources = await db.resource.findMany({
-    where: {
-      slug: { in: POPULAR_GUIDES.map((g) => g.slug) },
-      cityId: { in: cityIds },
-      isHidden: false,
-    },
-    select: { slug: true, resourceType: true },
-  });
-  const existingSlugs = new Set(popularResources.map((r) => r.slug));
+  const consularCount = resources.filter((r) => CONSULAR_TYPES.includes(r.resourceType)).length;
+  const popularBySlug = new Map(
+    resources.filter((r) => POPULAR_GUIDES.some((g) => g.slug === r.slug)).map((r) => [r.slug, r]),
+  );
 
-  // Consular count (separate page)
-  const consularCount = await db.resource.count({
-    where: {
-      cityId: { in: cityIds },
-      isHidden: false,
-      resourceType: {
-        in: ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'],
-      },
-      OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
-    },
-  });
+  const essentials = resources.filter((r) => r.isEssential);
+  const essentialsCount = essentials.length;
 
-  const totalGuides = Object.values(countMap).reduce((a, b) => a + b, 0) + consularCount;
+  const totalGuides = resources.length;
 
   return (
     <div className="space-y-10">
@@ -108,16 +91,60 @@ export default async function ResourcesHubPage({ params }: Props) {
         </p>
       </div>
 
+      {/* Newcomer Journey — first 30 days checklist */}
+      {essentialsCount > 0 && (
+        <section className="border-brand-100 bg-brand-50/60 rounded-2xl border p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-brand-900 text-lg font-semibold">
+                New to {cityName}? Start here
+              </h2>
+              <p className="text-brand-700 mt-1 text-sm">
+                {essentialsCount} essential step{essentialsCount === 1 ? '' : 's'} for your first
+                30 days — the official ones every Indian newcomer needs.
+              </p>
+            </div>
+            <Link
+              href={`/${city}/resources/journey`}
+              className="btn-primary shrink-0 px-4 py-2 text-sm"
+            >
+              Open checklist →
+            </Link>
+          </div>
+          <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+            {essentials.slice(0, 6).map((r) => {
+              const cat = RESOURCE_CATEGORIES.find((c) => c.type === r.resourceType);
+              const categorySlug = cat?.slug ?? 'city-registration';
+              return (
+                <li key={r.slug}>
+                  <Link
+                    href={`/${city}/resources/${categorySlug}#${r.slug}`}
+                    className="hover:ring-brand-200 group flex items-center gap-3 rounded-lg bg-white px-3 py-2.5 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5"
+                  >
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-sm shadow-sm`}
+                    >
+                      {cat?.icon ?? '✓'}
+                    </span>
+                    <span className="text-foreground group-hover:text-brand-600 truncate text-sm font-medium transition-colors">
+                      {r.title}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {/* Popular guides — quick access */}
-      {POPULAR_GUIDES.some((g) => existingSlugs.has(g.slug)) && (
+      {POPULAR_GUIDES.some((g) => popularBySlug.has(g.slug)) && (
         <section>
           <h2 className="text-lg font-semibold">Popular Guides</h2>
           <div className="mt-3 flex flex-wrap gap-2">
-            {POPULAR_GUIDES.filter((g) => existingSlugs.has(g.slug)).map((guide) => {
-              const resource = popularResources.find((r) => r.slug === guide.slug);
-              const cat = resource
-                ? RESOURCE_CATEGORIES.find((c) => c.type === resource.resourceType)
-                : null;
+            {POPULAR_GUIDES.filter((g) => popularBySlug.has(g.slug)).map((guide) => {
+              const resource = popularBySlug.get(guide.slug)!;
+              const cat = RESOURCE_CATEGORIES.find((c) => c.type === resource.resourceType);
               const categorySlug = cat?.slug ?? 'city-registration';
               return (
                 <Link

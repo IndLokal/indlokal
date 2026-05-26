@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import type { ResourceType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE } from '@/lib/config';
+import { getResourcesForCity } from '@/modules/resources';
 
 /**
  * Resource Category Page — all guides within one topic.
@@ -36,22 +37,17 @@ export default async function ResourceCategoryPage({ params }: Props) {
 
   const cityRow = await db.city.findUnique({
     where: { slug: city },
-    select: { name: true, isActive: true, id: true, satelliteCities: { select: { id: true } } },
+    select: { name: true, isActive: true },
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const cityIds = [cityRow.id, ...cityRow.satelliteCities.map((s: { id: string }) => s.id)];
   const cityName = cityRow.name;
 
-  const resources = await db.resource.findMany({
-    where: {
-      cityId: { in: cityIds },
-      resourceType: resourceType as ResourceType,
-      isHidden: false,
-      OR: [{ validUntil: null }, { validUntil: { gte: new Date() } }],
-    },
-    orderBy: { title: 'asc' },
+  // Resolver returns CITY + METRO + STATE + COUNTRY rows for this category.
+  const resources = await getResourcesForCity(city, {
+    type: resourceType as ResourceType,
   });
+  resources.sort((a, b) => a.title.localeCompare(b.title));
 
   // Related categories (exclude current)
   const related = RESOURCE_CATEGORIES.filter((c) => c.slug !== category).slice(0, 3);
