@@ -8,17 +8,21 @@ export const metadata = { title: 'Communities — Admin' };
 export default async function AdminCommunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; status?: string; q?: string }>;
+  searchParams: Promise<{ city?: string; status?: string; claimState?: string; q?: string }>;
 }) {
   const sp = await searchParams;
   const where: {
     city?: { slug: string };
-    status?: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' | 'CLAIMED';
+    status?: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
+    claimState?: 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
     name?: { contains: string; mode: 'insensitive' };
   } = {};
   if (sp.city) where.city = { slug: sp.city };
-  if (sp.status && ['ACTIVE', 'INACTIVE', 'UNVERIFIED', 'CLAIMED'].includes(sp.status)) {
-    where.status = sp.status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' | 'CLAIMED';
+  if (sp.status && ['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(sp.status)) {
+    where.status = sp.status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
+  }
+  if (sp.claimState && ['UNCLAIMED', 'CLAIM_PENDING', 'CLAIMED'].includes(sp.claimState)) {
+    where.claimState = sp.claimState as 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
   }
   if (sp.q) where.name = { contains: sp.q, mode: 'insensitive' };
 
@@ -87,6 +91,18 @@ export default async function AdminCommunitiesPage({
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="UNVERIFIED">Unverified</option>
+          </select>
+        </label>
+        <label className="text-sm">
+          <div className="text-muted">Claim State</div>
+          <select
+            name="claimState"
+            defaultValue={sp.claimState ?? ''}
+            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
+          >
+            <option value="">— any —</option>
+            <option value="UNCLAIMED">Unclaimed</option>
+            <option value="CLAIM_PENDING">Claim pending</option>
             <option value="CLAIMED">Claimed</option>
           </select>
         </label>
@@ -107,6 +123,7 @@ export default async function AdminCommunitiesPage({
               <th className="text-muted px-3 py-2 font-medium">Community</th>
               <th className="text-muted px-3 py-2 font-medium">City</th>
               <th className="text-muted px-3 py-2 font-medium">Status</th>
+              <th className="text-muted px-3 py-2 font-medium">Claim</th>
               <th className="text-muted px-3 py-2 font-medium">Events</th>
               <th className="text-muted px-3 py-2 font-medium">Channels</th>
               <th />
@@ -131,7 +148,6 @@ export default async function AdminCommunitiesPage({
                       <option value="ACTIVE">ACTIVE</option>
                       <option value="INACTIVE">INACTIVE</option>
                       <option value="UNVERIFIED">UNVERIFIED</option>
-                      <option value="CLAIMED">CLAIMED</option>
                     </select>
                     <button
                       type="submit"
@@ -141,6 +157,7 @@ export default async function AdminCommunitiesPage({
                     </button>
                   </form>
                 </td>
+                <td className="px-3 py-2 text-xs font-medium">{c.claimState}</td>
                 <td className="px-3 py-2 text-xs">{c._count.events}</td>
                 <td className="px-3 py-2 text-xs">{c._count.accessChannels}</td>
                 <td className="px-3 py-2 text-right">
