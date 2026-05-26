@@ -3,10 +3,14 @@
  *
  * **Fresh-DB note:** For environments that apply the migrations from
  * scratch, this script is a no-op — the seed in `prisma/resources.ts`
- * already produces correctly-scoped rows by consuming the same
- * `resource-classification.ts`. This script exists for environments that
- * were seeded BEFORE the v2 model landed and now need their existing rows
- * re-shaped in place.
+ * already produces correctly-scoped rows. This script exists for
+ * environments that were seeded BEFORE the v2 model landed and now need
+ * their existing rows re-shaped in place.
+ *
+ * Source of truth is `RESOURCE_DEFS` in `prisma/resources.ts`: scope,
+ * consulate tagging, essentials and title rewrites are all authored
+ * inline on each entry. This script just replays those intents as
+ * UPDATEs against the existing rows.
  *
  * Idempotent. Safe to re-run.
  *
@@ -14,19 +18,25 @@
  */
 
 import { PrismaClient, type Prisma } from '@prisma/client';
-import {
-  CONSULATE_TAGS,
-  COUNTRY_SCOPE_SLUGS,
-  DUPLICATE_SLUGS,
-  ESSENTIAL_SLUGS,
-  TITLE_REWRITES,
-} from './resource-classification';
+import { DUPLICATE_SLUGS } from './resource-classification';
+import { RESOURCE_DEFS } from './resources';
 
 const prisma = new PrismaClient();
 
+const COUNTRY_SLUGS = RESOURCE_DEFS.filter((e) => e.scope === 'COUNTRY').map((e) => e.slug);
+const CONSULATE_ENTRIES = RESOURCE_DEFS.filter((e) => e.consulate).map((e) => ({
+  slug: e.slug,
+  consulate: e.consulate!,
+}));
+const ESSENTIAL_SLUGS = RESOURCE_DEFS.filter((e) => e.isEssential).map((e) => e.slug);
+const TITLE_REWRITE_ENTRIES = RESOURCE_DEFS.filter(
+  (e) => e.slug === 'guide-116117-doctor-on-duty-munich',
+).map((e) => ({ slug: e.slug, title: e.title, description: e.description }));
+
 async function promoteToCountry(): Promise<number> {
+  if (COUNTRY_SLUGS.length === 0) return 0;
   const res = await prisma.resource.updateMany({
-    where: { slug: { in: [...COUNTRY_SCOPE_SLUGS] } },
+    where: { slug: { in: COUNTRY_SLUGS } },
     data: { scope: 'COUNTRY', scopeRegion: 'DE', cityId: null },
   });
   return res.count;
@@ -41,10 +51,10 @@ async function dropDuplicates(): Promise<number> {
 
 async function applyTitleRewrites(): Promise<number> {
   let updated = 0;
-  for (const [slug, rewrite] of Object.entries(TITLE_REWRITES)) {
+  for (const rw of TITLE_REWRITE_ENTRIES) {
     const r = await prisma.resource.updateMany({
-      where: { slug },
-      data: { title: rewrite.title, description: rewrite.description },
+      where: { slug: rw.slug },
+      data: { title: rw.title, description: rw.description },
     });
     updated += r.count;
   }
@@ -53,7 +63,7 @@ async function applyTitleRewrites(): Promise<number> {
 
 async function tagConsulates(): Promise<number> {
   let updated = 0;
-  for (const [slug, consulate] of Object.entries(CONSULATE_TAGS)) {
+  for (const { slug, consulate } of CONSULATE_ENTRIES) {
     const row = await prisma.resource.findUnique({
       where: { slug },
       select: { metadata: true },
@@ -78,9 +88,10 @@ async function tagConsulates(): Promise<number> {
 }
 
 async function markEssentials(): Promise<number> {
+  if (ESSENTIAL_SLUGS.length === 0) return 0;
   const res = await prisma.resource.updateMany({
-    where: { slug: { in: [...ESSENTIAL_SLUGS] } },
-    data: { isEssential: true, priority: 80 },
+    where: { slug: { in: ESSENTIAL_SLUGS } },
+    data: { isEssential: true, priority: 80, lifecycleStage: ['FIRST_30_DAYS'] },
   });
   return res.count;
 }

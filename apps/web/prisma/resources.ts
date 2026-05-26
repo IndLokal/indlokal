@@ -38,13 +38,7 @@ import {
   type Prisma,
 } from '@prisma/client';
 import { assessEvidenceUrl, getQualifyingEvidence } from '../src/lib/source-policy';
-import {
-  CONSULATE_TAGS,
-  COUNTRY_SCOPE_SLUGS,
-  DUPLICATE_SLUG_SET,
-  ESSENTIAL_SLUG_SET,
-  TITLE_REWRITES,
-} from './resource-classification';
+import { DUPLICATE_SLUG_SET } from './resource-classification';
 
 const prisma = new PrismaClient();
 
@@ -89,6 +83,8 @@ export type ResourceEntry = {
   reviewCadenceDays?: number;
   // PRD/TDD-0030 additions — defaults derived in the seeder when absent.
   scope?: ResourceScope;
+  /** Indian consular post that should surface this entry (resolver-aware). */
+  consulate?: 'berlin' | 'frankfurt' | 'munich';
   /**
    * Region identifier for the scope:
    *  - GLOBAL  → null
@@ -126,6 +122,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Passport Seva Portal — Renewal & New Applications',
     slug: 'passport-seva-renewal-india',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'GOVERNMENT_INFO',
     url: 'https://passportindia.gov.in',
     description:
@@ -134,6 +132,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'VFS Global — Indian Visa & Passport Services Germany',
     slug: 'vfs-global-india-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'VISA_SERVICE',
     url: 'https://www.vfsglobal.com/India/Germany',
     description:
@@ -142,6 +142,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'OCI Card — Application & Renewal',
     slug: 'oci-card-application-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'GOVERNMENT_INFO',
     url: 'https://ociservices.gov.in',
     description:
@@ -150,6 +152,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Police Clearance Certificate (PCC) — Germany',
     slug: 'pcc-india-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CONSULAR_SERVICE',
     url: 'https://www.cgimunich.gov.in/pages/pcc',
     description:
@@ -193,6 +197,9 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'CGI Munich — Republic Day & Independence Day Celebrations',
     slug: 'cgi-munich-national-day-celebrations',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    consulate: 'munich',
     resourceType: 'OFFICIAL_EVENT',
     url: 'https://www.cgimunich.gov.in',
     description:
@@ -201,6 +208,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'MOIA — Ministry of Overseas Indian Affairs Resources',
     slug: 'moia-overseas-indian-resources',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'GOVERNMENT_INFO',
     url: 'https://www.mea.gov.in/overseas-indian-affairs.htm',
     description:
@@ -211,6 +220,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Anmeldung — City Registration',
     slug: 'guide-anmeldung-stuttgart',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -219,6 +232,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Abmeldung — Deregistration When Leaving',
     slug: 'guide-abmeldung-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -235,6 +250,11 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'EU Blue Card — For Skilled Workers',
     slug: 'guide-eu-blue-card',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://www.make-it-in-germany.com/en/visa-residence/types/eu-blue-card',
     description:
@@ -243,6 +263,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Niederlassungserlaubnis — Permanent Residence',
     slug: 'guide-niederlassungserlaubnis-pr',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -251,6 +273,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Verpflichtungserklärung — Invitation Letter for Visitors',
     slug: 'guide-verpflichtungserklaerung',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -259,6 +283,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Family Reunion Visa — Bringing Spouse & Children',
     slug: 'guide-family-reunion-visa',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -267,6 +293,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Marriage Registration — Indian Couples in Germany',
     slug: 'guide-marriage-registration-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'CITY_REGISTRATION',
     url: null,
     description:
@@ -277,6 +305,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Driving Licence Conversion — Indian to German',
     slug: 'guide-driving-licence-conversion',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'DRIVING',
     url: null,
     description:
@@ -293,6 +323,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'International Driving Permit (IDP)',
     slug: 'guide-international-driving-permit',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'DRIVING',
     url: null,
     description:
@@ -319,6 +351,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Online Indian Grocery Delivery — Germany-Wide',
     slug: 'guide-online-indian-grocery-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'GROCERY_FOOD',
     url: null,
     description:
@@ -329,6 +363,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Job Portals for Internationals in Germany',
     slug: 'guide-job-portals-internationals',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'JOBS_CAREERS',
     url: null,
     description:
@@ -337,6 +373,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Freelance Visa — Self-Employment in Germany (§21 AufenthG)',
     slug: 'guide-freelance-visa-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'JOBS_CAREERS',
     url: null,
     description:
@@ -345,6 +383,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Agentur für Arbeit — Job Search & Unemployment Benefits',
     slug: 'guide-agentur-fuer-arbeit',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'JOBS_CAREERS',
     url: 'https://www.arbeitsagentur.de/',
     description:
@@ -355,6 +395,11 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Annual Tax Declaration (Steuererklärung)',
     slug: 'guide-steuererklaerung-basics',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'TAX_FINANCE',
     url: 'https://www.elster.de',
     description:
@@ -363,6 +408,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'India-Germany DTAA — Double Taxation Avoidance',
     slug: 'guide-dtaa-india-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'TAX_FINANCE',
     url: null,
     description:
@@ -371,6 +418,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'NRE & NRO Accounts — Managing Indian Finances from Germany',
     slug: 'guide-nre-nro-accounts',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'TAX_FINANCE',
     url: null,
     description:
@@ -379,6 +428,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'ELSTER — Online Tax Filing Portal',
     slug: 'guide-elster-tax-portal',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'TAX_FINANCE',
     url: 'https://www.elster.de',
     description:
@@ -387,6 +438,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Finding an English-Speaking Steuerberater',
     slug: 'guide-steuerberater-english',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'TAX_FINANCE',
     url: null,
     description:
@@ -397,6 +450,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Freiberufler vs Gewerbe — Understanding the Difference',
     slug: 'guide-freiberufler-vs-gewerbe',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'BUSINESS_SETUP',
     url: null,
     description:
@@ -405,6 +460,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Gewerbeanmeldung — Trade Licence Registration',
     slug: 'guide-gewerbeanmeldung',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'BUSINESS_SETUP',
     url: null,
     description:
@@ -413,6 +470,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Fragebogen zur steuerlichen Erfassung — Finanzamt Registration',
     slug: 'guide-fragebogen-steuerliche-erfassung',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'BUSINESS_SETUP',
     url: null,
     description:
@@ -423,6 +482,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Kindergeld — Child Benefit for Non-EU Families',
     slug: 'guide-kindergeld-non-eu',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'FAMILY_CHILDREN',
     url: 'https://familienportal.de/familienportal/familienleistungen/kindergeld',
     description:
@@ -431,6 +492,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Elterngeld — Parental Allowance',
     slug: 'guide-elterngeld-parental-allowance',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'FAMILY_CHILDREN',
     url: 'https://familienportal.de/familienportal/familienleistungen/elterngeld',
     description:
@@ -439,6 +502,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Mutterschutz & Elternzeit — Maternity Leave & Parental Leave',
     slug: 'guide-mutterschutz-elternzeit',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'FAMILY_CHILDREN',
     url: null,
     description:
@@ -465,6 +530,11 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Health Insurance — GKV vs PKV',
     slug: 'guide-health-insurance-gkv-pkv',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'HEALTH_DOCTORS',
     url: null,
     description:
@@ -481,6 +551,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Emergency Numbers & Hospitals',
     slug: 'guide-emergency-numbers-germany',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'HEALTH_DOCTORS',
     url: null,
     description:
@@ -499,6 +571,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Schufa — Credit Score in Germany',
     slug: 'guide-schufa-credit-score',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'HOUSING',
     url: 'https://www.schufa.de',
     description:
@@ -507,6 +581,8 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'GEZ / Rundfunkbeitrag — TV & Radio License Fee',
     slug: 'guide-gez-rundfunkbeitrag',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'HOUSING',
     url: 'https://www.rundfunkbeitrag.de',
     description:
@@ -519,6 +595,9 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Embassy of India, Berlin — Consular Services',
     slug: 'embassy-india-berlin-consular',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    consulate: 'berlin',
     resourceType: 'CONSULAR_SERVICE',
     url: 'https://indianembassyberlin.gov.in',
     description:
@@ -528,6 +607,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Anmeldung in Berlin — Bürgeramt Registration',
     slug: 'guide-anmeldung-berlin',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://service.berlin.de/dienstleistung/120335/',
     description:
@@ -537,6 +620,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Berlin Bürgeramt — Find a Location & Book Appointment',
     slug: 'berlin-buergeramt-locations',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://service.berlin.de/standorte/buergeraemter/',
     description:
@@ -595,6 +682,9 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'CGI Munich — Consulate General of India',
     slug: 'cgi-munich-consular-services',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    consulate: 'munich',
     resourceType: 'CONSULAR_SERVICE',
     url: 'https://www.cgimunich.gov.in',
     description:
@@ -604,6 +694,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Bürgerbüro München — Anmeldung & City Registration',
     slug: 'buergerbuero-munich',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://stadt.muenchen.de/infos/buergerbuero.html',
     description:
@@ -647,13 +741,14 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
     citySlug: 'munich',
   },
   {
-    title: '116117 — Doctor on Duty (Bavaria-wide)',
+    title: '116117 — Doctor-on-duty service (Germany-wide)',
     slug: 'guide-116117-doctor-on-duty-munich',
+    // folded from resource-classification
+    scope: 'COUNTRY',
     resourceType: 'HEALTH_DOCTORS',
     url: 'https://www.116117.de/',
     description:
-      'Call 116117 for non-emergency medical care across Germany, including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies always call 112 instead.',
-    citySlug: 'munich',
+      'Call 116117 anywhere in Germany for non-emergency medical care, including evenings, weekends and public holidays. For life-threatening emergencies always call 112.',
   },
   {
     title: 'ELSTER — Online Tax Filing',
@@ -671,6 +766,9 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'CGI Frankfurt — Consulate General of India',
     slug: 'cgi-frankfurt-consular-services',
+    // folded from resource-classification
+    scope: 'COUNTRY',
+    consulate: 'frankfurt',
     resourceType: 'CONSULAR_SERVICE',
     url: 'https://cgifrankfurt.gov.in/',
     description:
@@ -680,6 +778,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Frankfurt am Main — City Portal & Bürgerservice',
     slug: 'frankfurt-buergerservice',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://frankfurt.de/',
     description:
@@ -729,6 +831,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Karlsruhe — City Portal & Bürgerservice',
     slug: 'karlsruhe-buergerservice',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://www.karlsruhe.de/',
     description:
@@ -787,6 +893,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Mannheim Bürgerdienste — Anmeldung & City Services',
     slug: 'mannheim-buergerdienste',
+    // folded from resource-classification
+    isEssential: true,
+    priority: 80,
+    lifecycleStage: ['FIRST_30_DAYS'],
     resourceType: 'CITY_REGISTRATION',
     url: 'https://www.mannheim.de/de/service-bieten/buergerdienste',
     description:
@@ -883,12 +993,9 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       continue;
     }
 
-    // PRD/TDD-0030 — derive scope tier and the region identifier.
-    //   - If the slug is in COUNTRY_SCOPE_SLUGS or CONSULATE_TAGS, force COUNTRY.
-    //   - Otherwise honour `entry.scope`, defaulting to CITY.
-    const isCountryByClassification =
-      COUNTRY_SCOPE_SLUGS.includes(entry.slug) || entry.slug in CONSULATE_TAGS;
-    const scope: ResourceScope = isCountryByClassification ? 'COUNTRY' : (entry.scope ?? 'CITY');
+    // PRD/TDD-0030 — scope/consulate/essential are now authored inline on
+    // each entry (see ResourceEntry). Default to CITY when unspecified.
+    const scope: ResourceScope = entry.scope ?? 'CITY';
 
     // CITY/METRO rows need a city slug to derive the cityId; COUNTRY/STATE/
     // GLOBAL rows do not.
@@ -924,16 +1031,11 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
       continue;
     }
 
-    // Apply classification-driven overrides for title, essentials,
-    // consulate tagging.
-    const rewrite = TITLE_REWRITES[entry.slug];
-    const title = rewrite?.title ?? entry.title;
-    const description = rewrite?.description ?? entry.description;
-    const isEssential =
-      entry.isEssential !== undefined ? entry.isEssential : ESSENTIAL_SLUG_SET.has(entry.slug);
-    const priority =
-      entry.priority !== undefined ? entry.priority : ESSENTIAL_SLUG_SET.has(entry.slug) ? 80 : 50;
-    const consulate = CONSULATE_TAGS[entry.slug as keyof typeof CONSULATE_TAGS];
+    const title = entry.title;
+    const description = entry.description;
+    const isEssential = entry.isEssential ?? false;
+    const priority = entry.priority ?? (isEssential ? 80 : 50);
+    const consulate = entry.consulate;
 
     try {
       const baseMetadata: Prisma.JsonObject = {
