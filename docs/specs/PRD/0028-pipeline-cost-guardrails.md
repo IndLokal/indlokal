@@ -10,7 +10,7 @@ PRD-0026 and PRD-0027 made the pipeline visible and stopped two failure-amplifie
 
 - A bad source whose page balloons to 200 KB of text still goes into extract at full size; one run can quietly burn 100× normal tokens.
 - A prompt regression that increases output tokens by 5× silently doubles cost; we only learn from the OpenAI invoice.
-- A sustained OpenAI 5xx outage causes every batch to retry until the function timeout — the new `RetryBudget` bounds a _single_ batch's split tree but not the sum across many batches in one run.
+- A sustained OpenAI 5xx outage causes every batch to retry until the function timeout - the new `RetryBudget` bounds a _single_ batch's split tree but not the sum across many batches in one run.
 - There is no daily ceiling. If cron is triggered manually in a loop, we will pay for the loop.
 
 These are the failure modes the architecture review's R3, R10, and R17 jointly point at; PRD-0026 and PRD-0027 covered the observability half. This PRD covers the enforcement half.
@@ -18,7 +18,7 @@ These are the failure modes the architecture review's R3, R10, and R17 jointly p
 ## 2. Users & JTBD
 
 - **Operator:** "Tell the pipeline to stop spending if it has already burned its budget for this run."
-- **Operator on incident:** "When OpenAI is having a bad day, don't retry into the timeout — bail fast."
+- **Operator on incident:** "When OpenAI is having a bad day, don't retry into the timeout - bail fast."
 
 ## 3. Success Metrics
 
@@ -37,7 +37,7 @@ These are the failure modes the architecture review's R3, R10, and R17 jointly p
 
 ## 5. Out of Scope
 
-- **Cross-run global rate limiter** (token-bucket across all runs). Tracked as R17, deferred to Phase 2 with the queue. A per-run budget is the right primitive at current scale — there is exactly one cron-driven run per region per ~6 hours; a per-run cap is sufficient.
+- **Cross-run global rate limiter** (token-bucket across all runs). Tracked as R17, deferred to Phase 2 with the queue. A per-run budget is the right primitive at current scale - there is exactly one cron-driven run per region per ~6 hours; a per-run cap is sufficient.
 - **Dollar-denominated budgets.** Token counts are the durable unit; prices move and downstream tooling applies a price table.
 - **Adaptive budgets** (learn nominal cost, auto-tune). Premature optimization at one-region scale.
 - **Killing in-flight requests on budget exceed.** We check the budget _before_ the next `callOpenAI` call, not via abort. Simpler, deterministic, no half-billed requests.
@@ -84,5 +84,5 @@ No user-facing UX. Operator-only.
 
 - **Risk:** Budget tripping mid-extract leaves the run with extracted items unqueued. **Mitigation:** Orchestrator already persists `PipelineRun` via update() at the end; we add the budget/circuit booleans plus a clear error entry so the operator sees exactly what happened. Re-run will skip already-queued items via the existing URL dedup.
 - **Risk:** Circuit-breaker false trips during normal flakiness. **Mitigation:** Threshold defaults to 5 _consecutive_ failures (not 5 failures total). A single success resets the counter.
-- **Open:** Should the budget include the prefilter stage (zero LLM)? **Decision:** Budget tracks tokens, prefilter uses none, so it is implicitly free. Stage-level budget split (e.g. 30% filter / 70% extract) is deliberately not added — premature.
-- **Open:** Should budget be exposed in the cron route response? **Decision:** Yes, as part of `result` — already mechanically true once orchestrator copies the new counters.
+- **Open:** Should the budget include the prefilter stage (zero LLM)? **Decision:** Budget tracks tokens, prefilter uses none, so it is implicitly free. Stage-level budget split (e.g. 30% filter / 70% extract) is deliberately not added - premature.
+- **Open:** Should budget be exposed in the cron route response? **Decision:** Yes, as part of `result` - already mechanically true once orchestrator copies the new counters.

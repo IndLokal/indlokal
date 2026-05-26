@@ -2,9 +2,9 @@
 
 Principal-architect-level review of the IndLokal AI/data pipeline, conducted 2026-05-26.
 
-- **[AI_PIPELINE_ARCHITECTURE_REVIEW.md](AI_PIPELINE_ARCHITECTURE_REVIEW.md)** — full critique: structure, verdict per dimension, ranked issues, what's well-designed, scalability ceiling.
-- **[RISK_REGISTER.md](RISK_REGISTER.md)** — 20 risks with severity × likelihood and top-5 to fix this quarter.
-- **[IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md)** — phased plan (Phase 0 stop-the-bleeding → Phase 5 optional agent surface).
+- **[AI_PIPELINE_ARCHITECTURE_REVIEW.md](AI_PIPELINE_ARCHITECTURE_REVIEW.md)** - full critique: structure, verdict per dimension, ranked issues, what's well-designed, scalability ceiling.
+- **[RISK_REGISTER.md](RISK_REGISTER.md)** - 20 risks with severity × likelihood and top-5 to fix this quarter.
+- **[IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md)** - phased plan (Phase 0 stop-the-bleeding → Phase 5 optional agent surface).
 
 ## Headline findings
 

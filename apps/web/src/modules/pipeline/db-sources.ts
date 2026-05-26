@@ -1,5 +1,5 @@
 /**
- * DB-driven source generation — reads community access channels from the
+ * DB-driven source generation - reads community access channels from the
  * database and generates pinned_url strategies automatically.
  *
  * Instead of hardcoding community website URLs in runtime pipeline code, this module
@@ -99,7 +99,7 @@ function isStableEventListingUrl(url: string): boolean {
  *  - Score each by whether the URL path and/or link text matches event keywords
  *  - Return the top 5 highest-scored URLs
  *
- * Returns [] on any fetch/parse failure — caller must handle gracefully.
+ * Returns [] on any fetch/parse failure - caller must handle gracefully.
  */
 async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
   try {
@@ -112,7 +112,7 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
     const html = await res.text();
     const parsed = new URL(websiteUrl);
 
-    // Match <a href="...">link text</a> — captures href and inner content
+    // Match <a href="...">link text</a> - captures href and inner content
     const linkPattern =
       /<a\b[^>]*?\bhref=(?:"([^"#][^"]*?)"|'([^'#][^']*?)'|([^\s>"'#][^\s>]*))[^>]*>([\s\S]*?)<\/a>/gi;
 
@@ -194,7 +194,7 @@ export async function getDbCommunityStrategies(): Promise<
       const base = channel.url.replace(/\/$/, '');
 
       if (channel.channelType === 'MEETUP') {
-        // Scrape /events/ — the group homepage has org info (→ COMMUNITY,
+        // Scrape /events/ - the group homepage has org info (→ COMMUNITY,
         // deduped); the events page has upcoming event listings (→ EVENTs).
         const eventsUrl = base.endsWith('/events') ? `${base}/` : `${base}/events/`;
         strategies.push({

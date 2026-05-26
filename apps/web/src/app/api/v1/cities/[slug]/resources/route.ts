@@ -1,13 +1,13 @@
 /**
- * GET /api/v1/cities/:slug/resources — City resources resolved across all
+ * GET /api/v1/cities/:slug/resources - City resources resolved across all
  * scope tiers (GLOBAL → COUNTRY → STATE → METRO → CITY) with consular
  * jurisdiction filtering. PRD/TDD-0030.
  *
  * Query params (all optional):
- *   type           — ResourceType enum value or slug (city-registration)
- *   audience       — NEWCOMER | FAMILY | FOUNDER | EMPLOYEE | STUDENT | STUDENT_VISA | SENIOR | RETURNEE
- *   stage          — PRE_ARRIVAL | FIRST_30_DAYS | FIRST_90_DAYS | SETTLED | ANYTIME
- *   essentialsOnly — '1' | 'true' to only return rows with isEssential=true
+ *   type           - ResourceType enum value or slug (city-registration)
+ *   audience       - NEWCOMER | FAMILY | FOUNDER | EMPLOYEE | STUDENT | STUDENT_VISA | SENIOR | RETURNEE
+ *   stage          - PRE_ARRIVAL | FIRST_30_DAYS | FIRST_90_DAYS | SETTLED | ANYTIME
+ *   essentialsOnly - '1' | 'true' to only return rows with isEssential=true
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

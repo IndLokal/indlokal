@@ -8,11 +8,11 @@
 
 Three small surgical changes:
 
-1. `apps/web/src/app/admin/(dashboard)/submissions/page.tsx` — narrow the
+1. `apps/web/src/app/admin/(dashboard)/submissions/page.tsx` - narrow the
    list query.
-2. `apps/web/src/modules/pipeline/review.ts` — pass an explicit status
+2. `apps/web/src/modules/pipeline/review.ts` - pass an explicit status
    when materializing a pipeline extraction into a `Community`.
-3. `apps/web/prisma/directory.ts` — change default insert status.
+3. `apps/web/prisma/directory.ts` - change default insert status.
 
 ## 2. Data model
 
@@ -103,7 +103,7 @@ corrected.
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------- |
 | Backfill SQL not run                       | Old `UNVERIFIED` seeded rows linger as silent backlog; mitigated by the source filter on the queue. |
 | `adminApproved` plumbing regresses         | Approval re-creates the loop; covered by manual smoke test in test plan.                            |
-| Future `Community.source` enum value added | Won't appear in queue until added to the explicit filter — intentional.                             |
+| Future `Community.source` enum value added | Won't appear in queue until added to the explicit filter - intentional.                             |
 
 ## 8. Test plan
 

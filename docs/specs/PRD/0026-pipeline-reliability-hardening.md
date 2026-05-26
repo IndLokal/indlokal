@@ -15,7 +15,7 @@ The content ingestion pipeline currently degrades **silently and dangerously** u
 4. **Env knobs are unbounded.** A typo like `PIPELINE_EXTRACT_BATCH_SIZE=300` is silently accepted and will stuff ~900K characters into one prompt.
 5. **Out-of-range LLM indices silently mis-attribute items.** If the LLM returns an absolute index outside the current batch range, `normalizeSourceIndex` falls back to `startIndex`, attaching the extracted item to the _first_ source in the batch. The wrong source is then audited as the origin.
 
-These are not theoretical — they are reachable today by an OpenAI tier-1 rate-limit spike or a single GHA missed-then-retried run.
+These are not theoretical - they are reachable today by an OpenAI tier-1 rate-limit spike or a single GHA missed-then-retried run.
 
 ## 2. Users & JTBD
 
@@ -46,11 +46,11 @@ Measured via the new `PipelineRun` fields (`filterFailures`, `extractRetriesExha
 
 ## 5. Out of Scope
 
-- Job queue migration (Inngest / pg-boss) — deferred to a later spec.
-- Per-LLM-call audit table — covered by PRD-0027.
-- Prompt-injection / URL-allowlist hardening — deferred.
-- Notification outbox processor — owned by TDD-0002.
-- Documentation rename of `AI_PIPELINE_*.md` — covered by ADR-0006.
+- Job queue migration (Inngest / pg-boss) - deferred to a later spec.
+- Per-LLM-call audit table - covered by PRD-0027.
+- Prompt-injection / URL-allowlist hardening - deferred.
+- Notification outbox processor - owned by TDD-0002.
+- Documentation rename of `AI_PIPELINE_*.md` - covered by ADR-0006.
 
 ## 6. User Stories
 
@@ -105,4 +105,4 @@ No user-facing UX. Admin `/admin/pipeline` keeps current shape; new counters sur
 
 - **Risk:** Switching the filter from fail-open to fail-closed reduces queue volume during real LLM degradations. **Mitigation:** Operator alert on `filterFailures > 0` so degradations are noticed and the fetched URLs can be retried in the next scheduled window.
 - **Risk:** Advisory lock collides with developers running `pnpm pipeline` locally against a shared DB. **Mitigation:** Lock key namespaced to `pipeline:<scope>`; CLI passes a `runId` that uses a different lock namespace (`pipeline-cli:<scope>`), so cron and CLI cannot deadlock each other.
-- **Open:** Should the clamp throw or warn-and-clamp? **Decision:** warn-and-clamp — keeps the pipeline running with a sane default; throwing would break cron until env is fixed.
+- **Open:** Should the clamp throw or warn-and-clamp? **Decision:** warn-and-clamp - keeps the pipeline running with a sane default; throwing would break cron until env is fixed.

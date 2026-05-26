@@ -1,5 +1,5 @@
 /**
- * Mobile resources screen — PRD-0010.
+ * Mobile resources screen - PRD-0010.
  * Lists city resources grouped by ResourceType, opens the official link.
  */
 

@@ -6,11 +6,11 @@
 
 ## 1. Problem
 
-The home of the mobile app must answer "what's happening for me, near me, soon?" within seconds — mirroring web's `/[city]` discovery (`src/app/[city]/page.tsx` and `src/modules/discovery`).
+The home of the mobile app must answer "what's happening for me, near me, soon?" within seconds - mirroring web's `/[city]` discovery (`src/app/[city]/page.tsx` and `src/modules/discovery`).
 
 ## 2. Users & JTBD
 
-- Diaspora user in Stuttgart (or any active city) — "Show me events this week and the active communities I should know about."
+- Diaspora user in Stuttgart (or any active city) - "Show me events this week and the active communities I should know about."
 
 ## 3. Success Metrics
 

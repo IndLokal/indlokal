@@ -4,7 +4,7 @@ import { tryAdvisoryLock } from '@/lib/db/advisory-lock';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 
-export const maxDuration = 300; // 5 min — pipeline can be slow
+export const maxDuration = 300; // 5 min - pipeline can be slow
 
 function parseScopeParam(url: URL, key: 'city' | 'region'): string[] {
   return Array.from(

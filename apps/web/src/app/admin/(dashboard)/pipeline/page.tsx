@@ -16,7 +16,7 @@ import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 
-export const metadata = { title: 'Content Pipeline — Admin' };
+export const metadata = { title: 'Content Pipeline - Admin' };
 
 export default async function AdminPipelinePage() {
   const regions = await getRuntimeEnabledRegions();
@@ -434,7 +434,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
                 <p>
                   📅 {event.date}
                   {event.time && ` at ${event.time}`}
-                  {event.endTime && ` — ${event.endTime}`}
+                  {event.endTime && ` - ${event.endTime}`}
                 </p>
               )}
               {event.venueName && (

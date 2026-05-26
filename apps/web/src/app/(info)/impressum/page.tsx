@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
-  title: `Impressum — ${siteConfig.name}`,
+  title: `Impressum - ${siteConfig.name}`,
   description: `Legal notice (Impressum) for ${siteConfig.name} in accordance with German law (§ 5 DDG).`,
 };
 

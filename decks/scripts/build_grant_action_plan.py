@@ -58,7 +58,7 @@ def add_title(doc: Document, title: str, subtitle: str) -> None:
     r2.font.color.rgb = MUTED
     rule = doc.add_paragraph()
     rule.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r3 = rule.add_run("— ★ —")
+    r3 = rule.add_run("- ★ -")
     r3.font.color.rgb = ACCENT
     r3.font.size = Pt(13)
     doc.add_paragraph()
@@ -143,7 +143,7 @@ def build() -> None:
 
     add_title(
         doc,
-        "IndLokal — Grant Action Plan",
+        "IndLokal - Grant Action Plan",
         "What to do with the docs we have, in order",
     )
     # --- Reality check up top
@@ -258,7 +258,7 @@ def build() -> None:
              "Stadt Waiblingen + Landratsamt Rems-Murr-Kreis Integration"],
             ["IndLokal_Grant_Strategy.docx",
              "Internal strategy memo (programme tiers, gGmbH/e.V., paperwork)",
-             "Internal use only — not for funders"],
+             "Internal use only - not for funders"],
             ["EU_Grants_Explained.docx",
              "Background primer on EU grant landscape",
              "Internal reference / orientation for new team members"],
@@ -273,7 +273,7 @@ def build() -> None:
     )
 
     # --- 1. Reality-check sprint
-    add_h(doc, "1. Week 1 — reality-check sprint (do BEFORE any funder contact)", 1)
+    add_h(doc, "1. Week 1 - reality-check sprint (do BEFORE any funder contact)", 1)
     add_p(
         doc,
         "These five tasks calibrate the numbers in the deck. Without them, "
@@ -283,7 +283,7 @@ def build() -> None:
         doc,
         [
             "Build the 'real community list' spreadsheet: every Indian organisation, temple, association, sports club, language circle, alumni network you can name in Stuttgart / Sindelfingen / Waiblingen. Aim for 30+. Columns: name, contact person, contact channel, status (cold / warm / committed).",
-            "Talk to 5 Indians who arrived in the region in the last 12 months. One question: 'Where did you find your first community event?' Capture verbatim quotes — these become the deck's strongest evidence.",
+            "Talk to 5 Indians who arrived in the region in the last 12 months. One question: 'Where did you find your first community event?' Capture verbatim quotes - these become the deck's strongest evidence.",
             "Run one real event through the platform: a community sponsor posts, you measure RSVPs and attendance. Even 12 RSVPs gives you 'baseline' data instead of 'baseline 0'.",
             "Email 1 freelance evaluation consultant (or a chair at Uni Stuttgart / HS Esslingen) and ask: 'capacity to evaluate a 12mo integration pilot for €15k?' Their reply unlocks the evaluation line item.",
             "Email 1 BAMF-FZ or ifo researcher (light touch): 'we'd love a 20-min call to learn how you'd advise on evaluation design'. NOT a contract ask. Builds the research-link credibility for later.",
@@ -360,13 +360,13 @@ def build() -> None:
             ["Bürgerstiftung Stuttgart", "Small contribution",
              "Online form + 2-page concept",
              "Quarterly decisions"],
-            ["Robert Bosch Stiftung — Migration", "€50\\u201385k",
+            ["Robert Bosch Stiftung - Migration", "€50\\u201385k",
              "Email programme officer + deck. Stuttgart-HQ helps.",
              "Decision in 8\\u201316 weeks"],
-            ["Stiftung Mercator — Teilhabe & Zusammenhalt", "€85\\u2013150k",
+            ["Stiftung Mercator - Teilhabe & Zusammenhalt", "€85\\u2013150k",
              "Email programme officer + deck",
              "Decision in 12\\u201320 weeks"],
-            ["BW Stiftung — Integration", "€85\\u2013150k",
+            ["BW Stiftung - Integration", "€85\\u2013150k",
              "Public calls (check site) or unsolicited concept paper",
              "Call-cycle dependent"],
         ],
@@ -412,7 +412,7 @@ def build() -> None:
         [
             "Indian IT majors with Stuttgart-region offices: TCS, Infosys, Wipro, HCL, Tech Mahindra. Approach via diaspora-affairs / CSR contact.",
             "German employers with large Indian workforce: Mercedes-Benz (Sindelfingen), Bosch (Renningen / Stuttgart), Porsche (Weissach), SAP (Walldorf), Allianz (Stuttgart).",
-            "Indo-German Chamber of Commerce (IGCC) — they can intro to multiple corporates and amplify via newsletter.",
+            "Indo-German Chamber of Commerce (IGCC) - they can intro to multiple corporates and amplify via newsletter.",
             "Ask for: €5\\u201325k sponsorship, optional in-kind (event space, employee volunteer hours, content channels).",
         ],
     )
@@ -436,10 +436,10 @@ def build() -> None:
     add_h(doc, "Cold intro to a city Integrationsbeauftragte (DE)", 2)
     add_callout(
         doc,
-        "Subject: IndLokal — digitale Integrationsinfrastruktur für die indische Community in [Stadt]",
+        "Subject: IndLokal - digitale Integrationsinfrastruktur für die indische Community in [Stadt]",
         "Sehr geehrte Frau / Herr [Name],\n\n"
         "mein Name ist [Vorname Nachname], ich bin Bürger:in [Stadt] und "
-        "Mitgründer:in von IndLokal — einer digitalen Plattform, die "
+        "Mitgründer:in von IndLokal - einer digitalen Plattform, die "
         "neuen indischen Zuwander:innen hilft, lokale Communities, "
         "Veranstaltungen und vertrauenswürdige Anlaufstellen in ihrer "
         "neuen Heimatstadt zu finden.\n\n"
@@ -451,7 +451,7 @@ def build() -> None:
         "  - die Plattform live vorzustellen,\n"
         "  - Synergien mit dem Welcome Center / Integrationsangeboten "
         "der Stadt zu besprechen,\n"
-        "  - eine schlanke Form der Zusammenarbeit zu skizzieren — "
+        "  - eine schlanke Form der Zusammenarbeit zu skizzieren - "
         "ohne städtisches Budget zu binden.\n\n"
         "Im Anhang finden Sie eine einseitige Übersicht. Gerne stelle "
         "ich auch kurz das Projekt direkt im Termin vor.\n\n"
@@ -466,15 +466,15 @@ def build() -> None:
     add_h(doc, "Foundation programme officer intro (DE)", 2)
     add_callout(
         doc,
-        "Subject: IndLokal — digitale Integrationsinfrastruktur für die indische Community in der Region Stuttgart",
+        "Subject: IndLokal - digitale Integrationsinfrastruktur für die indische Community in der Region Stuttgart",
         "Sehr geehrte Frau / Herr [Name],\n\n"
         "wir bauen IndLokal auf, eine digitale Integrationsinfrastruktur "
-        "für die indische Community in Deutschland — beginnend mit einem "
+        "für die indische Community in Deutschland - beginnend mit einem "
         "12-monatigen Stuttgart-Pilot in Partnerschaft mit Stadt "
         "Stuttgart, Sindelfingen und Waiblingen.\n\n"
         "Warum wir uns an Sie wenden: Ihr Förderprogramm "
         "[Programmname / Schwerpunkt] passt direkt zu unserem Vorhaben "
-        "— [1\\u20132 Sätze, sehr konkret, warum es passt].\n\n"
+        "- [1\\u20132 Sätze, sehr konkret, warum es passt].\n\n"
         "Eckdaten:\n"
         "  - Bestehende Plattform (web + mobile), aus Eigenmitteln gebaut\n"
         "  - 12-Monats-Pilot in Stuttgart + Partnerkommunen\n"
@@ -492,7 +492,7 @@ def build() -> None:
     add_h(doc, "Corporate CSR intro (EN, for Indian-IT majors)", 2)
     add_callout(
         doc,
-        "Subject: IndLokal — supporting your Indian colleagues' integration into the Stuttgart region",
+        "Subject: IndLokal - supporting your Indian colleagues' integration into the Stuttgart region",
         "Dear [Name],\n\n"
         "I'm one of the founders of IndLokal, a digital platform that "
         "helps new Indian arrivals in Germany find local community, "
@@ -529,21 +529,21 @@ def build() -> None:
         ["Funder", "Type", "Amount asked", "Status", "Next action", "Owner", "Date"],
         [
             ["Stadt Stuttgart Abt. Integration", "City", "Letter of Support",
-             "(e.g. Email sent 25.04)", "Follow-up 02.05", "Dhiraj", "—"],
+             "(e.g. Email sent 25.04)", "Follow-up 02.05", "Dhiraj", "-"],
             ["Stadt Sindelfingen", "City", "LoS + €5\\u201315k Integrationsfonds",
-             "Email sent", "Follow-up", "Jaya", "—"],
+             "Email sent", "Follow-up", "Jaya", "-"],
             ["Stadt Waiblingen", "City", "LoS + €5\\u201315k Integrationsfonds",
-             "Email sent", "Follow-up", "Dhiraj", "—"],
+             "Email sent", "Follow-up", "Dhiraj", "-"],
             ["Robert Bosch Stiftung", "Foundation", "€50\\u201385k",
-             "Researching contact", "Find prog. officer", "Jaya", "—"],
+             "Researching contact", "Find prog. officer", "Jaya", "-"],
             ["Stiftung Mercator", "Foundation", "€85\\u2013150k",
-             "Not started", "—", "—", "—"],
+             "Not started", "-", "-", "-"],
             ["BW Stiftung", "Foundation", "€85\\u2013150k",
-             "Not started", "Check current call", "—", "—"],
+             "Not started", "Check current call", "-", "-"],
             ["AMIF national (BAMF)", "Public", "€100\\u2013250k",
-             "Not started", "Email regional coordinator", "—", "—"],
+             "Not started", "Email regional coordinator", "-", "-"],
             ["ESF+ BW (Min. f. Soziales)", "Public", "€50\\u2013150k",
-             "Not started", "Check current call", "—", "—"],
+             "Not started", "Check current call", "-", "-"],
         ],
     )
 
@@ -554,7 +554,7 @@ def build() -> None:
         [
             "Submit at least 1 funder application per month, on average.",
             "Run 1 user-research touch per quarter (5 short interviews).",
-            "Publish quarterly impact update — even before any grant lands. Builds credibility.",
+            "Publish quarterly impact update - even before any grant lands. Builds credibility.",
             "Refresh the deck KPIs with actual numbers each quarter. The deck must be alive, not frozen.",
             "Keep an audit-ready folder: receipts, contracts, timesheets, decisions.",
         ],
@@ -591,7 +591,7 @@ def build() -> None:
     r = disc.add_run(
         "Working action plan for the IndLokal founding team. Update "
         "weekly. Programme names, contacts and call schedules change "
-        "frequently — verify on the EU Funding & Tenders Portal, BAMF, "
+        "frequently - verify on the EU Funding & Tenders Portal, BAMF, "
         "L-Bank BW and each funder's site before applying."
     )
     r.italic = True

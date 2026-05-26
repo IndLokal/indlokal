@@ -4,7 +4,7 @@
  * Goals:
  *   - Avoid re-fetching the same payload on every tab focus / keystroke.
  *   - De-duplicate concurrent in-flight requests for the same key.
- *   - Stay tiny — no external deps, ~50 lines.
+ *   - Stay tiny - no external deps, ~50 lines.
  *
  * Not goals:
  *   - Cross-launch persistence (cleared on cold start). The CDN layer on the

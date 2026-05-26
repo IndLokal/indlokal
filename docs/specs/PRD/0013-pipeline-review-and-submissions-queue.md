@@ -21,9 +21,9 @@ The admin "Submissions" queue had become unusable:
 
 ## 2. Users & JTBD
 
-- **Platform admin** — wants the submissions queue to mean "things
+- **Platform admin** - wants the submissions queue to mean "things
   humans submitted that need a human decision", and nothing else.
-- **Platform admin** — when approving a pipeline candidate, wants the
+- **Platform admin** - when approving a pipeline candidate, wants the
   community to be live, not re-queued.
 
 ## 3. Success Metrics
@@ -50,7 +50,7 @@ The admin "Submissions" queue had become unusable:
 ## 5. Out of Scope
 
 - Reworking the AI confidence threshold itself (separate AI agent spec).
-- Pipeline **rejection** workflow — already exists, unchanged.
+- Pipeline **rejection** workflow - already exists, unchanged.
 - Mobile submission flow (PRD-0009).
 
 ## 6. User Stories

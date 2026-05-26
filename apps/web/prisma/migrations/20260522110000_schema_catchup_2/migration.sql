@@ -3,14 +3,14 @@
 -- Fixes remaining gaps between schema.prisma and the applied migrations.
 -- All statements are idempotent.
 --
---   1. pipeline_items.metadata JSONB   — was in schema.prisma but not in any migration
+--   1. pipeline_items.metadata JSONB   - was in schema.prisma but not in any migration
 --                                        (caused P2022 in integration tests)
---   2. activity_signals: drop extra event_id FK — eventId is a plain String? field
+--   2. activity_signals: drop extra event_id FK - eventId is a plain String? field
 --                                                 with no @relation directive; the FK
 --                                                 was incorrectly added in ambassador_hardening
---   3. content_reports FK ON UPDATE    — inline REFERENCES defaulted to ON UPDATE NO ACTION;
+--   3. content_reports FK ON UPDATE    - inline REFERENCES defaulted to ON UPDATE NO ACTION;
 --                                        schema.prisma expects ON UPDATE CASCADE
---   4. outreach_leads.updated_at       — drop DB-level DEFAULT so @updatedAt is fully
+--   4. outreach_leads.updated_at       - drop DB-level DEFAULT so @updatedAt is fully
 --                                        managed by the Prisma client (no DB default)
 
 -- ──────────────────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ ALTER TABLE "activity_signals"
   DROP CONSTRAINT IF EXISTS "activity_signals_event_id_fkey";
 
 -- ──────────────────────────────────────────────────────────────────────────────
--- 3. content_reports: fix reporter_user_id FK — re-add with ON UPDATE CASCADE
+-- 3. content_reports: fix reporter_user_id FK - re-add with ON UPDATE CASCADE
 -- ──────────────────────────────────────────────────────────────────────────────
 
 ALTER TABLE "content_reports"

@@ -54,7 +54,7 @@ model PipelineRun {
 }
 ```
 
-Migration: `20260526170000_add_pipeline_llm_calls` — `CREATE TYPE`, `CREATE TABLE`, two indexes, FK. No backfill (current rows have no audit; they keep their aggregate counters).
+Migration: `20260526170000_add_pipeline_llm_calls` - `CREATE TYPE`, `CREATE TABLE`, two indexes, FK. No backfill (current rows have no audit; they keep their aggregate counters).
 
 ## 3. API surface
 
@@ -77,7 +77,7 @@ export async function costByStageInWindow(fromDays: number): Promise<...> {
 }
 ```
 
-(This helper is not wired to any route in this iteration — direct SQL access is sufficient.)
+(This helper is not wired to any route in this iteration - direct SQL access is sufficient.)
 
 ## 4. Module changes
 
@@ -144,7 +144,7 @@ export async function callOpenAI(messages, opts = {}): Promise<string> {
 }
 ```
 
-`recordLlmCall` is fire-and-forget; logs but does not throw on DB failure. If `ctx` is missing (e.g. CLI run without `runId`), the call is **not** persisted — only the aggregate counter is updated. This keeps unit tests and ad-hoc CLI usage from requiring a DB.
+`recordLlmCall` is fire-and-forget; logs but does not throw on DB failure. If `ctx` is missing (e.g. CLI run without `runId`), the call is **not** persisted - only the aggregate counter is updated. This keeps unit tests and ad-hoc CLI usage from requiring a DB.
 
 `classifyError(err)` returns a short string: `'timeout' | 'http_4xx' | 'http_5xx' | 'parse_error' | 'unknown'`.
 
@@ -175,7 +175,7 @@ None.
 
 ## 6. Feature flags
 
-`PIPELINE_AUDIT_LLM_CALLS=0` env var disables the audit write (keeps counters). Default: on. Provides a kill-switch if the writes ever produce DB pressure — extremely unlikely at current scale but cheap insurance.
+`PIPELINE_AUDIT_LLM_CALLS=0` env var disables the audit write (keeps counters). Default: on. Provides a kill-switch if the writes ever produce DB pressure - extremely unlikely at current scale but cheap insurance.
 
 ## 7. Observability
 
@@ -210,7 +210,7 @@ ORDER BY created_at;
 | ------------------------------------ | ---------------------------------------------------------- |
 | `pipeline_llm_calls.create` throws   | Logged at `warn`; pipeline continues                       |
 | Missing `runId` context (CLI / test) | Audit row skipped; aggregate counters still update         |
-| Up-front `pipelineRun.create` fails  | Run aborts at top with error — same as today, just earlier |
+| Up-front `pipelineRun.create` fails  | Run aborts at top with error - same as today, just earlier |
 | Final `pipelineRun.update` fails     | Same handling as current `pipelineRun.create` error path   |
 
 ## 9. Test plan

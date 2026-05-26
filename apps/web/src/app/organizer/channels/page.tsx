@@ -1,7 +1,7 @@
 import { requireSessionUser } from '@/lib/session';
 import ChannelsForm from './ChannelsForm';
 
-export const metadata = { title: 'Manage Channels — Organizer' };
+export const metadata = { title: 'Manage Channels - Organizer' };
 
 export default async function ChannelsPage() {
   const user = await requireSessionUser();

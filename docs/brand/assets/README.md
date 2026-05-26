@@ -1,4 +1,4 @@
-# IndLokal — Brand Assets
+# IndLokal - Brand Assets
 
 This folder is the source of truth for IndLokal’s visual identity. All files are SVG; export to PNG/JPG at the size you need (most upload surfaces want PNG).
 
@@ -19,7 +19,7 @@ This folder is the source of truth for IndLokal’s visual identity. All files a
 
 ## How to export to PNG
 
-Pick one — all produce identical output:
+Pick one - all produce identical output:
 
 **Browser (zero install):**
 
@@ -54,13 +54,13 @@ rsvg-convert -w 1440 logo-primary.svg -o logo-primary.png
 
 | Platform                | Asset                                          | Spec                                                        |
 | ----------------------- | ---------------------------------------------- | ----------------------------------------------------------- |
-| LinkedIn — Page logo    | `social-profile.svg` → PNG 400 × 400           | Square, < 8 MB                                              |
-| LinkedIn — Page cover   | `linkedin-cover.svg` → PNG 1584 × 396          | < 8 MB                                                      |
-| Instagram — Profile     | `social-profile.svg` → PNG 400 × 400           | Square                                                      |
-| X / Twitter — Profile   | `social-profile.svg` → PNG 400 × 400           | Square                                                      |
-| X / Twitter — Header    | Crop `linkedin-cover.svg` to 1500 × 500        | —                                                           |
-| Website favicon         | `favicon.svg` (also export 32 / 192 / 512 PNG) | —                                                           |
+| LinkedIn - Page logo    | `social-profile.svg` → PNG 400 × 400           | Square, < 8 MB                                              |
+| LinkedIn - Page cover   | `linkedin-cover.svg` → PNG 1584 × 396          | < 8 MB                                                      |
+| Instagram - Profile     | `social-profile.svg` → PNG 400 × 400           | Square                                                      |
+| X / Twitter - Profile   | `social-profile.svg` → PNG 400 × 400           | Square                                                      |
+| X / Twitter - Header    | Crop `linkedin-cover.svg` to 1500 × 500        | -                                                           |
+| Website favicon         | `favicon.svg` (also export 32 / 192 / 512 PNG) | -                                                           |
 | Open Graph (`og:image`) | `og-image.svg` → PNG 1200 × 630                | < 8 MB                                                      |
 | Email signature         | `logo-primary.svg` → PNG 480 wide              | But prefer plain-text signatures (see Design Guidelines §8) |
 
-For everything else — sizing, clear space, do/don’t — see [`../DESIGN_GUIDELINES.md`](../DESIGN_GUIDELINES.md).
+For everything else - sizing, clear space, do/don’t - see [`../DESIGN_GUIDELINES.md`](../DESIGN_GUIDELINES.md).

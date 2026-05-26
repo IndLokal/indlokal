@@ -4,7 +4,7 @@ import { getSessionUser } from '@/lib/session';
 import { signOut } from '@/app/actions/auth';
 
 /**
- * Server component — renders user avatar + "My Saves" link, or a "Sign in" link.
+ * Server component - renders user avatar + "My Saves" link, or a "Sign in" link.
  * Embedded in the city layout nav bar.
  */
 export async function NavAuthWidget() {

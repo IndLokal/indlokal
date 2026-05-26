@@ -1,5 +1,5 @@
 /**
- * Global auth state — PRD-0019 / TDD-0019.
+ * Global auth state - PRD-0019 / TDD-0019.
  *
  * AuthProvider:
  *   - Restores the user from SecureStore on mount (with token refresh if
@@ -81,7 +81,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Access token expired or nearly so — attempt a silent refresh.
+        // Access token expired or nearly so - attempt a silent refresh.
         const refreshed = await authClient.refreshAccessToken();
         if (mounted.current) {
           setUser(refreshed?.user ?? null);
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     })();
-  }, []); // intentionally empty — runs once on mount
+  }, []); // intentionally empty - runs once on mount
 
   // ── onSignIn ────────────────────────────────────────────────────────
   const onSignIn = useCallback((newUser: AuthUser) => {
@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const tokens = await authClient.getTokens();
       if (tokens?.refreshToken) {
-        // Best effort — don't block UI if the request fails.
+        // Best effort - don't block UI if the request fails.
         await authClient
           .postPublic<
             { refreshToken: string },

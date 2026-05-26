@@ -1,5 +1,5 @@
 /**
- * Global test setup file — runs before every test file.
+ * Global test setup file - runs before every test file.
  *
  * - Extends Vitest's expect with jest-dom matchers
  *   (toBeInTheDocument, toHaveTextContent, etc.)

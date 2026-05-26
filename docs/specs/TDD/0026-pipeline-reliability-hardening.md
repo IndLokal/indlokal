@@ -37,7 +37,7 @@ model PipelineRun {
 }
 ```
 
-Migration: `20260526160000_add_pipeline_reliability_counters` — three `ALTER TABLE pipeline_runs ADD COLUMN ... DEFAULT 0 NOT NULL`.
+Migration: `20260526160000_add_pipeline_reliability_counters` - three `ALTER TABLE pipeline_runs ADD COLUMN ... DEFAULT 0 NOT NULL`.
 
 No data backfill required (counters start at 0 for historical rows; default handles it).
 
@@ -87,7 +87,7 @@ export async function tryAdvisoryLock(key: string): Promise<{
 Notes:
 
 - Session-level (not transaction-level) because the pipeline runs across many implicit Prisma transactions.
-- We deliberately do _not_ throw on a missing lock — callers decide the response.
+- We deliberately do _not_ throw on a missing lock - callers decide the response.
 
 ### 4.2 `src/app/api/cron/pipeline/route.ts` (changed)
 
@@ -115,7 +115,7 @@ try {
 }
 ```
 
-CLI namespace is `pipeline:cli:<scope>` (handled in a follow-up when CLI also needs locking — out of scope here).
+CLI namespace is `pipeline:cli:<scope>` (handled in a follow-up when CLI also needs locking - out of scope here).
 
 ### 4.3 `src/modules/pipeline/extraction.ts` (changed)
 
@@ -241,7 +241,7 @@ None.
 
 None. Behaviour change is small enough to ship under standard rollout. The clamp warning is a passive log, not a behaviour change for in-band values.
 
-A single `PIPELINE_FILTER_FAIL_OPEN=1` escape hatch is **not** added — restoring fail-open requires a code revert, which we want to remain visible in git history.
+A single `PIPELINE_FILTER_FAIL_OPEN=1` escape hatch is **not** added - restoring fail-open requires a code revert, which we want to remain visible in git history.
 
 ## 7. Observability
 
@@ -272,7 +272,7 @@ Unit (vitest, `__tests__/extraction.test.ts`):
 
 Unit (vitest, new `__tests__/advisory-lock.test.ts`):
 
-- Skipped in CI when `DATABASE_URL` for test DB is unavailable; otherwise: two concurrent `tryAdvisoryLock('x')` calls — only one acquired; after `release()`, the other can acquire.
+- Skipped in CI when `DATABASE_URL` for test DB is unavailable; otherwise: two concurrent `tryAdvisoryLock('x')` calls - only one acquired; after `release()`, the other can acquire.
 
 No contract / E2E / load tests required (no public API surface change beyond an added `reason` field).
 

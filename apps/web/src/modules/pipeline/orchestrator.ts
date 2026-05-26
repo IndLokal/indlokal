@@ -1,14 +1,14 @@
 /**
- * Pipeline orchestrator — known-source-first content discovery pipeline.
+ * Pipeline orchestrator - known-source-first content discovery pipeline.
  *
  * Flow:
- *   1. PLAN — DB + pinned sources first, keyword search only for DB coverage gaps
- *   2. FETCH — execute planned pinned URLs, then planned keyword searches
- *   3. FILTER — Stage 1 LLM: cheap batch relevance check
- *   4. EXTRACT — Stage 2 LLM: structured extraction with city assignment
- *   5. RESOLVE — map LLM cityName → DB city ID
- *   6. DEDUP — semantic/name similarity check against existing DB entities + queue
- *   7. QUEUE — store in PipelineItem for admin review
+ *   1. PLAN - DB + pinned sources first, keyword search only for DB coverage gaps
+ *   2. FETCH - execute planned pinned URLs, then planned keyword searches
+ *   3. FILTER - Stage 1 LLM: cheap batch relevance check
+ *   4. EXTRACT - Stage 2 LLM: structured extraction with city assignment
+ *   5. RESOLVE - map LLM cityName → DB city ID
+ *   6. DEDUP - semantic/name similarity check against existing DB entities + queue
+ *   7. QUEUE - store in PipelineItem for admin review
  *
  * Adding a new country: add region + strategy defaults in source-defaults.json,
  * sync them into DB, and rerun the pipeline. No orchestrator changes needed.
@@ -126,7 +126,7 @@ async function timePipelineStage<T>(
 
 /**
  * Run the full known-source-first pipeline.
- * No arguments needed — reads pipeline source config from the database.
+ * No arguments needed - reads pipeline source config from the database.
  */
 export async function runPipeline(
   triggeredBy = 'cron',
@@ -253,7 +253,7 @@ export async function runPipeline(
           timePipelineStage(result, 'resolveQueue', () =>
             resolveAndQueue(extracted, relevantItems, regions, result),
           );
-        // Semantic dedup inside resolveAndQueue may call LLM — tag stage='dedup'.
+        // Semantic dedup inside resolveAndQueue may call LLM - tag stage='dedup'.
         if (pipelineRunId) {
           await withLlmContext({ runId: pipelineRunId, stage: 'dedup' }, runResolve);
         } else {
@@ -397,7 +397,7 @@ async function fetchAllSources(
     `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${pinnedStrategies.length} total`,
   );
 
-  // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
+  // Pinned URLs - all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
     pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
@@ -419,7 +419,7 @@ async function fetchAllSources(
   }
 
   if (sourcePlan.keywordStrategies.length > 0) {
-    // Keyword strategies × regions — all combinations run in parallel.
+    // Keyword strategies × regions - all combinations run in parallel.
     // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
     const keywordJobs = regions.flatMap((region) =>
       sourcePlan.keywordStrategies.map((strategy) => async () => {
@@ -604,7 +604,7 @@ async function resolveAndQueue(
       cityId = fallbackCity.id;
       isCityPending = true;
       console.log(
-        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
       );
     }
 
@@ -634,12 +634,12 @@ async function resolveAndQueue(
         decisionCounts.noCityCommunities++;
       }
       console.log(
-        `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName}`,
+        `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName}`,
       );
       continue;
     }
 
-    // Skip events that have already passed — no value in queuing stale content
+    // Skip events that have already passed - no value in queuing stale content
     if (item.type === 'EVENT' && item.date) {
       const eventDate = new Date(`${item.date}T23:59:59`);
       if (!Number.isNaN(eventDate.getTime()) && eventDate < new Date()) {
@@ -1190,7 +1190,7 @@ function mergeExtractedEvents(base: ExtractedEvent, incoming: ExtractedEvent): E
 
 /**
  * Simple string similarity (Dice coefficient on bigrams).
- * Good enough for dedup — not a full fuzzy match.
+ * Good enough for dedup - not a full fuzzy match.
  */
 export function computeSimilarity(a: string, b: string): number {
   if (a === b) return 1;

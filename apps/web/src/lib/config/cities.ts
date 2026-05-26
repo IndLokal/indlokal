@@ -1,7 +1,7 @@
 import { normalizeCityLookupKey } from '@/lib/city-resolution';
 
 /**
- * Cities & taxonomy — single source of truth.
+ * Cities & taxonomy - single source of truth.
  *
  * Design principles:
  * - Active metros represent currently prioritized markets for product and ops.

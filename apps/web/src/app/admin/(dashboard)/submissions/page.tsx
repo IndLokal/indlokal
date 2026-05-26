@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { approveSubmission, rejectSubmission } from '../actions';
 
-export const metadata = { title: 'Review Submissions — Admin' };
+export const metadata = { title: 'Review Submissions - Admin' };
 
 export default async function AdminSubmissionsPage() {
   // Only show genuine user submissions awaiting first-touch review.

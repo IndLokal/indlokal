@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/submissions/suggest — Suggest a community for IndLokal to add.
+ * POST /api/v1/submissions/suggest - Suggest a community for IndLokal to add.
  * Requires access token.
  */
 

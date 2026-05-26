@@ -1,4 +1,4 @@
-# TDD-0030: Resources v2 — scoped knowledge, resolver, satellite parity
+# TDD-0030: Resources v2 - scoped knowledge, resolver, satellite parity
 
 - **Status:** Approved
 - **Linked PRD:** PRD-0030
@@ -109,9 +109,9 @@ model Resource {
 }
 ```
 
-### Migration plan — three migrations, two PRs
+### Migration plan - three migrations, two PRs
 
-**Phase A (this PR) — `20260527XXXXXX_resources_scope_v2`**
+**Phase A (this PR) - `20260527XXXXXX_resources_scope_v2`**
 
 ```sql
 -- 1. Add columns nullable / with default
@@ -140,7 +140,7 @@ CREATE INDEX idx_resources_is_essential ON resources (is_essential);
 Enums are declared in `schema.prisma`; Prisma materialises them as
 `TEXT` / `TEXT[]` (Postgres native enums avoided to keep schema flex).
 
-**Phase A.1 (same PR) — dedupe & rescope migration**
+**Phase A.1 (same PR) - dedupe & rescope migration**
 `20260527XXXXXX_resources_dedupe_v2.ts` (TypeScript migration, not SQL,
 because we need predicate-based merging). Runs in order:
 
@@ -177,15 +177,15 @@ Each step uses `prisma.resource.updateMany` + `prisma.resource.deleteMany`
 inside a transaction; the script is idempotent (skip if already done by
 checking the canonical slug's `scope`).
 
-**Phase B (follow-up PR, after the resolver is in production)** —
+**Phase B (follow-up PR, after the resolver is in production)** -
 `20260603XXXXXX_resources_drop_city_fk` removes `cityId` and the
 `City.resources` relation entirely. Out of scope for this TDD.
 
 ## 3. API surface
 
-### Zod contracts — `packages/shared/src/contracts/resources.ts`
+### Zod contracts - `packages/shared/src/contracts/resources.ts`
 
-Additive — existing `Resource` keeps its fields, new fields are appended:
+Additive - existing `Resource` keeps its fields, new fields are appended:
 
 ```ts
 export const ResourceScope = z.enum(['GLOBAL', 'COUNTRY', 'STATE', 'METRO', 'CITY', 'DISTRICT']);
@@ -229,7 +229,7 @@ export const Resource = z.object({
 });
 ```
 
-The optional `resolvedScope` field is set by the resolver, not the DB —
+The optional `resolvedScope` field is set by the resolver, not the DB -
 it's the "which scope hit" tag used by analytics and the UI.
 
 ### Endpoints
@@ -237,7 +237,7 @@ it's the "which scope hit" tag used by analytics and the UI.
 | Method | Path                                      | Auth  | Query                                         | Response                                     |
 | ------ | ----------------------------------------- | ----- | --------------------------------------------- | -------------------------------------------- |
 | GET    | `/api/v1/cities/{slug}/resources`         | None  | `type`, `audience`, `stage`, `essentialsOnly` | `Resource[]` (resolver output)               |
-| GET    | `/api/v1/cities/{slug}/resources/journey` | None  | —                                             | `{ steps: Resource[] }` (essential, ordered) |
+| GET    | `/api/v1/cities/{slug}/resources/journey` | None  | -                                             | `{ steps: Resource[] }` (essential, ordered) |
 | PATCH  | `/api/v1/admin/resources/{id}`            | Admin | body: partial `Resource`                      | `Resource`                                   |
 
 `/journey` is a convenience for mobile so it doesn't have to filter
@@ -334,7 +334,7 @@ re-warm on next request).
 ## 5. Push / Email / Inbox triggers
 
 None for v1. Future: a "Day 7 nudge" outbox row that pings users who
-have completed 0/8 journey steps after 7 days — tracked in a follow-up
+have completed 0/8 journey steps after 7 days - tracked in a follow-up
 PRD.
 
 ## 6. Feature flags
@@ -380,20 +380,20 @@ All three default-on for staging from day one; default-on for prod after
 
 ## 9. Test plan
 
-- **Unit (vitest)** — `apps/web/src/modules/resources/__tests__/resolver.test.ts`
+- **Unit (vitest)** - `apps/web/src/modules/resources/__tests__/resolver.test.ts`
   - Heidelberg gets metro Mannheim + STATE BW + COUNTRY + GLOBAL rows.
   - Berlin gets `embassy-berlin` consulate, not `cgi-munich`.
   - `essentialsOnly` filter returns only `isEssential=true` rows.
   - Slug dedup: a row matching CITY and METRO appears once with
     `resolvedScope='CITY'` (most-specific wins).
   - Order: same priority → newer `lastReviewedAt` first.
-- **Contract (vitest)** —
+- **Contract (vitest)** -
   `apps/web/src/app/api/v1/__tests__/resources.integration.test.ts` (already
   exists) extended with: satellite city returns non-empty; `/journey`
   returns only essentials.
-- **Mobile** — `apps/mobile/components/__tests__/ResourcesScreen.test.tsx`
+- **Mobile** - `apps/mobile/components/__tests__/ResourcesScreen.test.tsx`
   for the new layout (sections render, audience filter swaps lists).
-- **E2E**: deferred to follow-up — covered manually before merge.
+- **E2E**: deferred to follow-up - covered manually before merge.
 
 ## 10. Rollout plan
 
@@ -414,7 +414,7 @@ All three default-on for staging from day one; default-on for prod after
   takes over; web/mobile keep working with the by-cityId join (still
   valid because Phase A keeps `cityId` populated and only makes it
   nullable).
-- Phase A.1 dedupe is reversible via a recorded "before" snapshot —
+- Phase A.1 dedupe is reversible via a recorded "before" snapshot -
   the migration script writes
   `apps/web/prisma/migrations/snapshots/resources-dedupe-{ts}.json`
   with every row it touches; a companion `restore` script re-inserts

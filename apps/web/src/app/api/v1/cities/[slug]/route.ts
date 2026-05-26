@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/cities/:slug — city detail with counts + category grid.
+ * GET /api/v1/cities/:slug - city detail with counts + category grid.
  * Public, no auth required. TDD-0003 §3.
  */
 

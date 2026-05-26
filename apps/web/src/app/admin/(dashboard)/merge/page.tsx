@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { mergeCommunities } from './actions';
 
-export const metadata = { title: 'Merge Communities — Admin' };
+export const metadata = { title: 'Merge Communities - Admin' };
 
 export default async function AdminMergePage() {
   const communities = await db.community.findMany({

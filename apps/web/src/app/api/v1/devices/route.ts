@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/devices — TDD-0002 §3.
+ * POST /api/v1/devices - TDD-0002 §3.
  *
  * Idempotent registration: upserts on (userId, installationId).
  * Mobile apps call this on first launch and again whenever the Expo
@@ -55,7 +55,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
       ...data,
     },
     update: {
-      // platform is immutable post-creation — ignore it on update.
+      // platform is immutable post-creation - ignore it on update.
       ...data,
     },
   });

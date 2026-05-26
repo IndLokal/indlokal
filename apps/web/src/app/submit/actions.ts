@@ -59,7 +59,7 @@ export async function submitCommunity(
     };
   }
 
-  // Resolve city, dedup-check, and resolve categories — all DB reads that
+  // Resolve city, dedup-check, and resolve categories - all DB reads that
   // must run before the write. Wrapped together so a cold-start DB error
   // returns a graceful user-facing message instead of a 500.
   let city: {
@@ -93,7 +93,7 @@ export async function submitCommunity(
     targetCityId = city.metroRegionId ?? city.id;
     normalizedCitySlug = city.metroRegion?.slug ?? city.slug;
 
-    // Dedup check — prevent duplicate submissions
+    // Dedup check - prevent duplicate submissions
     existingCommunities = await db.community.findMany({
       where: { cityId: targetCityId, status: { not: 'INACTIVE' } },
       select: { name: true },
@@ -183,14 +183,14 @@ export async function submitCommunity(
     return { success: false, errors: { name: ['Failed to create community. Please try again.'] } };
   }
 
-  // Email is best-effort — don't fail the submission if it doesn't send
+  // Email is best-effort - don't fail the submission if it doesn't send
   try {
     await sendSubmissionReceivedEmail(data.contactEmail, data.contactName, data.name);
   } catch {
     // silently ignore email failure
   }
 
-  // Analytics — fire-and-forget, non-critical
+  // Analytics - fire-and-forget, non-critical
   // Use 'anonymous' as distinctId for unauthenticated submissions to avoid PII in PostHog
   await captureServerEvent('anonymous-submitter', Events.COMMUNITY_SUBMITTED, {
     city: city.slug,

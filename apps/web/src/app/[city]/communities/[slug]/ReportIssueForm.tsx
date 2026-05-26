@@ -15,7 +15,7 @@ export function ReportIssueForm({ communityId }: { communityId: string }) {
   const [state, formAction, isPending] = useActionState<ReportResult, FormData>(reportIssue, null);
 
   if (state?.success) {
-    return <p className="text-success text-xs">Thanks — we&apos;ll review your report shortly.</p>;
+    return <p className="text-success text-xs">Thanks - we&apos;ll review your report shortly.</p>;
   }
 
   if (!open) {
@@ -64,7 +64,7 @@ export function ReportIssueForm({ communityId }: { communityId: string }) {
       <input
         type="email"
         name="reporterEmail"
-        placeholder="Your email (optional — for followup)"
+        placeholder="Your email (optional - for followup)"
         className="border-border focus:border-brand-500 w-full rounded-[var(--radius-button)] border px-2 py-1.5 text-xs transition-colors focus:outline-none"
       />
 

@@ -1,12 +1,12 @@
 /**
- * Newcomer Journey screen — essentials-only resources grouped by lifecycle
+ * Newcomer Journey screen - essentials-only resources grouped by lifecycle
  * stage. PRD/TDD-0030 §6.
  *
  * Mirrors GET /api/v1/cities/:slug/resources/journey.
  *
  * "Checked" state is persisted locally per-city under
  *   resource_journey:v1:{citySlug}
- * (Per the spec, no server sync — purely a client-side checklist UI.)
+ * (Per the spec, no server sync - purely a client-side checklist UI.)
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -174,7 +174,7 @@ export default function JourneyScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Your Newcomer Journey</Text>
         <Text style={styles.sub}>
-          The official steps Indian newcomers need to complete — grouped by when they
+          The official steps Indian newcomers need to complete - grouped by when they
           matter.
         </Text>
 

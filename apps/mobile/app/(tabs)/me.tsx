@@ -1,5 +1,5 @@
 /**
- * Me tab — PRD-0019 / TDD-0019.
+ * Me tab - PRD-0019 / TDD-0019.
  * Auth-aware: anonymous users see a sign-in CTA; signed-in users see
  * account links and a sign-out action.
  */

@@ -1,9 +1,9 @@
 /**
- * Source adapters — fetch raw content from external sources.
+ * Source adapters - fetch raw content from external sources.
  *
  * Two modes:
- *  1. Keyword search (Eventbrite) — takes a region + keywords, returns items from anywhere in that region
- *  2. Pinned URL (Facebook, websites) — fetches a specific known URL
+ *  1. Keyword search (Eventbrite) - takes a region + keywords, returns items from anywhere in that region
+ *  2. Pinned URL (Facebook, websites) - fetches a specific known URL
  *
  * Adapters never assign a city. That's the LLM's job.
  */
@@ -225,7 +225,7 @@ export async function fetchEventbriteKeywords(
       url.searchParams.set('location.within', `${strategy.radiusKm}km`);
       url.searchParams.set('expand', 'venue');
       url.searchParams.set('sort_by', 'date');
-      // Only return future events — no point queuing things that have already happened
+      // Only return future events - no point queuing things that have already happened
       url.searchParams.set('start_date.range_start', new Date().toISOString());
 
       const res = await fetch(url.toString(), {
@@ -409,7 +409,7 @@ export async function fetchPinnedUrl(
 /**
  * Search Google Custom Search API for diaspora community mentions.
  * Finds groups that only exist as mentions on blogs, university pages,
- * directories, or community boards — no dedicated website needed.
+ * directories, or community boards - no dedicated website needed.
  *
  * Requires: GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID environment variables.
  * Free tier: 100 queries/day. Each keyword search = 1 query.

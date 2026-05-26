@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { HostStartForm } from './HostStartForm';
 
 export const metadata = {
-  title: 'Start as Event Host — IndLokal',
+  title: 'Start as Event Host - IndLokal',
   description: 'Sign up as an independent event host. No community required.',
 };
 
@@ -24,7 +24,7 @@ export default async function HostStartPage() {
           </div>
           <h1 className="mt-4 text-2xl font-bold">Become an event host</h1>
           <p className="text-muted mt-2 text-sm">
-            Post your own events on IndLokal — no community required.
+            Post your own events on IndLokal - no community required.
           </p>
         </div>
 

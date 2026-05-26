@@ -6,13 +6,13 @@ import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
 
 /**
- * Resources Hub — category card grid + journey checklist.
+ * Resources Hub - category card grid + journey checklist.
  *
  * Route: /[city]/resources/
  * Example: /stuttgart/resources/
  *
  * Now driven by the resolver (PRD/TDD-0030), so counts include CITY +
- * METRO + STATE + COUNTRY rows (with consulate filtering) — satellite
+ * METRO + STATE + COUNTRY rows (with consulate filtering) - satellite
  * cities like Karlsruhe inherit Stuttgart's metro rows automatically.
  */
 
@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityName = cityRow?.name ?? city;
   return {
     title: `Indian Expat Resources in ${cityName}`,
-    description: `Practical guides for Indians in ${cityName} — city registration, driving licence, health insurance, taxes, Kindergeld, housing, grocery stores, and more.`,
+    description: `Practical guides for Indians in ${cityName} - city registration, driving licence, health insurance, taxes, Kindergeld, housing, grocery stores, and more.`,
   };
 }
 
@@ -86,12 +86,12 @@ export default async function ResourcesHubPage({ params }: Props) {
         </nav>
         <h1 className="text-2xl font-bold">Indian Expat Resources in {cityName}</h1>
         <p className="text-muted mt-2 text-sm">
-          {totalGuides} practical guides on everything an Indian expat needs in {cityName} — from
+          {totalGuides} practical guides on everything an Indian expat needs in {cityName} - from
           Anmeldung to Kindergeld.
         </p>
       </div>
 
-      {/* Newcomer Journey — first 30 days checklist */}
+      {/* Newcomer Journey - first 30 days checklist */}
       {essentialsCount > 0 && (
         <section className="border-brand-100 bg-brand-50/60 rounded-2xl border p-6">
           <div className="flex items-start justify-between gap-4">
@@ -101,7 +101,7 @@ export default async function ResourcesHubPage({ params }: Props) {
               </h2>
               <p className="text-brand-700 mt-1 text-sm">
                 {essentialsCount} essential step{essentialsCount === 1 ? '' : 's'} for your first
-                30 days — the official ones every Indian newcomer needs.
+                30 days - the official ones every Indian newcomer needs.
               </p>
             </div>
             <Link
@@ -137,7 +137,7 @@ export default async function ResourcesHubPage({ params }: Props) {
         </section>
       )}
 
-      {/* Popular guides — quick access */}
+      {/* Popular guides - quick access */}
       {POPULAR_GUIDES.some((g) => popularBySlug.has(g.slug)) && (
         <section>
           <h2 className="text-lg font-semibold">Popular Guides</h2>
@@ -200,7 +200,7 @@ export default async function ResourcesHubPage({ params }: Props) {
             );
           })}
 
-          {/* Consular services — links to existing page */}
+          {/* Consular services - links to existing page */}
           <Link
             href={`/${city}/consular-services`}
             className="group relative flex flex-col overflow-hidden rounded-xl bg-white p-5 ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
@@ -232,7 +232,7 @@ export default async function ResourcesHubPage({ params }: Props) {
       <section className="border-brand-100 bg-brand-50 rounded-xl border p-5">
         <h2 className="text-brand-900 font-semibold">Know an Indian service in {cityName}?</h2>
         <p className="text-brand-700 mt-1 text-sm">
-          Help fellow Indians discover useful services — grocery stores, doctors, tax consultants,
+          Help fellow Indians discover useful services - grocery stores, doctors, tax consultants,
           and more.
         </p>
         <Link href={`/${city}/suggest`} className="btn-primary mt-3 inline-block px-4 py-2 text-sm">

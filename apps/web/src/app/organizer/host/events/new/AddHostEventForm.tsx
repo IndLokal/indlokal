@@ -32,7 +32,7 @@ export function AddHostEventForm({ cities, defaultCityId }: Props) {
           required
           minLength={3}
           maxLength={200}
-          placeholder="e.g. Bharatanatyam Workshop — Summer 2026"
+          placeholder="e.g. Bharatanatyam Workshop - Summer 2026"
           className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
         />
         {errors?.title && <p className="mt-1 text-xs text-red-600">{errors.title[0]}</p>}

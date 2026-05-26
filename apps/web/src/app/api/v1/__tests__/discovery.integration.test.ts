@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/cities and /api/v1/discovery/*.
+ * Integration tests - /api/v1/cities and /api/v1/discovery/*.
  *
- * @db — requires the test database. Covers TDD-0003 §3 surface end-to-end.
+ * @db - requires the test database. Covers TDD-0003 §3 surface end-to-end.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';

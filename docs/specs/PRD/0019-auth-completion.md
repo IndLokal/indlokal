@@ -1,4 +1,4 @@
-# PRD-0019: Auth Completion — Onboarding, Session Restore, Profile & Account Management
+# PRD-0019: Auth Completion - Onboarding, Session Restore, Profile & Account Management
 
 - **Status:** Implemented
 - **Owner:** Product Lead
@@ -10,7 +10,7 @@
 The auth foundation (JWT, three sign-in methods) was shipped in PRD-0008/TDD-0001 but the
 post-authentication product loop is incomplete:
 
-- New users land on the Discover tab without completing onboarding — `cityId` and
+- New users land on the Discover tab without completing onboarding - `cityId` and
   `personaSegments` are never collected, so the feed cannot personalise.
 - The app has no global auth state: the Me tab and Profile screen show identical UI to
   signed-in and anonymous users; there is no sign-out button.
@@ -20,9 +20,9 @@ post-authentication product loop is incomplete:
 
 ## 2. Users & JTBD
 
-- **New user (first install):** "I signed in — now tell me what the app needs to show me the right
+- **New user (first install):** "I signed in - now tell me what the app needs to show me the right
   content." → Needs a guided onboarding that captures city + persona in ≤ 2 taps.
-- **Returning user:** "I closed the app and reopened it — I don't want to sign in again."
+- **Returning user:** "I closed the app and reopened it - I don't want to sign in again."
   → Session must restore silently on every cold launch.
 - **Authenticated user:** "I want to see my profile and sign out when I'm done."
   → Me tab must reflect auth state and provide a sign-out action.
@@ -53,17 +53,17 @@ post-authentication product loop is incomplete:
   `preferredLanguages`, `displayName` atomically and flips `onboardingComplete`.
 - **Profile screen**: fetch and display `GET /api/v1/me`; show sign-out button.
 - **Me tab**: show sign-in CTA when anonymous, show display name + sign-out when signed in.
-- **Delete account**: `DELETE /api/v1/me` — authenticated, revokes all refresh tokens,
+- **Delete account**: `DELETE /api/v1/me` - authenticated, revokes all refresh tokens,
   cascades DB deletion, clears `SecureStore`.
 - **Bookmarks auth gate**: show sign-in CTA when not authenticated instead of error text.
 
 ## 5. Out of Scope
 
 - Phone/OTP sign-in.
-- Edit profile (name, avatar) — separate spec.
-- Web sign-in for general users — decision deferred (D2 in audit).
-- D0_WELCOME email — next sprint.
-- Analytics instrumentation — next sprint.
+- Edit profile (name, avatar) - separate spec.
+- Web sign-in for general users - decision deferred (D2 in audit).
+- D0_WELCOME email - next sprint.
+- Analytics instrumentation - next sprint.
 
 ## 6. User Stories
 
@@ -114,16 +114,16 @@ Then a sign-in CTA is displayed (no error message)
 
 - Title: "What best describes you?"
 - Multi-select option pills: New to this city / Student / Family / Working professional
-- "Done" button — always enabled (persona is optional but encouraged)
+- "Done" button - always enabled (persona is optional but encouraged)
 - Progress: step 2 of 2
 
-### Me tab — authenticated state
+### Me tab - authenticated state
 
 - Display name (or email fallback) + city name
 - Links: View Profile, Notifications, Inbox, Submit, Resources, Delete Account
 - "Sign out" at the bottom (destructive style)
 
-### Me tab — anonymous state
+### Me tab - anonymous state
 
 - Headline: "Sign in to save and get reminders"
 - Primary CTA: "Sign in" → `/auth/sign-in`
@@ -131,14 +131,14 @@ Then a sign-in CTA is displayed (no error message)
 ### Profile screen
 
 - Display name, email, city, persona segments
-- "Edit profile" — disabled / placeholder for next sprint
+- "Edit profile" - disabled / placeholder for next sprint
 - "Sign out" button
 
 ## 9. Risks & Open Questions
 
 - **Magic link on shared device**: if a user forwards the magic link email to another device,
   both devices get signed in. Acceptable for v1 (standard magic-link behaviour).
-- **Onboarding skip**: should users be able to skip the city step? Recommendation: No —
+- **Onboarding skip**: should users be able to skip the city step? Recommendation: No -
   `cityId` is required for meaningful discovery.
 - **Account deletion grace period**: v1 is immediate. Consider soft-delete + 30-day window
   post-launch if user feedback warrants.

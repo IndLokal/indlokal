@@ -1,5 +1,5 @@
 /**
- * POST /api/cron/pipeline/dispatch — fan-out cron entrypoint (PRD/TDD-0029).
+ * POST /api/cron/pipeline/dispatch - fan-out cron entrypoint (PRD/TDD-0029).
  *
  * Reads enabled regions from `pipeline_source_configs` via
  * `getRuntimeEnabledRegions()` and fires one POST per region against the
@@ -8,7 +8,7 @@
  * its own 300s budget, its own advisory lock (already region-scoped in
  * `buildLockKey`), and its own `PipelineRun` row.
  *
- * The dispatcher does NOT wait for the per-region runs to finish — they
+ * The dispatcher does NOT wait for the per-region runs to finish - they
  * complete asynchronously. Concurrency is bounded by
  * `PIPELINE_DISPATCH_CONCURRENCY` to avoid waking 20+ Lambdas at once.
  *
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
       const region = regions[idx];
       const url = `${baseUrl}/api/cron/pipeline?region=${encodeURIComponent(region.id)}`;
       try {
-        // Per-region runs can take up to 300s, but we don't await the body —
+        // Per-region runs can take up to 300s, but we don't await the body -
         // we only need to know the dispatch succeeded. The downstream
         // endpoint persists its own PipelineRun row regardless.
         const res = await fetch(url, {

@@ -19,7 +19,7 @@ export default function MagicLinkSentScreen() {
       await requestMagicLink(authClient, params.email);
       setResent(true);
     } catch {
-      // Best effort — back-to-sign-in link remains available.
+      // Best effort - back-to-sign-in link remains available.
     } finally {
       setResending(false);
     }

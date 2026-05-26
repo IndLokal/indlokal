@@ -27,7 +27,7 @@ packages/shared/src/
 
 ## Endpoint inventory (v1)
 
-Authoritative table — every endpoint in TDDs above appears here.
+Authoritative table - every endpoint in TDDs above appears here.
 
 ### Auth
 
@@ -112,5 +112,5 @@ All non-2xx responses return `ApiError`. Codes are documented in this file as th
 
 ## Versioning
 
-- Additive changes inside `v1` (new optional fields, new endpoints) — allowed.
-- Breaking changes — new path `/api/v2/...` + ADR + deprecation header on `v1` for ≥ 90 days.
+- Additive changes inside `v1` (new optional fields, new endpoints) - allowed.
+- Breaking changes - new path `/api/v2/...` + ADR + deprecation header on `v1` for ≥ 90 days.

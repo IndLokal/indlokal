@@ -1,4 +1,4 @@
--- Pipeline observability & cost guards — consolidated migration for
+-- Pipeline observability & cost guards - consolidated migration for
 -- PRD/TDD-0026 (reliability counters), PRD/TDD-0027 (per-LLM-call audit),
 -- and PRD/TDD-0028 (cost guard flags). Single migration because the three
 -- specs ship as one atomic change.

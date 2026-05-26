@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     //
     //    • If endsAt is set: flip when endsAt < now.
     //    • If endsAt is null: assume a 4-hour duration from startsAt. This is
-    //      a pragmatic default — most community events are 2–4 hours and
+    //      a pragmatic default - most community events are 2-4 hours and
     //      organisers frequently omit endsAt. Tweaks happen via organiser edits.
     const now = new Date();
     const noEndsAtCutoff = new Date(now.getTime() - 4 * 60 * 60 * 1000);

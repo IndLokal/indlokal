@@ -92,7 +92,7 @@ export default async function HostDashboardPage() {
           <div className="text-2xl">📋</div>
           <h2 className="text-foreground mt-3 font-semibold">My Events</h2>
           <p className="text-muted mt-1 text-sm">
-            {upcomingCount} upcoming event{upcomingCount !== 1 ? 's' : ''} — view and edit
+            {upcomingCount} upcoming event{upcomingCount !== 1 ? 's' : ''} - view and edit
           </p>
         </Link>
       </div>

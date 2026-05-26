@@ -1,5 +1,5 @@
 /**
- * Refresh-token issuance, rotation, and reuse detection — TDD-0001 §2, §8.
+ * Refresh-token issuance, rotation, and reuse detection - TDD-0001 §2, §8.
  *
  * - Refresh tokens are opaque random strings (NOT JWTs); only their
  *   SHA-256 hash is persisted in the `RefreshToken` table.
@@ -20,7 +20,7 @@ const REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 export type IssuedRefreshToken = {
   /** Raw token returned to the client; never persisted. */
   token: string;
-  /** RefreshToken row id — used as the JWT `jti` for the paired access token. */
+  /** RefreshToken row id - used as the JWT `jti` for the paired access token. */
   id: string;
   expiresAt: Date;
 };
@@ -138,5 +138,5 @@ export async function revokeRefreshToken(presentedToken: string): Promise<void> 
   });
 }
 
-/** Test helper — exposed for unit tests only. */
+/** Test helper - exposed for unit tests only. */
 export const __internal = { hashToken, generateOpaqueToken };

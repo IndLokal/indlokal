@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/submissions/community — Submit a new community for review.
+ * POST /api/v1/submissions/community - Submit a new community for review.
  * Requires access token.
  */
 

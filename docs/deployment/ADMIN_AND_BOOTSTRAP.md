@@ -6,7 +6,7 @@ The IndLokal database is split into three seed tiers:
 | ------------- | -------------------------------- | ---------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | **Bootstrap** | `pnpm --filter web db:bootstrap` | Cities, Categories, Personas, **Admin user** (required)                                        | Every deploy (idempotent, gated by env flag)    |
 | **Directory** | `pnpm --filter web db:directory` | Curated public communities per metro **and** curated public resources (consulates, registries) | Every deploy (create-only idempotent, gated)    |
-| **Demo**      | `pnpm --filter web db:seed`      | Sample events + score recompute (calls Bootstrap + Directory first)                            | Local dev / staging only — **never production** |
+| **Demo**      | `pnpm --filter web db:seed`      | Sample events + score recompute (calls Bootstrap + Directory first)                            | Local dev / staging only - **never production** |
 
 Resources live in [`apps/web/prisma/resources.ts`](../../apps/web/prisma/resources.ts)
 and are orchestrated by `runDirectorySeed()` so the directory tier always
@@ -23,7 +23,7 @@ delivers a complete public-content baseline (orgs + resources) per city.
 
 - Always idempotent (uses `prisma.upsert`).
 - Contains only rows the app code structurally depends on.
-- Safe to run repeatedly — it never deletes.
+- Safe to run repeatedly - it never deletes.
 
 ### Run manually
 
@@ -43,7 +43,7 @@ RUN_BOOTSTRAP_SEED=true
 
 Set it in **Vercel → Project → Settings → Environment Variables** for both
 Production and Preview environments. Because bootstrap is idempotent, leaving
-the flag enabled permanently is safe and recommended — it self-heals an empty
+the flag enabled permanently is safe and recommended - it self-heals an empty
 database after a fresh migration.
 
 If `RUN_BOOTSTRAP_SEED` is not `"true"`, the build skips bootstrap entirely.
@@ -80,9 +80,9 @@ See the **Schemas** panel at the bottom of `/admin/data/import` for ready-to-cop
 Imports always go through a **preview** step that shows create/update/error counts per row.
 **Apply** is disabled until preview returns zero errors. Nothing is ever deleted.
 
-## 4. Recovery playbook — production cities table is empty
+## 4. Recovery playbook - production cities table is empty
 
-1. Go to `/admin/data/health` — confirm 0 active cities.
+1. Go to `/admin/data/health` - confirm 0 active cities.
 2. Click **Run bootstrap** on `/admin/data`.
 3. Verify [https://indlokal.com/api/v1/cities](https://indlokal.com/api/v1/cities) returns the metro list.
 4. Set `RUN_BOOTSTRAP_SEED=true` in Vercel env so this self-heals on next deploy.
@@ -94,7 +94,7 @@ Admin auth uses **passwordless magic links** sent by email. There is no password
 1. Bootstrap creates exactly one platform admin user. Its email is whatever
    `ADMIN_EMAIL` env var is set to. **Default: `admin@indlokal.com`**.
    - Change it by setting `ADMIN_EMAIL=you@yourcompany.com` _before_ the first
-     bootstrap (or before the next one — it will upsert with role
+     bootstrap (or before the next one - it will upsert with role
      `PLATFORM_ADMIN`).
 2. Visit `/admin/login` (e.g. <https://indlokal.com/admin/login> or
    <http://localhost:3001/admin/login>).
@@ -223,7 +223,7 @@ These are the only env vars that influence admin login & outbound mail.
 | --------------------- | -------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `ADMIN_EMAIL`         | both           | `admin@indlokal.com`              | Email of the bootstrap-created platform admin user.                                                                      |
 | `NEXT_PUBLIC_APP_URL` | both           | `http://localhost:3001`           | Base URL used to build magic-link URLs in the email body.                                                                |
-| `RESEND_API_KEY`      | **production** | —                                 | Resend API key. Without it, prod cannot send admin emails. See [§6.1](#61-create-a-resend-account-and-get-your-api-key). |
+| `RESEND_API_KEY`      | **production** | -                                 | Resend API key. Without it, prod cannot send admin emails. See [§6.1](#61-create-a-resend-account-and-get-your-api-key). |
 | `RESEND_FROM_EMAIL`   | production     | `IndLokal <noreply@indlokal.com>` | From address. Sender domain must be verified in Resend. See [§6.2](#62-verify-your-sending-domain).                      |
 | `SMTP_HOST`           | dev only       | `localhost`                       | Mailpit host (Docker compose service `mailpit`).                                                                         |
 | `SMTP_PORT`           | dev only       | `1026`                            | Mailpit SMTP port (UI is on `8026`).                                                                                     |
@@ -235,10 +235,10 @@ These are the only env vars that influence admin login & outbound mail.
 3. ✅ `RESEND_FROM_EMAIL` uses a domain verified in Resend.
 4. ✅ `NEXT_PUBLIC_APP_URL=https://indlokal.com`.
 5. ✅ `RUN_BOOTSTRAP_SEED=true` so the admin user is created on first deploy.
-6. ✅ `RUN_DIRECTORY_SEED=true` so curated public listings are created on first deploy (safe to leave on — it never updates existing rows).
+6. ✅ `RUN_DIRECTORY_SEED=true` so curated public listings are created on first deploy (safe to leave on - it never updates existing rows).
 7. ✅ Visit `/admin/login`, request a link, confirm delivery.
 
-## 8. Directory seed — editorial policy
+## 8. Directory seed - editorial policy
 
 [`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) holds
 curated, publicly-sourced community listings. It runs **after** bootstrap and
@@ -248,9 +248,9 @@ day one.**
 ### Why it exists
 
 A directory product with zero entries on a city page has near-zero retention.
-Pre-populating each metro with 10–25 well-known orgs (then letting real
+Pre-populating each metro with 10-25 well-known orgs (then letting real
 organisers claim them) is how Eventbrite, Tracxn, Bandsintown, and every other
-serious directory bootstraps. We do the same — honestly.
+serious directory bootstraps. We do the same - honestly.
 
 ### Hard rules (do not bend)
 
@@ -284,14 +284,14 @@ take ownership and edit freely.
 
 For each new metro:
 
-1. **Discovery sprint** (~half a day): list 10–25 orgs from public sources
+1. **Discovery sprint** (~half a day): list 10-25 orgs from public sources
    (university ISA pages, Vereinsregister, Meetup, consulate cultural-org
    listings, public temple/gurudwara directories, registered Vereine).
 2. Add each as a `DirectoryEntry` in the appropriate per-metro array in
    [`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) with
    a real `sourceUrl`.
 3. Commit + deploy. The seed runs automatically (create-only).
-4. Reach out to organisers proactively: "Your group is on indlokal.com — claim
+4. Reach out to organisers proactively: "Your group is on indlokal.com - claim
    it here." Turns a passive listing into an activated power user.
 
 ### What NOT to put here
@@ -308,7 +308,7 @@ For each new metro:
 [`apps/web/prisma/resources.ts`](../../apps/web/prisma/resources.ts) holds
 curated public reference rows (consulates, university international offices,
 government registries, embassy services). It runs as part of
-`runDirectorySeed()` — there is no separate cron or env flag to manage.
+`runDirectorySeed()` - there is no separate cron or env flag to manage.
 
 Same editorial rules as the directory tier:
 
@@ -342,6 +342,6 @@ not Vercel Cron. Each job POSTs to `/api/cron/{name}` with the
 
 Required secrets (set in **both** Vercel project env and GitHub repo secrets):
 
-- `CRON_SECRET` — shared bearer token. Generate with `openssl rand -hex 32`.
-- `APP_URL` — production base URL, e.g. `https://indlokal.com` (GitHub repo
+- `CRON_SECRET` - shared bearer token. Generate with `openssl rand -hex 32`.
+- `APP_URL` - production base URL, e.g. `https://indlokal.com` (GitHub repo
   secret only; Vercel already knows its own URL).

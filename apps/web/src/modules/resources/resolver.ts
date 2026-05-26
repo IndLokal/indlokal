@@ -1,16 +1,16 @@
 /**
- * Resource resolver — PRD/TDD-0030 §3.
+ * Resource resolver - PRD/TDD-0030 §3.
  *
  * Given a city slug, returns every resource that applies to that city by
  * unioning rows across scope tiers:
  *
- *   CITY        — scopeRegion = city.slug
- *   METRO       — scopeRegion = city.metroRegion?.slug (or city.slug when
+ *   CITY        - scopeRegion = city.slug
+ *   METRO       - scopeRegion = city.metroRegion?.slug (or city.slug when
  *                 the city is itself a metro)
- *   STATE       — scopeRegion = city.state (Bundesland ISO, e.g. 'DE-BW')
- *   COUNTRY     — scopeRegion = 'DE'  (filtered through CONSULAR_JURISDICTION
+ *   STATE       - scopeRegion = city.state (Bundesland ISO, e.g. 'DE-BW')
+ *   COUNTRY     - scopeRegion = 'DE'  (filtered through CONSULAR_JURISDICTION
  *                 for consular rows so a Berlin user only sees CGI Berlin)
- *   GLOBAL      — scopeRegion IS NULL
+ *   GLOBAL      - scopeRegion IS NULL
  *
  * Results are deduplicated by slug (the most specific scope wins) and tagged
  * with `resolvedScope` so the UI can group / label them.
@@ -233,10 +233,10 @@ export async function getResourcesForCity(
     orderBy: [{ priority: 'desc' }, { title: 'asc' }],
   });
 
-  // Dedup by slug — most specific scope wins.
+  // Dedup by slug - most specific scope wins.
   const bySlug = new Map<string, ResolvedResource>();
   for (const row of rows) {
-    // Consular jurisdiction filter (TDD §3) — COUNTRY rows tagged with
+    // Consular jurisdiction filter (TDD §3) - COUNTRY rows tagged with
     // metadata.consulate are only visible when the city's consulate
     // matches. Untagged COUNTRY rows are always visible.
     if (row.scope === 'COUNTRY') {

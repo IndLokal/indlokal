@@ -76,7 +76,7 @@ Add these only when the features are active:
 | `EVENTBRITE_API_KEY`                                   | Eventbrite ingestion |
 | `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_ID`                 | Google CSE ingestion |
 
-`DATABASE_URL` is supplied by Vercel Storage when you create both databases with the `DATABASE` prefix — do not set it manually.
+`DATABASE_URL` is supplied by Vercel Storage when you create both databases with the `DATABASE` prefix - do not set it manually.
 
 ## 4. GitHub Actions
 

@@ -1,5 +1,5 @@
 /**
- * Magic-link verify handler — PRD-0008.
+ * Magic-link verify handler - PRD-0008.
  * Reached via Universal Link (https://indlokal.com/auth/magic?token=...) or
  * the in-app scheme (indlokal://auth/magic?token=...).
  *

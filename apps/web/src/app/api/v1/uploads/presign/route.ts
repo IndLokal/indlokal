@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/uploads/presign — Request a presigned PUT URL for a media upload.
+ * POST /api/v1/uploads/presign - Request a presigned PUT URL for a media upload.
  * Requires access token.
  */
 

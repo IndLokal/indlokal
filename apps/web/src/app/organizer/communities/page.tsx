@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { redirect } from 'next/navigation';
 
-export const metadata = { title: 'My Communities — Organizer Portal' };
+export const metadata = { title: 'My Communities - Organizer Portal' };
 export const dynamic = 'force-dynamic';
 
 export default async function OrganizerCommunitiesPage() {

@@ -1,5 +1,5 @@
 /**
- * Event freshness heuristics — shared by orchestrator (pre-LLM stale-page
+ * Event freshness heuristics - shared by orchestrator (pre-LLM stale-page
  * filter) and db-sources (event sub-page discovery scoring).
  *
  * Keep all event-page lexical and year-based signals in one module so a new

@@ -50,10 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const community = await getCommunityBySlug(slug);
   if (!community) return { title: 'Community not found' };
   return {
-    title: `${community.name} — Indian Community in ${community.city.name}`,
+    title: `${community.name} - Indian Community in ${community.city.name}`,
     description:
       community.description ??
-      `${community.name} — Indian community in ${community.city.name}, Germany.`,
+      `${community.name} - Indian community in ${community.city.name}, Germany.`,
   };
 }
 

@@ -1,5 +1,5 @@
 /**
- * Resolver unit tests — PRD/TDD-0030 §6.
+ * Resolver unit tests - PRD/TDD-0030 §6.
  *
  * Mocks `@/lib/db` so it runs without a database. Verifies:
  *  - scope OR clause is built per city characteristics (metro, state)
@@ -68,7 +68,7 @@ describe('consulateForState', () => {
   });
 });
 
-describe('getResourcesForCity — scope OR clause', () => {
+describe('getResourcesForCity - scope OR clause', () => {
   it('returns [] for unknown city without calling resource.findMany', async () => {
     findUniqueMock.mockResolvedValueOnce(null);
     const rows = await getResourcesForCity('does-not-exist');
@@ -113,7 +113,7 @@ describe('getResourcesForCity — scope OR clause', () => {
   });
 });
 
-describe('getResourcesForCity — dedup by slug picks most specific scope', () => {
+describe('getResourcesForCity - dedup by slug picks most specific scope', () => {
   it('keeps the CITY row when COUNTRY and CITY both match', async () => {
     findUniqueMock.mockResolvedValueOnce({
       id: 'city_berlin',
@@ -138,7 +138,7 @@ describe('getResourcesForCity — dedup by slug picks most specific scope', () =
   });
 });
 
-describe('getResourcesForCity — cache', () => {
+describe('getResourcesForCity - cache', () => {
   it('does not re-query Prisma on a repeated call', async () => {
     findUniqueMock.mockResolvedValue({
       id: 'city_stuttgart',

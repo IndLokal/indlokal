@@ -27,7 +27,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
               L
             </Link>
 
-            {/* Workspace switcher — shows active community name + chevron for multi-org */}
+            {/* Workspace switcher - shows active community name + chevron for multi-org */}
             {activeCommunity ? (
               isMultiOrg ? (
                 <Link

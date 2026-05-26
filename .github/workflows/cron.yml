@@ -2,8 +2,8 @@ name: Cron Jobs
 
 # Simple MVP cron runner. GitHub Actions is good enough until these jobs become
 # user-visible or business-critical. Requires repository secrets:
-#   APP_URL      — production base URL, e.g. https://indlokal.de
-#   CRON_SECRET  — shared secret matching CRON_SECRET env var on Vercel
+#   APP_URL      - production base URL, e.g. https://indlokal.de
+#   CRON_SECRET  - shared secret matching CRON_SECRET env var on Vercel
 
 on:
   schedule:

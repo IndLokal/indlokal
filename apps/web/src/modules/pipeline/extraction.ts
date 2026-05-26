@@ -1,5 +1,5 @@
 /**
- * LLM extraction — two-stage architecture for token efficiency.
+ * LLM extraction - two-stage architecture for token efficiency.
  *
  * Stage 1: RELEVANCE FILTER (cheap, batched)
  *   Send 5-10 raw items in one call to gpt-4o-mini.
@@ -10,7 +10,7 @@
  * Stage 2: STRUCTURED EXTRACTION (batched)
  *   Send a small batch of relevant items in one call.
  *   Prompt: "Extract structured event/community data + assign city."
- *   LLM outputs city name — orchestrator resolves to DB city.
+ *   LLM outputs city name - orchestrator resolves to DB city.
  *
  * Why two stages instead of one?
  *   - Eventbrite search for "Indian" returns Indian restaurants, Indian
@@ -33,7 +33,7 @@ import type {
 
 // ─── Config ────────────────────────────────────────────
 
-// Clamp bands — keep env knobs honest. See TDD-0026 §4.3.
+// Clamp bands - keep env knobs honest. See TDD-0026 §4.3.
 const FILTER_BATCH_MIN = 1;
 const FILTER_BATCH_MAX = 50;
 const EXTRACT_BATCH_MIN = 1;
@@ -77,7 +77,7 @@ const EXTRACT_BATCH_SIZE = getClampedIntEnv(
 // breaker / token budget (PRD-0028). `resetLlmStats()` is called by the
 // orchestrator at run start; if it's never called (ad-hoc CLI use of
 // `callOpenAI`), all helpers are silent no-ops and `getLlmStats()` returns
-// zeros — callers outside the orchestrator are not budget-bearing.
+// zeros - callers outside the orchestrator are not budget-bearing.
 
 export class PipelineBudgetExceededError extends Error {
   readonly code = 'budget_exceeded' as const;
@@ -181,7 +181,7 @@ type LlmAuditInput = {
 function recordLlmCall(input: LlmAuditInput): void {
   if (process.env.PIPELINE_AUDIT_LLM_CALLS === '0') return;
   const ctx = currentLlmContext();
-  if (!ctx) return; // CLI/tests with no run scope — skip audit, counters still update
+  if (!ctx) return; // CLI/tests with no run scope - skip audit, counters still update
   // Fire-and-forget; audit failures must never block the pipeline.
   void db.pipelineLlmCall
     .create({
@@ -252,7 +252,7 @@ export async function callOpenAI(
 
     if (!res.ok) {
       const body = await res.text();
-      throw new Error(`OpenAI API error: HTTP ${res.status} — ${body.slice(0, 200)}`);
+      throw new Error(`OpenAI API error: HTTP ${res.status} - ${body.slice(0, 200)}`);
     }
 
     const data = (await res.json()) as {
@@ -276,7 +276,7 @@ export async function callOpenAI(
 
     return data.choices?.[0]?.message?.content ?? '';
   } catch (err) {
-    // Don't count guard trips against the circuit — they're our own errors.
+    // Don't count guard trips against the circuit - they're our own errors.
     if (!isGuardError(err)) {
       recordCallFailure();
     }
@@ -347,11 +347,11 @@ RELEVANT examples: Indian cultural events, Bollywood dance, Diwali celebrations,
 NOT RELEVANT: Indian restaurants (commercial), generic "curry" cooking classes not community-run, events that mention India incidentally, non-diaspora cultural events.
 
 Return JSON: {"results": [{"index": 0, "isRelevant": true, "reason": "Diwali event by Tamil Sangam"}, ...]}
-Include every item index. Be inclusive — when in doubt, mark relevant. False positives are cheap (human reviews later). False negatives lose content.`;
+Include every item index. Be inclusive - when in doubt, mark relevant. False positives are cheap (human reviews later). False negatives lose content.`;
 
 /**
  * Stage 1: Filter a batch of raw items for Indian diaspora relevance.
- * Cheap call — short prompt, short output, amortised across batch.
+ * Cheap call - short prompt, short output, amortised across batch.
  */
 export async function filterRelevance(items: RawContent[]): Promise<RelevanceResult[]> {
   if (items.length === 0) return [];
@@ -378,7 +378,7 @@ export async function filterRelevance(items: RawContent[]): Promise<RelevanceRes
 }
 
 async function filterBatch(batch: RawContent[], startIndex: number): Promise<RelevanceResult[]> {
-  // Build numbered list — keep text SHORT to save tokens
+  // Build numbered list - keep text SHORT to save tokens
   const userMessage = batch
     .map((item, i) => {
       const preview = item.text.slice(0, 500); // 500 chars is enough for relevance
@@ -466,7 +466,7 @@ CRITICAL RULES:
 - If an item has no extractable event or community, return {"index": N, "type": "SKIP", "reason": "..."}.
 - confidence: 0.0-1.0. Lower if fields are inferred rather than explicit.
 - Extract WhatsApp/Telegram links if present, but do not treat them as sufficient proof for a community. Prefer websiteUrl, registry/institutional listing, or a public organiser page as the evidence anchor.
-- Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V., gUG, UG (haftungsbeschränkt), gGmbH — these are community organisers, not just event names.`;
+- Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V., gUG, UG (haftungsbeschränkt), gGmbH - these are community organisers, not just event names.`;
 
 /**
  * Stage 2: Extract structured data from pre-filtered relevant items.
@@ -526,7 +526,7 @@ async function extractBatchCall(
       `[Pipeline] Extract batch failed (size=${batch.length}, start=${startIndex}): ${String(err)}`,
     );
 
-    // Single-item batch already failed — give up on this item.
+    // Single-item batch already failed - give up on this item.
     if (batch.length <= 1) return [];
 
     // RetryBudget guard: bound recursive halving to prevent O(N) sequential
@@ -585,7 +585,7 @@ async function extractBatchCallOnce(
     .filter((item) => item.type === 'EVENT' || item.type === 'COMMUNITY')
     .map((item) => normalizeParsedItem(item, startIndex, batch.length));
 
-  // Drop items the LLM tagged with an out-of-range index — silent mis-attribution
+  // Drop items the LLM tagged with an out-of-range index - silent mis-attribution
   // would link extracted content to the wrong RawContent source.
   const kept: (ExtractedData & { sourceIndex: number })[] = [];
   for (const item of normalized) {
@@ -655,7 +655,7 @@ export function normalizeParsedItemForTest(
   return normalizeParsedItem(raw, startIndex, batchLength);
 }
 
-// Test-only helpers — exported so unit tests don't need to mutate env or globals.
+// Test-only helpers - exported so unit tests don't need to mutate env or globals.
 export const __testing = {
   getClampedIntEnv,
   normalizeSourceIndex,

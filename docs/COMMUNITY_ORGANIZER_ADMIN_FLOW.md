@@ -12,14 +12,14 @@ For the one-time claim process, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_
 
 ## 2. Authentication Model
 
-IndLokal uses a **sessionless, token-in-cookie** approach — no third-party auth library.
+IndLokal uses a **sessionless, token-in-cookie** approach - no third-party auth library.
 
 | Concern       | Implementation                                                                                                                                            |
 | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Token storage | `User.sessionToken` (32-byte hex), `User.sessionTokenExpiry` (Date) stored in PostgreSQL                                                                  |
-| Cookie        | `lp_session` — HTTP-only, SameSite=Lax, 24h max-age                                                                                                       |
-| Guard         | `requireSessionUser()` in `src/lib/session.ts` — reads cookie, looks up user + claimed communities, redirects to `/organizer/login` if invalid or expired |
-| Logout        | POST to `/organizer/logout` — clears `lp_session` cookie + nulls token in DB                                                                              |
+| Cookie        | `lp_session` - HTTP-only, SameSite=Lax, 24h max-age                                                                                                       |
+| Guard         | `requireSessionUser()` in `src/lib/session.ts` - reads cookie, looks up user + claimed communities, redirects to `/organizer/login` if invalid or expired |
+| Logout        | POST to `/organizer/logout` - clears `lp_session` cookie + nulls token in DB                                                                              |
 
 Login trigger: visiting `/organizer/login` → `requestMagicLink()` → verify link displayed on screen → visiting `/organizer/verify?token=…` → cookie set → redirect to `/organizer`.
 
@@ -160,20 +160,20 @@ Located in `src/app/organizer/events/new/actions.ts`:
 | Route / Action                     | File                                            | Purpose                                                              |
 | ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------- |
 | `GET /organizer/login`             | `src/app/organizer/login/page.tsx`              | Magic link login form                                                |
-| `requestMagicLink()`               | `src/app/organizer/login/actions.ts`            | Server Action — generate token                                       |
-| `GET /organizer/verify`            | `src/app/organizer/verify/route.ts`             | Route handler — validate token, set cookie                           |
-| `POST /organizer/logout`           | `src/app/organizer/logout/route.ts`             | Route handler — clear cookie + null token                            |
+| `requestMagicLink()`               | `src/app/organizer/login/actions.ts`            | Server Action - generate token                                       |
+| `GET /organizer/verify`            | `src/app/organizer/verify/route.ts`             | Route handler - validate token, set cookie                           |
+| `POST /organizer/logout`           | `src/app/organizer/logout/route.ts`             | Route handler - clear cookie + null token                            |
 | Layout + nav header                | `src/app/organizer/layout.tsx`                  | Auth-aware nav (Overview, Edit Profile, Channels, Add Event)         |
-| `GET /organizer`                   | `src/app/organizer/page.tsx`                    | Dashboard — completeness meter, quick-actions, channels, public link |
+| `GET /organizer`                   | `src/app/organizer/page.tsx`                    | Dashboard - completeness meter, quick-actions, channels, public link |
 | `GET /organizer/edit`              | `src/app/organizer/edit/page.tsx`               | Edit profile page                                                    |
 | `EditProfileForm`                  | `src/app/organizer/edit/EditProfileForm.tsx`    | Form component (`useActionState`)                                    |
-| `editCommunityProfile()`           | `src/app/organizer/edit/actions.ts`             | Server Action — update community fields                              |
+| `editCommunityProfile()`           | `src/app/organizer/edit/actions.ts`             | Server Action - update community fields                              |
 | `GET /organizer/channels`          | `src/app/organizer/channels/page.tsx`           | Channels manager page                                                |
-| `ChannelsForm`                     | `src/app/organizer/channels/ChannelsForm.tsx`   | Form component — add/delete channels                                 |
-| `addChannel()` / `deleteChannel()` | `src/app/organizer/channels/actions.ts`         | Server Actions — channel management                                  |
+| `ChannelsForm`                     | `src/app/organizer/channels/ChannelsForm.tsx`   | Form component - add/delete channels                                 |
+| `addChannel()` / `deleteChannel()` | `src/app/organizer/channels/actions.ts`         | Server Actions - channel management                                  |
 | `GET /organizer/events/new`        | `src/app/organizer/events/new/page.tsx`         | Add event page                                                       |
 | `AddEventForm`                     | `src/app/organizer/events/new/AddEventForm.tsx` | Form component                                                       |
-| `addEvent()`                       | `src/app/organizer/events/new/actions.ts`       | Server Action — create event                                         |
+| `addEvent()`                       | `src/app/organizer/events/new/actions.ts`       | Server Action - create event                                         |
 | Session helper                     | `src/lib/session.ts`                            | Token generation, cookie read/write, auth guard                      |
 
 ---
@@ -191,9 +191,9 @@ Located in `src/app/organizer/events/new/actions.ts`:
 
 ## 11. Future Enhancements
 
-- **Analytics tab** — views, event RSVPs, channel click-throughs
-- **Event editing** — `/organizer/events/[id]/edit`
-- **Recurring events** — weekly / monthly cadence with auto-expansion
-- **Co-admin invite** — primary admin sends magic link to a secondary manager
-- **Media upload** — S3/R2-backed logo and banner upload in the edit form
-- **Community transfer** — admin-mediated handover to a new organiser
+- **Analytics tab** - views, event RSVPs, channel click-throughs
+- **Event editing** - `/organizer/events/[id]/edit`
+- **Recurring events** - weekly / monthly cadence with auto-expansion
+- **Co-admin invite** - primary admin sends magic link to a secondary manager
+- **Media upload** - S3/R2-backed logo and banner upload in the edit form
+- **Community transfer** - admin-mediated handover to a new organiser

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { approveClaim, rejectClaim } from '../actions';
 
-export const metadata = { title: 'Review Claims — Admin' };
+export const metadata = { title: 'Review Claims - Admin' };
 
 export default async function AdminClaimsPage() {
   const claims = await db.community.findMany({

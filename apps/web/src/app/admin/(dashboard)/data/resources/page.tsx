@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { deleteResourceAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Resources — Admin' };
+export const metadata = { title: 'Resources - Admin' };
 
 export default async function AdminResourcesPage({
   searchParams,
@@ -81,7 +81,7 @@ export default async function AdminResourcesPage({
             defaultValue={sp.city ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— all —</option>
+            <option value="">- all -</option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.name}
@@ -96,7 +96,7 @@ export default async function AdminResourcesPage({
             defaultValue={sp.type ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— any —</option>
+            <option value="">- any -</option>
             {types.map((t) => (
               <option key={t} value={t}>
                 {t}
@@ -133,7 +133,7 @@ export default async function AdminResourcesPage({
                   <div className="text-muted font-mono text-xs">{r.slug}</div>
                 </td>
                 <td className="px-3 py-2 text-xs">{r.resourceType}</td>
-                <td className="px-3 py-2 text-xs">{r.city?.name ?? '—'}</td>
+                <td className="px-3 py-2 text-xs">{r.city?.name ?? '-'}</td>
                 <td className="px-3 py-2 text-xs">
                   {r.url && (
                     <a

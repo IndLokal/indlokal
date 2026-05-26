@@ -17,7 +17,7 @@ function createPostHogClient(): PostHog | null {
   });
 }
 
-// Module-level singleton — re-used across requests in the same worker
+// Module-level singleton - re-used across requests in the same worker
 let _client: PostHog | null | undefined;
 
 export function getPostHogClient(): PostHog | null {

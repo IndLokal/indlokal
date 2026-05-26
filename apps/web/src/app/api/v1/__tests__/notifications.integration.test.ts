@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/devices and /api/v1/notifications/*.
+ * Integration tests - /api/v1/devices and /api/v1/notifications/*.
  *
- * @db — requires the test database. Covers TDD-0002 §3 surface end-to-end.
+ * @db - requires the test database. Covers TDD-0002 §3 surface end-to-end.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';
@@ -63,7 +63,7 @@ describe('POST /api/v1/devices', () => {
     expect(created.installationId).toBe('inst-1');
     expect(created.expoPushToken).toBe('ExponentPushToken[abc]');
 
-    // Second call rotates token only — must NOT create a new row.
+    // Second call rotates token only - must NOT create a new row.
     const res2 = await devicesRoute.POST(
       jsonRequest('http://l/api/v1/devices', 'POST', headers, {
         installationId: 'inst-1',
@@ -141,7 +141,7 @@ describe('PATCH/DELETE /api/v1/devices/:installationId', () => {
         platform: 'WEB',
       }) as never,
     );
-    // Other user has the same installationId — must survive our DELETE.
+    // Other user has the same installationId - must survive our DELETE.
     await devicesRoute.POST(
       jsonRequest('http://l/api/v1/devices', 'POST', otherHeaders, {
         installationId: 'inst-3',
@@ -155,7 +155,7 @@ describe('PATCH/DELETE /api/v1/devices/:installationId', () => {
     );
     expect(res.status).toBe(200);
 
-    // Idempotent — second call also 200.
+    // Idempotent - second call also 200.
     const res2 = await deviceItemRoute.DELETE(
       jsonRequest('http://l/api/v1/devices/inst-3', 'DELETE', headers) as never,
       { params: Promise.resolve({ installationId: 'inst-3' }) },
@@ -257,7 +257,7 @@ describe('Inbox', () => {
     expect(page2.items).toHaveLength(10);
     expect(page2.items[0].title).toBe('t14');
 
-    // POST /read with one of our ids and the foreign id — only ours should flip.
+    // POST /read with one of our ids and the foreign id - only ours should flip.
     const ours = page1.items.slice(0, 3).map((i: { id: string }) => i.id);
     const readRes = await inboxReadRoute.POST(
       jsonRequest('http://l/api/v1/notifications/inbox/read', 'POST', headers, {

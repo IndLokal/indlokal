@@ -16,7 +16,7 @@ describe('normalizeParsedItemForTest', () => {
         index: 4,
         name: 'SAMAIKYA TELUGU VEDIKA e.V',
         title: 'JITO Stuttgart Tech Summit',
-        description: 'Event Registration: JITO Stuttgart Tech Summit – 22nd June 2026',
+        description: 'Event Registration: JITO Stuttgart Tech Summit - 22nd June 2026',
         date: '2026-06-22',
         time: '11:00',
         endDate: '2026-06-22',
@@ -191,11 +191,11 @@ describe('classifyLlmError (PRD-0027)', () => {
   });
 
   it('detects 4xx', () => {
-    expect(classifyLlmError(new Error('OpenAI API error: HTTP 429 — rate limit'))).toBe('http_4xx');
+    expect(classifyLlmError(new Error('OpenAI API error: HTTP 429 - rate limit'))).toBe('http_4xx');
   });
 
   it('detects 5xx', () => {
-    expect(classifyLlmError(new Error('OpenAI API error: HTTP 503 — overloaded'))).toBe('http_5xx');
+    expect(classifyLlmError(new Error('OpenAI API error: HTTP 503 - overloaded'))).toBe('http_5xx');
   });
 
   it('detects parse error', () => {
@@ -210,7 +210,7 @@ describe('classifyLlmError (PRD-0027)', () => {
 });
 
 // PRD/TDD-0028: cost guardrails.
-describe('LlmBudget — token budget', () => {
+describe('LlmBudget - token budget', () => {
   const { assertBudgetAvailable, recordCallSuccess } = __testing;
 
   beforeEach(() => {
@@ -259,7 +259,7 @@ describe('LlmBudget — token budget', () => {
 
   it('disables enforcement when no budget context exists', () => {
     // Simulate ad-hoc CLI use: no resetLlmStats(), no enforcement.
-    // We force null by re-importing? Simpler: trip then never call resetLlmStats — but
+    // We force null by re-importing? Simpler: trip then never call resetLlmStats - but
     // the previous tests already initialized it. We re-init then null it via env trick:
     // Just confirm that after reset the API returns sane defaults when not tripped.
     resetLlmStats();
@@ -268,7 +268,7 @@ describe('LlmBudget — token budget', () => {
   });
 });
 
-describe('LlmBudget — circuit breaker', () => {
+describe('LlmBudget - circuit breaker', () => {
   const { assertBudgetAvailable, recordCallFailure, recordCallSuccess } = __testing;
 
   beforeEach(() => {

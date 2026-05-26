@@ -142,13 +142,13 @@ def build() -> None:
     tight(p, after=3)
     add_run(p,
             "Rund 17.000 Inderinnen und Inder leben heute in Stuttgart "
-            "(Stadt Stuttgart 2024) — Tendenz stark steigend. Bundesweit "
+            "(Stadt Stuttgart 2024) - Tendenz stark steigend. Bundesweit "
             "ist es die am schnellsten wachsende Drittstaaten-Migration "
             "(+22% YoY, Destatis). Doch zentrale Information uber lokale "
             "Communities, kulturelle Veranstaltungen und vertrauenswurdige "
             "Anlaufstellen ist fragmentiert: geschlossene WhatsApp-Gruppen, "
             "veraltete Facebook-Seiten, Mundpropaganda. Die ersten 90 Tage "
-            "in Deutschland entscheiden uber Integrationserfolg — und genau "
+            "in Deutschland entscheiden uber Integrationserfolg - und genau "
             "hier fehlt eine kuratierte, mehrsprachige Schicht.",
             size=10)
 
@@ -157,7 +157,7 @@ def build() -> None:
     add_run(p, "IndLokal schliesst diese Lucke. ", bold=True, size=10)
     add_run(p,
             "Verifizierte Communities, frische Veranstaltungen und "
-            "stadtspezifische Ressourcen — mobil, mehrsprachig, "
+            "stadtspezifische Ressourcen - mobil, mehrsprachig, "
             "datensparsam, mit klarer Verbindung zu offiziellen Strukturen "
             "wie dem Welcome Center und der Volkshochschule.",
             size=10)
@@ -174,7 +174,7 @@ def build() -> None:
            bold_lead="Rechtsform: ")
 
     # ---- The pilot ----------------------------------------------------
-    section_heading(doc, "Der Stuttgart-Pilot — 12 Monate, konkrete Ergebnisse")
+    section_heading(doc, "Der Stuttgart-Pilot - 12 Monate, konkrete Ergebnisse")
     table = doc.add_table(rows=1, cols=4)
     table.style = "Light Grid Accent 1"
     headers = ["Reichweite", "Communities", "Ressourcen", "Partnerschaften"]
@@ -201,10 +201,10 @@ def build() -> None:
            "Sichtbarkeit & Vertrauen: ein Brief der Abteilung Integration ist fur AMIF, ESF+ BW, BW Stiftung, Mercator und Bosch faktisch Voraussetzung.",
            bold_lead="Letter of Support: ")
     bullet(doc,
-           "Wechselseitige Verlinkung mit Welcome Center / Integrationsbeauftragte — keine Doppelstrukturen, sondern gegenseitige Verstarkung.",
+           "Wechselseitige Verlinkung mit Welcome Center / Integrationsbeauftragte - keine Doppelstrukturen, sondern gegenseitige Verstarkung.",
            bold_lead="Verzahnung: ")
     bullet(doc,
-           "Open-Data-Schnittstelle fur stadtische Integrationsangebote, Sprachkurse und Veranstaltungen — die Stadt liefert Daten, IndLokal verteilt sie zielgruppengerecht.",
+           "Open-Data-Schnittstelle fur stadtische Integrationsangebote, Sprachkurse und Veranstaltungen - die Stadt liefert Daten, IndLokal verteilt sie zielgruppengerecht.",
            bold_lead="Daten-Partnerschaft: ")
     bullet(doc,
            "Quartalsweise Wirkungsberichte und unabhangige Evaluation (freier Evaluations-Consultant oder Lehrstuhl Uni Stuttgart / HS Esslingen; ifo / BAMF-FZ als Forschungs-Anker im Aufbau) \u2014 die Stadt erhalt erstmals belastbare Daten zur indischen Community in Stuttgart.",
@@ -219,7 +219,7 @@ def build() -> None:
             size=10)
     bullet(doc, "die Plattform live (Web + Mobile),")
     bullet(doc, "den geplanten Pilot-Umfang und KPIs,")
-    bullet(doc, "wie eine schlanke Partnerschaft (Letter of Support, ggf. Daten-Schnittstelle, gemeinsame Sichtbarkeit) aussehen kann — ohne stadtisches Budget zu binden.")
+    bullet(doc, "wie eine schlanke Partnerschaft (Letter of Support, ggf. Daten-Schnittstelle, gemeinsame Sichtbarkeit) aussehen kann - ohne stadtisches Budget zu binden.")
 
     # ---- Footer / contact --------------------------------------------
     spacer = doc.add_paragraph()

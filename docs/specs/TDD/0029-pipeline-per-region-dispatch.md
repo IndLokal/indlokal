@@ -64,7 +64,7 @@ Per-region runs continue to emit `pipeline_shard_completed` (existing) with the 
 
 ## 6. Out-of-scope (future)
 
-When evidence demands it (≥ 10 active regions OR observable transient-failure churn), graduate to a real queue with `PipelineJob` table, worker route, attempts/backoff, and dead-letter table. The contract of `/api/cron/pipeline?region=<id>` does not change; only the dispatcher is replaced. See `docs/architecture-review/IMPROVEMENT_ROADMAP.md` §Phase 2.4–2.7.
+When evidence demands it (≥ 10 active regions OR observable transient-failure churn), graduate to a real queue with `PipelineJob` table, worker route, attempts/backoff, and dead-letter table. The contract of `/api/cron/pipeline?region=<id>` does not change; only the dispatcher is replaced. See `docs/architecture-review/IMPROVEMENT_ROADMAP.md` §Phase 2.4-2.7.
 
 ## 7. Test plan
 

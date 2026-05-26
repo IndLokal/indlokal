@@ -6,7 +6,7 @@
 
 ## 1. Problem
 
-Today the GitHub Actions cron schedules four hardcoded entries — one per region (`berlin`, `baden-wuerttemberg`, `bavaria`, `hesse`) — each calling `POST /api/cron/pipeline?region=<id>`. This worked at four regions; it stops working at twenty:
+Today the GitHub Actions cron schedules four hardcoded entries - one per region (`berlin`, `baden-wuerttemberg`, `bavaria`, `hesse`) - each calling `POST /api/cron/pipeline?region=<id>`. This worked at four regions; it stops working at twenty:
 
 - **Hardcoded fan-out.** Adding a new region requires editing `.github/workflows/cron.yml` (a separate repo deploy) plus the DB seed. Two artefacts must stay in sync.
 - **All-or-nothing shards.** When a single region in a shard fails, the entire shard returns HTTP 500 and the cron job is marked failed, even though sibling regions succeeded.
@@ -50,13 +50,13 @@ The architecture review proposed a full job queue (Inngest or pg-boss) as Phase 
 - Async community-dedup as a separate job kind.
 - Global token-bucket rate limiting (per-run budget from PRD-0028 is sufficient at current scale).
 
-These are the items 2.4–2.7 from `IMPROVEMENT_ROADMAP.md` §Phase 2. They will reopen when we have either (a) ≥ 10 enabled regions or (b) evidence of transient-failure churn worth automating.
+These are the items 2.4-2.7 from `IMPROVEMENT_ROADMAP.md` §Phase 2. They will reopen when we have either (a) ≥ 10 enabled regions or (b) evidence of transient-failure churn worth automating.
 
 ## 5. Risks & Mitigations
 
 | Risk                                           | Mitigation                                                                                                     |
 | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| Dispatcher exceeds 60s for many regions        | `keepalive: true` on outbound fetch; concurrency cap keeps fan-out fast (4 regions issued in parallel ≈ 1–2s). |
+| Dispatcher exceeds 60s for many regions        | `keepalive: true` on outbound fetch; concurrency cap keeps fan-out fast (4 regions issued in parallel ≈ 1-2s). |
 | Per-region run still inherits the 300s ceiling | Accepted; same ceiling as today, just no longer shared. Full removal requires a real queue.                    |
 | Lost region runs if dispatcher fails           | Next cron tick retries the whole set. Documented; no per-tick SLO.                                             |
 

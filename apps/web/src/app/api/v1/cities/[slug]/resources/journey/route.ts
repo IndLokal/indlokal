@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/cities/:slug/resources/journey — Essentials-only resources for
+ * GET /api/v1/cities/:slug/resources/journey - Essentials-only resources for
  * a city, grouped by lifecycle stage. PRD/TDD-0030 §6.
  *
  * Stages returned in canonical order:

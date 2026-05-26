@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/reports — Submit a content report.
+ * POST /api/v1/reports - Submit a content report.
  * Requires access token. Feature-flagged via FEATURE_REPORT env var. TDD-0010.
  */
 

@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/discovery/:citySlug/trending — top trending communities,
+ * GET /api/v1/discovery/:citySlug/trending - top trending communities,
  * upcoming events, and category grid for the city.
  * Public, no auth required. TDD-0003 §3.
  */

@@ -52,7 +52,7 @@ export function generateSessionToken(): string {
 }
 
 /** Compute expiry timestamp for a new token */
-// (kept for backwards compatibility — magic-link callers use tokenExpiry above)
+// (kept for backwards compatibility - magic-link callers use tokenExpiry above)
 
 /** Create a one-time magic-link token and persist only its hash. */
 export async function createMagicLinkToken(userId: string): Promise<string> {
@@ -129,7 +129,7 @@ export async function getSessionUser() {
       return null;
 
     // Sliding session: when the expiry is close, extend it transparently.
-    // Failures here must not log the user out — swallow and continue.
+    // Failures here must not log the user out - swallow and continue.
     const msUntilExpiry = user.sessionTokenExpiry.getTime() - Date.now();
     if (msUntilExpiry < SESSION_REFRESH_THRESHOLD_HOURS * 60 * 60 * 1000) {
       try {
@@ -144,7 +144,7 @@ export async function getSessionUser() {
         try {
           await setSessionCookie(rawToken);
         } catch {
-          // best-effort — some render contexts forbid mutating cookies
+          // best-effort - some render contexts forbid mutating cookies
         }
         user.sessionTokenExpiry = newExpiry;
       } catch {
@@ -154,20 +154,20 @@ export async function getSessionUser() {
 
     return user;
   } catch {
-    // DB unreachable (e.g. Neon cold start) — treat as no session so the
+    // DB unreachable (e.g. Neon cold start) - treat as no session so the
     // page still renders instead of crashing on first request.
     return null;
   }
 }
 
-/** Require a valid session — redirect to login if missing */
+/** Require a valid session - redirect to login if missing */
 export async function requireSessionUser() {
   const user = await getSessionUser();
   if (!user) redirect('/organizer/login');
   return user;
 }
 
-/** Require PLATFORM_ADMIN role — redirect to admin login if not authorized.
+/** Require PLATFORM_ADMIN role - redirect to admin login if not authorized.
  * Preserved for backward-compat. New code should use requireCan() from
  * lib/auth/permissions.ts for granular, role-scoped checks.
  */
@@ -177,7 +177,7 @@ export async function requireAdmin() {
   return user;
 }
 
-/** Require COMMUNITY_ADMIN (organizer) — redirect if not authorized */
+/** Require COMMUNITY_ADMIN (organizer) - redirect if not authorized */
 export async function requireCommunityAdmin() {
   const user = await getSessionUser();
   if (!user || (user.role !== 'COMMUNITY_ADMIN' && user.role !== 'PLATFORM_ADMIN'))
@@ -186,7 +186,7 @@ export async function requireCommunityAdmin() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Workspace cookie — remembers which community is active for multi-org organizers
+// Workspace cookie - remembers which community is active for multi-org organizers
 // ─────────────────────────────────────────────────────────────────────────────
 
 const COMMUNITY_COOKIE = 'lp_community';

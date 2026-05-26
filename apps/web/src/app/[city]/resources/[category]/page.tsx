@@ -7,7 +7,7 @@ import { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
 
 /**
- * Resource Category Page — all guides within one topic.
+ * Resource Category Page - all guides within one topic.
  *
  * Route: /[city]/resources/[category]/
  * Example: /stuttgart/resources/city-registration/
@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
   return {
-    title: `${cat.title} — Indian Expat Guide for ${cityName}`,
+    title: `${cat.title} - Indian Expat Guide for ${cityName}`,
     description: `${cat.description} Practical guides for Indians in ${cityName}, Germany.`,
   };
 }

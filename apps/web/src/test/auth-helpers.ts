@@ -2,7 +2,7 @@
  * Test helpers for /api/v1 endpoints.
  *
  * `bearerHeaders(userId)` returns a Headers object with a freshly
- * minted access JWT for the given user — saves every test from
+ * minted access JWT for the given user - saves every test from
  * having to call `issueAccessToken` itself.
  */
 

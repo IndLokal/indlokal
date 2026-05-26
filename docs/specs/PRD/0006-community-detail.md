@@ -21,14 +21,14 @@ Mirror web `/[city]/communities/[slug]` so users can decide to follow and reach 
 
 - Header: cover image, logo, name, city, categories, badges (Verified, Claimed, Trending), Pulse Score breakdown link.
 - Actions: **Follow**, **Share**, **Report**.
-- AccessChannels list — primary on top, channel-typed icons.
+- AccessChannels list - primary on top, channel-typed icons.
 - Upcoming events (uses TDD-0005 cards).
 - Related communities (`RelationshipEdge`).
 
 ## 5. Out of Scope
 
 - In-app messaging.
-- Editing (organizer surface — Phase 2 mobile).
+- Editing (organizer surface - Phase 2 mobile).
 
 ## 6. User Stories
 
@@ -49,4 +49,4 @@ Empty state for unverified communities; CTA "Know who runs this? Claim it" linki
 
 ## 9. Risks & Open Questions
 
-- Channel verification freshness — show `lastVerifiedAt` chip when stale (>90 d).
+- Channel verification freshness - show `lastVerifiedAt` chip when stale (>90 d).

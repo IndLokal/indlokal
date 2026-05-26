@@ -10,7 +10,7 @@ Asking for push on launch caps opt-in around 35 %. We need a value-led prompt an
 
 ## 2. Users & JTBD
 
-- "Tell me what I care about — and don't spam me."
+- "Tell me what I care about - and don't spam me."
 
 ## 3. Success Metrics
 
@@ -53,4 +53,4 @@ Pre-prompt sheet copy, settings screen wireframe, quiet-hours time picker.
 
 ## 9. Risks & Open Questions
 
-- iOS provisional notifications — consider for digest-only users.
+- iOS provisional notifications - consider for digest-only users.

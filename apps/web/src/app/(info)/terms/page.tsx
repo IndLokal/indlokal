@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
-  title: `Terms of Service — ${siteConfig.name}`,
+  title: `Terms of Service - ${siteConfig.name}`,
   description: `Terms of Service for ${siteConfig.name}.`,
 };
 

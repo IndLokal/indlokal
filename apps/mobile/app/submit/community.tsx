@@ -1,5 +1,5 @@
 /**
- * Submit community form — PRD-0009.
+ * Submit community form - PRD-0009.
  * Text-only v1. Posts to POST /api/v1/submissions/community.
  */
 

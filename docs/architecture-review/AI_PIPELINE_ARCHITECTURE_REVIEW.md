@@ -1,10 +1,10 @@
-# IndLokal AI Pipeline — Principal Architect Review
+# IndLokal AI Pipeline - Principal Architect Review
 
 **Date:** 2026-05-26
 **Scope:** `apps/web/src/modules/pipeline/*`, `apps/web/src/app/api/cron/*`, `.github/workflows/cron.yml`, `prisma/schema.prisma` (pipeline models), `docs/AI_PIPELINE_*.md`.
 **Stance:** Architect view, not code review. Calibrated for "scaling and operating in production," not for MVP-survival.
 
-> TL;DR — The system is **a deterministic ETL pipeline with two LLM calls (filter + extract), persisted in Postgres, scheduled via GitHub Actions, executed inside a Vercel HTTP function**. It is well-suited to current scale (low hundreds of items/day, 4 regions). It is **mis-labelled as an "Agent"**, has **no real queue**, has **dangerous fallback semantics under LLM failure**, and will hit a **hard ceiling at the next 5–10× of volume**. None of those are emergencies. Two of them (filter fail-open, no idempotency on cron retries) should be fixed this sprint.
+> TL;DR - The system is **a deterministic ETL pipeline with two LLM calls (filter + extract), persisted in Postgres, scheduled via GitHub Actions, executed inside a Vercel HTTP function**. It is well-suited to current scale (low hundreds of items/day, 4 regions). It is **mis-labelled as an "Agent"**, has **no real queue**, has **dangerous fallback semantics under LLM failure**, and will hit a **hard ceiling at the next 5-10× of volume**. None of those are emergencies. Two of them (filter fail-open, no idempotency on cron retries) should be fixed this sprint.
 
 ---
 
@@ -49,7 +49,7 @@ This is fine for MVP. The problems start when you call it an "agent platform."
 | Source planning          | **A−** | DB-backed `pipeline_source_configs` with JSON fallback is genuinely well-designed. Keep.                                                    |
 | LLM call layer           | **C**  | Raw `fetch`, hand-rolled retry, no SDK, no streaming, no cost ceiling, fail-open on filter.                                                 |
 | Queueing & async         | **D**  | There is no queue. Calling `PipelineItem` a queue is wishful.                                                                               |
-| Cron design              | **C+** | GHA + Bearer secret is fine. Manual region-sharding is a code smell — it papers over the 300s Vercel ceiling instead of solving it.         |
+| Cron design              | **C+** | GHA + Bearer secret is fine. Manual region-sharding is a code smell - it papers over the 300s Vercel ceiling instead of solving it.         |
 | Failure handling         | **C−** | Soft-fail-everywhere + fail-open filter + unbounded recursive split = silent degradation under partial outage.                              |
 | Observability            | **D+** | `console.log` + one summary row in `PipelineRun`. No traces, no per-item lineage, no alerts.                                                |
 | Cost efficiency          | **B+** | Cheapest model, batching, prefilter, opt-in DDG, scope sharding. Genuinely tight.                                                           |
@@ -66,9 +66,9 @@ Each item below: **Problem → Why it matters → What breaks at scale → Fix**
 
 ---
 
-### 3.1 🔴 CRITICAL — Filter stage fails _open_ on LLM error
+### 3.1 🔴 CRITICAL - Filter stage fails _open_ on LLM error
 
-**Where:** [apps/web/src/modules/pipeline/extraction.ts](apps/web/src/modules/pipeline/extraction.ts) — `filterRelevance()` catch block returns `isRelevant: true` for every item in the batch on any LLM error.
+**Where:** [apps/web/src/modules/pipeline/extraction.ts](apps/web/src/modules/pipeline/extraction.ts) - `filterRelevance()` catch block returns `isRelevant: true` for every item in the batch on any LLM error.
 
 **Problem.** When OpenAI returns 429/5xx, has a bad API key, or the network blips, the filter says "everything is relevant." Those items then flow into the _expensive_ extract stage, which will also fail, also burn tokens on retries, and queue garbage if it partially succeeds.
 
@@ -88,7 +88,7 @@ Each item below: **Problem → Why it matters → What breaks at scale → Fix**
 
 ---
 
-### 3.2 🔴 CRITICAL — Cron retries are not idempotent
+### 3.2 🔴 CRITICAL - Cron retries are not idempotent
 
 **Where:** [apps/web/src/app/api/cron/pipeline/route.ts](apps/web/src/app/api/cron/pipeline/route.ts), `runPipeline()`.
 
@@ -109,7 +109,7 @@ Each item below: **Problem → Why it matters → What breaks at scale → Fix**
 
 ---
 
-### 3.3 🔴 CRITICAL — Recursive batch-split has no global budget
+### 3.3 🔴 CRITICAL - Recursive batch-split has no global budget
 
 **Where:** `extractBatch()` recursive halving in `extraction.ts`.
 
@@ -124,11 +124,11 @@ Each item below: **Problem → Why it matters → What breaks at scale → Fix**
 
 ---
 
-### 3.4 🟠 HIGH — There is no queue, but the system pretends there is
+### 3.4 🟠 HIGH - There is no queue, but the system pretends there is
 
 **Where:** Architecture-wide. `PipelineItem` is a review queue, not a job queue. Notifications outbox has no processor.
 
-**Problem.** Every unit of work — fetching, LLM-extracting, semantic-deduping, enriching — happens **inline inside the Vercel HTTP cron handler**. The 300s function timeout _is_ your scheduler, your worker, and your concurrency limit, all at once.
+**Problem.** Every unit of work - fetching, LLM-extracting, semantic-deduping, enriching - happens **inline inside the Vercel HTTP cron handler**. The 300s function timeout _is_ your scheduler, your worker, and your concurrency limit, all at once.
 
 **Why it matters.** This conflates three orthogonal concerns:
 
@@ -138,7 +138,7 @@ Each item below: **Problem → Why it matters → What breaks at scale → Fix**
 
 You cannot independently scale, retry, or observe any of them. You cannot drain a queue. You cannot delay an enrichment 1h to amortize cost. You cannot re-process a single failed item without re-running the entire region.
 
-**At scale (anything > 5–10 regions or > ~1000 items/run).**
+**At scale (anything > 5-10 regions or > ~1000 items/run).**
 
 - Vercel function timeout becomes the hard ceiling. The current "fix" is to spawn more cron _shards_ in `cron.yml`. This does not compose past ~10 shards.
 - Concurrent LLM calls cannot be globally rate-limited.
@@ -154,7 +154,7 @@ This is the single biggest architectural lever in the system.
 
 ---
 
-### 3.5 🟠 HIGH — Observability is too thin to operate
+### 3.5 🟠 HIGH - Observability is too thin to operate
 
 **Where:** Everywhere. Pattern is `console.log('[Pipeline] ...')` + one summary row in `PipelineRun`.
 
@@ -179,7 +179,7 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.6 🟠 HIGH — Doc/code drift on "Agent"
+### 3.6 🟠 HIGH - Doc/code drift on "Agent"
 
 **Where:** `docs/AI_PIPELINE_ARCHITECTURE.md`, `docs/AI_PIPELINE_PRODUCT.md`, in-code comments referring to "agent."
 
@@ -195,7 +195,7 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.7 🟠 HIGH — Region sharding via cron.yml is the wrong abstraction
+### 3.7 🟠 HIGH - Region sharding via cron.yml is the wrong abstraction
 
 **Where:** `.github/workflows/cron.yml` (4 entries: Berlin, BaWü, Bavaria, Hesse), `parseScopeParam()` in `cron/pipeline/route.ts`.
 
@@ -211,7 +211,7 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.8 🟡 MEDIUM — No content hashing; URL is the only stable key
+### 3.8 🟡 MEDIUM - No content hashing; URL is the only stable key
 
 **Problem.** Dedup is by exact `sourceUrl`. A page that flips between `?utm=x` and `?utm=y`, or moves from `/events` to `/events/2026`, creates two items. Conversely, a stable URL whose content was completely rewritten is silently merged into the existing item.
 
@@ -219,9 +219,9 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.9 🟡 MEDIUM — Auto-approval policy is two coupled magic numbers
+### 3.9 🟡 MEDIUM - Auto-approval policy is two coupled magic numbers
 
-**Where:** `review.ts` — `totalReviewed >= 5 && approvalRate >= 0.8 && confidence >= 0.9`.
+**Where:** `review.ts` - `totalReviewed >= 5 && approvalRate >= 0.8 && confidence >= 0.9`.
 
 **Problem.** Thresholds are code constants, not configuration. There is no shadow-mode (what _would_ have auto-approved if threshold were 0.85?). There is no audit of "approved items that humans later rejected."
 
@@ -229,22 +229,22 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.10 🟡 MEDIUM — Semantic dedup LLM call is per-item and unbounded
+### 3.10 🟡 MEDIUM - Semantic dedup LLM call is per-item and unbounded
 
-**Where:** `intelligence.ts` `semanticCommunityDuplicateCheck()` — called inside the orchestrator's resolve loop, one LLM call per incoming community.
+**Where:** `intelligence.ts` `semanticCommunityDuplicateCheck()` - called inside the orchestrator's resolve loop, one LLM call per incoming community.
 
 **Problem.** Cost and latency scale linearly with new communities, and it is in the _synchronous_ path of the cron run. A spike of 200 new community candidates = 200 sequential LLM calls inside the 300s budget.
 
 **Fix.**
 
-- Pre-filter candidates with **trigram similarity in Postgres** (`pg_trgm` GIN index on `Community.name`). Only call LLM when trigram score is in the ambiguous band (e.g. 0.3–0.7).
+- Pre-filter candidates with **trigram similarity in Postgres** (`pg_trgm` GIN index on `Community.name`). Only call LLM when trigram score is in the ambiguous band (e.g. 0.3-0.7).
 - Move semantic dedup to a _post-queue_ enrichment job, not inline.
 
 ---
 
-### 3.11 🟡 MEDIUM — Prompt injection surface is real, even if low risk today
+### 3.11 🟡 MEDIUM - Prompt injection surface is real, even if low risk today
 
-**Where:** `extraction.ts` user-message construction — concatenates 3000 chars of arbitrary fetched HTML/text.
+**Where:** `extraction.ts` user-message construction - concatenates 3000 chars of arbitrary fetched HTML/text.
 
 **Problem.** JSON-mode + a strong system prompt provides moderate protection, but a hostile event page can still influence `confidence`, `categories`, even `cityName`. The current pipeline auto-approves at confidence ≥ 0.9.
 
@@ -258,9 +258,9 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.12 🟡 MEDIUM — No upper bound on env-driven knobs
+### 3.12 🟡 MEDIUM - No upper bound on env-driven knobs
 
-**Where:** `getPositiveIntEnv` in `extraction.ts` — `PIPELINE_FILTER_BATCH_SIZE`, `PIPELINE_EXTRACT_BATCH_SIZE`, `PIPELINE_LLM_TIMEOUT_MS`.
+**Where:** `getPositiveIntEnv` in `extraction.ts` - `PIPELINE_FILTER_BATCH_SIZE`, `PIPELINE_EXTRACT_BATCH_SIZE`, `PIPELINE_LLM_TIMEOUT_MS`.
 
 **Problem.** A typo like `PIPELINE_EXTRACT_BATCH_SIZE=300` will silently attempt to stuff 900K chars into one prompt.
 
@@ -268,13 +268,13 @@ The `PipelineRun` table aggregates to _region-run_ granularity. Per-item lineage
 
 ---
 
-### 3.13 🟢 LOW — Stage timings are in-process only
+### 3.13 🟢 LOW - Stage timings are in-process only
 
 `stageTimings` lives on the run result, persisted to `PipelineRun`. Fine. But there's no per-source timing, so you cannot say "Eventbrite is 60% of the fetch budget." Add per-source duration to the proposed `PipelineSourceRun`.
 
 ---
 
-### 3.14 🟢 LOW — Hardcoded freshness regexes
+### 3.14 🟢 LOW - Hardcoded freshness regexes
 
 `freshness.ts` patterns are static. At current scale this is correct (avoid premature config). Revisit if you add non-German regions.
 
@@ -288,7 +288,7 @@ These are the parts where I would push back on any "refactor":
 2. **DB-backed `pipeline_source_configs` with JSON fallback.** Idempotent bootstrap, per-process cache, falls back when table is empty. Mature design.
 3. **Two-stage LLM (cheap filter → richer extract).** Correct cost/quality split. Do not collapse into one call.
 4. **Prefilter before filter.** Regex/score-based stale-page detection saves real money. Keep tuning the regexes, don't replace the pattern.
-5. **DB-derived sources from community websites.** Compounding asset — every approved community makes future runs better. Genuinely good.
+5. **DB-derived sources from community websites.** Compounding asset - every approved community makes future runs better. Genuinely good.
 6. **Scope-aware pinned source filtering** (`scope: GENERIC|CITY|REGION` + `hintState`). Right shape for sharded runs.
 7. **Strict mode (`PIPELINE_STRICT=1`) opt-in.** Sensible default of tolerant cron + strict CLI.
 8. **`runtime-config.ts` single per-process cache.** Avoids re-querying within a run. Right.
@@ -326,7 +326,7 @@ That sequence alone moves the system from C+ to B+.
 - No content hashing
 - Doc/code drift on "Agent"
 
-**Not debt — appropriate for stage (do NOT pay down yet):**
+**Not debt - appropriate for stage (do NOT pay down yet):**
 
 - One LLM provider
 - No vector DB / embeddings
@@ -348,7 +348,7 @@ That sequence alone moves the system from C+ to B+.
 
 ---
 
-## 7. Scalability ceiling — concrete numbers
+## 7. Scalability ceiling - concrete numbers
 
 Current architecture supports approximately:
 
@@ -357,8 +357,8 @@ Current architecture supports approximately:
 | Items / region / run       | ~200    | ~800         | Vercel 300s function timeout during extract                               |
 | Regions                    | 4       | ~10          | YAML cron entries become unmanageable; no global LLM rate limit           |
 | LLM calls / minute         | ~30     | ~200         | OpenAI tier-1 rate limit (60 req/min on gpt-4o-mini standard); no backoff |
-| Concurrent admin reviewers | 1–2     | ~5           | No optimistic locking on `PipelineItem.status` transitions                |
-| Cost / month               | ~$40–70 | ~$300        | Linear in items; no per-run cost cap                                      |
+| Concurrent admin reviewers | 1-2     | ~5           | No optimistic locking on `PipelineItem.status` transitions                |
+| Cost / month               | ~$40-70 | ~$300        | Linear in items; no per-run cost cap                                      |
 
 To go past these, the queue (3.4) and per-call telemetry (3.5) are non-negotiable.
 
@@ -372,5 +372,5 @@ This is a **well-factored ETL pipeline that has been carefully sized for the pre
 
 ## 9. See also
 
-- [RISK_REGISTER.md](RISK_REGISTER.md) — prioritized, with severity × likelihood.
-- [IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md) — phased plan with rough effort.
+- [RISK_REGISTER.md](RISK_REGISTER.md) - prioritized, with severity × likelihood.
+- [IMPROVEMENT_ROADMAP.md](IMPROVEMENT_ROADMAP.md) - phased plan with rough effort.

@@ -60,7 +60,7 @@ def add_title(doc: Document, title: str, subtitle: str) -> None:
 
     rule = doc.add_paragraph()
     rule.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r3 = rule.add_run("— ★ —")
+    r3 = rule.add_run("- ★ -")
     r3.font.color.rgb = ACCENT
     r3.font.size = Pt(13)
     doc.add_paragraph()
@@ -151,7 +151,7 @@ def build() -> None:
     add_title(
         doc,
         "IndLokal × EU/DE Grant Landscape",
-        "Strategic fit memo — where we belong, what to fix, where to apply, how to apply",
+        "Strategic fit memo - where we belong, what to fix, where to apply, how to apply",
     )
 
     # --- Section 1
@@ -162,7 +162,7 @@ def build() -> None:
         "nationals (TCNs) in Germany. That is exactly the language of one "
         "EU programme (AMIF) and a stack of German federal, Land and "
         "foundation pots. It is not a research, deep-tech or pan-European "
-        "consortium project — so most of the headline EU programmes "
+        "consortium project - so most of the headline EU programmes "
         "(Horizon, EIC, Digital Europe) are a poor fit. Don't chase them.",
     )
     add_callout(
@@ -190,7 +190,7 @@ def build() -> None:
         "€150k in one cheque. The realistic path is either (a) one large "
         "AMIF / ESF+ award, or (b) stacking ~3 smaller awards: e.g. "
         "€15k Stadt Stuttgart + €50k Bosch + €85k BW Stiftung = €150k. "
-        "The deck shows three explicit tiers — €85k lean (single "
+        "The deck shows three explicit tiers - €85k lean (single "
         "funder), €150k full (single large or stacked), €250k Region "
         "Stuttgart (Stuttgart + Sindelfingen + Waiblingen).",
     )
@@ -198,37 +198,37 @@ def build() -> None:
     # --- Section 2
     add_h(doc, "2. Programme-by-programme fit", 1)
 
-    add_h(doc, "Tier A — apply here first (high fit, realistic to win)", 2)
+    add_h(doc, "Tier A - apply here first (high fit, realistic to win)", 2)
     add_table(
         doc,
         ["Programme", "Owner", "Fit", "Typical size", "Why"],
         [
-            ["AMIF — National Programme DE", "BAMF",
-             "★★★★★", "€100k–€500k",
+            ["AMIF - National Programme DE", "BAMF",
+             "★★★★★", "€100k-€500k",
              "TCN integration is the Specific Objective. Multi-language + civic participation + public-sector partnership = textbook AMIF."],
             ["ESF+ Baden-Württemberg", "Min. f. Soziales BW",
-             "★★★★★", "€50k–€300k",
+             "★★★★★", "€50k-€300k",
              "Social inclusion, integration, digital access. Land-level decisions, closer to home."],
             ["Land BW Integrationsförderung / 'Gemeinsam in Vielfalt III'",
              "Min. f. Soziales BW",
-             "★★★★★", "€20k–€150k",
+             "★★★★★", "€20k-€150k",
              "Direct integration funding for projects in BW cities."],
             ["Stadt Stuttgart Integrationsfonds", "Stadt Stuttgart",
-             "★★★★★", "€5k–€50k",
+             "★★★★★", "€5k-€50k",
              "Small but fast. Builds the local credibility you need for bigger asks. Often the first 'yes'."],
-            ["Stiftung Mercator — Teilhabe & Zusammenhalt", "Foundation",
-             "★★★★☆", "€100k–€500k+",
+            ["Stiftung Mercator - Teilhabe & Zusammenhalt", "Foundation",
+             "★★★★☆", "€100k-€500k+",
              "Already in the deck. Strong fit, multi-year possible."],
-            ["Robert Bosch Stiftung — Migration & Inklusion", "Foundation",
-             "★★★★☆", "€50k–€300k",
+            ["Robert Bosch Stiftung - Migration & Inklusion", "Foundation",
+             "★★★★☆", "€50k-€300k",
              "Stuttgart-headquartered. Local angle helps."],
-            ["BW Stiftung — Integration / Gesellschaft & Kultur", "Foundation",
-             "★★★★☆", "€30k–€200k",
+            ["BW Stiftung - Integration / Gesellschaft & Kultur", "Foundation",
+             "★★★★☆", "€30k-€200k",
              "Land-level foundation, prefers BW projects."],
         ],
     )
 
-    add_h(doc, "Tier B — apply selectively", 2)
+    add_h(doc, "Tier B - apply selectively", 2)
     add_table(
         doc,
         ["Programme", "Fit", "Notes"],
@@ -237,7 +237,7 @@ def build() -> None:
              "EU strand on Union Values / civic engagement. Usually needs consortium. Frame: civic participation of new EU residents."],
             ["Prototype Fund (BMBF + OKF)", "★★★☆☆",
              "€95k for open-source civic tech. Requires releasing a meaningful module as OSS."],
-            ["Hertie Stiftung — Demokratie stärken", "★★★☆☆",
+            ["Hertie Stiftung - Demokratie stärken", "★★★☆☆",
              "Civic participation angle."],
             ["Schöpflin Stiftung", "★★★☆☆",
              "Civil society digital infrastructure."],
@@ -251,14 +251,14 @@ def build() -> None:
         ],
     )
 
-    add_h(doc, "Tier C — wrong fit, do not apply", 2)
+    add_h(doc, "Tier C - wrong fit, do not apply", 2)
     add_bullets(
         doc,
         [
-            "EIC Accelerator / Pathfinder / Transition — deep-tech only. Will be desk-rejected.",
-            "Horizon Europe Pillar 2 — needs 3+ partners across 3+ countries; research focus; novelty in method, not application.",
-            "Digital Europe — EU digital sovereignty (HPC, AI, cyber, EDIHs). Wrong space.",
-            "CEF Digital — telecom / cross-border infrastructure. Wrong scale.",
+            "EIC Accelerator / Pathfinder / Transition - deep-tech only. Will be desk-rejected.",
+            "Horizon Europe Pillar 2 - needs 3+ partners across 3+ countries; research focus; novelty in method, not application.",
+            "Digital Europe - EU digital sovereignty (HPC, AI, cyber, EDIHs). Wrong space.",
+            "CEF Digital - telecom / cross-border infrastructure. Wrong scale.",
         ],
     )
 
@@ -274,7 +274,7 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "Google Ad Grants (~€10k/month free Google Ads) — needs registered nonprofit.",
+            "Google Ad Grants (~€10k/month free Google Ads) - needs registered nonprofit.",
             "Google Workspace / Microsoft / Apple / GitHub nonprofit programmes.",
             "Many Land programmes that require gemeinnützig status.",
             "Reduced co-financing rates in several public calls.",
@@ -285,7 +285,7 @@ def build() -> None:
         "Recommended action",
         "Set up a parallel gGmbH or e.V. that receives grant funding and "
         "contracts technology services from the GmbH at arm's length. "
-        "Cost ~€2–5k, a few weeks via a Steuerberater specialised in "
+        "Cost ~€2-5k, a few weeks via a Steuerberater specialised in "
         "Gemeinnützigkeit. Many social ventures use this exact structure.",
     )
 
@@ -296,20 +296,20 @@ def build() -> None:
         [
             ["AMIF", "up to 75%",
              "25%, often covered by Land or municipal partner"],
-            ["ESF+ BW", "40–60%",
+            ["ESF+ BW", "40-60%",
              "Often covered by Land or municipality"],
             ["Foundations (Mercator, Bosch, BW Stiftung)", "up to 100%",
              "Usually none required"],
-            ["Stadt Stuttgart Integrationsfonds", "up to 80–100%",
+            ["Stadt Stuttgart Integrationsfonds", "up to 80-100%",
              "Sometimes co-funding from partner association"],
         ],
     )
     add_callout(
         doc,
         "Cash-flow reality",
-        "Pre-financing is typically 20–40%. You need ~6 months of "
+        "Pre-financing is typically 20-40%. You need ~6 months of "
         "working capital between signing and the first interim payment. "
-        "Plan for it — many small grantees die of cash-flow, not "
+        "Plan for it - many small grantees die of cash-flow, not "
         "rejection.",
     )
 
@@ -317,14 +317,14 @@ def build() -> None:
     add_checklist(
         doc,
         [
-            "PIC code on the EU Funding & Tenders Portal (free, slow — start now)",
+            "PIC code on the EU Funding & Tenders Portal (free, slow - start now)",
             "EU Login for both founders",
             "DSGVO concept: DPIA for community/event data, AVV with hosting providers, ROPA (Verarbeitungsverzeichnis)",
             "Accessibility statement per BFSG (mandatory since June 2025 for digital services in DE)",
             "Impressum + Datenschutzerklärung legally clean and reviewed",
             "Letters of intent / MoUs from Stadt Stuttgart Welcome Center, IHK Stuttgart, ≥1 community partner, ≥1 university",
             "Independent evaluator with a signed offer letter (target: freelance evaluation consultant or a chair at Uni Stuttgart / Hochschule Esslingen; ifo / BAMF-FZ as research-link aspirations only)",
-            "Audited or reviewed financials for the last 1–2 years",
+            "Audited or reviewed financials for the last 1-2 years",
             "Project bank account separated from operating account (required for AMIF reporting)",
         ],
     )
@@ -348,42 +348,42 @@ def build() -> None:
     )
 
     # --- Section 4
-    add_h(doc, "4. Application playbook — what to do, in order", 1)
+    add_h(doc, "4. Application playbook - what to do, in order", 1)
 
     add_h(doc, "Next 2 weeks", 2)
     add_numbered(
         doc,
         [
-            "Register PIC on the EU Funding & Tenders Portal — slowest item, start today.",
+            "Register PIC on the EU Funding & Tenders Portal - slowest item, start today.",
             "Email Stadt Stuttgart Abteilung Integration: request a 30-min meeting and share the 1-pager. Their Letter of Support is the single most valuable document you can collect.",
             "Email BAMF Regionalkoordinator BW for AMIF national programme guidance and the current call schedule.",
-            "Email the BW Ministerium für Soziales referat for Integrationsförderung — ask which open call best fits a 12-month Stuttgart pilot.",
+            "Email the BW Ministerium für Soziales referat for Integrationsförderung - ask which open call best fits a 12-month Stuttgart pilot.",
             "Talk to a Steuerberater about gGmbH/e.V. setup. Get a written cost + timeline.",
         ],
     )
 
-    add_h(doc, "Weeks 3–6", 2)
+    add_h(doc, "Weeks 3-6", 2)
     add_numbered(
         doc,
         [
-            "Pick your first two applications. Recommended: (a) Stadt Stuttgart Integrationsfonds — small, fast, builds CV; (b) Stiftung Mercator OR Robert Bosch Stiftung — bigger, longer cycle.",
+            "Pick your first two applications. Recommended: (a) Stadt Stuttgart Integrationsfonds - small, fast, builds CV; (b) Stiftung Mercator OR Robert Bosch Stiftung - bigger, longer cycle.",
             "Sign MoUs with 3 community organisations + 1 university international office + Stadt Stuttgart Welcome Center.",
             "Get the independent evaluator's signed offer letter.",
             "Draft application v1, then submit internally to a friendly NCP reviewer.",
         ],
     )
 
-    add_h(doc, "Weeks 7–12", 2)
+    add_h(doc, "Weeks 7-12", 2)
     add_numbered(
         doc,
         [
             "Submit Stadt Stuttgart application (rolling or quarterly deadlines).",
-            "Submit foundation application (Mercator/Bosch — usually rolling, decisions in 3–6 months).",
+            "Submit foundation application (Mercator/Bosch - usually rolling, decisions in 3-6 months).",
             "Prepare AMIF / ESF+ application for the next published call (BAMF + L-Bank BW pages).",
         ],
     )
 
-    add_h(doc, "Months 4–6", 2)
+    add_h(doc, "Months 4-6", 2)
     add_numbered(
         doc,
         [
@@ -398,7 +398,7 @@ def build() -> None:
     add_p(
         doc,
         "Not grants, but they materially reduce burn and add reach. "
-        "Most require nonprofit status — another argument for the "
+        "Most require nonprofit status - another argument for the "
         "gGmbH/e.V. structure.",
     )
     add_table(
@@ -427,7 +427,7 @@ def build() -> None:
         "have Stuttgart-region offices and CSR budgets earmarked for "
         "diaspora / integration. So do German firms with large Indian "
         "workforces (Bosch, Mercedes-Benz, Porsche, SAP, Allianz). A "
-        "€5k–€25k sponsorship from any one is faster than any grant — "
+        "€5k-€25k sponsorship from any one is faster than any grant - "
         "and counts as co-financing for AMIF / ESF+.",
     )
 
@@ -436,16 +436,16 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "Don't apply to EIC Accelerator — 200 hours wasted, desk-rejected.",
+            "Don't apply to EIC Accelerator - 200 hours wasted, desk-rejected.",
             "Don't try to lead a Horizon consortium. Maybe join one as a community partner.",
-            "Don't promise the same KPIs to every funder — they talk to each other (especially BW foundations).",
+            "Don't promise the same KPIs to every funder - they talk to each other (especially BW foundations).",
             "Don't position as 'startup' to public funders or as 'NGO' to commercial sponsors. Use the integration-infrastructure framing for both.",
             "Don't accept any grant that demands open-ended IP transfer or perpetual free-service obligations without legal review.",
         ],
     )
 
     # --- Section 7
-    add_h(doc, "7. Where to send the existing deck — scorecard", 1)
+    add_h(doc, "7. Where to send the existing deck - scorecard", 1)
     add_table(
         doc,
         ["Apply now (deck is ready)", "Apply after small tailoring", "Don't bother"],
@@ -454,7 +454,7 @@ def build() -> None:
             ["Robert Bosch Stiftung", "ESF+ BW", "Horizon Europe"],
             ["Stiftung Mercator", "BW Stiftung", "Digital Europe"],
             ["BW Stiftung discretionary", "CERV (with consortium)", "CEF Digital"],
-            ["Prototype Fund (with OSS angle)", "—", "Creative Europe"],
+            ["Prototype Fund (with OSS angle)", "-", "Creative Europe"],
         ],
     )
 
@@ -476,7 +476,7 @@ def build() -> None:
     r = disc.add_run(
         "Working memo prepared for the IndLokal founding team. "
         "Programme names, eligibility and call schedules change "
-        "frequently — verify on the EU Funding & Tenders Portal, "
+        "frequently - verify on the EU Funding & Tenders Portal, "
         "BAMF, L-Bank BW and each foundation's site before applying."
     )
     r.italic = True

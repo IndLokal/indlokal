@@ -1,6 +1,6 @@
-# IndLokal — Brand Guidelines
+# IndLokal - Brand Guidelines
 
-_Version 2.0 — Product-grounded brand release_
+_Version 2.0 - Product-grounded brand release_
 _Owner: Brand & Marketing_
 
 ---
@@ -10,7 +10,7 @@ _Owner: Brand & Marketing_
 | Attribute           | Value                                                                                                                                                                                                                                                                        |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Brand name**      | IndLokal                                                                                                                                                                                                                                                                     |
-| **Spelling**        | One word, camel-case: `IndLokal`. The `I` and the `L` are always capitalised — they signal the two halves of the name (`Ind` + `Lokal`). Never `Ind Lokal`, `Ind-Lokal`, `Indlokal`, `INDLOKAL`, or `IndLocal`. URLs and handles stay lowercase: `indlokal.de`, `@indlokal`. |
+| **Spelling**        | One word, camel-case: `IndLokal`. The `I` and the `L` are always capitalised - they signal the two halves of the name (`Ind` + `Lokal`). Never `Ind Lokal`, `Ind-Lokal`, `Indlokal`, `INDLOKAL`, or `IndLocal`. URLs and handles stay lowercase: `indlokal.de`, `@indlokal`. |
 | **Pronunciation**   | _“ind-lo-kahl”_ (the German _lokal_, not English _local_).                                                                                                                                                                                                                   |
 | **Domains**         | `indlokal.de` (primary, German market) · `indlokal.com` (global / English-speaking diaspora). Both must always 200; `.com` may canonicalise to `.de` for SEO.                                                                                                                |
 | **Handles**         | `@indlokal` everywhere it’s available (LinkedIn, Instagram, X, YouTube, Threads). Fallback: `@indlokal.de`.                                                                                                                                                                  |
@@ -24,8 +24,8 @@ _Owner: Brand & Marketing_
 
 **IndLokal = Ind + Lokal.**
 
-- **Ind** — short for Indian / Indien. Heritage, identity, the people we serve.
-- **Lokal** — German for _local_. Place, belonging, the city you actually live in.
+- **Ind** - short for Indian / Indien. Heritage, identity, the people we serve.
+- **Lokal** - German for _local_. Place, belonging, the city you actually live in.
 
 The name itself is the product thesis: _your Indian life, made local in Germany._ It bridges two cultures in five letters of overlap.
 
@@ -35,9 +35,9 @@ The capitalisation `IndLokal` is intentional and load-bearing: the capital `L` m
 
 ## 3. Mission, vision, promise
 
-**Mission.** Make Indian community life in Germany visible, fresh, and easy to join — and put the practical resources around it within reach.
+**Mission.** Make Indian community life in Germany visible, fresh, and easy to join - and put the practical resources around it within reach.
 
-**Vision.** Every Indian in Germany — newcomer, student, family, professional — knows where their people are, what’s happening this week, and where to find the help they need.
+**Vision.** Every Indian in Germany - newcomer, student, family, professional - knows where their people are, what’s happening this week, and where to find the help they need.
 
 **Brand promise.** _Real communities. Real events. Real resources. Right now._
 
@@ -45,23 +45,23 @@ The capitalisation `IndLokal` is intentional and load-bearing: the capital `L` m
 
 ## 4. Positioning statement
 
-> For Indians living in Germany who want to discover and participate in community life, **IndLokal** is the activity-led platform that shows you what’s happening, who’s active, how to get involved, and where to find the consular and expat-life resources you actually need — powered by a trusted community graph that ensures freshness, relevance, and quality.
+> For Indians living in Germany who want to discover and participate in community life, **IndLokal** is the activity-led platform that shows you what’s happening, who’s active, how to get involved, and where to find the consular and expat-life resources you actually need - powered by a trusted community graph that ensures freshness, relevance, and quality.
 
-### The three pillars (the product is built on these — the brand must reflect them equally)
+### The three pillars (the product is built on these - the brand must reflect them equally)
 
 Everything in the product, and everything we say about it, ladders up to one of three pillars. Copy, design, and creative that only serve one pillar are off-brief.
 
 | Pillar                | What it is in the product                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | What the brand says about it                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| 1. **Communities** 🪷 | The durable groups people can join — cultural, regional, religious, student, professional, family, sports. Listed at `/[city]/communities`, ranked by activity.                                                                                                                                                                                                                                                                                                                                                                                 | _“The communities actually alive in your city.”_           |
+| 1. **Communities** 🪷 | The durable groups people can join - cultural, regional, religious, student, professional, family, sports. Listed at `/[city]/communities`, ranked by activity.                                                                                                                                                                                                                                                                                                                                                                                 | _“The communities actually alive in your city.”_           |
 | 2. **Events** 📅      | The time-sensitive things happening this week or this month. Listed at `/[city]/events`, surfaced front-and-centre on the city feed.                                                                                                                                                                                                                                                                                                                                                                                                            | _“What’s happening for Indians in your city this week.”_   |
 | 3. **Resources** 🧭   | Consular & official services + nine expat-life topic categories: city registration (Anmeldung, EU Blue Card, PR, family reunion), driving (licence conversion, English Fahrschule), housing (apartment search, Schufa, GEZ), health & doctors (GKV vs PKV, English-speaking doctors), jobs & careers, tax & finance (Steuererklärung, DTAA, NRE/NRO), business setup (Freiberufler vs Gewerbe), family & children (Kindergeld, Elterngeld, Kita, schools), and food & groceries. Listed at `/[city]/resources` and `/[city]/consular-services`. | _“The resources every Indian in Germany ends up needing.”_ |
 
-When you’re writing copy or designing a layout, ask: _which pillar is this serving, and am I treating the other two as first-class citizens?_ If a hero, a headline, or a deck only mentions events, it’s wrong — add the other two.
+When you’re writing copy or designing a layout, ask: _which pillar is this serving, and am I treating the other two as first-class citizens?_ If a hero, a headline, or a deck only mentions events, it’s wrong - add the other two.
 
 ---
 
-## 5. Core product principles — and what they mean for the brand
+## 5. Core product principles - and what they mean for the brand
 
 These principles come straight from [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) and [`docs/SOLUTION_ARCHITECTURE.md`](../SOLUTION_ARCHITECTURE.md). Brand work that contradicts them is wrong on its face.
 
@@ -84,13 +84,13 @@ These principles come straight from [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCU
 
 **Supporting taglines (rotate by context):**
 
-- _Communities. Events. Resources. Real, near you._ — three-pillar story (use this when introducing the product)
-- _What’s alive for Indians in {city} this week._ — discovery / homepage / city pages
-- _The pulse of Indian life in your city._ — activity / freshness emphasis
-- _From Anmeldung to Diwali, in one place._ — newcomer story / resources story
-- _Real communities. Real events. Real resources. Right now._ — trust / quality
-- _Find your people — and the help you need — in Germany._ — emotional / acquisition
-- _Indian life, German postcode._ — playful / social media
+- _Communities. Events. Resources. Real, near you._ - three-pillar story (use this when introducing the product)
+- _What’s alive for Indians in {city} this week._ - discovery / homepage / city pages
+- _The pulse of Indian life in your city._ - activity / freshness emphasis
+- _From Anmeldung to Diwali, in one place._ - newcomer story / resources story
+- _Real communities. Real events. Real resources. Right now._ - trust / quality
+- _Find your people - and the help you need - in Germany._ - emotional / acquisition
+- _Indian life, German postcode._ - playful / social media
 
 Never lock the tagline into the logo. Taglines are a copy decision, not a logo decision.
 
@@ -132,11 +132,11 @@ If IndLokal were a person, they would be:
 
 ## 8. Voice rules
 
-1. **Write like a person, not a platform.** “We found 12 events this week” — not “12 results retrieved”.
+1. **Write like a person, not a platform.** “We found 12 events this week” - not “12 results retrieved”.
 2. **Lead with activity.** Talk about what’s happening before what exists.
-3. **Use the city.** Always say _“in Stuttgart”_, _“in Berlin”_ — never just “in your city”.
+3. **Use the city.** Always say _“in Stuttgart”_, _“in Berlin”_ - never just “in your city”.
 4. **Bilingual, but English-first.** German for nouns of place (_Stadt_, _Lokal_, _Verein_) when natural. Never code-switch mid-sentence for cuteness.
-5. **Hindi/Indian-language words are welcome** when they’re the most accurate word (_satsang_, _garba_, _adda_) — italicise on first use, then drop the italics.
+5. **Hindi/Indian-language words are welcome** when they’re the most accurate word (_satsang_, _garba_, _adda_) - italicise on first use, then drop the italics.
 6. **No hype words.** Banned: _revolutionary_, _game-changer_, _disrupt_, _curated experience_, _AI-powered_ (unless literally describing a feature), _seamless_.
 7. **No false scarcity, no fake urgency.**
 8. **Numbers over adjectives.** “47 active communities” beats “lots of communities”.
@@ -152,30 +152,30 @@ If IndLokal were a person, they would be:
 
 ---
 
-## 9. Audience — the five personas we write for
+## 9. Audience - the five personas we write for
 
 These are the same personas the product is built around (see [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) §3.1). Brand and product use the same names so writers, designers and PMs share a vocabulary.
 
 | Persona                                          | What they say to themselves                                                                                         | What we sell them                                                                                          |
 | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| **The Newcomer** (0–12 months in Germany)        | _“I just moved. I don’t know anyone. Where do Indians actually meet here — and what is Anmeldung?”_                 | All three pillars at once. Resources first, communities second, events third.                              |
+| **The Newcomer** (0-12 months in Germany)        | _“I just moved. I don’t know anyone. Where do Indians actually meet here - and what is Anmeldung?”_                 | All three pillars at once. Resources first, communities second, events third.                              |
 | **The Student**                                  | _“Is there a Desi society at my uni? What’s on this weekend that’s free?”_                                          | Communities (student associations, language groups), free events, light resources (housing, bank account). |
 | **The Family**                                   | _“Bharatanatyam classes for my daughter. A Diwali event for the kids. A Hindi-speaking paediatrician.”_             | Family-tagged communities, family-friendly events, family resources (Kindergeld, Kita, schools, doctors).  |
 | **The Working Professional**                     | _“High-signal networking. No WhatsApp group of 900 people I’ll mute in a day. And a Steuerberater who knows DTAA.”_ | Professional communities, curated events, advanced resources (EU Blue Card, PR, tax, freelance visa).      |
-| **The Settled Explorer** (1–5+ years in Germany) | _“I’ve been here years. What am I still missing?”_                                                                  | Activity feed, freshness signals, niche communities, weekly digest.                                        |
+| **The Settled Explorer** (1-5+ years in Germany) | _“I’ve been here years. What am I still missing?”_                                                                  | Activity feed, freshness signals, niche communities, weekly digest.                                        |
 | **The Organiser** _(secondary)_                  | _“We exist. Help people outside our group find us.”_                                                                | Free listing, claim flow, organiser dashboard, profile completeness coaching.                              |
 
-Ready-to-paste persona copy blocks live in [`MARKETING_KIT.md`](./MARKETING_KIT.md) §6. Use them — don’t freestyle.
+Ready-to-paste persona copy blocks live in [`MARKETING_KIT.md`](./MARKETING_KIT.md) §6. Use them - don’t freestyle.
 
 ---
 
 ## 10. Naming conventions for sub-brands
 
-- **Product surfaces** — `IndLokal Communities`, `IndLokal Events`, `IndLokal Resources`, `IndLokal for Organisers`. Never `IndLokal Pro`, `IndLokal Premium` (decide later, don’t pre-empt).
-- **City pages** — `IndLokal Stuttgart`, `IndLokal Berlin`. City name follows, never precedes.
-- **Newsletter** — `The Weekly Lokal`.
-- **Activity score (organiser-facing, Phase 2)** — `Pulse Score`. The Pulse name ties directly to the brand mark. Use “Pulse Score” only in organiser/admin surfaces; user-facing copy uses qualitative labels (“Active”, “Quiet”).
-- **Community graph (internal/PR)** — `The IndLokal Graph`.
+- **Product surfaces** - `IndLokal Communities`, `IndLokal Events`, `IndLokal Resources`, `IndLokal for Organisers`. Never `IndLokal Pro`, `IndLokal Premium` (decide later, don’t pre-empt).
+- **City pages** - `IndLokal Stuttgart`, `IndLokal Berlin`. City name follows, never precedes.
+- **Newsletter** - `The Weekly Lokal`.
+- **Activity score (organiser-facing, Phase 2)** - `Pulse Score`. The Pulse name ties directly to the brand mark. Use “Pulse Score” only in organiser/admin surfaces; user-facing copy uses qualitative labels (“Active”, “Quiet”).
+- **Community graph (internal/PR)** - `The IndLokal Graph`.
 
 ---
 
@@ -183,7 +183,7 @@ Ready-to-paste persona copy blocks live in [`MARKETING_KIT.md`](./MARKETING_KIT.
 
 > © {YEAR} IndLokal. Made with care for the Indian diaspora in Germany.
 
-Imprint / Impressum on `.de` is mandatory under German law — keep it linked from every page footer.
+Imprint / Impressum on `.de` is mandatory under German law - keep it linked from every page footer.
 
 ---
 
@@ -191,9 +191,9 @@ Imprint / Impressum on `.de` is mandatory under German law — keep it linked fr
 
 - [ ] Name spelled `IndLokal` everywhere in copy and in the wordmark (capital `I`, capital `L`).
 - [ ] URLs and handles in lowercase: `indlokal.de`, `indlokal.com`, `@indlokal`.
-- [ ] **All three pillars represented** if this is a hero, About blurb, or first-impression surface — communities, events, _and_ resources. (Drill-down surfaces can lead with one.)
+- [ ] **All three pillars represented** if this is a hero, About blurb, or first-impression surface - communities, events, _and_ resources. (Drill-down surfaces can lead with one.)
 - [ ] Tagline used is one of the approved set in §6.
-- [ ] Persona named in your head before you write — see §9.
+- [ ] Persona named in your head before you write - see §9.
 - [ ] Voice passes the “well-connected friend” test.
 - [ ] No banned hype words.
 - [ ] City named explicitly where relevant.

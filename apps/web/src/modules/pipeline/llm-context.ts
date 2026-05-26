@@ -19,7 +19,7 @@ export function withLlmContext<T>(ctx: LlmCallContext, fn: () => Promise<T>): Pr
   return storage.run(ctx, fn);
 }
 
-/** Returns the active context if any. Absent in CLI/test paths — callers must tolerate undefined. */
+/** Returns the active context if any. Absent in CLI/test paths - callers must tolerate undefined. */
 export function currentLlmContext(): LlmCallContext | undefined {
   return storage.getStore();
 }

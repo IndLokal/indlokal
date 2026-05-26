@@ -49,7 +49,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     return [
-      // PostHog reverse proxy — routes analytics through our domain to avoid ad-blockers
+      // PostHog reverse proxy - routes analytics through our domain to avoid ad-blockers
       {
         source: '/ingest/static/:path*',
         destination: `${POSTHOG_HOST}/static/:path*`,

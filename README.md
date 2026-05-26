@@ -1,8 +1,8 @@
 # IndLokal
 
-**Your Indian community, locally — the city-first discovery platform for the Indian diaspora in Germany.**
+**Your Indian community, locally - the city-first discovery platform for the Indian diaspora in Germany.**
 
-IndLokal helps Indians in Germany discover the **communities** active in their city, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing — from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
+IndLokal helps Indians in Germany discover the **communities** active in their city, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing - from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
 
 Brand source of truth: [`docs/brand/`](docs/brand/). Marketing copy: [`docs/brand/MARKETING_KIT.md`](docs/brand/MARKETING_KIT.md).
 
@@ -122,7 +122,7 @@ To keep source URLs fresh in DB:
 
 **Monorepo, single backend.** The web app owns the Next.js API routes and Prisma data model. The mobile app consumes the same backend and shared contracts; it does not get a separate backend for MVP.
 
-**Modular-internal backend.** Each domain module in `apps/web/src/modules/` encapsulates its own queries, types, and business logic. Modules communicate through well-defined exports — ready to extract later if usage justifies it.
+**Modular-internal backend.** Each domain module in `apps/web/src/modules/` encapsulates its own queries, types, and business logic. Modules communicate through well-defined exports - ready to extract later if usage justifies it.
 
 **City-first URL structure.** All user-facing routes are scoped under `/:city/` to enable multi-city expansion. Metro-region awareness means events in Böblingen surface under Stuttgart.
 
@@ -144,8 +144,8 @@ See [docs/deployment/](docs/deployment/) for the current deployment runbooks.
 
 ## Git Workflow
 
-- `develop` — primary branch for day-to-day work and feature integration
-- `main` — deployment branch; merge from `develop` when ready to deploy
+- `develop` - primary branch for day-to-day work and feature integration
+- `main` - deployment branch; merge from `develop` when ready to deploy
 - Feature branches: `feat/<description>`
 - Bug fixes: `fix/<description>`
 
@@ -161,4 +161,4 @@ chore: update dependencies
 
 ## License
 
-Private — All rights reserved.
+Private - All rights reserved.

@@ -11,7 +11,7 @@ The pipeline currently reports LLM usage at _region-run_ granularity: two intege
 
 - We cannot answer "what did extraction cost last week" vs. "what did filter cost".
 - We cannot answer "which source produced the most expensive batches".
-- We cannot answer "why was item X auto-approved at confidence 0.91" — the prompt/response is unrecoverable after the cron function exits.
+- We cannot answer "why was item X auto-approved at confidence 0.91" - the prompt/response is unrecoverable after the cron function exits.
 - A regression in prompt length or batch size is undetectable until the OpenAI invoice arrives.
 
 This is the single highest-ROI observability change in the system per the architecture review.
@@ -41,9 +41,9 @@ This is the single highest-ROI observability change in the system per the archit
 
 - Storing prompt/response bodies (privacy + cost). Only metadata. (A future spec can add hash-keyed cold storage if needed.)
 - Migration of historical `PipelineRun.llmCalls/llmTokensEstimate` into the new table.
-- A UI for browsing the audit log — query via SQL for now.
-- Multi-provider abstraction — single-provider (OpenAI) is fine.
-- Cost calculation in dollars — token counts only; price tables move; downstream consumer applies pricing.
+- A UI for browsing the audit log - query via SQL for now.
+- Multi-provider abstraction - single-provider (OpenAI) is fine.
+- Cost calculation in dollars - token counts only; price tables move; downstream consumer applies pricing.
 
 ## 6. User Stories
 
@@ -80,6 +80,6 @@ No user-facing UX. Admin docs gain one section under `docs/architecture-review/`
 
 ## 9. Risks & Open Questions
 
-- **Risk:** Per-call DB writes add latency to the cron function. **Mitigation:** Writes are fire-and-forget (`void db.pipelineLlmCall.create(...).catch(...)`); failure to audit does not block pipeline progress. Average cost is < 5ms per call against Neon — negligible vs. 1–5s LLM latency.
-- **Risk:** Table grows unboundedly. **Mitigation:** Retention of 90 days is sufficient for operations; a cleanup cron is a follow-up (out of scope here). At ~30–50 calls/day × 90 days × ~200 bytes/row this is < 1 MB — non-issue at current scale.
-- **Open:** Should we capture the source URL alongside `runId`? **Decision:** No, not in this iteration — the LLM call processes a _batch_, not a single source. `batchIndex` + `runId` + the existing per-batch logs are sufficient for lineage. A future `PipelineSourceRun` table (separate PRD) provides the source dimension cleanly.
+- **Risk:** Per-call DB writes add latency to the cron function. **Mitigation:** Writes are fire-and-forget (`void db.pipelineLlmCall.create(...).catch(...)`); failure to audit does not block pipeline progress. Average cost is < 5ms per call against Neon - negligible vs. 1-5s LLM latency.
+- **Risk:** Table grows unboundedly. **Mitigation:** Retention of 90 days is sufficient for operations; a cleanup cron is a follow-up (out of scope here). At ~30-50 calls/day × 90 days × ~200 bytes/row this is < 1 MB - non-issue at current scale.
+- **Open:** Should we capture the source URL alongside `runId`? **Decision:** No, not in this iteration - the LLM call processes a _batch_, not a single source. `batchIndex` + `runId` + the existing per-batch logs are sufficient for lineage. A future `PipelineSourceRun` table (separate PRD) provides the source dimension cleanly.

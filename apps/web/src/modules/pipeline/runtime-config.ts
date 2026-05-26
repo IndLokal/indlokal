@@ -7,7 +7,7 @@
  *      `pnpm pipeline:sources:sync`, which upserts from JSON), OR
  *   2. The bundled JSON defaults at
  *      `apps/web/prisma/data/pipeline-source-defaults.json` (fallback
- *      when the table is missing or empty — keeps fresh deployments and
+ *      when the table is missing or empty - keeps fresh deployments and
  *      test environments working without a manual sync step).
  *
  * The DB row is always preferred when present, so admins can disable or

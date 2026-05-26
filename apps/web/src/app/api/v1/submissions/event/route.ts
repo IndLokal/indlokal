@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/submissions/event — Submit a new event for review.
+ * POST /api/v1/submissions/event - Submit a new event for review.
  * Requires access token.
  */
 

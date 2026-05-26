@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: CityLayoutProps): Promise<Met
   return {
     title: {
       default: `Indian Communities & Events in ${cityName}`,
-      template: `%s — ${cityName} | ${siteConfig.name}`,
+      template: `%s - ${cityName} | ${siteConfig.name}`,
     },
     description: `Discover Indian communities, events, and cultural activities in ${cityName}, Germany. Find what's happening this week.`,
   };

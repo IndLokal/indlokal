@@ -1,5 +1,5 @@
 /**
- * Resource classification — duplicates-only.
+ * Resource classification - duplicates-only.
  *
  * As of PRD/TDD-0030 follow-up, scope / consulate / essential / lifecycle
  * stage / title overrides are authored **inline on each entry** in
@@ -9,8 +9,8 @@
  * supersedes them.
  *
  * Consumed by:
- *  - `prisma/resources.ts`         — seed skips DUPLICATE_SLUG_SET.
- *  - `prisma/dedupe_resources_v2.ts` — one-shot SQL drops these rows.
+ *  - `prisma/resources.ts`         - seed skips DUPLICATE_SLUG_SET.
+ *  - `prisma/dedupe_resources_v2.ts` - one-shot SQL drops these rows.
  */
 
 export const DUPLICATE_SLUGS: ReadonlyArray<{ slug: string; replacedBy: string }> = [

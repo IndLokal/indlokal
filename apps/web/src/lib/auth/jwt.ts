@@ -1,5 +1,5 @@
 /**
- * JWT issuance + verification — TDD-0001 §1, §3.
+ * JWT issuance + verification - TDD-0001 §1, §3.
  *
  * - Access tokens: short-lived (15 min), RS256-signed, contain user claims.
  * - Refresh tokens: opaque random strings (NOT JWTs); hashed at rest in
@@ -74,7 +74,7 @@ async function getKeys(): Promise<KeyMaterial> {
   return cachedKeys;
 }
 
-/** Reset the cached key material — for tests only. */
+/** Reset the cached key material - for tests only. */
 export function __resetJwtCacheForTests(): void {
   cachedKeys = null;
   warnedDevKey = false;

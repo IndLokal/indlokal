@@ -4,7 +4,7 @@ Single source of truth for every notification IndLokal sends. Each row is one **
 
 ## Defaults
 
-- Quiet hours: 22:00–08:00 user local TZ (PUSH only).
+- Quiet hours: 22:00-08:00 user local TZ (PUSH only).
 - Frequency caps below are per user.
 - Critical alerts (none today) bypass quiet hours.
 
@@ -21,13 +21,13 @@ Single source of truth for every notification IndLokal sends. Each row is one **
 | `ORGANIZER_SUBMISSION` | `PipelineItem` state change                                               | PUSH, EMAIL, INBOX                                                 | per-state                         | no          | `organizer_submission.v1` |
 | `REENGAGEMENT`         | D3 / D7 / D30 inactive                                                    | PUSH, EMAIL                                                        | one per ladder step               | yes         | `reengagement.v1`         |
 
-## Copy bank (en) — short examples
+## Copy bank (en) - short examples
 
 - `city_new_event.v1`: `New in {city}: {title}` / `{shortDate} · {venue}`
 - `community_update.v1`: `{community} just posted: {title}`
 - `saved_event_reminder.v1.t24`: `Tomorrow: {title}` / `{time} · {venue}`
 - `saved_event_reminder.v1.t2`: `In 2 hours: {title}` / `{venue}`
-- `festival.v1`: `{festival} in {city} — see what's planned`
+- `festival.v1`: `{festival} in {city} - see what's planned`
 - `weekly_digest.v1`: `This weekend in {city}` / `{n} events for you`
 - `organizer_rsvp.v1`: `{n} new saves on {title}`
 - `organizer_submission.v1.approved`: `Your submission "{title}" is live`

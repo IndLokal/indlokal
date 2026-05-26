@@ -2,7 +2,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { startOfISOWeek, subWeeks } from 'date-fns';
 
-export const metadata = { title: 'My Score — Ambassador' };
+export const metadata = { title: 'My Score - Ambassador' };
 
 function StatRow({
   label,
@@ -80,7 +80,7 @@ export default async function AmbassadorMePage() {
   ]);
 
   const totalThisWeek = submissionsThisWeek + checkInsThisWeek + feedbackThisWeek;
-  const totalLastWeek = submissionsLastWeek + checkInsLastWeek; // feedbackLastWeek not tracked — omit for parity
+  const totalLastWeek = submissionsLastWeek + checkInsLastWeek; // feedbackLastWeek not tracked - omit for parity
   const wowChange =
     totalLastWeek > 0 ? Math.round(((totalThisWeek - totalLastWeek) / totalLastWeek) * 100) : null;
 

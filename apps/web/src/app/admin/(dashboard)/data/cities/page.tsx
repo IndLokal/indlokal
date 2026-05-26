@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { createCityAction, deleteCityAction, toggleCityActiveAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Cities — Admin' };
+export const metadata = { title: 'Cities - Admin' };
 
 export default async function AdminCitiesPage() {
   const cities = await db.city.findMany({
@@ -42,7 +42,7 @@ export default async function AdminCitiesPage() {
             name="metroRegionSlug"
             label="Metro region (parent)"
             options={[
-              { value: '', label: '— none (this is a metro itself) —' },
+              { value: '', label: '- none (this is a metro itself) -' },
               ...metros.map((m) => ({ value: m.slug, label: m.name })),
             ]}
           />
@@ -79,7 +79,7 @@ export default async function AdminCitiesPage() {
                 <td className="text-muted px-4 py-2 font-mono text-xs">{c.slug}</td>
                 <td className="px-4 py-2">{c.state}</td>
                 <td className="text-muted px-4 py-2 text-xs">
-                  {c.isMetroPrimary ? 'metro primary' : (c.metroRegion?.name ?? '—')}
+                  {c.isMetroPrimary ? 'metro primary' : (c.metroRegion?.name ?? '-')}
                 </td>
                 <td className="px-4 py-2">
                   <span className={c.isActive ? 'text-green-700' : 'text-muted'}>

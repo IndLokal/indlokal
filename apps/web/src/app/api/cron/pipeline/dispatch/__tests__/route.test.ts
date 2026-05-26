@@ -1,7 +1,7 @@
 /**
  * Unit tests for POST /api/cron/pipeline/dispatch (PRD/TDD-0029).
  *
- * Stubs `getRuntimeEnabledRegions` and `fetch` — no DB required.
+ * Stubs `getRuntimeEnabledRegions` and `fetch` - no DB required.
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';

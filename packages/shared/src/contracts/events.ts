@@ -1,5 +1,5 @@
 /**
- * Event-detail contracts — TDD-0005.
+ * Event-detail contracts - TDD-0005.
  */
 
 import { z } from 'zod';

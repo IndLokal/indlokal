@@ -27,9 +27,9 @@ distinct env flag:
 
 | Tier      | Entry                                | Idempotent?                        | Env gate                   | Safe in prod |
 | --------- | ------------------------------------ | ---------------------------------- | -------------------------- | ------------ |
-| Bootstrap | `prisma/bootstrap.ts`                | Yes — `upsert` only                | `RUN_BOOTSTRAP_SEED=true`  | Yes          |
+| Bootstrap | `prisma/bootstrap.ts`                | Yes - `upsert` only                | `RUN_BOOTSTRAP_SEED=true`  | Yes          |
 | Directory | `prisma/directory.ts`                | Create-only (skips existing slugs) | `RUN_DIRECTORY_SEED=true`  | Yes          |
-| Demo      | `prisma/seed.ts` (events + fixtures) | No — re-creates fixtures           | Manual `pnpm db:seed:demo` | **No**       |
+| Demo      | `prisma/seed.ts` (events + fixtures) | No - re-creates fixtures           | Manual `pnpm db:seed:demo` | **No**       |
 
 Vercel `build:vercel` runs `maybe-bootstrap.cjs` and `maybe-directory.cjs`
 which no-op unless their flag is set and `DATABASE_URL` is present. Demo is
@@ -50,9 +50,9 @@ Bootstrap also seeds the platform admin user (`ADMIN_EMAIL`, default
 
 ## Alternatives considered
 
-- **Single seed with `if (process.env.NODE_ENV)` guards** — rejected; one bug
+- **Single seed with `if (process.env.NODE_ENV)` guards** - rejected; one bug
   in the guard plants demo content in prod.
-- **Migrations-as-data** — rejected; reference data updates would generate
+- **Migrations-as-data** - rejected; reference data updates would generate
   migration churn and Prisma migrations are append-only.
-- **External fixture loader (sql files via `psql`)** — rejected; loses
+- **External fixture loader (sql files via `psql`)** - rejected; loses
   type-safety on category slugs and admin email.

@@ -8,7 +8,7 @@
 - Mobile screens under `apps/mobile/app/`; the Discover home is `(tabs)/index.tsx`.
 - Data via a lightweight in-memory `queryCache` helper (`apps/mobile/lib/cache/query-cache.ts`)
   with TTL + de-duplication, calling `/api/v1/discovery/*` directly via `authClient`.
-  TanStack Query was evaluated but not adopted for v1 — `queryCache` covers the use
+  TanStack Query was evaluated but not adopted for v1 - `queryCache` covers the use
   case in ~50 lines with zero added dependencies.
 - Server reuses `src/modules/discovery/queries.ts`; thin handlers under
   `apps/web/src/app/api/v1/discovery/`.
@@ -23,11 +23,11 @@ None.
 
 | Method | Path                                                      | Auth     | Request            | Response           |
 | ------ | --------------------------------------------------------- | -------- | ------------------ | ------------------ |
-| GET    | `/api/v1/cities`                                          | optional | —                  | `City[]`           |
-| GET    | `/api/v1/cities/:slug`                                    | optional | —                  | `CityDetail`       |
+| GET    | `/api/v1/cities`                                          | optional | -                  | `City[]`           |
+| GET    | `/api/v1/cities/:slug`                                    | optional | -                  | `CityDetail`       |
 | GET    | `/api/v1/discovery/:citySlug/events?from&to&cursor&limit` | optional | `EventsQuery`      | `EventsPage`       |
 | GET    | `/api/v1/discovery/:citySlug/communities?cursor&limit`    | optional | `CommunitiesQuery` | `CommunitiesPage`  |
-| GET    | `/api/v1/discovery/:citySlug/trending`                    | optional | —                  | `TrendingResponse` |
+| GET    | `/api/v1/discovery/:citySlug/trending`                    | optional | -                  | `TrendingResponse` |
 
 `EventsPage = { items: EventCard[], nextCursor?: string }` etc. All Zod-defined in `packages/shared/src/contracts/discovery.ts`.
 
@@ -35,7 +35,7 @@ None.
 
 ```
 (tabs)/
-  index.tsx              # Discover home — chip-rail city picker + tabs
+  index.tsx              # Discover home - chip-rail city picker + tabs
                          # (This-week / Communities / Resources)
 events/[slug].tsx        # PRD-0005 (top-level so it is reachable from
                          # search, bookmarks, push notifications, etc.)

@@ -23,12 +23,12 @@ This:
 
 ## 2. Users & JTBD
 
-- **City Ambassador (Stuttgart, Karlsruhe, Munich, Frankfurt …)** — wants a
+- **City Ambassador (Stuttgart, Karlsruhe, Munich, Frankfurt …)** - wants a
   single place to see their city, drop new communities/events fast, log a
   visit, and watch their own contribution score.
-- **Y (Ops)** — wants per-ambassador throughput visibility for the monthly
+- **Y (Ops)** - wants per-ambassador throughput visibility for the monthly
   evaluation cadence in the JD.
-- **JP / X** — want city-by-city ecosystem signal that maps to partner city
+- **JP / X** - want city-by-city ecosystem signal that maps to partner city
   one-pagers and grant evidence.
 
 ## 3. Success Metrics
@@ -49,17 +49,17 @@ This:
   `can(user, 'ambassador.console.read')` → `RoleAssignment.role = CITY_AMBASSADOR`.
 - All queries filtered by `user.cityScopes` (from `RoleAssignment.cityId[]`).
 - Pages:
-  1. `/ambassador` — dashboard: this-week-in-{city} cards (new submissions,
+  1. `/ambassador` - dashboard: this-week-in-{city} cards (new submissions,
      unverified communities, upcoming events, stale communities).
-  2. `/ambassador/submit/community` and `/ambassador/submit/event` — quick-add
+  2. `/ambassador/submit/community` and `/ambassador/submit/event` - quick-add
      wizards (mobile-web friendly), pre-filling `cityId` from scope, marking
      `pipeline_items.submittedBy = ambassador.userId` and
      `metadata.submittedByRole = 'CITY_AMBASSADOR'` for fast-track routing.
-  3. `/ambassador/checkin/[eventId]` — log attendance + upload photo →
+  3. `/ambassador/checkin/[eventId]` - log attendance + upload photo →
      `ActivitySignal` of type `EVENT_VERIFIED_ATTENDED` + `MediaAsset`.
-  4. `/ambassador/feedback` — free-text feedback form (creates a
+  4. `/ambassador/feedback` - free-text feedback form (creates a
      `ContentReport` with `reportType = OTHER`, plus tag).
-  5. `/ambassador/me` — personal scoreboard (counts of submissions, check-ins,
+  5. `/ambassador/me` - personal scoreboard (counts of submissions, check-ins,
      feedback, week-over-week trend).
 - Pipeline auto-fast-track rule: items with `submittedByRole = CITY_AMBASSADOR`
   and dedup match-score < 0.4 jump to top of queue, default `confidence`
@@ -115,7 +115,7 @@ Then the scoreboard shows non-zero counts that match
 - Quick-add FAB (Floating Action Button) on dashboard → bottom sheet for
   community / event / resource.
 - Empty / loading / error / offline states per house style.
-- Copy is friendly, not bureaucratic ("You logged 3 communities this week —
+- Copy is friendly, not bureaucratic ("You logged 3 communities this week -
   nice.").
 
 ## 9. Risks & Open Questions
@@ -123,7 +123,7 @@ Then the scoreboard shows non-zero counts that match
 - Photo uploads from ambassadors carry consent/IP implications; v1 limits to
   events the ambassador attended and stores `uploadedBy` for takedown.
 - We must not let a Munich ambassador edit Stuttgart data even if they hold
-  _both_ assignments — scoping is per assignment row, not per session.
+  _both_ assignments - scoping is per assignment row, not per session.
 - Should ambassadors be able to mark a community **inactive**? v1 = no
   (suggest only via feedback); revisit after first cohort.
 - Auto-fast-track threshold tuning will need 4 weeks of data before

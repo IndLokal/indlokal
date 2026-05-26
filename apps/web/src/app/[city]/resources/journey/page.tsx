@@ -7,7 +7,7 @@ import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity, type ResolvedResource } from '@/modules/resources';
 
 /**
- * Newcomer Journey — essentials-only resources grouped by lifecycle stage.
+ * Newcomer Journey - essentials-only resources grouped by lifecycle stage.
  *
  * Route: /[city]/resources/journey
  *
@@ -33,7 +33,7 @@ const STAGE_LABELS: Record<ResourceStage, { title: string; blurb: string; icon: 
   },
   FIRST_30_DAYS: {
     title: 'First 30 Days',
-    blurb: 'Anmeldung, residence permit, health insurance — the legal essentials.',
+    blurb: 'Anmeldung, residence permit, health insurance - the legal essentials.',
     icon: '📋',
   },
   FIRST_90_DAYS: {
@@ -58,8 +58,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
   return {
-    title: `Newcomer Journey — Indian Expat Checklist for ${cityName}`,
-    description: `Step-by-step checklist of the official things Indian newcomers in ${cityName} need to do — pre-arrival through first 90 days.`,
+    title: `Newcomer Journey - Indian Expat Checklist for ${cityName}`,
+    description: `Step-by-step checklist of the official things Indian newcomers in ${cityName} need to do - pre-arrival through first 90 days.`,
   };
 }
 
@@ -147,7 +147,7 @@ export default async function JourneyPage({ params }: Props) {
         </nav>
         <h1 className="text-2xl font-bold">Your Newcomer Journey in {cityName}</h1>
         <p className="text-muted mt-2 text-sm">
-          The official steps Indian newcomers need to complete — grouped by when they matter.
+          The official steps Indian newcomers need to complete - grouped by when they matter.
         </p>
       </div>
 

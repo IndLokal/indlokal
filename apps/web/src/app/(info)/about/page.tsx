@@ -5,9 +5,9 @@ import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 import { CommunityActionGrid } from '@/components/content/community-actions';
 
 export const metadata: Metadata = {
-  title: `About — ${siteConfig.name}`,
+  title: `About - ${siteConfig.name}`,
   description:
-    'Learn about IndLokal — the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
+    'Learn about IndLokal - the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
 };
 
 export default function AboutPage() {
@@ -29,7 +29,7 @@ export default function AboutPage() {
             About {siteConfig.name}
           </h1>
           <p className="text-brand-200/80 mx-auto mt-4 max-w-xl text-lg leading-relaxed">
-            The city-first discovery platform for the Indian diaspora in Germany — communities,
+            The city-first discovery platform for the Indian diaspora in Germany - communities,
             events and expat-life resources, active near you.
           </p>
         </div>
@@ -39,7 +39,7 @@ export default function AboutPage() {
       <section className="mx-auto max-w-3xl px-4 py-16">
         <h2 className="text-foreground text-2xl font-extrabold">Our Mission</h2>
         <p className="text-muted mt-4 leading-relaxed">
-          Make Indian community life in Germany visible, fresh, and easy to join — and put the
+          Make Indian community life in Germany visible, fresh, and easy to join - and put the
           practical resources around it within reach. Whether you&apos;re looking for a Tamil
           Sangam, a Diwali celebration, a cricket league, or a plain-English walkthrough of your
           first Anmeldung, {siteConfig.name} makes it effortless to discover what&apos;s happening
@@ -47,7 +47,7 @@ export default function AboutPage() {
         </p>
         <p className="text-muted mt-4 leading-relaxed">
           We aggregate communities, events, and consular &amp; expat-life resources across German
-          cities — ranked by what&apos;s actually alive, not by who paid for a directory listing.
+          cities - ranked by what&apos;s actually alive, not by who paid for a directory listing.
         </p>
       </section>
 
@@ -68,24 +68,24 @@ export default function AboutPage() {
           <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
           <p className="text-muted mt-3 leading-relaxed">
             For every German city we cover, {siteConfig.name} brings together three things in one
-            place — with equal weight.
+            place - with equal weight.
           </p>
           <div className="mt-8 grid gap-6 sm:grid-cols-3">
             {[
               {
                 icon: '🪷',
                 title: 'Communities',
-                desc: 'Cultural associations, language groups, religious organisations, student bodies, sports clubs, professional networks — ranked by activity.',
+                desc: 'Cultural associations, language groups, religious organisations, student bodies, sports clubs, professional networks - ranked by activity.',
               },
               {
                 icon: '📅',
                 title: 'Events',
-                desc: "What's happening this week — from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
+                desc: "What's happening this week - from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
               },
               {
                 icon: '🧭',
                 title: 'Resources',
-                desc: 'Plain-English guides for Anmeldung, EU Blue Card, Kindergeld, GKV vs PKV, Steuererklärung — plus Indian grocers, English-friendly doctors, CGI consular dates.',
+                desc: 'Plain-English guides for Anmeldung, EU Blue Card, Kindergeld, GKV vs PKV, Steuererklärung - plus Indian grocers, English-friendly doctors, CGI consular dates.',
               },
             ].map((item) => (
               <div
@@ -129,7 +129,7 @@ export default function AboutPage() {
             Run a community or organize events?
           </h2>
           <p className="text-brand-200 mt-4">
-            Claim your community page, post events, and reach thousands of Indians in your city —
+            Claim your community page, post events, and reach thousands of Indians in your city -
             completely free.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">

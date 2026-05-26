@@ -1,5 +1,5 @@
 /**
- * Runtime environment validation — call validateEnv() in the root layout to
+ * Runtime environment validation - call validateEnv() in the root layout to
  * fail fast if critical environment variables are missing in production.
  *
  * All checks are deferred to a function so they run at server startup, NOT
@@ -36,7 +36,7 @@ let validated = false;
 
 export function validateEnv() {
   if (validated) return;
-  // Skip during `next build` static generation — env secrets aren't available
+  // Skip during `next build` static generation - env secrets aren't available
   if (process.env.NEXT_PHASE === 'phase-production-build') return;
   validated = true;
 
@@ -46,7 +46,7 @@ export function validateEnv() {
   // Required in production
   requireEnvInProduction('NEXT_PUBLIC_APP_URL');
 
-  // Optional integrations — route-level handlers enforce these where needed.
+  // Optional integrations - route-level handlers enforce these where needed.
   warnIfMissingInProduction('GOOGLE_CLIENT_ID');
   warnIfMissingInProduction('GOOGLE_CLIENT_SECRET');
   warnIfMissingInProduction('RESEND_API_KEY');

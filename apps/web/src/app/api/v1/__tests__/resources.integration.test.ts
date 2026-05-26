@@ -5,7 +5,7 @@
  *   GET  /api/v1/me/saves/communities?cursor
  *   POST /api/v1/reports
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -241,7 +241,7 @@ describe('GET /api/v1/me/saves/events', () => {
       await testDb.savedEvent.create({ data: { userId: USER_ID, eventId: e.id } });
     }
 
-    // First page — limit 2
+    // First page - limit 2
     const res1 = await savedEventsGET(
       makeGET('http://localhost/api/v1/me/saves/events?limit=2', authHeaders),
     );

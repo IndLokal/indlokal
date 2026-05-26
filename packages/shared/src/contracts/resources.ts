@@ -23,7 +23,7 @@ export type ResourceType = z.infer<typeof ResourceType>;
 
 // ─── Resource ─────────────────────────────────────────────────────────────
 
-// PRD/TDD-0030, ADR-0007 — scope & resolution model
+// PRD/TDD-0030, ADR-0007 - scope & resolution model
 export const ResourceScope = z.enum(['GLOBAL', 'COUNTRY', 'STATE', 'METRO', 'CITY', 'DISTRICT']);
 export type ResourceScope = z.infer<typeof ResourceScope>;
 
@@ -66,7 +66,7 @@ export const Resource = z.object({
   lifecycleStage: z.array(ResourceStage),
   priority: z.number().int(),
   isEssential: z.boolean(),
-  /** Optional, included only when returned by the resolver — tells the UI
+  /** Optional, included only when returned by the resolver - tells the UI
    *  which scope tier matched (e.g. 'CITY' vs 'COUNTRY') so it can group. */
   resolvedScope: ResourceScope.optional(),
 });

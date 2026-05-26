@@ -7,10 +7,10 @@
 ## 1. Architecture overview
 
 - `apps/mobile/lib/auth/`:
-  - `client.ts` — single-flight refresh, token store in SecureStore.
-  - `apple.ts` — `expo-apple-authentication`.
-  - `google.ts` — `expo-auth-session/providers/google` with native code via `@react-native-google-signin/google-signin`.
-  - `magic.ts` — POST request, deep-link verify.
+  - `client.ts` - single-flight refresh, token store in SecureStore.
+  - `apple.ts` - `expo-apple-authentication`.
+  - `google.ts` - `expo-auth-session/providers/google` with native code via `@react-native-google-signin/google-signin`.
+  - `magic.ts` - POST request, deep-link verify.
 - Universal Links / App Links configured for `https://indlokal.com/auth/magic` and `/auth/google/callback`.
 
 ## 2. Data model changes

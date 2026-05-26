@@ -6,8 +6,8 @@ import { resolve } from 'path';
  * Vitest configuration for IndLokal.
  *
  * Test layers:
- *   *.test.ts   — unit / integration tests   (Node environment)
- *   *.test.tsx  — component tests             (jsdom environment)
+ *   *.test.ts   - unit / integration tests   (Node environment)
+ *   *.test.tsx  - component tests             (jsdom environment)
  *
  * Integration tests that need the database are tagged with @db in their
  * describe block and require `npm run test:setup` to have been run first.
@@ -24,7 +24,7 @@ export default defineConfig({
   test: {
     globals: true,
 
-    // Default environment — overridden per-file type below
+    // Default environment - overridden per-file type below
     environment: 'node',
 
     // .tsx files (React components) run in jsdom

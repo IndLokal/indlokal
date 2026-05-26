@@ -454,7 +454,7 @@ registry.register('TrackEvent', eventsContracts.TrackEvent);
 registry.registerPath({
   method: 'get',
   path: '/api/v1/events/{slug}',
-  summary: 'Event detail — optional auth for savedByUser flag',
+  summary: 'Event detail - optional auth for savedByUser flag',
   request: { params: z.object({ slug: z.string() }) },
   security: [],
   responses: {
@@ -527,7 +527,7 @@ registry.register('FollowState', communityContracts.FollowState);
 registry.registerPath({
   method: 'get',
   path: '/api/v1/communities/{slug}',
-  summary: 'Community detail — optional auth for followedByUser flag',
+  summary: 'Community detail - optional auth for followedByUser flag',
   request: { params: z.object({ slug: z.string() }) },
   security: [],
   responses: {
@@ -842,7 +842,7 @@ const document = generator.generateDocument({
 
 const yaml = yamlStringify(document, { lineWidth: 100 });
 const banner =
-  '# AUTO-GENERATED — DO NOT EDIT BY HAND.\n' +
+  '# AUTO-GENERATED - DO NOT EDIT BY HAND.\n' +
   '# Source: packages/shared/src/contracts/*.ts\n' +
   '# Regenerate with: pnpm openapi:generate\n\n';
 

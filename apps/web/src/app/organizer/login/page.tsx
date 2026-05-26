@@ -51,7 +51,7 @@ export default function OrganizerLoginPage() {
           <h1 className="text-foreground text-2xl font-bold tracking-tight">Organizer Login</h1>
           <p className="text-muted mt-2 text-sm">
             Enter your email address to receive a secure login link. This is for approved organizers
-            — the person or team that already runs a community listing.
+            - the person or team that already runs a community listing.
           </p>
 
           <div className="mt-6 text-left">

@@ -1,4 +1,4 @@
-# Analytics Guide — PostHog Implementation
+# Analytics Guide - PostHog Implementation
 
 > Last updated: 2026-05  
 > Stage: MVP+  

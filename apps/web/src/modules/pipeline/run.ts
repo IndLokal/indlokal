@@ -6,9 +6,9 @@
  *   npx tsx src/modules/pipeline/run.ts --dry-run  # show config only
  *
  * Requires:
- *   OPENAI_API_KEY     — for LLM extraction
- *   DATABASE_URL       — PostgreSQL connection
- *   EVENTBRITE_API_KEY — (optional) for Eventbrite source
+ *   OPENAI_API_KEY     - for LLM extraction
+ *   DATABASE_URL       - PostgreSQL connection
+ *   EVENTBRITE_API_KEY - (optional) for Eventbrite source
  */
 
 import { runPipeline } from './orchestrator';
@@ -110,14 +110,14 @@ async function main() {
 
   console.log(`\n📍 Regions (${regions.length}):`);
   for (const r of regions) {
-    console.log(`   • ${r.label} — cities: ${r.citySlugs.join(', ')}`);
+    console.log(`   • ${r.label} - cities: ${r.citySlugs.join(', ')}`);
   }
 
   console.log(
     `\n🔍 Keyword templates (${keywordStrategies.length}) · canonical seeds (${keywordSeeds.length}):`,
   );
   for (const s of keywordStrategies) {
-    console.log(`   • ${s.label} — ${s.radiusKm}km radius`);
+    console.log(`   • ${s.label} - ${s.radiusKm}km radius`);
   }
 
   console.log(`\n📌 Pinned URLs (${pinnedStrategies.length} static):`);
@@ -132,7 +132,7 @@ async function main() {
   }
 
   if (dryRun) {
-    console.log('\n🔍 Dry run — config preview only. Remove --dry-run to execute.');
+    console.log('\n🔍 Dry run - config preview only. Remove --dry-run to execute.');
     process.exit(0);
   }
 

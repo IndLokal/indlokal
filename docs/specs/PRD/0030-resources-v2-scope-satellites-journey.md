@@ -1,4 +1,4 @@
-# PRD-0030: Resources v2 — scoped knowledge, satellite parity, first-30-days journey
+# PRD-0030: Resources v2 - scoped knowledge, satellite parity, first-30-days journey
 
 - **Status:** Approved
 - **Owner:** Product (this branch)
@@ -41,21 +41,21 @@ expats in Germany, sorted") and what it delivers outside Stuttgart.
 
 | Persona                | Job-to-be-done                                                                                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Pre-arrival**        | "I just got my Blue Card / job offer — give me the checklist for week 1 in {city}: registration, bank, insurance, SIM, where to eat Indian, who to call for OCI."               |
+| **Pre-arrival**        | "I just got my Blue Card / job offer - give me the checklist for week 1 in {city}: registration, bank, insurance, SIM, where to eat Indian, who to call for OCI."               |
 | **First-30-days**      | "I landed in {city}. What do I have to do, in what order, by when, with which authority, and where do I book the appointment?"                                                  |
 | **Settled family**     | "Kita registration in {city}. Kindergeld for non-EU. School choice. English-friendly Hausarzt."                                                                                 |
 | **Founder**            | "Gewerbe vs Freiberufler in {city}. Which IHK. Health insurance for self-employed. Steuerberater that speaks English/Hindi."                                                    |
-| **Satellite resident** | "I live in Heidelberg/Esslingen/Brandenburg, not the metro centre. Show me Rhein-Neckar IHK, Stuttgart Bürgeramt rules, and the Berlin embassy — not the Stuttgart-only stuff." |
+| **Satellite resident** | "I live in Heidelberg/Esslingen/Brandenburg, not the metro centre. Show me Rhein-Neckar IHK, Stuttgart Bürgeramt rules, and the Berlin embassy - not the Stuttgart-only stuff." |
 
 ## 3. Success Metrics
 
 | Metric                                                 | Target                                     | Source                                  |
 | ------------------------------------------------------ | ------------------------------------------ | --------------------------------------- |
-| Resources surfaced per active metro (incl. satellites) | ≥ 25 (was 6–41)                            | `db.resource` count via resolver        |
+| Resources surfaced per active metro (incl. satellites) | ≥ 25 (was 6-41)                            | `db.resource` count via resolver        |
 | Satellite cities with non-zero resource view           | 100 % of `City.isActive` satellites        | `db.resource` count via resolver        |
 | `resource_view` events / WAU on `/[city]/resources/`   | +50 % vs baseline                          | `EVENTS/analytics.md → resource_view`   |
 | `resource_journey_step_complete` (new event)           | ≥ 30 % of new mobile installs hit ≥ 1 step | new analytics event (see §7)            |
-| Editorial drift — duplicate slugs across cities        | 0                                          | DB invariant: `slug` is globally unique |
+| Editorial drift - duplicate slugs across cities        | 0                                          | DB invariant: `slug` is globally unique |
 
 ## 4. Scope
 
@@ -88,17 +88,17 @@ Out:
 - User-generated resources / community wiki.
 - Multi-language resource bodies (English-only for now; structured for
   i18n later via `metadata.translations`).
-- District-level scope (`DISTRICT`) — enum value reserved, no UI yet.
+- District-level scope (`DISTRICT`) - enum value reserved, no UI yet.
 
 ## 5. User Stories
 
 - **As a newcomer in Heidelberg**, I open `/heidelberg/resources/` and
   see the same first-30-days checklist as Mannheim, plus the
   Mannheim-metro Bürgeramt link, plus BW-state and federal info, plus
-  the CGI Munich consular block — all without leaving the page.
+  the CGI Munich consular block - all without leaving the page.
 - **As a founder in Berlin**, I filter the hub by `Founder` and see IHK
   Berlin, federal Gewerbeanmeldung guidance, and Berlin-specific
-  Finanzamt info — but not Family/Kita rows.
+  Finanzamt info - but not Family/Kita rows.
 - **As an editor**, I tag a new "EU Blue Card extension" row as
   `scope = COUNTRY`, `audiences = [NEWCOMER, EMPLOYEE]`,
   `lifecycleStage = [FIRST_90_DAYS, SETTLED]`, `priority = 80`,
@@ -156,34 +156,34 @@ Feature: Audience filter
 Surfaces:
 
 1. **`/[city]/resources/` hub (web).** Three vertically stacked sections:
-   1. **"Your first 30 days in {city}"** — ordered checklist of up to 8
+   1. **"Your first 30 days in {city}"** - ordered checklist of up to 8
       essential `FIRST_30_DAYS` resources. Each card: number, title,
       tldr (description first line), CTA "Open guide" + "Mark done"
       (client-side, localStorage).
-   2. **Topic hubs** — existing 9 category cards, count badges driven by
+   2. **Topic hubs** - existing 9 category cards, count badges driven by
       the resolver, not raw `cityId` count.
-   3. **City essentials card** — only true `CITY`-scoped rows for this
+   3. **City essentials card** - only true `CITY`-scoped rows for this
       city (your Bürgeramt, your IHK, your nearest Indian grocer).
 
    Above the journey: audience filter chips (`All / Newcomer / Family /
 Founder / Student`).
 
-2. **Satellite pages** — same template, no special-case copy. The
+2. **Satellite pages** - same template, no special-case copy. The
    journey title reads "Your first 30 days in {satellite name}" but the
    underlying rows are inherited from the parent metro.
 
-3. **Mobile `Resources` screen** — match web's three-section structure
+3. **Mobile `Resources` screen** - match web's three-section structure
    in a single `ScrollView`. Use `RESOURCE_CATEGORIES` from
    `@indlokal/shared` so labels and icons match the web hub. Audience
    filter as a horizontal `Pill` rail at the top.
 
-4. **Admin** — `/admin/data/resources/[id]/edit` adds:
+4. **Admin** - `/admin/data/resources/[id]/edit` adds:
    - Scope (radio: Global / Country / State / Metro / City)
    - Scope region (conditional input: state picker / metro picker / city
      picker, or static "DE" / "Global")
    - Audiences (multi-select chips)
    - Lifecycle stages (multi-select chips)
-   - Priority (number, 0–100, default 50)
+   - Priority (number, 0-100, default 50)
    - Essential toggle (boolean)
 
 Empty / loading / error:
@@ -193,7 +193,7 @@ Empty / loading / error:
 - Loading → skeleton journey + skeleton category cards.
 - Error → toast + retry; do not blank the page.
 
-Analytics events (full schema in `EVENTS/analytics.md` — new rows):
+Analytics events (full schema in `EVENTS/analytics.md` - new rows):
 
 | Event                             | Properties                                         |
 | --------------------------------- | -------------------------------------------------- |
@@ -204,20 +204,20 @@ Analytics events (full schema in `EVENTS/analytics.md` — new rows):
 
 ## 8. Risks & Open Questions
 
-- **Migration backfill scope rewrites** — the predicate list that turns
+- **Migration backfill scope rewrites** - the predicate list that turns
   Stuttgart-tagged federal rows into `COUNTRY`-scoped canonical rows is
   the riskiest step. Mitigated by: shipping the migration as
   _additive_ (new columns, default `CITY`), then a separate "dedupe"
   migration that runs after the resolver is in production, behind a
   feature flag. See TDD-0030 §10.
-- **Caching staleness vs editor velocity** — 60 s LRU TTL means an
+- **Caching staleness vs editor velocity** - 60 s LRU TTL means an
   editor's change takes up to 1 min to appear. Acceptable for v1;
   admin save path explicitly busts the cache key for the affected
   cities.
 - **Open: jurisdiction edge cases.** Embassy Berlin technically covers
   Berlin + Brandenburg + Mecklenburg-Vorpommern. CGI Munich covers BW
   - BY + parts of southern Germany. The map in
-    `consular-jurisdictions.ts` is the canonical source — needs sign-off
+    `consular-jurisdictions.ts` is the canonical source - needs sign-off
     from someone with current knowledge of consular boundaries before
     Phase-2 cities go live.
 - **Open: should `DISTRICT` scope ship in v1?** Decision: no. Reserve

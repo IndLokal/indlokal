@@ -161,12 +161,12 @@ export default async function AmbassadorDashboardPage() {
         <section>
           <h2 className="mb-4 font-semibold">Pending in pipeline</h2>
           {recentPipelineItems.length === 0 ? (
-            <p className="text-muted text-sm">Nothing pending — all clear!</p>
+            <p className="text-muted text-sm">Nothing pending - all clear!</p>
           ) : (
             <div className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
               {recentPipelineItems.map((item) => {
                 const d = item.extractedData as Record<string, unknown>;
-                const name = (d?.name as string) || (d?.title as string) || '—';
+                const name = (d?.name as string) || (d?.title as string) || '-';
                 const isMine = item.submittedBy === user.id;
                 return (
                   <div key={item.id} className="flex items-center justify-between px-4 py-3">
@@ -202,7 +202,7 @@ export default async function AmbassadorDashboardPage() {
                 <div key={ev.id} className="flex items-center justify-between px-4 py-3">
                   <div>
                     <p className="text-sm font-medium">{ev.title}</p>
-                    <p className="text-muted mt-0.5 text-xs">{ev.community?.name ?? '—'}</p>
+                    <p className="text-muted mt-0.5 text-xs">{ev.community?.name ?? '-'}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     <span className="text-muted text-xs">

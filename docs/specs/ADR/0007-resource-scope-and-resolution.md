@@ -47,7 +47,7 @@ scope          ResourceScope @default(CITY)
 scopeRegion    String?       // see semantics below
 audiences      ResourceAudience[]   // many-to-many via implicit array column
 lifecycleStage ResourceStage[]      // many-to-many via implicit array column
-priority       Int           @default(50) // 0–100, higher = surfaced first
+priority       Int           @default(50) // 0-100, higher = surfaced first
 isEssential    Boolean       @default(false) // appears in "first 30 days"
 ```
 
@@ -146,7 +146,7 @@ Positive:
 
 Negative:
 
-- Schema migration with backfill — non-trivial, requires careful
+- Schema migration with backfill - non-trivial, requires careful
   predicate list and an ADR-grade backout plan.
 - Resolver is a hot path; needs an in-process LRU cache (per-city,
   60 s TTL) to keep hub pages fast.
@@ -157,7 +157,7 @@ Neutral:
 
 - `metadata.consulate` is denormalised by design; the jurisdiction map
   in code is the source of truth, the column is for query convenience.
-- The 33-row baseline content survives the migration — only the `scope`,
+- The 33-row baseline content survives the migration - only the `scope`,
   `scopeRegion`, and slugs of duplicates change.
 
 ## Alternatives considered
@@ -167,7 +167,7 @@ Neutral:
   Cons: 1 row of curated content can require N inserts (every metro +
   satellite); editorial review must touch N join rows; "this applies to
   all of Germany" needs an explicit fan-out at write time; new cities
-  must trigger a backfill. Scope is the cleaner primitive — it expresses
+  must trigger a backfill. Scope is the cleaner primitive - it expresses
   intent, not enumeration.
 
 - **Keep single `cityId`, fake it by tagging the "primary" city and

@@ -72,7 +72,7 @@ export async function getEventsThisWeek(
     return { events: weekEvents, expandedToMonth: false };
   }
 
-  // Sparse content — expand to this month
+  // Sparse content - expand to this month
   const monthEnd = endOfMonth(now);
   const monthEvents = await db.event.findMany({
     where: {
@@ -94,7 +94,7 @@ export async function getEventsThisWeek(
  * Get upcoming events for a city with optional filters.
  */
 /**
- * Cursor-paginated event list — powers GET /api/v1/discovery/:citySlug/events.
+ * Cursor-paginated event list - powers GET /api/v1/discovery/:citySlug/events.
  */
 export async function getEventsPage(
   citySlug: string,

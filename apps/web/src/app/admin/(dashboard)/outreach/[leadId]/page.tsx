@@ -56,7 +56,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
           {/* Identity */}
           <div className="border-border rounded-[var(--radius-card)] border bg-white p-5">
             <h1 className="text-xl font-bold">
-              {lead.community?.name ?? lead.suggestedName ?? '—'}
+              {lead.community?.name ?? lead.suggestedName ?? '-'}
             </h1>
             <p className="text-muted mt-1 text-sm">
               {lead.city.name} · {lead.source}
@@ -153,7 +153,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
                         month: 'short',
                         year: 'numeric',
                       })
-                    : '—'}
+                    : '-'}
                 </dd>
               </div>
               <div>

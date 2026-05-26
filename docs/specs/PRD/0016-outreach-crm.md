@@ -25,12 +25,12 @@ This costs us:
 
 ## 2. Users & JTBD
 
-- **Y (Ops Lead)** — owns the master pipeline, runs cadence, reports
+- **Y (Ops Lead)** - owns the master pipeline, runs cadence, reports
   funnel.
-- **X (Partnerships Lead)** — owns higher-touch partner orgs (Consulate,
+- **X (Partnerships Lead)** - owns higher-touch partner orgs (Consulate,
   GTAI, universities); needs a private slice.
-- **City Ambassador** — owns local leads; needs a city-scoped lane.
-- **JP (Founder)** — wants weekly funnel snapshots without DM threads.
+- **City Ambassador** - owns local leads; needs a city-scoped lane.
+- **JP (Founder)** - wants weekly funnel snapshots without DM threads.
 
 ## 3. Success Metrics
 
@@ -89,9 +89,9 @@ model OutreachNote {
 
 Surfaces:
 
-- `/admin/outreach` — kanban (stage columns) + table view, filter by city,
+- `/admin/outreach` - kanban (stage columns) + table view, filter by city,
   owner, source. Visible to `OPS_LEAD`, `PARTNERSHIPS_LEAD`, `PLATFORM_ADMIN`.
-- `/ambassador/outreach` — same module, scoped to assignment city +
+- `/ambassador/outreach` - same module, scoped to assignment city +
   ambassador's own leads.
 - Lead detail drawer: meta · notes timeline · "promote to community" action
   (creates / links a `Community` and stamps `lead.communityId`).
@@ -105,7 +105,7 @@ Surfaces:
 - Email send/receive integration (no inbox, no IMAP). Operators send via
   WhatsApp / personal email; the CRM tracks notes only.
 - Bulk import from Notion / Airtable spreadsheets in v1 (manual seed CSV is
-  enough — see Risks).
+  enough - see Risks).
 - Sequencing / drip campaigns.
 - File attachments on notes (use Markdown links to Drive).
 
@@ -114,7 +114,7 @@ Surfaces:
 - As **Y**, I open `/admin/outreach`, drag a lead from `CONTACTED` to
   `IN_CONVERSATION`; the change is logged and a `stage_changed` event fires.
 - As an **ambassador**, when I submit a community via `/ambassador/submit`,
-  I am asked "is this a lead you've been talking to?" — yes prompts me to
+  I am asked "is this a lead you've been talking to?" - yes prompts me to
   link an existing `OutreachLead` (same city, my ownership) or create one.
 - As **X**, I see only leads I own or where `source = 'partner'`.
 - As **JP**, the Monday digest tells me how many leads moved stages last
@@ -148,7 +148,7 @@ Then they receive 403
 - Quick filter chips: city · owner · source · age (>14d, >30d).
 - Lead drawer: editable next-action date with calendar picker; notes appended
   newest-first with author avatar.
-- Empty state: "No leads yet — import a CSV or add your first lead."
+- Empty state: "No leads yet - import a CSV or add your first lead."
 
 ## 9. Risks & Open Questions
 

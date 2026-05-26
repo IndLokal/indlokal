@@ -10,7 +10,7 @@ Mirror web `/submit` so users can contribute events and communities on the go, w
 
 ## 2. Users & JTBD
 
-- Organizer / community member — "Submit our Diwali event in 60 seconds with a flyer photo."
+- Organizer / community member - "Submit our Diwali event in 60 seconds with a flyer photo."
 
 ## 3. Success Metrics
 
@@ -29,7 +29,7 @@ Mirror web `/submit` so users can contribute events and communities on the go, w
 
 ## 5. Out of Scope
 
-- OCR auto-extraction from flyer (Phase 2 — `docs/AI_PIPELINE_PRODUCT.md`).
+- OCR auto-extraction from flyer (Phase 2 - `docs/AI_PIPELINE_PRODUCT.md`).
 - Bulk import.
 
 ## 6. User Stories
@@ -51,4 +51,4 @@ Multi-step form (Type → Basics → Image → Review). Image upload progress; l
 
 ## 9. Risks & Open Questions
 
-- CSAM / abuse vectors — image hash check on backend; report flow live from day 1.
+- CSAM / abuse vectors - image hash check on backend; report flow live from day 1.

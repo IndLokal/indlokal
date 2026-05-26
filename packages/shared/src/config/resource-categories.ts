@@ -1,5 +1,5 @@
 /**
- * Shared resource category config — hub & spoke structure for
+ * Shared resource category config - hub & spoke structure for
  * /[city]/resources/ on web and Resources tab on mobile.
  *
  * Web pulls Tailwind classes from `color/bgLight/textColor/ringColor`.

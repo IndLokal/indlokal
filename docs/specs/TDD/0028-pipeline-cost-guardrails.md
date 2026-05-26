@@ -8,8 +8,8 @@
 
 A single small `LlmBudget` object is created per `runPipeline` invocation, held in module state inside `extraction.ts` (same scope as the existing token counters), and consulted at the start of every `callOpenAI`. Two trip conditions:
 
-1. **Token budget exceeded** — cumulative tokens (input + output, summed across all calls in this run) ≥ `PIPELINE_RUN_TOKEN_BUDGET`.
-2. **Circuit open** — `PIPELINE_CIRCUIT_BREAKER_THRESHOLD` consecutive failures.
+1. **Token budget exceeded** - cumulative tokens (input + output, summed across all calls in this run) ≥ `PIPELINE_RUN_TOKEN_BUDGET`.
+2. **Circuit open** - `PIPELINE_CIRCUIT_BREAKER_THRESHOLD` consecutive failures.
 
 Either condition throws a typed error. The orchestrator catches at the stage boundary, records the trip on `result`, and bails on subsequent stages.
 
@@ -31,7 +31,7 @@ model PipelineRun {
 }
 ```
 
-Migration: `20260526180000_add_pipeline_cost_guard_flags` — two `ALTER TABLE pipeline_runs ADD COLUMN ... BOOLEAN NOT NULL DEFAULT false`.
+Migration: `20260526180000_add_pipeline_cost_guard_flags` - two `ALTER TABLE pipeline_runs ADD COLUMN ... BOOLEAN NOT NULL DEFAULT false`.
 
 ## 3. API surface
 
@@ -39,7 +39,7 @@ No new HTTP endpoints. Cron `result` body gains two booleans (back-compat: addit
 
 ## 4. Module changes
 
-### 4.1 `extraction.ts` — new `LlmBudget`
+### 4.1 `extraction.ts` - new `LlmBudget`
 
 ```ts
 export class PipelineBudgetExceededError extends Error {
@@ -90,7 +90,7 @@ export function getLlmBudgetStatus() {
 }
 
 function assertBudgetAvailable(): void {
-  if (!budget) return; // CLI path without orchestrator wrapping — no enforcement
+  if (!budget) return; // CLI path without orchestrator wrapping - no enforcement
   if (budget.circuitTripped) {
     throw new PipelineCircuitOpenError(budget.consecutiveFailures);
   }
@@ -133,7 +133,7 @@ export async function callOpenAI(messages, opts = {}): Promise<string> {
 }
 ```
 
-### 4.2 `orchestrator.ts` — handle trips at stage boundaries
+### 4.2 `orchestrator.ts` - handle trips at stage boundaries
 
 Wrap each LLM-bearing stage:
 
@@ -156,7 +156,7 @@ try {
 
 Each subsequent stage checks `result.budgetExceeded || result.circuitBreakerTripped` and skips if set. The final `PipelineRun.update()` writes both booleans.
 
-The `runPipeline` start path calls `resetLlmStats()` which now also resets the budget — no per-stage reset needed.
+The `runPipeline` start path calls `resetLlmStats()` which now also resets the budget - no per-stage reset needed.
 
 ### 4.3 `types.ts`
 
@@ -218,7 +218,7 @@ No DB integration test required (boolean columns are trivially additive).
 
 ## 10. Rollout plan
 
-Single deploy with default budgets. Default `200_000` tokens/run is ~3× nominal observed usage in the largest current region — generous safety margin, will not trip on healthy days.
+Single deploy with default budgets. Default `200_000` tokens/run is ~3× nominal observed usage in the largest current region - generous safety margin, will not trip on healthy days.
 
 Watch for one week:
 

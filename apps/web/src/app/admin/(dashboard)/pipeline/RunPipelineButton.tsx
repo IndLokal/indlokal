@@ -140,7 +140,7 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
                 {result.budgetExceeded && (
                   <li>
-                    Token budget exceeded — LLM stages bailed out. Tune
+                    Token budget exceeded - LLM stages bailed out. Tune
                     <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
                   </li>
                 )}

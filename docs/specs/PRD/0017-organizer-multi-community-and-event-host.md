@@ -18,18 +18,18 @@ hides the rest. Two real-world cases break:
    they cannot toggle between them in the portal.
 2. **Event-only hosts.** Independent organisers (e.g. classical concert
    promoters, freelance Bharatanatyam teachers) host events but do not run a
-   community page. They have no first-class home — they currently submit via
+   community page. They have no first-class home - they currently submit via
    the public `/submit` form anonymously.
 
 Both gaps push real organisers off the platform and starve the event graph.
 
 ## 2. Users & JTBD
 
-- **Multi-community organizer (E3)** — wants a workspace switcher to manage
+- **Multi-community organizer (E3)** - wants a workspace switcher to manage
   several communities under one login.
-- **Event host (E4)** — wants to claim and post their own events without
+- **Event host (E4)** - wants to claim and post their own events without
   pretending to be a community.
-- **Y (Ops)** — wants both onboarding paths so cold outreach has a clear CTA.
+- **Y (Ops)** - wants both onboarding paths so cold outreach has a clear CTA.
 
 ## 3. Success Metrics
 
@@ -48,7 +48,7 @@ Both gaps push real organisers off the platform and starve the event graph.
 - Add `currentCommunityId` to organizer session cookie.
 - `/organizer` lists every claimed community in a sidebar; clicking switches
   context for the entire portal (edit, events, channels, verify, analytics).
-- New route `/organizer/communities` — overview of all claimed communities
+- New route `/organizer/communities` - overview of all claimed communities
   with last-activity, completeness score, quick stats.
 - `claim` flow already creates a `Community.claimedByUserId` link; ensure the
   same user can claim N more without UI breaking.
@@ -56,12 +56,12 @@ Both gaps push real organisers off the platform and starve the event graph.
 ### 4.2 Event Host flow
 
 - New role: `EVENT_HOST` (per ADR-0005).
-- Sign-up route `/organizer/host/start` — magic-link, asks city + display
+- Sign-up route `/organizer/host/start` - magic-link, asks city + display
   name, no community required.
 - New entity surface: an event-host has a lightweight "host profile" stored as
   `User.metadata.hostProfile = { displayName, city, links[] }` (no new table
   v1).
-- `/organizer/host/events` — list + create + edit own events. Events posted
+- `/organizer/host/events` - list + create + edit own events. Events posted
   here have `Event.communityId = null` and `Event.metadata.hostUserId =
 user.id`.
 - Event detail page renders host name + link instead of community card when
@@ -72,10 +72,10 @@ user.id`.
 
 ## 5. Out of Scope
 
-- Full Organization (multi-tenant) accounts for partners — separate future
+- Full Organization (multi-tenant) accounts for partners - separate future
   PRD.
-- Paid events / ticketing — keep `registrationUrl` external.
-- Host badges / verification — covered by general verified-badge work.
+- Paid events / ticketing - keep `registrationUrl` external.
+- Host badges / verification - covered by general verified-badge work.
 - Migrating existing anonymous public submissions retroactively into host
   accounts.
 
@@ -124,7 +124,7 @@ Then the response is 403
 
 ## 9. Risks & Open Questions
 
-- Hosts could pose as a community and crowd the events feed — mitigated by
+- Hosts could pose as a community and crowd the events feed - mitigated by
   hard cap of 5 unverified upcoming events per host until manual review.
 - Storing host profile in `User.metadata` is intentionally minimalist; revisit
   if hosts > 100 or we add host pages.

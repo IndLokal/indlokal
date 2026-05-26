@@ -1,8 +1,8 @@
-# IndLokal — Solution Architecture & Implementation Plan
+# IndLokal - Solution Architecture & Implementation Plan
 
 **Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
 
-_Architecture Planning Document — April 2026. Updated May 2026 to reflect the monorepo, the native mobile MVP path, magic-link admin/organizer auth with 7-day sliding sessions, the admin Data Management Console with cascade-safe deletes, source-scoped submissions, the three-tier seed pipeline, Resend transport, and the spec-driven workflow. Updated 11 May 2026 to add the operator-team architecture (scoped roles + Ambassador console + Outreach CRM + multi-community/event-host + audit log)._
+_Architecture Planning Document - April 2026. Updated May 2026 to reflect the monorepo, the native mobile MVP path, magic-link admin/organizer auth with 7-day sliding sessions, the admin Data Management Console with cascade-safe deletes, source-scoped submissions, the three-tier seed pipeline, Resend transport, and the spec-driven workflow. Updated 11 May 2026 to add the operator-team architecture (scoped roles + Ambassador console + Outreach CRM + multi-community/event-host + audit log)._
 
 > **Spec discipline:** Every non-trivial change is captured as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding. This document is the durable architectural narrative; the spec matrix in [docs/specs/README.md](specs/README.md) is the per-capability source of truth.
 >
@@ -31,25 +31,25 @@ _Architecture Planning Document — April 2026. Updated May 2026 to reflect the 
 
 ## 1. Executive Summary
 
-IndLokal is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** — a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
+IndLokal is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** - a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
 
 ### Key architectural decisions
 
 | Decision                               | Rationale                                                                                                                                                  |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Activity-led, not directory-led**    | Retention comes from time-sensitive, fresh content — not static listings                                                                                   |
+| **Activity-led, not directory-led**    | Retention comes from time-sensitive, fresh content - not static listings                                                                                   |
 | **Monolith-first, modular-internal**   | Ship fast, avoid distributed-system overhead; separate concerns at the module/domain boundary                                                              |
 | **Monorepo with one backend**          | `apps/web` owns API + Prisma, `apps/mobile` consumes the same backend, and `packages/shared` carries contracts; avoid a separate mobile backend            |
 | **Native mobile for recall**           | Web is the SEO and admin surface; Expo mobile app is required for member recall, push, and installed-app trust                                             |
 | **City-first data model**              | Hyperlocal density is the prerequisite for product-market fit; architecture must make city the primary partition                                           |
 | **Metro-region aware**                 | Stuttgart metro includes satellite cities (Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen); events in satellites must appear in main city feed |
 | **Graph-ready relational core**        | Start with PostgreSQL + structured relational schema; design edges and scores as first-class entities so graph queries are natural when needed             |
-| **External community assumption**      | Communities live on WhatsApp/Telegram/etc; IndLokal is the discovery, access, and trust layer — not the engagement layer                                   |
+| **External community assumption**      | Communities live on WhatsApp/Telegram/etc; IndLokal is the discovery, access, and trust layer - not the engagement layer                                   |
 | **Ingestion as a first-class concern** | Supply is the hardest problem; the architecture must treat content acquisition as a core system capability, not an afterthought                            |
 
 ### The long-term moat
 
-The community graph — structured relationships between communities, events, cities, categories, personas, activity signals, and trust scores — becomes the defensible asset. No competitor will trivially replicate a curated, scored, city-dense graph of diaspora community life.
+The community graph - structured relationships between communities, events, cities, categories, personas, activity signals, and trust scores - becomes the defensible asset. No competitor will trivially replicate a curated, scored, city-dense graph of diaspora community life.
 
 ---
 
@@ -59,11 +59,11 @@ The community graph — structured relationships between communities, events, ci
 
 Indian diaspora community life in Germany is **information-fragmented**. Communities, events, and groups exist across dozens of siloed platforms (WhatsApp groups, Telegram channels, Facebook groups, Meetup, Eventbrite, local association websites, word-of-mouth). There is:
 
-- **No unified discovery surface** — a newcomer to Munich cannot answer "what Indian communities exist here?" without deep network access
-- **No activity signal layer** — there is no way to know which communities are active vs dormant without being inside them
-- **No structural metadata** — communities lack categorization, freshness indicators, access information, or quality signals
-- **No temporal content aggregation** — events are scattered, duplicate, unranked, and hard to find unless you are already in the right group
-- **No trust or relevance scoring** — all communities appear equal; there is no way to distinguish active, well-run communities from abandoned ones
+- **No unified discovery surface** - a newcomer to Munich cannot answer "what Indian communities exist here?" without deep network access
+- **No activity signal layer** - there is no way to know which communities are active vs dormant without being inside them
+- **No structural metadata** - communities lack categorization, freshness indicators, access information, or quality signals
+- **No temporal content aggregation** - events are scattered, duplicate, unranked, and hard to find unless you are already in the right group
+- **No trust or relevance scoring** - all communities appear equal; there is no way to distinguish active, well-run communities from abandoned ones
 
 ### Why activity-led, not directory-led
 
@@ -82,7 +82,7 @@ An activity-led design:
 - enables **temporal personalization** (relevance changes over time)
 - produces **behavioral data** that feeds the graph
 
-Architecturally, this means the system must treat **events and activity signals as first-class, time-indexed entities** — not as optional metadata on a community listing.
+Architecturally, this means the system must treat **events and activity signals as first-class, time-indexed entities** - not as optional metadata on a community listing.
 
 ---
 
@@ -137,7 +137,7 @@ Architecturally, this means the system must treat **events and activity signals 
 | User → Interaction Signal    | Views, saves, clicks, joins                                          |
 | Community ↔ Community        | Related communities (same city, same category, shared members later) |
 
-These relationships form the **community graph**. The architecture must model them as structured, queryable edges — not as denormalized blobs.
+These relationships form the **community graph**. The architecture must model them as structured, queryable edges - not as denormalized blobs.
 
 ---
 
@@ -203,26 +203,26 @@ These relationships form the **community graph**. The architecture must model th
 
 **Components:**
 
-- **Expo mobile app** — iOS and Android app for member recall, push notifications, saved items, submission flows, and repeated discovery
-- **Public web application** — SEO-first discovery surface, previewable public pages, and fallback mobile web experience
-- **Programmatic SEO pages** — auto-generated pages for long-tail queries: `/stuttgart/telugu-communities/`, `/stuttgart/indian-events-this-week/`, `/stuttgart/consular-services/`. Each page is a filtered view backed by real data, not thin content.
-- **Admin console** (`/admin/*`) — magic-link authenticated; data management, submissions queue, pipeline review, verification. Per-section access becomes role-gated under [PRD-0014](specs/PRD/0014-roles-and-rbac.md) so the Strategic Partner (X), Ops Lead (Y), and Content support each see only what their role permits.
-- **Organizer console** (`/organizer/*`) — magic-link authenticated; claim & manage owned communities, add events, edit access channels. A workspace switcher (multi-community owners) and a parallel **Event Host** sign-up (`/organizer/host/*`) for organisers without a community page are scoped in [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
-- **City Ambassador console** (`/ambassador/*`, planned) — city-scoped operator surface for the field team: dashboard, mobile-first quick-add wizards that fast-track ambassador submissions through the pipeline, event check-in + photo, personal scoreboard. Scoping is enforced by `RoleAssignment.cityId`. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).
-- **Outreach CRM** (`/admin/outreach`, `/ambassador/outreach`, planned) — first-class lead pipeline shared by Ops, Partnerships, and Ambassadors. Auto-links to communities when a pipeline approval matches an open lead. See [PRD-0016](specs/PRD/0016-outreach-crm.md).
-- **Audit log viewer** (`/admin/audit`, planned) — readable surface over `ContentLog`, prerequisite for trusting role-scoped delegation. See [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
-- **Edge proxy / middleware** (`apps/web/src/proxy.ts`) — single boundary for host/path normalisation, environment guards (e.g., demo seed gating), and request-scoped context before any handler runs
-- **Backend API** — owned by `apps/web` and consumed by both web and mobile through shared contracts in `packages/shared` (Zod schemas + generated OpenAPI)
+- **Expo mobile app** - iOS and Android app for member recall, push notifications, saved items, submission flows, and repeated discovery
+- **Public web application** - SEO-first discovery surface, previewable public pages, and fallback mobile web experience
+- **Programmatic SEO pages** - auto-generated pages for long-tail queries: `/stuttgart/telugu-communities/`, `/stuttgart/indian-events-this-week/`, `/stuttgart/consular-services/`. Each page is a filtered view backed by real data, not thin content.
+- **Admin console** (`/admin/*`) - magic-link authenticated; data management, submissions queue, pipeline review, verification. Per-section access becomes role-gated under [PRD-0014](specs/PRD/0014-roles-and-rbac.md) so the Strategic Partner (X), Ops Lead (Y), and Content support each see only what their role permits.
+- **Organizer console** (`/organizer/*`) - magic-link authenticated; claim & manage owned communities, add events, edit access channels. A workspace switcher (multi-community owners) and a parallel **Event Host** sign-up (`/organizer/host/*`) for organisers without a community page are scoped in [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
+- **City Ambassador console** (`/ambassador/*`, planned) - city-scoped operator surface for the field team: dashboard, mobile-first quick-add wizards that fast-track ambassador submissions through the pipeline, event check-in + photo, personal scoreboard. Scoping is enforced by `RoleAssignment.cityId`. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).
+- **Outreach CRM** (`/admin/outreach`, `/ambassador/outreach`, planned) - first-class lead pipeline shared by Ops, Partnerships, and Ambassadors. Auto-links to communities when a pipeline approval matches an open lead. See [PRD-0016](specs/PRD/0016-outreach-crm.md).
+- **Audit log viewer** (`/admin/audit`, planned) - readable surface over `ContentLog`, prerequisite for trusting role-scoped delegation. See [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
+- **Edge proxy / middleware** (`apps/web/src/proxy.ts`) - single boundary for host/path normalisation, environment guards (e.g., demo seed gating), and request-scoped context before any handler runs
+- **Backend API** - owned by `apps/web` and consumed by both web and mobile through shared contracts in `packages/shared` (Zod schemas + generated OpenAPI)
 
 **Key design decisions:**
 
-- Server-side rendering (SSR) or static generation for SEO — events and communities must be indexable by Google
+- Server-side rendering (SSR) or static generation for SEO - events and communities must be indexable by Google
 - Mobile app is not a second backend; it uses the same API and domain model as web
 - City as the top-level navigation primitive
 - Activity feed as the default landing experience (not a search box, not a directory listing)
-- **Visitor surface is auth-free; operator surfaces (admin/organizer) are always behind magic-link sign-in** — the boundary is enforced at the route layer, not via UI hiding
+- **Visitor surface is auth-free; operator surfaces (admin/organizer) are always behind magic-link sign-in** - the boundary is enforced at the route layer, not via UI hiding
 
-**Technology guidance:** Next.js for web/API/SEO/admin/organizer, Expo for native mobile, Prisma/PostgreSQL for persistence, and `packages/shared` for Zod/OpenAPI contracts (the contract package is what keeps web and mobile honest — not informal docs).
+**Technology guidance:** Next.js for web/API/SEO/admin/organizer, Expo for native mobile, Prisma/PostgreSQL for persistence, and `packages/shared` for Zod/OpenAPI contracts (the contract package is what keeps web and mobile honest - not informal docs).
 
 ### 5.2 Application / Service Layer
 
@@ -239,7 +239,7 @@ These relationships form the **community graph**. The architecture must model th
 | **Scoring**                          | Computes activity scores, freshness signals, trust indicators; runs periodically or on write                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **Ingestion**                        | Handles content import from external sources, admin seeding, community submissions, AI pipeline review queue                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **Identity & Session**               | First-class module owning magic-link issuance/verification, hashed session tokens, 7-day sliding refresh, role gating, sign-out, and the `requireAdmin` / `requireOrganizer` guards used by route handlers and server actions. Backed by `User`, `MagicLinkToken`, `Session` entities. See PRD/TDD-0011. **Evolves to a `can(user, action, resource)` helper backed by `RoleAssignment` (city/org scope) under [PRD-0014](specs/PRD/0014-roles-and-rbac.md), so per-section admin RBAC and per-city ambassador scoping are centralised here rather than scattered across handlers.** |
-| **User Preferences**                 | City selection, persona/language interests, saved items — distinct from the Identity module so that auth changes don't ripple into preference logic. Member-side surfaces (Phase 2) live here                                                                                                                                                                                                                                                                                                                                                                                        |
+| **User Preferences**                 | City selection, persona/language interests, saved items - distinct from the Identity module so that auth changes don't ripple into preference logic. Member-side surfaces (Phase 2) live here                                                                                                                                                                                                                                                                                                                                                                                        |
 | **Admin/Curation**                   | Editorial tools, content moderation, claim review, cascade-safe delete actions (PRD/TDD-0012), submissions queue (PRD/TDD-0013). The `/admin/audit` surface ([PRD-0018](specs/PRD/0018-audit-log-viewer.md)) reads from the same `ContentLog` this module already writes.                                                                                                                                                                                                                                                                                                            |
 | **Organizer Workspace**              | Surfaces only the communities a `COMMUNITY_ADMIN` owns; all writes go through the same domain modules above with an ownership check. Extended by [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md) to support multi-community workspace switching and an `EVENT_HOST` sub-mode for organisers without a community page.                                                                                                                                                                                                                                         |
 | **Ambassador Workspace** _(planned)_ | New module mirroring Organizer Workspace but scoped by `RoleAssignment.cityId`. Owns the `/ambassador/*` surfaces, the fast-track pipeline tag (`metadata.submittedByRole='CITY_AMBASSADOR'`), event check-in writes (`ActivitySignal.EVENT_VERIFIED_ATTENDED`), and the personal scoreboard derived from `ContentLog` + `pipeline_items`. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).                                                                                                                                                                                |
@@ -271,7 +271,7 @@ These relationships form the **community graph**. The architecture must model th
 
 ### 5.4 Search / Discovery Layer
 
-**Purpose:** Power all user-facing discovery experiences — feeds, search, browse, filtering, ranking.
+**Purpose:** Power all user-facing discovery experiences - feeds, search, browse, filtering, ranking.
 
 **Key responsibilities:**
 
@@ -295,11 +295,11 @@ Supply is the existential risk. If the platform has 5 communities and 2 events, 
 
 **Ingestion channels (progressive):**
 
-1. **Admin seeding** — manual entry by the founding team (MVP)
-2. **Curated import** — structured import from known sources (event platforms, community websites)
-3. **Community submission** — self-service forms for community admins to list themselves
-4. **Semi-automated enrichment** — scraping or API-based import from public sources (with appropriate permissions)
-5. **User-contributed signals** — "suggest a community," "report stale info"
+1. **Admin seeding** - manual entry by the founding team (MVP)
+2. **Curated import** - structured import from known sources (event platforms, community websites)
+3. **Community submission** - self-service forms for community admins to list themselves
+4. **Semi-automated enrichment** - scraping or API-based import from public sources (with appropriate permissions)
+5. **User-contributed signals** - "suggest a community," "report stale info"
 
 **Architectural pattern:** Ingestion pipeline with stages:
 
@@ -333,7 +333,7 @@ Even at MVP, this pipeline is a set of admin scripts. The mental model should ex
 
 **Why it's separate:**
 
-Scoring logic changes frequently. It should not be entangled with CRUD operations. Scoring is a **read-side enrichment** — it computes derived attributes that influence ranking and display.
+Scoring logic changes frequently. It should not be entangled with CRUD operations. Scoring is a **read-side enrichment** - it computes derived attributes that influence ranking and display.
 
 **Scoring dimensions (designed for, not all implemented at MVP):**
 
@@ -350,7 +350,7 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 ### 5.8 Graph / Relationship Layer
 
-**Purpose:** Model and query the relationships between entities — the community graph.
+**Purpose:** Model and query the relationships between entities - the community graph.
 
 **What makes this a "graph":**
 
@@ -456,8 +456,8 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `diaspora_density_estimate` | Estimated Indian diaspora size                                          |
 | `is_active`                 | Whether this city is "launched" on the platform                         |
 | `timezone`                  | City timezone                                                           |
-| `metro_region_id`           | FK to parent metro region (nullable — null if this IS the primary city) |
-| `is_metro_primary`          | Boolean — true if this is the main city of a metro region               |
+| `metro_region_id`           | FK to parent metro region (nullable - null if this IS the primary city) |
+| `is_metro_primary`          | Boolean - true if this is the main city of a metro region               |
 
 **Metro region concept:** Stuttgart metro includes Stuttgart (primary), Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen. Events and communities in satellite cities appear in the Stuttgart city feed. Each satellite is a City row with `metro_region_id` pointing to Stuttgart's `id`.
 
@@ -563,7 +563,7 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 **Why it matters:** Users are necessary for personalization, saved content, community claims, and later for behavioral signal collection. Keep lightweight initially. The `role` enum gates the admin and organizer consoles; in MVP only the admin and organizer roles have an active sign-in surface (magic-link), while regular `USER` accounts remain a Phase 2 capability.
 
-**Evolution — `RoleAssignment` (planned, [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md), [PRD-0014](specs/PRD/0014-roles-and-rbac.md)):** A single `User.role` cannot express the operator team's access needs (city-scoped Ambassadors, role-separated Ops vs Partnerships, future Partner Org tier). A new `RoleAssignment(userId, role, cityId?, orgId?, grantedBy, grantedAt, revokedAt?)` table layers many scoped roles on top of each user. `User.role` is retained as the user's _primary_ role for legacy callers and display, but authorisation moves to a central `can(user, action, resource)` helper that reads `RoleAssignment`. Expanded enum: `USER`, `COMMUNITY_ADMIN`, `EVENT_HOST`, `PARTNER_ORG_ADMIN`, `CITY_AMBASSADOR`, `CONTENT_EDITOR`, `OPS_LEAD`, `PARTNERSHIPS_LEAD`, `PLATFORM_ADMIN`.
+**Evolution - `RoleAssignment` (planned, [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md), [PRD-0014](specs/PRD/0014-roles-and-rbac.md)):** A single `User.role` cannot express the operator team's access needs (city-scoped Ambassadors, role-separated Ops vs Partnerships, future Partner Org tier). A new `RoleAssignment(userId, role, cityId?, orgId?, grantedBy, grantedAt, revokedAt?)` table layers many scoped roles on top of each user. `User.role` is retained as the user's _primary_ role for legacy callers and display, but authorisation moves to a central `can(user, action, resource)` helper that reads `RoleAssignment`. Expanded enum: `USER`, `COMMUNITY_ADMIN`, `EVENT_HOST`, `PARTNER_ORG_ADMIN`, `CITY_AMBASSADOR`, `CONTENT_EDITOR`, `OPS_LEAD`, `PARTNERSHIPS_LEAD`, `PLATFORM_ADMIN`.
 
 ### 6.9a Entity: MagicLinkToken
 
@@ -612,21 +612,21 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | Attribute       | Description                                                                                                                                                                                                                     |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `id`            | Unique identifier                                                                                                                                                                                                               |
-| `title`         | Resource title (e.g., "CGI Munich Consular Camp — Stuttgart")                                                                                                                                                                   |
+| `title`         | Resource title (e.g., "CGI Munich Consular Camp - Stuttgart")                                                                                                                                                                   |
 | `slug`          | URL-friendly identifier                                                                                                                                                                                                         |
 | `resource_type` | consular_service / official_event / government_info / visa_service / community_resource / city_registration / driving / housing / health_doctors / family_children / jobs_careers / tax_finance / business_setup / grocery_food |
 | `city_id`       | Primary city (FK)                                                                                                                                                                                                               |
 | `url`           | External URL                                                                                                                                                                                                                    |
 | `description`   | Description of the resource                                                                                                                                                                                                     |
 | `valid_from`    | Start of validity (nullable)                                                                                                                                                                                                    |
-| `valid_until`   | End of validity (nullable — null = ongoing)                                                                                                                                                                                     |
+| `valid_until`   | End of validity (nullable - null = ongoing)                                                                                                                                                                                     |
 | `source`        | Where this was sourced from                                                                                                                                                                                                     |
 | `categories`    | Array of category tags                                                                                                                                                                                                          |
 | `metadata`      | JSONB for flexible attributes (e.g., consulate details, appointment links, VFS center info)                                                                                                                                     |
 | `created_at`    | When first added                                                                                                                                                                                                                |
 | `updated_at`    | Last update                                                                                                                                                                                                                     |
 
-**Why it matters:** Consular services, VFS appointments, and official embassy events are a unique content type that no competitor surfaces well. They serve a high-intent need (passport renewal, visa services, official cultural events) and are architecturally distinct from community-organized events — they have validity windows rather than single event dates, are institutionally sourced rather than community-submitted, and carry inherent trust. The topic-based types (city_registration, driving, housing, health_doctors, family_children, jobs_careers, tax_finance, business_setup, grocery_food) extend this model into a comprehensive Indian expat knowledge base — covering Anmeldung, Blue Card, Kindergeld, driving licence conversion, tax DTAA, apartment search, and more — a content category inspired by Stuttgart Expats' service directory but structured as detailed practical guides narrowed to the Indian diaspora niche.
+**Why it matters:** Consular services, VFS appointments, and official embassy events are a unique content type that no competitor surfaces well. They serve a high-intent need (passport renewal, visa services, official cultural events) and are architecturally distinct from community-organized events - they have validity windows rather than single event dates, are institutionally sourced rather than community-submitted, and carry inherent trust. The topic-based types (city_registration, driving, housing, health_doctors, family_children, jobs_careers, tax_finance, business_setup, grocery_food) extend this model into a comprehensive Indian expat knowledge base - covering Anmeldung, Blue Card, Kindergeld, driving licence conversion, tax DTAA, apartment search, and more - a content category inspired by Stuttgart Expats' service directory but structured as detailed practical guides narrowed to the Indian diaspora niche.
 
 **Graph connections:** → City, → Categories
 
@@ -640,7 +640,7 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `source_payload`       | Raw fetched content (HTML, JSON, post text) retained for re-processing and provenance                                         |
 | `extracted`            | Structured JSON produced by the LLM (community or event shape, depending on `kind`)                                           |
 | `kind`                 | `COMMUNITY` / `EVENT` / `RESOURCE`                                                                                            |
-| `confidence`           | Composite LLM confidence (0–1); per-field confidence stored inside `extracted`                                                |
+| `confidence`           | Composite LLM confidence (0-1); per-field confidence stored inside `extracted`                                                |
 | `dedup_match_id`       | Nullable FK to an existing Community/Event the dedup step thinks this matches                                                 |
 | `dedup_match_strategy` | `name+city` / `url` / `embedding` / `none`                                                                                    |
 | `status`               | `PENDING` / `APPROVED` / `REJECTED` / `MERGED`                                                                                |
@@ -650,7 +650,7 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 | `result_entity_id`     | FK to that produced/merged entity                                                                                             |
 | `created_at`           | When fetched + extracted                                                                                                      |
 
-**Why it matters:** The AI pipeline (§10.4) is referenced everywhere but was previously implicit in the schema. Modelling pipeline items as first-class rows gives us provenance, a real review queue, idempotent re-runs, and the dedup audit trail that a content platform needs. Critically: the `Submissions` queue (visitor-side, `Community.source='COMMUNITY_SUBMITTED'`) and the `Pipeline` queue (this entity) are **architecturally separate** — same review UX pattern, different data lifecycles, no cross-contamination. See PRD/TDD-0013.
+**Why it matters:** The AI pipeline (§10.4) is referenced everywhere but was previously implicit in the schema. Modelling pipeline items as first-class rows gives us provenance, a real review queue, idempotent re-runs, and the dedup audit trail that a content platform needs. Critically: the `Submissions` queue (visitor-side, `Community.source='COMMUNITY_SUBMITTED'`) and the `Pipeline` queue (this entity) are **architecturally separate** - same review UX pattern, different data lifecycles, no cross-contamination. See PRD/TDD-0013.
 
 **Graph connections:** → User (reviewer), → Community/Event/Resource (result)
 
@@ -662,11 +662,11 @@ Scoring logic changes frequently. It should not be entangled with CRUD operation
 
 | Data type               | Source                                                             | Lifecycle                      | Trust level                                                                                                                                                                                 |
 | ----------------------- | ------------------------------------------------------------------ | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Bootstrap seed**      | `seed/bootstrap` — cities, categories, taxonomies                  | One-time, idempotent           | High (platform invariants; ADR-0003)                                                                                                                                                        |
-| **Directory seed**      | `seed/directory` — real Stuttgart communities and resources        | Replayable; canonical baseline | High (human-curated from research)                                                                                                                                                          |
-| **Demo seed**           | `seed/demo` — synthetic content for local + preview                | On-demand; gated off in prod   | None (never reaches production users)                                                                                                                                                       |
-| **Community-submitted** | Visitors via `/submit/`; lands as `source='COMMUNITY_SUBMITTED'`   | Ongoing                        | Medium (first-party but unverified — status `UNVERIFIED` until admin approves)                                                                                                              |
-| **AI pipeline**         | Sources scraped by ingestion module → LLM extract → `PipelineItem` | Daily (per source schedule)    | Confidence-graded per item; `APPROVED` items inherit reviewer trail and land as `Community.status='UNVERIFIED'` (still need a verification pass) — nothing publishes without human approval |
+| **Bootstrap seed**      | `seed/bootstrap` - cities, categories, taxonomies                  | One-time, idempotent           | High (platform invariants; ADR-0003)                                                                                                                                                        |
+| **Directory seed**      | `seed/directory` - real Stuttgart communities and resources        | Replayable; canonical baseline | High (human-curated from research)                                                                                                                                                          |
+| **Demo seed**           | `seed/demo` - synthetic content for local + preview                | On-demand; gated off in prod   | None (never reaches production users)                                                                                                                                                       |
+| **Community-submitted** | Visitors via `/submit/`; lands as `source='COMMUNITY_SUBMITTED'`   | Ongoing                        | Medium (first-party but unverified - status `UNVERIFIED` until admin approves)                                                                                                              |
+| **AI pipeline**         | Sources scraped by ingestion module → LLM extract → `PipelineItem` | Daily (per source schedule)    | Confidence-graded per item; `APPROVED` items inherit reviewer trail and land as `Community.status='UNVERIFIED'` (still need a verification pass) - nothing publishes without human approval |
 | **Organizer-edited**    | `COMMUNITY_ADMIN` users editing their claimed communities/events   | Ongoing                        | High (first-party with magic-link verified ownership)                                                                                                                                       |
 | **User-contributed**    | "Suggest a community" or "report stale" (Phase 2)                  | Ongoing                        | Low (must be moderated)                                                                                                                                                                     |
 | **Inferred signals**    | Computed from activity, freshness, engagement                      | Continuous                     | Derived (depends on input quality)                                                                                                                                                          |
@@ -713,7 +713,7 @@ Not all data is equally reliable. The system should track provenance:
 Events are inherently temporal. The data model must natively support:
 
 - Querying future events ("what's happening this week in Berlin")
-- Archiving past events (not deleting — they feed activity scores and historical richness)
+- Archiving past events (not deleting - they feed activity scores and historical richness)
 - Recurring events via RRULE patterns
 - Timezone-correct display (Germany is CET/CEST)
 
@@ -763,7 +763,7 @@ Search is secondary to **curated, city-scoped, time-aware discovery**.
 
 | Facet          | Description                                      |
 | -------------- | ------------------------------------------------ |
-| **City**       | Primary partition — always applied               |
+| **City**       | Primary partition - always applied               |
 | **Category**   | Cultural, professional, student, religious, etc. |
 | **Persona**    | Student, family, professional, newcomer          |
 | **Language**   | Hindi, Telugu, Tamil, Malayalam, Bengali, etc.   |
@@ -775,12 +775,12 @@ Search is secondary to **curated, city-scoped, time-aware discovery**.
 
 Default ranking (city feed):
 
-1. **Recency** — events closer to now rank higher
-2. **Activity score** — communities with more recent activity rank higher
-3. **Completeness** — entities with rich profiles rank over sparse ones
-4. **Trust score** — verified/claimed communities rank higher
-5. **Engagement** (later) — entities with more user interaction rank higher
-6. **Personalization** (later) — match user's stated interests and behavior
+1. **Recency** - events closer to now rank higher
+2. **Activity score** - communities with more recent activity rank higher
+3. **Completeness** - entities with rich profiles rank over sparse ones
+4. **Trust score** - verified/claimed communities rank higher
+5. **Engagement** (later) - entities with more user interaction rank higher
+6. **Personalization** (later) - match user's stated interests and behavior
 
 **MVP implementation:** Simple weighted scoring formula computed periodically, stored as a materialized column, used in ORDER BY.
 
@@ -839,12 +839,12 @@ Trust and relevance should be **extensible dimensions, not hardcoded logic**. Th
 
 | Phase       | Capability                                                                                                                                                                                                                                                                                                                                                   |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **MVP**     | `activity_score` = f(events in 90d, last_update). `trust_score` = f(is_verified, source). Computed via cron. User-visible as qualitative label only ("Active" / "Moderate" / "Low activity") — NOT as a numeric score. Store score breakdown in JSONB (`score_breakdown`) for internal analytics but do not expose to users.                                 |
-| **Phase 2** | Add completeness score. Add engagement signals (view count). Tunable weights via config. Name and brand the composite score as **"Pulse Score"** — visible to organizers on their dashboard first (opt-in). Show score breakdown on community detail pages only for **claimed** communities (organizer sees it as a tool to improve, not a public judgment). |
+| **MVP**     | `activity_score` = f(events in 90d, last_update). `trust_score` = f(is_verified, source). Computed via cron. User-visible as qualitative label only ("Active" / "Moderate" / "Low activity") - NOT as a numeric score. Store score breakdown in JSONB (`score_breakdown`) for internal analytics but do not expose to users.                                 |
+| **Phase 2** | Add completeness score. Add engagement signals (view count). Tunable weights via config. Name and brand the composite score as **"Pulse Score"** - visible to organizers on their dashboard first (opt-in). Show score breakdown on community detail pages only for **claimed** communities (organizer sees it as a tool to improve, not a public judgment). |
 | **Phase 3** | Make Pulse Score publicly visible on all community cards and detail pages (by now communities have 60-90+ days of behavioral data). Introduce relevance score based on user preferences. A/B test ranking formulas. Publish scoring methodology on /about/scoring page for transparency.                                                                     |
 | **Phase 4** | ML-based ranking. Graph-propagated trust (community X is trusted because related community Y is trusted).                                                                                                                                                                                                                                                    |
 
-> **Rationale for deferred public scoring (learned from Tracxn analysis):** Tracxn's branded score works because they have 13 years of data density. At go-live, IndLokal communities have zero behavioral data — showing "Pulse Score: 15/100" to an organizer you're recruiting is damaging. Qualitative labels ("Active") are honest; numeric scores on cold-start data are misleadingly precise. Scores become meaningful after Phase 2 engagement data accumulates.
+> **Rationale for deferred public scoring (learned from Tracxn analysis):** Tracxn's branded score works because they have 13 years of data density. At go-live, IndLokal communities have zero behavioral data - showing "Pulse Score: 15/100" to an organizer you're recruiting is damaging. Qualitative labels ("Active") are honest; numeric scores on cold-start data are misleadingly precise. Scores become meaningful after Phase 2 engagement data accumulates.
 
 ### 9.4 Community quality indicators (user-visible)
 
@@ -915,7 +915,7 @@ The platform is only as good as its content density. A city with 3 communities a
 
 ### 10.4 AI-Powered Content Pipeline (detailed)
 
-> **Why AI, not manual?** At IndLokal's scale (1 city, 60-80 communities), manual seeding works for the initial load. But ongoing freshness — detecting new events, updating stale profiles, monitoring community activity — requires checking 50+ sources weekly. A single founder cannot sustain this. AI reduces the ongoing content cost from ~10 hours/week of manual research to ~1 hour/week of review queue processing.
+> **Why AI, not manual?** At IndLokal's scale (1 city, 60-80 communities), manual seeding works for the initial load. But ongoing freshness - detecting new events, updating stale profiles, monitoring community activity - requires checking 50+ sources weekly. A single founder cannot sustain this. AI reduces the ongoing content cost from ~10 hours/week of manual research to ~1 hour/week of review queue processing.
 
 #### 10.4.1 Source monitoring layer
 
@@ -942,7 +942,7 @@ Raw fetched content (HTML, social media posts, images) is processed through an L
 Input: Raw Facebook post text + any attached image
   "Hey everyone! 🎉 Our annual Diwali celebration is happening on Oct 25th
    at Bürgerzentrum Stuttgart from 5pm. Entry free. Bring your family!
-   See you there! — Stuttgart Tamil Sangam"
+   See you there! - Stuttgart Tamil Sangam"
 
 LLM Prompt: Extract event details as JSON from this social media post.
   Return: title, date, time, venue, description, hostCommunity, categories,
@@ -977,11 +977,11 @@ Output:
 | **Dedup assistance**       | LLM compares extracted event against existing events for fuzzy match  | "Is this the same Diwali event posted on Facebook AND Eventbrite?"      |
 | **Confidence scoring**     | LLM outputs confidence per field (high/medium/low)                    | Low-confidence items get human review; high-confidence can auto-approve |
 
-**LLM choice:** OpenAI GPT-4o-mini for text extraction (~$0.15/1M input tokens — extremely cheap). GPT-4o or Claude for image/poster extraction. Estimated cost: **$5-15/month per city** at Stuttgart's content volume.
+**LLM choice:** OpenAI GPT-4o-mini for text extraction (~$0.15/1M input tokens - extremely cheap). GPT-4o or Claude for image/poster extraction. Estimated cost: **$5-15/month per city** at Stuttgart's content volume.
 
 #### 10.4.3 Admin review queue
 
-The pipeline outputs items into a review queue — NOT directly to the public site. The admin sees:
+The pipeline outputs items into a review queue - NOT directly to the public site. The admin sees:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -1079,7 +1079,7 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 | **City as primary partition**          | City selection is the first user action                                                                                                                                   |
 | **Category/persona tagging**           | At least 11 curated categories (including Consular & Official)                                                                                                            |
 | **Access channels**                    | WhatsApp/Telegram/website links per community                                                                                                                             |
-| **City feed / discovery page**         | The primary UX — activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events)                           |
+| **City feed / discovery page**         | The primary UX - activity-led, not directory. Includes sparse-content resilience (auto-expand time window, mix content types, show past events)                           |
 | **Event listing with time filters**    | This week, this month, upcoming                                                                                                                                           |
 | **Community detail page**              | Full profile with events and access info                                                                                                                                  |
 | **Resource pages**                     | Consular services, VFS info, official events                                                                                                                              |
@@ -1088,10 +1088,10 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 | **Admin Data Management Console**      | `/admin/data` with CRUD + cascade-safe deletes for communities, events, cities, resources; deletes refuse and explain when references exist (PRD/TDD-0012)                |
 | **Source-scoped submissions queue**    | `/admin/submissions` shows only `source='COMMUNITY_SUBMITTED' AND status='UNVERIFIED'`; pipeline-extracted items live in their own `/admin/pipeline` queue (PRD/TDD-0013) |
 | **Three-tier database seeding**        | `bootstrap` / `directory` / `demo` seeds; demo never runs in production (ADR-0003)                                                                                        |
-| **Email transport (Resend)**           | Resend in prod, Mailpit in dev, send failures throw — no silent drops (ADR-0004)                                                                                          |
+| **Email transport (Resend)**           | Resend in prod, Mailpit in dev, send failures throw - no silent drops (ADR-0004)                                                                                          |
 | **Admin CRUD + bulk import**           | Content seeding capability including historical events and institutional sources                                                                                          |
 | **Programmatic SEO pages**             | Auto-generated pages for long-tail queries (/stuttgart/telugu-communities/, etc.)                                                                                         |
-| **Basic activity scoring**             | Sort by last_updated, event count — just enough to avoid stale-first                                                                                                      |
+| **Basic activity scoring**             | Sort by last_updated, event count - just enough to avoid stale-first                                                                                                      |
 | **SEO-ready rendering**                | Communities and events must be Google-indexable                                                                                                                           |
 | **Native mobile app path**             | Expo builds are part of MVP because recall requires an installed app, push, and app-store trust                                                                           |
 | **Mobile-responsive web**              | Web remains important for SEO, previews, admin, and users who arrive from search                                                                                          |
@@ -1112,8 +1112,8 @@ Compare this to the alternative: 10+ hours/week of manual research at any reason
 | **Multi-city**              | City model supports multiple cities                                                                                                                                                                                                       | Cross-city discovery and comparison                                                                                                                                                                                                                    |
 | **Taxonomy depth**          | JSONB `metadata` field on community supports subcategories                                                                                                                                                                                | Hierarchical taxonomy UI (Phase 4)                                                                                                                                                                                                                     |
 | **Data API**                | Normalized, structured data model                                                                                                                                                                                                         | External API for integrations (Phase 4+)                                                                                                                                                                                                               |
-| **Reporting & data export** | Schema already carries `created_at`, `source`, `status`, `last_activity_at`, `reviewed_at` — enough to produce monthly CSV/JSON exports of newcomer-reach, communities-indexed, and freshness metrics for grant reports without new infra | Hardened B2B data API for city tourism boards, integration offices, university international offices, and corporate HR onboarding (Phase B/C of the funding plan in `PRODUCT_DOCUMENT.md` §15)                                                         |
-| **Operator-team layer**     | `User.role` enum + magic-link single-tenant admin gate are sufficient while only the founder operates the console                                                                                                                         | `RoleAssignment` table + `can(user, action, resource)` helper + Ambassador/Outreach/Audit surfaces ship as the operating team grows past one person ([ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md), [PRD-0014–0018](specs/README.md)) |
+| **Reporting & data export** | Schema already carries `created_at`, `source`, `status`, `last_activity_at`, `reviewed_at` - enough to produce monthly CSV/JSON exports of newcomer-reach, communities-indexed, and freshness metrics for grant reports without new infra | Hardened B2B data API for city tourism boards, integration offices, university international offices, and corporate HR onboarding (Phase B/C of the funding plan in `PRODUCT_DOCUMENT.md` §15)                                                         |
+| **Operator-team layer**     | `User.role` enum + magic-link single-tenant admin gate are sufficient while only the founder operates the console                                                                                                                         | `RoleAssignment` table + `can(user, action, resource)` helper + Ambassador/Outreach/Audit surfaces ship as the operating team grows past one person ([ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md), [PRD-0014-0018](specs/README.md)) |
 
 ### 11.3 What can be postponed entirely
 
@@ -1200,7 +1200,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 | **Cold start per city**                | Each new city starts from zero                                          | Stuttgart launch creates repeatable playbook; BW region cities share some communities                                                                               |
 | **Competitor SEO advantage**           | IndoEuropean.eu has 11 years of SEO authority and 327+ Germany articles | Launch programmatic SEO pages early; target long-tail queries they don't serve ("Telugu community Stuttgart"); their misspelled "Stuttgurt" URL gives us an opening |
 | **IE adds structured features**        | They rebuild from WordPress to structured platform                      | Move fast; our structural advantage (community profiles, event filtering, trust signals) requires architectural rebuild they're unlikely to do                      |
-| **Facebook Groups remain good enough** | Users stay in closed FB groups for discovery                            | Our value is cross-group, searchable, temporal — FB can't do this for closed groups. Position as complement, not replacement                                        |
+| **Facebook Groups remain good enough** | Users stay in closed FB groups for discovery                            | Our value is cross-group, searchable, temporal - FB can't do this for closed groups. Position as complement, not replacement                                        |
 
 ### 13.2 Technical risks
 
@@ -1221,7 +1221,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **Content accuracy**       | Wrong links, wrong event times erode trust                                                                                                                           | Verification workflows; user reporting; periodic link checks                                                                                                                                                 |
 | **Community pushback**     | Communities don't want to be listed                                                                                                                                  | Claim flow allows removal; be respectful of community ownership                                                                                                                                              |
-| **No retention mechanism** | Users visit once, get the info they need, join WhatsApp, never return                                                                                                | Weekly digest email/WhatsApp (Phase 2); "new this week" section on city feed; event reminders; Tracxn retains via alerts and dashboards — we need an equivalent                                              |
+| **No retention mechanism** | Users visit once, get the info they need, join WhatsApp, never return                                                                                                | Weekly digest email/WhatsApp (Phase 2); "new this week" section on city feed; event reminders; Tracxn retains via alerts and dashboards - we need an equivalent                                              |
 | **Single-city fragility**  | If launch city doesn't work, product appears to fail                                                                                                                 | Stuttgart chosen for weakest competitor coverage + strong automotive pipeline + discoverable communities; BW region expansion if metro needs more density                                                    |
 | **Founder bus factor**     | Platform depends on manual curation too long                                                                                                                         | Build community submission and claim flows in Phase 2 to distribute supply; establish 5+ organizer relationships pre-launch                                                                                  |
 | **Auth misconfiguration**  | Wrong cookie domain in prod, leaked/rotated session secret invalidates everyone, or `Secure` flag dropped → either total lockout or session theft on shared networks | Cookie domain + `Secure` + `httpOnly` + `SameSite=Lax` are set centrally in `lib/session.ts`; secret rotation is a documented runbook; preview env uses a distinct cookie name to avoid cross-env collisions |
@@ -1235,14 +1235,14 @@ The following are explicitly **out of scope** for the initial architecture and s
 >
 > Several capabilities the original plan put in Phase 2 shipped in MVP because they ride on top of the magic-link auth rail we built early:
 >
-> - Community **self-submission** (`/submit/` → source-scoped admin queue) — was Phase 2, **shipped MVP**
-> - Community **claim & organizer console** (`/organizer/*`) — was Phase 2, **shipped MVP**
-> - Admin **data management console** with cascade-safe deletes — was Phase 2, **shipped MVP**
-> - **AI pipeline review queue** (separate from submissions) — was Phase 2, **shipped MVP** (basic source set)
+> - Community **self-submission** (`/submit/` → source-scoped admin queue) - was Phase 2, **shipped MVP**
+> - Community **claim & organizer console** (`/organizer/*`) - was Phase 2, **shipped MVP**
+> - Admin **data management console** with cascade-safe deletes - was Phase 2, **shipped MVP**
+> - **AI pipeline review queue** (separate from submissions) - was Phase 2, **shipped MVP** (basic source set)
 >
 > The phases below reflect what's still ahead. Anything still labelled "Phase 2" here is _net-new_ on top of the shipped surface.
 >
-> **Operator-team layer (Phase 2, P0–P1)** — RBAC + Ambassador console + Outreach CRM + Multi-community / Event-Host + Audit log are scheduled into Phase 2 below as the operating team grows past one person. They are infrastructure for hiring, not new product surfaces for end-users. See [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md) §5 gap matrix for sequencing.
+> **Operator-team layer (Phase 2, P0-P1)** - RBAC + Ambassador console + Outreach CRM + Multi-community / Event-Host + Audit log are scheduled into Phase 2 below as the operating team grows past one person. They are infrastructure for hiring, not new product surfaces for end-users. See [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md) §5 gap matrix for sequencing.
 
 ### Phase 0: Foundation (Weeks 1-3)
 
@@ -1253,12 +1253,12 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Repository setup with pnpm monorepo structure (`apps/web`, `apps/mobile`, `packages/shared`)
 - PostgreSQL schema: all core entities (community, event, city, category, access_channel, activity_signal, trust_signal, relationship_edge, user, user_interaction, **resource**, **magic_link_token**, **session**)
 - City schema includes metro-region support (Stuttgart + satellite cities)
-- Database migrations framework + **three-tier seed pipeline** (`bootstrap` / `directory` / `demo`; demo gated off in production — ADR-0003)
+- Database migrations framework + **three-tier seed pipeline** (`bootstrap` / `directory` / `demo`; demo gated off in production - ADR-0003)
 - API framework with module structure (community, event, discovery, admin, organizer)
 - **Authentication: magic-link** (no passwords) for `PLATFORM_ADMIN` and `COMMUNITY_ADMIN` roles, with 7-day sliding sessions and visible sign-out (PRD/TDD-0011). Member (`USER`) accounts are Phase 2.
 - **Email transport:** Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev, send failures throw (ADR-0004)
 - Admin CRUD endpoints for communities, events, resources, plus cascade-safe delete actions (PRD/TDD-0012)
-- **Grant-reportable analytics pack** — monthly CSV/JSON export of users-served, communities-indexed, AI-pipeline items reviewed, and median-freshness, produced from existing Postgres with a single SQL job (no new infra). Backs the Year-1 funder reporting commitments in `PRODUCT_DOCUMENT.md` §15.1.
+- **Grant-reportable analytics pack** - monthly CSV/JSON export of users-served, communities-indexed, AI-pipeline items reviewed, and median-freshness, produced from existing Postgres with a single SQL job (no new infra). Backs the Year-1 funder reporting commitments in `PRODUCT_DOCUMENT.md` §15.1.
 - Basic CI/CD pipeline
 - MVP deployment path: Vercel for web/API (`main` → indlokal.com, `develop` → preview), Neon for Postgres, Expo EAS for mobile builds
 
@@ -1296,7 +1296,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 ### Phase 2: Supply Activation (Weeks 8-14)
 
-**Goal:** Enable communities to participate at scale and reduce dependency on manual curation. _(Note: the magic-link organizer auth and the basic claim flow shipped in MVP — this phase deepens the surface area.)_
+**Goal:** Enable communities to participate at scale and reduce dependency on manual curation. _(Note: the magic-link organizer auth and the basic claim flow shipped in MVP - this phase deepens the surface area.)_
 
 **Architecture deliverables:**
 
@@ -1309,10 +1309,10 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Improved scoring: completeness score, engagement signals (view counts)
 - **Pulse Score branded and visible to claimed-community organizers** on their dashboard (score breakdown as improvement tool, not public judgment)
 - **Sponsorship intent capture (no marketplace)** on organizer/event-host flows, writing to Outreach CRM for manual matching by Ops/Partnerships
-- **Content provenance logging** (`ContentLog` entity tracking source, action, timestamp for every creation/update/verification — enables freshness auditing and source quality tracking; see Tracxn analysis §6.2)
+- **Content provenance logging** (`ContentLog` entity tracking source, action, timestamp for every creation/update/verification - enables freshness auditing and source quality tracking; see Tracxn analysis §6.2)
 - Broken link detection (scheduled job)
 - Stale content alerting and downranking
-- **Second city launch: Karlsruhe or Mannheim** (BW region — shared consular services, overlapping communities)
+- **Second city launch: Karlsruhe or Mannheim** (BW region - shared consular services, overlapping communities)
 
 **Architecture milestone:** The system can receive and process community-submitted content at scale, with notification feedback loops, without manual intervention for every entry.
 
@@ -1326,16 +1326,16 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Multi-signal scoring engine with configurable weights
 - Trust score computation (verification, claim state, user reports, editorial review)
 - **Pulse Score publicly visible** on all community cards and detail pages (communities now have 60-90+ days of behavioral data to back the numbers)
-- **Scoring transparency page** (/about/scoring — explain methodology, build user trust; see Tracxn analysis §6.3)
+- **Scoring transparency page** (/about/scoring - explain methodology, build user trust; see Tracxn analysis §6.3)
 - Category-aware ranking ("best student communities in Munich")
 - Trending signals ("most active this week")
 - Redis caching for hot queries (city feeds, popular communities)
 - Second city launch with repeatable city launch process
-- **Third city: Munich** (largest Indian population, strongest competition — but by now we have proven playbook)
+- **Third city: Munich** (largest Indian population, strongest competition - but by now we have proven playbook)
 - Event import adapter for at least one external source (Eventbrite or Meetup API)
 - User preference-based filtering (show me communities matching my interests)
-- Email notifications (weekly digest of events in your city — optional)
-- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing and SEO; see Tracxn analysis §7.3)
+- Email notifications (weekly digest of events in your city - optional)
+- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" - generated from platform data; serves as content marketing and SEO; see Tracxn analysis §7.3)
 - **Curated business and business-leader listing surfaces** tied to diaspora-relevant discovery contexts (professional, jobs/careers, business setup), managed through existing admin/outreach controls
 
 **Architecture milestone:** The scoring and search layer is decoupled from CRUD; ranking can be tuned without code changes.
@@ -1354,7 +1354,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Behavioral personalization (ranking influenced by user's past interactions)
 - A/B testing framework for ranking experiments
 - Analytics warehouse for deep behavioral analysis
-- **Data API for potential integrations** (city tourism boards, German integration agencies, relocation companies — see Tracxn analysis §5.4)
+- **Data API for potential integrations** (city tourism boards, German integration agencies, relocation companies - see Tracxn analysis §5.4)
 - **Hierarchical taxonomy expansion** (sub-categories for deeper filtering: "Cultural > Festivals > Diwali", "Professional > Automotive"; see Tracxn analysis §2.2)
 - **Optional self-serve sponsor portal** only after curated matching proves repeatability, with clear policy and audit controls
 
@@ -1373,7 +1373,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 | **ORM**          | Prisma ORM                                                                                                      | Same                                                                   |
 | **Search**       | PostgreSQL full-text search                                                                                     | Meilisearch                                                            |
 | **Cache**        | None                                                                                                            | Redis                                                                  |
-| **Auth**         | **Magic-link (custom)** — hashed single-use tokens, 24h TTL, 7-day sliding session, no passwords (PRD/TDD-0011) | Add WebAuthn / passkeys for admin & organizer once volume justifies it |
+| **Auth**         | **Magic-link (custom)** - hashed single-use tokens, 24h TTL, 7-day sliding session, no passwords (PRD/TDD-0011) | Add WebAuthn / passkeys for admin & organizer once volume justifies it |
 | **Analytics**    | PostHog or Plausible                                                                                            | PostHog + data warehouse                                               |
 | **Hosting**      | Vercel for web/API + Expo EAS for mobile                                                                        | Dedicated accounts/tiers when usage justifies it                       |
 | **File storage** | Cloudflare R2 or S3                                                                                             | Same                                                                   |
@@ -1388,7 +1388,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 2. **City as partition.** City is the primary data access pattern and should be the first filter in every query.
 
-3. **Separate concerns, deploy together.** Modular monolith — clean internal boundaries, single deployment unit.
+3. **Separate concerns, deploy together.** Modular monolith - clean internal boundaries, single deployment unit.
 
 4. **Score everything.** Every entity should have computed quality/freshness/trust scores, even if simple.
 
@@ -1410,4 +1410,4 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 13. **Cost discipline matches the funding model.** Infra choices (Vercel, managed Postgres, Resend, GitHub Actions cron, no dedicated cluster, no always-on workers) keep monthly run-cost grant-fundable in Year 1 and B2B-margin-friendly in Year 2. No architectural decision is allowed to push us into VC-required burn before Phase C of `PRODUCT_DOCUMENT.md` §15.
 
-14. **AI is a product capability, not a back-office tool.** The AI content pipeline (§10.4) is what makes the freshness promise affordable for a small team — it must be built and operated as a first-class part of the product, with a real review queue, real provenance (§6.12 `PipelineItem`), and a hard rule that nothing publishes without human approval.
+14. **AI is a product capability, not a back-office tool.** The AI content pipeline (§10.4) is what makes the freshness promise affordable for a small team - it must be built and operated as a first-class part of the product, with a real review queue, real provenance (§6.12 `PipelineItem`), and a hard rule that nothing publishes without human approval.

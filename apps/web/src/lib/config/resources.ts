@@ -1,5 +1,5 @@
 /**
- * Resource categories — re-exported from @indlokal/shared so that web and
+ * Resource categories - re-exported from @indlokal/shared so that web and
  * mobile stay in lock-step. Single source of truth lives in
  * packages/shared/src/config/resource-categories.ts.
  */

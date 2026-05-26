@@ -3,7 +3,7 @@ import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { AddHostEventForm } from './AddHostEventForm';
 
-export const metadata = { title: 'Post an Event — Event Host' };
+export const metadata = { title: 'Post an Event - Event Host' };
 
 export default async function HostNewEventPage() {
   const user = await getSessionUser();

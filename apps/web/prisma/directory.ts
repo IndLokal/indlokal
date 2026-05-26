@@ -1,5 +1,5 @@
 /**
- * Directory seed — curated, public-source community listings.
+ * Directory seed - curated, public-source community listings.
  *
  * Tier 2 of 3 (between bootstrap and demo). See
  * docs/deployment/ADMIN_AND_BOOTSTRAP.md §7 for the editorial policy.
@@ -11,22 +11,22 @@
  * organisations as `UNCLAIMED` rows. When a real organiser logs in and claims
  * the listing, they take ownership and edit freely.
  *
- * Hard rules — DO NOT BEND
+ * Hard rules - DO NOT BEND
  * ─────────────────────────
  * 1. Every entry needs at least ONE verifiable public source:
  *
- *    TIER A — org's own web presence (strongest; prefer these)
+ *    TIER A - org's own web presence (strongest; prefer these)
  *      • Own website / domain
  *      • Meetup.com group page
  *
- *    TIER B — German official registries
+ *    TIER B - German official registries
  *      • Vereinsregister / Handelsregister (vereinsregister.de or
- *        handelsregister.de) — sufficient for registered legal entities
+ *        handelsregister.de) - sufficient for registered legal entities
  *        (e.V., gUG/UG, gGmbH, etc.) even without a website. Record VR/HRB
  *        number in a code comment.
  *
- *    TIER C — official umbrella / institutional listings
- *      • Forum der Kulturen Stuttgart — forum-der-kulturen.de/mitgliedsvereine
+ *    TIER C - official umbrella / institutional listings
+ *      • Forum der Kulturen Stuttgart - forum-der-kulturen.de/mitgliedsvereine
  *      • aigev.org national Indian associations directory
  *      • IndoEuropean.eu organisation listings
  *      • City government integration / multicultural portals
@@ -35,11 +35,11 @@
  *      • University club portal (for student associations)
  *
  *    NOT acceptable as the sole source:
- *      ✗ Facebook groups  — user-created, renamed or deleted without notice
+ *      ✗ Facebook groups  - user-created, renamed or deleted without notice
  *      ✗ Instagram / LinkedIn / YouTube social profiles without Tier A/B/C proof
  *      ✗ WhatsApp group links
  *      ✗ Google Maps / Google Business Profile alone (unstable; easily faked)
- *      ✗ "I believe this exists" — if you can't find a URL, leave it out
+ *      ✗ "I believe this exists" - if you can't find a URL, leave it out
  *
  * 2. `sourceUrl` must point at the specific evidence page (not a homepage).
  *    Prefer Tier A > Tier B > Tier C. If using Tier C set needsReview: true.
@@ -48,7 +48,7 @@
  *    the org's own public website.
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
  * 5. Idempotent and create-only. Existing rows are NEVER updated or retired by
- *    this script — admin/organiser edits must survive every redeploy. Live-data
+ *    this script - admin/organiser edits must survive every redeploy. Live-data
  *    cleanup must happen via the explicit seed-cleanup script, never as an
  *    implicit side effect of editing this file.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
@@ -81,7 +81,7 @@ export type DirectoryEntry = {
   /** Unique kebab-case slug. Used as the natural key for upserts. */
   slug: string;
   name: string;
-  /** 1–3 factual sentences. No marketing copy. */
+  /** 1-3 factual sentences. No marketing copy. */
   description: string;
   /** Optional longer description. Same factual standard. */
   descriptionLong?: string;
@@ -107,7 +107,7 @@ export type DirectoryEntry = {
  *
  *  All entries below have at least one verifiable public URL. Orgs that
  *  previously existed only with placeholder WhatsApp links have been
- *  dropped — add them back when a real public source becomes available.
+ *  dropped - add them back when a real public source becomes available.
  * ──────────────────────────────────────────────────────────────────────── */
 
 const STUTTGART: DirectoryEntry[] = [
@@ -115,7 +115,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'hss-stuttgart',
     name: 'HSS Stuttgart',
     description:
-      'Hindu Swayamsevak Sangh Stuttgart — weekly shakha, festivals and cultural programs for the Hindu community.',
+      'Hindu Swayamsevak Sangh Stuttgart - weekly shakha, festivals and cultural programs for the Hindu community.',
     descriptionLong:
       'HSS Stuttgart is one of the most active Hindu cultural organisations in Baden-Württemberg. Weekly Sunday shakhas, Diwali and Holi celebrations, family camps.',
     citySlug: 'stuttgart',
@@ -138,7 +138,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'telugu-association-bw',
     name: 'Samaikya Telugu Vedika e.V. (STV)',
     description:
-      'Registered Verein for Telugu-speaking families in Baden-Württemberg — Ugadi, Sankranti, and regular meetups.',
+      'Registered Verein for Telugu-speaking families in Baden-Württemberg - Ugadi, Sankranti, and regular meetups.',
     descriptionLong:
       'Samaikya Telugu Vedika (STV) e.V. brings together Telugu-speaking professionals and families across Stuttgart and the surrounding region. Major events include Ugadi and Sankranti.',
     citySlug: 'stuttgart',
@@ -287,7 +287,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'bindi-ev-stuttgart',
     name: 'Bindi e.V.',
     description:
-      'BINDI: Bengalische Indische und Deutsche Initiative — Bengali/Indian cultural organisation since 2015. Durga Puja, Bengali Borshoboron, and cultural events.',
+      'BINDI: Bengalische Indische und Deutsche Initiative - Bengali/Indian cultural organisation since 2015. Durga Puja, Bengali Borshoboron, and cultural events.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'language-regional'],
     personaSegments: ['family', 'working-professional'],
@@ -402,14 +402,14 @@ const STUTTGART: DirectoryEntry[] = [
     ],
     needsReview: true,
   },
-  // ── Additional Stuttgart orgs — sourced from Forum der Kulturen Stuttgart e.V.
+  // ── Additional Stuttgart orgs - sourced from Forum der Kulturen Stuttgart e.V.
   //    membership list (official Dachverband of 160+ registered Vereine).
   //    Source page: https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/
   {
     slug: 'dig-stuttgart',
     name: 'Deutsch-Indische Gesellschaft Zweiggesellschaft Stuttgart e.V.',
     description:
-      "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft — cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
+      "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft - cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -435,7 +435,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'bharat-majlis-stuttgart',
     name: 'Indischer Verein Bharat Majlis e.V.',
     description:
-      'Registered Indian community association in Stuttgart — cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
+      'Registered Indian community association in Stuttgart - cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['family', 'working-professional'],
@@ -454,7 +454,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'tamilische-bildungsvereinigung-stuttgart',
     name: 'Tamilische Bildungsvereinigung e.V.',
     description:
-      'Tamil educational and cultural association based in Stuttgart — promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
+      'Tamil educational and cultural association based in Stuttgart - promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
     personaSegments: ['family', 'working-professional'],
@@ -473,7 +473,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'maharashtra-mandal-stuttgart',
     name: 'Maharashtra Mandal Stuttgart e.V.',
     description:
-      'Marathi community association in Stuttgart — Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
+      'Marathi community association in Stuttgart - Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural'],
     personaSegments: ['family', 'working-professional'],
@@ -640,7 +640,7 @@ const KARLSRUHE: DirectoryEntry[] = [
     slug: 'hss-karlsruhe',
     name: 'HSS Karlsruhe',
     description:
-      'Hindu Swayamsevak Sangh Karlsruhe unit — weekly shakha, Diwali and Holi celebrations for the Hindu community.',
+      'Hindu Swayamsevak Sangh Karlsruhe unit - weekly shakha, Diwali and Holi celebrations for the Hindu community.',
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -655,7 +655,7 @@ const KARLSRUHE: DirectoryEntry[] = [
     slug: 'dig-karlsruhe',
     name: 'Deutsch-Indische Gesellschaft Karlsruhe e.V.',
     description:
-      "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft — lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
+      "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft - lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -769,7 +769,7 @@ const MANNHEIM: DirectoryEntry[] = [
     slug: 'dig-heidelberg',
     name: 'Deutsch-Indische Gesellschaft Heidelberg e.V.',
     description:
-      "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft — lectures, music, film and cultural programming focused on India and Indo-German exchange.",
+      "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft - lectures, music, film and cultural programming focused on India and Indo-German exchange.",
     // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['cultural', 'networking-social'],
@@ -1242,7 +1242,7 @@ const MUNICH: DirectoryEntry[] = [
     slug: 'hss-munich',
     name: 'HSS München',
     description:
-      'Hindu Swayamsevak Sangh München — weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
+      'Hindu Swayamsevak Sangh München - weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -1267,7 +1267,7 @@ const MUNICH: DirectoryEntry[] = [
     slug: 'iskcon-munich',
     name: 'ISKCON München (Hare Krishna München)',
     description:
-      'International Society for Krishna Consciousness Munich center — Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
+      'International Society for Krishna Consciousness Munich center - Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
     citySlug: 'munich',
     categorySlugs: ['religious', 'cultural'],
     personaSegments: ['family', 'working-professional', 'persona-student'],
@@ -1991,7 +1991,7 @@ const FRANKFURT: DirectoryEntry[] = [
     slug: 'dig-rhein-main',
     name: 'Deutsch-Indische Gesellschaft Rhein-Main e.V. (DIG)',
     description:
-      "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area — lectures, film screenings and cultural exchanges.",
+      "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area - lectures, film screenings and cultural exchanges.",
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -2201,7 +2201,7 @@ const FRANKFURT: DirectoryEntry[] = [
     slug: 'hss-frankfurt',
     name: 'HSS Frankfurt',
     description:
-      'Hindu Swayamsevak Sangh Frankfurt — weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
+      'Hindu Swayamsevak Sangh Frankfurt - weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -2427,14 +2427,14 @@ async function insertEntry(
 ) {
   const evidence = assessEvidenceUrl(entry.sourceUrl);
   if (!evidence.isQualifying) {
-    console.warn(`  ⚠ ${entry.slug}: invalid source evidence (${evidence.label}) — skipped`);
+    console.warn(`  ⚠ ${entry.slug}: invalid source evidence (${evidence.label}) - skipped`);
     return { created: false, skippedInvalid: true };
   }
 
   const cityId = cityIdBySlug.get(entry.citySlug);
   if (!cityId) {
     console.warn(
-      `  ⚠ ${entry.slug}: city "${entry.citySlug}" not found (run bootstrap?) — skipped`,
+      `  ⚠ ${entry.slug}: city "${entry.citySlug}" not found (run bootstrap?) - skipped`,
     );
     return { created: false, skippedInvalid: false };
   }
@@ -2489,7 +2489,7 @@ async function insertEntry(
   for (const slug of entry.categorySlugs) {
     const categoryId = categoryIdBySlug.get(slug);
     if (!categoryId) {
-      console.warn(`  ⚠ Unknown category "${slug}" on ${entry.slug} — skipped`);
+      console.warn(`  ⚠ Unknown category "${slug}" on ${entry.slug} - skipped`);
       continue;
     }
     await prisma.communityCategory.create({
@@ -2543,7 +2543,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     result.totalInvalid += tally.skippedInvalid;
   }
 
-  // Resources are part of the same editorial tier — same hard rules,
+  // Resources are part of the same editorial tier - same hard rules,
   // same create-only / idempotent contract. One env flag, one build step.
   result.resources = await runResourcesSeed();
 
@@ -2551,7 +2551,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
 }
 
 async function main() {
-  console.log('📒 IndLokal directory seed — curated public listings\n');
+  console.log('📒 IndLokal directory seed - curated public listings\n');
   const started = Date.now();
   const r = await runDirectorySeed();
   const ms = Date.now() - started;

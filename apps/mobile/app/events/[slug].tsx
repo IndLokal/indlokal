@@ -1,5 +1,5 @@
 /**
- * Mobile event detail — PRD-0005.
+ * Mobile event detail - PRD-0005.
  * Renders the full event with save / share / register / add-to-calendar actions.
  */
 
@@ -166,7 +166,7 @@ export default function EventDetailScreen() {
           <Text style={styles.title}>{data.title}</Text>
           <Text style={styles.meta}>
             {new Date(data.startsAt).toLocaleString()}
-            {data.endsAt ? ` — ${new Date(data.endsAt).toLocaleTimeString()}` : ''}
+            {data.endsAt ? ` - ${new Date(data.endsAt).toLocaleTimeString()}` : ''}
           </Text>
           <Text style={styles.meta}>
             {data.isOnline ? 'Online event' : (data.venueName ?? 'Venue TBA')}

@@ -1,4 +1,4 @@
-# TDD-0019: Auth Completion — Onboarding, Session Restore, Profile & Account Management
+# TDD-0019: Auth Completion - Onboarding, Session Restore, Profile & Account Management
 
 - **Status:** Draft
 - **Linked PRD:** PRD-0019
@@ -14,11 +14,11 @@ packages/shared
 apps/web
   src/app/api/v1/me/
     route.ts                   + DELETE handler
-    onboarding/route.ts        new — PATCH /api/v1/me/onboarding
+    onboarding/route.ts        new - PATCH /api/v1/me/onboarding
 
 apps/mobile
   lib/auth/
-    AuthContext.tsx             new — React Context + useAuth()
+    AuthContext.tsx             new - React Context + useAuth()
   app/
     _layout.tsx                 + AuthProvider wrap + onboarding gate
     auth/
@@ -37,7 +37,7 @@ apps/mobile
 
 ## 2. Data model changes
 
-No schema migrations — all required columns already exist in `users`:
+No schema migrations - all required columns already exist in `users`:
 
 - `city_id` (nullable)
 - `persona_segments` (string array)
@@ -49,14 +49,14 @@ No schema migrations — all required columns already exist in `users`:
 
 `DELETE /api/v1/me`:
 
-1. `db.refreshToken.updateMany` — revoke all active refresh tokens for user
-2. `db.user.delete` — cascades to `MagicLinkToken`, `RefreshToken`, `UserInteraction`,
+1. `db.refreshToken.updateMany` - revoke all active refresh tokens for user
+2. `db.user.delete` - cascades to `MagicLinkToken`, `RefreshToken`, `UserInteraction`,
    `SavedCommunity`, `SavedEvent`, `Device`, `NotificationPreference`, `QuietHours`,
    `NotificationOutbox`, `InboxItem` (all carry `onDelete: Cascade`)
 
 ## 3. API surface
 
-### Zod schemas — `packages/shared/src/contracts/auth.ts`
+### Zod schemas - `packages/shared/src/contracts/auth.ts`
 
 ```typescript
 export const OnboardingUpdate = z.object({
@@ -73,17 +73,17 @@ export type OnboardingUpdate = z.infer<typeof OnboardingUpdate>;
 | Method | Path                    | Auth   | Request            | Response    |
 | ------ | ----------------------- | ------ | ------------------ | ----------- |
 | PATCH  | `/api/v1/me/onboarding` | Bearer | `OnboardingUpdate` | `MeProfile` |
-| DELETE | `/api/v1/me`            | Bearer | —                  | `Ack`       |
+| DELETE | `/api/v1/me`            | Bearer | -                  | `Ack`       |
 
-### PATCH /api/v1/me/onboarding — detail
+### PATCH /api/v1/me/onboarding - detail
 
 - Validates `cityId` against the `cities` table (must be active).
 - Updates `cityId`, `displayName`, `personaSegments`, `preferredLanguages` (only fields
-  present in request body — partial update semantics).
+  present in request body - partial update semantics).
 - Always sets `onboardingComplete = true` on success.
 - Returns the updated `MeProfile`.
 
-### DELETE /api/v1/me — detail
+### DELETE /api/v1/me - detail
 
 - Requires `Bearer` token (requireAccessToken).
 - Revokes all non-revoked `RefreshToken` rows for the user.
@@ -155,22 +155,22 @@ No new flags. Existing `authFlags.{apple,google,magic}.enabled` unchanged.
 
 ## 9. Test plan
 
-- **Unit** — `AuthContext`: session restore with valid token, with expired+refreshable token,
+- **Unit** - `AuthContext`: session restore with valid token, with expired+refreshable token,
   with expired+non-refreshable token; `signOut()` clears store.
-- **Unit** — `PATCH /api/v1/me/onboarding`: valid payload, invalid cityId, partial update.
-- **Unit** — `DELETE /api/v1/me`: success cascade, unauthenticated request.
-- **E2E (manual)** — Full onboarding flow after fresh Apple sign-in on device.
-- **E2E (manual)** — Cold launch with valid tokens → direct to Discover (no sign-in screen).
-- **E2E (manual)** — Delete account → confirm → sign-in screen.
+- **Unit** - `PATCH /api/v1/me/onboarding`: valid payload, invalid cityId, partial update.
+- **Unit** - `DELETE /api/v1/me`: success cascade, unauthenticated request.
+- **E2E (manual)** - Full onboarding flow after fresh Apple sign-in on device.
+- **E2E (manual)** - Cold launch with valid tokens → direct to Discover (no sign-in screen).
+- **E2E (manual)** - Delete account → confirm → sign-in screen.
 
 ## 10. Rollout plan
 
-Shipped as a single PR behind the existing auth flags (no new flag needed — these are all
+Shipped as a single PR behind the existing auth flags (no new flag needed - these are all
 completion steps for already-enabled flows). No staged rollout required; feature is additive
 and non-breaking.
 
 ## 11. Backout plan
 
 Revert the PR. Old auth flows (`router.replace('/(tabs)')`) are fully restored. The
-`onboarding_complete` column defaults `false` and no existing UI reads it — safe to leave
+`onboarding_complete` column defaults `false` and no existing UI reads it - safe to leave
 unset in the DB.

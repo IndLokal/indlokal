@@ -299,7 +299,7 @@ export async function approvePipelineItemRecord(
       await refreshCommunityScore(created.communityId);
     }
   } else {
-    // Admin-approved pipeline items go straight to ACTIVE — they've already
+    // Admin-approved pipeline items go straight to ACTIVE - they've already
     // been reviewed here. Auto-approved items stay UNVERIFIED so a human
     // still has a chance to vet them before they go public.
     const newStatus: 'ACTIVE' | 'UNVERIFIED' = options.autoApproved ? 'UNVERIFIED' : 'ACTIVE';
