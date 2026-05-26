@@ -134,6 +134,26 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
             </div>
           </div>
 
+          {(result.budgetExceeded || result.circuitBreakerTripped) && (
+            <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
+              <p className="font-semibold uppercase tracking-wide">Cost guard tripped</p>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                {result.budgetExceeded && (
+                  <li>
+                    Token budget exceeded — LLM stages bailed out. Tune
+                    <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
+                  </li>
+                )}
+                {result.circuitBreakerTripped && (
+                  <li>
+                    Circuit breaker opened after consecutive LLM failures. Check upstream provider
+                    health before re-running.
+                  </li>
+                )}
+              </ul>
+            </div>
+          )}
+
           <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
             <MetricCard label="Fetched" value={result.itemsFetched} />
@@ -148,6 +168,21 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
             <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
             <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
             <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
+            <StatLine
+              label="Filter batches dropped"
+              value={result.filterFailures}
+              tone={result.filterFailures > 0 ? 'warn' : 'default'}
+            />
+            <StatLine
+              label="Extract retries exhausted"
+              value={result.extractRetriesExhausted}
+              tone={result.extractRetriesExhausted > 0 ? 'warn' : 'default'}
+            />
+            <StatLine
+              label="Items dropped (bad index)"
+              value={result.itemsDroppedBadIndex}
+              tone={result.itemsDroppedBadIndex > 0 ? 'warn' : 'default'}
+            />
           </div>
 
           {result.errors.length > 0 && (
@@ -197,11 +232,21 @@ function MetricCard({
   );
 }
 
-function StatLine({ label, value }: { label: string; value: number | string }) {
+function StatLine({
+  label,
+  value,
+  tone = 'default',
+}: {
+  label: string;
+  value: number | string;
+  tone?: 'default' | 'warn';
+}) {
   return (
     <div>
       <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 font-medium text-slate-800">{value}</p>
+      <p className={`mt-1 font-medium ${tone === 'warn' ? 'text-amber-700' : 'text-slate-800'}`}>
+        {value}
+      </p>
     </div>
   );
 }
