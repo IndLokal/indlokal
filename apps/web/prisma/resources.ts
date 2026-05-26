@@ -483,6 +483,323 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
     description:
       "The Rundfunkbeitrag is Germany's household broadcasting contribution. Amounts, exemption rules and registration processes can change; always verify directly on the official Rundfunkbeitrag website.",
   },
+
+  /* ──────────────────────────────────────────────────────────────────────
+   *  BERLIN
+   * ────────────────────────────────────────────────────────────────────── */
+  {
+    title: 'Embassy of India, Berlin — Consular Services',
+    slug: 'embassy-india-berlin-consular',
+    resourceType: 'CONSULAR_SERVICE',
+    url: 'https://indianembassyberlin.gov.in',
+    description:
+      'The Embassy of India in Berlin is the primary consular post for Berlin, Brandenburg and the surrounding region. Services include passport renewal, OCI card, visa, attestation and PCC. Check the embassy website for appointment booking and current service hours.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Anmeldung in Berlin — Bürgeramt Registration',
+    slug: 'guide-anmeldung-berlin',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://service.berlin.de/dienstleistung/120335/',
+    description:
+      'You must register your address (Anmeldung) at a Berlin Bürgeramt within 14 days of moving in. Bring your passport, signed Wohnungsgeberbestätigung from your landlord and the completed Anmeldeformular. Berlin Bürgeramt appointments are notoriously hard to get — book early via the service portal or accept any available slot citywide.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Berlin Bürgeramt — Find a Location & Book Appointment',
+    slug: 'berlin-buergeramt-locations',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://service.berlin.de/standorte/buergeraemter/',
+    description:
+      'Berlin has dozens of Bürgerämter across all 12 districts. Any Bürgeramt can perform Anmeldung — you are not bound to your district. Use the official service portal to compare available appointment slots citywide; new slots are typically released on weekday mornings.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Berlin Willkommenszentrum — Welcome Center for New Berliners',
+    slug: 'berlin-welcome-center',
+    resourceType: 'GOVERNMENT_INFO',
+    url: 'https://www.berlin.de/willkommenszentrum/',
+    description:
+      'The Berlin Willkommenszentrum offers free orientation for international newcomers: residence permits, recognition of qualifications, language courses, schooling and integration support. Walk-in and appointment consultations are available in English and several other languages.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Berlin Ausländerbehörde (LEA) — Residence Permit Appointment',
+    slug: 'berlin-lea-residence-permit',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://service.berlin.de/dienstleistung/324269/',
+    description:
+      "Berlin's Landesamt für Einwanderung (LEA) handles residence permits, Blue Card, settlement permits and family reunification. Book appointments online — most categories are appointment-only. For urgent extensions you can submit a Fiktionsbescheinigung request before your current permit expires.",
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Kindertagesbetreuung Berlin — Kita Registration',
+    slug: 'guide-kita-berlin',
+    resourceType: 'FAMILY_CHILDREN',
+    url: 'https://www.berlin.de/sen/jugend/familie-und-kinder/kindertagesbetreuung/',
+    description:
+      'Berlin children aged 1+ have a legal right to a Kita place. Apply for the Kita-Gutschein (voucher) at your district Jugendamt 9 months before you need a place, then approach Kitas directly. Kita fees are waived in Berlin; you only pay for meals.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'IHK Berlin — Business Registration & Self-Employment',
+    slug: 'ihk-berlin-business',
+    resourceType: 'BUSINESS_SETUP',
+    url: 'https://www.ihk-berlin.de/',
+    description:
+      'The Chamber of Commerce and Industry (IHK) Berlin is the first stop for founders and freelancers: Gewerbeanmeldung guidance, freelancer recognition (Freiberufler vs Gewerbe), tax basics and free founder consultations in English.',
+    citySlug: 'berlin',
+  },
+  {
+    title: 'Bundesagentur für Arbeit — Jobs & Career Counselling',
+    slug: 'arbeitsagentur-berlin',
+    resourceType: 'JOBS_CAREERS',
+    url: 'https://www.arbeitsagentur.de/',
+    description:
+      'The Federal Employment Agency offers free job listings, career counselling and integration support for newcomers. Berlin offices provide consultations in English; the Make-it-in-Germany portal links into the same database for skilled-worker placements.',
+    citySlug: 'berlin',
+  },
+
+  /* ──────────────────────────────────────────────────────────────────────
+   *  MUNICH
+   * ────────────────────────────────────────────────────────────────────── */
+  {
+    title: 'CGI Munich — Consulate General of India',
+    slug: 'cgi-munich-consular-services',
+    resourceType: 'CONSULAR_SERVICE',
+    url: 'https://www.cgimunich.gov.in',
+    description:
+      'The Consulate General of India in Munich serves Bavaria, Baden-Württemberg, Hesse, Rheinland-Pfalz, Saarland and Baden. Services include passport, OCI, visa, attestation and PCC. Many services run via VFS Global; check the CGI Munich website for the latest appointment process.',
+    citySlug: 'munich',
+  },
+  {
+    title: 'Bürgerbüro München — Anmeldung & City Registration',
+    slug: 'buergerbuero-munich',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://stadt.muenchen.de/infos/buergerbuero.html',
+    description:
+      'Munich Bürgerbüros handle Anmeldung, Ummeldung, ID cards and many everyday civic services. Online appointments are mandatory for most services — book via the official stadt.muenchen.de portal. Bring passport, Wohnungsgeberbestätigung and a completed Meldeschein.',
+    citySlug: 'munich',
+  },
+  {
+    title: 'Ausländerbehörde KVR München — Residence Permits',
+    slug: 'auslaenderbehoerde-munich',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://stadt.muenchen.de/infos/auslaenderbehoerde.html',
+    description:
+      "Munich's Ausländerbehörde sits inside the Kreisverwaltungsreferat (KVR). It issues Aufenthaltstitel, Blue Card, settlement permits and family reunification. All categories are appointment-only — book online well in advance; popular Blue Card slots can be weeks out.",
+    citySlug: 'munich',
+  },
+  {
+    title: 'Kinderbetreuung München — Kita & Krippe Information',
+    slug: 'guide-kita-munich',
+    resourceType: 'FAMILY_CHILDREN',
+    url: 'https://stadt.muenchen.de/infos/kinderbetreuung.html',
+    description:
+      'Munich offers Krippe (under 3), Kindergarten (3–6) and Hort (school-age) places. Apply via kita-finder.muenchen.de; demand is very high so apply 6–12 months ahead. Municipal Kita fees are heavily subsidised since 2020.',
+    citySlug: 'munich',
+  },
+  {
+    title: 'IHK München & Oberbayern — Business Setup',
+    slug: 'ihk-munich-business',
+    resourceType: 'BUSINESS_SETUP',
+    url: 'https://www.ihk-muenchen.de/',
+    description:
+      'IHK München und Oberbayern supports founders and freelancers with free start-up consultations, Gewerbeanmeldung guidance and qualification recognition. Several services are offered in English for international founders.',
+    citySlug: 'munich',
+  },
+  {
+    title: 'Invest in Bavaria — English Resources for Newcomers',
+    slug: 'invest-in-bavaria-newcomers',
+    resourceType: 'JOBS_CAREERS',
+    url: 'https://www.invest-in-bavaria.com/en',
+    description:
+      'Invest in Bavaria is the official Bavarian state agency for business and talent. The English portal lists open jobs, sector guides, work-permit basics and direct contacts for skilled-worker support — useful for newcomers to Munich, Nuremberg and Augsburg.',
+    citySlug: 'munich',
+  },
+  {
+    title: '116117 — Doctor on Duty (Bavaria-wide)',
+    slug: 'guide-116117-doctor-on-duty-munich',
+    resourceType: 'HEALTH_DOCTORS',
+    url: 'https://www.116117.de/',
+    description:
+      'Call 116117 for non-emergency medical care across Germany, including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies always call 112 instead.',
+    citySlug: 'munich',
+  },
+  {
+    title: 'ELSTER — Online Tax Filing',
+    slug: 'elster-munich',
+    resourceType: 'TAX_FINANCE',
+    url: 'https://www.elster.de/',
+    description:
+      "ELSTER is Germany's official online tax portal. Register early — activation requires a postal code sent to your registered address (can take 2 weeks). Once registered you can file Einkommensteuererklärung and Umsatzsteuer returns yourself or grant access to your Steuerberater.",
+    citySlug: 'munich',
+  },
+
+  /* ──────────────────────────────────────────────────────────────────────
+   *  FRANKFURT (additions to existing 3)
+   * ────────────────────────────────────────────────────────────────────── */
+  {
+    title: 'CGI Frankfurt — Consulate General of India',
+    slug: 'cgi-frankfurt-consular-services',
+    resourceType: 'CONSULAR_SERVICE',
+    url: 'https://cgifrankfurt.gov.in/',
+    description:
+      'The Consulate General of India in Frankfurt serves Hesse, Nordrhein-Westfalen, Saarland, Rheinland-Pfalz, Thüringen and Sachsen. Services include passport, OCI, visa, attestation and PCC. Many services are routed through VFS Global; verify the latest process on the official CGI Frankfurt website.',
+    citySlug: 'frankfurt',
+  },
+  {
+    title: 'Frankfurt am Main — City Portal & Bürgerservice',
+    slug: 'frankfurt-buergerservice',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://frankfurt.de/',
+    description:
+      "Frankfurt's official city portal hosts the Bürgerämter directory, Anmeldung instructions, Ausländerbehörde information and all everyday municipal services. Bürgeramt appointments must be booked online; bring passport and Wohnungsgeberbestätigung.",
+    citySlug: 'frankfurt',
+  },
+  {
+    title: 'IHK Frankfurt am Main — Business Setup',
+    slug: 'ihk-frankfurt-business',
+    resourceType: 'BUSINESS_SETUP',
+    url: 'https://www.frankfurt-main.ihk.de/',
+    description:
+      'IHK Frankfurt am Main supports new founders and freelancers in the Rhein-Main region: Gewerbeanmeldung guidance, English-language start-up consultations and qualification recognition for non-EU professionals.',
+    citySlug: 'frankfurt',
+  },
+  {
+    title: 'Frankfurt Business — Investment & Skilled Workers',
+    slug: 'frankfurt-business-newcomers',
+    resourceType: 'JOBS_CAREERS',
+    url: 'https://www.frankfurt-business.net/',
+    description:
+      'Frankfurt Business is the official economic development arm of the city. The portal lists employer directories, sector reports and integration resources for international skilled workers moving to the Rhein-Main metro.',
+    citySlug: 'frankfurt',
+  },
+  {
+    title: '116117 — Doctor on Duty (Hesse-wide)',
+    slug: 'guide-116117-doctor-on-duty-frankfurt',
+    resourceType: 'HEALTH_DOCTORS',
+    url: 'https://www.116117.de/',
+    description:
+      'Call 116117 for non-emergency medical care across Hesse and the rest of Germany — including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies call 112.',
+    citySlug: 'frankfurt',
+  },
+
+  /* ──────────────────────────────────────────────────────────────────────
+   *  KARLSRUHE
+   * ────────────────────────────────────────────────────────────────────── */
+  {
+    title: 'CGI Munich — Consular Services for Baden-Württemberg',
+    slug: 'cgi-munich-consular-karlsruhe',
+    resourceType: 'CONSULAR_SERVICE',
+    url: 'https://www.cgimunich.gov.in',
+    description:
+      'The Consulate General of India in Munich is the responsible consular post for Karlsruhe and all of Baden-Württemberg. Periodic consular camps are held in Stuttgart and occasionally elsewhere in BW; check the CGI Munich website for upcoming dates.',
+    citySlug: 'karlsruhe',
+  },
+  {
+    title: 'Karlsruhe — City Portal & Bürgerservice',
+    slug: 'karlsruhe-buergerservice',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://www.karlsruhe.de/',
+    description:
+      'The official Karlsruhe city portal hosts the Bürgerbüro directory, Anmeldung instructions, Ausländerbehörde information and family services. Most Bürgerbüro services require an online appointment.',
+    citySlug: 'karlsruhe',
+  },
+  {
+    title: 'IHK Karlsruhe — Business & Freelancer Support',
+    slug: 'ihk-karlsruhe-business',
+    resourceType: 'BUSINESS_SETUP',
+    url: 'https://www.karlsruhe.ihk.de/',
+    description:
+      'IHK Karlsruhe supports founders and freelancers in TechnologieRegion Karlsruhe with free start-up consultations, Gewerbeanmeldung guidance and qualification recognition.',
+    citySlug: 'karlsruhe',
+  },
+  {
+    title: 'Bundesagentur für Arbeit — Karlsruhe Jobs & Counselling',
+    slug: 'arbeitsagentur-karlsruhe',
+    resourceType: 'JOBS_CAREERS',
+    url: 'https://www.arbeitsagentur.de/',
+    description:
+      'The Federal Employment Agency offers free job listings, career counselling and skilled-worker integration support. The Karlsruhe office covers the wider TechnologieRegion including Bruchsal and Bretten.',
+    citySlug: 'karlsruhe',
+  },
+  {
+    title: 'ELSTER — Online Tax Filing (Karlsruhe)',
+    slug: 'elster-karlsruhe',
+    resourceType: 'TAX_FINANCE',
+    url: 'https://www.elster.de/',
+    description:
+      "ELSTER is Germany's official online tax portal. Register early — activation requires a postal code sent to your registered Karlsruhe address (can take 2 weeks). Once registered you can file your Einkommensteuererklärung yourself or grant access to your Steuerberater.",
+    citySlug: 'karlsruhe',
+  },
+  {
+    title: '116117 — Doctor on Duty (Karlsruhe & BW)',
+    slug: 'guide-116117-doctor-on-duty-karlsruhe',
+    resourceType: 'HEALTH_DOCTORS',
+    url: 'https://www.116117.de/',
+    description:
+      'Call 116117 for non-emergency medical care in Karlsruhe and across Baden-Württemberg, including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies call 112.',
+    citySlug: 'karlsruhe',
+  },
+
+  /* ──────────────────────────────────────────────────────────────────────
+   *  MANNHEIM
+   * ────────────────────────────────────────────────────────────────────── */
+  {
+    title: 'CGI Munich — Consular Services for Rhein-Neckar',
+    slug: 'cgi-munich-consular-mannheim',
+    resourceType: 'CONSULAR_SERVICE',
+    url: 'https://www.cgimunich.gov.in',
+    description:
+      'The Consulate General of India in Munich is the responsible consular post for Mannheim and the Rhein-Neckar region in Baden-Württemberg. CGI Frankfurt is closer but only covers Hesse and surrounding states; for Mannheim residents, Munich is the right consulate.',
+    citySlug: 'mannheim',
+  },
+  {
+    title: 'Mannheim Bürgerdienste — Anmeldung & City Services',
+    slug: 'mannheim-buergerdienste',
+    resourceType: 'CITY_REGISTRATION',
+    url: 'https://www.mannheim.de/de/service-bieten/buergerdienste',
+    description:
+      'The Mannheim Bürgerdienste portal covers Anmeldung, Ummeldung, ID cards, residence permits and Ausländerbehörde appointments. Most services are appointment-only — book online via the official mannheim.de portal.',
+    citySlug: 'mannheim',
+  },
+  {
+    title: 'Kinderbetreuung Mannheim — Kita Information',
+    slug: 'guide-kita-mannheim',
+    resourceType: 'FAMILY_CHILDREN',
+    url: 'https://www.mannheim.de/de/bildung-staerken/kinderbetreuung',
+    description:
+      'Mannheim offers Kita, Krippe and Tagespflege places via the city Jugendamt. Apply through the city Kita-Portal as early as possible — popular Kitas in central Mannheim have long waitlists. Income-based fee waivers are available.',
+    citySlug: 'mannheim',
+  },
+  {
+    title: 'IHK Rhein-Neckar — Business & Freelancer Support',
+    slug: 'ihk-rhein-neckar-business',
+    resourceType: 'BUSINESS_SETUP',
+    url: 'https://www.rhein-neckar.ihk24.de/',
+    description:
+      'IHK Rhein-Neckar covers Mannheim, Heidelberg and the wider Rhein-Neckar metro. Services include free start-up consultations, Gewerbeanmeldung guidance and qualification recognition for skilled workers from non-EU countries.',
+    citySlug: 'mannheim',
+  },
+  {
+    title: 'Bundesagentur für Arbeit — Mannheim Jobs & Counselling',
+    slug: 'arbeitsagentur-mannheim',
+    resourceType: 'JOBS_CAREERS',
+    url: 'https://www.arbeitsagentur.de/',
+    description:
+      'The Federal Employment Agency Mannheim branch covers the Rhein-Neckar metro and offers free job listings, career counselling and integration support for international skilled workers.',
+    citySlug: 'mannheim',
+  },
+  {
+    title: '116117 — Doctor on Duty (Mannheim & Rhein-Neckar)',
+    slug: 'guide-116117-doctor-on-duty-mannheim',
+    resourceType: 'HEALTH_DOCTORS',
+    url: 'https://www.116117.de/',
+    description:
+      'Call 116117 for non-emergency medical care in Mannheim, Heidelberg and across the Rhein-Neckar region, including evenings, weekends and holidays. For life-threatening emergencies call 112.',
+    citySlug: 'mannheim',
+  },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────
