@@ -163,6 +163,16 @@ UNCLAIMED ─────────────────► CLAIM_PENDING
 - Disputed or fraudulent claims require manual admin action
 - Only one pending claim is allowed per community at a time
 
+### Important: `status` vs `claimState`
+
+These are separate fields and should not be interpreted as one combined status:
+
+- `Community.status` controls listing lifecycle and discovery visibility: `ACTIVE`, `INACTIVE`, `UNVERIFIED`
+- `Community.claimState` controls organiser ownership workflow: `UNCLAIMED`, `CLAIM_PENDING`, `CLAIMED`
+
+So when a claim is approved, the expected change is `claimState: CLAIMED` (not `status: CLAIMED`).
+The admin data screen should show/edit lifecycle status separately from claim state.
+
 ---
 
 ## 5. Data Written
@@ -207,7 +217,7 @@ TrustSignal {
 | Fraudster claims before the real admin              | Admin rejects the fraudulent claim → state resets → real admin re-submits. At < 100 communities with a human reviewer, this is the right resolution. No code change needed. |
 | Organiser loses email access                        | 24h tokens expire naturally; organiser contacts platform team to update email via admin interface                                                                           |
 | Community never gets claimed                        | Platform team continues seeding events and updates via `/admin`. Listing stays live and accurate. This is expected for some communities indefinitely.                       |
-| Community goes inactive after being claimed         | `activityScore` decays (future); `CLAIMED` status is not affected — inactivity affects visibility, not ownership                                                            |
+| Community goes inactive after being claimed         | `activityScore` decays (future); `claimState: CLAIMED` is not affected — inactivity affects visibility (`status`), not ownership                                            |
 
 ---
 
