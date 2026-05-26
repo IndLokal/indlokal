@@ -3,13 +3,13 @@ import { normalizeCityLookupKey } from '@/lib/city-resolution';
 /**
  * Cities & taxonomy — single source of truth.
  *
- * Consumed by:
- *   - The Next.js app (route validation, navigation, copy)
- *   - prisma/bootstrap.ts (idempotent reference seed)
- *   - prisma/seed.ts (demo seed reuses bootstrap, then layers demo content)
+ * Design principles:
+ * - Active metros represent currently prioritized markets for product and ops.
+ * - Satellites attach to a metro to widen discovery and capture nearby demand.
+ * - Upcoming metros represent the expansion pipeline and can be promoted over time.
  *
- * Adding a new active city = add an entry to ACTIVE_CITY_DATA. The bootstrap
- * (idempotent) creates or updates the row on next deploy. Nothing else.
+ * This model is intentionally iterative: adjust coverage by moving cities between
+ * ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, and UPCOMING_CITIES as GTM evolves.
  */
 
 export type CitySeed = {
@@ -24,7 +24,7 @@ export type CitySeed = {
   diasporaDensityEstimate?: number;
   isActive: boolean;
   isMetroPrimary: boolean;
-  metroSlug?: string; // satellite -> primary metro slug
+  metroSlug?: string;
   timezone?: string;
   emoji?: string;
 };
@@ -36,7 +36,7 @@ export type UpcomingCity = {
   emoji?: string;
 };
 
-/* ─── Active metro cities (have public landing pages) ─────────────────── */
+/* ─── Active metro cities (currently prioritized markets) ────────────── */
 
 export const ACTIVE_CITY_DATA: CitySeed[] = [
   {
@@ -79,7 +79,7 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
     name: 'Munich',
     slug: 'munich',
     state: 'Bavaria',
-    aliases: ['München', 'Munchen', 'München (München)'],
+    aliases: ['München', 'Munchen'],
     latitude: 48.1351,
     longitude: 11.582,
     population: 1488202,
@@ -103,7 +103,8 @@ export const ACTIVE_CITY_DATA: CitySeed[] = [
   },
 ];
 
-/* ─── Satellite cities (link to a metro, not publicly active) ─────────── */
+/* ─── Satellite cities (nearby expansion around each active metro) ───── */
+
 export const SATELLITE_CITY_DATA: CitySeed[] = [
   // Stuttgart metro
   {
@@ -118,8 +119,9 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'stuttgart',
   },
   {
-    name: 'Böblingen',
+    name: 'Boeblingen',
     slug: 'boeblingen',
+    aliases: ['Böblingen'],
     state: 'Baden-Württemberg',
     latitude: 48.6833,
     longitude: 9.0167,
@@ -131,7 +133,6 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
   {
     name: 'Ludwigsburg',
     slug: 'ludwigsburg',
-    aliases: ['Ludwigsburg (Württemberg)'],
     state: 'Baden-Württemberg',
     latitude: 48.8975,
     longitude: 9.1922,
@@ -264,17 +265,6 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'karlsruhe',
   },
   {
-    name: 'Rastatt',
-    slug: 'rastatt',
-    state: 'Baden-Württemberg',
-    latitude: 48.8589,
-    longitude: 8.2061,
-    population: 49805,
-    isActive: false,
-    isMetroPrimary: false,
-    metroSlug: 'karlsruhe',
-  },
-  {
     name: 'Pforzheim',
     slug: 'pforzheim',
     aliases: ['Pforzheim (Enz)'],
@@ -286,10 +276,22 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: false,
     metroSlug: 'karlsruhe',
   },
+  {
+    name: 'Rastatt',
+    slug: 'rastatt',
+    state: 'Baden-Württemberg',
+    latitude: 48.8589,
+    longitude: 8.2061,
+    population: 49805,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'karlsruhe',
+  },
+
   // Mannheim metro
   {
     name: 'Heidelberg',
-    slug: 'heidelberg-sat',
+    slug: 'heidelberg',
     state: 'Baden-Württemberg',
     latitude: 49.3988,
     longitude: 8.6724,
@@ -305,6 +307,17 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     latitude: 49.4774,
     longitude: 8.4452,
     population: 172145,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'mannheim',
+  },
+  {
+    name: 'Worms',
+    slug: 'worms',
+    state: 'Rhineland-Palatinate',
+    latitude: 49.6341,
+    longitude: 8.3592,
+    population: 84646,
     isActive: false,
     isMetroPrimary: false,
     metroSlug: 'mannheim',
@@ -332,28 +345,6 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'mannheim',
   },
   {
-    name: 'Speyer',
-    slug: 'speyer',
-    state: 'Rhineland-Palatinate',
-    latitude: 49.3173,
-    longitude: 8.4312,
-    population: 50561,
-    isActive: false,
-    isMetroPrimary: false,
-    metroSlug: 'mannheim',
-  },
-  {
-    name: 'Worms',
-    slug: 'worms',
-    state: 'Rhineland-Palatinate',
-    latitude: 49.6341,
-    longitude: 8.3592,
-    population: 84646,
-    isActive: false,
-    isMetroPrimary: false,
-    metroSlug: 'mannheim',
-  },
-  {
     name: 'Frankenthal',
     slug: 'frankenthal',
     state: 'Rhineland-Palatinate',
@@ -375,14 +366,15 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: false,
     metroSlug: 'mannheim',
   },
+
   // Munich metro
   {
-    name: 'Garching',
-    slug: 'garching',
+    name: 'Augsburg',
+    slug: 'augsburg',
     state: 'Bavaria',
-    latitude: 48.2487,
-    longitude: 11.6511,
-    population: 18247,
+    latitude: 48.3705,
+    longitude: 10.8978,
+    population: 296478,
     isActive: false,
     isMetroPrimary: false,
     metroSlug: 'munich',
@@ -399,12 +391,12 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'munich',
   },
   {
-    name: 'Augsburg',
-    slug: 'augsburg',
+    name: 'Garching',
+    slug: 'garching',
     state: 'Bavaria',
-    latitude: 48.3705,
-    longitude: 10.8978,
-    population: 296478,
+    latitude: 48.2487,
+    longitude: 11.6511,
+    population: 18247,
     isActive: false,
     isMetroPrimary: false,
     metroSlug: 'munich',
@@ -464,10 +456,12 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: false,
     metroSlug: 'munich',
   },
+
   // Frankfurt metro
   {
     name: 'Offenbach',
     slug: 'offenbach',
+    aliases: ['Offenbach am Main'],
     state: 'Hesse',
     latitude: 50.0956,
     longitude: 8.7761,
@@ -477,8 +471,19 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'frankfurt',
   },
   {
+    name: 'Wiesbaden',
+    slug: 'wiesbaden',
+    state: 'Hesse',
+    latitude: 50.0826,
+    longitude: 8.24,
+    population: 278342,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'frankfurt',
+  },
+  {
     name: 'Darmstadt',
-    slug: 'darmstadt-sat',
+    slug: 'darmstadt',
     state: 'Hesse',
     latitude: 49.8728,
     longitude: 8.6512,
@@ -499,17 +504,6 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'frankfurt',
   },
   {
-    name: 'Wiesbaden',
-    slug: 'wiesbaden',
-    state: 'Hesse',
-    latitude: 50.0826,
-    longitude: 8.24,
-    population: 278342,
-    isActive: false,
-    isMetroPrimary: false,
-    metroSlug: 'frankfurt',
-  },
-  {
     name: 'Hanau',
     slug: 'hanau',
     state: 'Hesse',
@@ -521,19 +515,9 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     metroSlug: 'frankfurt',
   },
   {
-    name: 'Rüsselsheim am Main',
-    slug: 'ruesselsheim',
-    state: 'Hesse',
-    latitude: 49.9929,
-    longitude: 8.4214,
-    population: 66843,
-    isActive: false,
-    isMetroPrimary: false,
-    metroSlug: 'frankfurt',
-  },
-  {
-    name: 'Bad Homburg vor der Höhe',
+    name: 'Bad Homburg vor der Hoehe',
     slug: 'bad-homburg',
+    aliases: ['Bad Homburg vor der Höhe'],
     state: 'Hesse',
     latitude: 50.2268,
     longitude: 8.6182,
@@ -553,14 +537,46 @@ export const SATELLITE_CITY_DATA: CitySeed[] = [
     isMetroPrimary: false,
     metroSlug: 'frankfurt',
   },
+  {
+    name: 'Giessen',
+    slug: 'giessen',
+    aliases: ['Gießen'],
+    state: 'Hesse',
+    latitude: 50.5841,
+    longitude: 8.6784,
+    population: 91604,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'frankfurt',
+  },
+  {
+    name: 'Marburg',
+    slug: 'marburg',
+    state: 'Hesse',
+    latitude: 50.8075,
+    longitude: 8.7708,
+    population: 76731,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'frankfurt',
+  },
+  {
+    name: 'Fulda',
+    slug: 'fulda',
+    state: 'Hesse',
+    latitude: 50.5558,
+    longitude: 9.6808,
+    population: 68635,
+    isActive: false,
+    isMetroPrimary: false,
+    metroSlug: 'frankfurt',
+  },
 ];
 
-/* ─── Derived constants used by the app ──────────────────────────────── */
+/* ─── Derived constants used by app and pipeline ─────────────────────── */
 
-/** Active metro slugs — used for routing and validation. */
 export const ACTIVE_CITIES = ACTIVE_CITY_DATA.map((c) => c.slug) as readonly string[];
 
-/** Metro region map: metro slug → its satellite town list. Derived. */
 export const METRO_REGIONS: Record<string, { satellites: { slug: string; name: string }[] }> =
   Object.fromEntries(
     ACTIVE_CITY_DATA.map((m) => [
@@ -574,36 +590,30 @@ export const METRO_REGIONS: Record<string, { satellites: { slug: string; name: s
     ]),
   );
 
-/** Reverse map: satellite slug → metro slug. Derived. */
 export const SATELLITE_TO_METRO: Record<string, string> = Object.fromEntries(
   SATELLITE_CITY_DATA.filter((s) => s.metroSlug).map((s) => [s.slug, s.metroSlug as string]),
 );
 
-/**
- * Alternate city names keyed by normalized lookup string → canonical city slug.
- * Most cities do not need explicit aliases because name/slug normalization already
- * resolves spacing, hyphenation, and accent differences. This list is only for
- * true alternate names like "München" → "munich" or "Frankfurt am Main" → "frankfurt".
- */
 export const CITY_NAME_ALIASES: Record<string, string> = Object.fromEntries(
   [...ACTIVE_CITY_DATA, ...SATELLITE_CITY_DATA].flatMap((city) =>
     (city.aliases ?? []).map((alias) => [normalizeCityLookupKey(alias), city.slug] as const),
   ),
 );
 
-/** Cities we plan to launch — shown as "Coming Soon" cards. Not seeded. */
+/**
+ * Upcoming metros are intentionally pre-modeled so GTM can stage expansion.
+ * These should stay focused on larger expansion metros, not secondary cities.
+ */
 export const UPCOMING_CITIES: readonly UpcomingCity[] = [
   { slug: 'berlin', name: 'Berlin', state: 'Berlin', emoji: '🐻' },
   { slug: 'hamburg', name: 'Hamburg', state: 'Hamburg', emoji: '⚓' },
   { slug: 'dusseldorf', name: 'Düsseldorf', state: 'NRW', emoji: '🗼' },
   { slug: 'cologne', name: 'Cologne', state: 'NRW', emoji: '⛪' },
-  { slug: 'heidelberg', name: 'Heidelberg', state: 'Baden-Württemberg', emoji: '🏰' },
-  { slug: 'darmstadt', name: 'Darmstadt', state: 'Hesse', emoji: '🔬' },
   { slug: 'nuremberg', name: 'Nuremberg', state: 'Bavaria', emoji: '🏯' },
-  { slug: 'aachen', name: 'Aachen', state: 'NRW', emoji: '♨️' },
+  { slug: 'wiesbaden', name: 'Wiesbaden', state: 'Hesse', emoji: '💧' },
+  { slug: 'kassel', name: 'Kassel', state: 'Hesse', emoji: '🌳' },
 ] as const;
 
-/** All known city slugs (active + upcoming) — used for sitemap/validation. */
 export const ALL_CITY_SLUGS = [
   ...ACTIVE_CITIES,
   ...UPCOMING_CITIES.map((c) => c.slug),

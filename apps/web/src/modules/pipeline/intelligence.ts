@@ -1,9 +1,10 @@
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
 import { Prisma, type RelationshipType } from '@prisma/client';
-import { DIASPORA_KEYWORDS } from './config';
 import { callOpenAI } from './extraction';
+import { getRuntimeKeywordSeeds } from './runtime-config';
 import { htmlToText } from './text';
+import { PIPELINE_USER_AGENT } from './http';
 import type { ExtractedCommunity } from './types';
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
@@ -38,6 +39,40 @@ Reject generic words, cities, person names, and low-signal noise.`;
 
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+const BASE_STOPWORDS = new Set([
+  'india',
+  'indian',
+  'germany',
+  'german',
+  'community',
+  'event',
+  'events',
+  'group',
+  'association',
+  'the',
+  'and',
+  'for',
+  'with',
+  'from',
+]);
+
+function buildDynamicBlockedTerms(
+  cityNames: string[],
+  baselineKeywordSet: ReadonlySet<string>,
+): Set<string> {
+  const blocked = new Set<string>([...BASE_STOPWORDS, ...baselineKeywordSet]);
+  for (const cityName of cityNames) {
+    const normalized = normalizeKeyword(cityName);
+    if (normalized) blocked.add(normalized);
+  }
+
+  const currentYear = new Date().getFullYear();
+  blocked.add(String(currentYear));
+  blocked.add(String(currentYear + 1));
+
+  return blocked;
 }
 
 export async function semanticCommunityDuplicateCheck(
@@ -91,7 +126,7 @@ function stripHtml(input: string): string {
 async function fetchSourceText(url: string): Promise<string | null> {
   try {
     const response = await fetch(url, {
-      headers: { 'User-Agent': 'IndLokalBot/1.0 (+https://indlokal.de)' },
+      headers: { 'User-Agent': PIPELINE_USER_AGENT },
       signal: AbortSignal.timeout(15_000),
     });
     if (!response.ok) return null;
@@ -354,29 +389,8 @@ export async function inferCommunityRelationships() {
 
 function extractCandidateKeywords(
   items: Array<{ text: string }>,
+  blockedTerms: ReadonlySet<string>,
 ): Array<{ keyword: string; count: number; evidence: string[] }> {
-  const stopwords = new Set([
-    'india',
-    'indian',
-    'germany',
-    'german',
-    'stuttgart',
-    'munich',
-    'frankfurt',
-    'karlsruhe',
-    'mannheim',
-    'community',
-    'event',
-    'events',
-    'group',
-    'association',
-    'the',
-    'and',
-    'for',
-    'with',
-    'from',
-    '2026',
-  ]);
   const counts = new Map<string, { count: number; evidence: string[] }>();
 
   for (const item of items) {
@@ -393,8 +407,7 @@ function extractCandidateKeywords(
           .trim();
         const normalized = normalizeKeyword(phrase);
         if (normalized.length < 4 || normalized.length > 32) continue;
-        if (DIASPORA_KEYWORDS.map(normalizeKeyword).includes(normalized)) continue;
-        if (stopwords.has(normalized)) continue;
+        if (blockedTerms.has(normalized)) continue;
         if (/^\d+$/.test(normalized)) continue;
 
         const entry = counts.get(normalized) ?? { count: 0, evidence: [] };
@@ -413,6 +426,14 @@ function extractCandidateKeywords(
 }
 
 export async function refreshKeywordSuggestions() {
+  const baselineKeywords = await getRuntimeKeywordSeeds();
+  const baselineKeywordSet = new Set(baselineKeywords.map(normalizeKeyword));
+  const cityRows = await db.city.findMany({ select: { name: true } });
+  const blockedTerms = buildDynamicBlockedTerms(
+    cityRows.map((city) => city.name),
+    baselineKeywordSet,
+  );
+
   const approvedItems = await db.pipelineItem.findMany({
     where: { status: 'APPROVED' },
     select: { extractedData: true },
@@ -435,7 +456,7 @@ export async function refreshKeywordSuggestions() {
     })
     .filter((item) => item.text.trim().length > 0);
 
-  const candidates = extractCandidateKeywords(texts);
+  const candidates = extractCandidateKeywords(texts, blockedTerms);
   if (candidates.length === 0) {
     return { created: 0, updated: 0, candidates: 0 };
   }

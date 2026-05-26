@@ -1,8 +1,13 @@
 import { db } from '@/lib/db';
-import { getKeywordStrategies, getPinnedStrategies } from './config';
+import {
+  getRuntimeKeywordSeeds,
+  getRuntimeKeywordStrategies,
+  getRuntimePinnedStrategies,
+} from './runtime-config';
 import { getDbCommunityStrategies, scorePinnedEventUrl } from './db-sources';
 import { getApprovedDynamicKeywords } from './intelligence';
 import type { SearchRegion, SearchStrategy } from './types';
+import type { KeywordStrategyTemplate } from './runtime-config';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
@@ -47,6 +52,35 @@ function getPositiveIntEnv(name: string, fallback: number): number {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
+}
+
+function quoteGoogleKeyword(keyword: string): string {
+  const trimmed = keyword.trim();
+  if (!trimmed) return trimmed;
+  return trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed : `"${trimmed}"`;
+}
+
+function renderGoogleKeywordQueries(keywords: string[]): string[] {
+  const groupSize = 3;
+  const rendered: string[] = [];
+
+  for (let index = 0; index < keywords.length; index += groupSize) {
+    const group = keywords.slice(index, index + groupSize).map(quoteGoogleKeyword);
+    if (group.length > 0) rendered.push(group.join(' OR '));
+  }
+
+  return rendered;
+}
+
+function renderKeywordsForSource(
+  sourceType: SearchStrategy['sourceType'],
+  keywords: string[],
+): string[] {
+  if (sourceType === 'GOOGLE_SEARCH') {
+    return renderGoogleKeywordQueries(keywords);
+  }
+
+  return keywords;
 }
 
 function expandTemplates(templates: readonly string[], cities: Array<{ name: string }>): string[] {
@@ -122,7 +156,7 @@ function limitDbPinnedSources(strategies: PinnedStrategy[], limit: number): Pinn
   return selected;
 }
 
-function isConfigured(strategy: KeywordStrategy): boolean {
+function isConfigured(strategy: KeywordStrategyTemplate): boolean {
   if (strategy.sourceType === 'EVENTBRITE') return Boolean(process.env.EVENTBRITE_API_KEY);
   if (strategy.sourceType === 'GOOGLE_SEARCH') {
     return Boolean(process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_ID);
@@ -134,10 +168,10 @@ function isDuckDuckGoEnabled(): boolean {
   return process.env.PIPELINE_ENABLE_DDG === '1';
 }
 
-function limitDuckDuckGoKeywords(keywords: string[], isCronRun: boolean): string[] {
+function limitDuckDuckGoKeywords(keywords: string[], triggeredBy: string): string[] {
   const limitFromEnv = Number.parseInt(process.env.PIPELINE_DDG_KEYWORD_LIMIT ?? '', 10);
-  const limit =
-    Number.isFinite(limitFromEnv) && limitFromEnv > 0 ? limitFromEnv : isCronRun ? 8 : 12;
+  const defaultLimit = triggeredBy === 'cron' ? 8 : triggeredBy === 'admin' ? 16 : 12;
+  const limit = Number.isFinite(limitFromEnv) && limitFromEnv > 0 ? limitFromEnv : defaultLimit;
   return keywords.slice(0, limit);
 }
 
@@ -230,7 +264,7 @@ export async function buildPipelineSourcePlan(
   const notes: string[] = [];
   const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
 
-  const staticPinned = getPinnedStrategies();
+  const staticPinned = await getRuntimePinnedStrategies();
   const dbPinnedAll = await getDbCommunityStrategies();
   const dbPinnedLimit = getPositiveIntEnv(
     'PIPELINE_DB_PINNED_LIMIT',
@@ -250,17 +284,21 @@ export async function buildPipelineSourcePlan(
     );
   }
 
-  const shouldRunKeywords = forceKeywordSearch || cityGaps.length > 0;
+  const shouldRunKeywords = forceKeywordSearch || triggeredBy === 'admin' || cityGaps.length > 0;
   if (!shouldRunKeywords) {
     notes.push('skipping keyword search: no low-coverage DB city gaps');
   }
+  if (triggeredBy === 'admin' && !forceKeywordSearch) {
+    notes.push('admin run: forcing keyword search for wider discovery coverage');
+  }
 
   const approvedKeywords = shouldRunKeywords ? await getApprovedDynamicKeywords() : [];
+  const baselineKeywordSeeds = shouldRunKeywords ? await getRuntimeKeywordSeeds() : [];
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, cityGaps);
   const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, cityGaps);
 
   const keywordStrategies = shouldRunKeywords
-    ? getKeywordStrategies().flatMap((strategy) => {
+    ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
         if (strategy.sourceType === 'DUCKDUCKGO' && !isDuckDuckGoEnabled()) {
           notes.push(
             `skipping ${strategy.id}: disabled by default; set PIPELINE_ENABLE_DDG=1 to enable`,
@@ -277,12 +315,18 @@ export async function buildPipelineSourcePlan(
           strategy.sourceType === 'EVENTBRITE'
             ? eventGapKeywords
             : [...eventGapKeywords, ...communityGapKeywords];
-        const fallbackKeywords = forceKeywordSearch ? strategy.keywords : [];
-        const keywords = unique([...gapKeywords, ...approvedKeywords, ...fallbackKeywords]);
+        const baselineKeywords =
+          forceKeywordSearch || triggeredBy === 'admin' ? baselineKeywordSeeds : [];
+        const canonicalKeywords = unique([
+          ...gapKeywords,
+          ...approvedKeywords,
+          ...baselineKeywords,
+        ]);
+        const renderedKeywords = renderKeywordsForSource(strategy.sourceType, canonicalKeywords);
         const limitedKeywords =
           strategy.sourceType === 'DUCKDUCKGO'
-            ? limitDuckDuckGoKeywords(keywords, isTimeBoundRun)
-            : keywords;
+            ? limitDuckDuckGoKeywords(renderedKeywords, triggeredBy)
+            : renderedKeywords;
 
         if (limitedKeywords.length === 0) return [];
         return [{ ...strategy, keywords: limitedKeywords }];

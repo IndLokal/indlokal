@@ -10,15 +10,15 @@
  *   6. DEDUP — semantic/name similarity check against existing DB entities + queue
  *   7. QUEUE — store in PipelineItem for admin review
  *
- * Adding a new country: add region + keyword strategies in config.ts. Done.
- * No orchestrator changes needed for new regions.
+ * Adding a new country: add region + strategy defaults in source-defaults.json,
+ * sync them into DB, and rerun the pipeline. No orchestrator changes needed.
  */
 
 import { db } from '@/lib/db';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { CITY_NAME_ALIASES } from '@/lib/config/cities';
 import { resolveCityMatch } from '@/lib/city-resolution';
-import { getEnabledRegions } from './config';
+import { getRuntimeEnabledRegions } from './runtime-config';
 import {
   fetchEventbriteKeywords,
   fetchPinnedUrl,
@@ -26,27 +26,27 @@ import {
   fetchDuckDuckGoSearch,
 } from './sources';
 import { scorePinnedEventUrl } from './db-sources';
+import {
+  STALE_EVENT_MARKERS,
+  EVENT_PAGE_MARKERS,
+  FRESH_EVENT_MARKERS,
+  extractMentionedYears,
+} from './freshness';
 import { buildPipelineSourcePlan } from './source-plan';
 import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
-import type { ExtractedData, ExtractedEvent, RawContent, PipelineRunResult } from './types';
+import type {
+  ExtractedData,
+  ExtractedEvent,
+  RawContent,
+  PipelineRunResult,
+  SearchRegion,
+} from './types';
 
 // Re-export PipelineRunResult type from types.ts
 export type { PipelineRunResult } from './types';
-
-const STALE_EVENT_MARKERS =
-  /past|archive|archiv|gallery|eventgallery|album|photo|foto|bericht|review|recap/i;
-const EVENT_PAGE_MARKERS =
-  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on|schedule/i;
-const FRESH_EVENT_MARKERS = /upcoming|next|current|ongoing|neu|latest|new this year/i;
-
-function extractMentionedYears(input: string): number[] {
-  return [...input.matchAll(/\b20\d{2}\b/g)]
-    .map((match) => Number.parseInt(match[0], 10))
-    .filter(Number.isFinite);
-}
 
 export function isLikelyStaleEventPage(item: RawContent): boolean {
   const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`;
@@ -87,7 +87,7 @@ async function timePipelineStage<T>(
 
 /**
  * Run the full known-source-first pipeline.
- * No arguments needed — reads config from config.ts.
+ * No arguments needed — reads pipeline source config from the database.
  */
 export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResult> {
   const start = Date.now();
@@ -110,7 +110,7 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
     stageTimings: {},
   };
 
-  const regions = getEnabledRegions();
+  const regions = await getRuntimeEnabledRegions();
   const uniqueRaw = await timePipelineStage(result, 'fetch', () =>
     fetchAllSources(regions, result, triggeredBy),
   );
@@ -182,7 +182,7 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
 
 // ─── Phase 1: Fetch ────────────────────────────────────
 
-type Region = ReturnType<typeof getEnabledRegions>[number];
+type Region = SearchRegion;
 
 async function fetchAllSources(
   regions: Region[],
@@ -315,7 +315,7 @@ async function resolveAndQueue(
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
   // Load region metros AND all their satellite cities so that communities
   // in satellite cities (e.g. esslingen → stuttgart metro) resolve correctly.
-  // This avoids manually enumerating satellite slugs in config.ts.
+  // This avoids manually enumerating satellite slugs in source defaults.
   const cities = await db.city.findMany({
     where: {
       OR: [{ slug: { in: allCitySlugs } }, { metroRegion: { slug: { in: allCitySlugs } } }],
@@ -332,12 +332,17 @@ async function resolveAndQueue(
   const decisionCounts = {
     queuedEvents: 0,
     queuedCommunities: 0,
+    queuedPendingCityEvents: 0,
+    queuedPendingCityCommunities: 0,
     duplicateEvents: 0,
     duplicateCommunities: 0,
     noCityEvents: 0,
     noCityCommunities: 0,
     pastEvents: 0,
   };
+
+  const fallbackCitySlug = process.env.PIPELINE_NO_CITY_FALLBACK_SLUG?.trim();
+  const fallbackCity = fallbackCitySlug ? (cityBySlug.get(fallbackCitySlug) ?? null) : null;
 
   for (const item of extracted) {
     const sourceRaw = relevantItems[item.sourceIndex];
@@ -358,6 +363,15 @@ async function resolveAndQueue(
         const match = cityBySlug.get(hint);
         if (match) cityId = match.id;
       }
+    }
+
+    let isCityPending = false;
+    if (!cityId && fallbackCity && fallbackCitySlug) {
+      cityId = fallbackCity.id;
+      isCityPending = true;
+      console.log(
+        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+      );
     }
 
     if (!cityId) {
@@ -384,7 +398,9 @@ async function resolveAndQueue(
     }
 
     // Dedup check
-    const isDupe = await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
+    const isDupe = isCityPending
+      ? await checkSourceUrlDuplicate(sourceRaw.sourceUrl)
+      : await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
     if (item.type === 'EVENT' && isDupe.isDuplicate) {
       if (isDupe.matchKind === 'PIPELINE_ITEM' && isDupe.matchedId) {
         await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
@@ -422,6 +438,19 @@ async function resolveAndQueue(
         cityId,
         matchedEntityId: isDupe.matchedId ?? undefined,
         matchScore: isDupe.matchScore ?? undefined,
+        reviewNotes: isCityPending
+          ? `CITY_PENDING: extracted city "${item.cityName ?? 'unknown'}" did not match configured cities; queued with fallback city "${fallbackCitySlug}" for admin review.`
+          : undefined,
+        metadata: isCityPending
+          ? ({
+              cityResolution: {
+                status: 'PENDING',
+                extractedCityName: item.cityName ?? null,
+                fallbackCitySlug,
+                reason: 'No city match found in configured cities/aliases.',
+              },
+            } as Prisma.InputJsonValue)
+          : undefined,
       },
       select: { id: true },
     });
@@ -429,8 +458,10 @@ async function resolveAndQueue(
     result.itemsQueued++;
     if (item.type === 'EVENT') {
       decisionCounts.queuedEvents++;
+      if (isCityPending) decisionCounts.queuedPendingCityEvents++;
     } else {
       decisionCounts.queuedCommunities++;
+      if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
     }
 
     const autoApprove = shouldAutoApprovePipelineItem({
@@ -440,7 +471,7 @@ async function resolveAndQueue(
       matchedEntityId: isDupe.matchedId,
       matchScore: isDupe.matchScore,
     });
-    if (autoApprove.eligible) {
+    if (autoApprove.eligible && !isCityPending) {
       await approvePipelineItemRecord(createdItem.id, {
         reviewedBy: 'system',
         autoApproved: true,
@@ -450,7 +481,7 @@ async function resolveAndQueue(
   }
 
   console.log(
-    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities; duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
+    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
   );
 }
 
@@ -468,7 +499,17 @@ async function checkDuplicate(
   cityId: string,
   sourceUrl: string,
 ): Promise<DedupResult> {
-  // Exact source URL match in queue
+  const existingQueueItem = await checkSourceUrlDuplicate(sourceUrl);
+  if (existingQueueItem.isDuplicate) return existingQueueItem;
+
+  if (item.type === 'EVENT') {
+    return checkEventDuplicate(item, cityId);
+  }
+
+  return checkCommunityDuplicate(item, cityId);
+}
+
+async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> {
   const existingQueueItem = await db.pipelineItem.findFirst({
     where: {
       sourceUrl,
@@ -477,20 +518,21 @@ async function checkDuplicate(
     select: { id: true },
   });
 
-  if (existingQueueItem) {
+  if (!existingQueueItem) {
     return {
-      isDuplicate: true,
-      matchedId: existingQueueItem.id,
-      matchScore: 1.0,
-      matchKind: 'PIPELINE_ITEM',
+      isDuplicate: false,
+      matchedId: null,
+      matchScore: null,
+      matchKind: null,
     };
   }
 
-  if (item.type === 'EVENT') {
-    return checkEventDuplicate(item, cityId);
-  }
-
-  return checkCommunityDuplicate(item, cityId);
+  return {
+    isDuplicate: true,
+    matchedId: existingQueueItem.id,
+    matchScore: 1.0,
+    matchKind: 'PIPELINE_ITEM',
+  };
 }
 
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {

@@ -5,6 +5,11 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
+import {
+  type ImportResource,
+  parseImportPayload,
+  validateImportEnvelope,
+} from '@/modules/admin-import/parsing';
 import { runBootstrap } from '../../../../../prisma/bootstrap';
 
 /* ───────────────────────────── Auth guard ───────────────────────────── */
@@ -361,95 +366,21 @@ export type ImportPlan = {
   rows: ImportPlanRow[];
 };
 
-function parseRows(text: string): { resource: string; rows: unknown[] } {
-  const trimmed = text.trim();
-  if (!trimmed) throw new Error('Empty payload');
-  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
-    const parsed = JSON.parse(trimmed);
-    if (Array.isArray(parsed)) return { resource: '', rows: parsed };
-    if (
-      parsed &&
-      typeof parsed === 'object' &&
-      Array.isArray((parsed as { rows?: unknown }).rows)
-    ) {
-      const obj = parsed as { resource?: string; rows: unknown[] };
-      return { resource: obj.resource ?? '', rows: obj.rows };
-    }
-    throw new Error('JSON must be an array or { resource, rows }');
-  }
-  // CSV (header row required)
-  const lines = trimmed.split(/\r?\n/).filter((l) => l.length > 0);
-  const header = splitCsvLine(lines[0]);
-  const rows = lines.slice(1).map((line) => {
-    const values = splitCsvLine(line);
-    const row: Record<string, unknown> = {};
-    header.forEach((key, i) => {
-      const raw = values[i] ?? '';
-      row[key] = coerceCsvValue(raw);
-    });
-    return row;
-  });
-  return { resource: '', rows };
-}
-
-function splitCsvLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = '';
-  let inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQ) {
-      if (ch === '"' && line[i + 1] === '"') {
-        cur += '"';
-        i++;
-      } else if (ch === '"') {
-        inQ = false;
-      } else {
-        cur += ch;
-      }
-    } else if (ch === ',') {
-      out.push(cur);
-      cur = '';
-    } else if (ch === '"' && cur === '') {
-      inQ = true;
-    } else {
-      cur += ch;
-    }
-  }
-  out.push(cur);
-  return out.map((s) => s.trim());
-}
-
-function coerceCsvValue(raw: string): unknown {
-  if (raw === '') return undefined;
-  if (raw === 'true') return true;
-  if (raw === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
-  if (raw.startsWith('[') || raw.startsWith('{')) {
-    try {
-      return JSON.parse(raw);
-    } catch {
-      return raw;
-    }
-  }
-  return raw;
-}
-
 export async function planImportAction(formData: FormData): Promise<ImportPlan> {
   await assertCan('admin.data.write');
-  const resource = String(formData.get('resource') || '') as 'city' | 'category' | 'community';
+  const selectedResource = String(formData.get('resource') || '');
   const text = String(formData.get('payload') || '');
-  if (!['city', 'category', 'community'].includes(resource)) {
-    throw new Error('Invalid resource');
-  }
-  const { rows } = parseRows(text);
+  const { payloadResource, rows } = parseImportPayload(text);
+  const resource = validateImportEnvelope({
+    selectedResource,
+    payloadResource,
+    payloadText: text,
+    rowCount: rows.length,
+  });
   return planRows(resource, rows);
 }
 
-async function planRows(
-  resource: 'city' | 'category' | 'community',
-  rows: unknown[],
-): Promise<ImportPlan> {
+async function planRows(resource: ImportResource, rows: unknown[]): Promise<ImportPlan> {
   const out: ImportPlan = {
     resource,
     total: rows.length,
@@ -464,6 +395,13 @@ async function planRows(
     try {
       if (resource === 'city') {
         const v = ImportCity.parse(raw);
+        if (v.metroRegionSlug) {
+          const metro = await db.city.findUnique({
+            where: { slug: v.metroRegionSlug },
+            select: { id: true },
+          });
+          if (!metro) throw new Error(`Unknown metroRegionSlug: ${v.metroRegionSlug}`);
+        }
         const exists = await db.city.findUnique({ where: { slug: v.slug }, select: { id: true } });
         out.rows.push({ index: i, action: exists ? 'update' : 'create', slug: v.slug });
         if (exists) out.toUpdate++;
@@ -484,6 +422,17 @@ async function planRows(
           select: { id: true },
         });
         if (!city) throw new Error(`Unknown city slug: ${v.citySlug}`);
+        if (v.categorySlugs.length) {
+          const foundCategories = await db.category.findMany({
+            where: { slug: { in: v.categorySlugs } },
+            select: { slug: true },
+          });
+          const found = new Set(foundCategories.map((c) => c.slug));
+          const missing = v.categorySlugs.filter((slug) => !found.has(slug));
+          if (missing.length) {
+            throw new Error(`Unknown category slugs: ${missing.join(', ')}`);
+          }
+        }
         const exists = await db.community.findUnique({
           where: { slug: v.slug },
           select: { id: true },
@@ -510,12 +459,15 @@ async function planRows(
 
 export async function applyImportAction(formData: FormData): Promise<ImportPlan> {
   await assertCan('admin.data.write');
-  const resource = String(formData.get('resource') || '') as 'city' | 'category' | 'community';
+  const selectedResource = String(formData.get('resource') || '');
   const text = String(formData.get('payload') || '');
-  if (!['city', 'category', 'community'].includes(resource)) {
-    throw new Error('Invalid resource');
-  }
-  const { rows } = parseRows(text);
+  const { payloadResource, rows } = parseImportPayload(text);
+  const resource = validateImportEnvelope({
+    selectedResource,
+    payloadResource,
+    payloadText: text,
+    rowCount: rows.length,
+  });
 
   // Re-run validation, then apply via upsert. Errors abort that single row only.
   const result: ImportPlan = {
@@ -532,124 +484,145 @@ export async function applyImportAction(formData: FormData): Promise<ImportPlan>
     try {
       if (resource === 'city') {
         const v = ImportCity.parse(raw);
-        const metroId = v.metroRegionSlug
-          ? (await db.city.findUnique({ where: { slug: v.metroRegionSlug }, select: { id: true } }))
-              ?.id
-          : null;
-        const existing = await db.city.findUnique({
-          where: { slug: v.slug },
-          select: { id: true },
-        });
-        await db.city.upsert({
-          where: { slug: v.slug },
-          update: {
-            name: v.name,
-            state: v.state,
-            country: v.country,
-            latitude: v.latitude ?? null,
-            longitude: v.longitude ?? null,
-            population: v.population ?? null,
-            diasporaDensityEstimate: v.diasporaDensityEstimate ?? null,
-            isActive: v.isActive,
-            isMetroPrimary: v.isMetroPrimary,
-            metroRegionId: metroId,
-            timezone: v.timezone,
-          },
-          create: {
-            name: v.name,
-            slug: v.slug,
-            state: v.state,
-            country: v.country,
-            latitude: v.latitude,
-            longitude: v.longitude,
-            population: v.population,
-            diasporaDensityEstimate: v.diasporaDensityEstimate,
-            isActive: v.isActive,
-            isMetroPrimary: v.isMetroPrimary,
-            metroRegionId: metroId ?? undefined,
-            timezone: v.timezone,
-          },
+        const { existing } = await db.$transaction(async (tx) => {
+          const metro = v.metroRegionSlug
+            ? await tx.city.findUnique({ where: { slug: v.metroRegionSlug }, select: { id: true } })
+            : null;
+          if (v.metroRegionSlug && !metro) {
+            throw new Error(`Unknown metroRegionSlug: ${v.metroRegionSlug}`);
+          }
+          const existing = await tx.city.findUnique({
+            where: { slug: v.slug },
+            select: { id: true },
+          });
+          await tx.city.upsert({
+            where: { slug: v.slug },
+            update: {
+              name: v.name,
+              state: v.state,
+              country: v.country,
+              latitude: v.latitude ?? null,
+              longitude: v.longitude ?? null,
+              population: v.population ?? null,
+              diasporaDensityEstimate: v.diasporaDensityEstimate ?? null,
+              isActive: v.isActive,
+              isMetroPrimary: v.isMetroPrimary,
+              metroRegionId: metro?.id ?? null,
+              timezone: v.timezone,
+            },
+            create: {
+              name: v.name,
+              slug: v.slug,
+              state: v.state,
+              country: v.country,
+              latitude: v.latitude,
+              longitude: v.longitude,
+              population: v.population,
+              diasporaDensityEstimate: v.diasporaDensityEstimate,
+              isActive: v.isActive,
+              isMetroPrimary: v.isMetroPrimary,
+              metroRegionId: metro?.id ?? undefined,
+              timezone: v.timezone,
+            },
+          });
+          return { existing };
         });
         result.rows.push({ index: i, action: existing ? 'update' : 'create', slug: v.slug });
         if (existing) result.toUpdate++;
         else result.toCreate++;
       } else if (resource === 'category') {
         const v = ImportCategory.parse(raw);
-        const existing = await db.category.findUnique({
-          where: { slug: v.slug },
-          select: { id: true },
-        });
-        await db.category.upsert({
-          where: { slug: v.slug },
-          update: v,
-          create: v,
+        const { existing } = await db.$transaction(async (tx) => {
+          const existing = await tx.category.findUnique({
+            where: { slug: v.slug },
+            select: { id: true },
+          });
+          await tx.category.upsert({
+            where: { slug: v.slug },
+            update: v,
+            create: v,
+          });
+          return { existing };
         });
         result.rows.push({ index: i, action: existing ? 'update' : 'create', slug: v.slug });
         if (existing) result.toUpdate++;
         else result.toCreate++;
       } else {
         const v = ImportCommunity.parse(raw);
-        const city = await db.city.findUnique({
-          where: { slug: v.citySlug },
-          select: { id: true },
-        });
-        if (!city) throw new Error(`Unknown city slug: ${v.citySlug}`);
-
-        const categories = v.categorySlugs.length
-          ? await db.category.findMany({
-              where: { slug: { in: v.categorySlugs } },
-              select: { id: true },
-            })
-          : [];
-
-        const existing = await db.community.findUnique({
-          where: { slug: v.slug },
-          select: { id: true },
-        });
-
-        const community = await db.community.upsert({
-          where: { slug: v.slug },
-          update: {
-            name: v.name,
-            description: v.description ?? null,
-            cityId: city.id,
-            languages: v.languages,
-            personaSegments: v.personaSegments,
-            status: v.status,
-            source: 'IMPORTED',
-          },
-          create: {
-            name: v.name,
-            slug: v.slug,
-            description: v.description,
-            cityId: city.id,
-            languages: v.languages,
-            personaSegments: v.personaSegments,
-            status: v.status,
-            source: 'IMPORTED',
-          },
-        });
-
-        if (categories.length) {
-          await db.communityCategory.deleteMany({ where: { communityId: community.id } });
-          await db.communityCategory.createMany({
-            data: categories.map((c) => ({ communityId: community.id, categoryId: c.id })),
-            skipDuplicates: true,
+        const { existing } = await db.$transaction(async (tx) => {
+          const city = await tx.city.findUnique({
+            where: { slug: v.citySlug },
+            select: { id: true },
           });
-        }
+          if (!city) throw new Error(`Unknown city slug: ${v.citySlug}`);
 
-        if (v.channels.length) {
-          await db.accessChannel.deleteMany({ where: { communityId: community.id } });
-          await db.accessChannel.createMany({
-            data: v.channels.map((ch) => ({
-              communityId: community.id,
-              channelType: ch.channelType,
-              url: ch.url,
-              label: ch.label,
-              isPrimary: ch.isPrimary,
-            })),
+          const categories = v.categorySlugs.length
+            ? await tx.category.findMany({
+                where: { slug: { in: v.categorySlugs } },
+                select: { id: true, slug: true },
+              })
+            : [];
+          const foundCategorySlugs = new Set(categories.map((c) => c.slug));
+          const missingCategorySlugs = v.categorySlugs.filter(
+            (slug) => !foundCategorySlugs.has(slug),
+          );
+          if (missingCategorySlugs.length) {
+            throw new Error(`Unknown category slugs: ${missingCategorySlugs.join(', ')}`);
+          }
+
+          const existing = await tx.community.findUnique({
+            where: { slug: v.slug },
+            select: { id: true },
           });
-        }
+
+          const community = await tx.community.upsert({
+            where: { slug: v.slug },
+            update: {
+              name: v.name,
+              description: v.description ?? null,
+              cityId: city.id,
+              languages: v.languages,
+              personaSegments: v.personaSegments,
+              status: v.status,
+              source: 'IMPORTED',
+            },
+            create: {
+              name: v.name,
+              slug: v.slug,
+              description: v.description,
+              cityId: city.id,
+              languages: v.languages,
+              personaSegments: v.personaSegments,
+              status: v.status,
+              source: 'IMPORTED',
+            },
+          });
+
+          // Reconcile many-to-many relations exactly as provided, including empty arrays.
+          await tx.communityCategory.deleteMany({ where: { communityId: community.id } });
+          if (categories.length) {
+            await tx.communityCategory.createMany({
+              data: categories.map((c) => ({ communityId: community.id, categoryId: c.id })),
+              skipDuplicates: true,
+            });
+          }
+
+          // Reconcile channels exactly as provided, including empty arrays.
+          await tx.accessChannel.deleteMany({ where: { communityId: community.id } });
+          if (v.channels.length) {
+            await tx.accessChannel.createMany({
+              data: v.channels.map((ch) => ({
+                communityId: community.id,
+                channelType: ch.channelType,
+                url: ch.url,
+                label: ch.label,
+                isPrimary: ch.isPrimary,
+              })),
+            });
+          }
+
+          return { existing };
+        });
 
         result.rows.push({ index: i, action: existing ? 'update' : 'create', slug: v.slug });
         if (existing) result.toUpdate++;

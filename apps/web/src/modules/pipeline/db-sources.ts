@@ -2,7 +2,7 @@
  * DB-driven source generation — reads community access channels from the
  * database and generates pinned_url strategies automatically.
  *
- * Instead of hardcoding community website URLs in config.ts, this module
+ * Instead of hardcoding community website URLs in runtime pipeline code, this module
  * queries all active communities that have scrapeable channels (WEBSITE, MEETUP)
  * and turns each into a SearchStrategy the orchestrator can fetch.
  *
@@ -14,27 +14,13 @@
 
 import { db } from '@/lib/db';
 import type { SearchStrategy } from './types';
-
-const EVENT_LINK_KEYWORDS =
-  /event|veranstaltung|programm|kalender|calendar|activit|agenda|upcoming|termin|what.?s.?on|schedule/i;
-const EVENT_LINK_STRONG_POSITIVE_KEYWORDS =
-  /upcoming|next|calendar|kalender|schedule|termin|what.?s.?on|programme|programm/i;
-const EVENT_LINK_NEGATIVE_KEYWORDS =
-  /past|archive|archiv|gallery|eventgallery|album|photo|foto|bericht|review|recap/i;
-
-function getYearSignalScore(input: string): number {
-  const currentYear = new Date().getFullYear();
-  const years = [...input.matchAll(/\b20\d{2}\b/g)]
-    .map((match) => Number.parseInt(match[0], 10))
-    .filter(Number.isFinite);
-
-  if (years.length === 0) return 0;
-
-  const newestYear = Math.max(...years);
-  if (newestYear < currentYear) return -2;
-  if (newestYear === currentYear) return 1;
-  return 2;
-}
+import {
+  EVENT_PAGE_MARKERS,
+  STRONG_FRESH_MARKERS,
+  STALE_EVENT_MARKERS,
+  getYearSignalScore,
+} from './freshness';
+import { PIPELINE_USER_AGENT } from './http';
 
 function getDetailPageScore(url: string, labelOrText = ''): number {
   const combined = `${url} ${labelOrText}`;
@@ -59,12 +45,10 @@ function getDetailPageScore(url: string, labelOrText = ''): number {
 }
 
 export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
-  const urlScore = EVENT_LINK_KEYWORDS.test(url) ? 2 : 0;
-  const labelScore = EVENT_LINK_KEYWORDS.test(labelOrText) ? 1 : 0;
-  const strongPositiveScore = EVENT_LINK_STRONG_POSITIVE_KEYWORDS.test(`${url} ${labelOrText}`)
-    ? 2
-    : 0;
-  const negativeScore = EVENT_LINK_NEGATIVE_KEYWORDS.test(`${url} ${labelOrText}`) ? -3 : 0;
+  const urlScore = EVENT_PAGE_MARKERS.test(url) ? 2 : 0;
+  const labelScore = EVENT_PAGE_MARKERS.test(labelOrText) ? 1 : 0;
+  const strongPositiveScore = STRONG_FRESH_MARKERS.test(`${url} ${labelOrText}`) ? 2 : 0;
+  const negativeScore = STALE_EVENT_MARKERS.test(`${url} ${labelOrText}`) ? -3 : 0;
   const yearScore = getYearSignalScore(`${url} ${labelOrText}`);
   const detailPageScore = getDetailPageScore(url, labelOrText);
 
@@ -109,7 +93,7 @@ function isMalformedDiscoveredHref(rawHref: string, resolved: URL): boolean {
 async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
   try {
     const res = await fetch(websiteUrl, {
-      headers: { 'User-Agent': 'IndLokal-ContentBot/1.0 (+https://indlokal.de)' },
+      headers: { 'User-Agent': PIPELINE_USER_AGENT },
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) return [];
