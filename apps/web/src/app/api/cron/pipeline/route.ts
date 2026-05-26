@@ -5,6 +5,18 @@ import { Events } from '@/lib/analytics/events';
 
 export const maxDuration = 300; // 5 min — pipeline can be slow
 
+function parseScopeParam(url: URL, key: 'city' | 'region'): string[] {
+  return Array.from(
+    new Set(
+      url.searchParams
+        .getAll(key)
+        .flatMap((value) => value.split(','))
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('authorization')?.replace('Bearer ', '');
   if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
@@ -12,16 +24,8 @@ export async function POST(req: NextRequest) {
   }
 
   const url = new URL(req.url);
-  const citySlugs = url.searchParams
-    .getAll('city')
-    .flatMap((v) => v.split(','))
-    .map((v) => v.trim())
-    .filter(Boolean);
-  const regionIds = url.searchParams
-    .getAll('region')
-    .flatMap((v) => v.split(','))
-    .map((v) => v.trim())
-    .filter(Boolean);
+  const citySlugs = parseScopeParam(url, 'city');
+  const regionIds = parseScopeParam(url, 'region');
 
   try {
     const scope =

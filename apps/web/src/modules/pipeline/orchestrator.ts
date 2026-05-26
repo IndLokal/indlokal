@@ -56,6 +56,18 @@ export type PipelineRunScope = {
   regionIds?: string[];
 };
 
+function isMissingPipelineRunScopeColumnError(error: unknown): boolean {
+  if (!(error instanceof Prisma.PrismaClientKnownRequestError)) return false;
+  if (error.code !== 'P2022') return false;
+
+  const column =
+    error.meta && typeof error.meta === 'object' && 'column' in error.meta
+      ? String((error.meta as { column?: unknown }).column ?? '')
+      : '';
+
+  return column === 'scope_region_ids' || column === 'scope_city_slugs';
+}
+
 function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
   if (!scope) return regions;
 
@@ -232,11 +244,7 @@ export async function runPipeline(
       },
     });
   } catch (persistErr) {
-    const message = String(persistErr);
-    const isMissingScopeColumns =
-      message.includes('scope_region_ids') || message.includes('scope_city_slugs');
-
-    if (isMissingScopeColumns) {
+    if (isMissingPipelineRunScopeColumnError(persistErr)) {
       console.warn(
         '[Pipeline] Run history persistence skipped: scope columns missing. Apply the latest migration.',
       );
