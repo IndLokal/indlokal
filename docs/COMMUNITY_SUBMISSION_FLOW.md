@@ -13,6 +13,8 @@ The **Community Self-Submission Flow** allows a community organiser whose commun
 
 Both flows converge at admin review and result in an approved, organiser-managed community. Neither allows self-publishing without oversight.
 
+If the community already exists on IndLokal, the user should claim it instead. If the listing is missing entirely but should exist, the user should use the suggest flow.
+
 ---
 
 ## 2. Design Principles

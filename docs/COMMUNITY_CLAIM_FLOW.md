@@ -62,9 +62,11 @@ On every community detail page (`/[city]/communities/[slug]`), a `ClaimSection` 
 
 | `claimState`    | What the visitor sees                                              |
 | --------------- | ------------------------------------------------------------------ |
-| `UNCLAIMED`     | "Do you manage this community?" + **Claim this community** button  |
+| `UNCLAIMED`     | "Do you run this community?" + **Claim this community** button     |
 | `CLAIM_PENDING` | Amber badge: "Claim pending review — our team will verify shortly" |
 | `CLAIMED`       | Green badge: "✓ Claimed — managed by the community organiser"      |
+
+The claim section now also explains that claiming is for existing listings, while the suggest flow is for communities or resources that are not listed yet.
 
 ---
 

@@ -3,7 +3,9 @@
 import { useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { content } from '@indlokal/shared';
 import { requestMagicLink, type LoginResult } from './actions';
+import { ContentCallout } from '@/components/content/community-actions';
 
 const ERROR_MESSAGES: Record<string, string> = {
   missing_token: 'The access link was incomplete. Please request a new one.',
@@ -48,8 +50,16 @@ export default function OrganizerLoginPage() {
         <div className="card-base px-8 py-10 text-center">
           <h1 className="text-foreground text-2xl font-bold tracking-tight">Organizer Login</h1>
           <p className="text-muted mt-2 text-sm">
-            Enter your email address to receive a secure login link. No passwords required.
+            Enter your email address to receive a secure login link. This is for approved organizers
+            — the person or team that already runs a community listing.
           </p>
+
+          <div className="mt-6 text-left">
+            <ContentCallout
+              title="What does organizer access mean?"
+              body={content.COMMUNITY_ACTION_COPY.organizerLoginBody}
+            />
+          </div>
 
           <form action={formAction} className="mt-8 space-y-5 text-left">
             {urlErrorMessage && (
@@ -96,9 +106,9 @@ export default function OrganizerLoginPage() {
             href="/submit"
             className="text-brand-600 hover:text-brand-700 font-semibold transition-colors hover:underline"
           >
-            Submit your community
+            Submit a new community
           </Link>{' '}
-          to get an invite.
+          if your listing does not exist yet.
         </p>
 
         <div className="mt-8 text-center">

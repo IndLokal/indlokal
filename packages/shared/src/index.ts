@@ -19,3 +19,4 @@ export * as community from './contracts/community';
 export * as search from './contracts/search';
 export * as submit from './contracts/submit';
 export * as resources from './contracts/resources';
+export * as content from './content';

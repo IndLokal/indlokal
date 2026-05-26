@@ -1302,6 +1302,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - "Report stale/incorrect" user flow
 - Improved scoring: completeness score, engagement signals (view counts)
 - **Pulse Score branded and visible to claimed-community organizers** on their dashboard (score breakdown as improvement tool, not public judgment)
+- **Sponsorship intent capture (no marketplace)** on organizer/event-host flows, writing to Outreach CRM for manual matching by Ops/Partnerships
 - **Content provenance logging** (`ContentLog` entity tracking source, action, timestamp for every creation/update/verification — enables freshness auditing and source quality tracking; see Tracxn analysis §6.2)
 - Broken link detection (scheduled job)
 - Stale content alerting and downranking
@@ -1329,6 +1330,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - User preference-based filtering (show me communities matching my interests)
 - Email notifications (weekly digest of events in your city — optional)
 - **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing and SEO; see Tracxn analysis §7.3)
+- **Curated business and business-leader listing surfaces** tied to diaspora-relevant discovery contexts (professional, jobs/careers, business setup), managed through existing admin/outreach controls
 
 **Architecture milestone:** The scoring and search layer is decoupled from CRUD; ranking can be tuned without code changes.
 
@@ -1348,6 +1350,7 @@ The following are explicitly **out of scope** for the initial architecture and s
 - Analytics warehouse for deep behavioral analysis
 - **Data API for potential integrations** (city tourism boards, German integration agencies, relocation companies — see Tracxn analysis §5.4)
 - **Hierarchical taxonomy expansion** (sub-categories for deeper filtering: "Cultural > Festivals > Diwali", "Professional > Automotive"; see Tracxn analysis §2.2)
+- **Optional self-serve sponsor portal** only after curated matching proves repeatability, with clear policy and audit controls
 
 **Architecture milestone:** The community graph is a queryable, scored asset that enables discovery beyond simple listing and filtering.
 

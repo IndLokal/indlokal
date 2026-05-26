@@ -765,6 +765,22 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - Sponsor portal
 - Mobile ambassador field-mode (after web ambassador console)
 
+### 8.17 Sponsorship + Business Listings Sequencing (lean path)
+
+To avoid over-engineering, we treat sponsorship as an **ops-assisted workflow first**, not a two-sided marketplace.
+
+- **Phase 2 (P1): sponsorship intent capture**
+  - Add simple fields on organizer/event-host event forms: `seekingSponsor`, sponsor type (cash / in-kind), and contact details.
+  - Route these into Outreach CRM for manual matching by Ops/Partnerships.
+  - No public sponsor bidding, no automated matching, no payments.
+- **Phase 3 (P1/P2): curated business and business-leader listings**
+  - Add tightly scoped listing surfaces for businesses and business leaders relevant to diaspora outcomes (networking, jobs, business setup).
+  - Admission remains curated via admin/outreach workflows; this is **not** an open generic business directory.
+- **Phase 4 (only if validated): sponsorship marketplace mechanics**
+  - Consider a sponsor portal or self-serve workflow only after repeated city-level matching success and low-dispute operations.
+
+Guardrail: IndLokal remains activity-led and community-first; business/sponsor surfaces must improve event outcomes and newcomer utility, not dilute discovery quality.
+
 Full priority + persona mapping: [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md) §5 gap matrix.
 
 - **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
@@ -1151,6 +1167,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 - **AI pipeline scale-up** — expand from MVP's 5–10 sources to 30+, add Instagram vision extraction, add high-confidence auto-approve with provenance log
 - **Weekly digest email** ("This week in Stuttgart for Indians") — retention channel for member accounts
 - **Enhanced scoring with engagement signals** — completeness + view counts feeding the Pulse Score (organizer-visible)
+- **Sponsorship intent capture + curated matching** — organizers can mark sponsor-seeking events; Ops/Partnerships handle matching through Outreach CRM (no public marketplace)
 - **Expand to Karlsruhe + Mannheim** (shared consular services, overlapping communities, natural BW region)
 
 ### Phase 3: Munich + Personalization
@@ -1162,6 +1179,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 - Multi-language UI (English, German, Hindi)
 - **Pulse Score publicly visible** on all community cards and detail pages (communities now have 60-90+ days of behavioral data; scoring methodology published on /about/scoring for transparency)
 - **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing+SEO; inspired by Tracxn's 12K+ monthly reports)
+- **Curated business and business-leader listings** for diaspora-relevant discovery paths (professional networking, jobs/careers, business setup), integrated into city/category discovery without becoming a generic directory
 
 ### Phase 4: Graph-Powered Features
 
@@ -1172,6 +1190,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 - Cross-reference community mentions (same organizer appears in multiple events)
 - **Hierarchical taxonomy expansion** (sub-categories: "Cultural > Festivals > Diwali", "Professional > Automotive"; deeper filtering UI; inspired by Tracxn's 55K+ taxonomy nodes)
 - **Data API** for integrations (city tourism boards, German integration agencies, relocation companies, corporate HR onboarding)
+- **Optional sponsor portal** only after validated curated matching performance and clear operational controls
 
 ### Phase 5: Ecosystem Expansion
 
@@ -1194,7 +1213,7 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 | **Promoted listings**                  | Communities pay for higher visibility — only after we have meaningful organic traffic per city                         | Year 3 (C) |
 | **Event promotion**                    | Event organizers pay to promote events — same gating as promoted listings                                              | Year 3 (C) |
 | **Premium organizer tools**            | Multi-organizer analytics, deeper Pulse Score, audience export                                                         | Year 3 (C) |
-| **Sponsorship**                        | Indian brands sponsoring city pages or categories                                                                      | Year 3 (C) |
+| **Sponsorship**                        | Start with curated sponsor-event matching run by Ops/Partnerships; evolve to sponsor surfaces only after validation    | Year 2-3   |
 
 **What we explicitly will NOT do:**
 
@@ -1283,20 +1302,21 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 ### 16.1 Decisions made
 
-| #   | Decision                         | Resolution                                                                                                                                                                                           |
-| --- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Launch city**                  | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path                                                                         |
-| 2   | **Product name / domain**        | **indlokal.com** (production: `main` → indlokal.com; preview: `develop` → preview.indlokal.com)                                                                                                      |
-| 3   | **Authentication approach**      | **Magic-link, no passwords.** Browsing requires no auth. Admin (`PLATFORM_ADMIN`) and Organizer (`COMMUNITY_ADMIN`) sign in via magic link with 7-day sliding sessions. Member saves remain Phase 2. |
-| 4   | **Content language**             | English for MVP (lingua franca for Indian diaspora in Germany)                                                                                                                                       |
-| 5   | **Mobile approach**              | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                                                                                           |
-| 6   | **Email transport**              | Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev; send failures throw — see [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md)                                  |
-| 7   | **Database seeding**             | Three-tier pipeline (`bootstrap` / `directory` / `demo`); demo never runs in production — see [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md)                                              |
-| 8   | **Spec workflow**                | PRD/TDD pair (or ADR) under `docs/specs/` before non-trivial work; templates in `docs/specs/templates/`                                                                                              |
-| 9   | **Metro region boundary**        | **Include Stuttgart metro from day 1** — Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen all roll up into the Stuttgart feed                                                    |
-| 10  | **Historical event attribution** | Imported with linked community when the host is known; otherwise as standalone events with `source` tagged for provenance                                                                            |
-| 11  | **Funding sequence**             | **Grants-first → hybrid B2B → venture funding** (§13). Year 1 grant-funded as integration utility; Year 2 layers paid B2B surfaces; Year 2–3 raise pre-seed/seed for multi-city expansion            |
-| 12  | **Monetization stance for MVP**  | **Free for users, free for organizers.** No promoted listings, no ads, no data sales while operating on grants. Paid surfaces (§14.6) are B2B and start in Year 2                                    |
+| #   | Decision                                     | Resolution                                                                                                                                                                                           |
+| --- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | **Launch city**                              | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path                                                                         |
+| 2   | **Product name / domain**                    | **indlokal.com** (production: `main` → indlokal.com; preview: `develop` → preview.indlokal.com)                                                                                                      |
+| 3   | **Authentication approach**                  | **Magic-link, no passwords.** Browsing requires no auth. Admin (`PLATFORM_ADMIN`) and Organizer (`COMMUNITY_ADMIN`) sign in via magic link with 7-day sliding sessions. Member saves remain Phase 2. |
+| 4   | **Content language**                         | English for MVP (lingua franca for Indian diaspora in Germany)                                                                                                                                       |
+| 5   | **Mobile approach**                          | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                                                                                           |
+| 6   | **Email transport**                          | Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev; send failures throw — see [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md)                                  |
+| 7   | **Database seeding**                         | Three-tier pipeline (`bootstrap` / `directory` / `demo`); demo never runs in production — see [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md)                                              |
+| 8   | **Spec workflow**                            | PRD/TDD pair (or ADR) under `docs/specs/` before non-trivial work; templates in `docs/specs/templates/`                                                                                              |
+| 9   | **Metro region boundary**                    | **Include Stuttgart metro from day 1** — Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen all roll up into the Stuttgart feed                                                    |
+| 10  | **Historical event attribution**             | Imported with linked community when the host is known; otherwise as standalone events with `source` tagged for provenance                                                                            |
+| 11  | **Funding sequence**                         | **Grants-first → hybrid B2B → venture funding** (§13). Year 1 grant-funded as integration utility; Year 2 layers paid B2B surfaces; Year 2–3 raise pre-seed/seed for multi-city expansion            |
+| 12  | **Monetization stance for MVP**              | **Free for users, free for organizers.** No promoted listings, no ads, no data sales while operating on grants. Paid surfaces (§14.6) are B2B and start in Year 2                                    |
+| 13  | **Sponsorship + business listings sequence** | Phase 2: sponsorship intent capture + curated matching; Phase 3: curated business/business-leader listings; no open sponsor marketplace before Phase 4 evidence gates                                |
 
 ### 16.2 Decisions still needed
 
