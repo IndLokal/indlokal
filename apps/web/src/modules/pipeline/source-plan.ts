@@ -104,6 +104,10 @@ function prioritizeDbPinnedSources(strategies: PinnedStrategy[]): PinnedStrategy
 }
 
 function getDbPinnedBucketKey(strategy: PinnedStrategy): string {
+  if (strategy.hintCitySlug) {
+    return `city:${strategy.hintCitySlug.toLowerCase()}`;
+  }
+
   try {
     const parsed = new URL(strategy.url);
     const host = parsed.hostname.replace(/^www\./, '').toLowerCase();

@@ -294,6 +294,72 @@
       "scope": "REGION",
       "hintState": "Bavaria",
       "enabled": true
+    },
+    {
+      "id": "web-meetup-munich-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Munich — Group Discovery",
+      "url": "https://www.meetup.com/find/de--munich/",
+      "scope": "CITY",
+      "hintCitySlug": "munich",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-munich-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Munich — Events",
+      "url": "https://www.eventbrite.com/d/germany--munich/events/",
+      "scope": "CITY",
+      "hintCitySlug": "munich",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-frankfurt-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Frankfurt — Group Discovery",
+      "url": "https://www.meetup.com/find/de--frankfurt/",
+      "scope": "CITY",
+      "hintCitySlug": "frankfurt",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-frankfurt-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Frankfurt — Events",
+      "url": "https://www.eventbrite.com/d/germany--frankfurt/events/",
+      "scope": "CITY",
+      "hintCitySlug": "frankfurt",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-karlsruhe-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Karlsruhe — Group Discovery",
+      "url": "https://www.meetup.com/find/de--karlsruhe/",
+      "scope": "CITY",
+      "hintCitySlug": "karlsruhe",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-karlsruhe-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Karlsruhe — Events",
+      "url": "https://www.eventbrite.com/d/germany--karlsruhe/events/",
+      "scope": "CITY",
+      "hintCitySlug": "karlsruhe",
+      "enabled": true
     }
   ]
 }
