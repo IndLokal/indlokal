@@ -34,6 +34,7 @@ import { GET as resourcesGET } from '@/app/api/v1/cities/[slug]/resources/route'
 import { GET as savedEventsGET } from '@/app/api/v1/me/saves/events/route';
 import { GET as savedCommunitiesGET } from '@/app/api/v1/me/saves/communities/route';
 import { POST as reportPOST } from '@/app/api/v1/reports/route';
+import { invalidateResolver } from '@/modules/resources';
 
 // ─── Setup ─────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function makePOST(path: string, body: unknown, hdrs: Record<string, string>) {
 
 beforeEach(async () => {
   await cleanDb();
+  invalidateResolver();
   const city = await createCity(testDb, { slug: 'resources-city', name: 'ResourcesCity' });
   cityId = city.id;
   citySlug = city.slug;

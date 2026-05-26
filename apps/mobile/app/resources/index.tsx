@@ -16,8 +16,8 @@ import {
   View,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Stack } from 'expo-router';
-import { resources as r } from '@indlokal/shared';
+import { Link, Stack } from 'expo-router';
+import { resources as r, resourceCategories as rc } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
@@ -87,6 +87,15 @@ export default function ResourcesScreen() {
     return Array.from(map.entries());
   }, [items]);
 
+  const essentials = useMemo(
+    () =>
+      items
+        .filter((it) => it.isEssential)
+        .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0))
+        .slice(0, 5),
+    [items],
+  );
+
   async function open(url: string | null) {
     if (!url) return;
     const ok = await Linking.canOpenURL(url);
@@ -107,26 +116,48 @@ export default function ResourcesScreen() {
           <Text style={styles.empty}>No resources for this city yet.</Text>
         )}
 
-        {grouped.map(([type, list]) => (
-          <View key={type} style={styles.group}>
-            <Text style={styles.groupTitle}>{TYPE_LABEL[type] ?? type}</Text>
-            {list.map((item) => (
-              <Pressable key={item.id} onPress={() => open(item.url)} style={styles.card}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                {item.description && (
-                  <Text style={styles.cardMeta} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                )}
-                {item.url && (
-                  <Text style={styles.cardLink} numberOfLines={1}>
-                    Open link
-                  </Text>
-                )}
-              </Pressable>
-            ))}
-          </View>
-        ))}
+        {essentials.length > 0 && (
+          <Link href={'/resources/journey' as never} asChild>
+            <Pressable style={styles.journeyCard}>
+              <Text style={styles.journeyEyebrow}>NEWCOMER JOURNEY</Text>
+              <Text style={styles.journeyTitle}>Your first-30-day checklist</Text>
+              <Text style={styles.journeyMeta}>
+                {essentials.length} essential {essentials.length === 1 ? 'step' : 'steps'} for new
+                arrivals
+              </Text>
+              <Text style={styles.journeyCta}>Open checklist →</Text>
+            </Pressable>
+          </Link>
+        )}
+
+        {grouped.map(([type, list]) => {
+          const cat = rc.RESOURCE_CATEGORIES.find((c) => c.type === type);
+          const label = cat?.title ?? TYPE_LABEL[type] ?? type;
+          const icon = cat?.icon;
+          return (
+            <View key={type} style={styles.group}>
+              <Text style={styles.groupTitle}>
+                {icon ? `${icon}  ` : ''}
+                {label}
+              </Text>
+              {list.map((item) => (
+                <Pressable key={item.id} onPress={() => open(item.url)} style={styles.card}>
+                  <Text style={styles.cardTitle}>{item.title}</Text>
+                  {item.description && (
+                    <Text style={styles.cardMeta} numberOfLines={2}>
+                      {item.description}
+                    </Text>
+                  )}
+                  {item.url && (
+                    <Text style={styles.cardLink} numberOfLines={1}>
+                      Open link
+                    </Text>
+                  )}
+                </Pressable>
+              ))}
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,5 +187,33 @@ const styles = StyleSheet.create({
     color: palette.brand[600],
     marginTop: 6,
     fontWeight: '600',
+  },
+  journeyCard: {
+    backgroundColor: palette.brand[50],
+    borderColor: palette.brand[200],
+    borderWidth: 1,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: 4,
+  },
+  journeyEyebrow: {
+    fontSize: typography.small,
+    fontWeight: '700',
+    color: palette.brand[700],
+    letterSpacing: 0.5,
+  },
+  journeyTitle: {
+    fontSize: typography.h4,
+    fontWeight: '800',
+    color: palette.neutral.foreground,
+    marginTop: 2,
+  },
+  journeyMeta: { fontSize: typography.small, color: palette.neutral.muted },
+  journeyCta: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: palette.brand[700],
+    marginTop: 6,
   },
 });
