@@ -43,6 +43,13 @@
       "searchCenter": "Frankfurt, Germany",
       "state": "Hesse",
       "enabled": true
+    },
+    {
+      "id": "berlin",
+      "label": "Berlin",
+      "searchCenter": "Berlin, Germany",
+      "state": "Berlin",
+      "enabled": true
     }
   ],
   "strategies": [
@@ -80,6 +87,7 @@
       "contentScope": "official_portal",
       "label": "Consulate General of India Munich — Official Portal",
       "url": "https://www.cgimunich.gov.in/",
+      "scope": "CITY",
       "hintCitySlug": "munich",
       "enabled": true
     },
@@ -90,6 +98,7 @@
       "contentScope": "official_portal",
       "label": "Consulate General of India Frankfurt — Official Portal",
       "url": "https://cgifrankfurt.gov.in/",
+      "scope": "CITY",
       "hintCitySlug": "frankfurt",
       "enabled": true
     },
@@ -100,6 +109,51 @@
       "contentScope": "official_portal",
       "label": "Embassy of India Berlin — Official Portal",
       "url": "https://indianembassyberlin.gov.in/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-berlin-integration-beauftragte",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Berlin Senate Integration Commissioner — Official Portal",
+      "url": "https://www.berlin.de/lb/intmig/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-berlin-viz-migrationsbeirat",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "Berlin VIZ — Migrant Organisations and District Councils",
+      "url": "https://www.berlin.de/lb/intmig/service/vereine-und-verbaende/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-berlin-welcome-center",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Berlin Welcome Center — Official Expat Services Portal",
+      "url": "https://www.berlin.de/welcome/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-brandenburg-migs",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Brandenburg Integration Portal — Official State Integration Portal",
+      "url": "https://integration.brandenburg.de/",
+      "scope": "CITY",
       "hintCitySlug": "berlin",
       "enabled": true
     },
@@ -182,6 +236,8 @@
       "contentScope": "community_portal",
       "label": "DIZ Baden-Württemberg e.V.",
       "url": "https://diz-ev.de/bawue",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -200,6 +256,8 @@
       "contentScope": "directory_listing",
       "label": "Forum der Kulturen Stuttgart — Member Associations (160+ Vereine)",
       "url": "https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -209,6 +267,8 @@
       "contentScope": "directory_listing",
       "label": "House of Resources Stuttgart — Stadtteilkarte migrantischer Vereine",
       "url": "https://house-of-resources-stuttgart.de/stadtteilkarte-kontakt-zu-vereinen/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -218,6 +278,8 @@
       "contentScope": "official_portal",
       "label": "AMKA Frankfurt — Amt für multikulturelle Angelegenheiten (official city office)",
       "url": "https://www.amka.de/",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -227,6 +289,8 @@
       "contentScope": "directory_listing",
       "label": "AMKA Frankfurt — Registered Multicultural Associations Directory",
       "url": "https://www.amka.de/vereine",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -236,6 +300,8 @@
       "contentScope": "official_portal",
       "label": "Vielfalt bewegt Frankfurt — Official Diversity Portal",
       "url": "https://www.vielfalt-bewegt-frankfurt.de/",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -245,6 +311,8 @@
       "contentScope": "official_portal",
       "label": "Baden-Württemberg Integrationsministerium — Migrant Organisations",
       "url": "https://sozialministerium.baden-wuerttemberg.de/de/integration/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -254,6 +322,8 @@
       "contentScope": "directory_listing",
       "label": "MORGEN München — Migrant Organisation Member Associations",
       "url": "https://morgen-muenchen.de/thema/mitgliedervereine/",
+      "scope": "REGION",
+      "hintState": "Bavaria",
       "enabled": true
     }
   ]

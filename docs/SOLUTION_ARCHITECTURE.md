@@ -883,7 +883,7 @@ The platform is only as good as its content density. A city with 3 communities a
 | **Institutional source import**        | Import consular event schedules (CGI Munich), embassy cultural calendars, VFS service info               | MVP                          |
 | **Historical event import**            | Import past events from research (IndoEuropean.eu data, community websites) to populate activity history | MVP                          |
 | **AI-powered source monitoring**       | Automated pipeline: scrape public sources → LLM extraction → admin review queue (see §10.5)              | MVP (basic) / Phase 2 (full) |
-| **Community self-submission**          | Public submission form with moderation queue                                                             | Phase 2                      |
+| **Community self-submission**          | Public submission form with moderation queue                                                             | MVP (shipped)                |
 | **Event import from external sources** | Import pipeline with adapters for Eventbrite, Meetup APIs                                                | Phase 2                      |
 | **AI enrichment & classification**     | LLM-powered auto-tagging, description generation, translation (DE/HI → EN)                               | Phase 2                      |
 | **Verification / claim flows**         | Ownership verification (email, admin link, etc.)                                                         | Phase 2                      |
@@ -906,6 +906,12 @@ The platform is only as good as its content density. A city with 3 communities a
 ```
 
 **Key design principle: AI does the heavy lifting, humans do quality control.** The pipeline automates source monitoring, content extraction, classification, and deduplication. Admin effort reduces from "research + write + classify + publish" (~30 min/item) to "review + approve" (~1-2 min/item).
+
+**Implementation status (May 2026):**
+
+- Runtime orchestration supports scoped execution by `region` and/or `city` (CLI and cron API).
+- Pinned strategy metadata supports `scope` (`CITY` / `REGION` / `GENERIC`) with `hintCitySlug` / `hintState`, and scoped runs exclude unrelated generic/cross-region pinned URLs.
+- Production scheduling is GitHub Actions based (not Vercel Cron), with sharded pipeline calls to `/api/cron/pipeline?region=...` for `berlin`, `baden-wuerttemberg`, `bavaria`, and `hesse`.
 
 ### 10.4 AI-Powered Content Pipeline (detailed)
 
@@ -1031,13 +1037,13 @@ Beyond new content detection, AI helps keep existing content fresh:
 
 #### 10.4.6 Technology stack for AI pipeline
 
-| Component            | Recommendation                                                                                                                                                                           | Rationale                                                                                                                                                                                                 |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Scheduler**        | **Vercel Cron** for in-monorepo schedules; manual `pnpm` scripts as the local-dev fallback. Heavy / long-running jobs (e.g., bulk Playwright runs) move to GitHub Actions on a schedule. | We host on Vercel anyway, so Vercel Cron has zero new infrastructure; reserve GitHub Actions for jobs that exceed Vercel's serverless time limits. (Promote this to an ADR if/when we change schedulers.) |
-| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML                                                                                                               | Handles modern SPAs; Playwright runs in Node                                                                                                                                                              |
-| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                                                                                                                                     | Best cost/quality ratio; structured output mode for reliable JSON                                                                                                                                         |
-| **Queue storage**    | PostgreSQL table (`content_review_queue`)                                                                                                                                                | No new infrastructure; works with existing Prisma setup                                                                                                                                                   |
-| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                                                                                                                               | Reduce API costs by resizing large images                                                                                                                                                                 |
+| Component            | Recommendation                                                                                                                                   | Rationale                                                                                                                                                |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Scheduler**        | **GitHub Actions cron** for production scheduled jobs hitting `/api/cron/*` with `CRON_SECRET`; manual `pnpm` scripts remain local-dev fallback. | Matches current deployment operations and keeps scheduling/versioning with infra-as-code in repo while preserving low run-cost and easy manual dispatch. |
+| **Scraping**         | Playwright (headless browser) for JS-rendered pages; fetch for simple HTML                                                                       | Handles modern SPAs; Playwright runs in Node                                                                                                             |
+| **LLM API**          | OpenAI API (GPT-4o-mini for text, GPT-4o for images)                                                                                             | Best cost/quality ratio; structured output mode for reliable JSON                                                                                        |
+| **Queue storage**    | PostgreSQL table (`PipelineItem` / `pipeline_items`)                                                                                             | No new infrastructure; works with existing Prisma setup and preserves provenance + review lifecycle                                                      |
+| **Image processing** | Sharp (Node.js) for image optimization before LLM analysis                                                                                       | Reduce API costs by resizing large images                                                                                                                |
 
 **Total monthly cost estimate for Stuttgart:**
 
@@ -1153,8 +1159,8 @@ Resend (prod) + Mailpit (dev)      Same                         Same + retry/que
 Three-tier seed pipeline           Same                         Same
  (bootstrap/directory/demo;
   demo gated off in prod)
-Vercel Cron + manual pnpm          + Analytics warehouse        + ML feature store
- scripts for ingestion
+GitHub Actions cron + manual       + Analytics warehouse        + ML feature store
+pnpm scripts for ingestion
 Expo EAS builds                                                 + Graph layer
 ```
 
@@ -1402,6 +1408,6 @@ The following are explicitly **out of scope** for the initial architecture and s
 
 12. **Visitor surface stays auth-free; operator surfaces stay authenticated.** The boundary between the two is enforced at the route layer, not by hiding UI. The operator surface (admin + organizer) is treated as a real product, not a back office.
 
-13. **Cost discipline matches the funding model.** Infra choices (Vercel, managed Postgres, Resend, Vercel Cron, no dedicated cluster, no always-on workers) keep monthly run-cost grant-fundable in Year 1 and B2B-margin-friendly in Year 2. No architectural decision is allowed to push us into VC-required burn before Phase C of `PRODUCT_DOCUMENT.md` §15.
+13. **Cost discipline matches the funding model.** Infra choices (Vercel, managed Postgres, Resend, GitHub Actions cron, no dedicated cluster, no always-on workers) keep monthly run-cost grant-fundable in Year 1 and B2B-margin-friendly in Year 2. No architectural decision is allowed to push us into VC-required burn before Phase C of `PRODUCT_DOCUMENT.md` §15.
 
 14. **AI is a product capability, not a back-office tool.** The AI content pipeline (§10.4) is what makes the freshness promise affordable for a small team — it must be built and operated as a first-class part of the product, with a real review queue, real provenance (§6.12 `PipelineItem`), and a hard rule that nothing publishes without human approval.

@@ -70,8 +70,12 @@ export type SearchStrategy = {
       /** Known URL — a specific high-value page (CGI Munich, IndoEuropean, Facebook page) */
       kind: 'pinned_url';
       url: string;
+      /** Scope hint for pinned URL applicability during sharded runs. */
+      scope?: 'GENERIC' | 'CITY' | 'REGION';
       /** Optional: if we know the city in advance (e.g. CGI Munich serves all BaWü) */
       hintCitySlug?: string;
+      /** Optional: if URL is region-level (state-level) rather than city-specific. */
+      hintState?: string;
     }
 );
 
@@ -84,6 +88,8 @@ export type SearchRegion = {
   label: string;
   /** Center point for radius-based API searches (e.g. "Stuttgart, Germany") */
   searchCenter: string;
+  /** Optional state label used for region-scoped source filtering. */
+  state?: string;
   /** City slugs this region covers — used to match LLM city output to DB */
   citySlugs: string[];
   enabled: boolean;

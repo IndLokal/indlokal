@@ -49,6 +49,36 @@ import type {
 // Re-export PipelineRunResult type from types.ts
 export type { PipelineRunResult } from './types';
 
+type Region = SearchRegion;
+
+export type PipelineRunScope = {
+  citySlugs?: string[];
+  regionIds?: string[];
+};
+
+function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
+  if (!scope) return regions;
+
+  const regionIds = new Set((scope.regionIds ?? []).map((id) => id.trim()).filter(Boolean));
+  const citySlugs = new Set((scope.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+
+  if (regionIds.size === 0 && citySlugs.size === 0) return regions;
+
+  return regions
+    .filter((region) => {
+      const regionMatch = regionIds.size > 0 && regionIds.has(region.id);
+      const cityMatch = citySlugs.size > 0 && region.citySlugs.some((slug) => citySlugs.has(slug));
+      return regionMatch || cityMatch;
+    })
+    .map((region) => ({
+      ...region,
+      citySlugs:
+        citySlugs.size > 0
+          ? region.citySlugs.filter((slug) => citySlugs.has(slug))
+          : region.citySlugs,
+    }))
+    .filter((region) => region.citySlugs.length > 0);
+}
 export function isLikelyStaleEventPage(item: RawContent): boolean {
   const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`;
   const lowerPreview = preview.toLowerCase();
@@ -90,7 +120,10 @@ async function timePipelineStage<T>(
  * Run the full known-source-first pipeline.
  * No arguments needed — reads pipeline source config from the database.
  */
-export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResult> {
+export async function runPipeline(
+  triggeredBy = 'cron',
+  scope?: PipelineRunScope,
+): Promise<PipelineRunResult> {
   const start = Date.now();
   resetLlmStats();
 
@@ -111,9 +144,29 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
     stageTimings: {},
   };
 
-  const regions = await getRuntimeEnabledRegions();
+  const baseRegions = await getRuntimeEnabledRegions();
+  const regions = filterRegionsByScope(baseRegions, scope);
+  const scopedCitySlugs =
+    scope && (scope.citySlugs?.length || scope.regionIds?.length)
+      ? Array.from(new Set(regions.flatMap((region) => region.citySlugs)))
+      : undefined;
+  const scopedStates =
+    scope && (scope.citySlugs?.length || scope.regionIds?.length)
+      ? Array.from(
+          new Set(
+            regions
+              .map((region) => region.state)
+              .filter((state): state is string => Boolean(state)),
+          ),
+        )
+      : undefined;
+  if (regions.length === 0) {
+    throw new Error(
+      '[Pipeline] No regions matched the requested scope. Check --region/--city values or cron query params.',
+    );
+  }
   const uniqueRaw = await timePipelineStage(result, 'fetch', () =>
-    fetchAllSources(regions, result, triggeredBy),
+    fetchAllSources(regions, result, triggeredBy, scopedCitySlugs, scopedStates),
   );
   const candidateRaw = await timePipelineStage(result, 'prefilter', async () => {
     const currentItems = prefilterLikelyCurrentItems(uniqueRaw);
@@ -152,9 +205,17 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
 
   // Persist run history for observability
   try {
+    const scopeRegionIds = Array.from(
+      new Set((scope?.regionIds ?? []).map((id) => id.trim()).filter(Boolean)),
+    );
+    const scopeCitySlugs = Array.from(
+      new Set((scope?.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean)),
+    );
     await db.pipelineRun.create({
       data: {
         triggeredBy,
+        scopeRegionIds,
+        scopeCitySlugs,
         regionsScanned: result.regionsScanned,
         sourcesProcessed: result.sourcesProcessed,
         itemsFetched: result.itemsFetched,
@@ -183,27 +244,48 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
 
 // ─── Phase 1: Fetch ────────────────────────────────────
 
-type Region = SearchRegion;
-
 async function fetchAllSources(
   regions: Region[],
   result: PipelineRunResult,
   triggeredBy: string,
+  scopedCitySlugs?: string[],
+  scopedStates?: string[],
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
   const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy);
+  const scopedCitySet = new Set((scopedCitySlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+  const scopedStateSet = new Set((scopedStates ?? []).map((state) => state.trim()).filter(Boolean));
+  const pinnedStrategies =
+    scopedCitySet.size > 0 || scopedStateSet.size > 0
+      ? sourcePlan.pinnedStrategies.filter((strategy) => {
+          const scope =
+            strategy.scope ??
+            (strategy.hintCitySlug ? 'CITY' : strategy.hintState ? 'REGION' : 'GENERIC');
+          if (scope === 'CITY')
+            return Boolean(strategy.hintCitySlug && scopedCitySet.has(strategy.hintCitySlug));
+          if (scope === 'REGION')
+            return Boolean(strategy.hintState && scopedStateSet.has(strategy.hintState));
+          return false;
+        })
+      : sourcePlan.pinnedStrategies;
+
+  if (scopedCitySet.size > 0 || scopedStateSet.size > 0) {
+    console.log(
+      `[Pipeline] Scoped run: pinned sources limited to ${pinnedStrategies.length}/${sourcePlan.pinnedStrategies.length} (cities=${[...scopedCitySet].join(', ') || 'none'}; states=${[...scopedStateSet].join(', ') || 'none'})`,
+    );
+  }
 
   for (const note of sourcePlan.notes) {
     console.log(`[Pipeline] Plan: ${note}`);
   }
 
   console.log(
-    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${sourcePlan.pinnedStrategies.length} total`,
+    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${pinnedStrategies.length} total`,
   );
 
   // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
-    sourcePlan.pinnedStrategies.map(async (strategy) => {
+    pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
@@ -720,7 +802,7 @@ export function normalizeEventTitleForDedup(value: string): string {
   return value
     .toLowerCase()
     .replace(/\b(20\d{2})\b/g, ' ')
-    .replace(/\b(stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
+    .replace(/\b(berlin|stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');

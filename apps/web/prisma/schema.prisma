@@ -936,6 +936,8 @@ model PipelineItem {
 model PipelineRun {
   id                    String   @id @default(cuid())
   triggeredBy           String   @default("cron") @map("triggered_by")
+  scopeRegionIds        String[] @default([]) @map("scope_region_ids")
+  scopeCitySlugs        String[] @default([]) @map("scope_city_slugs")
   regionsScanned        Int      @map("regions_scanned")
   sourcesProcessed      Int      @map("sources_processed")
   itemsFetched          Int      @map("items_fetched")
