@@ -1,5 +1,5 @@
 /**
- * Admin Dashboard — internal content management.
+ * Admin Dashboard - internal content management.
  *
  * Route: /admin/
  *
@@ -57,7 +57,7 @@ export default function AdminDashboardPage() {
         />
         <DashboardCard
           title="Audit Log"
-          description="Who changed what, when — full write history across all entities"
+          description="Who changed what, when - full write history across all entities"
           href="/admin/audit"
         />
       </div>

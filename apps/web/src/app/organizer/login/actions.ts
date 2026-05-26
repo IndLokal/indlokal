@@ -30,7 +30,7 @@ export async function requestMagicLink(
     return { success: false, error: 'Please enter a valid email address.' };
   }
 
-  // IP + global checks before any DB work — caps abuse from a single
+  // IP + global checks before any DB work - caps abuse from a single
   // source and bounds total Resend spend across all callers.
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   const ipRl = checkRateLimit(magicLinkIpLimiter, ip);

@@ -42,7 +42,7 @@ export default function HomePage() {
       </header>
 
       <main className="flex-1">
-        {/* Hero — indigo with single saffron accent */}
+        {/* Hero - indigo with single saffron accent */}
         <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pb-20 pt-16 text-center sm:pb-32 sm:pt-28">
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <div className="bg-brand-500/20 absolute -right-40 -top-40 hidden h-[500px] w-[500px] rounded-full blur-3xl sm:block" />
@@ -63,7 +63,7 @@ export default function HomePage() {
             </h1>
             <p className="text-brand-200/90 mx-auto mt-6 max-w-xl text-lg leading-relaxed">
               The communities active in your city, the events worth knowing about this week, and the
-              resources every Indian in Germany ends up needing — all in one place.
+              resources every Indian in Germany ends up needing - all in one place.
             </p>
 
             <div className="mx-auto mt-10 max-w-md">
@@ -167,7 +167,7 @@ export default function HomePage() {
               </h2>
               <p className="text-muted mx-auto mt-3 max-w-xl">
                 Everything in {siteConfig.name} ladders up to one of three pillars. Equal weight,
-                ranked by what&apos;s actually alive — not who paid for a listing.
+                ranked by what&apos;s actually alive - not who paid for a listing.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-3">
@@ -180,12 +180,12 @@ export default function HomePage() {
                 {
                   icon: '📅',
                   title: 'Events',
-                  desc: "What's happening for Indians this week — from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
+                  desc: "What's happening for Indians this week - from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
                 },
                 {
                   icon: '🧭',
                   title: 'Resources',
-                  desc: 'Plain-English guides to Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung — plus Indian grocers, English-friendly doctors and CGI consular dates.',
+                  desc: 'Plain-English guides to Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung - plus Indian grocers, English-friendly doctors and CGI consular dates.',
                 },
               ].map((item) => (
                 <div

@@ -12,7 +12,7 @@ const WEIGHTS = {
   trust: 0.2,
 } as const;
 
-/** Pulse Score breakdown — stored in community.scoreBreakdown JSONB */
+/** Pulse Score breakdown - stored in community.scoreBreakdown JSONB */
 export type PulseScoreBreakdown = {
   pulseScore: number;
   activity: {
@@ -52,10 +52,10 @@ export function computeActivityBreakdown(input: {
   const { eventsLast90Days, lastActivityAt, viewsLast30Days = 0 } = input;
   const now = new Date();
 
-  // Event count component (0-50 points) — logarithmic to avoid gaming
+  // Event count component (0-50 points) - logarithmic to avoid gaming
   const eventFrequency = Math.round(Math.min(50, Math.log2(eventsLast90Days + 1) * 15) * 100) / 100;
 
-  // Recency component (0-40 points) — decays over STALE_THRESHOLD_DAYS
+  // Recency component (0-40 points) - decays over STALE_THRESHOLD_DAYS
   let recency = 0;
   if (lastActivityAt) {
     const daysAgo = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
@@ -63,7 +63,7 @@ export function computeActivityBreakdown(input: {
       Math.round(Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS)) * 100) / 100;
   }
 
-  // Engagement component (0-10 points) — view count signal
+  // Engagement component (0-10 points) - view count signal
   const engagement = Math.round(Math.min(10, Math.log2(viewsLast30Days + 1) * 3) * 100) / 100;
 
   const total = Math.round((eventFrequency + recency + engagement) * 100) / 100;
@@ -382,7 +382,7 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
     };
 
     // Auto-demote DORMANT communities (180d+ no activity) to INACTIVE.
-    // Grace period: never demote a community created less than 90 days ago —
+    // Grace period: never demote a community created less than 90 days ago -
     // freshly seeded or newly approved listings need time to accumulate activity.
     const isNew = now.getTime() - c.createdAt.getTime() < 90 * 24 * 60 * 60 * 1000;
     const shouldDemote = freshnessState === 'DORMANT' && c.status === 'ACTIVE' && !isNew;

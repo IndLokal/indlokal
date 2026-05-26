@@ -1,5 +1,5 @@
 /**
- * Bootstrap seed — REQUIRED reference data only.
+ * Bootstrap seed - REQUIRED reference data only.
  *
  * Idempotent. Safe to run on every deploy. Reads from the single source of
  * truth at src/lib/config/cities.ts so there is no duplicate city/category
@@ -49,7 +49,7 @@ async function upsertCity(c: CitySeed, metroIdBySlug: Map<string, string>) {
     select: { id: true },
   });
 
-  // Structural fields — safe to reconcile on every bootstrap run. These are
+  // Structural fields - safe to reconcile on every bootstrap run. These are
   // identity / wiring fields; the TS config is authoritative for them.
   const structural = {
     name: c.name,
@@ -63,7 +63,7 @@ async function upsertCity(c: CitySeed, metroIdBySlug: Map<string, string>) {
     timezone: c.timezone ?? 'Europe/Berlin',
   };
 
-  // Editorial fields — admins may tweak these via /admin/data/cities. We only
+  // Editorial fields - admins may tweak these via /admin/data/cities. We only
   // set them on initial create, then leave them alone so bootstrap never
   // clobbers admin edits.
   const editorialOnCreate = {
@@ -157,7 +157,7 @@ export async function runBootstrap(): Promise<BootstrapResult> {
   // 5) Pipeline source config defaults (canonical keyword/region/strategy rows).
   result.pipelineSourceConfig = await runPipelineSourceConfigBootstrap(prisma);
 
-  // 6) Platform admin user — login uses magic-link to this email address.
+  // 6) Platform admin user - login uses magic-link to this email address.
   const adminEmail = (process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
@@ -178,7 +178,7 @@ export async function runBootstrap(): Promise<BootstrapResult> {
 }
 
 async function main() {
-  console.log('🚀 IndLokal bootstrap — required reference data only');
+  console.log('🚀 IndLokal bootstrap - required reference data only');
   const started = Date.now();
   const r = await runBootstrap();
   const ms = Date.now() - started;

@@ -1,5 +1,5 @@
 /**
- * PATCH /api/v1/me/onboarding — PRD-0019 / TDD-0019.
+ * PATCH /api/v1/me/onboarding - PRD-0019 / TDD-0019.
  *
  * Persists the user's city, persona segments, preferred languages, and
  * optional display name collected during the mobile onboarding flow.

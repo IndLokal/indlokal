@@ -2,7 +2,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { AmbassadorSubmitForm } from './SubmitForm';
 
-export const metadata = { title: 'Submit — Ambassador' };
+export const metadata = { title: 'Submit - Ambassador' };
 
 export default async function AmbassadorSubmitPage() {
   const user = await requireCan('ambassador.submit');

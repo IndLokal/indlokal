@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/events/:slug and /api/v1/track.
+ * Integration tests - /api/v1/events/:slug and /api/v1/track.
  *
- * @db — requires the test database. Covers TDD-0005 §3 surface end-to-end.
+ * @db - requires the test database. Covers TDD-0005 §3 surface end-to-end.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';

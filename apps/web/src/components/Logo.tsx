@@ -3,7 +3,7 @@ import type { SVGProps } from 'react';
 /**
  * IndLokal Pulse mark.
  *
- * Bicolour pulse line on an indigo tile — the cream half rises from the local
+ * Bicolour pulse line on an indigo tile - the cream half rises from the local
  * German context on the left, the saffron half descends with Indian community
  * warmth on the right; they meet at the peak (the moment of discovery).
  *

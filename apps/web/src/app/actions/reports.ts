@@ -95,7 +95,7 @@ export async function suggestCommunity(
     city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
     if (!city) return { success: false, error: 'City not found.' };
 
-    // Dedup check — look for existing communities with similar names in this city
+    // Dedup check - look for existing communities with similar names in this city
     const existing = await db.community.findMany({
       where: { cityId: city.id, status: { not: 'INACTIVE' } },
       select: { id: true, name: true, slug: true },
@@ -126,7 +126,7 @@ export async function suggestCommunity(
     return { success: false, error: 'Failed to submit suggestion. Please try again.' };
   }
 
-  // Also seed the AI pipeline — the LLM can enrich this suggestion
+  // Also seed the AI pipeline - the LLM can enrich this suggestion
   // with any online info it finds (events, social links, descriptions).
   // This is how WhatsApp-only communities enter the pipeline.
   await db.pipelineItem.create({

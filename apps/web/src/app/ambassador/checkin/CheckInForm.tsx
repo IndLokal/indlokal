@@ -28,7 +28,7 @@ export function CheckInForm({ eventId }: { eventId: string }) {
           Photo evidence (optional)
         </label>
         <p className="text-muted mb-2 text-xs">
-          Upload a photo to support the attendance signal. Coming soon — direct upload via
+          Upload a photo to support the attendance signal. Coming soon - direct upload via
           pre-signed URL.
         </p>
         <input

@@ -58,7 +58,7 @@ def add_title(doc: Document, title: str, subtitle: str) -> None:
     # decorative rule
     rule = doc.add_paragraph()
     rule.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    r = rule.add_run("— ★ —")
+    r = rule.add_run("- ★ -")
     r.font.color.rgb = ACCENT
     r.font.size = Pt(14)
     doc.add_paragraph()
@@ -150,7 +150,7 @@ def build() -> None:
         "Every year the European Union and its member states hand out tens of "
         "billions of euros in grants. That money funds research labs, climate "
         "startups, civic tech, films, farms, and small businesses you have "
-        "never heard of. Yet most people — including most founders — have "
+        "never heard of. Yet most people - including most founders - have "
         "no idea where to start. The acronyms are intimidating (Horizon, EIC, "
         "EIT, ESF+, ERDF, CEF, LIFE…), the websites read like tax law, and "
         "the application portals feel like a portal to 2003.",
@@ -177,8 +177,8 @@ def build() -> None:
         doc,
         "A grant is money you do not have to pay back, given to you so that "
         "you carry out a specific project the funder cares about. That last "
-        "part matters. Grants are not gifts and they are not investments — "
-        "they are co-financed contracts. The EU pays a share (often 50–100%) "
+        "part matters. Grants are not gifts and they are not investments - "
+        "they are co-financed contracts. The EU pays a share (often 50-100%) "
         "of the eligible costs of a project that advances an EU policy goal: "
         "the green transition, digital sovereignty, health, defence, "
         "cohesion between regions, research excellence, and so on.",
@@ -196,7 +196,7 @@ def build() -> None:
     )
     add_p(
         doc,
-        "EU grants are 'non-dilutive' — they do not take a slice of your "
+        "EU grants are 'non-dilutive' - they do not take a slice of your "
         "company. That is their superpower. The trade-off is paperwork, "
         "timelines measured in months, and reporting obligations after "
         "you win.",
@@ -211,15 +211,15 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "EU level — the European Commission and its executive agencies "
+            "EU level - the European Commission and its executive agencies "
             "(CINEA, HaDEA, EISMEA, ERCEA, REA) design and run pan-European "
             "programmes such as Horizon Europe, Digital Europe, the EIC and "
             "Creative Europe.",
-            "National level — each member state runs its own ministries and "
+            "National level - each member state runs its own ministries and "
             "agencies (e.g. BMBF/Projektträger in Germany, Bpifrance in "
             "France, Enterprise Ireland) that channel both EU and national "
             "money.",
-            "Regional / local level — managing authorities for the "
+            "Regional / local level - managing authorities for the "
             "structural funds (ERDF, ESF+, Just Transition Fund) sit in "
             "regions and cities. This is where the bulk of cohesion money "
             "actually lands.",
@@ -237,7 +237,7 @@ def build() -> None:
     # ---- Major programmes
     add_h(doc, "4. The programmes you should actually know", 1)
 
-    add_h(doc, "Horizon Europe (2021–2027, ~€95.5B)", 2)
+    add_h(doc, "Horizon Europe (2021-2027, ~€95.5B)", 2)
     add_p(
         doc,
         "The flagship research and innovation programme. Three pillars:",
@@ -245,14 +245,14 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "Pillar 1 — Excellent Science: ERC grants for individual "
+            "Pillar 1 - Excellent Science: ERC grants for individual "
             "researchers, Marie Skłodowska-Curie fellowships, research "
             "infrastructures.",
-            "Pillar 2 — Global Challenges & Industrial Competitiveness: "
+            "Pillar 2 - Global Challenges & Industrial Competitiveness: "
             "big collaborative projects in health, climate, digital, food, "
-            "security. Usually 3–5 partners from different countries.",
-            "Pillar 3 — Innovative Europe: home of the European Innovation "
-            "Council (EIC) — the part most startups care about.",
+            "security. Usually 3-5 partners from different countries.",
+            "Pillar 3 - Innovative Europe: home of the European Innovation "
+            "Council (EIC) - the part most startups care about.",
         ],
     )
 
@@ -265,11 +265,11 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "EIC Pathfinder — early, high-risk research (up to €3–4M, "
+            "EIC Pathfinder - early, high-risk research (up to €3-4M, "
             "usually consortia).",
-            "EIC Transition — turning a lab result into a prototype "
+            "EIC Transition - turning a lab result into a prototype "
             "(up to €2.5M).",
-            "EIC Accelerator — single-company funding: up to €2.5M grant "
+            "EIC Accelerator - single-company funding: up to €2.5M grant "
             "plus up to €15M equity from the EIC Fund. The crown jewel and "
             "the hardest to win (success rates around 5%).",
         ],
@@ -287,7 +287,7 @@ def build() -> None:
     add_h(doc, "Cohesion funds: ERDF, ESF+, Just Transition Fund", 2)
     add_p(
         doc,
-        "Quietly the biggest pot of all (~€392B for 2021–2027). Managed "
+        "Quietly the biggest pot of all (~€392B for 2021-2027). Managed "
         "by regions, not Brussels. ERDF funds infrastructure and SMEs, "
         "ESF+ funds people (training, social inclusion, employment), and "
         "the Just Transition Fund supports regions moving away from "
@@ -299,12 +299,12 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "LIFE — environment and climate action.",
-            "Creative Europe — culture, media, audiovisual.",
-            "Erasmus+ — education, training, youth, sport.",
-            "CEF (Connecting Europe Facility) — transport, energy and "
+            "LIFE - environment and climate action.",
+            "Creative Europe - culture, media, audiovisual.",
+            "Erasmus+ - education, training, youth, sport.",
+            "CEF (Connecting Europe Facility) - transport, energy and "
             "digital infrastructure.",
-            "Interreg — cross-border cooperation projects.",
+            "Interreg - cross-border cooperation projects.",
             "EU4Health, EDF (defence), CAP (agriculture).",
         ],
     )
@@ -321,19 +321,19 @@ def build() -> None:
     add_numbered(
         doc,
         [
-            "Topic ID and title — the unique handle (e.g. HORIZON-EIC-"
+            "Topic ID and title - the unique handle (e.g. HORIZON-EIC-"
             "2025-ACCELERATOROPEN-01). Bookmark it.",
-            "Type of action — RIA (research), IA (innovation), CSA "
+            "Type of action - RIA (research), IA (innovation), CSA "
             "(coordination), Lump Sum, etc. Determines funding rate.",
-            "Expected outcomes & scope — what the Commission wants the "
+            "Expected outcomes & scope - what the Commission wants the "
             "world to look like after the project. Your proposal must "
             "speak to these in their language.",
-            "Eligibility — who can apply, from where, alone or in "
+            "Eligibility - who can apply, from where, alone or in "
             "consortium, minimum number of partners.",
-            "Budget and funding rate — total call budget, indicative "
+            "Budget and funding rate - total call budget, indicative "
             "project size, share the EU pays.",
-            "Deadlines — single-stage, two-stage, or rolling.",
-            "Evaluation criteria — almost always Excellence, Impact, and "
+            "Deadlines - single-stage, two-stage, or rolling.",
+            "Evaluation criteria - almost always Excellence, Impact, and "
             "Implementation, each scored out of 5.",
         ],
     )
@@ -341,7 +341,7 @@ def build() -> None:
         doc,
         "Insider tip",
         "The 'Expected Outcomes' section is the brief. If your project "
-        "does not naturally produce those outcomes, do not contort it — "
+        "does not naturally produce those outcomes, do not contort it - "
         "find a different call. Forcing a fit is the #1 reason proposals "
         "fail.",
     )
@@ -352,7 +352,7 @@ def build() -> None:
         doc,
         "Most EU programmes require you to be legally established in an "
         "EU member state or an 'associated country' (Norway, Iceland, "
-        "Israel, the UK for parts of Horizon, Ukraine, and others — the "
+        "Israel, the UK for parts of Horizon, Ukraine, and others - the "
         "list shifts). Specific rules vary, but the common gates are:",
     )
     add_bullets(
@@ -381,7 +381,7 @@ def build() -> None:
             "them.",
             "Register your organisation. Get a PIC, upload statutes, "
             "financial statements, VAT, etc. Do this weeks before the "
-            "deadline — validation can take time.",
+            "deadline - validation can take time.",
             "Build the consortium (if needed). Many calls require 3+ "
             "partners from 3+ countries. Use partner-search tools, "
             "national contact points (NCPs), and existing networks.",
@@ -392,14 +392,14 @@ def build() -> None:
             "If they cannot summarise your impact in one sentence, "
             "neither will the evaluator.",
             "Submit before the deadline. The portal closes at 17:00 "
-            "Brussels time, sharp. Submit at least a day early — the "
+            "Brussels time, sharp. Submit at least a day early - the "
             "portal famously melts in the final hour.",
             "Evaluation. Independent expert evaluators score you on "
             "Excellence, Impact, Implementation. You get an Evaluation "
-            "Summary Report (ESR) — read it carefully even if you win.",
+            "Summary Report (ESR) - read it carefully even if you win.",
             "Grant Agreement Preparation (GAP). If selected, you "
             "negotiate the contract, budget, and start date. This takes "
-            "2–6 months.",
+            "2-6 months.",
             "Implementation and reporting. Periodic reports, financial "
             "statements, audits. Keep clean timesheets from day one.",
         ],
@@ -415,16 +415,16 @@ def build() -> None:
     add_bullets(
         doc,
         [
-            "Personnel — salaries based on actual hours worked on the "
+            "Personnel - salaries based on actual hours worked on the "
             "project. Hence the timesheet obsession.",
-            "Subcontracting — limited; the EU prefers you do the work "
+            "Subcontracting - limited; the EU prefers you do the work "
             "yourself.",
-            "Travel & subsistence — capped per diems.",
-            "Equipment — usually only the depreciation during the "
+            "Travel & subsistence - capped per diems.",
+            "Equipment - usually only the depreciation during the "
             "project, not the full purchase price.",
-            "Other goods, works and services — consumables, software, "
+            "Other goods, works and services - consumables, software, "
             "dissemination, audits.",
-            "Indirect costs — a flat 25% on top of direct costs in most "
+            "Indirect costs - a flat 25% on top of direct costs in most "
             "Horizon actions.",
         ],
     )
@@ -432,7 +432,7 @@ def build() -> None:
         doc,
         "Funding rates: 100% for research actions and most non-profits; "
         "70% for innovation actions when you are a for-profit company "
-        "(100% if non-profit). Lump-sum grants are increasingly common — "
+        "(100% if non-profit). Lump-sum grants are increasingly common - "
         "you get a fixed amount per work package on completion, no "
         "timesheets.",
     )
@@ -442,7 +442,7 @@ def build() -> None:
         "You typically receive a 'pre-financing' payment (often ~40%) "
         "after signing, then interim payments after each reporting "
         "period, then a final payment after the project ends. Plan for "
-        "12–18 months of working capital. Many startups die of "
+        "12-18 months of working capital. Many startups die of "
         "cash-flow, not rejection.",
     )
 
@@ -469,29 +469,29 @@ def build() -> None:
     )
 
     # ---- Help
-    add_h(doc, "10. Where to get help — for free", 1)
+    add_h(doc, "10. Where to get help - for free", 1)
     add_bullets(
         doc,
         [
-            "National Contact Points (NCPs) — every country has one per "
+            "National Contact Points (NCPs) - every country has one per "
             "programme. They review draft proposals, host info days, and "
             "the service is free.",
-            "Enterprise Europe Network (EEN) — local advisors for SMEs.",
-            "European Digital Innovation Hubs (EDIHs) — regional "
+            "Enterprise Europe Network (EEN) - local advisors for SMEs.",
+            "European Digital Innovation Hubs (EDIHs) - regional "
             "support for digital transformation projects.",
             "EIC Community platform and the Funding & Tenders Portal "
             "partner-search.",
-            "Your regional managing authority — for ERDF / ESF+ money "
+            "Your regional managing authority - for ERDF / ESF+ money "
             "this is the only door.",
-            "Universities and research organisations — they have grant "
+            "Universities and research organisations - they have grant "
             "offices that have done this hundreds of times.",
         ],
     )
     add_p(
         doc,
         "Paid consultants exist and can be excellent, but fees range "
-        "from a few thousand euros to 10–15% success fees. Talk to NCPs "
-        "first — you may not need one.",
+        "from a few thousand euros to 10-15% success fees. Talk to NCPs "
+        "first - you may not need one.",
     )
 
     # ---- Realism
@@ -500,14 +500,14 @@ def build() -> None:
         doc,
         [
             "Success rates are low. EIC Accelerator: ~5%. Horizon "
-            "collaborative calls: 10–20%. ERC: ~13%. A rejection is the "
+            "collaborative calls: 10-20%. ERC: ~13%. A rejection is the "
             "default outcome; treat each attempt as a draft.",
             "Time investment is real. A serious Horizon proposal is "
-            "200–400 person-hours. An EIC Accelerator full proposal is "
+            "200-400 person-hours. An EIC Accelerator full proposal is "
             "more.",
             "Timelines are slow. From call publication to money in the "
-            "bank: typically 9–14 months.",
-            "Reporting is mandatory. Plan ~5–10% of project effort for "
+            "bank: typically 9-14 months.",
+            "Reporting is mandatory. Plan ~5-10% of project effort for "
             "admin and reporting.",
             "Audits happen. Years later. Keep every receipt, contract "
             "and timesheet for at least 5 years after the final payment.",
@@ -517,7 +517,7 @@ def build() -> None:
         doc,
         "When grants are a bad fit",
         "If you need money in 3 months, if your project pivots every "
-        "quarter, or if the topic does not match any policy priority — "
+        "quarter, or if the topic does not match any policy priority - "
         "skip grants. Use revenue, angels, or a bank loan. Grants are "
         "patient, slow, public money for projects with a clear public "
         "benefit.",
@@ -542,7 +542,7 @@ def build() -> None:
             ["PIC", "Participant Identification Code"],
             ["RIA / IA / CSA", "Research / Innovation / Coordination & Support Action"],
             ["TRL", "Technology Readiness Level (1 = idea, 9 = on the market)"],
-            ["WP", "Work Package (and also Work Programme — context!)"],
+            ["WP", "Work Package (and also Work Programme - context!)"],
             ["GA", "Grant Agreement"],
             ["ESR", "Evaluation Summary Report"],
         ],
@@ -554,7 +554,7 @@ def build() -> None:
         doc,
         [
             "Open the EU Funding & Tenders Portal and create an EU Login.",
-            "Search 2–3 calls that match your topic. Read them fully.",
+            "Search 2-3 calls that match your topic. Read them fully.",
             "Identify your National Contact Point and email them with a "
             "one-page summary of your idea.",
             "Find one previously funded project on CORDIS that resembles "
@@ -578,7 +578,7 @@ def build() -> None:
         "Approach them like you would a Series A: with a sharp story, "
         "the right partners, a credible plan, and the patience to "
         "iterate. Win or lose, you will come out with a better-defined "
-        "project — and that, more than the cheque, is often the real "
+        "project - and that, more than the cheque, is often the real "
         "prize.",
     )
     add_p(doc, "Good luck. Europe is rooting for you.")

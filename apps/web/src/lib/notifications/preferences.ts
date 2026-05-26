@@ -1,8 +1,8 @@
 /**
- * Notification-preference helpers — TDD-0002 §2.
+ * Notification-preference helpers - TDD-0002 §2.
  *
  * The Prisma model stores ONLY rows the user has touched. A missing
- * (topic, channel) pair is treated as "enabled" — that's the product
+ * (topic, channel) pair is treated as "enabled" - that's the product
  * default per PRD-0004. This helper materializes the full matrix so
  * the API always returns a complete `NotificationPreferences` shape.
  */

@@ -17,11 +17,11 @@
 
 | Method | Path                                      | Auth     | Request | Response             |
 | ------ | ----------------------------------------- | -------- | ------- | -------------------- |
-| GET    | `/api/v1/communities/:slug`               | optional | —       | `CommunityDetail`    |
-| POST   | `/api/v1/communities/:slug/follow`        | access   | —       | `FollowState`        |
-| DELETE | `/api/v1/communities/:slug/follow`        | access   | —       | `FollowState`        |
-| GET    | `/api/v1/communities/:slug/events?cursor` | optional | —       | `EventsPage`         |
-| GET    | `/api/v1/communities/:slug/related`       | optional | —       | `CommunitySummary[]` |
+| GET    | `/api/v1/communities/:slug`               | optional | -       | `CommunityDetail`    |
+| POST   | `/api/v1/communities/:slug/follow`        | access   | -       | `FollowState`        |
+| DELETE | `/api/v1/communities/:slug/follow`        | access   | -       | `FollowState`        |
+| GET    | `/api/v1/communities/:slug/events?cursor` | optional | -       | `EventsPage`         |
+| GET    | `/api/v1/communities/:slug/related`       | optional | -       | `CommunitySummary[]` |
 
 ## 4. Mobile screens & navigation
 

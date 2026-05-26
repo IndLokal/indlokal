@@ -4,7 +4,7 @@
  * Validates that refreshCommunityScore correctly computes
  * and persists scores based on community content.
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';

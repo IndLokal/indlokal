@@ -1,4 +1,4 @@
-# IndLokal AI Content Agent — Technical Architecture
+# IndLokal AI Content Agent - Technical Architecture
 
 ## Current Architecture Summary
 
@@ -235,7 +235,7 @@ This is the self-improving discovery loop: approved communities create future fe
 
 ## Orchestration (`orchestrator.ts`)
 
-### Phase 1 — Fetch
+### Phase 1 - Fetch
 
 - builds a source plan
 - logs planning notes
@@ -243,14 +243,14 @@ This is the self-improving discovery loop: approved communities create future fe
 - fetches keyword strategies only when the plan includes them
 - deduplicates by `sourceUrl`
 
-### Phase 2 — Prefilter, Filter, Extract
+### Phase 2 - Prefilter, Filter, Extract
 
 - removes likely stale pages before LLM
 - runs relevance filtering in batches
 - runs structured extraction in batches
 - captures stage timings for fetch, prefilter, filter, extract, and resolveQueue
 
-### Phase 3 — Resolve, Dedup, Queue
+### Phase 3 - Resolve, Dedup, Queue
 
 - loads covered metros and satellites from the DB
 - resolves extracted `cityName` via shared resolver and configured aliases

@@ -74,7 +74,7 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
         });
       }
 
-      // Update community claim state — merge into existing metadata to avoid overwriting submission data
+      // Update community claim state - merge into existing metadata to avoid overwriting submission data
       const existingMetadata = (community.metadata ?? {}) as Record<string, unknown>;
       await db.community.update({
         where: { id: data.communityId },

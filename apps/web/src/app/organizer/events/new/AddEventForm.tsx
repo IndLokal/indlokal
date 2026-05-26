@@ -27,7 +27,7 @@ export default function AddEventForm({ communityName }: { communityName: string 
           type="text"
           required
           maxLength={200}
-          placeholder={`${communityName} — Diwali Celebration`}
+          placeholder={`${communityName} - Diwali Celebration`}
           className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
         {errors.title && <p className="mt-1 text-sm text-red-600">{errors.title[0]}</p>}

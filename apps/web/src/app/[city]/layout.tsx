@@ -1,6 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, SATELLITE_TO_METRO } from '@/lib/config';
+import {
+  siteConfig,
+  ACTIVE_CITIES,
+  UPCOMING_CITIES,
+  SATELLITE_TO_METRO,
+  getConfiguredCityName,
+} from '@/lib/config';
 import { AppShell } from '@/components/layout';
 
 type CityLayoutProps = {
@@ -10,11 +16,11 @@ type CityLayoutProps = {
 
 export async function generateMetadata({ params }: CityLayoutProps): Promise<Metadata> {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  const cityName = getConfiguredCityName(city) ?? city.charAt(0).toUpperCase() + city.slice(1);
   return {
     title: {
       default: `Indian Communities & Events in ${cityName}`,
-      template: `%s — ${cityName} | ${siteConfig.name}`,
+      template: `%s - ${cityName} | ${siteConfig.name}`,
     },
     description: `Discover Indian communities, events, and cultural activities in ${cityName}, Germany. Find what's happening this week.`,
   };
@@ -41,7 +47,7 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
     return <>{children}</>;
   }
 
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  const cityName = getConfiguredCityName(city) ?? city.charAt(0).toUpperCase() + city.slice(1);
 
   const navLinks = [
     { href: `/${city}`, label: 'Feed' },

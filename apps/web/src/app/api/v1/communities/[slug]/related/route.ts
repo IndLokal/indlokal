@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/communities/:slug/related — Related communities via graph edges.
+ * GET /api/v1/communities/:slug/related - Related communities via graph edges.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

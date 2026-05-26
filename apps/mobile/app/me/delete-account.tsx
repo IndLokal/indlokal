@@ -1,5 +1,5 @@
 /**
- * Delete account screen — PRD-0019 / TDD-0019.
+ * Delete account screen - PRD-0019 / TDD-0019.
  * Calls DELETE /api/v1/me, clears session, navigates to sign-in.
  */
 
@@ -22,7 +22,7 @@ export default function DeleteAccountScreen() {
   const [loading, setLoading] = useState(false);
   const { signOut, user, isLoading } = useAuth();
 
-  // Redirect anonymous users — they have nothing to delete.
+  // Redirect anonymous users - they have nothing to delete.
   useEffect(() => {
     if (!isLoading && !user) {
       router.replace('/auth/sign-in');

@@ -1,4 +1,4 @@
-# ADR-0004: Email transport — Resend in production with throw-on-failure
+# ADR-0004: Email transport - Resend in production with throw-on-failure
 
 - **Date:** 2026-05-09
 - **Status:** Accepted
@@ -8,12 +8,12 @@
 Email is on the critical path for two flows that block users entirely if
 they fail silently:
 
-1. **Admin / organizer login** — magic links are the only way in.
-2. **Submission and claim notifications** — reviewers and submitters expect
+1. **Admin / organizer login** - magic links are the only way in.
+2. **Submission and claim notifications** - reviewers and submitters expect
    acknowledgement.
 
 The first cut logged Resend API errors and returned `{ ok: false }` to the
-caller, which the magic-link request action then ignored — so users saw
+caller, which the magic-link request action then ignored - so users saw
 "Check your inbox" while no email had been sent. This was the single biggest
 source of "I can't log in" support load before the Resend domain was even
 verified, because the failure was completely invisible.
@@ -45,7 +45,7 @@ Three transports, selected by env at module load:
 - All product links in emails use `NEXT_PUBLIC_APP_URL` (default
   `https://indlokal.com`). This env var must be scoped per Vercel
   environment if preview deploys are ever expected to email links to the
-  preview URL — see TDD-0011 §8.
+  preview URL - see TDD-0011 §8.
 
 ## Consequences
 
@@ -57,12 +57,12 @@ Three transports, selected by env at module load:
 
 ## Alternatives considered
 
-- **Postmark / SES** — both fine; Resend chosen for the fastest setup, EU
-  region availability, and DKIM/SPF UI. Decision is reversible — the
+- **Postmark / SES** - both fine; Resend chosen for the fastest setup, EU
+  region availability, and DKIM/SPF UI. Decision is reversible - the
   transport is one file (`apps/web/src/lib/email.ts`).
-- **Queue all email through the notification outbox first** — better for
+- **Queue all email through the notification outbox first** - better for
   retries and batching, but adds latency to magic links and blocks shipping
   Phase-1 admin auth. Will revisit when worker channel adapters land
   (PRD/TDD-0002).
-- **Catch and log all errors uniformly** — rejected; that's exactly the bug
+- **Catch and log all errors uniformly** - rejected; that's exactly the bug
   we are fixing.

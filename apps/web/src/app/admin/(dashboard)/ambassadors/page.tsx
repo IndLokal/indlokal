@@ -3,7 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { startOfISOWeek } from 'date-fns';
 
-export const metadata = { title: 'Ambassadors — Admin' };
+export const metadata = { title: 'Ambassadors - Admin' };
 
 export default async function AdminAmbassadorsPage() {
   await requireCan('team.read');
@@ -124,7 +124,7 @@ export default async function AdminAmbassadorsPage() {
                 const sa = subAll[uid] ?? 0;
                 const cw = ciWeek[uid] ?? 0;
                 const ca = ciAll[uid] ?? 0;
-                const city = a.cityId ? (cityById[a.cityId] ?? a.cityId) : '—';
+                const city = a.cityId ? (cityById[a.cityId] ?? a.cityId) : '-';
                 return (
                   <tr key={a.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3">

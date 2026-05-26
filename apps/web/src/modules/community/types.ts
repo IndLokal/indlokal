@@ -40,7 +40,7 @@ export type CommunityListItem = Pick<
   _count: { events: number };
 };
 
-/** Full community for the detail API — includes channels, trust signals */
+/** Full community for the detail API - includes channels, trust signals */
 export type CommunityDetailRow = Pick<
   Community,
   | 'id'

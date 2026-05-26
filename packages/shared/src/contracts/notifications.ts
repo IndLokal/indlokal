@@ -1,5 +1,5 @@
 /**
- * Devices + Notifications contracts — TDD-0002.
+ * Devices + Notifications contracts - TDD-0002.
  *
  * Schemas live here so the mobile app and the web Next.js handlers
  * import the exact same shapes (ADR-0002).
@@ -16,7 +16,7 @@ export type DevicePlatform = z.infer<typeof DevicePlatform>;
 /**
  * `installationId` is generated client-side per app install (e.g. via
  * `expo-application.installationId`). It's stable across launches but
- * NOT a secret — the (userId, installationId) pair is the natural key.
+ * NOT a secret - the (userId, installationId) pair is the natural key.
  */
 export const DeviceRegister = z.object({
   installationId: z.string().min(1).max(128),

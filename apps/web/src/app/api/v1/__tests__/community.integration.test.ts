@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/communities/:slug endpoints.
+ * Integration tests - /api/v1/communities/:slug endpoints.
  *
- * @db — requires the test database. Covers TDD-0006 §3 surface end-to-end.
+ * @db - requires the test database. Covers TDD-0006 §3 surface end-to-end.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';

@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
         safePath = resolved.pathname + resolved.search;
       }
     } catch {
-      // malformed next param — fall back to /organizer
+      // malformed next param - fall back to /organizer
     }
   }
 

@@ -14,9 +14,9 @@ This is intentionally small. If a founder cannot do it in a few minutes, it is t
 
 1. Create and commit a Prisma migration locally (`pnpm --filter web exec prisma migrate dev --name <name>`).
 2. Run tests locally.
-3. Open a PR — CI runs against ephemeral Postgres (and validates the migration applies cleanly), and the Vercel Preview deployment applies the migration to `indlokal-db-staging`.
+3. Open a PR - CI runs against ephemeral Postgres (and validates the migration applies cleanly), and the Vercel Preview deployment applies the migration to `indlokal-db-staging`.
 4. Click the Preview deployment and verify the feature against the migrated staging database.
-5. Merge to `main` — Vercel applies the same migration to `indlokal-db` and deploys the app.
+5. Merge to `main` - Vercel applies the same migration to `indlokal-db` and deploys the app.
 
 Do not use `prisma db push` against production or staging.
 

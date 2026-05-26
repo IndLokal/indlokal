@@ -13,14 +13,14 @@ more operators (X, Y, ambassadors), the founder needs a "who changed what,
 when, from where" view without opening psql.
 
 This is also a precondition for trusting role-scoped delegation in
-PRD-0014 — granting `OPS_LEAD` to Y is only safe if reviewable.
+PRD-0014 - granting `OPS_LEAD` to Y is only safe if reviewable.
 
 ## 2. Users & JTBD
 
-- **JP (Founder)** — quickly answer "what happened to this community last
+- **JP (Founder)** - quickly answer "what happened to this community last
   week?" or "what did this teammate do today?".
-- **X (Partnerships)** — review partner-org-impacting changes.
-- **Eng / on-call** — incident triage when a user reports something missing.
+- **X (Partnerships)** - review partner-org-impacting changes.
+- **Eng / on-call** - incident triage when a user reports something missing.
 
 ## 3. Success Metrics
 
@@ -31,7 +31,7 @@ PRD-0014 — granting `OPS_LEAD` to Y is only safe if reviewable.
 
 ## 4. Scope
 
-- New route `/admin/audit` — paginated table of `ContentLog` rows.
+- New route `/admin/audit` - paginated table of `ContentLog` rows.
 - Filters: entityType, entityId, action, changedBy (user picker), date range.
 - Row drawer: pretty-print `metadata` (diff if `previous`/`next` present),
   show actor email + role.
@@ -44,7 +44,7 @@ PRD-0014 — granting `OPS_LEAD` to Y is only safe if reviewable.
 ## 5. Out of Scope
 
 - Append-only / cryptographic chaining (overkill at our stage).
-- Real-time stream / websocket — polling on demand is enough.
+- Real-time stream / websocket - polling on demand is enough.
 - Read-side audit (who _viewed_ what).
 - Integration with external SIEM.
 
@@ -83,7 +83,7 @@ Then only matching ContentLog rows are returned, ordered createdAt desc
 
 - `ContentLog` retention policy not yet defined; PRD assumes indefinite for
   now. Revisit if row count > 10 M.
-- Some legacy writes may not log — track during PRD-0014 migration and add
+- Some legacy writes may not log - track during PRD-0014 migration and add
   missing `recordContentLog(...)` calls as discovered.
 - Indexing: existing `(entityType, entityId)` and `createdAt` cover the
   common filters; add `(changedBy, createdAt)` if user-filter is slow.

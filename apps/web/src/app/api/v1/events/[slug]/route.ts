@@ -1,6 +1,6 @@
 /**
- * GET /api/v1/events/:slug — Event detail.
- * Optional auth — includes savedByUser if bearer token present.
+ * GET /api/v1/events/:slug - Event detail.
+ * Optional auth - includes savedByUser if bearer token present.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

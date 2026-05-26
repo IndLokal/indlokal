@@ -14,8 +14,8 @@ Mobile clients cannot rely on cookie-based sessions and need a stable, versioned
 
 ## 2. Users & JTBD
 
-- Mobile engineers — "I want a single, typed, versioned API to call from React Native."
-- Backend engineers — "I want one auth model for web + mobile + future integrations."
+- Mobile engineers - "I want a single, typed, versioned API to call from React Native."
+- Backend engineers - "I want one auth model for web + mobile + future integrations."
 
 ## 3. Success Metrics
 
@@ -28,19 +28,19 @@ Mobile clients cannot rely on cookie-based sessions and need a stable, versioned
 - Build `/api/v1/*` route group from scratch. Migrate the dev-stage `/api/auth/google` and `/api/auth/google/callback` routes directly to their v1 equivalents and delete the old paths in the same release.
 - Issue **access JWT (15 min)** + **refresh token (60 d, rotated)**.
 - Endpoints: `POST /auth/magic-link/request`, `POST /auth/magic-link/verify`, `POST /auth/google`, `POST /auth/apple`, `POST /auth/refresh`, `POST /auth/logout`, `GET /me`.
-- Web uses cookie-based sessions (`src/lib/session.ts`) for browser flows — unchanged. Mobile uses JWT exclusively. Both are served by the same backend from day one; there is no staged cutover.
+- Web uses cookie-based sessions (`src/lib/session.ts`) for browser flows - unchanged. Mobile uses JWT exclusively. Both are served by the same backend from day one; there is no staged cutover.
 - OpenAPI emitted to `packages/shared/openapi.yaml`.
 
 ## 5. Out of Scope
 
-- Legacy `/api/*` forwarding mode: **not applicable** — web is in active development, not live. The existing `/api/auth/google` routes will be migrated to `/api/v1/auth/google` and the old paths deleted in the same release. No deprecation window needed.
+- Legacy `/api/*` forwarding mode: **not applicable** - web is in active development, not live. The existing `/api/auth/google` routes will be migrated to `/api/v1/auth/google` and the old paths deleted in the same release. No deprecation window needed.
 - Email/SMS 2FA. Apple + Google + magic link covers the launch audience; 2FA adds friction that will suppress new-user conversion.
 
 ## 6. User Stories
 
 - As a mobile user I can sign in with magic link / Google / Apple and stay signed in across cold starts.
 - As a mobile user my session refreshes silently in the background.
-- As a backend dev I can add a new endpoint by writing a Zod schema and a handler — OpenAPI updates in CI.
+- As a backend dev I can add a new endpoint by writing a Zod schema and a handler - OpenAPI updates in CI.
 
 ## 7. Acceptance Criteria
 
@@ -61,4 +61,4 @@ None user-visible beyond auth screens (covered by PRD-0008).
 ## 9. Risks & Open Questions
 
 - Refresh-token rotation race conditions on parallel requests → mitigated by single-flight refresh in client.
-- Web ↔ mobile session unification — phase 2.
+- Web ↔ mobile session unification - phase 2.

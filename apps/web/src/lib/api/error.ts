@@ -1,5 +1,5 @@
 /**
- * Canonical JSON error envelope for /api/v1/* — TDD-0001 §3, ADR-0002.
+ * Canonical JSON error envelope for /api/v1/* - TDD-0001 §3, ADR-0002.
  *
  * Every non-2xx response from a v1 route handler MUST go through this
  * helper so the wire shape stays in lockstep with `ApiError` from

@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/apple — TDD-0001 §3.
+ * POST /api/v1/auth/apple - TDD-0001 §3.
  *
  * Client posts the Apple identity token (a JWT signed by Apple) plus
  * the authorization code. We verify the identity token's signature
@@ -7,7 +7,7 @@
  * identifier) and return the standard `AuthTokens` envelope.
  *
  * On first-time sign-in Apple sends `user.email` and `user.name` in the
- * payload — we trust those over the JWT claims because Apple omits
+ * payload - we trust those over the JWT claims because Apple omits
  * private-relay email from the token after the first call.
  */
 

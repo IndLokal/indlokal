@@ -21,7 +21,7 @@ export default async function EditCityPage({ params }: { params: Promise<{ slug:
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit city — {city.name}</h1>
+        <h1 className="text-2xl font-bold">Edit city - {city.name}</h1>
         <Link
           href="/admin/data/cities"
           className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
@@ -67,7 +67,7 @@ export default async function EditCityPage({ params }: { params: Promise<{ slug:
           label="Metro region"
           defaultValue={city.metroRegion?.slug ?? ''}
           options={[
-            { value: '', label: '— none —' },
+            { value: '', label: '- none -' },
             ...metros.map((m) => ({ value: m.slug, label: m.name })),
           ]}
         />

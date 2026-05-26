@@ -5,7 +5,7 @@
  *   GET  /api/v1/me/saves/communities?cursor
  *   POST /api/v1/reports
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -34,6 +34,7 @@ import { GET as resourcesGET } from '@/app/api/v1/cities/[slug]/resources/route'
 import { GET as savedEventsGET } from '@/app/api/v1/me/saves/events/route';
 import { GET as savedCommunitiesGET } from '@/app/api/v1/me/saves/communities/route';
 import { POST as reportPOST } from '@/app/api/v1/reports/route';
+import { invalidateResolver } from '@/modules/resources';
 
 // ─── Setup ─────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,7 @@ function makePOST(path: string, body: unknown, hdrs: Record<string, string>) {
 
 beforeEach(async () => {
   await cleanDb();
+  invalidateResolver();
   const city = await createCity(testDb, { slug: 'resources-city', name: 'ResourcesCity' });
   cityId = city.id;
   citySlug = city.slug;
@@ -239,7 +241,7 @@ describe('GET /api/v1/me/saves/events', () => {
       await testDb.savedEvent.create({ data: { userId: USER_ID, eventId: e.id } });
     }
 
-    // First page — limit 2
+    // First page - limit 2
     const res1 = await savedEventsGET(
       makeGET('http://localhost/api/v1/me/saves/events?limit=2', authHeaders),
     );

@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/cities — returns all active cities ordered by name.
+ * GET /api/v1/cities - returns all active cities ordered by name.
  * Public, no auth required. TDD-0003 §3.
  */
 

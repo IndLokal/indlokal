@@ -99,7 +99,7 @@ export default async function ConsularServicesPage({ params }: Props) {
       </div>
 
       {resources.length === 0 && (
-        <p className="text-muted">No resources listed yet — check back soon.</p>
+        <p className="text-muted">No resources listed yet - check back soon.</p>
       )}
 
       {/* Grouped sections */}

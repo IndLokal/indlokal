@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
-  title: `Contact — ${siteConfig.name}`,
+  title: `Contact - ${siteConfig.name}`,
   description: `Get in touch with the ${siteConfig.name} team.`,
 };
 

@@ -1,5 +1,5 @@
 /**
- * Directory seed — curated, public-source community listings.
+ * Directory seed - curated, public-source community listings.
  *
  * Tier 2 of 3 (between bootstrap and demo). See
  * docs/deployment/ADMIN_AND_BOOTSTRAP.md §7 for the editorial policy.
@@ -11,22 +11,22 @@
  * organisations as `UNCLAIMED` rows. When a real organiser logs in and claims
  * the listing, they take ownership and edit freely.
  *
- * Hard rules — DO NOT BEND
+ * Hard rules - DO NOT BEND
  * ─────────────────────────
  * 1. Every entry needs at least ONE verifiable public source:
  *
- *    TIER A — org's own web presence (strongest; prefer these)
+ *    TIER A - org's own web presence (strongest; prefer these)
  *      • Own website / domain
  *      • Meetup.com group page
  *
- *    TIER B — German official registries
+ *    TIER B - German official registries
  *      • Vereinsregister / Handelsregister (vereinsregister.de or
- *        handelsregister.de) — sufficient for registered legal entities
+ *        handelsregister.de) - sufficient for registered legal entities
  *        (e.V., gUG/UG, gGmbH, etc.) even without a website. Record VR/HRB
  *        number in a code comment.
  *
- *    TIER C — official umbrella / institutional listings
- *      • Forum der Kulturen Stuttgart — forum-der-kulturen.de/mitgliedsvereine
+ *    TIER C - official umbrella / institutional listings
+ *      • Forum der Kulturen Stuttgart - forum-der-kulturen.de/mitgliedsvereine
  *      • aigev.org national Indian associations directory
  *      • IndoEuropean.eu organisation listings
  *      • City government integration / multicultural portals
@@ -35,11 +35,11 @@
  *      • University club portal (for student associations)
  *
  *    NOT acceptable as the sole source:
- *      ✗ Facebook groups  — user-created, renamed or deleted without notice
+ *      ✗ Facebook groups  - user-created, renamed or deleted without notice
  *      ✗ Instagram / LinkedIn / YouTube social profiles without Tier A/B/C proof
  *      ✗ WhatsApp group links
  *      ✗ Google Maps / Google Business Profile alone (unstable; easily faked)
- *      ✗ "I believe this exists" — if you can't find a URL, leave it out
+ *      ✗ "I believe this exists" - if you can't find a URL, leave it out
  *
  * 2. `sourceUrl` must point at the specific evidence page (not a homepage).
  *    Prefer Tier A > Tier B > Tier C. If using Tier C set needsReview: true.
@@ -48,7 +48,7 @@
  *    the org's own public website.
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
  * 5. Idempotent and create-only. Existing rows are NEVER updated or retired by
- *    this script — admin/organiser edits must survive every redeploy. Live-data
+ *    this script - admin/organiser edits must survive every redeploy. Live-data
  *    cleanup must happen via the explicit seed-cleanup script, never as an
  *    implicit side effect of editing this file.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
@@ -81,7 +81,7 @@ export type DirectoryEntry = {
   /** Unique kebab-case slug. Used as the natural key for upserts. */
   slug: string;
   name: string;
-  /** 1–3 factual sentences. No marketing copy. */
+  /** 1-3 factual sentences. No marketing copy. */
   description: string;
   /** Optional longer description. Same factual standard. */
   descriptionLong?: string;
@@ -107,7 +107,7 @@ export type DirectoryEntry = {
  *
  *  All entries below have at least one verifiable public URL. Orgs that
  *  previously existed only with placeholder WhatsApp links have been
- *  dropped — add them back when a real public source becomes available.
+ *  dropped - add them back when a real public source becomes available.
  * ──────────────────────────────────────────────────────────────────────── */
 
 const STUTTGART: DirectoryEntry[] = [
@@ -115,7 +115,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'hss-stuttgart',
     name: 'HSS Stuttgart',
     description:
-      'Hindu Swayamsevak Sangh Stuttgart — weekly shakha, festivals and cultural programs for the Hindu community.',
+      'Hindu Swayamsevak Sangh Stuttgart - weekly shakha, festivals and cultural programs for the Hindu community.',
     descriptionLong:
       'HSS Stuttgart is one of the most active Hindu cultural organisations in Baden-Württemberg. Weekly Sunday shakhas, Diwali and Holi celebrations, family camps.',
     citySlug: 'stuttgart',
@@ -138,7 +138,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'telugu-association-bw',
     name: 'Samaikya Telugu Vedika e.V. (STV)',
     description:
-      'Registered Verein for Telugu-speaking families in Baden-Württemberg — Ugadi, Sankranti, and regular meetups.',
+      'Registered Verein for Telugu-speaking families in Baden-Württemberg - Ugadi, Sankranti, and regular meetups.',
     descriptionLong:
       'Samaikya Telugu Vedika (STV) e.V. brings together Telugu-speaking professionals and families across Stuttgart and the surrounding region. Major events include Ugadi and Sankranti.',
     citySlug: 'stuttgart',
@@ -287,7 +287,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'bindi-ev-stuttgart',
     name: 'Bindi e.V.',
     description:
-      'BINDI: Bengalische Indische und Deutsche Initiative — Bengali/Indian cultural organisation since 2015. Durga Puja, Bengali Borshoboron, and cultural events.',
+      'BINDI: Bengalische Indische und Deutsche Initiative - Bengali/Indian cultural organisation since 2015. Durga Puja, Bengali Borshoboron, and cultural events.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'language-regional'],
     personaSegments: ['family', 'working-professional'],
@@ -402,14 +402,14 @@ const STUTTGART: DirectoryEntry[] = [
     ],
     needsReview: true,
   },
-  // ── Additional Stuttgart orgs — sourced from Forum der Kulturen Stuttgart e.V.
+  // ── Additional Stuttgart orgs - sourced from Forum der Kulturen Stuttgart e.V.
   //    membership list (official Dachverband of 160+ registered Vereine).
   //    Source page: https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/
   {
     slug: 'dig-stuttgart',
     name: 'Deutsch-Indische Gesellschaft Zweiggesellschaft Stuttgart e.V.',
     description:
-      "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft — cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
+      "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft - cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -435,7 +435,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'bharat-majlis-stuttgart',
     name: 'Indischer Verein Bharat Majlis e.V.',
     description:
-      'Registered Indian community association in Stuttgart — cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
+      'Registered Indian community association in Stuttgart - cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['family', 'working-professional'],
@@ -454,7 +454,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'tamilische-bildungsvereinigung-stuttgart',
     name: 'Tamilische Bildungsvereinigung e.V.',
     description:
-      'Tamil educational and cultural association based in Stuttgart — promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
+      'Tamil educational and cultural association based in Stuttgart - promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
     personaSegments: ['family', 'working-professional'],
@@ -473,7 +473,7 @@ const STUTTGART: DirectoryEntry[] = [
     slug: 'maharashtra-mandal-stuttgart',
     name: 'Maharashtra Mandal Stuttgart e.V.',
     description:
-      'Marathi community association in Stuttgart — Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
+      'Marathi community association in Stuttgart - Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural'],
     personaSegments: ['family', 'working-professional'],
@@ -640,7 +640,7 @@ const KARLSRUHE: DirectoryEntry[] = [
     slug: 'hss-karlsruhe',
     name: 'HSS Karlsruhe',
     description:
-      'Hindu Swayamsevak Sangh Karlsruhe unit — weekly shakha, Diwali and Holi celebrations for the Hindu community.',
+      'Hindu Swayamsevak Sangh Karlsruhe unit - weekly shakha, Diwali and Holi celebrations for the Hindu community.',
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -655,7 +655,7 @@ const KARLSRUHE: DirectoryEntry[] = [
     slug: 'dig-karlsruhe',
     name: 'Deutsch-Indische Gesellschaft Karlsruhe e.V.',
     description:
-      "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft — lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
+      "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft - lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -769,7 +769,7 @@ const MANNHEIM: DirectoryEntry[] = [
     slug: 'dig-heidelberg',
     name: 'Deutsch-Indische Gesellschaft Heidelberg e.V.',
     description:
-      "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft — lectures, music, film and cultural programming focused on India and Indo-German exchange.",
+      "Rhein-Neckar chapter of Germany's Deutsch-Indische Gesellschaft - lectures, music, film and cultural programming focused on India and Indo-German exchange.",
     // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['cultural', 'networking-social'],
@@ -1242,7 +1242,7 @@ const MUNICH: DirectoryEntry[] = [
     slug: 'hss-munich',
     name: 'HSS München',
     description:
-      'Hindu Swayamsevak Sangh München — weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
+      'Hindu Swayamsevak Sangh München - weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -1267,7 +1267,7 @@ const MUNICH: DirectoryEntry[] = [
     slug: 'iskcon-munich',
     name: 'ISKCON München (Hare Krishna München)',
     description:
-      'International Society for Krishna Consciousness Munich center — Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
+      'International Society for Krishna Consciousness Munich center - Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
     citySlug: 'munich',
     categorySlugs: ['religious', 'cultural'],
     personaSegments: ['family', 'working-professional', 'persona-student'],
@@ -1483,12 +1483,515 @@ const MUNICH: DirectoryEntry[] = [
   },
 ];
 
+const BERLIN: DirectoryEntry[] = [
+  {
+    slug: 'embassy-of-india-berlin',
+    name: 'Embassy of India, Berlin',
+    description:
+      'Official Embassy of India in Germany serving diplomatic, consular, diaspora and cultural relations across Germany.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional', 'family', 'persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indianembassyberlin.gov.in/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indianembassyberlin.gov.in/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://de.linkedin.com/company/embassy-of-india-berlin-germany',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/indiaingermany/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/IndiaInGermany/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'OTHER',
+        url: 'https://x.com/eoiberlin',
+        label: 'X (Twitter)',
+      },
+    ],
+  },
+  {
+    slug: 'indian-students-germany-berlin',
+    name: 'Indian Students Germany (Berlin Network)',
+    description:
+      'Embassy-supported Indian student support network helping students in Berlin and across Germany with onboarding, education and diaspora coordination.',
+    citySlug: 'berlin',
+    categorySlugs: ['student', 'networking-social'],
+    personaSegments: ['persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://indianstudentsgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indianstudentsgermany.org/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/indiaingermany/',
+        label: 'Instagram',
+      },
+    ],
+  },
+  {
+    slug: 'indo-german-young-leaders-forum',
+    name: 'Indo-German Young Leaders Forum',
+    description:
+      'Professional and policy-oriented Indo-German leadership network connecting students, entrepreneurs, researchers and young professionals.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional', 'persona-student'],
+    languages: ['English', 'German'],
+    sourceUrl: 'https://igylf.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://igylf.org/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/indo-german-young-leaders-forum/',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/igylf/',
+        label: 'Instagram',
+      },
+    ],
+  },
+  {
+    slug: 'india-club-berlin',
+    name: 'India Club Berlin',
+    description:
+      'Historic Indo-German cultural and networking institution in Berlin focused on diplomacy, arts, business and community dialogue.',
+    citySlug: 'berlin',
+    categorySlugs: ['cultural', 'professional', 'networking-social'],
+    personaSegments: ['working-professional', 'family'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://www.indiaclubberlin.com/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.indiaclubberlin.com/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/india-club-berlin/',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/IndiaClubBerlin/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'ahk-indo-german-chamber-berlin',
+    name: 'Indo-German Chamber of Commerce (Berlin Community)',
+    description:
+      'German-Indian business ecosystem and networking platform supporting Indo-German trade, startups, professionals and economic collaboration.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional'],
+    languages: ['English', 'German'],
+    sourceUrl: 'https://indien.ahk.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://indien.ahk.de/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/indo-german-chamber-of-commerce/',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/indo.german.chamber/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@IndoGermanChamberCommerce',
+        label: 'YouTube',
+      },
+    ],
+  },
+  {
+    slug: 'hss-berlin',
+    name: 'HSS Berlin',
+    description:
+      'Berlin chapter of Hindu Swayamsevak Sangh organising Hindu cultural activities, yoga, festivals and family programs.',
+    citySlug: 'berlin',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://hssgermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://hssgermany.org/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/hss_germany/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/hssdeutschland/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'iskcon-berlin',
+    name: 'ISKCON Berlin',
+    description:
+      'Berlin Krishna temple and Vaishnava spiritual community with regular kirtan, Sunday feast and festival celebrations.',
+    citySlug: 'berlin',
+    categorySlugs: ['religious', 'cultural'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://iskconberlin.com/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://iskconberlin.com/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/iskconberlin/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@iskconberlin',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/iskcon.berlin/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'basava-samithi-europe-berlin-network',
+    name: 'Basava Samithi Europe',
+    description:
+      'Europe-wide Kannada and Lingayat cultural-spiritual organisation with active Indian diaspora participation from Berlin and Germany.',
+    citySlug: 'berlin',
+    categorySlugs: ['language-regional', 'cultural', 'religious'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Kannada', 'English', 'German'],
+    sourceUrl: 'https://basavasamithieurope.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://basavasamithieurope.org/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/basavasamithieurope/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/basavasamithieurope/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'berlin-indian-business-network',
+    name: 'Berlin Indian Business Network',
+    description:
+      'Professional networking ecosystem connecting Indian founders, consultants, engineers and business leaders in Berlin.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional'],
+    languages: ['English', 'German', 'Hindi'],
+    sourceUrl: 'https://www.linkedin.com/',
+    channels: [
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/groups/12403877/',
+        isPrimary: true,
+        label: 'LinkedIn Group',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'berlin-startup-india-community',
+    name: 'Berlin Startup India Community',
+    description:
+      'India-focused startup and innovation networking ecosystem connecting founders, investors, operators and tech professionals in Berlin.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'networking-social'],
+    personaSegments: ['working-professional'],
+    languages: ['English'],
+    sourceUrl: 'https://www.startupindia.gov.in/',
+    channels: [
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/startup-india/',
+        isPrimary: true,
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/startupindia/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@startupindiaofficial',
+        label: 'YouTube',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'berlin-bengali-cultural-association',
+    name: 'Berlin Bengali Cultural Association',
+    description:
+      'Bengali cultural community in Berlin organising Durga Puja, Saraswati Puja and Bengali arts and literary activities.',
+    citySlug: 'berlin',
+    categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Bengali', 'English', 'German'],
+    sourceUrl: 'https://www.durgapuja-berlin.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.durgapuja-berlin.de/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/durgapujaberlin/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/durgapujaberlin/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'berlin-tamil-sangam',
+    name: 'Berlin Tamil Sangam',
+    description:
+      'Tamil cultural organisation in Berlin focused on Tamil language, Pongal celebrations and regional cultural activities.',
+    citySlug: 'berlin',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'English', 'German'],
+    sourceUrl: 'https://tamilsangam.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://tamilsangam.de/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/c/GermanTamilSangam',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/103474994944223/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'berlin-kannada-koota',
+    name: 'Berlin Kannada Koota',
+    description:
+      'Kannada-speaking community in Berlin organising Karnataka Rajyotsava, Ugadi and networking events for families and professionals.',
+    citySlug: 'berlin',
+    categorySlugs: ['language-regional', 'cultural'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Kannada', 'English', 'German'],
+    sourceUrl: 'https://kanasugermany.org/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://kanasugermany.org/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/kanasugermany/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/kanasugermany/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'berlin-malayalee-community',
+    name: 'Berlin Malayalee Community',
+    description:
+      'Malayali diaspora community in Berlin organising Onam, Vishu and cultural networking activities for families and professionals.',
+    citySlug: 'berlin',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Malayalam', 'English', 'German'],
+    sourceUrl: 'https://www.gmcgermany.com/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.gmcgermany.com/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'YOUTUBE',
+        url: 'https://www.youtube.com/@gmcgermany',
+        label: 'YouTube',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/gmcgermany/',
+        label: 'Facebook',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'berlin-indian-cultural-forum',
+    name: 'Indian Cultural Forum Berlin',
+    description:
+      'Indian cultural and arts community in Berlin promoting dance, music, festivals and Indo-German cultural exchange.',
+    citySlug: 'berlin',
+    categorySlugs: ['cultural', 'arts-entertainment'],
+    personaSegments: ['family', 'working-professional', 'persona-student'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.indiaclubberlin.com/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.indiaclubberlin.com/',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/company/india-club-berlin/',
+        label: 'LinkedIn',
+      },
+    ],
+    needsReview: true,
+  },
+  {
+    slug: 'berlin-cricket-community',
+    name: 'Berlin Cricket Community',
+    description:
+      'Indian-subcontinent-led cricket ecosystem in Berlin connecting amateur, league and student cricket communities.',
+    citySlug: 'berlin',
+    categorySlugs: ['sports-fitness'],
+    personaSegments: ['single', 'working-professional', 'persona-student'],
+    languages: ['English', 'Hindi'],
+    sourceUrl: 'https://www.berlincricketacademy.de/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.berlincricketacademy.de/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/berlincricketacademy/',
+        label: 'Instagram',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/berlincricketacademy/',
+        label: 'Facebook',
+      },
+    ],
+  },
+  {
+    slug: 'berlin-indian-research-network',
+    name: 'Berlin Indian Research Network',
+    description:
+      'Academic and research-oriented Indian professional ecosystem across Berlin universities, research institutes and innovation labs.',
+    citySlug: 'berlin',
+    categorySlugs: ['professional', 'student', 'networking-social'],
+    personaSegments: ['persona-student', 'working-professional'],
+    languages: ['English', 'German'],
+    sourceUrl: 'https://www.daad.de/en/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.daad.de/en/',
+        isPrimary: true,
+        label: 'DAAD Germany',
+      },
+      {
+        channelType: 'LINKEDIN',
+        url: 'https://www.linkedin.com/school/daad-germany/',
+        label: 'LinkedIn',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/daadinternational/',
+        label: 'Instagram',
+      },
+    ],
+    needsReview: true,
+  },
+];
+
 const FRANKFURT: DirectoryEntry[] = [
   {
     slug: 'dig-rhein-main',
     name: 'Deutsch-Indische Gesellschaft Rhein-Main e.V. (DIG)',
     description:
-      "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area — lectures, film screenings and cultural exchanges.",
+      "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area - lectures, film screenings and cultural exchanges.",
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'networking-social'],
     personaSegments: ['working-professional', 'family'],
@@ -1698,7 +2201,7 @@ const FRANKFURT: DirectoryEntry[] = [
     slug: 'hss-frankfurt',
     name: 'HSS Frankfurt',
     description:
-      'Hindu Swayamsevak Sangh Frankfurt — weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
+      'Hindu Swayamsevak Sangh Frankfurt - weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'religious'],
     personaSegments: ['family', 'working-professional'],
@@ -1895,12 +2398,14 @@ const FRANKFURT: DirectoryEntry[] = [
   },
 ];
 
+// Keep metro order aligned to population priority among live seeded metros.
 export const METRO_DIRECTORIES: Record<string, DirectoryEntry[]> = {
-  stuttgart: STUTTGART,
-  karlsruhe: KARLSRUHE,
-  mannheim: MANNHEIM,
+  berlin: BERLIN,
   munich: MUNICH,
   frankfurt: FRANKFURT,
+  stuttgart: STUTTGART,
+  mannheim: MANNHEIM,
+  karlsruhe: KARLSRUHE,
 };
 
 /* ────────────────────────────────────────────────────────────────────────
@@ -1922,14 +2427,14 @@ async function insertEntry(
 ) {
   const evidence = assessEvidenceUrl(entry.sourceUrl);
   if (!evidence.isQualifying) {
-    console.warn(`  ⚠ ${entry.slug}: invalid source evidence (${evidence.label}) — skipped`);
+    console.warn(`  ⚠ ${entry.slug}: invalid source evidence (${evidence.label}) - skipped`);
     return { created: false, skippedInvalid: true };
   }
 
   const cityId = cityIdBySlug.get(entry.citySlug);
   if (!cityId) {
     console.warn(
-      `  ⚠ ${entry.slug}: city "${entry.citySlug}" not found (run bootstrap?) — skipped`,
+      `  ⚠ ${entry.slug}: city "${entry.citySlug}" not found (run bootstrap?) - skipped`,
     );
     return { created: false, skippedInvalid: false };
   }
@@ -1984,7 +2489,7 @@ async function insertEntry(
   for (const slug of entry.categorySlugs) {
     const categoryId = categoryIdBySlug.get(slug);
     if (!categoryId) {
-      console.warn(`  ⚠ Unknown category "${slug}" on ${entry.slug} — skipped`);
+      console.warn(`  ⚠ Unknown category "${slug}" on ${entry.slug} - skipped`);
       continue;
     }
     await prisma.communityCategory.create({
@@ -2006,6 +2511,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
       skippedExisting: 0,
       skippedMissingCity: 0,
       skippedInvalid: 0,
+      skippedDuplicate: 0,
     },
   };
 
@@ -2037,7 +2543,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
     result.totalInvalid += tally.skippedInvalid;
   }
 
-  // Resources are part of the same editorial tier — same hard rules,
+  // Resources are part of the same editorial tier - same hard rules,
   // same create-only / idempotent contract. One env flag, one build step.
   result.resources = await runResourcesSeed();
 
@@ -2045,7 +2551,7 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
 }
 
 async function main() {
-  console.log('📒 IndLokal directory seed — curated public listings\n');
+  console.log('📒 IndLokal directory seed - curated public listings\n');
   const started = Date.now();
   const r = await runDirectorySeed();
   const ms = Date.now() - started;

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Categories — Admin' };
+export const metadata = { title: 'Categories - Admin' };
 
 export default async function AdminCategoriesPage() {
   const all = await db.category.findMany({
@@ -91,7 +91,7 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-border border-b align-top last:border-b-0">
-                <td className="px-3 py-2 text-lg">{r.icon ?? '—'}</td>
+                <td className="px-3 py-2 text-lg">{r.icon ?? '-'}</td>
                 <td className="px-3 py-2">
                   <form action={updateCategoryAction} className="grid grid-cols-2 gap-2">
                     <input type="hidden" name="id" value={r.id} />

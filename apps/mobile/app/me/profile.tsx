@@ -1,5 +1,5 @@
 /**
- * Profile screen — PRD-0019 / TDD-0019.
+ * Profile screen - PRD-0019 / TDD-0019.
  * Displays the authenticated user's profile fetched from GET /api/v1/me.
  */
 
@@ -51,7 +51,7 @@ export default function ProfileScreen() {
         <Text style={styles.title}>Profile</Text>
 
         <View style={styles.card}>
-          <ProfileRow label="Name" value={user.displayName ?? '—'} />
+          <ProfileRow label="Name" value={user.displayName ?? '-'} />
           <ProfileRow label="Email" value={user.email} />
           {user.cityName && <ProfileRow label="City" value={user.cityName} />}
           {user.personaSegments.length > 0 && (

@@ -19,7 +19,7 @@ if (process.env.RUN_DIRECTORY_SEED !== 'true') {
 }
 
 if (!process.env.DATABASE_URL) {
-  console.warn('⚠ RUN_DIRECTORY_SEED=true but DATABASE_URL is not set — skipping.');
+  console.warn('⚠ RUN_DIRECTORY_SEED=true but DATABASE_URL is not set - skipping.');
   process.exit(0);
 }
 

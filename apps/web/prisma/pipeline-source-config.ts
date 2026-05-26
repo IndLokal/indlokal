@@ -31,6 +31,8 @@ type SourceDefaultsStrategy = {
   radiusKm?: number;
   url?: string;
   hintCitySlug?: string;
+  hintState?: string;
+  scope?: 'GENERIC' | 'CITY' | 'REGION';
 };
 
 type SourceDefaults = {
@@ -74,6 +76,8 @@ const ALLOWED_SOURCE_TYPES = new Set<string>([
   'USER_SUBMITTED',
 ]);
 
+const ALLOWED_PINNED_SCOPES = new Set<'GENERIC' | 'CITY' | 'REGION'>(['GENERIC', 'CITY', 'REGION']);
+
 const KNOWN_STATES = new Set<string>([
   ...ACTIVE_CITY_DATA.map((city) => city.state),
   ...SATELLITE_CITY_DATA.map((city) => city.state),
@@ -93,8 +97,21 @@ const KNOWN_CITY_SLUGS = new Set(
  */
 function getCitySlugsForState(state: string): string[] {
   const slugs: string[] = [];
-  for (const city of ACTIVE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
-  for (const city of SATELLITE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  const metroSlugsForState = new Set<string>();
+
+  for (const city of ACTIVE_CITY_DATA) {
+    if (city.state === state) {
+      slugs.push(city.slug);
+      metroSlugsForState.add(city.slug);
+    }
+  }
+
+  for (const city of SATELLITE_CITY_DATA) {
+    const isInState = city.state === state;
+    const isMetroSatellite = Boolean(city.metroSlug && metroSlugsForState.has(city.metroSlug));
+    if (isInState || isMetroSatellite) slugs.push(city.slug);
+  }
+
   for (const city of UPCOMING_CITIES) if (city.state === state) slugs.push(city.slug);
   return Array.from(new Set(slugs));
 }
@@ -194,6 +211,11 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
       url: typeof rawStrategy.url === 'string' ? rawStrategy.url : undefined,
       hintCitySlug:
         typeof rawStrategy.hintCitySlug === 'string' ? rawStrategy.hintCitySlug : undefined,
+      hintState: typeof rawStrategy.hintState === 'string' ? rawStrategy.hintState : undefined,
+      scope:
+        typeof rawStrategy.scope === 'string'
+          ? (rawStrategy.scope as 'GENERIC' | 'CITY' | 'REGION')
+          : undefined,
     };
 
     if (
@@ -260,6 +282,40 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
       parseErrors.push(
         `[Pipeline] Strategy ${candidate.id} has unknown hintCitySlug ${candidate.hintCitySlug}`,
       );
+      continue;
+    }
+
+    if (candidate.hintState != null && candidate.hintState.trim().length === 0) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} has empty hintState`);
+      continue;
+    }
+
+    if (candidate.hintState != null && !KNOWN_STATES.has(candidate.hintState)) {
+      parseErrors.push(
+        `[Pipeline] Strategy ${candidate.id} has unknown hintState ${candidate.hintState}`,
+      );
+      continue;
+    }
+
+    const inferredScope = candidate.hintCitySlug
+      ? 'CITY'
+      : candidate.hintState
+        ? 'REGION'
+        : 'GENERIC';
+    const normalizedScope = candidate.scope ?? inferredScope;
+    if (!ALLOWED_PINNED_SCOPES.has(normalizedScope)) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} has invalid scope ${candidate.scope}`);
+      continue;
+    }
+    candidate.scope = normalizedScope;
+
+    if (candidate.scope === 'CITY' && !candidate.hintCitySlug) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} scope=CITY requires hintCitySlug`);
+      continue;
+    }
+
+    if (candidate.scope === 'REGION' && !candidate.hintState) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} scope=REGION requires hintState`);
       continue;
     }
 
@@ -360,7 +416,9 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
       kind: strategy.kind,
       payload: {
         url: strategy.url ?? null,
+        scope: strategy.scope ?? null,
         hintCitySlug: strategy.hintCitySlug ?? null,
+        hintState: strategy.hintState ?? null,
         contentScope: strategy.contentScope,
       },
     };
@@ -488,10 +546,9 @@ async function main() {
 }
 
 const isDirectRun =
-  typeof require !== 'undefined' && require.main === module
-    ? true
-    : process.argv[1]?.endsWith('pipeline-source-config.ts') ||
-      process.argv[1]?.endsWith('pipeline-source-config.js');
+  (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) ||
+  process.argv[1]?.endsWith('pipeline-source-config.ts') ||
+  process.argv[1]?.endsWith('pipeline-source-config.js');
 
 if (isDirectRun) {
   main().catch((error) => {

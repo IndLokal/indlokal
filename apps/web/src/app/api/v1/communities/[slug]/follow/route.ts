@@ -1,6 +1,6 @@
 /**
- * POST   /api/v1/communities/:slug/follow  — follow (requires auth)
- * DELETE /api/v1/communities/:slug/follow  — unfollow (requires auth)
+ * POST   /api/v1/communities/:slug/follow  - follow (requires auth)
+ * DELETE /api/v1/communities/:slug/follow  - unfollow (requires auth)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

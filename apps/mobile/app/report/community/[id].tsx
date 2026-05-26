@@ -1,5 +1,5 @@
 /**
- * Report community content — PRD-0010.
+ * Report community content - PRD-0010.
  * Renders a small report sheet for a community by id (passed via params).
  * POST /api/v1/reports.
  */

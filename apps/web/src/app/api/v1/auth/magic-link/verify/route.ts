@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/magic-link/verify — TDD-0001 §3.
+ * POST /api/v1/auth/magic-link/verify - TDD-0001 §3.
  *
  * Consumes a one-time magic-link token and returns an `AuthTokens`
  * envelope (access JWT + refresh token + user profile). The token is

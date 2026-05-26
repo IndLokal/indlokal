@@ -16,7 +16,7 @@ export interface SearchAllOptions {
   to?: Date;
   type?: 'COMMUNITY' | 'EVENT' | 'ALL';
   limit?: number;
-  /** Opaque offset cursor — base64-encoded integer offset. */
+  /** Opaque offset cursor - base64-encoded integer offset. */
   cursor?: string;
 }
 
@@ -262,7 +262,7 @@ export async function getSuggestions(
 }
 
 /**
- * Return trending search terms — approved keywords ordered by confidence.
+ * Return trending search terms - approved keywords ordered by confidence.
  *
  * Cached for 60s with tag-based invalidation.
  */

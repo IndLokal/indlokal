@@ -16,9 +16,9 @@
 
 | Method | Path                                                     | Auth     | Request       | Response       |
 | ------ | -------------------------------------------------------- | -------- | ------------- | -------------- |
-| GET    | `/api/v1/search/suggest?q&citySlug`                      | optional | —             | `Suggestion[]` |
+| GET    | `/api/v1/search/suggest?q&citySlug`                      | optional | -             | `Suggestion[]` |
 | GET    | `/api/v1/search?q&citySlug&category&from&to&type&cursor` | optional | `SearchQuery` | `SearchPage`   |
-| GET    | `/api/v1/search/trending?citySlug`                       | optional | —             | `string[]`     |
+| GET    | `/api/v1/search/trending?citySlug`                       | optional | -             | `string[]`     |
 
 ## 4. Mobile screens & navigation
 

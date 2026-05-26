@@ -1,5 +1,5 @@
 /**
- * Mobile community detail — PRD-0006.
+ * Mobile community detail - PRD-0006.
  * Renders the community with follow / share / channel actions + upcoming events.
  */
 

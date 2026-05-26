@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/notifications/inbox?cursor=&limit= — TDD-0002 §3.
+ * GET /api/v1/notifications/inbox?cursor=&limit= - TDD-0002 §3.
  *
  * Cursor-based pagination, newest first. The cursor is the opaque
  * `id` of the oldest item in the previous page. Page size is clamped

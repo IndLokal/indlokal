@@ -2,7 +2,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { FeedbackForm } from './FeedbackForm';
 
-export const metadata = { title: 'Feedback — Ambassador' };
+export const metadata = { title: 'Feedback - Ambassador' };
 
 export default async function AmbassadorFeedbackPage() {
   const user = await requireCan('ambassador.submit');

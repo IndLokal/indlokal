@@ -1,6 +1,6 @@
 /**
- * PATCH /api/v1/devices/:installationId — partial update (push token rotation, locale, etc.)
- * DELETE /api/v1/devices/:installationId — sign-out from this device.
+ * PATCH /api/v1/devices/:installationId - partial update (push token rotation, locale, etc.)
+ * DELETE /api/v1/devices/:installationId - sign-out from this device.
  */
 
 import type { NextRequest } from 'next/server';

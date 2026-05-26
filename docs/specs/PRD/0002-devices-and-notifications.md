@@ -6,12 +6,12 @@
 
 ## 1. Problem
 
-We need a reliable substrate to deliver push, email, and in-app inbox messages — gated by user preferences and frequency caps — without spamming or duplicating sends.
+We need a reliable substrate to deliver push, email, and in-app inbox messages - gated by user preferences and frequency caps - without spamming or duplicating sends.
 
 ## 2. Users & JTBD
 
-- End user — "I only want notifications I care about, in the channels I chose, at sane times."
-- Backend dev — "I want to enqueue a notification from any module without knowing about transport."
+- End user - "I only want notifications I care about, in the channels I chose, at sane times."
+- Backend dev - "I want to enqueue a notification from any module without knowing about transport."
 
 ## 3. Success Metrics
 

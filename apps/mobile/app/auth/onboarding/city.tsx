@@ -1,5 +1,5 @@
 /**
- * Onboarding step 1 — city selection. PRD-0019 / TDD-0019.
+ * Onboarding step 1 - city selection. PRD-0019 / TDD-0019.
  *
  * Fetches active cities from GET /api/v1/cities and presents a filtered
  * list. The selected cityId is passed as a route param to the persona

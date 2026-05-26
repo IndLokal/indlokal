@@ -18,7 +18,7 @@ Common properties auto-attached by client:
 | Event               | Properties                     | Notes               |
 | ------------------- | ------------------------------ | ------------------- |
 | `app.opened`        | `coldStart:boolean`            | first frame painted |
-| `app.session.start` | —                              | new session window  |
+| `app.session.start` | -                              | new session window  |
 | `app.session.end`   | `durationMs`                   | client-derived      |
 | `app.error`         | `code, message, fatal:boolean` | mirrors Sentry      |
 
@@ -29,8 +29,8 @@ Common properties auto-attached by client:
 | `auth.signin.started`  | `method:apple               | google | magic` |
 | `auth.signin.success`  | `method, isNewUser:boolean` |
 | `auth.signin.failed`   | `method, reason`            |
-| `auth.signout`         | —                           |
-| `auth.account.deleted` | —                           |
+| `auth.signout`         | -                           |
+| `auth.account.deleted` | -                           |
 
 ### Discover (PRD-0003)
 

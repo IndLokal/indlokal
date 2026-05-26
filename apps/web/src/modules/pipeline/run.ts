@@ -6,9 +6,9 @@
  *   npx tsx src/modules/pipeline/run.ts --dry-run  # show config only
  *
  * Requires:
- *   OPENAI_API_KEY     — for LLM extraction
- *   DATABASE_URL       — PostgreSQL connection
- *   EVENTBRITE_API_KEY — (optional) for Eventbrite source
+ *   OPENAI_API_KEY     - for LLM extraction
+ *   DATABASE_URL       - PostgreSQL connection
+ *   EVENTBRITE_API_KEY - (optional) for Eventbrite source
  */
 
 import { runPipeline } from './orchestrator';
@@ -19,17 +19,66 @@ import {
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
 } from './runtime-config';
+import type { SearchRegion } from './types';
+
+function parseListArg(args: string[], key: '--city' | '--region'): string[] {
+  const values: string[] = [];
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === key) {
+      const next = args[i + 1];
+      if (next && !next.startsWith('--')) values.push(next);
+      continue;
+    }
+    if (arg.startsWith(`${key}=`)) values.push(arg.slice(key.length + 1));
+  }
+  return values
+    .flatMap((raw) => raw.split(','))
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
+function filterRegionsForPreview(
+  regions: SearchRegion[],
+  opts: { citySlugs: string[]; regionIds: string[] },
+): SearchRegion[] {
+  const regionIds = new Set(opts.regionIds);
+  const citySlugs = new Set(opts.citySlugs);
+  if (regionIds.size === 0 && citySlugs.size === 0) return regions;
+
+  return regions
+    .filter((region) => {
+      const regionMatch = regionIds.size > 0 && regionIds.has(region.id);
+      const cityMatch = citySlugs.size > 0 && region.citySlugs.some((slug) => citySlugs.has(slug));
+      return regionMatch || cityMatch;
+    })
+    .map((region) => ({
+      ...region,
+      citySlugs:
+        citySlugs.size > 0
+          ? region.citySlugs.filter((slug) => citySlugs.has(slug))
+          : region.citySlugs,
+    }))
+    .filter((region) => region.citySlugs.length > 0);
+}
 
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const strictMode = args.includes('--strict') || process.env.PIPELINE_STRICT === '1';
+  const citySlugs = parseListArg(args, '--city');
+  const regionIds = parseListArg(args, '--region');
 
   console.log('╔══════════════════════════════════════════╗');
   console.log('║  IndLokal AI Content Pipeline          ║');
   console.log('║  Known-source-first · Two-stage LLM      ║');
   console.log('╚══════════════════════════════════════════╝');
   console.log(`Mode: ${dryRun ? 'DRY RUN (config preview)' : 'LIVE'}`);
+  if (citySlugs.length > 0 || regionIds.length > 0) {
+    console.log(
+      `Scope: ${regionIds.length > 0 ? `regions=${regionIds.join(', ')}` : ''}${regionIds.length > 0 && citySlugs.length > 0 ? ' · ' : ''}${citySlugs.length > 0 ? `cities=${citySlugs.join(', ')}` : ''}`,
+    );
+  }
   if (!dryRun) {
     console.log(
       `Exit behavior: ${strictMode ? 'STRICT (non-zero on pipeline errors)' : 'TOLERANT (warnings do not fail run)'}`,
@@ -47,21 +96,28 @@ async function main() {
     process.exit(1);
   }
 
-  const regions = await getRuntimeEnabledRegions();
+  const regions = filterRegionsForPreview(await getRuntimeEnabledRegions(), {
+    citySlugs,
+    regionIds,
+  });
+  if (regions.length === 0) {
+    console.error('\n❌ No regions matched the requested --city/--region scope.');
+    process.exit(1);
+  }
   const keywordSeeds = await getRuntimeKeywordSeeds();
   const keywordStrategies = await getRuntimeKeywordStrategies();
   const pinnedStrategies = await getRuntimePinnedStrategies();
 
   console.log(`\n📍 Regions (${regions.length}):`);
   for (const r of regions) {
-    console.log(`   • ${r.label} — cities: ${r.citySlugs.join(', ')}`);
+    console.log(`   • ${r.label} - cities: ${r.citySlugs.join(', ')}`);
   }
 
   console.log(
     `\n🔍 Keyword templates (${keywordStrategies.length}) · canonical seeds (${keywordSeeds.length}):`,
   );
   for (const s of keywordStrategies) {
-    console.log(`   • ${s.label} — ${s.radiusKm}km radius`);
+    console.log(`   • ${s.label} - ${s.radiusKm}km radius`);
   }
 
   console.log(`\n📌 Pinned URLs (${pinnedStrategies.length} static):`);
@@ -76,12 +132,20 @@ async function main() {
   }
 
   if (dryRun) {
-    console.log('\n🔍 Dry run — config preview only. Remove --dry-run to execute.');
+    console.log('\n🔍 Dry run - config preview only. Remove --dry-run to execute.');
     process.exit(0);
   }
 
   console.log('\n🚀 Running pipeline...\n');
-  const result = await runPipeline('cli');
+  const result = await runPipeline(
+    'cli',
+    citySlugs.length > 0 || regionIds.length > 0
+      ? {
+          citySlugs: citySlugs.length > 0 ? citySlugs : undefined,
+          regionIds: regionIds.length > 0 ? regionIds : undefined,
+        }
+      : undefined,
+  );
 
   console.log('\n═══════════════════════════════════════');
   console.log('Pipeline Run Summary');

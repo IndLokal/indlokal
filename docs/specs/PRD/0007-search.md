@@ -49,4 +49,4 @@ Empty state, zero-results state with suggested queries; offline disables search 
 
 ## 9. Risks & Open Questions
 
-- Postgres FTS vs. Meilisearch — start with Postgres trigram + FTS, revisit at scale.
+- Postgres FTS vs. Meilisearch - start with Postgres trigram + FTS, revisit at scale.

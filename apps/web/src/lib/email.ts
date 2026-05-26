@@ -6,7 +6,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const FROM = process.env.RESEND_FROM_EMAIL ?? 'IndLokal <noreply@indlokal.com>';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
-// Dev SMTP transport — sends to Mailpit (or any local SMTP server)
+// Dev SMTP transport - sends to Mailpit (or any local SMTP server)
 const SMTP_HOST = process.env.SMTP_HOST ?? 'localhost';
 const SMTP_PORT = Number(process.env.SMTP_PORT ?? '1026');
 
@@ -32,9 +32,9 @@ async function sendEmail(to: string, subject: string, html: string): Promise<voi
     await devTransport.sendMail({ from: FROM, to, subject, html });
     console.log(`📧 Email sent to Mailpit → http://localhost:8026`);
   } catch {
-    // Mailpit not running — fall back to console
+    // Mailpit not running - fall back to console
     console.log(
-      `\n📧 [EMAIL – Mailpit unavailable, logging to console]\nTo: ${to}\nSubject: ${subject}\n`,
+      `\n📧 [EMAIL - Mailpit unavailable, logging to console]\nTo: ${to}\nSubject: ${subject}\n`,
     );
     console.log(html);
     console.log('─'.repeat(60));
@@ -184,7 +184,7 @@ export async function sendSubmissionReceivedEmail(
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Thanks, ${submitterName}!</h2>
-  <p>We've received your submission for <strong>${communityName}</strong> and will review it within 1–2 business days.</p>
+  <p>We've received your submission for <strong>${communityName}</strong> and will review it within 1-2 business days.</p>
   <p>Once approved, your community will appear on IndLokal. We'll email you when it's live.</p>
   <p style="font-size:13px;color:#666">If you have any questions in the meantime, reply to this email.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">

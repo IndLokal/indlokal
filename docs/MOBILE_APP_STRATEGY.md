@@ -1,7 +1,7 @@
 # IndLokal Mobile App Strategy & Spec-Driven Development Plan
 
 > Owner: Engineering + Product (acting as Engineer & Product Head)
-> Status: Draft v1 — 22 April 2026
+> Status: Draft v1 - 22 April 2026
 > Scope: Native mobile apps (iOS + Android) for IndLokal. **PWA is explicitly out of scope** as a primary delivery channel.
 
 ---
@@ -10,11 +10,11 @@
 
 A PWA would be the cheapest path, but for IndLokal's retention thesis it is the wrong primitive:
 
-- **Push on iOS is second-class** — Web Push on iOS requires "Add to Home Screen", has lower opt-in, no rich media, no Live Activities, no critical alerts.
-- **No App Store / Play Store presence** — we lose the dominant discovery surface for "Indian events {city}", "Desi community {city}", "Diwali near me".
-- **No deep OS integrations** — share sheet, contacts, calendar, widgets, Siri/Assistant, Live Activities, Geofencing are limited or unavailable.
-- **Branding & trust** — diaspora users (especially 35+ family decision-makers) trust an installed app icon more than a browser bookmark.
-- **Background work** — reliable background sync for "events near me today" is not feasible on PWA.
+- **Push on iOS is second-class** - Web Push on iOS requires "Add to Home Screen", has lower opt-in, no rich media, no Live Activities, no critical alerts.
+- **No App Store / Play Store presence** - we lose the dominant discovery surface for "Indian events {city}", "Desi community {city}", "Diwali near me".
+- **No deep OS integrations** - share sheet, contacts, calendar, widgets, Siri/Assistant, Live Activities, Geofencing are limited or unavailable.
+- **Branding & trust** - diaspora users (especially 35+ family decision-makers) trust an installed app icon more than a browser bookmark.
+- **Background work** - reliable background sync for "events near me today" is not feasible on PWA.
 
 **Decision:** Build native apps for iOS and Android using **Expo (React Native) + EAS**, reusing the existing Next.js backend. Web stays as our SEO/long-tail surface and admin/organizer console.
 
@@ -47,7 +47,7 @@ Primary jobs-to-be-done on mobile:
 
 | Option                  | Verdict                                                                                        |
 | ----------------------- | ---------------------------------------------------------------------------------------------- |
-| PWA only                | ❌ Rejected — see §0                                                                           |
+| PWA only                | ❌ Rejected - see §0                                                                           |
 | Native Swift + Kotlin   | ❌ Premature; doubles cost, splits a small team                                                |
 | Flutter                 | ❌ Team is TS/React; high ramp, no shared types with web                                       |
 | **Expo / React Native** | ✅ Shares TS + Zod schemas through `packages/shared`; OTA via EAS Update; mature push pipeline |
@@ -87,7 +87,7 @@ We adopt a **spec-first** workflow: no production code is written for a feature 
 docs/specs/
   PRD/                # Product Requirement Docs (the "why" + user stories + acceptance)
   TDD/                # Technical Design Docs (the "how" + architecture + tradeoffs)
-  API/                # OpenAPI 3.1 (generated from Zod) — the contract
+  API/                # OpenAPI 3.1 (generated from Zod) - the contract
   EVENTS/             # Analytics & notification event catalog (typed)
   UX/                 # Figma links, flows, screen-by-screen acceptance
   ADR/                # Architecture Decision Records (immutable, numbered)
@@ -97,16 +97,16 @@ docs/specs/
 
 For every feature (mobile or shared backend):
 
-1. **PRD** — problem, users, JTBD, success metrics, scope/non-scope, acceptance criteria as Gherkin (`Given/When/Then`).
-2. **UX spec** — Figma frames, empty/loading/error/offline states, a11y notes, copy.
-3. **API spec** — Zod schemas in `packages/shared` → OpenAPI export → reviewed before any handler is written. Contract changes require a version bump under `/api/v1/*`.
-4. **TDD** — data model deltas (Prisma migration draft), module boundaries, push/email triggers, failure modes, observability (logs, metrics, traces), rollout plan, feature flag name.
-5. **Test plan** — unit, contract (Pact-style against OpenAPI), E2E (Detox for mobile, Playwright for web), load (k6 for any new endpoint).
-6. **ADR** — only if a non-obvious architectural choice is made.
-7. **Implementation** — gated by an approved spec; PRs reference the spec doc.
-8. **Verification** — acceptance criteria checked off in the PR description; analytics events fire in staging; Sentry clean.
-9. **Rollout** — behind a feature flag; staged 1% → 10% → 50% → 100%.
-10. **Post-launch review** — metrics reviewed against PRD targets after 2 weeks; ADR amended if assumptions broke.
+1. **PRD** - problem, users, JTBD, success metrics, scope/non-scope, acceptance criteria as Gherkin (`Given/When/Then`).
+2. **UX spec** - Figma frames, empty/loading/error/offline states, a11y notes, copy.
+3. **API spec** - Zod schemas in `packages/shared` → OpenAPI export → reviewed before any handler is written. Contract changes require a version bump under `/api/v1/*`.
+4. **TDD** - data model deltas (Prisma migration draft), module boundaries, push/email triggers, failure modes, observability (logs, metrics, traces), rollout plan, feature flag name.
+5. **Test plan** - unit, contract (Pact-style against OpenAPI), E2E (Detox for mobile, Playwright for web), load (k6 for any new endpoint).
+6. **ADR** - only if a non-obvious architectural choice is made.
+7. **Implementation** - gated by an approved spec; PRs reference the spec doc.
+8. **Verification** - acceptance criteria checked off in the PR description; analytics events fire in staging; Sentry clean.
+9. **Rollout** - behind a feature flag; staged 1% → 10% → 50% → 100%.
+10. **Post-launch review** - metrics reviewed against PRD targets after 2 weeks; ADR amended if assumptions broke.
 
 ### 3.3 Spec Templates (lightweight)
 
@@ -208,15 +208,15 @@ For every feature (mobile or shared backend):
 
 Must-have, each with its own PRD/TDD/API/UX:
 
-1. **City picker + Discover feed** — reuses `modules/discovery`.
-2. **Event detail** — RSVP/Save, Add to Calendar, Share.
+1. **City picker + Discover feed** - reuses `modules/discovery`.
+2. **Event detail** - RSVP/Save, Add to Calendar, Share.
 3. **Community detail + Follow.**
-4. **Search** — `modules/search` with recent + trending.
-5. **Auth** — Apple, Google, magic link; profile; bookmarks (`me/`).
-6. **Push notifications** — granular per-city / per-community / per-category prefs.
-7. **Submit event/community** — camera + gallery upload; reuses `submit/` flow.
-8. **Universal Links / App Links** — `indlokal.com/[city]/...` opens in app.
-9. **Offline cache** — last feed + saved items.
+4. **Search** - `modules/search` with recent + trending.
+5. **Auth** - Apple, Google, magic link; profile; bookmarks (`me/`).
+6. **Push notifications** - granular per-city / per-community / per-category prefs.
+7. **Submit event/community** - camera + gallery upload; reuses `submit/` flow.
+8. **Universal Links / App Links** - `indlokal.com/[city]/...` opens in app.
+9. **Offline cache** - last feed + saved items.
 10. **Analytics + crash reporting.**
 
 Explicitly out of v1: in-app chat, ticketing/payments, organizer analytics dashboards, social posts.
@@ -248,7 +248,7 @@ Rules (specced in `EVENTS/notifications.md`):
 
 - Ask for push permission **after** first valuable action (saved event or followed community).
 - Per-channel + per-topic toggles; one-tap unsubscribe in every email (CAN-SPAM/DPDP).
-- Quiet hours 22:00–08:00 local by default.
+- Quiet hours 22:00-08:00 local by default.
 - Use `modules/scoring` to gate sends; suppress low-score items.
 - Idempotency keys on the outbox to prevent duplicates.
 
@@ -265,9 +265,9 @@ Newsletter:
 Each item below ships behind its own TDD:
 
 - Promote `/api/*` to versioned `/api/v1/*`; OpenAPI generated from Zod.
-- `Device` table — userId, expoPushToken, platform, locale, timezone, appVersion, lastSeen.
-- `NotificationPreference` table — per-user × per-topic × per-channel.
-- `NotificationOutbox` table + worker (BullMQ or pg-boss on existing Postgres — no new infra).
+- `Device` table - userId, expoPushToken, platform, locale, timezone, appVersion, lastSeen.
+- `NotificationPreference` table - per-user × per-topic × per-channel.
+- `NotificationOutbox` table + worker (BullMQ or pg-boss on existing Postgres - no new infra).
 - Extend `modules/scoring` with `notificationScore`.
 - Event-bus hooks in `community`, `event`, `pipeline` modules to enqueue notifications.
 - Image upload pipeline (S3/R2 + signed URLs) for camera submissions.
@@ -278,22 +278,22 @@ Each item below ships behind its own TDD:
 ## 7. Engagement & Growth Loops
 
 - **Deep links + share sheet** with branded OG cards (server-rendered in Next.js) → WhatsApp/Telegram → app/open-store path.
-- **Referrals** — "Invite a friend to {city}" tracked via `modules/pipeline`.
-- **Organizer loop** — push for RSVPs and approvals → daily opens → more content.
-- **Calendar integration** — "Add to Calendar" auto-creates a reminder trigger.
-- **Widgets (Phase 2)** — "Next event near you".
-- **Live Activities (iOS) / Ongoing notifications (Android)** — event-day countdowns.
+- **Referrals** - "Invite a friend to {city}" tracked via `modules/pipeline`.
+- **Organizer loop** - push for RSVPs and approvals → daily opens → more content.
+- **Calendar integration** - "Add to Calendar" auto-creates a reminder trigger.
+- **Widgets (Phase 2)** - "Next event near you".
+- **Live Activities (iOS) / Ongoing notifications (Android)** - event-day countdowns.
 
 ---
 
 ## 8. Quality, Security, Compliance
 
-- DPDP Act (India) + GDPR — explicit consent for push/email/analytics; data export + delete in `me/`.
+- DPDP Act (India) + GDPR - explicit consent for push/email/analytics; data export + delete in `me/`.
 - Apple ATT prompt only if IDFA-based attribution is added.
 - Tokens in SecureStore/Keychain/Keystore; refresh-token rotation.
 - Certificate pinning for API calls.
 - Crash-free sessions ≥ 99.5% once mobile is in external testing.
-- Accessibility per `docs/brand/DESIGN_GUIDELINES.md` — dynamic type, VoiceOver/TalkBack, contrast.
+- Accessibility per `docs/brand/DESIGN_GUIDELINES.md` - dynamic type, VoiceOver/TalkBack, contrast.
 - Content moderation policy + report/block (App Store requirement for UGC).
 
 ---
@@ -304,16 +304,16 @@ Each item below ships behind its own TDD:
 - Native binary release cadence can stay manual during MVP; automate only after repeated releases.
 - Feature flags can remain simple config until usage requires a dedicated service.
 - Staged rollout through TestFlight and Play Console tracks; halt manually if crashes or feedback regress.
-- ASO — localized listings (en, hi, ta, te first); keywords from `docs/COMPETITIVE_ANALYSIS_*`.
+- ASO - localized listings (en, hi, ta, te first); keywords from `docs/COMPETITIVE_ANALYSIS_*`.
 
 ---
 
 ## 10. Phased Roadmap
 
-- **Phase 0 — Foundations:** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads, spec templates merged into `docs/specs/`.
-- **Phase 1 — App v1.0 MVP:** §4 scope. Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target — informed by existing competitive docs).
+- **Phase 0 - Foundations:** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads, spec templates merged into `docs/specs/`.
+- **Phase 1 - App v1.0 MVP:** §4 scope. Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target - informed by existing competitive docs).
 - **Phase 2:** widgets, Live Activities, WhatsApp channel, organizer surface in-app, in-app inbox, referrals.
-- **Phase 3:** ticketing/RSVP + payments (Razorpay/Stripe), in-app chat per community, recommendations from `modules/scoring` + collaborative filtering, AI agent surface from `docs/AI_AGENT_*`.
+- **Phase 3:** ticketing/RSVP + payments (Razorpay/Stripe), in-app chat per community, recommendations from `modules/scoring` + collaborative filtering, AI agent surface from `docs/AI_PIPELINE_*`.
 
 ---
 
@@ -344,15 +344,15 @@ Run-rate adds should stay minimal: EAS, Resend, object storage, PostHog, and Sen
 
 ## 13. First Specs to Write (immediate next actions)
 
-1. `ADR-0001` — Adopt Expo + monorepo; reject PWA.
-2. `ADR-0002` — Zod-as-contract; OpenAPI generated, not hand-written.
-3. `PRD-0001` / `TDD-0001` — `/api/v1` cutover + JWT auth.
-4. `PRD-0002` / `TDD-0002` — Device + NotificationPreference + Outbox worker.
-5. `PRD-0003` / `TDD-0003` — Mobile Discover feed (city picker + event/community list).
-6. `PRD-0004` / `TDD-0004` — Push permission flow + topic preferences UI.
-7. `EVENTS/analytics.md` — initial event catalog (typed).
-8. `EVENTS/notifications.md` — full notification matrix with caps and copy.
+1. `ADR-0001` - Adopt Expo + monorepo; reject PWA.
+2. `ADR-0002` - Zod-as-contract; OpenAPI generated, not hand-written.
+3. `PRD-0001` / `TDD-0001` - `/api/v1` cutover + JWT auth.
+4. `PRD-0002` / `TDD-0002` - Device + NotificationPreference + Outbox worker.
+5. `PRD-0003` / `TDD-0003` - Mobile Discover feed (city picker + event/community list).
+6. `PRD-0004` / `TDD-0004` - Push permission flow + topic preferences UI.
+7. `EVENTS/analytics.md` - initial event catalog (typed).
+8. `EVENTS/notifications.md` - full notification matrix with caps and copy.
 
 ---
 
-**Bottom line:** Native via Expo, monorepo with a shared contract, and a spec-driven workflow where every feature starts as a PRD + API + TDD before code. Push and the weekly digest are treated as the core retention product — not features. Ship a tight v1.0 in two lighthouse cities, then scale.
+**Bottom line:** Native via Expo, monorepo with a shared contract, and a spec-driven workflow where every feature starts as a PRD + API + TDD before code. Push and the weekly digest are treated as the core retention product - not features. Ship a tight v1.0 in two lighthouse cities, then scale.

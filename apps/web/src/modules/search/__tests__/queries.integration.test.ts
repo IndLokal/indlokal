@@ -4,7 +4,7 @@
  * Validates that search correctly finds communities and events,
  * handles edge cases, and doesn't crash on special characters.
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { testDb, cleanDb } from '@/test/db-helpers';
@@ -94,7 +94,7 @@ describe('searchCommunities @db', () => {
   it('does not crash on special characters', async () => {
     await createCommunity(testDb, { cityId });
 
-    // These should not throw — SQL injection or syntax error would cause failure
+    // These should not throw - SQL injection or syntax error would cause failure
     const specialQueries = [
       "it's",
       'test & more',

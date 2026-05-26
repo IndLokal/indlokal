@@ -1,6 +1,6 @@
 /**
- * POST /api/v1/track — Client-side behavioral event tracking.
- * Optional auth — records userId when a bearer token is present.
+ * POST /api/v1/track - Client-side behavioral event tracking.
+ * Optional auth - records userId when a bearer token is present.
  * Writes to user_interactions table for scoring/analytics pipeline.
  */
 
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   const { event: eventType, entityType, entityId, citySlug, metadata } = parsed.data;
   const interactionType = INTERACTION_TYPE_MAP[eventType] ?? 'VIEW';
 
-  // Skip writes that are missing entity context — they're pure analytics pings
+  // Skip writes that are missing entity context - they're pure analytics pings
   // not tied to a specific entity (e.g. page views).
   if (entityType && entityId) {
     try {
@@ -74,7 +74,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         },
       });
     } catch {
-      // Tracking is non-critical — always return ok.
+      // Tracking is non-critical - always return ok.
     }
   }
 

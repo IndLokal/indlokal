@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { PreferencesForm } from './PreferencesForm';
 
 export const metadata: Metadata = {
-  title: 'My Profile — IndLokal',
+  title: 'My Profile - IndLokal',
   robots: { index: false },
 };
 

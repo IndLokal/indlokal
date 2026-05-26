@@ -69,7 +69,7 @@ export async function createReport(
     reporterEmail: input.reporterEmail,
     submittedByUserId: userId,
   }).catch(() => {
-    // Non-critical — don't fail the request if email fails
+    // Non-critical - don't fail the request if email fails
   });
 
   return report;

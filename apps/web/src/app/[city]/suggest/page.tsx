@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city } = await params;
   const cityName = city.charAt(0).toUpperCase() + city.slice(1);
   return {
-    title: `Suggest a Community — ${cityName} · IndLokal`,
+    title: `Suggest a Community - ${cityName} · IndLokal`,
     description: `Suggest a missing Indian community, service, or resource in ${cityName}.`,
   };
 }

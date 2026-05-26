@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/logout — TDD-0001 §3.
+ * POST /api/v1/auth/logout - TDD-0001 §3.
  * Revokes the supplied refresh token. Idempotent: always returns 200.
  */
 

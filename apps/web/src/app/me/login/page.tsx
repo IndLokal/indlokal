@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Sign in — IndLokal',
+  title: 'Sign in - IndLokal',
   robots: { index: false },
 };
 

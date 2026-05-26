@@ -11,7 +11,7 @@ import {
   revertAutoApprovedPipelineItems,
 } from '@/modules/pipeline';
 
-/* ——— Approve: create entity from pipeline item ——— */
+/* --- Approve: create entity from pipeline item --- */
 
 export async function approvePipelineItem(formData: FormData) {
   await assertCan('pipeline.approve');
@@ -23,7 +23,7 @@ export async function approvePipelineItem(formData: FormData) {
   revalidatePath('/admin/pipeline');
 }
 
-/* ——— Reject pipeline item ——— */
+/* --- Reject pipeline item --- */
 
 export async function rejectPipelineItem(formData: FormData) {
   await assertCan('pipeline.reject');
@@ -43,7 +43,7 @@ export async function rejectPipelineItem(formData: FormData) {
   revalidatePath('/admin/pipeline');
 }
 
-/* ——— Batch approve high-confidence items ——— */
+/* --- Batch approve high-confidence items --- */
 
 export async function batchApprovePipelineItems(formData: FormData) {
   await assertCan('pipeline.approve');

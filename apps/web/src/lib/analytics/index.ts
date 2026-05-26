@@ -1,5 +1,5 @@
 /**
- * Analytics barrel — domain-grouped exports for PostHog tracking.
+ * Analytics barrel - domain-grouped exports for PostHog tracking.
  *
  * Client hooks:  import { Events, useTrackEvent } from '@/lib/analytics';
  * Server events: import { Events } from '@/lib/analytics/events';

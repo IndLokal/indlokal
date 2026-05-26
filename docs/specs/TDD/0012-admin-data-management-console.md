@@ -38,7 +38,7 @@ deleteResourceAction(resourceId: string): Promise<ActionResult>
 
 Common contract:
 
-1. `await requireAdmin()` — throws redirect to `/admin/login` if unauth.
+1. `await requireAdmin()` - throws redirect to `/admin/login` if unauth.
 2. Run the entity-specific check / cascade (see §4).
 3. `revalidateTag('city-feed', 'max')`.
 4. Return `{ ok: true }` or `{ ok: false, error: string }`.
@@ -84,7 +84,7 @@ waiting for ISR.
 
 - Server-side `console.log` per action with `{ entity, id, adminId }`.
 - Sentry breadcrumb on action entry.
-- Failed deletes are returned as data, not thrown — the form surfaces
+- Failed deletes are returned as data, not thrown - the form surfaces
   them to the admin.
 
 ## 7. Failure modes

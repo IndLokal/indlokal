@@ -1,7 +1,7 @@
 /**
- * Integration tests — refresh-token rotation and reuse detection.
+ * Integration tests - refresh-token rotation and reuse detection.
  *
- * @db — requires test database (`./dev.sh test:setup`).
+ * @db - requires test database (`./dev.sh test:setup`).
  * Covers TDD-0001 §2 and §8.
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';

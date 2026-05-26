@@ -46,7 +46,7 @@ export function AuditTable({ logs, operators }: Props) {
   const operatorMap = new Map(operators.map((o) => [o.id, o]));
 
   function actorLabel(changedBy: string | null): string {
-    if (!changedBy) return '—';
+    if (!changedBy) return '-';
     if (changedBy === 'system') return 'system';
     const op = operatorMap.get(changedBy);
     return op ? (op.displayName ?? op.email) : changedBy.slice(0, 8) + '…';

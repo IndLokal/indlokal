@@ -1,11 +1,11 @@
 /**
- * Centralised error-handling wrappers — three building blocks for every
+ * Centralised error-handling wrappers - three building blocks for every
  * layer of the stack.
  *
  * ┌─────────────────────────────────────────────────────────────────┐
- * │  withDb(fn)       — server components / layouts                 │
- * │  withAction(fn)   — 'use server' actions                        │
- * │  apiHandler(fn)   — /api/* route handlers                       │
+ * │  withDb(fn)       - server components / layouts                 │
+ * │  withAction(fn)   - 'use server' actions                        │
+ * │  apiHandler(fn)   - /api/* route handlers                       │
  * └─────────────────────────────────────────────────────────────────┘
  *
  * Why this exists
@@ -16,7 +16,7 @@
  * silently hangs forms, or returns HTTP 500 to the mobile client.
  *
  * The wrappers centralise the catch so individual callers stay thin and
- * consistent. They log the error once (server-side only — never leaking
+ * consistent. They log the error once (server-side only - never leaking
  * internals to the client) and return a safe fallback.
  */
 

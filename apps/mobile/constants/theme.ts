@@ -1,5 +1,5 @@
 /**
- * Mobile design tokens — mirrors the brand palette defined in
+ * Mobile design tokens - mirrors the brand palette defined in
  * apps/web/src/app/globals.css and docs/brand/DESIGN_GUIDELINES.md.
  *
  * Keep this file in sync with the web `--color-*` tokens. When the

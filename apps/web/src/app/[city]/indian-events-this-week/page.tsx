@@ -64,7 +64,7 @@ export default async function IndianEventsThisWeekPage({ params }: Props) {
         <p className="text-muted mt-2">
           {events.length > 0
             ? `${events.length} event${events.length !== 1 ? 's' : ''} ${windowLabel}`
-            : `No events found ${windowLabel} — check back soon.`}
+            : `No events found ${windowLabel} - check back soon.`}
         </p>
       </div>
 

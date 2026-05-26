@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!event) return { title: 'Event not found' };
   const dateStr = format(new Date(event.startsAt), 'MMM d, yyyy');
   return {
-    title: `${event.title} — ${dateStr}`,
+    title: `${event.title} - ${dateStr}`,
     description: event.description ?? `${event.title} in ${event.city.name}, Germany.`,
   };
 }
@@ -163,7 +163,7 @@ export default async function EventDetailPage({ params }: Props) {
               <p className="font-medium">{format(startsAt, 'EEEE, MMMM d, yyyy')}</p>
               <p className="text-muted text-sm">
                 {format(startsAt, 'h:mm a')}
-                {endsAt && ` – ${format(endsAt, 'h:mm a')}`}
+                {endsAt && ` - ${format(endsAt, 'h:mm a')}`}
               </p>
             </div>
           </div>
@@ -211,7 +211,7 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* Organiser — community */}
+        {/* Organiser - community */}
         {event.community && (
           <div>
             <h2 className="text-lg font-semibold">Organised by</h2>
@@ -231,7 +231,7 @@ export default async function EventDetailPage({ params }: Props) {
           </div>
         )}
 
-        {/* Hosted by — independent event host */}
+        {/* Hosted by - independent event host */}
         {!event.community && hostDisplayName && (
           <div>
             <h2 className="text-lg font-semibold">Hosted by</h2>

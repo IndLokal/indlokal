@@ -1,5 +1,5 @@
 /**
- * Component tests — HomePage (landing page).
+ * Component tests - HomePage (landing page).
  *
  * Runs in jsdom environment.
  * next/link, next/navigation are mocked globally in src/test/setup.ts.
@@ -19,7 +19,7 @@ vi.mock('@/components/layout', () => ({
 
 // CitySearch is a client component that calls useState; the page-test runs the
 // server HomePage in jsdom which doesn't dispatch React's client renderer for
-// nested client boundaries — mock it out.
+// nested client boundaries - mock it out.
 vi.mock('../CitySearch', () => ({
   CitySearch: () => null,
 }));

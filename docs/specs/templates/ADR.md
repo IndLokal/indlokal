@@ -19,5 +19,5 @@ The position taken.
 
 ## Alternatives considered
 
-- Option A — pros/cons, why not.
-- Option B — pros/cons, why not.
+- Option A - pros/cons, why not.
+- Option B - pros/cons, why not.

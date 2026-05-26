@@ -1,4 +1,4 @@
-# AUTO-GENERATED — DO NOT EDIT BY HAND.
+# AUTO-GENERATED - DO NOT EDIT BY HAND.
 # Source: packages/shared/src/contracts/*.ts
 # Regenerate with: pnpm openapi:generate
 
@@ -4794,7 +4794,7 @@ paths:
             application/json: *a16
   /api/v1/events/{slug}:
     get:
-      summary: Event detail — optional auth for savedByUser flag
+      summary: Event detail - optional auth for savedByUser flag
       security: []
       parameters:
         - schema:
@@ -5157,7 +5157,7 @@ paths:
             application/json: *a16
   /api/v1/communities/{slug}:
     get:
-      summary: Community detail — optional auth for followedByUser flag
+      summary: Community detail - optional auth for followedByUser flag
       security: []
       parameters:
         - schema:

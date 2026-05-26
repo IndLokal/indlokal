@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/auth/google.
+ * Integration tests - /api/v1/auth/google.
  *
- * @db — requires the test database. Mocks `fetch` to simulate Google's
+ * @db - requires the test database. Mocks `fetch` to simulate Google's
  * token + userinfo endpoints; we never make a real HTTP call.
  */
 import { describe, it, expect, beforeEach, afterAll, beforeAll, afterEach, vi } from 'vitest';

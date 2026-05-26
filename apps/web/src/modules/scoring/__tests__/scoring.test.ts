@@ -1,7 +1,7 @@
 /**
  * Unit tests for scoring module.
  *
- * These tests cover pure functions only — no database, no I/O.
+ * These tests cover pure functions only - no database, no I/O.
  * They should be fast (<10ms each) and run on every save.
  */
 import { describe, it, expect } from 'vitest';

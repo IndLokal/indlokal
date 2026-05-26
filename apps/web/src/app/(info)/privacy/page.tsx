@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 
 export const metadata: Metadata = {
-  title: `Privacy Policy — ${siteConfig.name}`,
+  title: `Privacy Policy - ${siteConfig.name}`,
   description: `Privacy Policy for ${siteConfig.name}. Learn how we collect, use, and protect your data.`,
 };
 
@@ -78,7 +78,7 @@ export default function PrivacyPolicyPage() {
             <h3>3.2 Automatically collected data</h3>
             <ul>
               <li>
-                <strong>Usage data:</strong> Pages visited, time spent, and interactions — collected
+                <strong>Usage data:</strong> Pages visited, time spent, and interactions - collected
                 via privacy-friendly analytics (Plausible Analytics). No cookies are used for
                 analytics, and no personal data is collected.
               </li>
@@ -165,7 +165,7 @@ export default function PrivacyPolicyPage() {
                 <strong>Restrict</strong> processing of your data
               </li>
               <li>
-                <strong>Data portability</strong> — receive your data in a structured format
+                <strong>Data portability</strong> - receive your data in a structured format
               </li>
               <li>
                 <strong>Object</strong> to processing based on legitimate interest

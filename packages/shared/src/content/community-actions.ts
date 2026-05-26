@@ -80,7 +80,7 @@ export const COMMUNITY_ACTION_COPY = {
   organizerLoginBody:
     'Once your claim is approved, this is where you edit the community profile, manage join links, and add events. If you do not manage a listed community yet, start by claiming it on the community page or by submitting a new listing.',
   organizerDashboardBody:
-    'This dashboard is for approved organizers — the person or team that runs the community listing. Here you can edit the profile, manage join links, and post events that appear on the city feed.',
+    'This dashboard is for approved organizers - the person or team that runs the community listing. Here you can edit the profile, manage join links, and post events that appear on the city feed.',
   mobileSubmitChooserSub: 'Submissions are reviewed before going live.',
   mobileSubmitCommunityHint:
     'Use this when the community is not listed yet. If it already exists, claim it on the web page instead. If you only want to point us to something missing, use Suggest.',

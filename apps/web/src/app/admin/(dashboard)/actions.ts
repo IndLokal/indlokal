@@ -10,7 +10,7 @@ import {
   sendSubmissionApprovedEmail,
 } from '@/lib/email';
 
-/* ——— Submission actions ——— */
+/* --- Submission actions --- */
 
 export async function approveSubmission(formData: FormData) {
   await assertCan('pipeline.approve');
@@ -48,11 +48,11 @@ export async function approveSubmission(formData: FormData) {
         community.slug,
       );
     } catch {
-      // Email is best-effort — don't fail admin action
+      // Email is best-effort - don't fail admin action
     }
   }
 
-  // Refresh scores — trust and completeness change on approval
+  // Refresh scores - trust and completeness change on approval
   await refreshCommunityScore(id);
 
   revalidateTag('city-feed', 'max');
@@ -72,7 +72,7 @@ export async function rejectSubmission(formData: FormData) {
   revalidatePath('/admin/submissions');
 }
 
-/* ——— Claim actions ——— */
+/* --- Claim actions --- */
 
 export async function approveClaim(formData: FormData) {
   await assertCan('claims.approve');
@@ -127,7 +127,7 @@ export async function approveClaim(formData: FormData) {
       }
     }
   }
-  // Refresh scores — trust score changes when claimed
+  // Refresh scores - trust score changes when claimed
   await refreshCommunityScore(id);
 
   revalidateTag('city-feed', 'max');
@@ -174,7 +174,7 @@ export async function rejectClaim(formData: FormData) {
   revalidatePath('/admin/claims');
 }
 
-/* ——— Report actions ——— */
+/* --- Report actions --- */
 
 export async function reviewReport(formData: FormData) {
   await assertCan('reports.read');

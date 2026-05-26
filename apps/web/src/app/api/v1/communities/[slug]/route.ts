@@ -1,6 +1,6 @@
 /**
- * GET /api/v1/communities/:slug — Community detail.
- * Optional auth — includes followedByUser if bearer token present.
+ * GET /api/v1/communities/:slug - Community detail.
+ * Optional auth - includes followedByUser if bearer token present.
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

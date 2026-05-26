@@ -1,5 +1,5 @@
 /**
- * Bearer-token middleware helpers — TDD-0001 §1.
+ * Bearer-token middleware helpers - TDD-0001 §1.
  *
  * Usage in a route handler (e.g. /api/v1/me/route.ts):
  *

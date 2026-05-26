@@ -1,5 +1,5 @@
 /**
- * Centralized analytics module — single source of truth for PostHog event names,
+ * Centralized analytics module - single source of truth for PostHog event names,
  * client-side tracking helpers, and user identity management.
  *
  * Usage (client components):

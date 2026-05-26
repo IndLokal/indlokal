@@ -1,5 +1,5 @@
 /**
- * Feature flags — controlled via environment variables.
+ * Feature flags - controlled via environment variables.
  * All flags default to enabled unless explicitly disabled with `=false`.
  */
 export const FLAGS = {

@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { runBootstrapAction } from './actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Data Management — Admin' };
+export const metadata = { title: 'Data Management - Admin' };
 
 export default async function DataHubPage() {
   const [
@@ -61,7 +61,7 @@ export default async function DataHubPage() {
           <div>
             <h2 className="text-sm font-semibold text-amber-900">Bootstrap reference data</h2>
             <p className="mt-1 text-xs text-amber-800">
-              Re-runs the idempotent bootstrap (cities, categories, personas). Safe to run anytime —
+              Re-runs the idempotent bootstrap (cities, categories, personas). Safe to run anytime -
               uses upserts and never deletes data. Use this if a freshly-migrated database is empty.
             </p>
           </div>

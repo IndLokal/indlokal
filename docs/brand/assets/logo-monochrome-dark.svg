@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220" role="img" aria-label="IndLokal">
-  <title>IndLokal — monochrome dark</title>
+  <title>IndLokal - monochrome dark</title>
   <!-- Mark in single indigo. The peak gets a filled disc to preserve the "pulse moment". -->
   <g transform="translate(0,0)">
     <rect width="220" height="220" rx="48" fill="#312E81"/>

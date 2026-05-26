@@ -15,8 +15,14 @@ export const metadata: Metadata = {
 export default async function SubmitPage() {
   const [cities, categories] = await Promise.all([
     db.city.findMany({
-      where: { isActive: true },
-      select: { slug: true, name: true },
+      where: {
+        OR: [{ isActive: true }, { metroRegionId: { not: null } }],
+      },
+      select: {
+        slug: true,
+        name: true,
+        metroRegion: { select: { name: true, slug: true } },
+      },
       orderBy: { name: 'asc' },
     }),
     db.category.findMany({
@@ -48,7 +54,13 @@ export default async function SubmitPage() {
       </div>
 
       <div className="border-border mt-10 rounded-[var(--radius-card)] border bg-white p-6 shadow-sm sm:p-8">
-        <SubmitForm cities={cities} categories={categories} />
+        <SubmitForm
+          cities={cities.map((city) => ({
+            slug: city.slug,
+            name: city.metroRegion ? `${city.name} (${city.metroRegion.name} metro)` : city.name,
+          }))}
+          categories={categories}
+        />
       </div>
     </div>
   );

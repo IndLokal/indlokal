@@ -8,18 +8,18 @@
 ## 1. Problem
 
 Founders, ops staff, and verified community organizers need to sign in to the
-web admin from anywhere — including from a phone — without password
+web admin from anywhere - including from a phone - without password
 management, without a third-party SSO bill, and with email link previewers
 (Gmail, Outlook Safe Links, mail-server scanners) not silently consuming the
 one-shot token before the human ever clicks it.
 
 ## 2. Users & JTBD
 
-- **Platform admin** — wants to triage submissions, run bootstrap, manage
+- **Platform admin** - wants to triage submissions, run bootstrap, manage
   data; expects "log in once a week, stay signed in".
-- **Community organizer** (claimed community) — wants to update events and
+- **Community organizer** (claimed community) - wants to update events and
   respond to claims; logs in much less often, almost always on mobile.
-- **Both** — must be able to sign out cleanly from a shared device.
+- **Both** - must be able to sign out cleanly from a shared device.
 
 ## 3. Success Metrics
 
@@ -33,7 +33,7 @@ one-shot token before the human ever clicks it.
 - Email-based magic-link request for both `/admin/login` and
   `/organizer/login`.
 - Token issued once, hashed at rest (SHA-256), 24-hour TTL, single-use.
-- Verify route safe to GET-prefetch by email scanners — GET shows a confirm
+- Verify route safe to GET-prefetch by email scanners - GET shows a confirm
   page, POST consumes the token; all redirects use HTTP **303** to force
   the follow-up to be GET.
 - 7-day **sliding** session cookie; renewed when the request is within 24 h
@@ -88,15 +88,15 @@ Given a magic link is older than 24 h or already used
 
 ## 8. UX
 
-- `/admin/login` — email input, submit returns to the same page with
+- `/admin/login` - email input, submit returns to the same page with
   "Check your inbox" notice; renders signed-out banner when
   `?signed_out=1`.
-- `/admin/verify?token=…` — single-button confirm page ("Click to sign in")
+- `/admin/verify?token=…` - single-button confirm page ("Click to sign in")
   to ensure POST consumption.
-- Admin layout header — admin email + Sign out button (form POST to
+- Admin layout header - admin email + Sign out button (form POST to
   `/admin/logout`).
 - Organizer flow mirrors the same pattern at `/organizer/...`.
-- Errors: invalid token, expired token, network — all surface inline.
+- Errors: invalid token, expired token, network - all surface inline.
 
 ## 9. Risks & Open Questions
 
@@ -105,4 +105,4 @@ Given a magic link is older than 24 h or already used
   scope per environment (see TDD-0011 §6).
 - **Open:** add WebAuthn for admin step-up (deferred).
 - **Open:** allow admin to invalidate all other sessions ("sign out
-  everywhere") — deferred until we add a sessions list.
+  everywhere") - deferred until we add a sessions list.

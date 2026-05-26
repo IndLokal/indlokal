@@ -7,7 +7,7 @@ import { CommunityCard } from '@/components/CommunityCard';
 import { getSessionUser } from '@/lib/session';
 
 /**
- * Community Explorer — browse communities in a city.
+ * Community Explorer - browse communities in a city.
  * Supports optional ?language= filter for SEO pages
  * (e.g. /stuttgart/telugu-communities → rewritten to /stuttgart/communities?language=telugu)
  *

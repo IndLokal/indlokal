@@ -1,4 +1,4 @@
-"""Builds a concise IndLokal Consulate Connect deck (6–8 slides) using IndLokal brand template.
+"""Builds a concise IndLokal Consulate Connect deck (6-8 slides) using IndLokal brand template.
 
 Run:
     python3 decks/scripts/build_consulate_deck.py
@@ -49,13 +49,13 @@ def build():
     slide, y = slide_content(prs, THEME, GEO,
         eyebrow="How it works",
         title="Discover events, communities, resources")
-    add_text(slide, "[Insert 3–4 screenshots: Home feed, Event detail, Community, Resources. Captions: 'Upcoming events', 'Community detail', 'Multilingual resources', 'Submit an event']", GEO.margin, y + 0.2, GEO.content_w, 1.0, size=SIZE_BODY_LG, color=THEME.ink)
+    add_text(slide, "[Insert 3-4 screenshots: Home feed, Event detail, Community, Resources. Captions: 'Upcoming events', 'Community detail', 'Multilingual resources', 'Submit an event']", GEO.margin, y + 0.2, GEO.content_w, 1.0, size=SIZE_BODY_LG, color=THEME.ink)
 
     # 5. Roadmap
     slide, y = slide_content(prs, THEME, GEO,
         eyebrow="2026 rollout",
         title="Stuttgart anchor, national arc")
-    add_text(slide, "Stuttgart anchor (months 0–3). Munich beta-live months 1–3. Frankfurt beta-live months 3–6. 6–8 metros by month 12. AI-assisted ingestion + city-agnostic platform = fast, scalable expansion. Partnership conversations run in parallel.", GEO.margin, y + 0.2, GEO.content_w, 1.0, size=SIZE_BODY_LG, color=THEME.ink)
+    add_text(slide, "Stuttgart anchor (months 0-3). Munich beta-live months 1-3. Frankfurt beta-live months 3-6. 6-8 metros by month 12. AI-assisted ingestion + city-agnostic platform = fast, scalable expansion. Partnership conversations run in parallel.", GEO.margin, y + 0.2, GEO.content_w, 1.0, size=SIZE_BODY_LG, color=THEME.ink)
 
     # 6. The ask
     slide, y = slide_content(prs, THEME, GEO,

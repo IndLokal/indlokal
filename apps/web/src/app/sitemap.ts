@@ -74,7 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   entries.push({ url: `${baseUrl}/terms`, changeFrequency: 'yearly', priority: 0.3 });
   entries.push({ url: `${baseUrl}/impressum`, changeFrequency: 'yearly', priority: 0.3 });
 
-  // Upcoming cities — coming soon pages
+  // Upcoming cities - coming soon pages
   for (const city of UPCOMING_CITIES) {
     entries.push({
       url: `${baseUrl}/${city.slug}/coming-soon`,

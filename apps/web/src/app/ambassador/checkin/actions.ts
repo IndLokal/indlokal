@@ -6,7 +6,7 @@ import { assertCan } from '@/lib/auth/permissions';
 import { Prisma } from '@prisma/client';
 import type { SubmitResult } from '../submit/actions';
 
-// Allowed S3/R2 key format — alphanumeric, hyphens, underscores, dots, slashes.
+// Allowed S3/R2 key format - alphanumeric, hyphens, underscores, dots, slashes.
 // Prevents arbitrary strings from reaching storage layers.
 const PHOTO_KEY_RE = /^[\w\-.\/]{1,512}$/;
 
@@ -32,7 +32,7 @@ export async function checkInToEvent(
   }
   const photoKey = photoKeyRaw;
 
-  // Load event — need startsAt/endsAt for the temporal guard
+  // Load event - need startsAt/endsAt for the temporal guard
   const event = await db.event.findUnique({
     where: { id: eventId },
     select: {
@@ -72,7 +72,7 @@ export async function checkInToEvent(
   if (!communityId) {
     return {
       success: false,
-      error: 'This event has no associated community — check-in not supported.',
+      error: 'This event has no associated community - check-in not supported.',
     };
   }
 

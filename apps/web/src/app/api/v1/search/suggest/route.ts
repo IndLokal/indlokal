@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/search/suggest?q&citySlug — Autocomplete suggestions.
+ * GET /api/v1/search/suggest?q&citySlug - Autocomplete suggestions.
  * Optional auth.
  */
 

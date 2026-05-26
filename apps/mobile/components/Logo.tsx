@@ -1,5 +1,5 @@
 /**
- * IndLokal Pulse mark — mobile.
+ * IndLokal Pulse mark - mobile.
  *
  * Mirrors `apps/web/src/components/Logo.tsx`. Uses the bundled PNG asset so
  * we don't need to pull in `react-native-svg` just for the brand mark.
@@ -14,7 +14,7 @@ const PULSE_MARK = require('../assets/images/icon.png');
 export interface LogoMarkProps {
   /** Pixel width and height. Defaults to 40 (matches typical header use). */
   size?: number;
-  /** Override container styling — e.g. shadow, margin. */
+  /** Override container styling - e.g. shadow, margin. */
   style?: StyleProp<ImageStyle>;
 }
 
