@@ -1,11 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, PipelineSourceConfigType, PipelineSourceType } from '@prisma/client';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '../src/lib/config/cities';
-
-type SqlClient = PrismaClient | Prisma.TransactionClient;
 
 type SourceDefaultsRegion = {
   id: string;
@@ -42,11 +39,11 @@ type SourceDefaults = {
 };
 
 type PipelineConfigRow = {
-  configType: 'KEYWORD' | 'REGION' | 'STRATEGY';
+  configType: PipelineSourceConfigType;
   key: string;
   label: string;
   enabled: boolean;
-  sourceType: string | null;
+  sourceType: PipelineSourceType | null;
   kind: string | null;
   payload: Prisma.JsonObject;
 };
@@ -398,7 +395,7 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
         key: strategy.id,
         label: strategy.label,
         enabled: strategy.enabled,
-        sourceType: strategy.sourceType,
+        sourceType: strategy.sourceType as PipelineSourceType,
         kind: strategy.kind,
         payload: {
           radiusKm: strategy.radiusKm ?? 50,
@@ -412,7 +409,7 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
       key: strategy.id,
       label: strategy.label,
       enabled: strategy.enabled,
-      sourceType: strategy.sourceType,
+      sourceType: strategy.sourceType as PipelineSourceType,
       kind: strategy.kind,
       payload: {
         url: strategy.url ?? null,
@@ -427,38 +424,37 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
   return [...keywordRows, ...regionRows, ...strategyRows];
 }
 
-async function upsertConfigRow(prisma: SqlClient, row: PipelineConfigRow): Promise<void> {
-  await prisma.$executeRaw(
-    Prisma.sql`
-      INSERT INTO pipeline_source_configs
-        (id, config_type, key, label, enabled, source_type, kind, payload, created_at, updated_at)
-      VALUES
-        (
-          ${randomUUID()},
-          ${row.configType}::"PipelineSourceConfigType",
-          ${row.key},
-          ${row.label},
-          ${row.enabled},
-          ${row.sourceType}::"PipelineSourceType",
-          ${row.kind},
-          ${row.payload}::jsonb,
-          NOW(),
-          NOW()
-        )
-      ON CONFLICT (config_type, key)
-      DO UPDATE
-      SET
-        label = EXCLUDED.label,
-        enabled = EXCLUDED.enabled,
-        source_type = EXCLUDED.source_type,
-        kind = EXCLUDED.kind,
-        payload = EXCLUDED.payload,
-        updated_at = NOW()
-    `,
-  );
+async function upsertConfigRow(prisma: PrismaClient, row: PipelineConfigRow): Promise<void> {
+  await prisma.pipelineSourceConfig.upsert({
+    where: {
+      configType_key: {
+        configType: row.configType,
+        key: row.key,
+      },
+    },
+    update: {
+      label: row.label,
+      enabled: row.enabled,
+      sourceType: row.sourceType,
+      kind: row.kind,
+      payload: row.payload,
+    },
+    create: {
+      configType: row.configType,
+      key: row.key,
+      label: row.label,
+      enabled: row.enabled,
+      sourceType: row.sourceType,
+      kind: row.kind,
+      payload: row.payload,
+    },
+  });
 }
 
-async function disableMissingRows(prisma: SqlClient, rows: PipelineConfigRow[]): Promise<number> {
+async function disableMissingRows(
+  prisma: PrismaClient,
+  rows: PipelineConfigRow[],
+): Promise<number> {
   const keepKeywordKeys = rows.filter((row) => row.configType === 'KEYWORD').map((row) => row.key);
   const keepRegionKeys = rows.filter((row) => row.configType === 'REGION').map((row) => row.key);
   const keepStrategyKeys = rows
@@ -473,37 +469,34 @@ async function disableMissingRows(prisma: SqlClient, rows: PipelineConfigRow[]):
     return 0;
   }
 
-  const keywordResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'KEYWORD'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepKeywordKeys)})
-    `,
-  );
+  const keywordResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'KEYWORD',
+      enabled: true,
+      key: { notIn: keepKeywordKeys },
+    },
+    data: { enabled: false },
+  });
 
-  const regionResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'REGION'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepRegionKeys)})
-    `,
-  );
+  const regionResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'REGION',
+      enabled: true,
+      key: { notIn: keepRegionKeys },
+    },
+    data: { enabled: false },
+  });
 
-  const strategyResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'STRATEGY'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepStrategyKeys)})
-    `,
-  );
+  const strategyResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'STRATEGY',
+      enabled: true,
+      key: { notIn: keepStrategyKeys },
+    },
+    data: { enabled: false },
+  });
 
-  return Number(keywordResult) + Number(regionResult) + Number(strategyResult);
+  return keywordResult.count + regionResult.count + strategyResult.count;
 }
 
 export type PipelineSourceConfigBootstrapResult = {
