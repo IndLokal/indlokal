@@ -343,12 +343,20 @@ async function resolveAndQueue(
   result: PipelineRunResult,
 ): Promise<void> {
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
+  const hintedCitySlugs = [
+    ...new Set(
+      relevantItems
+        .map((item) => (item as RawContent & { _hintCitySlug?: string })._hintCitySlug)
+        .filter((slug): slug is string => typeof slug === 'string' && slug.trim().length > 0),
+    ),
+  ];
+  const cityScopeSlugs = [...new Set([...allCitySlugs, ...hintedCitySlugs])];
   // Load region metros AND all their satellite cities so that communities
   // in satellite cities (e.g. esslingen → stuttgart metro) resolve correctly.
   // This avoids manually enumerating satellite slugs in source defaults.
   const cities = await db.city.findMany({
     where: {
-      OR: [{ slug: { in: allCitySlugs } }, { metroRegion: { slug: { in: allCitySlugs } } }],
+      OR: [{ slug: { in: cityScopeSlugs } }, { metroRegion: { slug: { in: cityScopeSlugs } } }],
     },
     select: { id: true, slug: true, name: true },
   });
