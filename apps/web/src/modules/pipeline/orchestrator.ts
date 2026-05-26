@@ -17,7 +17,7 @@
 import { db } from '@/lib/db';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { CITY_NAME_ALIASES } from '@/lib/config/cities';
-import { resolveCityMatch } from '@/lib/city-resolution';
+import { normalizeCityLookupKey, resolveCityMatch } from '@/lib/city-resolution';
 import { getRuntimeEnabledRegions } from './runtime-config';
 import {
   fetchEventbriteKeywords,
@@ -374,6 +374,24 @@ async function resolveAndQueue(
       );
     }
 
+    let cityConflict = false;
+    let cityConflictReason: string | undefined;
+    if (item.type === 'EVENT') {
+      const signalCity = inferCityFromEventSignals(item, cities);
+      if (signalCity) {
+        if (!cityId) {
+          cityId = signalCity.id;
+        } else if (cityId !== signalCity.id) {
+          cityConflict = true;
+          cityId = signalCity.id;
+          cityConflictReason = `City conflict: LLM city "${item.cityName ?? 'unknown'}" disagreed with event location signals; assigned "${signalCity.name}".`;
+          console.warn(
+            `[Pipeline] City conflict corrected for event "${item.title}": llm="${item.cityName ?? 'unknown'}" signal="${signalCity.name}"`,
+          );
+        }
+      }
+    }
+
     if (!cityId) {
       result.itemsSkippedNoCity++;
       if (item.type === 'EVENT') {
@@ -440,17 +458,22 @@ async function resolveAndQueue(
         matchScore: isDupe.matchScore ?? undefined,
         reviewNotes: isCityPending
           ? `CITY_PENDING: extracted city "${item.cityName ?? 'unknown'}" did not match configured cities; queued with fallback city "${fallbackCitySlug}" for admin review.`
-          : undefined,
-        metadata: isCityPending
-          ? ({
-              cityResolution: {
-                status: 'PENDING',
-                extractedCityName: item.cityName ?? null,
-                fallbackCitySlug,
-                reason: 'No city match found in configured cities/aliases.',
-              },
-            } as Prisma.InputJsonValue)
-          : undefined,
+          : cityConflict
+            ? cityConflictReason
+            : undefined,
+        metadata:
+          isCityPending || cityConflict
+            ? ({
+                cityResolution: {
+                  status: isCityPending ? 'PENDING' : 'CORRECTED',
+                  extractedCityName: item.cityName ?? null,
+                  fallbackCitySlug: isCityPending ? fallbackCitySlug : null,
+                  reason: isCityPending
+                    ? 'No city match found in configured cities/aliases.'
+                    : (cityConflictReason ?? 'City conflict corrected from event signals.'),
+                },
+              } as Prisma.InputJsonValue)
+            : undefined,
       },
       select: { id: true },
     });
@@ -471,7 +494,7 @@ async function resolveAndQueue(
       matchedEntityId: isDupe.matchedId,
       matchScore: isDupe.matchScore,
     });
-    if (autoApprove.eligible && !isCityPending) {
+    if (autoApprove.eligible && !isCityPending && !cityConflict) {
       await approvePipelineItemRecord(createdItem.id, {
         reviewedBy: 'system',
         autoApproved: true,
@@ -535,6 +558,84 @@ async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> 
   };
 }
 
+function hasHyphenBoundedToken(haystack: string, token: string): boolean {
+  return (
+    haystack === token ||
+    haystack.startsWith(`${token}-`) ||
+    haystack.endsWith(`-${token}`) ||
+    haystack.includes(`-${token}-`)
+  );
+}
+
+function findCitiesMentionedInText(
+  text: string | null | undefined,
+  cities: Array<{ id: string; slug: string; name: string }>,
+  aliases: Record<string, string>,
+): Array<{ id: string; slug: string; name: string }> {
+  if (!text) return [];
+
+  const normalized = normalizeCityLookupKey(text);
+  if (!normalized) return [];
+
+  const bySlug = new Map(cities.map((city) => [city.slug, city]));
+  const keysToSlug = new Map<string, string>();
+
+  for (const city of cities) {
+    keysToSlug.set(normalizeCityLookupKey(city.name), city.slug);
+    keysToSlug.set(normalizeCityLookupKey(city.slug), city.slug);
+  }
+  for (const [aliasKey, slug] of Object.entries(aliases)) {
+    keysToSlug.set(aliasKey, slug);
+  }
+
+  const found = new Map<string, { id: string; slug: string; name: string }>();
+  for (const [key, slug] of keysToSlug.entries()) {
+    if (!key || !hasHyphenBoundedToken(normalized, key)) continue;
+    const city = bySlug.get(slug);
+    if (city) found.set(city.id, city);
+  }
+
+  return [...found.values()];
+}
+
+function inferCityFromEventSignals(
+  event: ExtractedEvent,
+  cities: Array<{ id: string; slug: string; name: string }>,
+): { id: string; slug: string; name: string } | null {
+  const strongSignals = [event.venueAddress, event.venueName, event.hostCommunity];
+
+  for (const signal of strongSignals) {
+    const matches = findCitiesMentionedInText(signal, cities, CITY_NAME_ALIASES);
+    if (matches.length === 1) return matches[0] ?? null;
+  }
+
+  const titleMatches = findCitiesMentionedInText(event.title, cities, CITY_NAME_ALIASES);
+  if (titleMatches.length === 1) return titleMatches[0] ?? null;
+
+  return null;
+}
+
+export function normalizeEventTitleForDedup(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(20\d{2})\b/g, ' ')
+    .replace(/\b(stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function normalizeComparableUrl(value: string | null | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const pathname = url.pathname.replace(/\/$/, '');
+    return `${url.hostname.toLowerCase()}${pathname}`;
+  } catch {
+    return value.toLowerCase().replace(/\/$/, '');
+  }
+}
+
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {
   if (!event.date) {
     return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
@@ -553,12 +654,27 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
       cityId,
       startsAt: { gte: startOfWindow, lte: endOfWindow },
     },
-    select: { id: true, title: true },
+    select: { id: true, title: true, registrationUrl: true },
   });
 
+  const normalizedIncomingTitle = normalizeEventTitleForDedup(event.title);
+  const incomingRegistrationUrl = normalizeComparableUrl(event.registrationUrl);
+
   for (const candidate of candidates) {
+    const candidateRegistrationUrl = normalizeComparableUrl(candidate.registrationUrl);
+    if (
+      incomingRegistrationUrl &&
+      candidateRegistrationUrl &&
+      incomingRegistrationUrl === candidateRegistrationUrl
+    ) {
+      return { isDuplicate: true, matchedId: candidate.id, matchScore: 1, matchKind: 'ENTITY' };
+    }
+
     const score = computeSimilarity(event.title.toLowerCase(), candidate.title.toLowerCase());
-    if (score > 0.7) {
+    const normalizedCandidateTitle = normalizeEventTitleForDedup(candidate.title);
+    const canonicalTitleMatch =
+      normalizedIncomingTitle.length >= 8 && normalizedIncomingTitle === normalizedCandidateTitle;
+    if (score > 0.7 || canonicalTitleMatch) {
       return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
   }
@@ -581,8 +697,25 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     const dayDiff = Math.abs(eventDate.getTime() - candidateDate.getTime()) / (1000 * 60 * 60 * 24);
     if (dayDiff > 1) continue;
 
+    const pendingRegistrationUrl = normalizeComparableUrl(pendingEvent.registrationUrl ?? null);
+    if (
+      incomingRegistrationUrl &&
+      pendingRegistrationUrl &&
+      incomingRegistrationUrl === pendingRegistrationUrl
+    ) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: 1,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+
     const score = computeSimilarity(event.title.toLowerCase(), pendingEvent.title.toLowerCase());
-    if (score > 0.7) {
+    const normalizedPendingTitle = normalizeEventTitleForDedup(pendingEvent.title);
+    const canonicalTitleMatch =
+      normalizedIncomingTitle.length >= 8 && normalizedIncomingTitle === normalizedPendingTitle;
+    if (score > 0.7 || canonicalTitleMatch) {
       return {
         isDuplicate: true,
         matchedId: candidate.id,

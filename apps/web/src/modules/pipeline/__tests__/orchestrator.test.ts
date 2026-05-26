@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   computeSimilarity,
   isLikelyStaleEventPage,
+  normalizeEventTitleForDedup,
   prefilterLikelyCurrentItems,
 } from '../orchestrator';
 
@@ -53,6 +54,20 @@ describe('computeSimilarity', () => {
     // Bigram similarity is high because the names share most words.
     // In practice, date-based dedup catches these — same community, different dates.
     expect(score).toBeGreaterThan(0.8);
+  });
+});
+
+describe('normalizeEventTitleForDedup', () => {
+  it('removes city names and years for cross-source duplicate matching', () => {
+    const a = normalizeEventTitleForDedup('FTS Cultural Fest 2026 - Frankfurt');
+    const b = normalizeEventTitleForDedup('FTS Cultural Fest Frankfurt am Main 2026');
+    expect(a).toBe('fts cultural fest');
+    expect(b).toBe('fts cultural fest am main');
+  });
+
+  it('keeps core event identity tokens', () => {
+    const normalized = normalizeEventTitleForDedup('Tamil Sangam Diwali Celebration 2026');
+    expect(normalized).toContain('tamil sangam diwali celebration');
   });
 });
 
