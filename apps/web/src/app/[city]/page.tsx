@@ -182,6 +182,23 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
       {/* Quick links — brand palette */}
       <section className="grid gap-5 sm:grid-cols-2">
         <Link
+          href={`/${city}/business-events`}
+          className="group flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r from-emerald-50 to-white p-5 ring-1 ring-emerald-200/50 transition-all hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 text-xl shadow-sm">
+            💼
+          </span>
+          <div>
+            <p className="text-foreground text-sm font-semibold transition-colors group-hover:text-emerald-700">
+              Business and careers
+            </p>
+            <p className="text-muted mt-0.5 text-xs">
+              Networking nights, career talks, startup and founder events
+            </p>
+          </div>
+        </Link>
+
+        <Link
           href={`/${city}/resources`}
           className="from-accent-50 ring-accent-200/50 group flex items-center gap-4 overflow-hidden rounded-xl bg-gradient-to-r to-white p-5 ring-1 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >

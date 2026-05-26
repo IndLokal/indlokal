@@ -66,6 +66,7 @@ async function seedEvent(
   communityId: string | null,
   title: string,
   startsAt: Date,
+  options?: { cost?: string | null; isOnline?: boolean },
 ) {
   return testDb.event.create({
     data: {
@@ -75,6 +76,19 @@ async function seedEvent(
       communityId,
       status: 'UPCOMING',
       startsAt,
+      ...(options?.cost !== undefined ? { cost: options.cost } : {}),
+      ...(options?.isOnline !== undefined ? { isOnline: options.isOnline } : {}),
+    },
+  });
+}
+
+async function seedCategory(slug: string, name: string) {
+  return testDb.category.create({
+    data: {
+      slug,
+      name,
+      type: 'CATEGORY',
+      sortOrder: 0,
     },
   });
 }
@@ -207,6 +221,205 @@ describe('GET /api/v1/discovery/:citySlug/events', () => {
     );
     expect(res.status).toBe(200);
     expect((await res.json()).items).toEqual([]);
+  });
+
+  it('supports categorySlugs OR filtering', async () => {
+    const city = await seedCity();
+    const professional = await seedCategory('professional', 'Professional');
+    const networking = await seedCategory('networking-social', 'Networking & Social');
+    const cultural = await seedCategory('cultural', 'Cultural');
+
+    const professionalEvent = await seedEvent(
+      city.id,
+      null,
+      'Professional Meetup',
+      new Date(Date.now() + 3_600_000),
+    );
+    const networkingEvent = await seedEvent(
+      city.id,
+      null,
+      'Founder Networking Night',
+      new Date(Date.now() + 7_200_000),
+    );
+    const culturalEvent = await seedEvent(
+      city.id,
+      null,
+      'Cultural Festival',
+      new Date(Date.now() + 10_800_000),
+    );
+
+    await testDb.eventCategory.createMany({
+      data: [
+        { eventId: professionalEvent.id, categoryId: professional.id },
+        { eventId: networkingEvent.id, categoryId: networking.id },
+        { eventId: culturalEvent.id, categoryId: cultural.id },
+      ],
+    });
+
+    const res = await eventsRoute.GET(
+      new Request(
+        'http://l/api/v1/discovery/stuttgart/events?categorySlugs=professional&categorySlugs=networking-social',
+      ) as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    const titles = json.items.map((item: { title: string }) => item.title);
+    expect(titles).toContain('Professional Meetup');
+    expect(titles).toContain('Founder Networking Night');
+    expect(titles).not.toContain('Cultural Festival');
+  });
+
+  it('normalizes comma-separated and mixed-case categorySlugs', async () => {
+    const city = await seedCity();
+    const professional = await seedCategory('professional', 'Professional');
+    const networking = await seedCategory('networking-social', 'Networking & Social');
+    const sports = await seedCategory('sports', 'Sports');
+
+    const professionalEvent = await seedEvent(
+      city.id,
+      null,
+      'Professional Growth Session',
+      new Date(Date.now() + 3_600_000),
+    );
+    const networkingEvent = await seedEvent(
+      city.id,
+      null,
+      'Networking Mixer',
+      new Date(Date.now() + 7_200_000),
+    );
+    const sportsEvent = await seedEvent(
+      city.id,
+      null,
+      'Cricket Social',
+      new Date(Date.now() + 10_800_000),
+    );
+
+    await testDb.eventCategory.createMany({
+      data: [
+        { eventId: professionalEvent.id, categoryId: professional.id },
+        { eventId: networkingEvent.id, categoryId: networking.id },
+        { eventId: sportsEvent.id, categoryId: sports.id },
+      ],
+    });
+
+    const res = await eventsRoute.GET(
+      new Request(
+        'http://l/api/v1/discovery/stuttgart/events?categorySlugs= Professional,NETWORKING-social,professional ',
+      ) as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    const titles = json.items.map((item: { title: string }) => item.title);
+    expect(titles).toContain('Professional Growth Session');
+    expect(titles).toContain('Networking Mixer');
+    expect(titles).not.toContain('Cricket Social');
+  });
+
+  it('prefers categorySlugs when both categorySlug and categorySlugs are provided', async () => {
+    const city = await seedCity();
+    const professional = await seedCategory('professional', 'Professional');
+    const networking = await seedCategory('networking-social', 'Networking & Social');
+
+    const professionalEvent = await seedEvent(
+      city.id,
+      null,
+      'Professional Meetup Legacy',
+      new Date(Date.now() + 3_600_000),
+    );
+    const networkingEvent = await seedEvent(
+      city.id,
+      null,
+      'Networking Meetup Legacy',
+      new Date(Date.now() + 7_200_000),
+    );
+
+    await testDb.eventCategory.createMany({
+      data: [
+        { eventId: professionalEvent.id, categoryId: professional.id },
+        { eventId: networkingEvent.id, categoryId: networking.id },
+      ],
+    });
+
+    const res = await eventsRoute.GET(
+      new Request(
+        'http://l/api/v1/discovery/stuttgart/events?categorySlug=professional&categorySlugs=networking-social',
+      ) as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    const titles = json.items.map((item: { title: string }) => item.title);
+    expect(titles).toContain('Networking Meetup Legacy');
+    expect(titles).not.toContain('Professional Meetup Legacy');
+  });
+
+  it('supports cost filtering for free and paid', async () => {
+    const city = await seedCity();
+    await seedEvent(city.id, null, 'Free Meetup', new Date(Date.now() + 3_600_000), {
+      cost: 'free',
+    });
+    await seedEvent(city.id, null, 'Paid Workshop', new Date(Date.now() + 7_200_000), {
+      cost: '19',
+    });
+    await seedEvent(city.id, null, 'Cost Not Set', new Date(Date.now() + 10_800_000), {
+      cost: null,
+    });
+
+    const freeRes = await eventsRoute.GET(
+      new Request('http://l/api/v1/discovery/stuttgart/events?cost=free') as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+    expect(freeRes.status).toBe(200);
+    const freeTitles = (await freeRes.json()).items.map((item: { title: string }) => item.title);
+    expect(freeTitles).toContain('Free Meetup');
+    expect(freeTitles).not.toContain('Paid Workshop');
+
+    const paidRes = await eventsRoute.GET(
+      new Request('http://l/api/v1/discovery/stuttgart/events?cost=paid') as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+    expect(paidRes.status).toBe(200);
+    const paidTitles = (await paidRes.json()).items.map((item: { title: string }) => item.title);
+    expect(paidTitles).toContain('Paid Workshop');
+    expect(paidTitles).not.toContain('Free Meetup');
+    expect(paidTitles).not.toContain('Cost Not Set');
+  });
+
+  it('supports type filtering for online and in-person', async () => {
+    const city = await seedCity();
+    await seedEvent(city.id, null, 'Online Webinar', new Date(Date.now() + 3_600_000), {
+      isOnline: true,
+    });
+    await seedEvent(city.id, null, 'In Person Meetup', new Date(Date.now() + 7_200_000), {
+      isOnline: false,
+    });
+
+    const onlineRes = await eventsRoute.GET(
+      new Request('http://l/api/v1/discovery/stuttgart/events?type=online') as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+    expect(onlineRes.status).toBe(200);
+    const onlineTitles = (await onlineRes.json()).items.map(
+      (item: { title: string }) => item.title,
+    );
+    expect(onlineTitles).toContain('Online Webinar');
+    expect(onlineTitles).not.toContain('In Person Meetup');
+
+    const inPersonRes = await eventsRoute.GET(
+      new Request('http://l/api/v1/discovery/stuttgart/events?type=in-person') as never,
+      { params: Promise.resolve({ citySlug: 'stuttgart' }) },
+    );
+    expect(inPersonRes.status).toBe(200);
+    const inPersonTitles = (await inPersonRes.json()).items.map(
+      (item: { title: string }) => item.title,
+    );
+    expect(inPersonTitles).toContain('In Person Meetup');
+    expect(inPersonTitles).not.toContain('Online Webinar');
   });
 });
 

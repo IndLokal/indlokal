@@ -22,12 +22,33 @@ export const GET = apiHandler(
     const { citySlug } = await ctx.params;
     const sp = new URL(req.url).searchParams;
 
-    const parsed = d.EventsQuery.safeParse(Object.fromEntries(sp));
+    const raw: Record<string, string | string[]> = Object.fromEntries(sp.entries());
+    const rawCategorySlugs = sp.getAll('categorySlugs');
+    if (rawCategorySlugs.length > 0) {
+      raw.categorySlugs = rawCategorySlugs;
+    }
+
+    const parsed = d.EventsQuery.safeParse(raw);
     if (!parsed.success) {
       return apiError('BAD_REQUEST', 'invalid query params', { details: parsed.error.flatten() });
     }
 
-    const { from, to, cursor, limit = DEFAULT_LIMIT, categorySlug } = parsed.data;
+    const {
+      from,
+      to,
+      cursor,
+      limit = DEFAULT_LIMIT,
+      categorySlug,
+      categorySlugs,
+      cost,
+      type,
+    } = parsed.data;
+
+    if (categorySlug && categorySlugs?.length) {
+      console.warn(
+        '[discovery/events] Both categorySlug and categorySlugs supplied; categorySlugs wins',
+      );
+    }
 
     const { items, nextCursor } = await getEventsPage(citySlug, {
       from: from ? new Date(from) : undefined,
@@ -35,6 +56,9 @@ export const GET = apiHandler(
       cursor,
       limit,
       categorySlug,
+      categorySlugs,
+      cost,
+      type,
     });
 
     return withPublicCache(
