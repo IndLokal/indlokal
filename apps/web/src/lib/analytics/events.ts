@@ -30,6 +30,7 @@ export const Events = {
 
   // Ops observability — scheduled pipeline health
   PIPELINE_SHARD_COMPLETED: 'pipeline_shard_completed',
+  PIPELINE_DISPATCHED: 'pipeline_dispatched',
 } as const;
 
 export type AnalyticsEvent = (typeof Events)[keyof typeof Events];

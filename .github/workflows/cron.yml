@@ -11,15 +11,12 @@ on:
     - cron: '0 */6 * * *'
     # Daily maintenance jobs.
     - cron: '0 3 * * *'
-    # Sharded pipeline runs to stay within time budgets.
+    # Pipeline dispatcher fans out per-region (PRD/TDD-0029).
     - cron: '5 2 * * *'
-    - cron: '20 2 * * *'
-    - cron: '35 2 * * *'
-    - cron: '50 2 * * *'
   workflow_dispatch:
     inputs:
       job:
-        description: 'Job to run (links | keywords | relationships | enrichment | scores | pipeline | pipeline-berlin | pipeline-bw | pipeline-bavaria | pipeline-hesse | all)'
+        description: 'Job to run (links | keywords | relationships | enrichment | scores | pipeline | all)'
         required: false
         default: 'all'
 
@@ -43,73 +40,22 @@ jobs:
           cat /tmp/scores.json
           [ "$STATUS" -eq 200 ] || (echo "scores returned HTTP $STATUS" && exit 1)
 
-  pipeline_berlin:
-    name: AI pipeline (Berlin)
+  pipeline_dispatch:
+    name: AI pipeline (dispatch all regions)
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-berlin' || inputs.job == 'all')) ||
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')) ||
       (github.event_name == 'schedule' && github.event.schedule == '5 2 * * *')
     steps:
-      - name: POST /api/cron/pipeline?region=berlin
+      - name: POST /api/cron/pipeline/dispatch
         run: |
-          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=berlin" \
+          STATUS=$(curl -s -o /tmp/pipeline-dispatch.json -w "%{http_code}" \
+            --max-time 90 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline/dispatch" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          cat /tmp/pipeline.json
-          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
-
-  pipeline_bw:
-    name: AI pipeline (Baden-Wuerttemberg)
-    runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-bw' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '20 2 * * *')
-    steps:
-      - name: POST /api/cron/pipeline?region=baden-wuerttemberg
-        run: |
-          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=baden-wuerttemberg" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          cat /tmp/pipeline.json
-          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
-
-  pipeline_bavaria:
-    name: AI pipeline (Bavaria)
-    runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-bavaria' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '35 2 * * *')
-    steps:
-      - name: POST /api/cron/pipeline?region=bavaria
-        run: |
-          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=bavaria" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          cat /tmp/pipeline.json
-          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
-
-  pipeline_hesse:
-    name: AI pipeline (Hesse)
-    runs-on: ubuntu-latest
-    if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-hesse' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '50 2 * * *')
-    steps:
-      - name: POST /api/cron/pipeline?region=hesse
-        run: |
-          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=hesse" \
-            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            -H "Content-Type: application/json")
-          cat /tmp/pipeline.json
-          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+          cat /tmp/pipeline-dispatch.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline dispatch returned HTTP $STATUS" && exit 1)
 
   links:
     name: Verify join links
