@@ -191,6 +191,36 @@ async function main() {
           categories: ['cultural'],
         },
         {
+          title: 'JITO Stuttgart — Founder Funding Roundtable',
+          slug: 'jito-founder-funding-roundtable-2026',
+          description:
+            'Roundtable for founders and early-stage operators: fundraising readiness, angel expectations, and go-to-market mistakes in Germany.',
+          communitySlug: 'jito-stuttgart',
+          venueName: 'Impact Hub Stuttgart',
+          venueAddress: 'Quellenstr. 7a, 70376 Stuttgart',
+          startsAt: future(9, 18),
+          endsAt: future(9, 21),
+          cost: 'free',
+          status: 'UPCOMING' as const,
+          categories: ['professional', 'networking-social'],
+        },
+        {
+          title: 'JITO Stuttgart — Monthly Founder Breakfast',
+          slug: 'jito-monthly-founder-breakfast-2026',
+          description:
+            'Recurring peer breakfast for entrepreneurs and professionals: accountability updates, hiring challenges, and referral exchange.',
+          communitySlug: 'jito-stuttgart',
+          venueName: 'Cafe am Schlossgarten',
+          venueAddress: 'Arnulf-Klett-Platz 2, 70173 Stuttgart',
+          startsAt: future(12, 8),
+          endsAt: future(12, 10),
+          cost: 'free',
+          status: 'UPCOMING' as const,
+          isRecurring: true,
+          recurrenceRule: 'FREQ=MONTHLY;BYDAY=2FR',
+          categories: ['professional', 'networking-social'],
+        },
+        {
           title: 'ISS Study Group — Exam Prep Session',
           slug: 'iss-study-group-may-2026',
           description:
