@@ -89,19 +89,30 @@ function buildAccessChannels(community: ExtractedCommunity): Array<{
 }
 
 async function createEventFromExtraction(event: ExtractedEvent, cityId: string): Promise<string> {
-  let startsAt: Date;
-  if (event.date) {
-    const timeStr = event.time ?? '00:00';
-    startsAt = new Date(`${event.date}T${timeStr}:00`);
-  } else {
-    startsAt = new Date();
+  const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
+    const parsed = new Date(`${dateStr}T${timeStr}:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+  };
+  const today = new Date().toISOString().slice(0, 10);
+  const safeDate = event.date?.trim() || '';
+  const safeTime = event.time?.trim() || '';
+  const safeEndDate = event.endDate?.trim() || '';
+  const safeEndTime = event.endTime?.trim() || '';
+
+  let startsAt = new Date();
+  if (safeDate) {
+    const parsedStart = parseDateTime(safeDate, safeTime || '00:00');
+    if (parsedStart) startsAt = parsedStart;
   }
 
   let endsAt: Date | undefined;
-  if (event.endDate || event.endTime) {
-    const endDateStr = event.endDate ?? event.date ?? new Date().toISOString().slice(0, 10);
-    const endTimeStr = event.endTime ?? '23:59';
-    endsAt = new Date(`${endDateStr}T${endTimeStr}:00`);
+  if (safeEndDate || safeEndTime) {
+    const endDateStr = safeEndDate || safeDate || today;
+    const endTimeStr = safeEndTime || '23:59';
+    const parsedEnd = parseDateTime(endDateStr, endTimeStr);
+    if (parsedEnd && parsedEnd >= startsAt) {
+      endsAt = parsedEnd;
+    }
   }
 
   let communityId: string | undefined;
