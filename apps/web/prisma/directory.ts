@@ -625,6 +625,26 @@ const MANNHEIM: DirectoryEntry[] = [
 
 const MUNICH: DirectoryEntry[] = [
   {
+    slug: 'consulate-general-of-india-munich',
+    name: 'Consulate General of India, Munich',
+    description:
+      'Official Government of India consular mission in Munich serving Bavaria and Baden-Wuerttemberg with passport, visa, OCI and consular services.',
+    citySlug: 'munich',
+    categorySlugs: ['networking-social', 'professional'],
+    personaSegments: ['persona-student', 'working-professional', 'family'],
+    languages: ['English', 'Hindi', 'German'],
+    sourceUrl: 'https://www.cgimunich.gov.in/',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://www.cgimunich.gov.in/',
+        isPrimary: true,
+        label: 'Official Website',
+      },
+    ],
+    needsReview: true,
+  },
+  {
     slug: 'hss-munich',
     name: 'HSS München',
     description:
