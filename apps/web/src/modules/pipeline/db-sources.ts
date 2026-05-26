@@ -22,6 +22,18 @@ import {
 } from './freshness';
 import { PIPELINE_USER_AGENT } from './http';
 
+const WEBSITE_EVENT_PATH_CANDIDATES = [
+  'events',
+  'event',
+  'calendar',
+  'activities',
+  'upcoming-events',
+  'programme',
+  'program',
+  'veranstaltungen',
+  'termine',
+] as const;
+
 function getDetailPageScore(url: string, labelOrText = ''): number {
   const combined = `${url} ${labelOrText}`;
   const yearScore = getYearSignalScore(combined);
@@ -86,6 +98,31 @@ function isStableEventListingUrl(url: string): boolean {
     );
   } catch {
     return false;
+  }
+}
+
+function buildWebsiteEventPathCandidates(websiteUrl: string): string[] {
+  try {
+    const parsed = new URL(websiteUrl);
+    const basePath = parsed.pathname.replace(/\/+$/, '');
+    const roots = new Set<string>();
+
+    roots.add(parsed.origin);
+    if (basePath && basePath !== '/') {
+      roots.add(`${parsed.origin}${basePath}`);
+    }
+
+    const candidates = new Set<string>();
+    for (const root of roots) {
+      for (const segment of WEBSITE_EVENT_PATH_CANDIDATES) {
+        const candidate = `${root}/${segment}`.replace(/([^:]\/)\/+/, '$1');
+        candidates.add(candidate);
+      }
+    }
+
+    return [...candidates].filter(isStableEventListingUrl);
+  } catch {
+    return [];
   }
 }
 
@@ -180,6 +217,13 @@ export async function getDbCommunityStrategies(): Promise<
   });
 
   const strategies: (SearchStrategy & { kind: 'pinned_url' })[] = [];
+  const strategyIds = new Set<string>();
+
+  const pushStrategy = (strategy: SearchStrategy & { kind: 'pinned_url' }) => {
+    if (strategyIds.has(strategy.id)) return;
+    strategyIds.add(strategy.id);
+    strategies.push(strategy);
+  };
 
   // Phase 1: generate all strategies that don't require extra HTTP fetches
   // (Meetup events pages + Website homepages), and collect the Website channels
@@ -197,7 +241,7 @@ export async function getDbCommunityStrategies(): Promise<
         // Scrape /events/ - the group homepage has org info (→ COMMUNITY,
         // deduped); the events page has upcoming event listings (→ EVENTs).
         const eventsUrl = base.endsWith('/events') ? `${base}/` : `${base}/events/`;
-        strategies.push({
+        pushStrategy({
           id: `db-${community.slug}-meetup`,
           sourceType: 'DB_COMMUNITY',
           kind: 'pinned_url',
@@ -208,7 +252,7 @@ export async function getDbCommunityStrategies(): Promise<
         });
       } else {
         // Homepage: always include (useful for community discovery)
-        strategies.push({
+        pushStrategy({
           id: `db-${community.slug}-website`,
           sourceType: 'DB_COMMUNITY',
           kind: 'pinned_url',
@@ -217,6 +261,26 @@ export async function getDbCommunityStrategies(): Promise<
           hintCitySlug: community.city.slug,
           enabled: true,
         });
+
+        // Heuristic event paths: many community sites expose upcoming events on
+        // predictable endpoints even when homepage links are JS-driven.
+        const eventPathUrls = buildWebsiteEventPathCandidates(channel.url);
+        for (const eventUrl of eventPathUrls) {
+          const pathKey = new URL(eventUrl).pathname
+            .replace(/[^a-z0-9]+/gi, '-')
+            .replace(/^-|-$/g, '')
+            .slice(0, 30);
+          pushStrategy({
+            id: `db-${community.slug}-website-${pathKey}`,
+            sourceType: 'DB_COMMUNITY',
+            kind: 'pinned_url',
+            label: `${community.name} (${new URL(eventUrl).pathname})`,
+            url: eventUrl,
+            hintCitySlug: community.city.slug,
+            enabled: true,
+          });
+        }
+
         // Queue this channel for parallel event-link discovery below
         websiteJobs.push({ community, url: channel.url });
       }
@@ -242,7 +306,7 @@ export async function getDbCommunityStrategies(): Promise<
         .replace(/[^a-z0-9]+/gi, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 30);
-      strategies.push({
+      pushStrategy({
         id: `db-${job.community.slug}-website-${pathKey}`,
         sourceType: 'DB_COMMUNITY',
         kind: 'pinned_url',
