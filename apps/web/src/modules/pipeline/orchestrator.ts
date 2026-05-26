@@ -25,6 +25,7 @@ import {
   fetchGoogleSearch,
   fetchDuckDuckGoSearch,
 } from './sources';
+import { extractCalendarEventFromRawContent, isEmbeddedCalendarEventRawContent } from './calendar';
 import { scorePinnedEventUrl } from './db-sources';
 import {
   STALE_EVENT_MARKERS,
@@ -203,7 +204,7 @@ async function fetchAllSources(
   // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
     sourcePlan.pinnedStrategies.map(async (strategy) => {
-      const fetchResult = await fetchPinnedUrl(strategy);
+      const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
       }
@@ -276,11 +277,16 @@ async function filterRelevantItems(
   result: PipelineRunResult,
 ): Promise<RawContent[]> {
   console.log('[Pipeline] Stage 1: Relevance filter...');
-  const relevanceResults = await filterRelevance(uniqueRaw);
-  const relevantItems = relevanceResults
+  const directCalendarItems = uniqueRaw.filter(isEmbeddedCalendarEventRawContent);
+  const llmCandidates = uniqueRaw.filter((item) => !isEmbeddedCalendarEventRawContent(item));
+
+  const relevanceResults = await filterRelevance(llmCandidates);
+  const llmRelevantItems = relevanceResults
     .filter((r) => r.isRelevant)
-    .map((r) => uniqueRaw[r.index])
+    .map((r) => llmCandidates[r.index])
     .filter((item): item is RawContent => item != null);
+
+  const relevantItems = [...directCalendarItems, ...llmRelevantItems];
 
   result.itemsPassedFilter = relevantItems.length;
   console.log(`[Pipeline] Passed filter: ${relevantItems.length}/${uniqueRaw.length}`);
@@ -293,7 +299,31 @@ async function extractRelevantItems(
   result: PipelineRunResult,
 ): Promise<ExtractedItem[]> {
   console.log('[Pipeline] Stage 2: Batch extraction...');
-  const extracted = await extractBatch(relevantItems);
+  const directExtracted: ExtractedItem[] = [];
+  const llmItems: RawContent[] = [];
+  const llmSourceIndices: number[] = [];
+
+  relevantItems.forEach((item, index) => {
+    const calendarEvent = extractCalendarEventFromRawContent(item);
+    if (calendarEvent) {
+      directExtracted.push({ ...calendarEvent, sourceIndex: index });
+      return;
+    }
+
+    llmItems.push(item);
+    llmSourceIndices.push(index);
+  });
+
+  const llmExtracted = llmItems.length > 0 ? await extractBatch(llmItems) : [];
+
+  const extracted = [
+    ...directExtracted,
+    ...llmExtracted.map((item) => ({
+      ...item,
+      sourceIndex: llmSourceIndices[item.sourceIndex] ?? item.sourceIndex,
+    })),
+  ];
+
   result.itemsExtracted = extracted.length;
   const eventCount = extracted.filter((item) => item.type === 'EVENT').length;
   const communityCount = extracted.filter((item) => item.type === 'COMMUNITY').length;
@@ -313,12 +343,20 @@ async function resolveAndQueue(
   result: PipelineRunResult,
 ): Promise<void> {
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
+  const hintedCitySlugs = [
+    ...new Set(
+      relevantItems
+        .map((item) => (item as RawContent & { _hintCitySlug?: string })._hintCitySlug)
+        .filter((slug): slug is string => typeof slug === 'string' && slug.trim().length > 0),
+    ),
+  ];
+  const cityScopeSlugs = [...new Set([...allCitySlugs, ...hintedCitySlugs])];
   // Load region metros AND all their satellite cities so that communities
   // in satellite cities (e.g. esslingen → stuttgart metro) resolve correctly.
   // This avoids manually enumerating satellite slugs in source defaults.
   const cities = await db.city.findMany({
     where: {
-      OR: [{ slug: { in: allCitySlugs } }, { metroRegion: { slug: { in: allCitySlugs } } }],
+      OR: [{ slug: { in: cityScopeSlugs } }, { metroRegion: { slug: { in: cityScopeSlugs } } }],
     },
     select: { id: true, slug: true, name: true },
   });
@@ -416,9 +454,7 @@ async function resolveAndQueue(
     }
 
     // Dedup check
-    const isDupe = isCityPending
-      ? await checkSourceUrlDuplicate(sourceRaw.sourceUrl)
-      : await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
+    const isDupe = await checkDuplicate(item, cityId, sourceRaw.sourceUrl);
     if (item.type === 'EVENT' && isDupe.isDuplicate) {
       if (isDupe.matchKind === 'PIPELINE_ITEM' && isDupe.matchedId) {
         await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
@@ -428,7 +464,7 @@ async function resolveAndQueue(
       continue;
     }
 
-    if (isDupe.isDuplicate && isDupe.matchScore && isDupe.matchScore > 0.9) {
+    if (isDupe.isDuplicate) {
       result.itemsSkippedDuplicate++;
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
@@ -443,15 +479,20 @@ async function resolveAndQueue(
       item.confidence,
       reliability?.confidenceAdjustment ?? 0,
     );
+    const resolvedCity = cityId
+      ? (cities.find((candidate) => candidate.id === cityId) ?? null)
+      : null;
+    const queuedItem =
+      !item.cityName && resolvedCity ? { ...item, cityName: resolvedCity.name } : item;
 
     // Queue for review
     const createdItem = await db.pipelineItem.create({
       data: {
-        entityType: item.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
+        entityType: queuedItem.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
         sourceType: sourceRaw.sourceType as import('@prisma/client').PipelineSourceType,
         sourceUrl: sourceRaw.sourceUrl,
         rawContent: sourceRaw.text.slice(0, 50_000),
-        extractedData: item as unknown as import('@prisma/client').Prisma.InputJsonValue,
+        extractedData: queuedItem as unknown as import('@prisma/client').Prisma.InputJsonValue,
         confidence,
         cityId,
         matchedEntityId: isDupe.matchedId ?? undefined,
@@ -479,7 +520,7 @@ async function resolveAndQueue(
     });
 
     result.itemsQueued++;
-    if (item.type === 'EVENT') {
+    if (queuedItem.type === 'EVENT') {
       decisionCounts.queuedEvents++;
       if (isCityPending) decisionCounts.queuedPendingCityEvents++;
     } else {
@@ -487,13 +528,16 @@ async function resolveAndQueue(
       if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
     }
 
-    const autoApprove = shouldAutoApprovePipelineItem({
-      item: { ...item, confidence },
-      sourceType: sourceRaw.sourceType as PipelineSourceType,
-      reliability,
-      matchedEntityId: isDupe.matchedId,
-      matchScore: isDupe.matchScore,
-    });
+    const autoApprove =
+      queuedItem.type === 'EVENT'
+        ? { eligible: false, reason: 'event-admin-approval-required' }
+        : shouldAutoApprovePipelineItem({
+            item: { ...queuedItem, confidence },
+            sourceType: sourceRaw.sourceType as PipelineSourceType,
+            reliability,
+            matchedEntityId: isDupe.matchedId,
+            matchScore: isDupe.matchScore,
+          });
     if (autoApprove.eligible && !isCityPending && !cityConflict) {
       await approvePipelineItemRecord(createdItem.id, {
         reviewedBy: 'system',
@@ -517,12 +561,15 @@ type DedupResult = {
   matchKind: 'PIPELINE_ITEM' | 'ENTITY' | null;
 };
 
+const COMMUNITY_DUPLICATE_NAME_THRESHOLD = 0.5;
+const COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD = 0.35;
+
 async function checkDuplicate(
   item: ExtractedData,
   cityId: string,
   sourceUrl: string,
 ): Promise<DedupResult> {
-  const existingQueueItem = await checkSourceUrlDuplicate(sourceUrl);
+  const existingQueueItem = await checkSourceUrlDuplicate(sourceUrl, cityId, item.type);
   if (existingQueueItem.isDuplicate) return existingQueueItem;
 
   if (item.type === 'EVENT') {
@@ -532,16 +579,47 @@ async function checkDuplicate(
   return checkCommunityDuplicate(item, cityId);
 }
 
-async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> {
+function normalizeSourceUrlForDedup(sourceUrl: string | null | undefined): string | null {
+  if (!sourceUrl) return null;
+  try {
+    const url = new URL(sourceUrl);
+    const pathname = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
+    const eventIdentityFragment = url.hash.startsWith('#uid=')
+      ? `#uid=${decodeURIComponent(url.hash.slice(5))}`
+      : '';
+    return `${url.hostname.toLowerCase()}${pathname}${eventIdentityFragment}`;
+  } catch {
+    return sourceUrl.toLowerCase().replace(/\/+$/, '');
+  }
+}
+
+async function checkSourceUrlDuplicate(
+  sourceUrl: string,
+  cityId: string,
+  itemType: ExtractedData['type'],
+): Promise<DedupResult> {
+  const entityType = itemType === 'EVENT' ? 'EVENT' : 'COMMUNITY';
   const existingQueueItem = await db.pipelineItem.findFirst({
     where: {
       sourceUrl,
+      cityId,
+      entityType,
       status: { in: ['PENDING', 'APPROVED'] },
     },
     select: { id: true },
   });
 
-  if (!existingQueueItem) {
+  if (existingQueueItem) {
+    return {
+      isDuplicate: true,
+      matchedId: existingQueueItem.id,
+      matchScore: 1.0,
+      matchKind: 'PIPELINE_ITEM',
+    };
+  }
+
+  const normalizedIncoming = normalizeSourceUrlForDedup(sourceUrl);
+  if (!normalizedIncoming) {
     return {
       isDuplicate: false,
       matchedId: null,
@@ -550,11 +628,34 @@ async function checkSourceUrlDuplicate(sourceUrl: string): Promise<DedupResult> 
     };
   }
 
+  const recentQueueItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType,
+      status: { in: ['PENDING', 'APPROVED'] },
+      sourceUrl: { not: null },
+    },
+    orderBy: { createdAt: 'desc' },
+    take: 300,
+    select: { id: true, sourceUrl: true },
+  });
+
+  for (const candidate of recentQueueItems) {
+    if (normalizeSourceUrlForDedup(candidate.sourceUrl) === normalizedIncoming) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: 1.0,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+  }
+
   return {
-    isDuplicate: true,
-    matchedId: existingQueueItem.id,
-    matchScore: 1.0,
-    matchKind: 'PIPELINE_ITEM',
+    isDuplicate: false,
+    matchedId: null,
+    matchScore: null,
+    matchKind: null,
   };
 }
 
@@ -683,7 +784,7 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     where: {
       cityId,
       entityType: 'EVENT',
-      status: 'PENDING',
+      status: { in: ['PENDING', 'APPROVED'] },
     },
     select: { id: true, extractedData: true },
   });
@@ -746,10 +847,10 @@ async function checkCommunityDuplicate(
 
   for (const candidate of candidates) {
     const score = computeSimilarity(community.name.toLowerCase(), candidate.name.toLowerCase());
-    if (score > 0.7) {
+    if (score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD) {
       return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
-    if (score >= 0.5) {
+    if (score >= COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD) {
       borderlineCandidates.push({
         id: candidate.id,
         name: candidate.name,
@@ -770,6 +871,47 @@ async function checkCommunityDuplicate(
       matchScore: semanticMatch.confidence,
       matchKind: 'ENTITY',
     };
+  }
+
+  const pendingCommunityItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType: 'COMMUNITY',
+      status: { in: ['PENDING', 'APPROVED'] },
+    },
+    select: { id: true, extractedData: true },
+  });
+
+  const normalizedIncomingName = community.name
+    .toLowerCase()
+    .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  for (const pending of pendingCommunityItems) {
+    const pendingCommunity = pending.extractedData as unknown as Partial<ExtractedData>;
+    if (pendingCommunity.type !== 'COMMUNITY' || !pendingCommunity.name) continue;
+
+    const pendingName = String(pendingCommunity.name)
+      .toLowerCase()
+      .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+    const score = computeSimilarity(normalizedIncomingName, pendingName);
+    if (
+      score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD ||
+      (normalizedIncomingName.length >= 8 && normalizedIncomingName === pendingName)
+    ) {
+      return {
+        isDuplicate: true,
+        matchedId: pending.id,
+        matchScore: score,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
   }
 
   return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
