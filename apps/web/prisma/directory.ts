@@ -689,7 +689,7 @@ const KARLSRUHE: DirectoryEntry[] = [
     categorySlugs: ['student', 'networking-social', 'cultural'],
     personaSegments: ['persona-student'],
     languages: ['English', 'Hindi', 'German'],
-    sourceUrl: 'https://www.linkedin.com/',
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
       {
         channelType: 'LINKEDIN',
@@ -1741,7 +1741,7 @@ const BERLIN: DirectoryEntry[] = [
     categorySlugs: ['professional', 'networking-social'],
     personaSegments: ['working-professional'],
     languages: ['English', 'German', 'Hindi'],
-    sourceUrl: 'https://www.linkedin.com/',
+    sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
       {
         channelType: 'LINKEDIN',
@@ -2083,7 +2083,7 @@ const FRANKFURT: DirectoryEntry[] = [
     name: 'Darmstadt Indian Association (DIA) e.V.',
     description:
       'Indian community association serving students and families in the Darmstadt area with cultural meetups and diaspora support.',
-    citySlug: 'darmstadt-sat',
+    citySlug: 'darmstadt',
     categorySlugs: ['networking-social', 'cultural'],
     personaSegments: ['persona-student', 'working-professional', 'family'],
     languages: ['English', 'Hindi', 'German'],

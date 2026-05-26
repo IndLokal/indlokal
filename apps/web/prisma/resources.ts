@@ -61,6 +61,7 @@ const RESOURCE_TYPE_EVIDENCE_URLS: Partial<Record<ResourceType, string[]>> = {
   HOUSING: ['https://www.stuttgart.de/leben/wohnen/', 'https://www.schufa.de/'],
   HEALTH_DOCTORS: ['https://www.116117.de/', 'https://gesund.bund.de/en'],
   FAMILY_CHILDREN: ['https://familienportal.de/'],
+  GROCERY_FOOD: ['https://www.bmel.de/EN/home.html', 'https://www.lebensmittelwarnung.de/'],
   JOBS_CAREERS: ['https://www.arbeitsagentur.de/', 'https://www.make-it-in-germany.com/en/'],
   TAX_FINANCE: ['https://www.elster.de', 'https://www.bundesfinanzministerium.de/'],
   BUSINESS_SETUP: ['https://www.service-bw.de/', 'https://www.verwaltung.bund.de/'],
