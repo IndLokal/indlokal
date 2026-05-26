@@ -546,10 +546,9 @@ async function main() {
 }
 
 const isDirectRun =
-  typeof require !== 'undefined' && require.main === module
-    ? true
-    : process.argv[1]?.endsWith('pipeline-source-config.ts') ||
-      process.argv[1]?.endsWith('pipeline-source-config.js');
+  (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) ||
+  process.argv[1]?.endsWith('pipeline-source-config.ts') ||
+  process.argv[1]?.endsWith('pipeline-source-config.js');
 
 if (isDirectRun) {
   main().catch((error) => {
