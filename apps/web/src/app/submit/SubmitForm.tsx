@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
+import { content } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
+import { ContentCallout } from '@/components/content/community-actions';
 
 type Props = {
   cities: { slug: string; name: string }[];
@@ -67,6 +69,11 @@ export function SubmitForm({ cities, categories }: Props) {
 
   return (
     <form action={formAction} className="space-y-8">
+      <ContentCallout
+        title={content.COMMUNITY_ACTION_COPY.submitFormHint}
+        body={content.COMMUNITY_ACTION_COPY.submitFormBody}
+      />
+
       {/* Community details */}
       <fieldset className="card-base space-y-5 p-6">
         <legend className="text-foreground -ml-1 text-lg font-bold">Community Details</legend>

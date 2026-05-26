@@ -2,6 +2,7 @@
 
 import { useState, useActionState } from 'react';
 import Link from 'next/link';
+import { content } from '@indlokal/shared';
 import { claimCommunity, type ClaimResult } from './actions';
 
 type Props = {
@@ -67,10 +68,9 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
     <div className="border-brand-100 bg-brand-50 rounded-[var(--radius-panel)] border p-5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-brand-900 font-medium">Is this your community?</p>
+          <p className="text-brand-900 font-medium">Do you run this community?</p>
           <p className="text-brand-700 mt-0.5 text-sm">
-            Claim it to post events to the city feed, manage your profile, and reach hundreds of
-            people already searching for communities like yours.
+            {content.COMMUNITY_ACTION_COPY.claimSectionLead}
           </p>
         </div>
         {!expanded && (
@@ -86,6 +86,10 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
       {expanded && (
         <form action={formAction} className="mt-5 space-y-4">
           <input type="hidden" name="communityId" value={communityId} />
+
+          <p className="text-muted text-sm leading-relaxed">
+            {content.COMMUNITY_ACTION_COPY.claimSectionHint}
+          </p>
 
           {errors.communityId && <p className="text-sm text-red-600">{errors.communityId[0]}</p>}
 

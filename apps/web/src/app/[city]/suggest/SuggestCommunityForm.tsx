@@ -41,7 +41,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
 
       <div>
         <label htmlFor="suggDetails" className="text-foreground block text-sm font-semibold">
-          Any extra details?
+          Any extra details? <span className="text-muted font-normal">(optional)</span>
         </label>
         <textarea
           id="suggDetails"
@@ -77,7 +77,7 @@ export function SuggestCommunityForm({ citySlug }: { citySlug: string }) {
         disabled={isPending}
         className="btn-primary mt-2 w-full py-2.5 text-base"
       >
-        {isPending ? 'Submitting…' : 'Suggest this community'}
+        {isPending ? 'Submitting…' : 'Send suggestion'}
       </button>
     </form>
   );

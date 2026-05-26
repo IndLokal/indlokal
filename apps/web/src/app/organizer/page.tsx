@@ -1,5 +1,7 @@
 import Link from 'next/link';
+import { content } from '@indlokal/shared';
 import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
+import { ContentCallout } from '@/components/content/community-actions';
 
 const CHANNEL_ICONS: Record<string, string> = {
   WHATSAPP: '💬',
@@ -53,6 +55,11 @@ export default async function OrganizerDashboardPage() {
         <p className="text-muted mt-1 text-sm">{community.city.name}</p>
       </div>
 
+      <ContentCallout
+        title="What is this dashboard for?"
+        body={content.COMMUNITY_ACTION_COPY.organizerDashboardBody}
+      />
+
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {/* Quick actions */}
         <Link
@@ -60,9 +67,9 @@ export default async function OrganizerDashboardPage() {
           className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="text-2xl">✏️</div>
-          <h2 className="text-foreground mt-3 font-semibold">Edit Profile</h2>
+          <h2 className="text-foreground mt-3 font-semibold">Edit profile</h2>
           <p className="text-muted mt-1 text-sm">
-            Update name, description, languages, founded year
+            Update the name, description, languages, and details people see first.
           </p>
         </Link>
         <Link
@@ -70,16 +77,20 @@ export default async function OrganizerDashboardPage() {
           className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="text-2xl">🔗</div>
-          <h2 className="text-foreground mt-3 font-semibold">Manage Channels</h2>
-          <p className="text-muted mt-1 text-sm">Add or remove WhatsApp, Telegram, website links</p>
+          <h2 className="text-foreground mt-3 font-semibold">Manage join links</h2>
+          <p className="text-muted mt-1 text-sm">
+            Add or remove WhatsApp, Telegram, website, and other access links.
+          </p>
         </Link>
         <Link
           href="/organizer/events/new"
           className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="text-2xl">📅</div>
-          <h2 className="text-foreground mt-3 font-semibold">Add Event</h2>
-          <p className="text-muted mt-1 text-sm">Post an upcoming event to your community page</p>
+          <h2 className="text-foreground mt-3 font-semibold">Add event</h2>
+          <p className="text-muted mt-1 text-sm">
+            Post an upcoming event so it appears on the community page and city feed.
+          </p>
         </Link>
       </div>
 

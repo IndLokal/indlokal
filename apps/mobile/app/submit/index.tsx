@@ -4,6 +4,7 @@
  */
 
 import { Link, Stack } from 'expo-router';
+import { content } from '@indlokal/shared';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
@@ -15,17 +16,17 @@ const TILES: Array<{
   {
     href: '/submit/event',
     title: 'Submit an event',
-    body: 'Add a community event so others can find it.',
+    body: 'Share a one-time event or recurring program so people can discover it.',
   },
   {
     href: '/submit/community',
     title: 'Add a community',
-    body: 'Register an organized group, association, or recurring meetup.',
+    body: 'Add a brand-new community listing when it is not on IndLokal yet.',
   },
   {
     href: '/submit/suggest',
     title: 'Suggest a community',
-    body: 'Know one we should add? Tell us in 30 seconds.',
+    body: 'Point us to a missing group, service, or resource that should be listed.',
   },
 ];
 
@@ -35,7 +36,7 @@ export default function SubmitChooserScreen() {
       <Stack.Screen options={{ title: 'Submit' }} />
       <View style={styles.container}>
         <Text style={styles.title}>What would you like to add?</Text>
-        <Text style={styles.sub}>Submissions are reviewed before going live.</Text>
+        <Text style={styles.sub}>{content.COMMUNITY_ACTION_COPY.mobileSubmitChooserSub}</Text>
         {TILES.map((tile) => (
           <Link key={tile.href} href={tile.href} asChild>
             <Pressable style={styles.tile}>

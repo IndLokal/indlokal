@@ -20,7 +20,7 @@ import {
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { discovery as d, submit as s } from '@indlokal/shared';
+import { content, discovery as d, submit as s } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
@@ -89,6 +89,8 @@ export default function SuggestCommunityScreen() {
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.container}>
+          <Text style={styles.helper}>{content.COMMUNITY_ACTION_COPY.mobileSubmitSuggestHint}</Text>
+
           <Text style={styles.label}>Community name *</Text>
           <TextInput
             value={name}
@@ -158,6 +160,14 @@ export default function SuggestCommunityScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.neutral.background },
   container: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
+  helper: {
+    fontSize: typography.small,
+    color: palette.neutral.muted,
+    lineHeight: 20,
+    backgroundColor: palette.neutral.surface,
+    borderRadius: radius.panel,
+    padding: spacing.md,
+  },
   label: {
     fontSize: typography.small,
     fontWeight: '700',

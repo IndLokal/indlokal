@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { content } from '@indlokal/shared';
 import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
+import { CommunityActionGrid } from '@/components/content/community-actions';
 
 export const metadata: Metadata = {
   title: `About — ${siteConfig.name}`,
@@ -9,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function AboutPage() {
+  const actionCards = content.ACTION_GRID_ORDER.map((id) => content.COMMUNITY_ACTIONS[id]);
+
   return (
     <>
       {/* Hero */}
@@ -45,6 +49,17 @@ export default function AboutPage() {
           We aggregate communities, events, and consular &amp; expat-life resources across German
           cities — ranked by what&apos;s actually alive, not by who paid for a directory listing.
         </p>
+      </section>
+
+      {/* Action guide */}
+      <section className="bg-white px-4 py-16">
+        <div className="mx-auto max-w-6xl">
+          <CommunityActionGrid
+            title="Which action should I use?"
+            description={content.COMMUNITY_ACTION_COPY.aboutDescription}
+            cards={actionCards}
+          />
+        </div>
       </section>
 
       {/* Three pillars */}

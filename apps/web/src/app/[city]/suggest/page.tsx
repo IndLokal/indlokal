@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { content } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { SuggestCommunityForm } from './SuggestCommunityForm';
+import { ContentCallout } from '@/components/content/community-actions';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -11,7 +13,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const cityName = city.charAt(0).toUpperCase() + city.slice(1);
   return {
     title: `Suggest a Community — ${cityName} · IndLokal`,
-    description: `Know of an Indian community in ${cityName} that isn't listed? Let us know!`,
+    description: `Suggest a missing Indian community, service, or resource in ${cityName}.`,
   };
 }
 
@@ -38,12 +40,19 @@ export default async function SuggestCommunityPage({ params }: Props) {
           {' / '}
           <span className="text-foreground">Suggest a community</span>
         </nav>
-        <h1 className="text-foreground mt-4 text-2xl font-bold">Suggest a Community or Service</h1>
-        <p className="text-muted mt-2">
-          Know of an Indian community, service, or useful resource in {cityData.name} that
-          isn&apos;t listed here? Share the details and we&apos;ll look into adding it.
-        </p>
+        <h1 className="text-foreground mt-4 text-2xl font-bold">
+          Suggest a missing community or resource
+        </h1>
+        <p className="text-muted mt-2">{content.COMMUNITY_ACTION_COPY.suggestPageLead}</p>
       </div>
+
+      <ContentCallout
+        title="Who should use this?"
+        body={content.interpolateActionCopy(content.COMMUNITY_ACTION_COPY.suggestWho, {
+          city: cityData.name,
+        })}
+        cta={{ label: 'Browse existing communities', href: `/${city}/communities` }}
+      />
 
       <SuggestCommunityForm citySlug={city} />
 
