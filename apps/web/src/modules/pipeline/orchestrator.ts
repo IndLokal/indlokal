@@ -487,13 +487,16 @@ async function resolveAndQueue(
       if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
     }
 
-    const autoApprove = shouldAutoApprovePipelineItem({
-      item: { ...item, confidence },
-      sourceType: sourceRaw.sourceType as PipelineSourceType,
-      reliability,
-      matchedEntityId: isDupe.matchedId,
-      matchScore: isDupe.matchScore,
-    });
+    const autoApprove =
+      item.type === 'EVENT'
+        ? { eligible: false, reason: 'event-admin-approval-required' }
+        : shouldAutoApprovePipelineItem({
+            item: { ...item, confidence },
+            sourceType: sourceRaw.sourceType as PipelineSourceType,
+            reliability,
+            matchedEntityId: isDupe.matchedId,
+            matchScore: isDupe.matchScore,
+          });
     if (autoApprove.eligible && !isCityPending && !cityConflict) {
       await approvePipelineItemRecord(createdItem.id, {
         reviewedBy: 'system',

@@ -320,11 +320,39 @@ type PipelineItemWithCity = Awaited<
   >
 >[number];
 
+function getCalendarSourceMeta(sourceUrl: string | null): {
+  calendarId: string;
+  feedOrigin: string;
+} | null {
+  if (!sourceUrl) return null;
+
+  let parsed: URL;
+  try {
+    parsed = new URL(sourceUrl);
+  } catch {
+    return null;
+  }
+
+  if (parsed.hostname !== 'calendar.google.com') return null;
+  if (!parsed.pathname.startsWith('/calendar/ical/')) return null;
+
+  const segments = parsed.pathname.split('/').filter(Boolean);
+  const icalIndex = segments.indexOf('ical');
+  const encodedCalendarId = icalIndex >= 0 ? segments[icalIndex + 1] : null;
+  if (!encodedCalendarId) return null;
+
+  const calendarId = decodeURIComponent(encodedCalendarId);
+  const feedOrigin = `${parsed.origin}${parsed.pathname}`;
+
+  return { calendarId, feedOrigin };
+}
+
 function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
   const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
   const isEvent = data.type === 'EVENT';
   const event = isEvent ? (data as ExtractedEvent) : null;
   const community = !isEvent ? (data as ExtractedCommunity) : null;
+  const calendarSource = isEvent ? getCalendarSourceMeta(item.sourceUrl) : null;
 
   const confidenceColor =
     item.confidence >= 0.85
@@ -441,6 +469,21 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
               </span>
             )}
           </p>
+          {calendarSource && (
+            <p className="text-muted mt-1 text-xs">
+              Calendar ID: <span className="font-mono">{calendarSource.calendarId}</span>
+              {' · '}
+              Feed origin:{' '}
+              <a
+                href={calendarSource.feedOrigin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-500 hover:underline"
+              >
+                {calendarSource.feedOrigin}
+              </a>
+            </p>
+          )}
         </div>
 
         {/* Action buttons */}

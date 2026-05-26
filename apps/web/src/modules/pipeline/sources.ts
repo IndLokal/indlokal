@@ -11,6 +11,7 @@
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
 import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
 import { PIPELINE_USER_AGENT } from './http';
+import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {
@@ -329,6 +330,17 @@ export async function fetchPinnedUrl(
       imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       fetchedAt: new Date().toISOString(),
     });
+
+    const calendarFeedResult = await fetchEmbeddedGoogleCalendarEvents(
+      strategy.sourceType,
+      rawHtml,
+    );
+    if (calendarFeedResult.items.length > 0) {
+      items.push(...calendarFeedResult.items);
+    }
+    if (calendarFeedResult.errors.length > 0) {
+      errors.push(...calendarFeedResult.errors);
+    }
 
     if (shouldExpandPinnedUrl(strategy)) {
       const links = extractPinnedExpansionLinks(rawHtml, strategy.url);
