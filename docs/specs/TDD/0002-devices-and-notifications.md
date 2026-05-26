@@ -113,10 +113,10 @@ model InboxItem {
 | ------ | ------------------------------------- | ------ | ------------------------------- | ------------------------- |
 | POST   | `/api/v1/devices`                     | access | `DeviceRegister`                | `Device`                  |
 | PATCH  | `/api/v1/devices/:installationId`     | access | `DeviceUpdate`                  | `Device`                  |
-| DELETE | `/api/v1/devices/:installationId`     | access | —                               | `Ack`                     |
-| GET    | `/api/v1/notifications/preferences`   | access | —                               | `NotificationPreferences` |
+| DELETE | `/api/v1/devices/:installationId`     | access | -                               | `Ack`                     |
+| GET    | `/api/v1/notifications/preferences`   | access | -                               | `NotificationPreferences` |
 | PUT    | `/api/v1/notifications/preferences`   | access | `NotificationPreferencesUpdate` | `NotificationPreferences` |
-| GET    | `/api/v1/notifications/inbox?cursor=` | access | —                               | `InboxPage`               |
+| GET    | `/api/v1/notifications/inbox?cursor=` | access | -                               | `InboxPage`               |
 | POST   | `/api/v1/notifications/inbox/read`    | access | `{ ids: string[] }`             | `Ack`                     |
 
 ## 4. Mobile screens

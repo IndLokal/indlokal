@@ -7,7 +7,7 @@
  *      `pnpm pipeline:sources:sync`, which upserts from JSON), OR
  *   2. The bundled JSON defaults at
  *      `apps/web/prisma/data/pipeline-source-defaults.json` (fallback
- *      when the table is missing or empty — keeps fresh deployments and
+ *      when the table is missing or empty - keeps fresh deployments and
  *      test environments working without a manual sync step).
  *
  * The DB row is always preferred when present, so admins can disable or
@@ -43,6 +43,7 @@ type ConfigRow = {
 };
 
 type ConfigSource = 'db' | 'json-fallback';
+type PinnedScope = 'GENERIC' | 'CITY' | 'REGION';
 
 const VALID_SOURCE_TYPES = new Set<SourceType>([
   'EVENTBRITE',
@@ -73,6 +74,12 @@ function normalizeStringArray(value: unknown): string[] {
 function normalizeSourceType(value: PipelineSourceType | string | null): SourceType | null {
   if (!value) return null;
   return VALID_SOURCE_TYPES.has(value as SourceType) ? (value as SourceType) : null;
+}
+
+function normalizePinnedScope(value: unknown): PinnedScope | null {
+  if (typeof value !== 'string') return null;
+  if (value === 'GENERIC' || value === 'CITY' || value === 'REGION') return value;
+  return null;
 }
 
 // ── DB read ────────────────────────────────────────────
@@ -114,6 +121,8 @@ type JsonStrategy = {
   radiusKm?: unknown;
   url?: unknown;
   hintCitySlug?: unknown;
+  hintState?: unknown;
+  scope?: unknown;
 };
 
 type JsonDefaults = {
@@ -140,8 +149,21 @@ function resolveDefaultsJsonPath(): string {
  */
 function getCitySlugsForState(state: string): string[] {
   const slugs: string[] = [];
-  for (const city of ACTIVE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
-  for (const city of SATELLITE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  const metroSlugsForState = new Set<string>();
+
+  for (const city of ACTIVE_CITY_DATA) {
+    if (city.state === state) {
+      slugs.push(city.slug);
+      metroSlugsForState.add(city.slug);
+    }
+  }
+
+  for (const city of SATELLITE_CITY_DATA) {
+    const isInState = city.state === state;
+    const isMetroSatellite = Boolean(city.metroSlug && metroSlugsForState.has(city.metroSlug));
+    if (isInState || isMetroSatellite) slugs.push(city.slug);
+  }
+
   for (const city of UPCOMING_CITIES) if (city.state === state) slugs.push(city.slug);
   return Array.from(new Set(slugs));
 }
@@ -216,6 +238,11 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
       if (typeof strategy.hintCitySlug === 'string' && strategy.hintCitySlug.trim().length > 0) {
         payload.hintCitySlug = strategy.hintCitySlug.trim();
       }
+      if (typeof strategy.hintState === 'string' && strategy.hintState.trim().length > 0) {
+        payload.hintState = strategy.hintState.trim();
+      }
+      const scope = normalizePinnedScope(strategy.scope);
+      if (scope) payload.scope = scope;
     }
 
     rows.push({
@@ -301,6 +328,7 @@ function parseRegions(rows: ConfigRow[]): SearchRegion[] {
       id: row.key,
       label: row.label,
       searchCenter,
+      state: typeof row.payload.state === 'string' ? row.payload.state.trim() : undefined,
       citySlugs,
       enabled: true,
     });
@@ -354,6 +382,11 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
     const url = typeof row.payload.url === 'string' ? row.payload.url.trim() : '';
     const hintCitySlug =
       typeof row.payload.hintCitySlug === 'string' ? row.payload.hintCitySlug.trim() : undefined;
+    const hintState =
+      typeof row.payload.hintState === 'string' ? row.payload.hintState.trim() : undefined;
+    const parsedScope = normalizePinnedScope(row.payload.scope);
+    const scope: PinnedScope =
+      parsedScope ?? (hintCitySlug ? 'CITY' : hintState ? 'REGION' : 'GENERIC');
     if (!url) continue;
 
     const evidence = assessEvidenceUrl(url);
@@ -368,7 +401,9 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       kind: 'pinned_url',
       label: row.label,
       url,
+      scope,
       hintCitySlug: hintCitySlug || undefined,
+      hintState: hintState || undefined,
       enabled: true,
     });
   }

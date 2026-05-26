@@ -8,15 +8,15 @@
 
 Three smaller but essential parity surfaces from web:
 
-1. **Resources** (consular services + practical expat guides) — mirrors web `/[city]/resources` and `/[city]/consular-services`.
-2. **Bookmarks** — saved events + communities (`/me`).
-3. **Report content** — `STALE_INFO`, `BROKEN_LINK`, `INCORRECT_DETAILS`, `OTHER`.
+1. **Resources** (consular services + practical expat guides) - mirrors web `/[city]/resources` and `/[city]/consular-services`.
+2. **Bookmarks** - saved events + communities (`/me`).
+3. **Report content** - `STALE_INFO`, `BROKEN_LINK`, `INCORRECT_DETAILS`, `OTHER`.
 
 ## 2. Users & JTBD
 
 - New arrival: "How do I register my address / find an Indian doctor?"
 - Active user: "Find what I saved last week."
-- Vigilant user: "This community link is dead — flag it."
+- Vigilant user: "This community link is dead - flag it."
 
 ## 3. Success Metrics
 
@@ -51,7 +51,7 @@ Then the cached detail renders, with Save state intact
 
 ## 8. UX
 
-Resource cards minimal — title, type badge, short description, external-link icon.
+Resource cards minimal - title, type badge, short description, external-link icon.
 
 ## 9. Risks & Open Questions
 

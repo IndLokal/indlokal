@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Data Health — Admin' };
+export const metadata = { title: 'Data Health - Admin' };
 
 export default async function DataHealthPage() {
   const [

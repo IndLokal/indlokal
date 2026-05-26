@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/discovery/:citySlug/events — cursor-paginated event feed.
+ * GET /api/v1/discovery/:citySlug/events - cursor-paginated event feed.
  * Public, no auth required. TDD-0003 §3.
  */
 

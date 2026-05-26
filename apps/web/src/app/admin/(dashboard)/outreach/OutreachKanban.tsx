@@ -58,7 +58,7 @@ type Props = {
 function LeadCard({ lead, showCityBadge }: { lead: Lead; showCityBadge?: boolean }) {
   const [isPending, startTransition] = useTransition();
 
-  const name = lead.community?.name ?? lead.suggestedName ?? '—';
+  const name = lead.community?.name ?? lead.suggestedName ?? '-';
   const isOverdue = lead.nextActionAt && new Date(lead.nextActionAt) < new Date();
 
   return (

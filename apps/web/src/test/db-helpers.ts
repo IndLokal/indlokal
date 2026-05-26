@@ -19,7 +19,7 @@ const TEST_DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
   'postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public';
 
-// Singleton scoped to the test process — avoids connection exhaustion
+// Singleton scoped to the test process - avoids connection exhaustion
 const globalForTestPrisma = globalThis as unknown as {
   testPrisma: PrismaClient | undefined;
 };
@@ -40,7 +40,7 @@ if (process.env.NODE_ENV !== 'production') {
  * Call this in beforeEach for integration tests.
  */
 export async function cleanDb(): Promise<void> {
-  // Order matters — child tables first to respect FK constraints
+  // Order matters - child tables first to respect FK constraints
   await testDb.$transaction([
     testDb.userInteraction.deleteMany(),
     testDb.magicLinkToken.deleteMany(),

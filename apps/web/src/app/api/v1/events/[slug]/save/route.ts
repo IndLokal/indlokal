@@ -1,6 +1,6 @@
 /**
- * POST   /api/v1/events/:slug/save  — save an event (requires auth)
- * DELETE /api/v1/events/:slug/save  — unsave an event (requires auth)
+ * POST   /api/v1/events/:slug/save  - save an event (requires auth)
+ * DELETE /api/v1/events/:slug/save  - unsave an event (requires auth)
  */
 
 import { NextResponse, type NextRequest } from 'next/server';

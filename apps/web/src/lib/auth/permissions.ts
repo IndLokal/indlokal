@@ -1,5 +1,5 @@
 /**
- * Authorization — ADR-0005 / PRD-0014
+ * Authorization - ADR-0005 / PRD-0014
  *
  * Single source of truth for "can this user perform this action?".
  *
@@ -28,38 +28,38 @@ import { getSessionUser } from '@/lib/session';
 // ─────────────────────────────────────────────────
 
 export type Action =
-  // Admin — data
+  // Admin - data
   | 'admin.data.read'
   | 'admin.data.write'
   | 'admin.data.delete' // destructive; founder-only by default
-  // Admin — pipeline & submissions
+  // Admin - pipeline & submissions
   | 'pipeline.read'
   | 'pipeline.approve'
   | 'pipeline.reject'
   | 'pipeline.run' // trigger scrape; OPS_LEAD+
-  // Admin — claims
+  // Admin - claims
   | 'claims.read'
   | 'claims.approve'
   | 'claims.reject'
-  // Admin — scoring
+  // Admin - scoring
   | 'scoring.read'
   | 'scoring.run'
-  // Admin — merge
+  // Admin - merge
   | 'merge.read'
   | 'merge.execute'
-  // Admin — reports
+  // Admin - reports
   | 'reports.read'
   | 'reports.resolve'
-  // Admin — team / role assignments
+  // Admin - team / role assignments
   | 'team.read' // view role assignments
   | 'team.grant' // grant roles (platform admin only)
   | 'team.revoke' // revoke roles (platform admin only)
-  // Admin — audit log
+  // Admin - audit log
   | 'audit.read'
   // Outreach CRM
   | 'outreach.read'
   | 'outreach.write'
-  // Ambassador console (always city-scoped — pass cityId as scope)
+  // Ambassador console (always city-scoped - pass cityId as scope)
   | 'ambassador.read'
   | 'ambassador.submit'
   | 'ambassador.checkin'
@@ -126,7 +126,7 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
 };
 
 // ─────────────────────────────────────────────────
-// SessionUser shape — the subset getSessionUser returns
+// SessionUser shape - the subset getSessionUser returns
 // ─────────────────────────────────────────────────
 
 export type SessionUser = {
@@ -167,7 +167,7 @@ export function can(
   const activeAssignments = user.roleAssignments.filter((a) => !a.revokedAt);
 
   // PLATFORM_ADMIN via assignment (edge-case: primary role is something else
-  // but they've been assignment-promoted — shouldn't normally happen, but safe).
+  // but they've been assignment-promoted - shouldn't normally happen, but safe).
   if (activeAssignments.some((a) => a.role === 'PLATFORM_ADMIN')) return true;
 
   for (const assignment of activeAssignments) {
@@ -228,7 +228,7 @@ export async function requireCan(
 
 /**
  * Returns the current session user with role assignments loaded,
- * or null. Non-throwing — use where optional auth is needed.
+ * or null. Non-throwing - use where optional auth is needed.
  */
 export async function getAuthorizedUser(): Promise<SessionUser | null> {
   return (await getSessionUser()) as SessionUser | null;

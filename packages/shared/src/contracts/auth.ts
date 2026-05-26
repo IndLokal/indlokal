@@ -1,5 +1,5 @@
 /**
- * Auth contracts — TDD-0001.
+ * Auth contracts - TDD-0001.
  *
  * NOTE: This file defines the *shapes* the API will use. Handlers
  * are not yet implemented (foundation-only PR per the agreed scope).
@@ -92,7 +92,7 @@ export const AppleAuth = z.object({
   identityToken: z.string().min(1),
   /** Authorization code from Apple. */
   authorizationCode: z.string().min(1),
-  /** First-time sign-in only — Apple sends user info once. */
+  /** First-time sign-in only - Apple sends user info once. */
   user: z
     .object({
       email: z.string().email().optional(),
@@ -131,7 +131,7 @@ export const AccessTokenClaims = z.object({
 });
 export type AccessTokenClaims = z.infer<typeof AccessTokenClaims>;
 
-// ─── PATCH /api/v1/me/onboarding — TDD-0019 ───
+// ─── PATCH /api/v1/me/onboarding - TDD-0019 ───
 
 /**
  * Partial update accepted by PATCH /api/v1/me/onboarding.

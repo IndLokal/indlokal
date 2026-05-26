@@ -46,7 +46,7 @@ Critical invariants:
 | `expiresAt`  | timestamptz                     | sliding for SESSION rows                     |
 | `createdAt`  | timestamptz                     |                                              |
 
-No new migrations in this work — table existed; column semantics changed
+No new migrations in this work - table existed; column semantics changed
 (see §3 TTLs).
 
 ## 3. TTLs and cookie
@@ -61,11 +61,11 @@ export const SESSION_REFRESH_THRESHOLD_HOURS = 24;
 
 - `magicLinkExpiry()` → now + 24 h.
 - `sessionExpiry()` → now + 7 d.
-- `sessionMaxAgeSeconds()` → 7 d in seconds — used for the cookie `Max-Age`.
+- `sessionMaxAgeSeconds()` → 7 d in seconds - used for the cookie `Max-Age`.
 - Cookie: `il_admin` (HttpOnly, Secure in prod, SameSite=Lax, Path=/).
 - Sliding refresh inside `getSessionUser()`: when the row's `expiresAt` is
   within `SESSION_REFRESH_THRESHOLD_HOURS`, run a single `update` that pushes
-  it to `now + 7d` and re-emit the cookie. Errors are swallowed — a failed
+  it to `now + 7d` and re-emit the cookie. Errors are swallowed - a failed
   refresh must not log the user out mid-request.
 
 ## 4. Routes
@@ -85,9 +85,9 @@ double-submit the verify endpoint on browser back/forward.
 
 ## 5. Email triggers
 
-- `auth.admin_magic_link` — From: `IndLokal <noreply@indlokal.com>`,
+- `auth.admin_magic_link` - From: `IndLokal <noreply@indlokal.com>`,
   link: `${NEXT_PUBLIC_APP_URL}/admin/verify?token=…`, 24 h TTL copy.
-- `auth.organizer_magic_link` — same shape, organizer route.
+- `auth.organizer_magic_link` - same shape, organizer route.
 
 Both transports go through `lib/email.ts` and **propagate** delivery errors
 to the action so the user sees a real failure (ADR-0004).
@@ -96,7 +96,7 @@ to the action so the user sees a real failure (ADR-0004).
 
 | Var                   | Scope                         | Notes                                                                                                                                           |
 | --------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_APP_URL` | **Per-environment** in Vercel | Production: `https://indlokal.com`. Preview: per-deploy URL. **Must not be shared** — caused the "magic link already used" production incident. |
+| `NEXT_PUBLIC_APP_URL` | **Per-environment** in Vercel | Production: `https://indlokal.com`. Preview: per-deploy URL. **Must not be shared** - caused the "magic link already used" production incident. |
 | `RESEND_API_KEY`      | Production + Preview          |                                                                                                                                                 |
 | `RESEND_FROM_EMAIL`   | Optional override             | Default `IndLokal <noreply@indlokal.com>`.                                                                                                      |
 | `ADMIN_EMAIL`         | Bootstrap only                | Seeds the platform admin row.                                                                                                                   |
@@ -112,7 +112,7 @@ to the action so the user sees a real failure (ADR-0004).
 
 | Failure                           | Behavior                                                                             |
 | --------------------------------- | ------------------------------------------------------------------------------------ |
-| Resend down                       | Action throws; form shows "We could not send the email — try again".                 |
+| Resend down                       | Action throws; form shows "We could not send the email - try again".                 |
 | Scanner GET on link               | Renders confirm page; token untouched.                                               |
 | Token expired / consumed          | Verify POST returns to login with inline error and "Request a new link" action.      |
 | DB unreachable on session refresh | Refresh is best-effort; the current request still resolves with the existing cookie. |
@@ -128,7 +128,7 @@ to the action so the user sees a real failure (ADR-0004).
 
 ## 10. Rollout
 
-Already shipped to production behind the existing admin route. No flag —
+Already shipped to production behind the existing admin route. No flag -
 the previous flow had no users besides the founders.
 
 ## 11. Backout

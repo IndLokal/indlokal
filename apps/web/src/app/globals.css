@@ -3,7 +3,7 @@
 @theme inline {
   --font-sans: var(--font-inter);
 
-  /* ─── Brand palette — vivid indigo ─── */
+  /* ─── Brand palette - vivid indigo ─── */
   --color-brand-50: #eef2ff;
   --color-brand-100: #e0e7ff;
   --color-brand-200: #c7d2fe;
@@ -15,7 +15,7 @@
   --color-brand-800: #3730a3;
   --color-brand-900: #312e81;
 
-  /* ─── Accent palette — warm saffron/amber ─── */
+  /* ─── Accent palette - warm saffron/amber ─── */
   --color-accent-50: #fffbeb;
   --color-accent-100: #fef3c7;
   --color-accent-200: #fde68a;

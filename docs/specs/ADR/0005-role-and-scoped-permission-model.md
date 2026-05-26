@@ -5,24 +5,24 @@
 
 ## Context
 
-Today `User.role` is a single enum with three values — `USER`,
+Today `User.role` is a single enum with three values - `USER`,
 `COMMUNITY_ADMIN`, `PLATFORM_ADMIN` (see `apps/web/prisma/schema.prisma`).
 Every admin route is gated on `PLATFORM_ADMIN`, which is fine while only the
 founder operates the console.
 
 The near-term team grid adds at least four new operating personas:
 
-- **X — Partnerships & Community Lead** (strategic partner)
-- **Y — Ops & Community Growth** (founding hire, JD attached)
-- **City Ambassadors** (2–3 in Q3'26 → 15–20 by 2028, scoped to one city)
+- **X - Partnerships & Community Lead** (strategic partner)
+- **Y - Ops & Community Growth** (founding hire, JD attached)
+- **City Ambassadors** (2-3 in Q3'26 → 15-20 by 2028, scoped to one city)
 - **Content & Social Support** (PT intern from Q3'26)
 
 We need:
 
 1. Role separation so X and Y can do their jobs without shipping them
    `PLATFORM_ADMIN` (which today implies destructive DB power).
-2. **Scoping** — a Stuttgart Ambassador must only see/edit Stuttgart data.
-3. **Multi-tenancy hooks** — a future Partner Org (Consulate, university Indian
+2. **Scoping** - a Stuttgart Ambassador must only see/edit Stuttgart data.
+3. **Multi-tenancy hooks** - a future Partner Org (Consulate, university Indian
    Society, Indo-German chamber) owns N communities and N resources under one
    account. Schema must not paint us into a corner.
 4. An audit trail for who granted what, and when it was revoked.
@@ -69,11 +69,11 @@ A small server-side `can(user, action, resource)` helper centralizes checks
 
 ## Alternatives considered
 
-- **Stay on a single enum, add booleans (`isAmbassador`, `cityScope`)** —
+- **Stay on a single enum, add booleans (`isAmbassador`, `cityScope`)** -
   simplest now but cannot model multi-city ambassadors or partner orgs without
   reworking again within the year.
-- **Full Casbin/OPA policy engine** — overkill for the team size; we will
+- **Full Casbin/OPA policy engine** - overkill for the team size; we will
   re-evaluate when we hit ~10 internal seats or when the partner org tier
   ships.
-- **Per-role boolean flags on `User`** — same scaling problem as the enum-only
+- **Per-role boolean flags on `User`** - same scaling problem as the enum-only
   approach and produces a sparse, hard-to-query schema.

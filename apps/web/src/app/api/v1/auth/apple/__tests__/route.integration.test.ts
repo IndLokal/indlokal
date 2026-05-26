@@ -1,7 +1,7 @@
 /**
- * Integration tests — /api/v1/auth/apple.
+ * Integration tests - /api/v1/auth/apple.
  *
- * @db — requires the test database. We don't talk to Apple; instead we
+ * @db - requires the test database. We don't talk to Apple; instead we
  * inject a local JWKS resolver and sign tokens with a generated key,
  * exercising the same `jwtVerify()` code path as production.
  */

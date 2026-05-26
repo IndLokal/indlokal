@@ -1,7 +1,7 @@
 import { requireSessionUser } from '@/lib/session';
 import AddEventForm from './AddEventForm';
 
-export const metadata = { title: 'Add Event — Organizer' };
+export const metadata = { title: 'Add Event - Organizer' };
 
 export default async function AddEventPage() {
   const user = await requireSessionUser();

@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/notifications/inbox/read — TDD-0002 §3.
+ * POST /api/v1/notifications/inbox/read - TDD-0002 §3.
  * Marks the given inbox items as read for the authenticated user.
  * Items belonging to other users are silently ignored (scoped by userId).
  */

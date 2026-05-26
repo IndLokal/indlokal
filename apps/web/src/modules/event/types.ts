@@ -26,7 +26,7 @@ export type EventListItem = Pick<
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
 };
 
-/** Full event for the detail API — includes trust signals and related events */
+/** Full event for the detail API - includes trust signals and related events */
 export type EventDetailRow = Pick<
   Event,
   | 'id'

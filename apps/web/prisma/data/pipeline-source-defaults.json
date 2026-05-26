@@ -43,6 +43,13 @@
       "searchCenter": "Frankfurt, Germany",
       "state": "Hesse",
       "enabled": true
+    },
+    {
+      "id": "berlin",
+      "label": "Berlin",
+      "searchCenter": "Berlin, Germany",
+      "state": "Berlin",
+      "enabled": true
     }
   ],
   "strategies": [
@@ -60,7 +67,7 @@
       "sourceType": "GOOGLE_SEARCH",
       "kind": "keyword_search",
       "contentScope": "keyword_discovery",
-      "label": "Google Custom Search — Diaspora Communities",
+      "label": "Google Custom Search - Diaspora Communities",
       "radiusKm": 100,
       "enabled": true
     },
@@ -69,7 +76,7 @@
       "sourceType": "DUCKDUCKGO",
       "kind": "keyword_search",
       "contentScope": "keyword_discovery",
-      "label": "DuckDuckGo Web Search — Diaspora Communities",
+      "label": "DuckDuckGo Web Search - Diaspora Communities",
       "radiusKm": 100,
       "enabled": true
     },
@@ -78,8 +85,9 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "Consulate General of India Munich — Official Portal",
+      "label": "Consulate General of India Munich - Official Portal",
       "url": "https://www.cgimunich.gov.in/",
+      "scope": "CITY",
       "hintCitySlug": "munich",
       "enabled": true
     },
@@ -88,8 +96,9 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "Consulate General of India Frankfurt — Official Portal",
+      "label": "Consulate General of India Frankfurt - Official Portal",
       "url": "https://cgifrankfurt.gov.in/",
+      "scope": "CITY",
       "hintCitySlug": "frankfurt",
       "enabled": true
     },
@@ -98,18 +107,54 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "Embassy of India Berlin — Official Portal",
+      "label": "Embassy of India Berlin - Official Portal",
       "url": "https://indianembassyberlin.gov.in/",
+      "scope": "CITY",
       "hintCitySlug": "berlin",
       "enabled": true
     },
     {
-      "id": "web-mea-germany-missions",
+      "id": "web-berlin-integration-beauftragte",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Berlin Senate Integration Commissioner - Official Portal",
+      "url": "https://www.berlin.de/lb/intmig/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-berlin-viz-migrationsbeirat",
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "MEA India — Germany Missions Directory",
-      "url": "https://www.mea.gov.in/indian-missions-abroad-new.htm?country=Germany",
+      "label": "Berlin VIZ - Migrant Organisations and District Councils",
+      "url": "https://www.berlin.de/lb/intmig/service/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-berlin-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Berlin - Group Discovery",
+      "url": "https://www.meetup.com/find/de--berlin/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-berlin-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Berlin - Events",
+      "url": "https://www.eventbrite.com/d/germany--berlin/events/",
+      "scope": "CITY",
+      "hintCitySlug": "berlin",
       "enabled": true
     },
     {
@@ -117,7 +162,7 @@
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
       "contentScope": "community_events",
-      "label": "IndoEuropean.eu — Events",
+      "label": "IndoEuropean.eu - Events",
       "url": "https://indoeuropean.eu/category/events/",
       "enabled": true
     },
@@ -126,7 +171,7 @@
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
       "contentScope": "community_portal",
-      "label": "IndoEuropean.eu — Germany",
+      "label": "IndoEuropean.eu - Germany",
       "url": "https://indoeuropean.eu/country/germany/",
       "enabled": true
     },
@@ -135,7 +180,7 @@
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "IndoEuropean.eu — Indian Associations in Germany",
+      "label": "IndoEuropean.eu - Indian Associations in Germany",
       "url": "https://indoeuropean.eu/list-of-indian-association-in-germany/",
       "enabled": true
     },
@@ -144,7 +189,7 @@
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "IndoEuropean.eu — Association Category",
+      "label": "IndoEuropean.eu - Association Category",
       "url": "https://indoeuropean.eu/category/association/",
       "enabled": true
     },
@@ -153,7 +198,7 @@
       "sourceType": "INDOEUROPEAN",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "IndoEuropean.eu — Temples",
+      "label": "IndoEuropean.eu - Temples",
       "url": "https://indoeuropean.eu/category/temples/",
       "enabled": true
     },
@@ -162,7 +207,7 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "community_events",
-      "label": "Indians in Germany — Events",
+      "label": "Indians in Germany - Events",
       "url": "https://indiansingermany.org/events",
       "enabled": true
     },
@@ -182,6 +227,8 @@
       "contentScope": "community_portal",
       "label": "DIZ Baden-Württemberg e.V.",
       "url": "https://diz-ev.de/bawue",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -189,7 +236,7 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "community_events",
-      "label": "Stuttgart Expats — Events (general expat, cross-reference)",
+      "label": "Stuttgart Expats - Events (general expat, cross-reference)",
       "url": "https://stuttgartexpats.com/stuttgart-events/",
       "enabled": true
     },
@@ -198,8 +245,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "Forum der Kulturen Stuttgart — Member Associations (160+ Vereine)",
+      "label": "Forum der Kulturen Stuttgart - Member Associations (160+ Vereine)",
       "url": "https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -207,8 +256,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "House of Resources Stuttgart — Stadtteilkarte migrantischer Vereine",
+      "label": "House of Resources Stuttgart - Stadtteilkarte migrantischer Vereine",
       "url": "https://house-of-resources-stuttgart.de/stadtteilkarte-kontakt-zu-vereinen/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -216,8 +267,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "AMKA Frankfurt — Amt für multikulturelle Angelegenheiten (official city office)",
+      "label": "AMKA Frankfurt - Amt für multikulturelle Angelegenheiten (official city office)",
       "url": "https://www.amka.de/",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -225,8 +278,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "AMKA Frankfurt — Registered Multicultural Associations Directory",
+      "label": "AMKA Frankfurt - Registered Multicultural Associations Directory",
       "url": "https://www.amka.de/vereine",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -234,8 +289,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "Vielfalt bewegt Frankfurt — Official Diversity Portal",
+      "label": "Vielfalt bewegt Frankfurt - Official Diversity Portal",
       "url": "https://www.vielfalt-bewegt-frankfurt.de/",
+      "scope": "REGION",
+      "hintState": "Hesse",
       "enabled": true
     },
     {
@@ -243,8 +300,10 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "official_portal",
-      "label": "Baden-Württemberg Integrationsministerium — Migrant Organisations",
+      "label": "Baden-Württemberg Integrationsministerium - Migrant Organisations",
       "url": "https://sozialministerium.baden-wuerttemberg.de/de/integration/",
+      "scope": "REGION",
+      "hintState": "Baden-Württemberg",
       "enabled": true
     },
     {
@@ -252,8 +311,76 @@
       "sourceType": "WEBSITE_SCRAPE",
       "kind": "pinned_url",
       "contentScope": "directory_listing",
-      "label": "MORGEN München — Migrant Organisation Member Associations",
+      "label": "MORGEN München - Migrant Organisation Member Associations",
       "url": "https://morgen-muenchen.de/thema/mitgliedervereine/",
+      "scope": "REGION",
+      "hintState": "Bavaria",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-munich-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Munich - Group Discovery",
+      "url": "https://www.meetup.com/find/de--munich/",
+      "scope": "CITY",
+      "hintCitySlug": "munich",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-munich-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Munich - Events",
+      "url": "https://www.eventbrite.com/d/germany--munich/events/",
+      "scope": "CITY",
+      "hintCitySlug": "munich",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-frankfurt-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Frankfurt - Group Discovery",
+      "url": "https://www.meetup.com/find/de--frankfurt/",
+      "scope": "CITY",
+      "hintCitySlug": "frankfurt",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-frankfurt-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Frankfurt - Events",
+      "url": "https://www.eventbrite.com/d/germany--frankfurt/events/",
+      "scope": "CITY",
+      "hintCitySlug": "frankfurt",
+      "enabled": true
+    },
+    {
+      "id": "web-meetup-karlsruhe-discovery",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Meetup Karlsruhe - Group Discovery",
+      "url": "https://www.meetup.com/find/de--karlsruhe/",
+      "scope": "CITY",
+      "hintCitySlug": "karlsruhe",
+      "enabled": true
+    },
+    {
+      "id": "web-eventbrite-karlsruhe-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Eventbrite Karlsruhe - Events",
+      "url": "https://www.eventbrite.com/d/germany--karlsruhe/events/",
+      "scope": "CITY",
+      "hintCitySlug": "karlsruhe",
       "enabled": true
     }
   ]

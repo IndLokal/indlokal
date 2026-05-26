@@ -5,7 +5,7 @@ import { OutreachKanban } from './OutreachKanban';
 import { CreateLeadForm } from './CreateLeadForm';
 import type { OutreachStage } from '@prisma/client';
 
-export const metadata = { title: 'Outreach CRM — Admin' };
+export const metadata = { title: 'Outreach CRM - Admin' };
 export const dynamic = 'force-dynamic';
 
 const STAGE_ORDER: OutreachStage[] = [
@@ -163,7 +163,7 @@ export default async function AdminOutreachPage({
       {/* Kanban */}
       {leads.length === 0 ? (
         <div className="border-border rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-          <p className="text-muted text-sm">No leads yet — add your first lead below.</p>
+          <p className="text-muted text-sm">No leads yet - add your first lead below.</p>
         </div>
       ) : (
         <OutreachKanban leads={leads} showCityBadge={!filterCity} />

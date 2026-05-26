@@ -1,9 +1,9 @@
 /**
- * GET /api/v1/me — TDD-0001 §3.
+ * GET /api/v1/me - TDD-0001 §3.
  * Returns the authenticated user's `MeProfile`. First consumer of the
  * `requireAccessToken` middleware.
  *
- * DELETE /api/v1/me — PRD-0019 / TDD-0019.
+ * DELETE /api/v1/me - PRD-0019 / TDD-0019.
  * Permanently deletes the authenticated user's account. Revokes all
  * active refresh tokens before deletion so any in-flight sessions are
  * immediately invalidated. Cascades to all related tables via Prisma.
@@ -45,7 +45,7 @@ export const DELETE = apiHandler(async (req: NextRequest) => {
     data: { revokedAt: new Date() },
   });
 
-  // Delete the user — Prisma cascades to all related tables.
+  // Delete the user - Prisma cascades to all related tables.
   await db.user.delete({ where: { id: userId } });
 
   return NextResponse.json({ ok: true });

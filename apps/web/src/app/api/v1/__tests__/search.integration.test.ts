@@ -2,11 +2,11 @@
  * Integration tests for TDD-0007 search API endpoints.
  *
  * Covers:
- *   GET /api/v1/search         — combined search
- *   GET /api/v1/search/suggest — autocomplete suggestions
- *   GET /api/v1/search/trending — trending keywords
+ *   GET /api/v1/search         - combined search
+ *   GET /api/v1/search/suggest - autocomplete suggestions
+ *   GET /api/v1/search/trending - trending keywords
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';

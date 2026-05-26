@@ -118,7 +118,7 @@ export async function addHostEvent(
               onlineLink: data.onlineLink || null,
               registrationUrl: data.registrationUrl || null,
               cost: data.cost,
-              source: 'USER_SUGGESTED', // unverified host submission — needs review
+              source: 'USER_SUGGESTED', // unverified host submission - needs review
               metadata: { hostUserId: user.id },
             },
           });
@@ -129,7 +129,7 @@ export async function addHostEvent(
             err.code === 'P2002' &&
             attempt < 4
           ) {
-            continue; // slug collision — retry with new random suffix
+            continue; // slug collision - retry with new random suffix
           }
           throw err;
         }

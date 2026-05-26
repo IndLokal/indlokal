@@ -1,5 +1,5 @@
 /**
- * Unit tests for lib/auth/jwt.ts — TDD-0001 §9 (Test plan: token issue/verify).
+ * Unit tests for lib/auth/jwt.ts - TDD-0001 §9 (Test plan: token issue/verify).
  *
  * Uses the ephemeral dev key path (no AUTH_JWT_PRIVATE_KEY in env)
  * so the test is hermetic.

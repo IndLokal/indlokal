@@ -1,11 +1,8 @@
-import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient, PipelineSourceConfigType, PipelineSourceType } from '@prisma/client';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '../src/lib/config/cities';
-
-type SqlClient = PrismaClient | Prisma.TransactionClient;
 
 type SourceDefaultsRegion = {
   id: string;
@@ -31,6 +28,8 @@ type SourceDefaultsStrategy = {
   radiusKm?: number;
   url?: string;
   hintCitySlug?: string;
+  hintState?: string;
+  scope?: 'GENERIC' | 'CITY' | 'REGION';
 };
 
 type SourceDefaults = {
@@ -40,11 +39,11 @@ type SourceDefaults = {
 };
 
 type PipelineConfigRow = {
-  configType: 'KEYWORD' | 'REGION' | 'STRATEGY';
+  configType: PipelineSourceConfigType;
   key: string;
   label: string;
   enabled: boolean;
-  sourceType: string | null;
+  sourceType: PipelineSourceType | null;
   kind: string | null;
   payload: Prisma.JsonObject;
 };
@@ -74,6 +73,8 @@ const ALLOWED_SOURCE_TYPES = new Set<string>([
   'USER_SUBMITTED',
 ]);
 
+const ALLOWED_PINNED_SCOPES = new Set<'GENERIC' | 'CITY' | 'REGION'>(['GENERIC', 'CITY', 'REGION']);
+
 const KNOWN_STATES = new Set<string>([
   ...ACTIVE_CITY_DATA.map((city) => city.state),
   ...SATELLITE_CITY_DATA.map((city) => city.state),
@@ -93,8 +94,21 @@ const KNOWN_CITY_SLUGS = new Set(
  */
 function getCitySlugsForState(state: string): string[] {
   const slugs: string[] = [];
-  for (const city of ACTIVE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
-  for (const city of SATELLITE_CITY_DATA) if (city.state === state) slugs.push(city.slug);
+  const metroSlugsForState = new Set<string>();
+
+  for (const city of ACTIVE_CITY_DATA) {
+    if (city.state === state) {
+      slugs.push(city.slug);
+      metroSlugsForState.add(city.slug);
+    }
+  }
+
+  for (const city of SATELLITE_CITY_DATA) {
+    const isInState = city.state === state;
+    const isMetroSatellite = Boolean(city.metroSlug && metroSlugsForState.has(city.metroSlug));
+    if (isInState || isMetroSatellite) slugs.push(city.slug);
+  }
+
   for (const city of UPCOMING_CITIES) if (city.state === state) slugs.push(city.slug);
   return Array.from(new Set(slugs));
 }
@@ -194,6 +208,11 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
       url: typeof rawStrategy.url === 'string' ? rawStrategy.url : undefined,
       hintCitySlug:
         typeof rawStrategy.hintCitySlug === 'string' ? rawStrategy.hintCitySlug : undefined,
+      hintState: typeof rawStrategy.hintState === 'string' ? rawStrategy.hintState : undefined,
+      scope:
+        typeof rawStrategy.scope === 'string'
+          ? (rawStrategy.scope as 'GENERIC' | 'CITY' | 'REGION')
+          : undefined,
     };
 
     if (
@@ -260,6 +279,40 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
       parseErrors.push(
         `[Pipeline] Strategy ${candidate.id} has unknown hintCitySlug ${candidate.hintCitySlug}`,
       );
+      continue;
+    }
+
+    if (candidate.hintState != null && candidate.hintState.trim().length === 0) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} has empty hintState`);
+      continue;
+    }
+
+    if (candidate.hintState != null && !KNOWN_STATES.has(candidate.hintState)) {
+      parseErrors.push(
+        `[Pipeline] Strategy ${candidate.id} has unknown hintState ${candidate.hintState}`,
+      );
+      continue;
+    }
+
+    const inferredScope = candidate.hintCitySlug
+      ? 'CITY'
+      : candidate.hintState
+        ? 'REGION'
+        : 'GENERIC';
+    const normalizedScope = candidate.scope ?? inferredScope;
+    if (!ALLOWED_PINNED_SCOPES.has(normalizedScope)) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} has invalid scope ${candidate.scope}`);
+      continue;
+    }
+    candidate.scope = normalizedScope;
+
+    if (candidate.scope === 'CITY' && !candidate.hintCitySlug) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} scope=CITY requires hintCitySlug`);
+      continue;
+    }
+
+    if (candidate.scope === 'REGION' && !candidate.hintState) {
+      parseErrors.push(`[Pipeline] Strategy ${candidate.id} scope=REGION requires hintState`);
       continue;
     }
 
@@ -342,7 +395,7 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
         key: strategy.id,
         label: strategy.label,
         enabled: strategy.enabled,
-        sourceType: strategy.sourceType,
+        sourceType: strategy.sourceType as PipelineSourceType,
         kind: strategy.kind,
         payload: {
           radiusKm: strategy.radiusKm ?? 50,
@@ -356,11 +409,13 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
       key: strategy.id,
       label: strategy.label,
       enabled: strategy.enabled,
-      sourceType: strategy.sourceType,
+      sourceType: strategy.sourceType as PipelineSourceType,
       kind: strategy.kind,
       payload: {
         url: strategy.url ?? null,
+        scope: strategy.scope ?? null,
         hintCitySlug: strategy.hintCitySlug ?? null,
+        hintState: strategy.hintState ?? null,
         contentScope: strategy.contentScope,
       },
     };
@@ -369,38 +424,37 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
   return [...keywordRows, ...regionRows, ...strategyRows];
 }
 
-async function upsertConfigRow(prisma: SqlClient, row: PipelineConfigRow): Promise<void> {
-  await prisma.$executeRaw(
-    Prisma.sql`
-      INSERT INTO pipeline_source_configs
-        (id, config_type, key, label, enabled, source_type, kind, payload, created_at, updated_at)
-      VALUES
-        (
-          ${randomUUID()},
-          ${row.configType}::"PipelineSourceConfigType",
-          ${row.key},
-          ${row.label},
-          ${row.enabled},
-          ${row.sourceType}::"PipelineSourceType",
-          ${row.kind},
-          ${row.payload}::jsonb,
-          NOW(),
-          NOW()
-        )
-      ON CONFLICT (config_type, key)
-      DO UPDATE
-      SET
-        label = EXCLUDED.label,
-        enabled = EXCLUDED.enabled,
-        source_type = EXCLUDED.source_type,
-        kind = EXCLUDED.kind,
-        payload = EXCLUDED.payload,
-        updated_at = NOW()
-    `,
-  );
+async function upsertConfigRow(prisma: PrismaClient, row: PipelineConfigRow): Promise<void> {
+  await prisma.pipelineSourceConfig.upsert({
+    where: {
+      configType_key: {
+        configType: row.configType,
+        key: row.key,
+      },
+    },
+    update: {
+      label: row.label,
+      enabled: row.enabled,
+      sourceType: row.sourceType,
+      kind: row.kind,
+      payload: row.payload,
+    },
+    create: {
+      configType: row.configType,
+      key: row.key,
+      label: row.label,
+      enabled: row.enabled,
+      sourceType: row.sourceType,
+      kind: row.kind,
+      payload: row.payload,
+    },
+  });
 }
 
-async function disableMissingRows(prisma: SqlClient, rows: PipelineConfigRow[]): Promise<number> {
+async function disableMissingRows(
+  prisma: PrismaClient,
+  rows: PipelineConfigRow[],
+): Promise<number> {
   const keepKeywordKeys = rows.filter((row) => row.configType === 'KEYWORD').map((row) => row.key);
   const keepRegionKeys = rows.filter((row) => row.configType === 'REGION').map((row) => row.key);
   const keepStrategyKeys = rows
@@ -415,37 +469,34 @@ async function disableMissingRows(prisma: SqlClient, rows: PipelineConfigRow[]):
     return 0;
   }
 
-  const keywordResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'KEYWORD'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepKeywordKeys)})
-    `,
-  );
+  const keywordResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'KEYWORD',
+      enabled: true,
+      key: { notIn: keepKeywordKeys },
+    },
+    data: { enabled: false },
+  });
 
-  const regionResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'REGION'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepRegionKeys)})
-    `,
-  );
+  const regionResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'REGION',
+      enabled: true,
+      key: { notIn: keepRegionKeys },
+    },
+    data: { enabled: false },
+  });
 
-  const strategyResult = await prisma.$executeRaw(
-    Prisma.sql`
-      UPDATE pipeline_source_configs
-      SET enabled = false, updated_at = NOW()
-      WHERE config_type = 'STRATEGY'::"PipelineSourceConfigType"
-        AND enabled = true
-        AND key NOT IN (${Prisma.join(keepStrategyKeys)})
-    `,
-  );
+  const strategyResult = await prisma.pipelineSourceConfig.updateMany({
+    where: {
+      configType: 'STRATEGY',
+      enabled: true,
+      key: { notIn: keepStrategyKeys },
+    },
+    data: { enabled: false },
+  });
 
-  return Number(keywordResult) + Number(regionResult) + Number(strategyResult);
+  return keywordResult.count + regionResult.count + strategyResult.count;
 }
 
 export type PipelineSourceConfigBootstrapResult = {
@@ -460,18 +511,18 @@ export async function runPipelineSourceConfigBootstrap(
   const defaults = await loadSourceDefaults();
   const rows = buildConfigRows(defaults);
 
-  return prisma.$transaction(async (tx) => {
-    for (const row of rows) {
-      await upsertConfigRow(tx, row);
-    }
+  // Avoid interactive transactions here: serverless/pooled Postgres setups can
+  // invalidate callback transaction handles (P2028) during long seed/bootstrap runs.
+  for (const row of rows) {
+    await upsertConfigRow(prisma, row);
+  }
 
-    const disabledMissing = options.disableMissing ? await disableMissingRows(tx, rows) : 0;
+  const disabledMissing = options.disableMissing ? await disableMissingRows(prisma, rows) : 0;
 
-    return {
-      upserted: rows.length,
-      disabledMissing,
-    };
-  });
+  return {
+    upserted: rows.length,
+    disabledMissing,
+  };
 }
 
 async function main() {
@@ -488,10 +539,9 @@ async function main() {
 }
 
 const isDirectRun =
-  typeof require !== 'undefined' && require.main === module
-    ? true
-    : process.argv[1]?.endsWith('pipeline-source-config.ts') ||
-      process.argv[1]?.endsWith('pipeline-source-config.js');
+  (typeof require !== 'undefined' && typeof module !== 'undefined' && require.main === module) ||
+  process.argv[1]?.endsWith('pipeline-source-config.ts') ||
+  process.argv[1]?.endsWith('pipeline-source-config.js');
 
 if (isDirectRun) {
   main().catch((error) => {

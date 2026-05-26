@@ -1,14 +1,14 @@
 /**
- * Pipeline orchestrator — known-source-first content discovery pipeline.
+ * Pipeline orchestrator - known-source-first content discovery pipeline.
  *
  * Flow:
- *   1. PLAN — DB + pinned sources first, keyword search only for DB coverage gaps
- *   2. FETCH — execute planned pinned URLs, then planned keyword searches
- *   3. FILTER — Stage 1 LLM: cheap batch relevance check
- *   4. EXTRACT — Stage 2 LLM: structured extraction with city assignment
- *   5. RESOLVE — map LLM cityName → DB city ID
- *   6. DEDUP — semantic/name similarity check against existing DB entities + queue
- *   7. QUEUE — store in PipelineItem for admin review
+ *   1. PLAN - DB + pinned sources first, keyword search only for DB coverage gaps
+ *   2. FETCH - execute planned pinned URLs, then planned keyword searches
+ *   3. FILTER - Stage 1 LLM: cheap batch relevance check
+ *   4. EXTRACT - Stage 2 LLM: structured extraction with city assignment
+ *   5. RESOLVE - map LLM cityName → DB city ID
+ *   6. DEDUP - semantic/name similarity check against existing DB entities + queue
+ *   7. QUEUE - store in PipelineItem for admin review
  *
  * Adding a new country: add region + strategy defaults in source-defaults.json,
  * sync them into DB, and rerun the pipeline. No orchestrator changes needed.
@@ -34,7 +34,15 @@ import {
   extractMentionedYears,
 } from './freshness';
 import { buildPipelineSourcePlan } from './source-plan';
-import { filterRelevance, extractBatch, resetLlmStats, getLlmStats } from './extraction';
+import {
+  filterRelevance,
+  extractBatch,
+  resetLlmStats,
+  getLlmStats,
+  PipelineBudgetExceededError,
+  PipelineCircuitOpenError,
+} from './extraction';
+import { withLlmContext } from './llm-context';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
@@ -49,6 +57,36 @@ import type {
 // Re-export PipelineRunResult type from types.ts
 export type { PipelineRunResult } from './types';
 
+type Region = SearchRegion;
+
+export type PipelineRunScope = {
+  citySlugs?: string[];
+  regionIds?: string[];
+};
+
+function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
+  if (!scope) return regions;
+
+  const regionIds = new Set((scope.regionIds ?? []).map((id) => id.trim()).filter(Boolean));
+  const citySlugs = new Set((scope.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+
+  if (regionIds.size === 0 && citySlugs.size === 0) return regions;
+
+  return regions
+    .filter((region) => {
+      const regionMatch = regionIds.size > 0 && regionIds.has(region.id);
+      const cityMatch = citySlugs.size > 0 && region.citySlugs.some((slug) => citySlugs.has(slug));
+      return regionMatch || cityMatch;
+    })
+    .map((region) => ({
+      ...region,
+      citySlugs:
+        citySlugs.size > 0
+          ? region.citySlugs.filter((slug) => citySlugs.has(slug))
+          : region.citySlugs,
+    }))
+    .filter((region) => region.citySlugs.length > 0);
+}
 export function isLikelyStaleEventPage(item: RawContent): boolean {
   const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`;
   const lowerPreview = preview.toLowerCase();
@@ -88,9 +126,12 @@ async function timePipelineStage<T>(
 
 /**
  * Run the full known-source-first pipeline.
- * No arguments needed — reads pipeline source config from the database.
+ * No arguments needed - reads pipeline source config from the database.
  */
-export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResult> {
+export async function runPipeline(
+  triggeredBy = 'cron',
+  scope?: PipelineRunScope,
+): Promise<PipelineRunResult> {
   const start = Date.now();
   resetLlmStats();
 
@@ -109,11 +150,73 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
     llmTokensEstimate: 0,
     duration: 0,
     stageTimings: {},
+    filterFailures: 0,
+    extractRetriesExhausted: 0,
+    itemsDroppedBadIndex: 0,
+    budgetExceeded: false,
+    circuitBreakerTripped: false,
   };
 
-  const regions = await getRuntimeEnabledRegions();
+  const scopeRegionIds = Array.from(
+    new Set((scope?.regionIds ?? []).map((id) => id.trim()).filter(Boolean)),
+  );
+  const scopeCitySlugs = Array.from(
+    new Set((scope?.citySlugs ?? []).map((slug) => slug.trim()).filter(Boolean)),
+  );
+
+  // Create PipelineRun row UP-FRONT so we have an id to attribute per-LLM-call
+  // audit rows to (PRD-0027). Counters are zero initially and patched on
+  // completion via update().
+  let pipelineRunId: string | null = null;
+  try {
+    const created = await db.pipelineRun.create({
+      data: {
+        triggeredBy,
+        scopeRegionIds,
+        scopeCitySlugs,
+        regionsScanned: 0,
+        sourcesProcessed: 0,
+        itemsFetched: 0,
+        itemsPassedFilter: 0,
+        itemsExtracted: 0,
+        itemsQueued: 0,
+        itemsSkippedDuplicate: 0,
+        itemsSkippedNoCity: 0,
+        itemsSkippedPast: 0,
+        llmCalls: 0,
+        llmTokensEstimate: 0,
+        durationMs: 0,
+        errors: [],
+      },
+    });
+    pipelineRunId = created.id;
+  } catch (createErr) {
+    console.error('[Pipeline] Failed to create up-front PipelineRun:', createErr);
+  }
+
+  const baseRegions = await getRuntimeEnabledRegions();
+  const regions = filterRegionsByScope(baseRegions, scope);
+  const scopedCitySlugs =
+    scope && (scope.citySlugs?.length || scope.regionIds?.length)
+      ? Array.from(new Set(regions.flatMap((region) => region.citySlugs)))
+      : undefined;
+  const scopedStates =
+    scope && (scope.citySlugs?.length || scope.regionIds?.length)
+      ? Array.from(
+          new Set(
+            regions
+              .map((region) => region.state)
+              .filter((state): state is string => Boolean(state)),
+          ),
+        )
+      : undefined;
+  if (regions.length === 0) {
+    throw new Error(
+      '[Pipeline] No regions matched the requested scope. Check --region/--city values or cron query params.',
+    );
+  }
   const uniqueRaw = await timePipelineStage(result, 'fetch', () =>
-    fetchAllSources(regions, result, triggeredBy),
+    fetchAllSources(regions, result, triggeredBy, scopedCitySlugs, scopedStates),
   );
   const candidateRaw = await timePipelineStage(result, 'prefilter', async () => {
     const currentItems = prefilterLikelyCurrentItems(uniqueRaw);
@@ -127,49 +230,121 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
   });
 
   if (candidateRaw.length > 0) {
-    const relevantItems = await timePipelineStage(result, 'filter', () =>
-      filterRelevantItems(candidateRaw, result),
-    );
-
-    const extracted =
-      relevantItems.length > 0
-        ? await timePipelineStage(result, 'extract', () =>
-            extractRelevantItems(relevantItems, result),
+    try {
+      const relevantItems = pipelineRunId
+        ? await withLlmContext({ runId: pipelineRunId, stage: 'filter' }, () =>
+            timePipelineStage(result, 'filter', () => filterRelevantItems(candidateRaw, result)),
           )
-        : [];
+        : await timePipelineStage(result, 'filter', () =>
+            filterRelevantItems(candidateRaw, result),
+          );
 
-    if (extracted.length > 0) {
-      await timePipelineStage(result, 'resolveQueue', () =>
-        resolveAndQueue(extracted, relevantItems, regions, result),
-      );
+      const runExtract = async () =>
+        timePipelineStage(result, 'extract', () => extractRelevantItems(relevantItems, result));
+      const extracted =
+        relevantItems.length > 0
+          ? pipelineRunId
+            ? await withLlmContext({ runId: pipelineRunId, stage: 'extract' }, runExtract)
+            : await runExtract()
+          : [];
+
+      if (extracted.length > 0) {
+        const runResolve = async () =>
+          timePipelineStage(result, 'resolveQueue', () =>
+            resolveAndQueue(extracted, relevantItems, regions, result),
+          );
+        // Semantic dedup inside resolveAndQueue may call LLM - tag stage='dedup'.
+        if (pipelineRunId) {
+          await withLlmContext({ runId: pipelineRunId, stage: 'dedup' }, runResolve);
+        } else {
+          await runResolve();
+        }
+      }
+    } catch (guardErr) {
+      // PRD/TDD-0028: budget or circuit guard tripped. Record it on the run
+      // and let the persistence block below write whatever we already have.
+      if (guardErr instanceof PipelineBudgetExceededError) {
+        result.budgetExceeded = true;
+        result.errors.push(`budget_exceeded:tokens=${guardErr.tokensConsumed}`);
+        console.warn(
+          `[Pipeline] budget exceeded (tokens=${guardErr.tokensConsumed} >= ${guardErr.limit}); halting LLM stages`,
+        );
+      } else if (guardErr instanceof PipelineCircuitOpenError) {
+        result.circuitBreakerTripped = true;
+        result.errors.push(
+          `circuit_breaker_tripped:consecutive_failures=${guardErr.consecutiveFailures}`,
+        );
+        console.warn(
+          `[Pipeline] circuit breaker tripped after ${guardErr.consecutiveFailures} consecutive failures; halting LLM stages`,
+        );
+      } else {
+        throw guardErr;
+      }
     }
   }
 
   const stats = getLlmStats();
   result.llmCalls = stats.calls;
   result.llmTokensEstimate = stats.tokensEstimate;
+  result.filterFailures = stats.filterFailures;
+  result.extractRetriesExhausted = stats.extractRetriesExhausted;
+  result.itemsDroppedBadIndex = stats.itemsDroppedBadIndex;
   result.duration = Date.now() - start;
 
-  // Persist run history for observability
+  // Persist run history for observability.
+  // If the up-front row exists, patch it; otherwise create one (migration not yet applied path).
   try {
-    await db.pipelineRun.create({
-      data: {
-        triggeredBy,
-        regionsScanned: result.regionsScanned,
-        sourcesProcessed: result.sourcesProcessed,
-        itemsFetched: result.itemsFetched,
-        itemsPassedFilter: result.itemsPassedFilter,
-        itemsExtracted: result.itemsExtracted,
-        itemsQueued: result.itemsQueued,
-        itemsSkippedDuplicate: result.itemsSkippedDuplicate,
-        itemsSkippedNoCity: result.itemsSkippedNoCity,
-        itemsSkippedPast: result.itemsSkippedPast,
-        llmCalls: result.llmCalls,
-        llmTokensEstimate: result.llmTokensEstimate,
-        durationMs: result.duration,
-        errors: result.errors,
-      },
-    });
+    if (pipelineRunId) {
+      await db.pipelineRun.update({
+        where: { id: pipelineRunId },
+        data: {
+          regionsScanned: result.regionsScanned,
+          sourcesProcessed: result.sourcesProcessed,
+          itemsFetched: result.itemsFetched,
+          itemsPassedFilter: result.itemsPassedFilter,
+          itemsExtracted: result.itemsExtracted,
+          itemsQueued: result.itemsQueued,
+          itemsSkippedDuplicate: result.itemsSkippedDuplicate,
+          itemsSkippedNoCity: result.itemsSkippedNoCity,
+          itemsSkippedPast: result.itemsSkippedPast,
+          llmCalls: result.llmCalls,
+          llmTokensEstimate: result.llmTokensEstimate,
+          durationMs: result.duration,
+          errors: result.errors,
+          filterFailures: result.filterFailures,
+          extractRetriesExhausted: result.extractRetriesExhausted,
+          itemsDroppedBadIndex: result.itemsDroppedBadIndex,
+          budgetExceeded: result.budgetExceeded,
+          circuitBreakerTripped: result.circuitBreakerTripped,
+        },
+      });
+    } else {
+      await db.pipelineRun.create({
+        data: {
+          triggeredBy,
+          scopeRegionIds,
+          scopeCitySlugs,
+          regionsScanned: result.regionsScanned,
+          sourcesProcessed: result.sourcesProcessed,
+          itemsFetched: result.itemsFetched,
+          itemsPassedFilter: result.itemsPassedFilter,
+          itemsExtracted: result.itemsExtracted,
+          itemsQueued: result.itemsQueued,
+          itemsSkippedDuplicate: result.itemsSkippedDuplicate,
+          itemsSkippedNoCity: result.itemsSkippedNoCity,
+          itemsSkippedPast: result.itemsSkippedPast,
+          llmCalls: result.llmCalls,
+          llmTokensEstimate: result.llmTokensEstimate,
+          durationMs: result.duration,
+          errors: result.errors,
+          filterFailures: result.filterFailures,
+          extractRetriesExhausted: result.extractRetriesExhausted,
+          itemsDroppedBadIndex: result.itemsDroppedBadIndex,
+          budgetExceeded: result.budgetExceeded,
+          circuitBreakerTripped: result.circuitBreakerTripped,
+        },
+      });
+    }
   } catch (persistErr) {
     console.error('[Pipeline] Failed to persist run history:', persistErr);
   }
@@ -183,27 +358,48 @@ export async function runPipeline(triggeredBy = 'cron'): Promise<PipelineRunResu
 
 // ─── Phase 1: Fetch ────────────────────────────────────
 
-type Region = SearchRegion;
-
 async function fetchAllSources(
   regions: Region[],
   result: PipelineRunResult,
   triggeredBy: string,
+  scopedCitySlugs?: string[],
+  scopedStates?: string[],
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
   const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy);
+  const scopedCitySet = new Set((scopedCitySlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
+  const scopedStateSet = new Set((scopedStates ?? []).map((state) => state.trim()).filter(Boolean));
+  const pinnedStrategies =
+    scopedCitySet.size > 0 || scopedStateSet.size > 0
+      ? sourcePlan.pinnedStrategies.filter((strategy) => {
+          const scope =
+            strategy.scope ??
+            (strategy.hintCitySlug ? 'CITY' : strategy.hintState ? 'REGION' : 'GENERIC');
+          if (scope === 'CITY')
+            return Boolean(strategy.hintCitySlug && scopedCitySet.has(strategy.hintCitySlug));
+          if (scope === 'REGION')
+            return Boolean(strategy.hintState && scopedStateSet.has(strategy.hintState));
+          return false;
+        })
+      : sourcePlan.pinnedStrategies;
+
+  if (scopedCitySet.size > 0 || scopedStateSet.size > 0) {
+    console.log(
+      `[Pipeline] Scoped run: pinned sources limited to ${pinnedStrategies.length}/${sourcePlan.pinnedStrategies.length} (cities=${[...scopedCitySet].join(', ') || 'none'}; states=${[...scopedStateSet].join(', ') || 'none'})`,
+    );
+  }
 
   for (const note of sourcePlan.notes) {
     console.log(`[Pipeline] Plan: ${note}`);
   }
 
   console.log(
-    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${sourcePlan.pinnedStrategies.length} total`,
+    `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${pinnedStrategies.length} total`,
   );
 
-  // Pinned URLs — all run in parallel (each is an independent HTTP fetch)
+  // Pinned URLs - all run in parallel (each is an independent HTTP fetch)
   const pinnedOutcomes = await Promise.allSettled(
-    sourcePlan.pinnedStrategies.map(async (strategy) => {
+    pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
         (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
@@ -223,7 +419,7 @@ async function fetchAllSources(
   }
 
   if (sourcePlan.keywordStrategies.length > 0) {
-    // Keyword strategies × regions — all combinations run in parallel.
+    // Keyword strategies × regions - all combinations run in parallel.
     // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
     const keywordJobs = regions.flatMap((region) =>
       sourcePlan.keywordStrategies.map((strategy) => async () => {
@@ -408,7 +604,7 @@ async function resolveAndQueue(
       cityId = fallbackCity.id;
       isCityPending = true;
       console.log(
-        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
       );
     }
 
@@ -438,12 +634,12 @@ async function resolveAndQueue(
         decisionCounts.noCityCommunities++;
       }
       console.log(
-        `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} — cityName: ${item.cityName}`,
+        `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName}`,
       );
       continue;
     }
 
-    // Skip events that have already passed — no value in queuing stale content
+    // Skip events that have already passed - no value in queuing stale content
     if (item.type === 'EVENT' && item.date) {
       const eventDate = new Date(`${item.date}T23:59:59`);
       if (!Number.isNaN(eventDate.getTime()) && eventDate < new Date()) {
@@ -720,7 +916,7 @@ export function normalizeEventTitleForDedup(value: string): string {
   return value
     .toLowerCase()
     .replace(/\b(20\d{2})\b/g, ' ')
-    .replace(/\b(stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
+    .replace(/\b(berlin|stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
@@ -994,7 +1190,7 @@ function mergeExtractedEvents(base: ExtractedEvent, incoming: ExtractedEvent): E
 
 /**
  * Simple string similarity (Dice coefficient on bigrams).
- * Good enough for dedup — not a full fuzzy match.
+ * Good enough for dedup - not a full fuzzy match.
  */
 export function computeSimilarity(a: string, b: string): number {
   if (a === b) return 1;

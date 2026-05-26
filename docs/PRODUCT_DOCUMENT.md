@@ -1,12 +1,12 @@
-# IndLokal — Product Document
+# IndLokal - Product Document
 
 **The real-time guide to Indian communities and events near you.**
 
-_Product Planning Document — April 2026. Updated May 2026 to reflect shipped admin/organizer auth, data console, submissions queue scoping, and the spec-driven workflow. Updated 11 May 2026 to integrate the operating-team layer (Strategic Partner / Ops / City Ambassadors / Content) into the product surfaces and Phase 2 plan._
+_Product Planning Document - April 2026. Updated May 2026 to reflect shipped admin/organizer auth, data console, submissions queue scoping, and the spec-driven workflow. Updated 11 May 2026 to integrate the operating-team layer (Strategic Partner / Ops / City Ambassadors / Content) into the product surfaces and Phase 2 plan._
 
 > **Spec discipline:** Non-trivial product changes are specified as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding, and kept in sync through implementation. This document is the durable product narrative; specs are the source of truth for any individual capability.
 >
-> **Operating-team layer:** The full audit of every interface, persona (external + internal + system), and the concrete build gaps to support the upcoming team grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support, freelance engineering) lives in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md). The role/permission decision is captured in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md); the four operator-facing PRDs are [PRD-0014 RBAC](specs/PRD/0014-roles-and-rbac.md), [PRD-0015 City Ambassador console](specs/PRD/0015-city-ambassador-console.md), [PRD-0016 Outreach CRM](specs/PRD/0016-outreach-crm.md), [PRD-0017 Multi-community + Event Host](specs/PRD/0017-organizer-multi-community-and-event-host.md), [PRD-0018 Audit log viewer](specs/PRD/0018-audit-log-viewer.md). This document references but does not duplicate them.
+> **Operating-team layer:** The full audit of every interface, persona (external + internal + system), and the concrete build gaps to support the upcoming team grid (Founder, X - Strategic Partner, Y - Ops, City Ambassadors, Content support, freelance engineering) lives in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md). The role/permission decision is captured in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md); the four operator-facing PRDs are [PRD-0014 RBAC](specs/PRD/0014-roles-and-rbac.md), [PRD-0015 City Ambassador console](specs/PRD/0015-city-ambassador-console.md), [PRD-0016 Outreach CRM](specs/PRD/0016-outreach-crm.md), [PRD-0017 Multi-community + Event Host](specs/PRD/0017-organizer-multi-community-and-event-host.md), [PRD-0018 Audit log viewer](specs/PRD/0018-audit-log-viewer.md). This document references but does not duplicate them.
 
 ---
 
@@ -18,8 +18,8 @@ _Product Planning Document — April 2026. Updated May 2026 to reflect shipped a
 4. [Product Positioning](#4-product-positioning)
 5. [Core Product Principles](#5-core-product-principles)
 6. [User Journeys](#6-user-journeys)
-7. [Feature Specification — MVP](#7-feature-specification--mvp)
-8. [Feature Specification — Phase 2](#8-feature-specification--phase-2)
+7. [Feature Specification - MVP](#7-feature-specification--mvp)
+8. [Feature Specification - Phase 2](#8-feature-specification--phase-2)
 9. [Information Architecture](#9-information-architecture)
 10. [Content Strategy](#10-content-strategy)
 11. [Launch Strategy](#11-launch-strategy)
@@ -35,7 +35,7 @@ _Product Planning Document — April 2026. Updated May 2026 to reflect shipped a
 
 **IndLokal is the real-time guide to Indian communities and events near you.**
 
-For any Indian living in Germany — whether a new arrival, a student, a working professional, or a settled family — IndLokal answers the question:
+For any Indian living in Germany - whether a new arrival, a student, a working professional, or a settled family - IndLokal answers the question:
 
 > _"What's happening for Indians in my city this week, and how do I get involved?"_
 
@@ -43,9 +43,9 @@ The product is designed as an **activity-led discovery layer**: users come for f
 
 Web gives IndLokal search visibility and shareable city pages. The native mobile app gives members recall: installed presence, push notifications, saved items, and a faster path back to what's happening this week.
 
-Behind the product experience, IndLokal builds a **trusted community graph** — a structured, scored, and evolving map of diaspora community life that becomes more valuable over time.
+Behind the product experience, IndLokal builds a **trusted community graph** - a structured, scored, and evolving map of diaspora community life that becomes more valuable over time.
 
-**AI is what makes this sustainable as a small operation.** Continuous source monitoring, LLM extraction, and a human review queue keep the community graph fresh without scaling headcount linearly. The product story is _Indian-diaspora depth + city-first density + AI-assisted freshness_ — each of those three is hard for a generic expat platform to copy.
+**AI is what makes this sustainable as a small operation.** Continuous source monitoring, LLM extraction, and a human review queue keep the community graph fresh without scaling headcount linearly. The product story is _Indian-diaspora depth + city-first density + AI-assisted freshness_ - each of those three is hard for a generic expat platform to copy.
 
 **Funding model in one line:** start as a grant-funded integration utility for Indian newcomers (city integration funds, BAMF, EU AMIF, foundations), then layer paid B2B surfaces (city tourism, university international offices, corporate HR onboarding) on top, then raise pre-seed/seed for multi-city expansion once the playbook is proven. Detailed in §15.
 
@@ -73,7 +73,7 @@ Indian communities in Germany **lack external visibility**.
 
 ### The structural problem
 
-The information exists — it's just **unstructured, scattered, and inaccessible**.
+The information exists - it's just **unstructured, scattered, and inaccessible**.
 
 - Events are posted inside closed groups
 - Community quality and activity are invisible from outside
@@ -84,9 +84,9 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 
 ## 3. Target Users
 
-> **MVP focus.** IndLokal is a two-sided product. **Newcomers**, **Settled Explorers**, and **Community Organizers** are the three personas the MVP product surfaces are actually designed for today. Student / Family / Professional remain on the validation backlog — we use them to shape content (categories, taxonomy, resource topics), not to build dedicated UX yet.
+> **MVP focus.** IndLokal is a two-sided product. **Newcomers**, **Settled Explorers**, and **Community Organizers** are the three personas the MVP product surfaces are actually designed for today. Student / Family / Professional remain on the validation backlog - we use them to shape content (categories, taxonomy, resource topics), not to build dedicated UX yet.
 >
-> **Operator personas are first-class too** but live in §3.3 below. Treat them as product users — the City Ambassador console (PRD-0015), Outreach CRM (PRD-0016), and admin RBAC (PRD-0014) all have PRDs, success metrics, and acceptance criteria. The full persona × interface matrix is in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md).
+> **Operator personas are first-class too** but live in §3.3 below. Treat them as product users - the City Ambassador console (PRD-0015), Outreach CRM (PRD-0016), and admin RBAC (PRD-0014) all have PRDs, success metrics, and acceptance criteria. The full persona × interface matrix is in [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md).
 
 ### 3.1 Primary personas (MVP)
 
@@ -107,7 +107,7 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 - Most likely to become a repeat mobile user if event reminders and saved communities work well
 - **Key need:** "What's happening that I don't know about?"
 
-#### The Community Organizer (promoted from secondary — now primary because the organizer console shipped in MVP)
+#### The Community Organizer (promoted from secondary - now primary because the organizer console shipped in MVP)
 
 - Runs or helps run an Indian community group
 - Wants more visibility, reach, and a credible web presence
@@ -145,13 +145,13 @@ The information exists — it's just **unstructured, scattered, and inaccessible
 
 ### 3.3 Operator personas (the operating team that runs the platform)
 
-These are the personas behind the team-growth grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support, AI/Eng support). They are not end-users in the demand-side sense, but they are first-class **product users** of operator-facing surfaces. Each maps to a role in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and to one or more operator PRDs.
+These are the personas behind the team-growth grid (Founder, X - Strategic Partner, Y - Ops, City Ambassadors, Content support, AI/Eng support). They are not end-users in the demand-side sense, but they are first-class **product users** of operator-facing surfaces. Each maps to a role in [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and to one or more operator PRDs.
 
 | Persona                             | Hire stage                | Primary surface                                               | Role                  | Source PRD                                                                                                                               |
 | ----------------------------------- | ------------------------- | ------------------------------------------------------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **Founder / Product (JP)**          | Q2'26 → FT 2028           | Admin console + DB + scripts                                  | `PLATFORM_ADMIN`      | All                                                                                                                                      |
-| **X — Partnerships & Community**    | Q2'26 → Strategic         | Admin (claims, pipeline curation), Outreach CRM               | `PARTNERSHIPS_LEAD`   | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md)                                                 |
-| **Y — Ops & Community Growth**      | Q2'26 PT → FT 2028        | Admin console + Outreach CRM + content composer               | `OPS_LEAD`            | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md), [PRD-0018](specs/PRD/0018-audit-log-viewer.md) |
+| **X - Partnerships & Community**    | Q2'26 → Strategic         | Admin (claims, pipeline curation), Outreach CRM               | `PARTNERSHIPS_LEAD`   | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md)                                                 |
+| **Y - Ops & Community Growth**      | Q2'26 PT → FT 2028        | Admin console + Outreach CRM + content composer               | `OPS_LEAD`            | [PRD-0014](specs/PRD/0014-roles-and-rbac.md), [PRD-0016](specs/PRD/0016-outreach-crm.md), [PRD-0018](specs/PRD/0018-audit-log-viewer.md) |
 | **City Ambassador**                 | 2-3 Q3'26 → 15-20 by 2028 | **City-scoped Ambassador console** (`/ambassador/*`) + mobile | `CITY_AMBASSADOR`     | [PRD-0015](specs/PRD/0015-city-ambassador-console.md)                                                                                    |
 | **Content & Social Support**        | PT from Q3'26             | Highlight queue + asset library                               | `CONTENT_EDITOR`      | [PRD-0014](specs/PRD/0014-roles-and-rbac.md) (deferred social composer)                                                                  |
 | **Freelance Engineer / AI Support** | Adhoc → 2-3 by 2028       | GitHub + Vercel + DB read-only (out-of-band)                  | _no platform UI role_ | n/a                                                                                                                                      |
@@ -166,7 +166,7 @@ These are the personas behind the team-growth grid (Founder, X — Strategic Par
 
 | Positioning                         | Explanation                                                                                                       |
 | ----------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| **Activity-led discovery layer**    | Users experience fresh, time-sensitive content — not a static directory                                           |
+| **Activity-led discovery layer**    | Users experience fresh, time-sensitive content - not a static directory                                           |
 | **Community participation gateway** | The path from "I didn't know this existed" to "I'm now part of it"                                                |
 | **Event and relevance engine**      | Surfaces the right events at the right time for the right person                                                  |
 | **Mobile recall layer**             | Uses saved items, push, and app presence to bring members back when local activity changes                        |
@@ -175,10 +175,10 @@ These are the personas behind the team-growth grid (Founder, X — Strategic Par
 
 ### What IndLokal _uses_ as its moat
 
-1. **Indian-diaspora depth** — language/regional/cultural filtering and a dedicated resource directory (§8.9), not a generic expat platform
-2. **City-first density** — every city must feel complete; we don't expand until the launch city does (§5.2)
-3. **AI-assisted supply** — the content pipeline (§10.5) is what makes ongoing freshness affordable; without it the model only works with paid editorial staff
-4. **Operator surface as a product** — the admin + organizer consoles (§7.8) close the loop with the people who actually run the communities, which is where most directories fail
+1. **Indian-diaspora depth** - language/regional/cultural filtering and a dedicated resource directory (§8.9), not a generic expat platform
+2. **City-first density** - every city must feel complete; we don't expand until the launch city does (§5.2)
+3. **AI-assisted supply** - the content pipeline (§10.5) is what makes ongoing freshness affordable; without it the model only works with paid editorial staff
+4. **Operator surface as a product** - the admin + organizer consoles (§7.8) close the loop with the people who actually run the communities, which is where most directories fail
 
 ### What IndLokal is NOT
 
@@ -193,7 +193,7 @@ These are the personas behind the team-growth grid (Founder, X — Strategic Par
 
 ### Positioning statement
 
-> For Indians living in Germany who want to discover and participate in community life, IndLokal is the activity-led platform that shows you what's happening, who's active, and how to get involved — powered by a trusted community graph that ensures freshness, relevance, and quality.
+> For Indians living in Germany who want to discover and participate in community life, IndLokal is the activity-led platform that shows you what's happening, who's active, and how to get involved - powered by a trusted community graph that ensures freshness, relevance, and quality.
 
 ---
 
@@ -205,7 +205,7 @@ The product should feel **alive**. The default experience should surface time-se
 
 - "Events this week" is more prominent than "community directory"
 - Stale content should be automatically downranked
-- If nothing is happening, the product feels broken — so the system must ensure content density
+- If nothing is happening, the product feels broken - so the system must ensure content density
 
 ### 5.2 City-first
 
@@ -221,7 +221,7 @@ IndLokal is a **gateway**, not a destination.
 
 - Users discover communities and events on IndLokal
 - They engage (chat, RSVP, participate) on the community's own platform (WhatsApp, Telegram, etc.)
-- IndLokal succeeds when someone clicks "Join via WhatsApp" — that is the conversion event
+- IndLokal succeeds when someone clicks "Join via WhatsApp" - that is the conversion event
 
 ### 5.4 Mobile recall, not mobile bloat
 
@@ -250,8 +250,8 @@ Events, access channels, and activity signals all connect back to communities. T
 
 IndLokal has two distinct surfaces and they are deliberately separated:
 
-- **Visitor surface** — frictionless, no login, optimised for SEO and time-to-access. Adding any account requirement here is a regression.
-- **Operator surface** — admin (`/admin/*`) and organizer (`/organizer/*`) consoles — a real authenticated workspace with magic-link sign-in, sliding sessions, sign-out, and cascade-safe write actions. Treated as a product, not a back office.
+- **Visitor surface** - frictionless, no login, optimised for SEO and time-to-access. Adding any account requirement here is a regression.
+- **Operator surface** - admin (`/admin/*`) and organizer (`/organizer/*`) consoles - a real authenticated workspace with magic-link sign-in, sliding sessions, sign-out, and cascade-safe write actions. Treated as a product, not a back office.
 
 The operator surface is what makes the data graph maintainable at scale; the visitor surface is what makes the data useful. Neither is allowed to compromise the other.
 
@@ -261,7 +261,7 @@ The AI content pipeline (§10.5) is a core product capability, not just a back-o
 
 - **AI does the heavy lifting:** source monitoring, extraction from posts/HTML/images, classification, deduplication, link-health checks.
 - **Humans own trust:** nothing publishes without admin approval; AI-extracted items land as `UNVERIFIED` and require a human pass before they go live.
-- **The cost discipline this enables is what makes the funding model in §15 work** — grant-fundable run-cost in Year 1, B2B-margin-friendly in Year 2+, no editorial-headcount blow-up at multi-city scale.
+- **The cost discipline this enables is what makes the funding model in §15 work** - grant-fundable run-cost in Year 1, B2B-margin-friendly in Year 2+, no editorial-headcount blow-up at multi-city scale.
 
 ### 5.9 Fund the mission, then scale the business
 
@@ -269,7 +269,7 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
 
 - **Year 1** is grant-fundable because the product directly serves a documented public-policy goal (Indian newcomer integration in German cities) and the run-cost is small, measurable, and reportable.
 - **Year 2** layers paid B2B surfaces (city tourism, university international offices, corporate HR onboarding) on top of the same data graph and the same operator console.
-- **Year 2–3** raises pre-seed/seed for multi-city expansion once the per-city playbook is proven.
+- **Year 2-3** raises pre-seed/seed for multi-city expansion once the per-city playbook is proven.
 - No architectural decision is allowed to optimise for one of those modes in a way that breaks the others.
 
 ---
@@ -341,14 +341,14 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
 4. She explores Frankfurt Tamil Sangam → rich profile, upcoming Pongal event, WhatsApp link
 
 5. She goes back, selects "Professional"
-   → "Indian Professionals Network Frankfurt" — monthly meetups, 100+ members
+   → "Indian Professionals Network Frankfurt" - monthly meetups, 100+ members
 
 6. She joins both communities
 ```
 
 **Product success criteria:** Category/language filtering surfaced the right communities immediately. Activity signals helped Priya prioritize the active community.
 
-### 6.4 Journey: Community Organizer — Claiming a Listing _(shipped in MVP)_
+### 6.4 Journey: Community Organizer - Claiming a Listing _(shipped in MVP)_
 
 **Trigger:** Suresh runs the "Düsseldorf Kerala Association." He discovers it's already listed on IndLokal (from seed data) but the description is incomplete.
 
@@ -371,7 +371,7 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
 
 **Product success criteria:** Suresh improved his community's listing without any gatekeeping, with no password to remember, and without the founding team manually onboarding him.
 
-### 6.5 Journey: Admin — Reviewing the AI Pipeline Queue _(shipped in MVP, basic source set)_
+### 6.5 Journey: Admin - Reviewing the AI Pipeline Queue _(shipped in MVP, basic source set)_
 
 **Trigger:** It's Monday morning. The AI pipeline ran overnight against ~8 configured sources (Eventbrite Stuttgart, a handful of Facebook community pages, CGI Munich, IndoEuropean.eu's Stuttgart Mela). The admin has ~20 candidate items in the queue.
 
@@ -385,7 +385,7 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
      confidence (e.g., 0.91), and a one-click Approve / Reject / Merge action
 
 3. She bulk-approves the 8 high-confidence event extractions from CGI Munich
-   (consular camp dates — institutional source, near-zero hallucination risk)
+   (consular camp dates - institutional source, near-zero hallucination risk)
    → They land as Event rows with status='UNVERIFIED' and source tagged for provenance
 
 4. She opens a medium-confidence Facebook event (0.74)
@@ -405,7 +405,7 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
 
 ---
 
-## 7. Feature Specification — MVP
+## 7. Feature Specification - MVP
 
 ### 7.1 City Selection
 
@@ -422,11 +422,11 @@ IndLokal is built so the same product can be operated as a grant-funded integrat
 
 Stuttgart is the strategic launch city based on competitive analysis:
 
-- **Automotive industry pipeline** — Bosch, Mercedes-Benz, Porsche, ZF, Mahle, Continental all have offices in the Stuttgart metro. Hundreds of Indian engineers arrive annually.
+- **Automotive industry pipeline** - Bosch, Mercedes-Benz, Porsche, ZF, Mahle, Continental all have offices in the Stuttgart metro. Hundreds of Indian engineers arrive annually.
 - **Estimated Indian population:** 10,000-15,000+ in Stuttgart metro (including Böblingen, Sindelfingen, Ludwigsburg, Esslingen)
-- **Weakest competitor coverage** among top German cities — IndoEuropean.eu misspells "Stuttgart" in their URL, Meetup has zero Indian-specific groups, InterNations has 1,752 Indian members attending generic expat events
-- **Proven community activity** — Holi festivals, Indian Film Festival (22 years running), cricket tournaments, Tamil food festivals, Bollywood parties, Independence Day celebrations
-- **Regional expansion built in** — Karlsruhe, Mannheim, Heidelberg, Heilbronn all within 1hr; overlapping communities; same consular jurisdiction (CGI Munich for BW)
+- **Weakest competitor coverage** among top German cities - IndoEuropean.eu misspells "Stuttgart" in their URL, Meetup has zero Indian-specific groups, InterNations has 1,752 Indian members attending generic expat events
+- **Proven community activity** - Holi festivals, Indian Film Festival (22 years running), cricket tournaments, Tamil food festivals, Bollywood parties, Independence Day celebrations
+- **Regional expansion built in** - Karlsruhe, Mannheim, Heidelberg, Heilbronn all within 1hr; overlapping communities; same consular jurisdiction (CGI Munich for BW)
 
 **Stuttgart metro definition:** Stuttgart city + Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen. Communities and events in these satellite towns are part of the Stuttgart launch.
 
@@ -438,12 +438,12 @@ Stuttgart is the strategic launch city based on competitive analysis:
 
 **Sections (top to bottom):**
 
-1. **This Week** — upcoming events in the next 7 days (card carousel or list)
-2. **Active Communities** — communities ranked by activity score (top 6-8)
-3. **Browse by Category** — category grid (Cultural, Student, Professional, Religious, Language, Sports, Family, Networking, Food, Arts, **Consular & Official**)
-4. **Recently Added** — newest communities or events
-5. **All Upcoming Events** — chronological event list with "load more"
-6. **Trending in Germany** — cross-city section showing notable upcoming events in other cities (Phase 2 prep; provides value even with single city by showing national context)
+1. **This Week** - upcoming events in the next 7 days (card carousel or list)
+2. **Active Communities** - communities ranked by activity score (top 6-8)
+3. **Browse by Category** - category grid (Cultural, Student, Professional, Religious, Language, Sports, Family, Networking, Food, Arts, **Consular & Official**)
+4. **Recently Added** - newest communities or events
+5. **All Upcoming Events** - chronological event list with "load more"
+6. **Trending in Germany** - cross-city section showing notable upcoming events in other cities (Phase 2 prep; provides value even with single city by showing national context)
 
 **Sparse-content resilience:**
 
@@ -475,7 +475,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Hosting community name (linked)
 - Category tag(s)
 - Image (if available)
-- **Recurring badge** — events with `isRecurring: true` show a 🔄 indicator and human-readable recurrence label (e.g., "Every Saturday", "Monthly"). This builds event frequency perception without requiring many distinct event rows.
+- **Recurring badge** - events with `isRecurring: true` show a 🔄 indicator and human-readable recurrence label (e.g., "Every Saturday", "Monthly"). This builds event frequency perception without requiring many distinct event rows.
 
 ### 7.4 Event Detail Page
 
@@ -488,7 +488,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - Hosting community (linked to community profile)
 - Access: registration link, community join link
 - Category tags
-- **Recurrence info** — if the event is recurring, display recurrence pattern ("Every Saturday at 10:00 AM", "First Sunday of each month") with RRULE-derived human-readable text. Helps users understand it's an ongoing commitment, not a one-off.
+- **Recurrence info** - if the event is recurring, display recurrence pattern ("Every Saturday at 10:00 AM", "First Sunday of each month") with RRULE-derived human-readable text. Helps users understand it's an ongoing commitment, not a one-off.
 - Share button
 - "More events from this community" section
 
@@ -529,7 +529,7 @@ Stuttgart is the strategic launch city based on competitive analysis:
 - City/cities
 - Member count (approximate)
 - Activity indicator + last updated date
-- **Access Channels section:** WhatsApp link, Telegram link, Website, Instagram, etc. — each as a clear CTA
+- **Access Channels section:** WhatsApp link, Telegram link, Website, Instagram, etc. - each as a clear CTA
 - **Upcoming Events section:** list of this community's future events
 - **Past Events section:** collapsed/secondary, shows track record
 - Verified/Claimed badge
@@ -562,37 +562,37 @@ Stuttgart is the strategic launch city based on competitive analysis:
 
 **Authentication (shipped):**
 
-- **Magic-link sign-in** at `/admin/login` and `/organizer/login` — no passwords. Email contains a single-use, SHA-256 hashed, 24h-TTL token; verify routes use a 303 See Other redirect after POST so email scanners and inline previewers cannot consume the token (a 2-minute grace window covers genuine races). See [PRD-0011](specs/PRD/0011-magic-link-admin-organizer-auth.md).
+- **Magic-link sign-in** at `/admin/login` and `/organizer/login` - no passwords. Email contains a single-use, SHA-256 hashed, 24h-TTL token; verify routes use a 303 See Other redirect after POST so email scanners and inline previewers cannot consume the token (a 2-minute grace window covers genuine races). See [PRD-0011](specs/PRD/0011-magic-link-admin-organizer-auth.md).
 - **7-day sliding sessions.** Cookies are httpOnly + DB-backed (hashed token); sessions auto-extend on activity within 24h of expiry, so daily users never re-authenticate. See [TDD-0011](specs/TDD/0011-magic-link-admin-organizer-auth.md).
 - **Visible sign-out** in the admin and organizer headers (POST → clear cookie + DB token → 303 to `/admin/login?signed_out=1`).
-- **Email transport:** Resend in production (FROM `noreply@indlokal.com`), Mailpit in local dev. Send failures throw rather than silently log — captured by [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md).
+- **Email transport:** Resend in production (FROM `noreply@indlokal.com`), Mailpit in local dev. Send failures throw rather than silently log - captured by [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md).
 
 **Platform Admin capabilities (shipped):**
 
-- **Data Management Console** (`/admin/data`) — full CRUD for communities, events, cities, and resources, with city/type/search filters and per-row delete actions. Deletes are transactional and cascade-safe: deleting a community removes its access channels, activity signals, trust signals, claims, and event references; cities refuse deletion when still referenced and explain why. See [PRD-0012](specs/PRD/0012-admin-data-management-console.md) and [TDD-0012](specs/TDD/0012-admin-data-management-console.md).
-- **Submissions queue** (`/admin/submissions`) — source-scoped to user-submitted communities only (`status='UNVERIFIED' AND source='COMMUNITY_SUBMITTED'`). Approving an entry promotes it to `ACTIVE` and removes it from the queue.
-- **AI Pipeline review queue** (`/admin/pipeline`) — separate from submissions. Items extracted by the content pipeline are reviewed here; admin approval lands the community as `UNVERIFIED` (still requires a verification pass) rather than auto-publishing. See [PRD-0013](specs/PRD/0013-pipeline-review-and-submissions-queue.md).
-- **Verification** — mark communities verified; toggle status (Active / Inactive / Unverified).
-- **Bulk import** — communities and events from CSV/JSON.
+- **Data Management Console** (`/admin/data`) - full CRUD for communities, events, cities, and resources, with city/type/search filters and per-row delete actions. Deletes are transactional and cascade-safe: deleting a community removes its access channels, activity signals, trust signals, claims, and event references; cities refuse deletion when still referenced and explain why. See [PRD-0012](specs/PRD/0012-admin-data-management-console.md) and [TDD-0012](specs/TDD/0012-admin-data-management-console.md).
+- **Submissions queue** (`/admin/submissions`) - source-scoped to user-submitted communities only (`status='UNVERIFIED' AND source='COMMUNITY_SUBMITTED'`). Approving an entry promotes it to `ACTIVE` and removes it from the queue.
+- **AI Pipeline review queue** (`/admin/pipeline`) - separate from submissions. Items extracted by the content pipeline are reviewed here; admin approval lands the community as `UNVERIFIED` (still requires a verification pass) rather than auto-publishing. See [PRD-0013](specs/PRD/0013-pipeline-review-and-submissions-queue.md).
+- **Verification** - mark communities verified; toggle status (Active / Inactive / Unverified).
+- **Bulk import** - communities and events from CSV/JSON.
 - Basic counts and recent activity.
 
-**Community Organizer capabilities (shipped — MVP, originally scoped Phase 2):**
+**Community Organizer capabilities (shipped - MVP, originally scoped Phase 2):**
 
 - Sign in via magic link, claim ownership of a community listing.
 - Edit profile, manage access channels, add and edit events for owned communities.
 - See organizer-only signals (e.g., last activity, completeness hints).
 
-**Operator surfaces — planned (Phase 2 onward, see §8.11–§8.14):**
+**Operator surfaces - planned (Phase 2 onward, see §8.11-§8.14):**
 
-- **Scoped roles + admin RBAC** — replace the single `PLATFORM_ADMIN` gate with role-scoped access so the Strategic Partner (X), Ops Lead (Y), Ambassadors, and Content support can each be granted only what they need, scoped to a city or org where applicable. See [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and [PRD-0014](specs/PRD/0014-roles-and-rbac.md).
-- **City Ambassador console** (`/ambassador/*`) — city-scoped dashboard, quick-add wizards that auto-fast-track ambassador submissions, event check-in with photo, personal scoreboard mapped to the JD success metrics. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).
-- **Outreach CRM** (`/admin/outreach` + `/ambassador/outreach`) — first-class lead pipeline (Lead → Contacted → In Conversation → Onboarded) replacing today's spreadsheet workflow; auto-links to communities when the pipeline approves a matching item. See [PRD-0016](specs/PRD/0016-outreach-crm.md).
-- **Multi-community ownership + Event Host flow** — workspace switcher for organisers running multiple communities; a lightweight event-only sign-up for independent hosts. See [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
-- **Audit log viewer** (`/admin/audit`) — readable surface over `ContentLog` so role-scoped delegation is reviewable. See [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
+- **Scoped roles + admin RBAC** - replace the single `PLATFORM_ADMIN` gate with role-scoped access so the Strategic Partner (X), Ops Lead (Y), Ambassadors, and Content support can each be granted only what they need, scoped to a city or org where applicable. See [ADR-0005](specs/ADR/0005-role-and-scoped-permission-model.md) and [PRD-0014](specs/PRD/0014-roles-and-rbac.md).
+- **City Ambassador console** (`/ambassador/*`) - city-scoped dashboard, quick-add wizards that auto-fast-track ambassador submissions, event check-in with photo, personal scoreboard mapped to the JD success metrics. See [PRD-0015](specs/PRD/0015-city-ambassador-console.md).
+- **Outreach CRM** (`/admin/outreach` + `/ambassador/outreach`) - first-class lead pipeline (Lead → Contacted → In Conversation → Onboarded) replacing today's spreadsheet workflow; auto-links to communities when the pipeline approves a matching item. See [PRD-0016](specs/PRD/0016-outreach-crm.md).
+- **Multi-community ownership + Event Host flow** - workspace switcher for organisers running multiple communities; a lightweight event-only sign-up for independent hosts. See [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md).
+- **Audit log viewer** (`/admin/audit`) - readable surface over `ContentLog` so role-scoped delegation is reviewable. See [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
 
 **Database seeding (operational, not user-facing):**
 
-Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory` (real Stuttgart communities and resources sourced from research), `demo` (synthetic content for local/preview only). The directory seed is the canonical content baseline; demo never runs in production. See [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md).
+Three-tier pipeline - `bootstrap` (cities, categories, taxonomies), `directory` (real Stuttgart communities and resources sourced from research), `demo` (synthetic content for local/preview only). The directory seed is the canonical content baseline; demo never runs in production. See [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md).
 
 **Not required for MVP:**
 
@@ -633,20 +633,20 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - Required fields: name, city, primary category, short description, at least one access channel (WhatsApp / Telegram / website)
 - Optional fields: long description, logo URL, additional categories, languages, persona segments
 - On submit, the entry is persisted as `Community { source: 'COMMUNITY_SUBMITTED', status: 'UNVERIFIED' }` and lands in the **admin Submissions queue** (separate from the AI pipeline queue)
-- Confirmation screen: "Thanks — our team reviews submissions within ~48 hours." (No account, so no in-product status updates in MVP; submitter notification is Phase 2 work.)
+- Confirmation screen: "Thanks - our team reviews submissions within ~48 hours." (No account, so no in-product status updates in MVP; submitter notification is Phase 2 work.)
 - Anti-abuse: simple per-IP rate-limit + honeypot field; no CAPTCHA in MVP unless abuse is observed
 
 **Why this is MVP, not Phase 2:** The visitor-side submission rail is what makes the admin queue worth maintaining. Without it, organic supply growth depends entirely on us cold-emailing organizers.
 
 ---
 
-## 8. Feature Specification — Phase 2
+## 8. Feature Specification - Phase 2
 
 > **What's already in MVP and therefore not repeated here:** community self-submission (§7.11), community claim + organizer console (§7.8 + journey 6.4), admin data console with cascade-safe deletes (§7.8), source-scoped submissions queue (§7.8), magic-link auth + 7-day sliding sessions (§7.8). Phase 2 builds _on top of_ these rails rather than introducing them.
 
 ### 8.1 Member Accounts (on top of existing magic-link rails)
 
-- Add a `USER`-role sign-in surface at `/login`, mirroring the shipped admin/organizer flow (magic link, sliding session, sign-out) — no new auth infrastructure to build, just a third role gate.
+- Add a `USER`-role sign-in surface at `/login`, mirroring the shipped admin/organizer flow (magic link, sliding session, sign-out) - no new auth infrastructure to build, just a third role gate.
 - City and interest preferences during onboarding
 - Saved/bookmarked communities and events
 - "My communities" view
@@ -661,14 +661,14 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 ### 8.3 Multi-Organizer per Community + Organizer Analytics
 
 - Allow more than one `COMMUNITY_ADMIN` to manage a single community (today: one)
-- Per-organizer audit trail (who edited what, when) — surfaced via the audit log viewer (§8.14, [PRD-0018](specs/PRD/0018-audit-log-viewer.md))
+- Per-organizer audit trail (who edited what, when) - surfaced via the audit log viewer (§8.14, [PRD-0018](specs/PRD/0018-audit-log-viewer.md))
 - Organizer dashboard surfaces: views in last 30d, access-channel clicks, completeness checklist, Pulse Score breakdown (organizer-only)
 - The complementary **multi-community-per-organizer** workspace switcher and the **event-only Host** sign-up are scoped in §8.13 / [PRD-0017](specs/PRD/0017-organizer-multi-community-and-event-host.md)
 
 ### 8.4 User-Contributed Signals
 
-- "Suggest a community" — lightweight form for users to suggest missing communities
-- "Report an issue" — report stale info, broken links, incorrect details
+- "Suggest a community" - lightweight form for users to suggest missing communities
+- "Report an issue" - report stale info, broken links, incorrect details
 - These feed into admin review queue
 
 ### 8.5 Weekly Digest Email
@@ -685,39 +685,39 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - Engagement score (more views/clicks = higher ranking)
 - Trust score (verified + claimed + low reports = higher ranking)
 - "Trending" badge for communities with rising activity
-- **Branded "Pulse Score"** — composite activity/completeness/trust score, visible to claimed-community organizers on their dashboard as an improvement tool (e.g., "Your Pulse Score is 45 — add more events and update your description to improve it")
+- **Branded "Pulse Score"** - composite activity/completeness/trust score, visible to claimed-community organizers on their dashboard as an improvement tool (e.g., "Your Pulse Score is 45 - add more events and update your description to improve it")
 - Pulse Score breakdown stored in database; **NOT publicly visible until Phase 3** (communities need 60-90+ days of behavioral data before numeric scores are meaningful)
 
-> **Why not show Pulse Score at launch?** At go-live, all communities have zero engagement data. A score of "15/100" on a freshly seeded community is technically accurate but practically harmful — it alienates the organizers you're trying to recruit. Qualitative labels ("Active", "Moderate") are honest about what we know. Numeric scores require data density that doesn't exist until Phase 2 engagement signals accumulate. See Tracxn competitive analysis for the full rationale.
+> **Why not show Pulse Score at launch?** At go-live, all communities have zero engagement data. A score of "15/100" on a freshly seeded community is technically accurate but practically harmful - it alienates the organizers you're trying to recruit. Qualitative labels ("Active", "Moderate") are honest about what we know. Numeric scores require data density that doesn't exist until Phase 2 engagement signals accumulate. See Tracxn competitive analysis for the full rationale.
 
 ### 8.7 Multi-City Support
 
-- **Phase 2a:** Expand to Karlsruhe + Mannheim (BW region — natural geographic extension, shared consular services, some communities already span BW)
-- **Phase 2b:** Munich (largest Indian population, proven demand, but strongest competition)
-- Cross-city community linking (same community in multiple cities — e.g., HSS chapters)
-- Metro-region concept: Stuttgart metro includes Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen — events in satellite cities appear in Stuttgart feed
+- **Implementation status (May 2026):** Active metros are Berlin, Munich, Frankfurt, Stuttgart, Karlsruhe, and Mannheim (with metro satellites configured, including the Berlin ring in Brandenburg).
+- **Next expansion focus:** Increase per-metro density and satellite coverage before adding additional metro primaries.
+- Cross-city community linking (same community in multiple cities - e.g., HSS chapters)
+- Metro-region concept: Stuttgart metro includes Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Göppingen - events in satellite cities appear in Stuttgart feed
 - City comparison ("Stuttgart has 60 communities, Karlsruhe has 25")
 
 ### 8.8 Content Provenance & Pipeline (informed by Tracxn analysis)
 
 - **Content provenance logging:** Every community/event creation, update, and verification is logged with source, actor, and timestamp. Enables freshness auditing ("when was this community last verified?") and source quality tracking ("which sources produce the best content?")
 - **AI content pipeline maturation:** Expand from MVP's basic 5-10 source monitoring to 30+ sources. Add high-confidence auto-approve option (items with >85% LLM confidence can auto-publish with logging). Integrate with community self-submission (user submissions also get LLM-enriched with auto-classification and description improvement)
-- **Weekly city digest email:** "This week in [city] for Indians" — auto-generated from upcoming events, sent to registered users (retention mechanism; Tracxn retains users via alerts and newsletters)
+- **Weekly city digest email:** "This week in [city] for Indians" - auto-generated from upcoming events, sent to registered users (retention mechanism; Tracxn retains users via alerts and newsletters)
 
 ### 8.9 Indian Expat Services Directory (informed by Stuttgart Expats analysis)
 
 - **Expanded resource types:** Beyond consular/official resources, the resource model uses a topic-based taxonomy with 9 expat categories: `CITY_REGISTRATION` (Anmeldung, Blue Card, PR, family reunion), `DRIVING` (licence conversion, English Fahrschule), `HOUSING` (apartment search, Schufa, GEZ), `HEALTH_DOCTORS` (GKV vs PKV, finding doctors, emergencies), `JOBS_CAREERS` (job portals, freelance visa), `TAX_FINANCE` (Steuererklärung, DTAA, NRE/NRO, ELSTER), `BUSINESS_SETUP` (Freiberufler vs Gewerbe, Finanzamt), `FAMILY_CHILDREN` (Kindergeld, Elterngeld, Kita, schools), and `GROCERY_FOOD` (Indian groceries, restaurants, online delivery). Each resource is a detailed practical guide written specifically for Indian expats.
 - **Dedicated `/[city]/resources/` page:** Grouped by resource type, with search/filter. Targets high-intent queries like "Indian grocery store Stuttgart", "Hindi-speaking doctor Stuttgart".
-- **Community-sourced contributions:** Leverage community organiser knowledge — claimed communities can suggest relevant services, feeding into moderation queue.
-- **SEO value:** Indian-specific service pages are a content moat — Stuttgart Expats links to generic expat services; IndLokal links to Indian-specific ones.
+- **Community-sourced contributions:** Leverage community organiser knowledge - claimed communities can suggest relevant services, feeding into moderation queue.
+- **SEO value:** Indian-specific service pages are a content moat - Stuttgart Expats links to generic expat services; IndLokal links to Indian-specific ones.
 
 ### 8.10 Multi-Channel Distribution (informed by Stuttgart Expats analysis)
 
 - **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
-- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.
+- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel - low-effort, high-reach.
 - **Social proof & testimonials:** Community organisers can add short testimonials visible on community detail pages. Social proof drives trust for newcomers deciding whether to join a group.
 
-> **\u00a78.11–\u00a78.16 below — Operator surfaces (Phase 2).** Build plan supporting the operating-team grid (Founder, X — Strategic Partner, Y — Ops, City Ambassadors, Content support). Each is backed by a PRD; this document only summarises.
+> **\u00a78.11-\u00a78.16 below - Operator surfaces (Phase 2).** Build plan supporting the operating-team grid (Founder, X - Strategic Partner, Y - Ops, City Ambassadors, Content support). Each is backed by a PRD; this document only summarises.
 
 ### 8.11 Operator-side: Scoped roles + admin RBAC _(P0 once we hire X / Y)_
 
@@ -734,7 +734,7 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - Weekly digest to Ops with per-ambassador throughput.
 - Source: [PRD-0015](specs/PRD/0015-city-ambassador-console.md). Maps directly to the City Ambassador role description.
 
-### 8.13 Outreach CRM _(P1 — the Ops pipeline)_
+### 8.13 Outreach CRM _(P1 - the Ops pipeline)_
 
 - First-class `OutreachLead` and `OutreachNote` entities replace the spreadsheets X / Y / ambassadors otherwise default to.
 - Stages: `NEW → RESEARCHING → CONTACTED → IN_CONVERSATION → ONBOARDED` (plus `DECLINED`, `DORMANT`).
@@ -755,7 +755,7 @@ Three-tier pipeline — `bootstrap` (cities, categories, taxonomies), `directory
 - Precondition for trusting role-scoped delegation: granting `OPS_LEAD` to Y is only safe if reviewable.
 - Source: [PRD-0018](specs/PRD/0018-audit-log-viewer.md).
 
-### 8.16 Deferred operator-side capabilities (P2 / P3 — not built yet, intentionally)
+### 8.16 Deferred operator-side capabilities (P2 / P3 - not built yet, intentionally)
 
 - Partner Org accounts (Consulate / university Indian Society / Indo-German chamber as parent of N communities + resources)
 - Organizer analytics dashboard (impressions, saves, channel clicks)
@@ -784,7 +784,7 @@ Guardrail: IndLokal remains activity-led and community-first; business/sponsor s
 Full priority + persona mapping: [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`](specs/AUDIT_PERSONAS_AND_INTERFACES.md) §5 gap matrix.
 
 - **WhatsApp Community integration:** Stuttgart Expats runs 20+ WhatsApp sub-groups as their primary engagement layer. IndLokal should surface WhatsApp Communities as first-class access channels, and optionally push weekly digests to opted-in community WhatsApp groups.
-- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel — low-effort, high-reach.
+- **Telegram channel for city digest:** Auto-generated "This week in Stuttgart" posted to a Telegram channel - low-effort, high-reach.
 - **Social proof & testimonials:** Community organisers can add short testimonials visible on community detail pages. Social proof drives trust for newcomers deciding whether to join a group.
 
 ---
@@ -796,21 +796,21 @@ Full priority + persona mapping: [`docs/specs/AUDIT_PERSONAS_AND_INTERFACES.md`]
 ```
 IndLokal
 ├── / (Landing → City Selection)
-├── /[city]/ (City Feed — primary discovery surface)
+├── /[city]/ (City Feed - primary discovery surface)
 │   ├── /[city]/events/ (Event listing with filters)
 │   │   └── /[city]/events/[event-slug]/ (Event detail)
 │   ├── /[city]/communities/ (Community explorer with filters)
 │   │   └── /[city]/communities/[community-slug]/ (Community detail)
 │   ├── /[city]/search?q=... (Search results)
-│   ├── /[city]/[language]-communities/ (Programmatic SEO — e.g., /stuttgart/telugu-communities/)
-│   ├── /[city]/indian-events-this-week/ (Programmatic SEO — temporal)
-│   ├── /[city]/consular-services/ (Programmatic SEO — consular/official)
-│   └── /[city]/resources/ (Indian expat services — groceries, doctors, tax, driving)
+│   ├── /[city]/[language]-communities/ (Programmatic SEO - e.g., /stuttgart/telugu-communities/)
+│   ├── /[city]/indian-events-this-week/ (Programmatic SEO - temporal)
+│   ├── /[city]/consular-services/ (Programmatic SEO - consular/official)
+│   └── /[city]/resources/ (Indian expat services - groceries, doctors, tax, driving)
 ├── /about/ (About IndLokal)
-├── /submit/ (Submit a community — shipped)
-├── /login/ (Member accounts — Phase 2; magic-link, mirrors admin/organizer flow)
-├── /organizer/ (Organizer console — magic-link auth, claim & manage owned communities)
-└── /admin/ (Platform admin console — magic-link auth, data + submissions + pipeline)
+├── /submit/ (Submit a community - shipped)
+├── /login/ (Member accounts - Phase 2; magic-link, mirrors admin/organizer flow)
+├── /organizer/ (Organizer console - magic-link auth, claim & manage owned communities)
+└── /admin/ (Platform admin console - magic-link auth, data + submissions + pipeline)
 ```
 
 **Programmatic SEO pages (MVP):**
@@ -846,11 +846,11 @@ Each page includes: filtered community/event list, brief intro paragraph, intern
 
 City-first URLs are critical for SEO and clarity:
 
-- `indlokal.com/munich/` — Munich city feed
-- `indlokal.com/munich/events/` — Munich events
-- `indlokal.com/munich/events/diwali-celebration-2026/` — Event detail
-- `indlokal.com/munich/communities/` — Munich communities
-- `indlokal.com/munich/communities/munich-indians-community/` — Community detail
+- `indlokal.com/munich/` - Munich city feed
+- `indlokal.com/munich/events/` - Munich events
+- `indlokal.com/munich/events/diwali-celebration-2026/` - Event detail
+- `indlokal.com/munich/communities/` - Munich communities
+- `indlokal.com/munich/communities/munich-indians-community/` - Community detail
 
 ---
 
@@ -862,7 +862,7 @@ City-first URLs are critical for SEO and clarity:
 
 **Minimum viable content density per city:**
 
-The launch city must have enough communities, upcoming events, complete profiles, historical events, and consular/official events to feel **alive and comprehensive** from day 1. Specific numeric targets should be derived from the actual discoverable communities in each city rather than fixed upfront — the goal is to catalog every real, active community rather than hit an arbitrary number.
+The launch city must have enough communities, upcoming events, complete profiles, historical events, and consular/official events to feel **alive and comprehensive** from day 1. Specific numeric targets should be derived from the actual discoverable communities in each city rather than fixed upfront - the goal is to catalog every real, active community rather than hit an arbitrary number.
 
 **Note:** Content density matters more than usual because we are entering a market with an active (if poorly structured) incumbent (IndoEuropean.eu). Thin content = "why would I use this when IE already has stuff?"
 
@@ -870,18 +870,18 @@ The launch city must have enough communities, upcoming events, complete profiles
 
 | Source                           | How to use                                                                                                                                                                                                                          |
 | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Facebook groups                  | Search "Indians in Stuttgart," "Indians in Baden-Württemberg" — group names, descriptions, member counts                                                                                                                            |
-| WhatsApp communities             | Known through network — carefully collect public invite links                                                                                                                                                                       |
+| Facebook groups                  | Search "Indians in Stuttgart," "Indians in Baden-Württemberg" - group names, descriptions, member counts                                                                                                                            |
+| WhatsApp communities             | Known through network - carefully collect public invite links                                                                                                                                                                       |
 | IndoEuropean.eu Stuttgart Mela   | 50+ posts identifying real communities: HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V., Bombay Dance Club, Shiridi Sai Stuttgart, DeBI, Green Sox Göppingen. Use as research guide, NOT automated scraping |
-| InterNations Stuttgart           | 1,752 Indian members — monitor their events, identify crossover communities                                                                                                                                                         |
-| Meetup.com                       | No Indian-specific groups exist — but check generic expat groups for crossover events                                                                                                                                               |
+| InterNations Stuttgart           | 1,752 Indian members - monitor their events, identify crossover communities                                                                                                                                                         |
+| Meetup.com                       | No Indian-specific groups exist - but check generic expat groups for crossover events                                                                                                                                               |
 | Eventbrite                       | Search for Indian cultural events in Stuttgart / Baden-Württemberg                                                                                                                                                                  |
-| University international offices | University of Stuttgart, Hochschule der Medien — Indian student group lists                                                                                                                                                         |
+| University international offices | University of Stuttgart, Hochschule der Medien - Indian student group lists                                                                                                                                                         |
 | CGI Munich (Consulate General)   | Official event calendar, consular camp schedule for BW region, Mannheim camps                                                                                                                                                       |
-| Indian Film Festival Stuttgart   | Official site — annual tentpole event, connected community                                                                                                                                                                          |
+| Indian Film Festival Stuttgart   | Official site - annual tentpole event, connected community                                                                                                                                                                          |
 | Google search                    | "Stuttgart Indian association," "Stuttgart Indian cultural events," "Indischer Verein Stuttgart"                                                                                                                                    |
 | Personal network                 | Diaspora contacts in Stuttgart automotive companies                                                                                                                                                                                 |
-| Company internal networks        | Bosch, Daimler, Porsche — often have Indian employee groups with events                                                                                                                                                             |
+| Company internal networks        | Bosch, Daimler, Porsche - often have Indian employee groups with events                                                                                                                                                             |
 
 ### 10.3 Content quality guidelines
 
@@ -895,7 +895,7 @@ The launch city must have enough communities, upcoming events, complete profiles
 
 | Time since last update | System behavior                               |
 | ---------------------- | --------------------------------------------- |
-| 0-30 days              | Active — normal ranking                       |
+| 0-30 days              | Active - normal ranking                       |
 | 30-90 days             | Slightly downranked; no warning               |
 | 90-180 days            | "Last updated X months ago" badge; downranked |
 | 180+ days              | Significant downranking; flagged for review   |
@@ -909,12 +909,19 @@ The launch city must have enough communities, upcoming events, complete profiles
 
 #### How it works
 
-1. **Automated source monitoring** — Scheduled jobs fetch content from configured public sources (Facebook pages, Instagram accounts, Eventbrite, community websites, CGI Munich, IndoEuropean.eu, Google Alerts)
-2. **LLM extraction** — AI reads raw posts, HTML, and event flyer images → extracts structured data (title, date, venue, community, categories, languages)
-3. **Auto-classification** — AI tags each item with categories (Cultural, Professional, etc.) and language tags (Tamil, Telugu, Hindi, etc.)
-4. **Deduplication** — AI compares extracted items against existing database entries to catch duplicates across sources
-5. **Admin review queue** — Extracted items appear in a review queue. High-confidence items can be batch-approved. Low-confidence or duplicate-flagged items require individual review. **Nothing publishes without human approval** (prevents hallucinated events)
-6. **Freshness monitoring** — AI periodically checks community link health, detects activity drops, and flags stale profiles
+1. **Automated source monitoring** - Scheduled jobs fetch content from configured public sources (Facebook pages, Instagram accounts, Eventbrite, community websites, CGI Munich, IndoEuropean.eu, Google Alerts)
+2. **LLM extraction** - AI reads raw posts, HTML, and event flyer images → extracts structured data (title, date, venue, community, categories, languages)
+3. **Auto-classification** - AI tags each item with categories (Cultural, Professional, etc.) and language tags (Tamil, Telugu, Hindi, etc.)
+4. **Deduplication** - AI compares extracted items against existing database entries to catch duplicates across sources
+5. **Admin review queue** - Extracted items appear in a review queue. High-confidence items can be batch-approved. Low-confidence or duplicate-flagged items require individual review. **Nothing publishes without human approval** (prevents hallucinated events)
+6. **Freshness monitoring** - AI periodically checks community link health, detects activity drops, and flags stale profiles
+
+#### Implementation status (May 2026)
+
+- **Scoped runs are implemented end-to-end.** Pipeline accepts `city` and `region` scope in CLI and cron API routes, and only matching regions are executed.
+- **Pinned URL scope is implemented.** Runtime config supports `scope` (`CITY` / `REGION` / `GENERIC`) plus `hintCitySlug` / `hintState`; scoped runs include only relevant city/region pinned sources.
+- **Sharded cron is implemented via GitHub Actions.** The production schedule runs pipeline shards at 02:05 (`region=berlin`), 02:20 (`region=baden-wuerttemberg`), 02:35 (`region=bavaria`), and 02:50 (`region=hesse`) UTC.
+- **Berlin institutional coverage was expanded.** Official Berlin and Brandenburg institutional pinned sources were added to defaults with explicit CITY/REGION metadata to reduce noisy fetches.
 
 #### Content cost comparison
 
@@ -953,7 +960,7 @@ See Solution Architecture §10.4 for full technical specification.
 
 | Persona              | Description                                  | Matching categories                           |
 | -------------------- | -------------------------------------------- | --------------------------------------------- |
-| Newcomer             | Recently arrived, needs orientation          | All — especially social, cultural, networking |
+| Newcomer             | Recently arrived, needs orientation          | All - especially social, cultural, networking |
 | Student              | University student                           | Student, sports, social, cultural             |
 | Working Professional | Employed, networking focus                   | Professional, networking, sports              |
 | Family               | Has children, values family activities       | Family, cultural, religious, language         |
@@ -965,7 +972,7 @@ See Solution Architecture §10.4 for full technical specification.
 
 ### 11.1 City selection criteria
 
-**Launch city: Stuttgart** (decided — see Section 7.1 for rationale)
+**Launch city: Stuttgart** (decided - see Section 7.1 for rationale)
 
 Stuttgart was selected based on:
 
@@ -1005,14 +1012,14 @@ Stuttgart was selected based on:
 | **InterNations**         | Share in InterNations Stuttgart Indian expat threads (1,752 potential users)                                                                          |
 | **Word of mouth**        | Personal introductions through automotive company Indian employee networks                                                                            |
 | **Reddit**               | Post in r/stuttgart, r/germany, r/india                                                                                                               |
-| **Indian Film Festival** | Partner/presence at the next Indian Film Festival Stuttgart — audience IS our users                                                                   |
+| **Indian Film Festival** | Partner/presence at the next Indian Film Festival Stuttgart - audience IS our users                                                                   |
 | **Consular camps**       | Distribute at CGI Munich consular camps in Mannheim/Stuttgart area                                                                                    |
 
 ### 11.4 Post-launch content maintenance
 
 **AI-assisted workflow (not manual research):**
 
-- **Daily (automated):** AI pipeline scans configured sources (Facebook pages, Eventbrite, community websites), extracts new events/updates, populates admin review queue
+- **Daily (automated):** AI pipeline runs as region shards through GitHub Actions cron (`berlin`, `baden-wuerttemberg`, `bavaria`, `hesse`), scans configured sources, and populates the admin review queue
 - **Daily (human, ~15-20 min):** Review and approve/reject items in the queue. High-confidence items can be batch-approved in one click
 - **Weekly (automated):** Access link health check on all community channels. Broken links auto-flagged
 - **Weekly (human, ~30 min):** Review flagged broken links, update or remove. Check for any sources the pipeline missed
@@ -1028,7 +1035,7 @@ Stuttgart was selected based on:
 
 ### 12.1 North Star Metric
 
-**Weekly Active Discovery Sessions per City** — number of unique sessions per week where a user views at least one community or event detail page in a given city.
+**Weekly Active Discovery Sessions per City** - number of unique sessions per week where a user views at least one community or event detail page in a given city.
 
 This metric captures:
 
@@ -1042,18 +1049,18 @@ We instrument and track the full funnel rather than just the top-line number. Ea
 
 | Step                                              | Target range (first 3 months) | Anchor / source                                                                                       |
 | ------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------- |
-| 1. City landing pageviews / week (Stuttgart)      | 800 – 1,500                   | InterNations Stuttgart has 1,752 Indian members — we aim to reach a comparable weekly visitor surface |
-| 2. → Detail view (community or event) per session | 35 – 50%                      | Anything <30% means the city feed isn't compelling; >55% would suggest cherry-picked traffic          |
-| 3. → Access-channel click per session             | 12 – 20%                      | This is the conversion event (§5.3); below 10% means the join CTA is failing                          |
-| 4. → Return within 7 days                         | 18 – 30%                      | Validates the activity-led thesis; if it's <15% we have a freshness problem                           |
-| **North Star: Weekly active discovery sessions**  | 200 – 400                     | Composition of the funnel above                                                                       |
+| 1. City landing pageviews / week (Stuttgart)      | 800 - 1,500                   | InterNations Stuttgart has 1,752 Indian members - we aim to reach a comparable weekly visitor surface |
+| 2. → Detail view (community or event) per session | 35 - 50%                      | Anything <30% means the city feed isn't compelling; >55% would suggest cherry-picked traffic          |
+| 3. → Access-channel click per session             | 12 - 20%                      | This is the conversion event (§5.3); below 10% means the join CTA is failing                          |
+| 4. → Return within 7 days                         | 18 - 30%                      | Validates the activity-led thesis; if it's <15% we have a freshness problem                           |
+| **North Star: Weekly active discovery sessions**  | 200 - 400                     | Composition of the funnel above                                                                       |
 
 ### 12.3 MVP supply & quality metrics (first 3 months)
 
 | Metric                             | Target        | Why it matters                                            |
 | ---------------------------------- | ------------- | --------------------------------------------------------- |
-| Communities listed (Stuttgart)     | Comprehensive | Content density — must exceed perception of IE's coverage |
-| Events listed (next 30 days)       | Sufficient    | Freshness and activity — higher bar due to incumbent      |
+| Communities listed (Stuttgart)     | Comprehensive | Content density - must exceed perception of IE's coverage |
+| Events listed (next 30 days)       | Sufficient    | Freshness and activity - higher bar due to incumbent      |
 | Historical events imported         | Sufficient    | Proves community is active; SEO content                   |
 | Consular/official events listed    | All known     | Unique value prop vs all competitors                      |
 | Communities with complete profiles | 60%+          | Content quality                                           |
@@ -1079,24 +1086,24 @@ We instrument and track the full funnel rather than just the top-line number. Ea
 
 ### 12.5 Leading indicators (watch early)
 
-- **Search queries with zero results** — signal where content is missing
-- **Access link click-through rate** — signal whether users find the path useful
-- **Bounce rate on city feed** — signal whether the feed is compelling
-- **Events per week per city** — signal whether temporal content density is sufficient
-- **Time to first access click** — signal how quickly users reach value
+- **Search queries with zero results** - signal where content is missing
+- **Access link click-through rate** - signal whether users find the path useful
+- **Bounce rate on city feed** - signal whether the feed is compelling
+- **Events per week per city** - signal whether temporal content density is sufficient
+- **Time to first access click** - signal how quickly users reach value
 
 ### 12.6 Lagging indicators (evaluate quarterly)
 
-- **Content freshness** — % of communities updated in last 90 days
-- **SEO rankings** — position for target keywords
-- **Community organizer satisfaction** — qualitative feedback from claimed community admins
-- **City expansion readiness** — can we replicate content density in a new city?
+- **Content freshness** - % of communities updated in last 90 days
+- **SEO rankings** - position for target keywords
+- **Community organizer satisfaction** - qualitative feedback from claimed community admins
+- **City expansion readiness** - can we replicate content density in a new city?
 
 ---
 
 ## 13. Competitive Landscape
 
-### 13.1 Named competitors — Stuttgart specific
+### 13.1 Named competitors - Stuttgart specific
 
 | Competitor              | What they offer for Indians in Stuttgart                                                                                                                                                                                                                                  | Threat level    | Our advantage                                                                                                                                                                                                                                                                 |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -1105,9 +1112,9 @@ We instrument and track the full funnel rather than just the top-line number. Ea
 | **InterNations**        | 17,335 Stuttgart members, 1,752 Indian members. Generic expat events (Italian dinners, hiking). Paid premium model. No Indian-specific content.                                                                                                                           | **LOW**         | Indian-diaspora-specific. Free to browse. 1,752 Indian members = proof of demand we can capture                                                                                                                                                                               |
 | **Meetup.com**          | Zero Indian-specific groups in Stuttgart. Top groups are tech, language, hiking.                                                                                                                                                                                          | **NONE**        | We serve the audience Meetup completely missed                                                                                                                                                                                                                                |
 | **Facebook Groups**     | Closed groups ("Indians in Stuttgart," regional/language groups, corporate groups). Current de facto discovery via search + request to join.                                                                                                                              | **MEDIUM**      | Open discovery (no login to browse). Structured data. Cross-group visibility. But FB is incumbent behavior we must displace                                                                                                                                                   |
-| **WhatsApp Groups**     | Primary engagement layer for Indian communities. Not a competitor — we complement it.                                                                                                                                                                                     | **NONE**        | We're the discovery layer that helps people FIND WhatsApp groups                                                                                                                                                                                                              |
+| **WhatsApp Groups**     | Primary engagement layer for Indian communities. Not a competitor - we complement it.                                                                                                                                                                                     | **NONE**        | We're the discovery layer that helps people FIND WhatsApp groups                                                                                                                                                                                                              |
 
-### 13.2 Competitive positioning — how we're different
+### 13.2 Competitive positioning - how we're different
 
 | Dimension                       | IndoEuropean.eu | Stuttgart Expats  | InterNations | Meetup  | Facebook  | **IndLokal** |
 | ------------------------------- | --------------- | ----------------- | ------------ | ------- | --------- | ------------ |
@@ -1128,19 +1135,19 @@ We instrument and track the full funnel rather than just the top-line number. Ea
 
 ### 13.3 Positioning statement (revised for competitive market)
 
-> IndoEuropean.eu is a news portal that happens to list events. Stuttgart Expats is the biggest general expat community — great for bar nights and wine walks, but an Indian newcomer looking for Telugu or Tamil communities won't find that there. InterNations is a generic expat platform where Indians get Italian dinners. Meetup missed the Indian diaspora entirely. Facebook requires you to be inside closed groups.
+> IndoEuropean.eu is a news portal that happens to list events. Stuttgart Expats is the biggest general expat community - great for bar nights and wine walks, but an Indian newcomer looking for Telugu or Tamil communities won't find that there. InterNations is a generic expat platform where Indians get Italian dinners. Meetup missed the Indian diaspora entirely. Facebook requires you to be inside closed groups.
 >
-> **IndLokal is the first structured, city-level discovery platform for Indians in Stuttgart.** We answer: "What's happening for Indians in Stuttgart this week?" — a question no existing platform can answer.
+> **IndLokal is the first structured, city-level discovery platform for Indians in Stuttgart.** We answer: "What's happening for Indians in Stuttgart this week?" - a question no existing platform can answer.
 
 ### 13.4 Defensive moat (over time)
 
-The community graph — structured, scored, city-dense data about diaspora community life — is the moat. It is:
+The community graph - structured, scored, city-dense data about diaspora community life - is the moat. It is:
 
 - **Hard to replicate** (requires manual seeding, community relationships, ongoing curation)
 - **Grows in value** (more communities, more events, more signals, better scoring)
 - **Network-effect adjacent** (communities listing themselves attract users who attract more communities)
 - **Data-rich** (behavioral signals, trust scores, and relationship edges are proprietary)
-- **Architecturally defended** — IndoEuropean.eu would need to abandon WordPress and rebuild entirely. InterNations would need to fork their product for Indian-specific features. Neither will do this.
+- **Architecturally defended** - IndoEuropean.eu would need to abandon WordPress and rebuild entirely. InterNations would need to fork their product for Indian-specific features. Neither will do this.
 
 ### 13.5 Competitive risk matrix
 
@@ -1151,40 +1158,40 @@ The community graph — structured, scored, city-dense data about diaspora commu
 | InterNations adds Indian-specific features         | Very Low                     | High   | Their business model is generic expat; unlikely to niche down                                                                                                |
 | Stuttgart Expats adds Indian-specific sub-platform | Low                          | Medium | They're a general expat community; Indian niche requires cultural domain knowledge they don't have. Their "Indians" WhatsApp group is passive, not a product |
 | A new Indian-specific Stuttgart platform launches  | Low                          | High   | First-mover advantage in a thin market; community graph is defensive                                                                                         |
-| Facebook Groups remain "good enough"               | Medium                       | Medium | Our value is cross-group discovery + search + temporal filtering — things FB can't do for closed groups                                                      |
+| Facebook Groups remain "good enough"               | Medium                       | Medium | Our value is cross-group discovery + search + temporal filtering - things FB can't do for closed groups                                                      |
 
 ---
 
 ## 14. Future Product Roadmap
 
-> **Reframed (May 2026):** several capabilities originally planned for Phase 2 — community self-submission, organizer claim & management, the admin data console — shipped in MVP on top of magic-link auth. Phase 2 below is what's left after that, and is mostly _leverage_ (member surface on top of existing rails, AI pipeline scale-up, BW expansion) rather than new infrastructure.
+> **Reframed (May 2026):** several capabilities originally planned for Phase 2 - community self-submission, organizer claim & management, the admin data console - shipped in MVP on top of magic-link auth. Phase 2 below is what's left after that, and is mostly _leverage_ (member surface on top of existing rails, AI pipeline scale-up, BW expansion) rather than new infrastructure.
 
 ### Phase 2: Member rails + AI pipeline scale + BW expansion
 
-- **Member accounts on top of existing magic-link rails** — add `USER` role sign-in at `/login`, with city/interest prefs and saved items. No new auth stack.
-- **Submitter / organizer feedback loop** — close the silent gap after `/submit/` and after a claim (email notifications, in-product status)
+- **Member accounts on top of existing magic-link rails** - add `USER` role sign-in at `/login`, with city/interest prefs and saved items. No new auth stack.
+- **Submitter / organizer feedback loop** - close the silent gap after `/submit/` and after a claim (email notifications, in-product status)
 - **Multi-organizer per community + organizer analytics dashboard**
-- **AI pipeline scale-up** — expand from MVP's 5–10 sources to 30+, add Instagram vision extraction, add high-confidence auto-approve with provenance log
-- **Weekly digest email** ("This week in Stuttgart for Indians") — retention channel for member accounts
-- **Enhanced scoring with engagement signals** — completeness + view counts feeding the Pulse Score (organizer-visible)
-- **Sponsorship intent capture + curated matching** — organizers can mark sponsor-seeking events; Ops/Partnerships handle matching through Outreach CRM (no public marketplace)
+- **AI pipeline scale-up** - expand from MVP's 5-10 sources to 30+, add Instagram vision extraction, add high-confidence auto-approve with provenance log
+- **Weekly digest email** ("This week in Stuttgart for Indians") - retention channel for member accounts
+- **Enhanced scoring with engagement signals** - completeness + view counts feeding the Pulse Score (organizer-visible)
+- **Sponsorship intent capture + curated matching** - organizers can mark sponsor-seeking events; Ops/Partnerships handle matching through Outreach CRM (no public marketplace)
 - **Expand to Karlsruhe + Mannheim** (shared consular services, overlapping communities, natural BW region)
 
 ### Phase 3: Munich + Personalization
 
-- **Expand to Munich** (largest Indian population, strongest competition — by now we have proven playbook)
+- **Expand to Munich** (largest Indian population, strongest competition - by now we have proven playbook)
 - Personalized discovery feed based on user interests and behavior
 - "Recommended for you" communities
 - Smart notifications ("New community in your interest area")
 - Multi-language UI (English, German, Hindi)
 - **Pulse Score publicly visible** on all community cards and detail pages (communities now have 60-90+ days of behavioral data; scoring methodology published on /about/scoring for transparency)
-- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" — generated from platform data; serves as content marketing+SEO; inspired by Tracxn's 12K+ monthly reports)
+- **Auto-generated city reports** ("State of the Indian Community in Stuttgart: 2026" - generated from platform data; serves as content marketing+SEO; inspired by Tracxn's 12K+ monthly reports)
 - **Curated business and business-leader listings** for diaspora-relevant discovery paths (professional networking, jobs/careers, business setup), integrated into city/category discovery without becoming a generic directory
 
 ### Phase 4: Graph-Powered Features
 
-- **"Similar communities"** — powered by community graph relationships (same category, same city, shared event attendees)
-- "People who joined X also explored Y" — collaborative filtering
+- **"Similar communities"** - powered by community graph relationships (same category, same city, shared event attendees)
+- "People who joined X also explored Y" - collaborative filtering
 - Cross-city discovery ("this community also exists in Munich")
 - Community health dashboard (for community organizers)
 - Cross-reference community mentions (same organizer appears in multiple events)
@@ -1195,7 +1202,7 @@ The community graph — structured, scored, city-dense data about diaspora commu
 ### Phase 5: Ecosystem Expansion
 
 - India-to-Germany pre-migration discovery ("I'm moving to Stuttgart, what communities should I join?")
-- Community event management tools (lightweight — not replacing Eventbrite)
+- Community event management tools (lightweight - not replacing Eventbrite)
 - Germany-wide aggregated view
 - Potential expansion to other diaspora communities (Turkish, Vietnamese, etc.)
 - API for integrations (university international offices, relocation companies, Bosch/Daimler/Porsche HR onboarding)
@@ -1209,9 +1216,9 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 | **Grants (no monetization)**           | City integration funds, BAMF, EU AMIF, foundations cover infra + content ops; product is free for users and organizers | Year 1 (A) |
 | **City / public-sector partnerships**  | Paid integrations with city tourism boards, integration offices, university international offices                      | Year 2 (B) |
 | **Corporate HR onboarding**            | Paid newcomer-pack integrations with Bosch, Daimler, Porsche, Mercedes (Indian engineer onboarding flows)              | Year 2 (B) |
-| **Aggregated diaspora insights (B2B)** | Anonymised community-activity reports for relocation companies, real-estate, banks targeting newcomers                 | Year 2–3   |
-| **Promoted listings**                  | Communities pay for higher visibility — only after we have meaningful organic traffic per city                         | Year 3 (C) |
-| **Event promotion**                    | Event organizers pay to promote events — same gating as promoted listings                                              | Year 3 (C) |
+| **Aggregated diaspora insights (B2B)** | Anonymised community-activity reports for relocation companies, real-estate, banks targeting newcomers                 | Year 2-3   |
+| **Promoted listings**                  | Communities pay for higher visibility - only after we have meaningful organic traffic per city                         | Year 3 (C) |
+| **Event promotion**                    | Event organizers pay to promote events - same gating as promoted listings                                              | Year 3 (C) |
 | **Premium organizer tools**            | Multi-organizer analytics, deeper Pulse Score, audience export                                                         | Year 3 (C) |
 | **Sponsorship**                        | Start with curated sponsor-event matching run by Ops/Partnerships; evolve to sponsor surfaces only after validation    | Year 2-3   |
 
@@ -1225,9 +1232,9 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 ## 15. Funding & Sustainability Strategy
 
-> **Inserted May 2026.** This section makes explicit what was previously implicit: the product is built to survive on grants in Year 1, layer paid B2B surfaces in Year 2, and become venture-fundable in Year 2–3 once the per-city playbook is proven. Open Questions has shifted from §15 to §16 — update internal references as you spot them. (Existing §13 Competitive Landscape and §14 Future Product Roadmap keep their numbers.)
+> **Inserted May 2026.** This section makes explicit what was previously implicit: the product is built to survive on grants in Year 1, layer paid B2B surfaces in Year 2, and become venture-fundable in Year 2-3 once the per-city playbook is proven. Open Questions has shifted from §15 to §16 - update internal references as you spot them. (Existing §13 Competitive Landscape and §14 Future Product Roadmap keep their numbers.)
 
-### 15.1 Phase A — Grant-funded integration utility (Year 1)
+### 15.1 Phase A - Grant-funded integration utility (Year 1)
 
 **Posture:** IndLokal is operated as a public-good integration utility for Indian newcomers in German cities. Free for users and free for organizers. Cost base is small and grant-reportable.
 
@@ -1235,8 +1242,8 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 | Funder                                             | Programme / angle                                                           | Rough fit                                                                                |
 | -------------------------------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| **Stadt Stuttgart — Stabsstelle für Integration**  | Local integration projects for migrant communities                          | Strong: launch city, direct alignment with city's integration mandate                    |
-| **Land Baden-Württemberg — Partizipationsfonds**   | Participation projects for people with migration background                 | Strong: BW region expansion is built into our roadmap                                    |
+| **Stadt Stuttgart - Stabsstelle für Integration**  | Local integration projects for migrant communities                          | Strong: launch city, direct alignment with city's integration mandate                    |
+| **Land Baden-Württemberg - Partizipationsfonds**   | Participation projects for people with migration background                 | Strong: BW region expansion is built into our roadmap                                    |
 | **BAMF**                                           | "Integration durch..." lines (digital, sport, culture); migrant-org support | Medium-strong: digital integration utility is increasingly fundable                      |
 | **EU AMIF** (Asylum, Migration & Integration Fund) | Integration of legally residing third-country nationals                     | Medium: requires multi-stakeholder consortium; revisit once we have one city of evidence |
 | **Bürgerstiftung Stuttgart**                       | Civic-society projects in the Stuttgart region                              | Medium: smaller cheques, faster decisions, good for early credibility                    |
@@ -1245,10 +1252,10 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 **Use of grant funds (Year 1, indicative split):**
 
-- **AI infrastructure & content ops** — LLM API costs, source monitoring, review-queue tooling (the part that makes ongoing freshness sustainable)
-- **Organizer outreach & onboarding** — reaching the 5–20 communities per city we need for density
-- **Accessibility, translation, and inclusion work** — e.g., German/Hindi UI, low-bandwidth fallbacks; these double as grant-reportable deliverables
-- **Hosting + domain + transactional email** — deliberately cheap (Vercel, managed Postgres, Resend) so run-cost is grant-fundable, not VC-required
+- **AI infrastructure & content ops** - LLM API costs, source monitoring, review-queue tooling (the part that makes ongoing freshness sustainable)
+- **Organizer outreach & onboarding** - reaching the 5-20 communities per city we need for density
+- **Accessibility, translation, and inclusion work** - e.g., German/Hindi UI, low-bandwidth fallbacks; these double as grant-reportable deliverables
+- **Hosting + domain + transactional email** - deliberately cheap (Vercel, managed Postgres, Resend) so run-cost is grant-fundable, not VC-required
 
 **Reportable outputs (what we commit to measure for funders):**
 
@@ -1258,24 +1265,24 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 - # AI-pipeline items reviewed and approved per month (transparency about how the data graph is maintained)
 - Freshness metric: median age of "last updated" per active community
 
-### 15.2 Phase B — Hybrid (Year 2)
+### 15.2 Phase B - Hybrid (Year 2)
 
 **Posture:** Continue grant funding (renewals + new programmes such as multi-city BW or AMIF consortium), and layer paid B2B surfaces on top of the _same_ data graph and operator console. No fork in the product.
 
 **B2B surfaces, in priority order:**
 
-1. **City / public-sector partnerships** — paid "city integration page" integrations with city tourism / integration offices (whitelabelled or co-branded view of the city's Indian community life)
-2. **University international offices** — University of Stuttgart, Hochschule der Medien, KIT (Karlsruhe), Heidelberg — paid newcomer onboarding pack for incoming Indian students
-3. **Corporate HR onboarding** — Bosch, Daimler, Porsche, Mercedes, ZF — paid newcomer-pack integration for incoming Indian engineers (the most concentrated, willing-to-pay segment we have direct line-of-sight to)
-4. **Aggregated diaspora insights** — anonymised community-activity reports for relocation firms, real-estate, banks targeting newcomers (only if it can be done without compromising user trust)
+1. **City / public-sector partnerships** - paid "city integration page" integrations with city tourism / integration offices (whitelabelled or co-branded view of the city's Indian community life)
+2. **University international offices** - University of Stuttgart, Hochschule der Medien, KIT (Karlsruhe), Heidelberg - paid newcomer onboarding pack for incoming Indian students
+3. **Corporate HR onboarding** - Bosch, Daimler, Porsche, Mercedes, ZF - paid newcomer-pack integration for incoming Indian engineers (the most concentrated, willing-to-pay segment we have direct line-of-sight to)
+4. **Aggregated diaspora insights** - anonymised community-activity reports for relocation firms, real-estate, banks targeting newcomers (only if it can be done without compromising user trust)
 
 **Why this works on top of the same product:** every B2B surface above is a _view_ over the existing community graph, not a new product. The marginal cost of adding one is small; the marginal revenue is real.
 
-### 15.3 Phase C — For-profit + venture funding (Year 2–3)
+### 15.3 Phase C - For-profit + venture funding (Year 2-3)
 
 **Posture:** Once one city is proven (Stuttgart) and one BW expansion is proven (Karlsruhe / Mannheim), IndLokal raises pre-seed / seed to:
 
-- Expand to 5–10 German cities + EU diaspora cities (Amsterdam, Vienna, Zürich, Dublin)
+- Expand to 5-10 German cities + EU diaspora cities (Amsterdam, Vienna, Zürich, Dublin)
 - Add member-side surfaces (digest, personalisation) at scale
 - Build out the B2B partnership team
 
@@ -1292,9 +1299,9 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 ### 15.4 What this section is NOT
 
-- Not a financial plan with numbers — those live in the funding deck under [decks/](../decks/)
-- Not a commitment to take VC — if the grant + B2B path produces a sustainable business by itself, that's a valid outcome
-- Not a separate product — every funding mode above runs on the same codebase, the same data graph, and the same operator console
+- Not a financial plan with numbers - those live in the funding deck under [decks/](../decks/)
+- Not a commitment to take VC - if the grant + B2B path produces a sustainable business by itself, that's a valid outcome
+- Not a separate product - every funding mode above runs on the same codebase, the same data graph, and the same operator console
 
 ---
 
@@ -1304,17 +1311,17 @@ The monetization surface is sequenced to match the funding model in §15. Each r
 
 | #   | Decision                                     | Resolution                                                                                                                                                                                           |
 | --- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | **Launch city**                              | **Stuttgart** — weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path                                                                         |
+| 1   | **Launch city**                              | **Stuttgart** - weakest competitive coverage, strong automotive pipeline, discoverable communities, BW region expansion path                                                                         |
 | 2   | **Product name / domain**                    | **indlokal.com** (production: `main` → indlokal.com; preview: `develop` → preview.indlokal.com)                                                                                                      |
 | 3   | **Authentication approach**                  | **Magic-link, no passwords.** Browsing requires no auth. Admin (`PLATFORM_ADMIN`) and Organizer (`COMMUNITY_ADMIN`) sign in via magic link with 7-day sliding sessions. Member saves remain Phase 2. |
 | 4   | **Content language**                         | English for MVP (lingua franca for Indian diaspora in Germany)                                                                                                                                       |
 | 5   | **Mobile approach**                          | Native Expo app for iOS/Android is part of MVP recall; web remains SEO/admin/share surface                                                                                                           |
-| 6   | **Email transport**                          | Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev; send failures throw — see [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md)                                  |
-| 7   | **Database seeding**                         | Three-tier pipeline (`bootstrap` / `directory` / `demo`); demo never runs in production — see [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md)                                              |
+| 6   | **Email transport**                          | Resend in production (FROM `noreply@indlokal.com`), Mailpit in dev; send failures throw - see [ADR-0004](specs/ADR/0004-email-transport-resend-throw-on-failure.md)                                  |
+| 7   | **Database seeding**                         | Three-tier pipeline (`bootstrap` / `directory` / `demo`); demo never runs in production - see [ADR-0003](specs/ADR/0003-three-tier-database-seeding.md)                                              |
 | 8   | **Spec workflow**                            | PRD/TDD pair (or ADR) under `docs/specs/` before non-trivial work; templates in `docs/specs/templates/`                                                                                              |
-| 9   | **Metro region boundary**                    | **Include Stuttgart metro from day 1** — Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen all roll up into the Stuttgart feed                                                    |
+| 9   | **Metro region boundary**                    | **Include Stuttgart metro from day 1** - Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen all roll up into the Stuttgart feed                                                    |
 | 10  | **Historical event attribution**             | Imported with linked community when the host is known; otherwise as standalone events with `source` tagged for provenance                                                                            |
-| 11  | **Funding sequence**                         | **Grants-first → hybrid B2B → venture funding** (§13). Year 1 grant-funded as integration utility; Year 2 layers paid B2B surfaces; Year 2–3 raise pre-seed/seed for multi-city expansion            |
+| 11  | **Funding sequence**                         | **Grants-first → hybrid B2B → venture funding** (§13). Year 1 grant-funded as integration utility; Year 2 layers paid B2B surfaces; Year 2-3 raise pre-seed/seed for multi-city expansion            |
 | 12  | **Monetization stance for MVP**              | **Free for users, free for organizers.** No promoted listings, no ads, no data sales while operating on grants. Paid surfaces (§14.6) are B2B and start in Year 2                                    |
 | 13  | **Sponsorship + business listings sequence** | Phase 2: sponsorship intent capture + curated matching; Phase 3: curated business/business-leader listings; no open sponsor marketplace before Phase 4 evidence gates                                |
 
@@ -1326,7 +1333,7 @@ _(Resolved items moved to §16.1: metro region boundary → included from day 1;
 | --- | ----------------------------------- | --------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
 | 1   | **Organizer outreach strategy**     | Cold email, mutual intro via network, in-person at events                                           | Need to reach HSS Stuttgart, German Tamil Sangam, Malayalee Deutsches Treffen BW e.V. before launch |
 | 2   | **Automotive company partnerships** | Formal HR partnership, informal employee network contact, ignore for now                            | Bosch/Daimler/Porsche Indian employee groups could be massive distribution channel                  |
-| 3   | **Indian Film Festival timing**     | Launch before (to capture pre-event search traffic) or after (to use event for launch distribution) | Festival is usually July — plan accordingly                                                         |
+| 3   | **Indian Film Festival timing**     | Launch before (to capture pre-event search traffic) or after (to use event for launch distribution) | Festival is usually July - plan accordingly                                                         |
 
 ### 16.3 Open research questions
 
@@ -1335,7 +1342,7 @@ _(Resolved items moved to §16.1: metro region boundary → included from day 1;
 | 1   | How many of the estimated Stuttgart communities are still active?           | Manual verification: check last event date, test access links                                          |
 | 2   | How willing are community organizers to be listed (and share access links)? | Interview 5-10 Stuttgart community organizers                                                          |
 | 3   | What search terms do Indians in Stuttgart actually use?                     | Google Keyword Planner: "Indian community Stuttgart," "Indians in Stuttgart," "Telugu Stuttgart," etc. |
-| 4   | Is English sufficient or is Hindi/German needed from launch?                | Survey target users (likely English is fine — professional diaspora)                                   |
+| 4   | Is English sufficient or is Hindi/German needed from launch?                | Survey target users (likely English is fine - professional diaspora)                                   |
 | 5   | Can we get CGI Munich consular camp schedule reliably?                      | Contact consulate; check if they have a public calendar or mailing list                                |
 | 6   | What's the actual community density breakdown by category in Stuttgart?     | Map discovered communities to our 11 categories; identify gaps                                         |
 
@@ -1349,7 +1356,7 @@ _(Resolved items moved to §16.1: metro region boundary → included from day 1;
 | Activity/events are more compelling than static listings                            | A/B test: directory view vs feed view                                                 |
 | WhatsApp group join links can be reliably maintained                                | Track link decay over 30 days after seeding                                           |
 | Stuttgart Indian population is 10,000-15,000+                                       | Cross-reference InterNations data (1,752 Indian members) with estimated capture rate  |
-| IndoEuropean.eu will not significantly improve their Stuttgart coverage in 6 months | Monitor monthly; they've had 11 years with a misspelled URL — unlikely to change fast |
+| IndoEuropean.eu will not significantly improve their Stuttgart coverage in 6 months | Monitor monthly; they've had 11 years with a misspelled URL - unlikely to change fast |
 
 ---
 
@@ -1358,17 +1365,17 @@ _(Resolved items moved to §16.1: metro region boundary → included from day 1;
 | Term                  | Definition                                                                                                                                     |
 | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Community**         | An organized group of Indians in a German city, such as a cultural association, student group, professional network, or religious organization |
-| **Event**             | A time-bound activity organized by or relevant to the Indian diaspora — meetup, celebration, workshop, class, social gathering                 |
-| **Access channel**    | A link or contact method to join or reach a community — WhatsApp group, Telegram channel, website, email                                       |
-| **Activity signal**   | Any indicator that a community is active — recent event, profile update, verified link                                                         |
-| **Trust signal**      | Any indicator that a community listing is accurate and reliable — platform verification, community claim, user reports                         |
+| **Event**             | A time-bound activity organized by or relevant to the Indian diaspora - meetup, celebration, workshop, class, social gathering                 |
+| **Access channel**    | A link or contact method to join or reach a community - WhatsApp group, Telegram channel, website, email                                       |
+| **Activity signal**   | Any indicator that a community is active - recent event, profile update, verified link                                                         |
+| **Trust signal**      | Any indicator that a community listing is accurate and reliable - platform verification, community claim, user reports                         |
 | **Community graph**   | The structured network of relationships between communities, events, cities, categories, and users that IndLokal builds over time              |
-| **City feed**         | The primary discovery surface for a city — showing upcoming events, active communities, and fresh content                                      |
+| **City feed**         | The primary discovery surface for a city - showing upcoming events, active communities, and fresh content                                      |
 | **Discovery session** | A user visit where at least one community or event detail page is viewed                                                                       |
 
 ---
 
-## Appendix B: Reference — Indian Diaspora in Germany
+## Appendix B: Reference - Indian Diaspora in Germany
 
 Estimated Indian population in Germany: ~200,000+ (growing rapidly due to tech immigration)
 
@@ -1381,7 +1388,7 @@ Estimated Indian population in Germany: ~200,000+ (growing rapidly due to tech i
 | Frankfurt                     | 15,000+                     | Financial sector, established diaspora                                                                                                                                                                 |
 | **Stuttgart**                 | **10,000-15,000+**          | **Launch city.** Automotive industry (Bosch, Daimler, Porsche). Structurally growing via Blue Card pipeline. 1,752 Indian members on InterNations alone. 35-56 discoverable communities in metro area. |
 | Hamburg                       | 8,000+                      | Port city, growing tech scene                                                                                                                                                                          |
-| Düsseldorf                    | 8,000+                      | Largest Japanese diaspora — growing Indian presence                                                                                                                                                    |
+| Düsseldorf                    | 8,000+                      | Largest Japanese diaspora - growing Indian presence                                                                                                                                                    |
 | Cologne                       | 7,000+                      | University city, cultural hub                                                                                                                                                                          |
 | Bangalore-to-Germany pipeline | Growing                     | Blue Card immigration driving rapid growth                                                                                                                                                             |
 

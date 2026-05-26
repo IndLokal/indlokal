@@ -1,7 +1,7 @@
 /**
- * Integration tests — community module queries.
+ * Integration tests - community module queries.
  *
- * @db — requires test database.
+ * @db - requires test database.
  * Prerequisites: `./dev.sh test:setup`
  *
  * These tests run against `indlokal_test` (isolated from dev data).

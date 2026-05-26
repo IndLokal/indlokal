@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/search/trending?citySlug — Trending search terms.
+ * GET /api/v1/search/trending?citySlug - Trending search terms.
  * Optional auth.
  */
 

@@ -30,7 +30,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
       <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
         <span>✓</span>
         <span className="font-medium">Claimed</span>
-        <span className="text-green-600">— This listing is managed by the community organizer</span>
+        <span className="text-green-600">- This listing is managed by the community organizer</span>
       </div>
     );
   }
@@ -43,7 +43,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
           <h3 className="font-semibold text-green-800">Claim submitted!</h3>
         </div>
         <div className="mt-3 space-y-2 text-sm text-green-700">
-          <p>Our team will review your request — this usually takes 1–2 days.</p>
+          <p>Our team will review your request - this usually takes 1-2 days.</p>
           <p>
             Once approved, log in at{' '}
             <Link href="/organizer/login" className="font-medium underline">
@@ -58,7 +58,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
   }
 
   if (claimState === 'CLAIM_PENDING') {
-    // Don't show anything to random visitors — a pending claim is an internal state
+    // Don't show anything to random visitors - a pending claim is an internal state
     return null;
   }
 
@@ -164,7 +164,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
           <div className="border-border border-t pt-4">
             <p className="text-foreground text-sm font-medium">
               Proof of connection{' '}
-              <span className="text-muted font-normal">(optional — helps us verify faster)</span>
+              <span className="text-muted font-normal">(optional - helps us verify faster)</span>
             </p>
             <div className="mt-3 space-y-3">
               <div>

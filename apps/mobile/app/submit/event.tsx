@@ -1,6 +1,6 @@
 /**
- * Submit event form — PRD-0009.
- * Text-only v1 (no image picker yet — pending expo-image-picker install).
+ * Submit event form - PRD-0009.
+ * Text-only v1 (no image picker yet - pending expo-image-picker install).
  * Posts to POST /api/v1/submissions/event with EventSubmission shape.
  */
 
@@ -65,7 +65,7 @@ export default function SubmitEventScreen() {
           if (first) setCitySlug(first.slug);
         }
       } catch {
-        // ignore — user can still pick from default
+        // ignore - user can still pick from default
       }
     })();
   }, []);

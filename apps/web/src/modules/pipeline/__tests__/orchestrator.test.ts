@@ -52,7 +52,7 @@ describe('computeSimilarity', () => {
       'tamil sangam pongal celebration',
     );
     // Bigram similarity is high because the names share most words.
-    // In practice, date-based dedup catches these — same community, different dates.
+    // In practice, date-based dedup catches these - same community, different dates.
     expect(score).toBeGreaterThan(0.8);
   });
 });

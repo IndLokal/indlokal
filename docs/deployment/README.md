@@ -8,7 +8,7 @@ The goal is **simple but workable**: get the web backend online, ship the mobile
 
 Current release model:
 
-- `main` is the production branch — every merge deploys to production via Vercel
+- `main` is the production branch - every merge deploys to production via Vercel
 - feature branches and PRs produce Vercel Preview deployments that share the `indlokal-db-staging` database
 
 ## Current stage
@@ -58,10 +58,10 @@ Optional:
 
 ## Files in this folder
 
-- [SETUP.md](SETUP.md) — **start here** — end-to-end setup of Vercel + Neon + GitHub Actions
-- [go-live.md](go-live.md) — condensed launch runbook (web + mobile)
-- [operations.md](operations.md) — ongoing ops checklist
-- [mobile.md](mobile.md) — Expo/EAS release notes
+- [SETUP.md](SETUP.md) - **start here** - end-to-end setup of Vercel + Neon + GitHub Actions
+- [go-live.md](go-live.md) - condensed launch runbook (web + mobile)
+- [operations.md](operations.md) - ongoing ops checklist
+- [mobile.md](mobile.md) - Expo/EAS release notes
 
 ## What we are intentionally not doing yet
 

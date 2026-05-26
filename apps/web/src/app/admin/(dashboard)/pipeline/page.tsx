@@ -13,11 +13,13 @@ import {
 } from './actions';
 import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 
-export const metadata = { title: 'Content Pipeline — Admin' };
+export const metadata = { title: 'Content Pipeline - Admin' };
 
 export default async function AdminPipelinePage() {
+  const regions = await getRuntimeEnabledRegions();
   const sourceStats = await getSourceReliabilityStats();
   const items = await db.pipelineItem.findMany({
     where: { status: 'PENDING' },
@@ -50,18 +52,46 @@ export default async function AdminPipelinePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Content Pipeline</h1>
-          <p className="text-muted mt-1 text-sm">
-            {items.length} items pending review · AI-extracted from configured sources
-          </p>
+      <div className="card-base p-6">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="bg-brand-50 text-brand-700 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em]">
+                Operations Console
+              </span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
+                {regions.length} enabled regions
+              </span>
+            </div>
+            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
+              Content Pipeline
+            </h1>
+            <p className="text-muted mt-2 max-w-2xl text-sm leading-6">
+              Run discovery by region, review extracted items, and monitor which sources are
+              producing queueable content. Manual regional runs now mirror cron shards for easier
+              debugging.
+            </p>
+
+            <div className="mt-4 flex flex-wrap gap-3">
+              <StatusPill label="Pending review" value={items.length} />
+              <StatusPill label="High confidence" value={highConfidence.length} />
+              <StatusPill label="Keyword suggestions" value={keywordSuggestions.length} />
+            </div>
+          </div>
+          <div className="flex items-start gap-4">
+            <RunPipelineButton
+              regions={regions.map((region) => ({ id: region.id, label: region.label }))}
+            />
+          </div>
         </div>
-        <div className="flex items-center gap-4">
-          <RunPipelineButton />
+
+        <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+          <p className="text-muted text-xs">
+            Review queue and source quality update automatically after each manual run.
+          </p>
           <Link
             href="/admin"
-            className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
+            className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
           >
             ← Dashboard
           </Link>
@@ -312,6 +342,15 @@ export default async function AdminPipelinePage() {
   );
 }
 
+function StatusPill({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-[var(--radius-button)] border border-slate-200 bg-white px-3 py-2 shadow-sm">
+      <p className="text-[11px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="mt-1 text-sm font-semibold text-slate-900">{value}</p>
+    </div>
+  );
+}
+
 // ─── Pipeline item card component ──────────────────────
 
 type PipelineItemWithCity = Awaited<
@@ -395,7 +434,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
                 <p>
                   📅 {event.date}
                   {event.time && ` at ${event.time}`}
-                  {event.endTime && ` — ${event.endTime}`}
+                  {event.endTime && ` - ${event.endTime}`}
                 </p>
               )}
               {event.venueName && (

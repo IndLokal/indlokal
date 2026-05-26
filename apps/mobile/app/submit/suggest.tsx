@@ -1,5 +1,5 @@
 /**
- * Suggest a community — PRD-0009.
+ * Suggest a community - PRD-0009.
  * Lightest-weight submit path: name + city + optional note.
  * Posts to POST /api/v1/submissions/suggest.
  */

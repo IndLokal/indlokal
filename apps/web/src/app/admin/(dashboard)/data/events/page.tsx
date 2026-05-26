@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { deleteEventAction, setEventStatusAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Events — Admin' };
+export const metadata = { title: 'Events - Admin' };
 
 export default async function AdminEventsPage({
   searchParams,
@@ -53,7 +53,7 @@ export default async function AdminEventsPage({
             defaultValue={sp.city ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— all —</option>
+            <option value="">- all -</option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.name}
@@ -68,7 +68,7 @@ export default async function AdminEventsPage({
             defaultValue={sp.status ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— any —</option>
+            <option value="">- any -</option>
             <option value="UPCOMING">Upcoming</option>
             <option value="ONGOING">Ongoing</option>
             <option value="PAST">Past</option>
@@ -107,8 +107,8 @@ export default async function AdminEventsPage({
                 <td className="px-3 py-2 text-xs">
                   {e.startsAt.toISOString().slice(0, 16).replace('T', ' ')}
                 </td>
-                <td className="px-3 py-2 text-xs">{e.city?.name ?? '—'}</td>
-                <td className="px-3 py-2 text-xs">{e.community?.name ?? '—'}</td>
+                <td className="px-3 py-2 text-xs">{e.city?.name ?? '-'}</td>
+                <td className="px-3 py-2 text-xs">{e.community?.name ?? '-'}</td>
                 <td className="px-3 py-2">
                   <form action={setEventStatusAction} className="flex items-center gap-1">
                     <input type="hidden" name="id" value={e.id} />

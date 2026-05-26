@@ -26,7 +26,7 @@ type CardItem = {
 };
 
 /**
- * Mobile bookmarks shell — TDD-0010 / PRD-0019.
+ * Mobile bookmarks shell - TDD-0010 / PRD-0019.
  * Lists the signed-in user's saved events and communities.
  * Anonymous users see a sign-in CTA.
  */

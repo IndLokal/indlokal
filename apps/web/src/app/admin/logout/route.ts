@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { clearSessionCookie } from '@/lib/session';
 
 /**
- * POST /admin/logout — clears cookie + invalidates DB token, then redirects
+ * POST /admin/logout - clears cookie + invalidates DB token, then redirects
  * to the admin login page with a friendly notice.
  *
  * 303 See Other forces the browser to GET the destination (the login page is

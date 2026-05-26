@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/google — TDD-0001 §3.
+ * POST /api/v1/auth/google - TDD-0001 §3.
  *
  * Client (mobile or SPA) drives the OAuth dance, obtains an
  * authorization code, then posts it here. We exchange the code with

@@ -4,11 +4,11 @@
  * Architecture: Generic search → cheap relevance filter → batch LLM extraction → dedup → review queue
  *
  * Design principles (optimised for all-Europe scale):
- *  1. Search broad, filter with AI — don't hardcode per-city sources
- *  2. Two-stage LLM — cheap model filters relevance, expensive model extracts
- *  3. Batch calls — multiple items per LLM request to amortise system prompt tokens
- *  4. LLM assigns city — extraction output includes cityName, not config input
- *  5. Region config, not city config — add a country by adding keywords + search region
+ *  1. Search broad, filter with AI - don't hardcode per-city sources
+ *  2. Two-stage LLM - cheap model filters relevance, expensive model extracts
+ *  3. Batch calls - multiple items per LLM request to amortise system prompt tokens
+ *  4. LLM assigns city - extraction output includes cityName, not config input
+ *  5. Region config, not city config - add a country by adding keywords + search region
  */
 
 // ─── Source types ──────────────────────────────────────
@@ -59,19 +59,23 @@ export type SearchStrategy = {
   enabled: boolean;
 } & (
   | {
-      /** Keyword-based search (Eventbrite, Meetup) — searches region-wide */
+      /** Keyword-based search (Eventbrite, Meetup) - searches region-wide */
       kind: 'keyword_search';
-      /** Search keywords — combined with region at runtime */
+      /** Search keywords - combined with region at runtime */
       keywords: string[];
       /** Search radius from region center */
       radiusKm: number;
     }
   | {
-      /** Known URL — a specific high-value page (CGI Munich, IndoEuropean, Facebook page) */
+      /** Known URL - a specific high-value page (CGI Munich, IndoEuropean, Facebook page) */
       kind: 'pinned_url';
       url: string;
+      /** Scope hint for pinned URL applicability during sharded runs. */
+      scope?: 'GENERIC' | 'CITY' | 'REGION';
       /** Optional: if we know the city in advance (e.g. CGI Munich serves all BaWü) */
       hintCitySlug?: string;
+      /** Optional: if URL is region-level (state-level) rather than city-specific. */
+      hintState?: string;
     }
 );
 
@@ -84,7 +88,9 @@ export type SearchRegion = {
   label: string;
   /** Center point for radius-based API searches (e.g. "Stuttgart, Germany") */
   searchCenter: string;
-  /** City slugs this region covers — used to match LLM city output to DB */
+  /** Optional state label used for region-scoped source filtering. */
+  state?: string;
+  /** City slugs this region covers - used to match LLM city output to DB */
   citySlugs: string[];
   enabled: boolean;
 };
@@ -100,7 +106,7 @@ export type RelevanceResult = {
 
 // ─── Extraction types (LLM output) ────────────────────
 
-/** Structured event data — now includes city assignment */
+/** Structured event data - now includes city assignment */
 export type ExtractedEvent = {
   type: 'EVENT';
   title: string;
@@ -124,7 +130,7 @@ export type ExtractedEvent = {
   fieldConfidence: Record<string, number>;
 };
 
-/** Structured community data — now includes city assignment */
+/** Structured community data - now includes city assignment */
 export type ExtractedCommunity = {
   type: 'COMMUNITY';
   name: string;
@@ -161,4 +167,14 @@ export type PipelineRunResult = {
   llmTokensEstimate: number;
   duration: number; // ms
   stageTimings?: Record<string, number>;
+  /** PRD-0026: filter batches that failed LLM call and were fail-closed dropped. */
+  filterFailures: number;
+  /** PRD-0026: extract batches that exhausted RetryBudget (depth or wall-clock). */
+  extractRetriesExhausted: number;
+  /** PRD-0026: items whose LLM-assigned sourceIndex was out of range. */
+  itemsDroppedBadIndex: number;
+  /** PRD-0028: run hit the per-run token budget and bailed out of LLM stages. */
+  budgetExceeded: boolean;
+  /** PRD-0028: consecutive LLM failures tripped the circuit breaker. */
+  circuitBreakerTripped: boolean;
 };

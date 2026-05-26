@@ -1,5 +1,5 @@
 /**
- * Test fixtures — typed factory functions for domain objects.
+ * Test fixtures - typed factory functions for domain objects.
  *
  * Each factory accepts a partial override so tests can
  * specify only what they care about:

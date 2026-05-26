@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/communities/:slug/events?cursor=&limit= — Paginated upcoming events
+ * GET /api/v1/communities/:slug/events?cursor=&limit= - Paginated upcoming events
  * for a specific community. Optional auth (no personalization yet).
  */
 

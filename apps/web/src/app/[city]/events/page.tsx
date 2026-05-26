@@ -8,7 +8,7 @@ import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 
 /**
- * Event Listing — all upcoming events in a city.
+ * Event Listing - all upcoming events in a city.
  * Supports filters: category, cost, type.
  *
  * Route: /[city]/events/
@@ -91,11 +91,11 @@ export default async function EventsPage({ params, searchParams }: Props) {
         <p className="text-muted mt-2">
           {events.length > 0
             ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
-            : 'No upcoming events right now — check back soon.'}
+            : 'No upcoming events right now - check back soon.'}
         </p>
       </div>
 
-      {/* Filters — horizontally scrollable on mobile */}
+      {/* Filters - horizontally scrollable on mobile */}
       <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
         {/* Lens filter */}
         <>

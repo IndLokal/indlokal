@@ -11,7 +11,7 @@ datasource db {
 }
 
 // ─────────────────────────────────────────────────────────
-// City / Locality — primary partition key for all discovery
+// City / Locality - primary partition key for all discovery
 // ─────────────────────────────────────────────────────────
 
 model City {
@@ -27,7 +27,7 @@ model City {
   isActive               Boolean  @default(false) @map("is_active")
   timezone               String   @default("Europe/Berlin")
 
-  // Metro region support — Stuttgart metro includes satellites
+  // Metro region support - Stuttgart metro includes satellites
   isMetroPrimary         Boolean  @default(false) @map("is_metro_primary")
   metroRegionId          String?  @map("metro_region_id")
   metroRegion            City?    @relation("MetroRegion", fields: [metroRegionId], references: [id])
@@ -49,7 +49,7 @@ model City {
 }
 
 // ─────────────────────────────────────────────────
-// Category — Cultural, Student, Professional, etc.
+// Category - Cultural, Student, Professional, etc.
 // ─────────────────────────────────────────────────
 
 enum CategoryType {
@@ -79,7 +79,7 @@ model Category {
 }
 
 // ─────────────────────────────────────────────────
-// Community — the central node of the community graph
+// Community - the central node of the community graph
 // ─────────────────────────────────────────────────
 
 enum CommunityStatus {
@@ -148,7 +148,7 @@ model Community {
   reports          ContentReport[] @relation("CommunityReports")
   savedBy          SavedCommunity[]
 
-  // Edges — relationships to other entities
+  // Edges - relationships to other entities
   sourceEdges      RelationshipEdge[] @relation("SourceEdges")
   targetEdges      RelationshipEdge[] @relation("TargetEdges")
   outreachLeads    OutreachLead[]
@@ -180,7 +180,7 @@ model CommunityCategory {
 }
 
 // ─────────────────────────────────────────────────
-// Event — the primary retention driver
+// Event - the primary retention driver
 // ─────────────────────────────────────────────────
 
 enum EventStatus {
@@ -249,7 +249,7 @@ model EventCategory {
 }
 
 // ─────────────────────────────────────────────────
-// Access Channel — the bridge from discovery to engagement
+// Access Channel - the bridge from discovery to engagement
 // ─────────────────────────────────────────────────
 
 enum ChannelType {
@@ -284,7 +284,7 @@ model AccessChannel {
 }
 
 // ─────────────────────────────────────────────────
-// Activity Signal — raw material for freshness scoring
+// Activity Signal - raw material for freshness scoring
 // ─────────────────────────────────────────────────
 
 enum ActivitySignalType {
@@ -317,7 +317,7 @@ model ActivitySignal {
 }
 
 // ─────────────────────────────────────────────────
-// Trust Signal — quality ranking inputs
+// Trust Signal - quality ranking inputs
 // ─────────────────────────────────────────────────
 
 enum TrustSignalEntityType {
@@ -337,7 +337,7 @@ model TrustSignal {
   id         String               @id @default(cuid())
   entityType TrustSignalEntityType @map("entity_type")
 
-  // Polymorphic relation — one of these will be set
+  // Polymorphic relation - one of these will be set
   communityId String?             @map("community_id")
   community   Community?          @relation("CommunityTrustSignals", fields: [communityId], references: [id], onDelete: Cascade)
   eventId     String?             @map("event_id")
@@ -355,7 +355,7 @@ model TrustSignal {
 }
 
 // ─────────────────────────────────────────────────
-// Relationship Edge — the community graph
+// Relationship Edge - the community graph
 // ─────────────────────────────────────────────────
 
 enum RelationshipType {
@@ -383,7 +383,7 @@ model RelationshipEdge {
 }
 
 // ─────────────────────────────────────────────────
-// Resource — consular/official/institutional + practical expat guides
+// Resource - consular/official/institutional + practical expat guides
 // ─────────────────────────────────────────────────
 
 enum ResourceType {
@@ -408,14 +408,54 @@ enum ResourceType {
   COMMUNITY_RESOURCE
 }
 
+// PRD/TDD-0030, ADR-0007 - resource scope determines which cities a row applies to.
+enum ResourceScope {
+  GLOBAL
+  COUNTRY
+  STATE
+  METRO
+  CITY
+  DISTRICT
+}
+
+enum ResourceAudience {
+  NEWCOMER
+  FAMILY
+  FOUNDER
+  EMPLOYEE
+  STUDENT
+  STUDENT_VISA
+  SENIOR
+  RETURNEE
+}
+
+enum ResourceStage {
+  PRE_ARRIVAL
+  FIRST_30_DAYS
+  FIRST_90_DAYS
+  SETTLED
+  ANYTIME
+}
+
 model Resource {
   id           String       @id @default(cuid())
   title        String
   slug         String       @unique
   resourceType ResourceType @map("resource_type")
 
-  cityId       String       @map("city_id")
-  city         City         @relation(fields: [cityId], references: [id])
+  // Phase A (TDD-0030 §2): cityId becomes nullable. The resolver uses
+  // scope + scopeRegion as the source of truth. Phase B will drop this
+  // column in a follow-up migration.
+  cityId       String?      @map("city_id")
+  city         City?        @relation(fields: [cityId], references: [id])
+
+  // ── PRD/TDD-0030 - scope-based resolution ──
+  scope          ResourceScope      @default(CITY)
+  scopeRegion    String?            @map("scope_region")
+  audiences      ResourceAudience[] @default([])
+  lifecycleStage ResourceStage[]    @default([])  @map("lifecycle_stage")
+  priority       Int                @default(50)
+  isEssential    Boolean            @default(false) @map("is_essential")
 
   url          String?
   description  String?
@@ -434,11 +474,13 @@ model Resource {
   @@index([cityId])
   @@index([resourceType])
   @@index([isHidden])
+  @@index([isEssential])
+  @@index([scope, scopeRegion])
   @@map("resources")
 }
 
 // ─────────────────────────────────────────────────
-// User — lightweight initially; grows with Phase 2
+// User - lightweight initially; grows with Phase 2
 // Role model: ADR-0005 / PRD-0014
 // ─────────────────────────────────────────────────
 
@@ -455,7 +497,7 @@ enum UserRole {
 }
 
 // ─────────────────────────────────────────────────
-// RoleAssignment — scoped, auditable role grants
+// RoleAssignment - scoped, auditable role grants
 // ADR-0005 / PRD-0014
 // One user may hold many role assignments.
 // cityId scopes CITY_AMBASSADOR to a specific city.
@@ -525,7 +567,7 @@ model User {
 }
 
 // ─────────────────────────────────────────────────
-// Magic Link Token — one-time tokens for passwordless login
+// Magic Link Token - one-time tokens for passwordless login
 // ─────────────────────────────────────────────────
 
 model MagicLinkToken {
@@ -534,7 +576,7 @@ model MagicLinkToken {
   userId    String   @map("user_id")
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime @map("expires_at")
-  usedAt    DateTime? @map("used_at") // set when consumed — prevents replay
+  usedAt    DateTime? @map("used_at") // set when consumed - prevents replay
   createdAt DateTime @default(now()) @map("created_at")
 
   @@index([userId])
@@ -542,7 +584,7 @@ model MagicLinkToken {
 }
 
 // ─────────────────────────────────────────────────
-// Refresh Token — TDD-0001 §2
+// Refresh Token - TDD-0001 §2
 // One row per (user, device) chain. Opaque random token, hashed at rest.
 // rotatedToId links the chain so reuse of a rotated token can revoke
 // the entire chain (TDD-0001 §8).
@@ -567,7 +609,7 @@ model RefreshToken {
 }
 
 // ─────────────────────────────────────────────────
-// Devices + Notifications — TDD-0002
+// Devices + Notifications - TDD-0002
 // ─────────────────────────────────────────────────
 
 enum DevicePlatform {
@@ -676,7 +718,7 @@ model InboxItem {
 }
 
 // ─────────────────────────────────────────────────
-// User Interaction — behavioral signals for scoring
+// User Interaction - behavioral signals for scoring
 // ─────────────────────────────────────────────────
 
 enum InteractionType {
@@ -749,7 +791,7 @@ model ContentReport {
 
   details        String?
   reporterEmail  String?      @map("reporter_email")
-  // Structured FK — preferred over reporterEmail for ambassador stats queries.
+  // Structured FK - preferred over reporterEmail for ambassador stats queries.
   // Nullable so existing rows without a userId remain valid.
   reporterUserId String?      @map("reporter_user_id")
   reporter       User?        @relation("ReporterUser", fields: [reporterUserId], references: [id])
@@ -790,7 +832,7 @@ model SavedEvent {
 }
 
 // ─────────────────────────────────────────────────
-// Content Log — provenance tracking for every data change
+// Content Log - provenance tracking for every data change
 // ─────────────────────────────────────────────────
 
 enum ContentLogAction {
@@ -820,7 +862,7 @@ model ContentLog {
 }
 
 // ─────────────────────────────────────────────────
-// Pipeline Item — AI content pipeline review queue
+// Pipeline Item - AI content pipeline review queue
 // ─────────────────────────────────────────────────
 
 enum PipelineEntityType {
@@ -899,7 +941,7 @@ model PipelineItem {
   cityId         String             @map("city_id")
   city           City               @relation(fields: [cityId], references: [id])
 
-  // Dedup — matched against an existing entity
+  // Dedup - matched against an existing entity
   matchedEntityId String?           @map("matched_entity_id") // existing event/community id if dupe detected
   matchScore      Float?            @map("match_score")       // 0-1 similarity score
 
@@ -936,6 +978,8 @@ model PipelineItem {
 model PipelineRun {
   id                    String   @id @default(cuid())
   triggeredBy           String   @default("cron") @map("triggered_by")
+  scopeRegionIds        String[] @default([]) @map("scope_region_ids")
+  scopeCitySlugs        String[] @default([]) @map("scope_city_slugs")
   regionsScanned        Int      @map("regions_scanned")
   sourcesProcessed      Int      @map("sources_processed")
   itemsFetched          Int      @map("items_fetched")
@@ -949,10 +993,44 @@ model PipelineRun {
   llmTokensEstimate     Int      @map("llm_tokens_estimate")
   durationMs            Int      @map("duration_ms")
   errors                String[]
+  filterFailures          Int               @default(0) @map("filter_failures")
+  extractRetriesExhausted Int               @default(0) @map("extract_retries_exhausted")
+  itemsDroppedBadIndex    Int               @default(0) @map("items_dropped_bad_index")
+  budgetExceeded          Boolean           @default(false) @map("budget_exceeded")
+  circuitBreakerTripped   Boolean           @default(false) @map("circuit_breaker_tripped")
   createdAt             DateTime @default(now()) @map("created_at")
+  llmCallAudits         PipelineLlmCall[]
 
   @@index([createdAt])
   @@map("pipeline_runs")
+}
+
+enum PipelineLlmStage {
+  filter
+  extract
+  dedup
+  enrich
+  keyword
+}
+
+model PipelineLlmCall {
+  id               String           @id @default(cuid())
+  runId            String           @map("run_id")
+  run              PipelineRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
+  stage            PipelineLlmStage
+  model            String
+  promptTokens     Int              @default(0) @map("prompt_tokens")
+  completionTokens Int              @default(0) @map("completion_tokens")
+  totalTokens      Int              @default(0) @map("total_tokens")
+  durationMs       Int              @map("duration_ms")
+  ok               Boolean
+  errorCode        String?          @map("error_code")
+  batchSize        Int?             @map("batch_size")
+  createdAt        DateTime         @default(now()) @map("created_at")
+
+  @@index([runId])
+  @@index([createdAt, stage])
+  @@map("pipeline_llm_calls")
 }
 
 // ─────────────────────────────────────────────────

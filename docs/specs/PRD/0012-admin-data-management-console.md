@@ -19,9 +19,9 @@ direct SQL. That:
 
 ## 2. Users & JTBD
 
-- **Platform admin** — wants to browse cities, communities, events, and
+- **Platform admin** - wants to browse cities, communities, events, and
   resources, and remove duplicates or stale rows safely.
-- **Platform admin** — wants to see counts ("how many communities in
+- **Platform admin** - wants to see counts ("how many communities in
   Stuttgart?") at a glance.
 
 ## 3. Success Metrics
@@ -38,10 +38,10 @@ direct SQL. That:
   status).
 - Server actions to **delete** a city, community, event, or resource.
 - Reference-safe city delete: refuses if the city has any communities,
-  events, resources, users, reports, or child cities — the error tells
+  events, resources, users, reports, or child cities - the error tells
   the admin exactly which counts are non-zero.
 - Transactional community delete: detaches events, clears merge pointers,
-  drops reports, then deletes — in one Prisma `$transaction`.
+  drops reports, then deletes - in one Prisma `$transaction`.
 - Cache invalidation: every mutating action calls
   `revalidateTag('city-feed', 'max')` so the public site reflects deletes
   immediately.
@@ -51,7 +51,7 @@ direct SQL. That:
 - Inline edit of community / event content (use the existing detail
   pages).
 - Bulk delete / bulk merge.
-- Undo / soft-delete (deferred — current rows are deleted hard).
+- Undo / soft-delete (deferred - current rows are deleted hard).
 - Audit log UI (server logs only for now).
 
 ## 6. User Stories
@@ -88,10 +88,10 @@ Given an admin deletes any entity
 
 ## 8. UX
 
-- `/admin/data` — tile grid: "Cities (n)", "Categories (n)",
+- `/admin/data` - tile grid: "Cities (n)", "Categories (n)",
   "Communities (n)", "Events (n)", "Resources (n)", plus a "Run bootstrap"
-  button (re-runs the idempotent bootstrap seed — see ADR-0003).
-- `/admin/data/{cities,communities,events,resources}` — table with
+  button (re-runs the idempotent bootstrap seed - see ADR-0003).
+- `/admin/data/{cities,communities,events,resources}` - table with
   search + filters, each row has a "Delete" button with `confirm()`
   prompt.
 - Inline error toast for refused city delete.

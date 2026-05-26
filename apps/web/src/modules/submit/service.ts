@@ -62,10 +62,14 @@ export async function createEventSubmission(
   data: EventSubmission,
 ): Promise<{ id: string; entityType: string; status: string; createdAt: Date }> {
   const city = await db.city.findFirst({
-    where: { slug: data.citySlug, isActive: true },
-    select: { id: true },
+    where: {
+      slug: data.citySlug,
+      OR: [{ isActive: true }, { metroRegionId: { not: null } }],
+    },
+    select: { id: true, metroRegionId: true },
   });
   if (!city) throw new Error('CITY_NOT_FOUND');
+  const targetCityId = city.metroRegionId ?? city.id;
 
   const extractedData = {
     title: data.title,
@@ -90,7 +94,7 @@ export async function createEventSubmission(
       sourceType: 'USER_SUBMITTED',
       extractedData,
       confidence: 1.0,
-      cityId: city.id,
+      cityId: targetCityId,
       submittedBy: userId,
       imageKey: data.imageKey ?? null,
     },
@@ -105,14 +109,18 @@ export async function createCommunitySubmission(
   data: CommunitySubmission,
 ): Promise<{ id: string; entityType: string; status: string; createdAt: Date }> {
   const city = await db.city.findFirst({
-    where: { slug: data.citySlug, isActive: true },
-    select: { id: true },
+    where: {
+      slug: data.citySlug,
+      OR: [{ isActive: true }, { metroRegionId: { not: null } }],
+    },
+    select: { id: true, metroRegionId: true },
   });
   if (!city) throw new Error('CITY_NOT_FOUND');
+  const targetCityId = city.metroRegionId ?? city.id;
 
   // Dedup check
   const existing = await db.community.findMany({
-    where: { cityId: city.id, status: { not: 'INACTIVE' } },
+    where: { cityId: targetCityId, status: { not: 'INACTIVE' } },
     select: { name: true },
   });
   for (const c of existing) {
@@ -156,7 +164,7 @@ export async function createCommunitySubmission(
       sourceType: 'USER_SUBMITTED',
       extractedData,
       confidence: 1.0,
-      cityId: city.id,
+      cityId: targetCityId,
       submittedBy: userId,
       imageKey: data.imageKey ?? null,
     },
@@ -171,10 +179,14 @@ export async function createSuggestSubmission(
   data: SuggestSubmission,
 ): Promise<{ id: string; entityType: string; status: string; createdAt: Date }> {
   const city = await db.city.findFirst({
-    where: { slug: data.citySlug, isActive: true },
-    select: { id: true },
+    where: {
+      slug: data.citySlug,
+      OR: [{ isActive: true }, { metroRegionId: { not: null } }],
+    },
+    select: { id: true, metroRegionId: true },
   });
   if (!city) throw new Error('CITY_NOT_FOUND');
+  const targetCityId = city.metroRegionId ?? city.id;
 
   const extractedData = {
     name: data.name,
@@ -191,7 +203,7 @@ export async function createSuggestSubmission(
       sourceType: 'COMMUNITY_SUGGESTION',
       extractedData,
       confidence: 0.5,
-      cityId: city.id,
+      cityId: targetCityId,
       submittedBy: userId,
     },
     select: { id: true, entityType: true, status: true, createdAt: true },

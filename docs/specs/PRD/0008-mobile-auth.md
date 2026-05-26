@@ -1,4 +1,4 @@
-# PRD-0008: Mobile auth — Apple, Google, Magic link
+# PRD-0008: Mobile auth - Apple, Google, Magic link
 
 - **Status:** Draft
 - **Owner:** Mobile lead
@@ -22,7 +22,7 @@ Sign in must be frictionless and store-compliant. Apple requires Sign in with Ap
 
 - Sign in with **Apple** (iOS + cross-platform via web fallback).
 - Sign in with **Google** (`expo-auth-session` + native).
-- **Magic link** via email — opens app via Universal Link to `/auth/magic`.
+- **Magic link** via email - opens app via Universal Link to `/auth/magic`.
 - Profile screen: display name, city, persona segments, languages, sign out, delete account (DPDP).
 - Onboarding: city pick → optional persona/language → push pre-prompt deferred to first valuable action.
 
@@ -51,4 +51,4 @@ Sign-in screen, onboarding flow, profile screen, delete-account confirmation.
 
 ## 9. Risks & Open Questions
 
-- Apple's email-relay handling — store relayed email and treat as canonical.
+- Apple's email-relay handling - store relayed email and treat as canonical.

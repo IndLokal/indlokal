@@ -17,9 +17,9 @@ None.
 
 | Method | Path                        | Auth     | Request      | Response      |
 | ------ | --------------------------- | -------- | ------------ | ------------- |
-| GET    | `/api/v1/events/:slug`      | optional | —            | `EventDetail` |
-| POST   | `/api/v1/events/:slug/save` | access   | —            | `SaveState`   |
-| DELETE | `/api/v1/events/:slug/save` | access   | —            | `SaveState`   |
+| GET    | `/api/v1/events/:slug`      | optional | -            | `EventDetail` |
+| POST   | `/api/v1/events/:slug/save` | access   | -            | `SaveState`   |
+| DELETE | `/api/v1/events/:slug/save` | access   | -            | `SaveState`   |
 | POST   | `/api/v1/track`             | optional | `TrackEvent` | `Ack`         |
 
 `EventDetail` includes community summary, categories, trustSignals, related events.

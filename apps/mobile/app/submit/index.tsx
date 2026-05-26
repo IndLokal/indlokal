@@ -1,5 +1,5 @@
 /**
- * Submit type chooser — PRD-0009.
+ * Submit type chooser - PRD-0009.
  * Three entry points: Event, Community, Suggest a community.
  */
 

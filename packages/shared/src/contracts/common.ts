@@ -8,7 +8,7 @@
 import { z } from 'zod';
 
 /**
- * CUID v1/v2 — Prisma's default ID format.
+ * CUID v1/v2 - Prisma's default ID format.
  * Permissive on length to avoid coupling to Prisma version.
  */
 export const Cuid = z.string().min(20).max(40);
@@ -20,7 +20,7 @@ export type Cuid = z.infer<typeof Cuid>;
 export const IsoDateTime = z.string().datetime({ offset: true });
 
 /**
- * Generic ack response — used by mutations that have no useful payload
+ * Generic ack response - used by mutations that have no useful payload
  * to return (e.g. logout, magic-link-request).
  */
 export const Ack = z.object({

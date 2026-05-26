@@ -28,7 +28,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
   return {
-    title: q ? `"${q}" — Search ${cityName}` : `Search Indian Communities in ${cityName}`,
+    title: q ? `"${q}" - Search ${cityName}` : `Search Indian Communities in ${cityName}`,
     robots: { index: false },
   };
 }
@@ -75,7 +75,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         <h1 className="text-3xl font-bold">Search {cityName}</h1>
       </div>
 
-      {/* Search form — server action redirects to same page with ?q= */}
+      {/* Search form - server action redirects to same page with ?q= */}
       <form method="GET" action={`/${city}/search`} className="flex gap-2">
         <input
           type="search"
@@ -149,7 +149,7 @@ export default async function SearchPage({ params, searchParams }: Props) {
         </>
       )}
 
-      {/* Empty state — no query yet */}
+      {/* Empty state - no query yet */}
       {query.length < 2 && (
         <div className="text-muted space-y-3 text-sm">
           <p>Try searching for:</p>

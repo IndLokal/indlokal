@@ -209,7 +209,7 @@ export async function deleteCategoryAction(formData: FormData) {
   await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
-  // Refuse if referenced — admin-safe.
+  // Refuse if referenced - admin-safe.
   const refs = await db.communityCategory.count({ where: { categoryId: id } });
   if (refs > 0) throw new Error(`Category has ${refs} community references; deactivate instead.`);
   await db.category.delete({ where: { id } });

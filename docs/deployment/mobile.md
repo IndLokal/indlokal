@@ -16,9 +16,9 @@ pnpm dlx eas-cli init
 
 The repo includes [../../apps/mobile/eas.json](../../apps/mobile/eas.json) with three profiles:
 
-- `development` — development client, only when Expo Go is not enough
-- `preview` — internal founder/member testing
-- `production` — app-store builds
+- `development` - development client, only when Expo Go is not enough
+- `preview` - internal founder/member testing
+- `production` - app-store builds
 
 Required accounts:
 

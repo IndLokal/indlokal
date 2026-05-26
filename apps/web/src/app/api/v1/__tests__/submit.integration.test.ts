@@ -2,12 +2,12 @@
  * Integration tests for TDD-0009 submit API endpoints.
  *
  * Covers:
- *   POST /api/v1/uploads/presign        — presigned URL (S3 mocked)
- *   POST /api/v1/submissions/event      — event pipeline item
- *   POST /api/v1/submissions/community  — community pipeline item + dedup
- *   POST /api/v1/submissions/suggest    — community suggestion pipeline item
+ *   POST /api/v1/uploads/presign        - presigned URL (S3 mocked)
+ *   POST /api/v1/submissions/event      - event pipeline item
+ *   POST /api/v1/submissions/community  - community pipeline item + dedup
+ *   POST /api/v1/submissions/suggest    - community suggestion pipeline item
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';

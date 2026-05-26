@@ -7,7 +7,7 @@ import { unstable_cache } from 'next/cache';
 import type { CityFeedData } from './types';
 
 /**
- * Assemble the full city feed — the primary discovery surface.
+ * Assemble the full city feed - the primary discovery surface.
  * Cached for 5 minutes with tag-based invalidation.
  */
 export const getCityFeed = unstable_cache(
@@ -43,7 +43,7 @@ async function _getCityFeed(citySlug: string): Promise<CityFeedData | null> {
 
     getCommunitiesByCity(citySlug, { limit: 8 }),
 
-    // Past events from last 30 days — "recently happened"
+    // Past events from last 30 days - "recently happened"
     db.event.findMany({
       where: {
         cityId: { in: cityIds },
@@ -146,7 +146,7 @@ const citySelect = {
   longitude: true,
 } as const;
 
-/** All active cities ordered by name — powers GET /api/v1/cities. */
+/** All active cities ordered by name - powers GET /api/v1/cities. */
 export const getCitiesList = unstable_cache(
   async () =>
     db.city.findMany({
@@ -158,7 +158,7 @@ export const getCitiesList = unstable_cache(
   { revalidate: 300, tags: ['cities'] },
 );
 
-/** City detail with counts + category grid — powers GET /api/v1/cities/:slug. */
+/** City detail with counts + category grid - powers GET /api/v1/cities/:slug. */
 export const getCityDetail = unstable_cache(
   async (slug: string) => _getCityDetail(slug),
   ['city-detail'],
@@ -247,7 +247,7 @@ const trendingCommunitySelect = {
   categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
 } as const;
 
-/** Trending communities + upcoming events — powers GET /api/v1/discovery/:citySlug/trending. */
+/** Trending communities + upcoming events - powers GET /api/v1/discovery/:citySlug/trending. */
 export const getTrending = unstable_cache(
   async (citySlug: string) => _getTrending(citySlug),
   ['trending'],

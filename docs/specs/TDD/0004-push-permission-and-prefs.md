@@ -9,7 +9,7 @@
 - Mobile-only; backend is TDD-0002.
 - Hook `usePushPermission()` in `apps/mobile/lib/notifications.ts`:
   - On `requestPermission()` calls `Notifications.requestPermissionsAsync()`, then `Notifications.getExpoPushTokenAsync()`, then `POST /api/v1/devices`.
-- Pre-prompt component shown via Zustand `pushPromptStore` — opens once per install per trigger event, dismiss state persisted.
+- Pre-prompt component shown via Zustand `pushPromptStore` - opens once per install per trigger event, dismiss state persisted.
 
 ## 2. Data model changes
 

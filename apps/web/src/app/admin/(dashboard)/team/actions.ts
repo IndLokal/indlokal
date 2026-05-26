@@ -53,7 +53,7 @@ export async function grantRole(formData: FormData) {
       },
     }),
     // Only promote User.role when the user is currently an unprivileged USER.
-    // If they already hold a higher role (e.g. COMMUNITY_ADMIN), preserve it —
+    // If they already hold a higher role (e.g. COMMUNITY_ADMIN), preserve it -
     // the permission system checks RoleAssignment rows for any additional grants.
     ...(target.role === 'USER' && role !== 'USER'
       ? [db.user.update({ where: { id: target.id }, data: { role } })]

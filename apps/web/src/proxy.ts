@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Edge middleware — runs before every matched request.
+ * Edge middleware - runs before every matched request.
  *
  * Responsibilities:
  * 1. Block common scanner/bot paths (/.git, /wp-admin, etc.)
@@ -23,7 +23,7 @@ const BLOCKED_PREFIXES = ['/.git/', '/.svn/', '/wp-', '/phpmyadmin/', '/cgi-bin/
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 1. Block scanner paths — return 404 immediately
+  // 1. Block scanner paths - return 404 immediately
   if (
     BLOCKED_PATHS.includes(pathname) ||
     BLOCKED_PREFIXES.some((prefix) => pathname.startsWith(prefix))

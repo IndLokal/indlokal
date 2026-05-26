@@ -1,6 +1,6 @@
 /**
- * GET /api/v1/notifications/preferences — TDD-0002 §3.
- * PUT /api/v1/notifications/preferences — partial update.
+ * GET /api/v1/notifications/preferences - TDD-0002 §3.
+ * PUT /api/v1/notifications/preferences - partial update.
  *
  * GET always returns the full topic × channel matrix (defaults filled
  * in). PUT accepts a partial patch; omitted (topic, channel) pairs

@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { OutreachKanban } from '@/app/admin/(dashboard)/outreach/OutreachKanban';
 import { CreateLeadForm } from '@/app/admin/(dashboard)/outreach/CreateLeadForm';
 
-export const metadata = { title: 'Outreach — Ambassador Console' };
+export const metadata = { title: 'Outreach - Ambassador Console' };
 export const dynamic = 'force-dynamic';
 
 export default async function AmbassadorOutreachPage() {
@@ -55,7 +55,7 @@ export default async function AmbassadorOutreachPage() {
 
       {leads.length === 0 ? (
         <div className="border-border mb-8 rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-          <p className="text-muted text-sm">No leads yet — add your first lead below.</p>
+          <p className="text-muted text-sm">No leads yet - add your first lead below.</p>
         </div>
       ) : (
         <OutreachKanban leads={leads} showCityBadge={cityScopes.length !== 1} />

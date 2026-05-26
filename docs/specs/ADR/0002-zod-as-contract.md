@@ -22,10 +22,10 @@ Web (`apps/web`) and mobile (`apps/mobile`) must agree on every request/response
 
 - **Positive:** single source of truth, runtime + compile-time safety, no spec drift, mobile and web evolve together.
 - **Negative:** `zod-to-openapi` covers ~95 % of OpenAPI; rare edge cases need manual annotations on the Zod schema.
-- **Neutral:** all new endpoints must register their schema; the existing dev-stage `/api/auth/google` routes are migrated directly to `/api/v1/auth/google` and deleted in the same release — no wrapping or deprecation window needed since the web is pre-launch (see TDD-0001).
+- **Neutral:** all new endpoints must register their schema; the existing dev-stage `/api/auth/google` routes are migrated directly to `/api/v1/auth/google` and deleted in the same release - no wrapping or deprecation window needed since the web is pre-launch (see TDD-0001).
 
 ## Alternatives considered
 
-- **OpenAPI hand-written first, types generated** — drifts from code, slower to iterate.
-- **tRPC** — great DX inside TS, but binds mobile tightly to TS server semantics and complicates third-party (potential web-hook / integrations) consumption. Rejected for now.
-- **GraphQL** — overkill for current shape; adds a server, schema layer, and client cache to maintain.
+- **OpenAPI hand-written first, types generated** - drifts from code, slower to iterate.
+- **tRPC** - great DX inside TS, but binds mobile tightly to TS server semantics and complicates third-party (potential web-hook / integrations) consumption. Rejected for now.
+- **GraphQL** - overkill for current shape; adds a server, schema layer, and client cache to maintain.

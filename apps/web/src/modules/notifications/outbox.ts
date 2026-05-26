@@ -1,11 +1,11 @@
 /**
- * Notification outbox module — TDD-0002.
+ * Notification outbox module - TDD-0002.
  *
  * Two pure-ish entry points:
  *
- * - `enqueueNotification` — producer; inserts a row into NotificationOutbox
+ * - `enqueueNotification` - producer; inserts a row into NotificationOutbox
  *   with an idempotency key.
- * - `processNotificationOutbox` — consumer; claims pending rows, applies
+ * - `processNotificationOutbox` - consumer; claims pending rows, applies
  *   per-user preferences and quiet-hours filters, dispatches to the
  *   appropriate channel transport, and marks rows SENT/SUPPRESSED/FAILED.
  *
@@ -26,7 +26,7 @@ export type EnqueueInput = {
   topic: NotificationTopic;
   channel: NotificationChannel;
   payload: Record<string, unknown>;
-  /** Idempotency key — typically `${topic}:${entityId}:${userId}` */
+  /** Idempotency key - typically `${topic}:${entityId}:${userId}` */
   idempotencyKey: string;
   notBefore?: Date;
   scoreAtEnqueue?: number;
@@ -117,7 +117,7 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
 
   // Atomically claim a batch using PostgreSQL `FOR UPDATE SKIP LOCKED` so that
   // concurrent workers never claim the same rows. We bump `attempts` inside
-  // the same transaction as the claim marker — if the worker crashes before
+  // the same transaction as the claim marker - if the worker crashes before
   // dispatching, the row stays PENDING and will be re-claimed on the next
   // tick (at-least-once delivery).
   const claimed = await db.$transaction(async (tx) => {

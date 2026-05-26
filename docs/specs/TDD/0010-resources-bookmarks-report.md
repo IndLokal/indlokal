@@ -15,9 +15,9 @@ None.
 
 | Method | Path                                  | Auth     | Request              | Response          |
 | ------ | ------------------------------------- | -------- | -------------------- | ----------------- |
-| GET    | `/api/v1/cities/:slug/resources?type` | optional | —                    | `Resource[]`      |
-| GET    | `/api/v1/me/saves/events?cursor`      | access   | —                    | `EventsPage`      |
-| GET    | `/api/v1/me/saves/communities?cursor` | access   | —                    | `CommunitiesPage` |
+| GET    | `/api/v1/cities/:slug/resources?type` | optional | -                    | `Resource[]`      |
+| GET    | `/api/v1/me/saves/events?cursor`      | access   | -                    | `EventsPage`      |
+| GET    | `/api/v1/me/saves/communities?cursor` | access   | -                    | `CommunitiesPage` |
 | POST   | `/api/v1/reports`                     | access   | `ContentReportInput` | `ContentReport`   |
 
 ## 4. Mobile screens & navigation

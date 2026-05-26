@@ -30,7 +30,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
 
   return (
     <div className="sm:hidden">
-      {/* Hamburger — 44×44 tap target */}
+      {/* Hamburger - 44×44 tap target */}
       <button
         onClick={() => setOpen(!open)}
         className="text-foreground hover:bg-muted-bg flex h-11 w-11 items-center justify-center rounded-[var(--radius-button)] transition-colors"
@@ -72,7 +72,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
             onClick={close}
             aria-hidden="true"
           />
-          {/* Dropdown — aligned to h-16 header bottom */}
+          {/* Dropdown - aligned to h-16 header bottom */}
           <div className="border-border fixed left-0 right-0 top-16 z-50 border-b bg-white px-4 py-3 shadow-lg">
             <nav className="flex flex-col gap-1">
               {links.map((link) => (

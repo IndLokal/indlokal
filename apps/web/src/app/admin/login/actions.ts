@@ -27,7 +27,7 @@ export async function requestAdminMagicLink(
     return { success: false, error: 'Please enter a valid email address.' };
   }
 
-  // IP + global checks first — before any DB work — so unbounded probes
+  // IP + global checks first - before any DB work - so unbounded probes
   // can't even reach the user lookup. Use a deliberately vague error so
   // the response shape doesn't reveal which limit fired.
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';

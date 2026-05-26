@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { AuditTable } from './AuditTable';
 import type { ContentLogAction } from '@prisma/client';
 
-export const metadata = { title: 'Audit Log — Admin' };
+export const metadata = { title: 'Audit Log - Admin' };
 export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 50;

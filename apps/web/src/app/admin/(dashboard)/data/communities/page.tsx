@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { deleteCommunityAction, setCommunityStatusAction } from '../actions';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Communities — Admin' };
+export const metadata = { title: 'Communities - Admin' };
 
 export default async function AdminCommunitiesPage({
   searchParams,
@@ -72,7 +72,7 @@ export default async function AdminCommunitiesPage({
             defaultValue={sp.city ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— all —</option>
+            <option value="">- all -</option>
             {cities.map((c) => (
               <option key={c.slug} value={c.slug}>
                 {c.name}
@@ -87,7 +87,7 @@ export default async function AdminCommunitiesPage({
             defaultValue={sp.status ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— any —</option>
+            <option value="">- any -</option>
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="UNVERIFIED">Unverified</option>
@@ -100,7 +100,7 @@ export default async function AdminCommunitiesPage({
             defaultValue={sp.claimState ?? ''}
             className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
           >
-            <option value="">— any —</option>
+            <option value="">- any -</option>
             <option value="UNCLAIMED">Unclaimed</option>
             <option value="CLAIM_PENDING">Claim pending</option>
             <option value="CLAIMED">Claimed</option>
@@ -136,7 +136,7 @@ export default async function AdminCommunitiesPage({
                   <div className="font-medium">{c.name}</div>
                   <div className="text-muted font-mono text-xs">{c.slug}</div>
                 </td>
-                <td className="px-3 py-2 text-xs">{c.city?.name ?? '—'}</td>
+                <td className="px-3 py-2 text-xs">{c.city?.name ?? '-'}</td>
                 <td className="px-3 py-2">
                   <form action={setCommunityStatusAction} className="flex items-center gap-1">
                     <input type="hidden" name="id" value={c.id} />

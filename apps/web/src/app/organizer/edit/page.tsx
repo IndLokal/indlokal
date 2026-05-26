@@ -1,7 +1,7 @@
 import { requireSessionUser } from '@/lib/session';
 import EditProfileForm from './EditProfileForm';
 
-export const metadata = { title: 'Edit Profile — Organizer' };
+export const metadata = { title: 'Edit Profile - Organizer' };
 
 export default async function EditProfilePage() {
   const user = await requireSessionUser();

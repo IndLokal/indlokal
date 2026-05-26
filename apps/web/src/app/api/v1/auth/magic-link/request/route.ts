@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/magic-link/request — TDD-0001 §3.
+ * POST /api/v1/auth/magic-link/request - TDD-0001 §3.
  *
  * Issues an email-delivered magic link. To avoid account enumeration we
  * always return 200 OK with the same body, regardless of whether the
@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
 
   const email = parsed.data.email.trim().toLowerCase();
 
-  // IP + global caps first — bound abuse before any DB work.
+  // IP + global caps first - bound abuse before any DB work.
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
     req.headers.get('x-real-ip') ??
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     const user = await db.user.findUnique({ where: { email }, select: { id: true } });
     if (user) {
       const token = await createMagicLinkToken(user.id);
-      // displayName at this stage is "your account" — the existing template
+      // displayName at this stage is "your account" - the existing template
       // takes a community name; we pass the email so the email isn't blank.
       await sendMagicLinkEmail(email, token, email).catch((err) => {
         console.error('[auth/magic-link/request] email send failed', err);
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
     }
   } catch (err) {
     console.error('[auth/magic-link/request] db error', err);
-    // Fall through — always return 200 to prevent account enumeration.
+    // Fall through - always return 200 to prevent account enumeration.
   }
 
   return NextResponse.json({ ok: true } satisfies authContracts.MagicLinkRequestResponse);

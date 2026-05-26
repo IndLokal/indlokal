@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/search — Full-text search across communities and events.
+ * GET /api/v1/search - Full-text search across communities and events.
  * Optional auth.
  *
  * Query params: q, citySlug, category, from, to, type, cursor, limit

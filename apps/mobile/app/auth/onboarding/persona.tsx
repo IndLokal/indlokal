@@ -1,5 +1,5 @@
 /**
- * Onboarding step 2 — persona selection. PRD-0019 / TDD-0019.
+ * Onboarding step 2 - persona selection. PRD-0019 / TDD-0019.
  *
  * Multi-select persona chips; on Done calls PATCH /api/v1/me/onboarding
  * with both the cityId (from the previous screen) and the selected

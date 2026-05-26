@@ -11,20 +11,20 @@
 The admin console is gated on a single `PLATFORM_ADMIN` role. As we add a
 strategic partner (X), an ops/community-growth founding hire (Y), city
 ambassadors, and a content intern, we cannot keep handing out platform-admin
-access — it carries destructive write authority and no audit trail. We also
+access - it carries destructive write authority and no audit trail. We also
 cannot scope ambassadors to a single city today.
 
 ## 2. Users & JTBD
 
-- **Founder (JP)** — assign and revoke teammates without shell access.
-- **X (Partnerships Lead)** — approve claims, run partner outreach, manage
+- **Founder (JP)** - assign and revoke teammates without shell access.
+- **X (Partnerships Lead)** - approve claims, run partner outreach, manage
   Resource directory; **must not** be able to delete cities or rotate auth.
-- **Y (Ops Lead)** — onboard communities, manage outreach pipeline, run
+- **Y (Ops Lead)** - onboard communities, manage outreach pipeline, run
   digests; same destructive guardrails.
-- **City Ambassador** — see + queue submissions for _their_ city only.
-- **Content Editor (intern)** — draft social/content highlights; no admin
+- **City Ambassador** - see + queue submissions for _their_ city only.
+- **Content Editor (intern)** - draft social/content highlights; no admin
   writes.
-- **Engineer / AI support** — out of band (GitHub + DB read-only); no platform
+- **Engineer / AI support** - out of band (GitHub + DB read-only); no platform
   UI role.
 
 ## 3. Success Metrics
@@ -40,12 +40,12 @@ cannot scope ambassadors to a single city today.
 
 - New Prisma migration: expanded `UserRole` enum + `RoleAssignment` table per
   ADR-0005.
-- `lib/auth/permissions.ts` — `can(user, action, resource)` helper, action
+- `lib/auth/permissions.ts` - `can(user, action, resource)` helper, action
   catalog, role → action map.
-- `lib/auth/with-role.ts` — server-action / route handler wrapper, replacing
+- `lib/auth/with-role.ts` - server-action / route handler wrapper, replacing
   current `requirePlatformAdmin`.
 - Admin UI:
-  - `/admin/team` — list assignments, grant role with optional city/org scope,
+  - `/admin/team` - list assignments, grant role with optional city/org scope,
     revoke. Visible to `PLATFORM_ADMIN` and `PARTNERSHIPS_LEAD` (read-only for
     the latter on platform-admin grants).
   - Sidebar items hide when the user lacks the action.
@@ -54,7 +54,7 @@ cannot scope ambassadors to a single city today.
 
 ## 5. Out of Scope
 
-- Full policy engine (Casbin / OPA) — see ADR-0005.
+- Full policy engine (Casbin / OPA) - see ADR-0005.
 - Org / multi-tenant Partner Org accounts (covered by a future PRD).
 - SSO / SCIM provisioning.
 - Per-field-level redaction in the API.

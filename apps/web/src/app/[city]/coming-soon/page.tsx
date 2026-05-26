@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const city = getUpcomingCity(slug);
   if (!city) return {};
   return {
-    title: `${city.name} — Coming Soon | ${siteConfig.name}`,
+    title: `${city.name} - Coming Soon | ${siteConfig.name}`,
     description: `${siteConfig.name} is expanding to ${city.name}! Be the first to know when we launch for the Indian community in ${city.name}, Germany.`,
   };
 }
@@ -32,7 +32,7 @@ export default async function ComingSoonPage({ params }: Props) {
     if (!(ACTIVE_CITIES as readonly string[]).includes(slug)) {
       notFound();
     }
-    // Active cities shouldn't land here — redirect handled by layout
+    // Active cities shouldn't land here - redirect handled by layout
     notFound();
   }
 
@@ -69,7 +69,7 @@ export default async function ComingSoonPage({ params }: Props) {
             </h1>
             <p className="text-brand-200/80 mx-auto mt-4 max-w-md text-base leading-relaxed">
               We&apos;re bringing {siteConfig.name} to the Indian community in {city.name},{' '}
-              {city.state}. Communities, events, resources — all in one place.
+              {city.state}. Communities, events, resources - all in one place.
             </p>
           </div>
         </section>
@@ -99,7 +99,7 @@ export default async function ComingSoonPage({ params }: Props) {
             </h2>
             <p className="text-muted mt-2 text-sm leading-relaxed">
               Help us build the {city.name} directory. Submit communities, events, or groups you
-              know about — we&apos;ll add them when we launch.
+              know about - we&apos;ll add them when we launch.
             </p>
             <Link
               href="/submit"

@@ -6,10 +6,10 @@ import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';
 import { SectionHeader, EmptyState } from '@/components/ui';
-import { UPCOMING_CITIES } from '@/lib/config';
+import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
 
 /**
- * City Feed — the primary discovery surface.
+ * City Feed - the primary discovery surface.
  * Activity-led, not directory-led.
  */
 
@@ -19,7 +19,7 @@ type CityFeedPageProps = {
 
 export async function generateMetadata({ params }: CityFeedPageProps): Promise<Metadata> {
   const { city } = await params;
-  const cityName = city.charAt(0).toUpperCase() + city.slice(1);
+  const cityName = getConfiguredCityName(city) ?? city.charAt(0).toUpperCase() + city.slice(1);
   return {
     title: `Indian Communities & Events in ${cityName}`,
     description: `What's happening for Indians in ${cityName} this week? Discover communities, events, and activities.`,
@@ -48,7 +48,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
   } = feed;
   const cityName = cityData.name;
 
-  // Category card palette — brand indigo with a saffron alternate per design system.
+  // Category card palette - brand indigo with a saffron alternate per design system.
   const CAT_COLORS = [
     'from-brand-400 to-brand-600',
     'from-brand-500 to-brand-700',
@@ -63,7 +63,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
 
   return (
     <div className="space-y-14">
-      {/* Hero — dark, bold */}
+      {/* Hero - dark, bold */}
       <section className="relative -mx-4 -mt-8 overflow-hidden sm:-mx-6 sm:-mt-12 lg:-mx-8">
         <div className="from-brand-900 via-brand-800 to-brand-700 bg-gradient-to-br px-4 pb-8 pt-10 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0">
@@ -124,7 +124,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         </section>
       )}
 
-      {/* Browse by Category — colorful grid */}
+      {/* Browse by Category - colorful grid */}
       {categories.length > 0 && (
         <section className="space-y-5">
           <SectionHeader title="Browse by Category" />
@@ -179,7 +179,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         </p>
       </section>
 
-      {/* Quick links — brand palette */}
+      {/* Quick links - brand palette */}
       <section className="grid gap-5 sm:grid-cols-2">
         <Link
           href={`/${city}/business-events`}

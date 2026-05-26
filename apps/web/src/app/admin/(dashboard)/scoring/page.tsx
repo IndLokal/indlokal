@@ -3,7 +3,7 @@ import { db } from '@/lib/db';
 import { subDays } from 'date-fns';
 import { ScoringJobPanel } from './ScoringJobPanel';
 
-export const metadata = { title: 'Scoring & Jobs — Admin' };
+export const metadata = { title: 'Scoring & Jobs - Admin' };
 
 export default async function AdminScoringPage() {
   const now = new Date();
@@ -74,7 +74,7 @@ export default async function AdminScoringPage() {
       {brokenLinksCount > 0 && (
         <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           ⚠️ {brokenLinksCount} access channel{brokenLinksCount !== 1 ? 's' : ''} marked as
-          unverified — run Link Check to update.
+          unverified - run Link Check to update.
         </div>
       )}
 

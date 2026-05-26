@@ -1,5 +1,5 @@
 /**
- * Community-detail contracts — TDD-0006.
+ * Community-detail contracts - TDD-0006.
  */
 
 import { z } from 'zod';
@@ -71,7 +71,7 @@ export const CommunityDetail = z.object({
 });
 export type CommunityDetail = z.infer<typeof CommunityDetail>;
 
-// ─── Community summary (lightweight — used in related rail) ──────────────
+// ─── Community summary (lightweight - used in related rail) ──────────────
 
 export const CommunitySummary = z.object({
   id: Cuid,

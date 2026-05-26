@@ -18,7 +18,7 @@ import { runDirectorySeed } from './directory';
 const prisma = new PrismaClient();
 const shouldSeedDemoEvents = process.env.SEED_DEMO_EVENTS === '1';
 
-// Helpers — produces clean event dates
+// Helpers - produces clean event dates
 const past = (daysAgo: number, hour = 18) =>
   setMinutes(setHours(subDays(new Date(), daysAgo), hour), 0);
 const future = (daysAhead: number, hour = 18) =>
@@ -51,7 +51,7 @@ async function main() {
   );
   console.log(`✅ Communities (from directory): ${allCommunities.length} available\n`);
 
-  // ─── Events (demo-only — synthetic dates for activity scoring) ──────────
+  // ─── Events (demo-only - synthetic dates for activity scoring) ──────────
   // Keep local resets clean by default so pipeline tests reflect only
   // discovered website events. Opt in with SEED_DEMO_EVENTS=1 when needed.
 
@@ -62,7 +62,7 @@ async function main() {
           title: 'Holi Milan 2026',
           slug: 'holi-milan-stuttgart-2026',
           description:
-            'Annual Holi colour festival at Killesbergpark — organic colours, music and food stalls. Families welcome.',
+            'Annual Holi colour festival at Killesbergpark - organic colours, music and food stalls. Families welcome.',
           communitySlug: 'hss-stuttgart',
           venueName: 'Killesbergpark Stuttgart',
           venueAddress: 'Stresemannstr. 4, 70191 Stuttgart',
@@ -87,12 +87,12 @@ async function main() {
           categories: ['cultural', 'language-regional'],
         },
         {
-          title: 'ISS Orientation Day — Summer 2026',
+          title: 'ISS Orientation Day - Summer 2026',
           slug: 'iss-orientation-summer-2026',
           description:
             'Welcome session for new Indian students joining Stuttgart universities in the summer semester. Campus tour, housing Q&A, SIM cards help.',
           communitySlug: 'indian-students-stuttgart',
-          venueName: 'University of Stuttgart — Pfaffenwaldring Campus',
+          venueName: 'University of Stuttgart - Pfaffenwaldring Campus',
           venueAddress: 'Pfaffenwaldring 57, 70569 Stuttgart',
           startsAt: past(20, 10),
           endsAt: past(20, 14),
@@ -101,10 +101,10 @@ async function main() {
           categories: ['student'],
         },
         {
-          title: 'Indians in Stuttgart — March Social',
+          title: 'Indians in Stuttgart - March Social',
           slug: 'indians-stuttgart-march-social-2026',
           description:
-            'Monthly social at Bidda Bar, Stuttgart Mitte. Open to all Indians — no registration needed, just show up!',
+            'Monthly social at Bidda Bar, Stuttgart Mitte. Open to all Indians - no registration needed, just show up!',
           communitySlug: 'indians-in-stuttgart',
           venueName: 'Bidda Bar Stuttgart',
           venueAddress: 'Lautenschlagerstr. 20, 70173 Stuttgart',
@@ -115,7 +115,7 @@ async function main() {
           categories: ['networking-social'],
         },
         {
-          title: 'IPN Stuttgart — Automotive Career Panel',
+          title: 'IPN Stuttgart - Automotive Career Panel',
           slug: 'ipn-automotive-career-panel-2026',
           description:
             'Indian professionals at Bosch, Mercedes, Porsche share career insights for the Stuttgart automotive corridor. Networking drinks after.',
@@ -145,10 +145,10 @@ async function main() {
           categories: ['cultural', 'language-regional', 'family-kids'],
         },
         {
-          title: 'HSS Stuttgart — Weekly Shakha',
+          title: 'HSS Stuttgart - Weekly Shakha',
           slug: 'hss-weekly-shakha-apr-2026',
           description:
-            'Weekly Sunday shakha open to all Hindus — yoga, patriotic songs and community activities. Families and children welcome.',
+            'Weekly Sunday shakha open to all Hindus - yoga, patriotic songs and community activities. Families and children welcome.',
           communitySlug: 'hss-stuttgart',
           venueName: 'Sportplatz Vaihingen',
           venueAddress: 'Rosenaustr. 4, 70569 Stuttgart',
@@ -163,12 +163,12 @@ async function main() {
 
         // ── Coming up ──
         {
-          title: 'Indians in Stuttgart — April Social',
+          title: 'Indians in Stuttgart - April Social',
           slug: 'indians-stuttgart-april-social-2026',
           description:
-            'Monthly social at a new venue — details shared in the WhatsApp group. Open to all Indians, friends welcome.',
+            'Monthly social at a new venue - details shared in the WhatsApp group. Open to all Indians, friends welcome.',
           communitySlug: 'indians-in-stuttgart',
-          venueName: 'TBA — check WhatsApp group',
+          venueName: 'TBA - check WhatsApp group',
           venueAddress: 'Stuttgart Mitte',
           startsAt: future(15, 19),
           endsAt: future(15, 23),
@@ -191,7 +191,7 @@ async function main() {
           categories: ['cultural'],
         },
         {
-          title: 'JITO Stuttgart — Founder Funding Roundtable',
+          title: 'JITO Stuttgart - Founder Funding Roundtable',
           slug: 'jito-founder-funding-roundtable-2026',
           description:
             'Roundtable for founders and early-stage operators: fundraising readiness, angel expectations, and go-to-market mistakes in Germany.',
@@ -205,7 +205,7 @@ async function main() {
           categories: ['professional', 'networking-social'],
         },
         {
-          title: 'JITO Stuttgart — Monthly Founder Breakfast',
+          title: 'JITO Stuttgart - Monthly Founder Breakfast',
           slug: 'jito-monthly-founder-breakfast-2026',
           description:
             'Recurring peer breakfast for entrepreneurs and professionals: accountability updates, hiring challenges, and referral exchange.',
@@ -221,12 +221,12 @@ async function main() {
           categories: ['professional', 'networking-social'],
         },
         {
-          title: 'ISS Study Group — Exam Prep Session',
+          title: 'ISS Study Group - Exam Prep Session',
           slug: 'iss-study-group-may-2026',
           description:
             'Open study session at the university library for Indian students preparing for summer exams. WhatsApp group for table reservation.',
           communitySlug: 'indian-students-stuttgart',
-          venueName: 'UB Stuttgart — Gruppenlernraum',
+          venueName: 'UB Stuttgart - Gruppenlernraum',
           venueAddress: 'Holzgartenstr. 16, 70174 Stuttgart',
           startsAt: future(25, 14),
           endsAt: future(25, 19),
@@ -238,7 +238,7 @@ async function main() {
           title: 'Navratri Dandiya Night Stuttgart 2026',
           slug: 'navratri-dandiya-stuttgart-2026',
           description:
-            "The biggest Navratri dandiya event in BW — Gujarati Samaj's annual celebration drawing 400+ attendees. Traditional dress encouraged.",
+            "The biggest Navratri dandiya event in BW - Gujarati Samaj's annual celebration drawing 400+ attendees. Traditional dress encouraged.",
           communitySlug: 'gujarati-samaj-stuttgart',
           venueName: 'Porsche Arena Stuttgart',
           venueAddress: 'Porscheplatz 1, 70435 Stuttgart',
@@ -266,7 +266,7 @@ async function main() {
           title: 'Kannada Rajyotsava Stuttgart 2026',
           slug: 'kannada-rajyotsava-stuttgart-2026',
           description:
-            'Karnataka Formation Day celebration — Kannada cultural programme, traditional cuisine and community camaraderie.',
+            'Karnataka Formation Day celebration - Kannada cultural programme, traditional cuisine and community camaraderie.',
           communitySlug: 'kannada-koota-stuttgart',
           venueName: 'Gemeindesaal Feuerbach',
           venueAddress: 'Stuttgarter Str. 65, 70469 Stuttgart',
@@ -279,7 +279,7 @@ async function main() {
 
         // ── Events for verified communities ──
         {
-          title: 'Indian Film Festival Stuttgart 2026 — Opening Night',
+          title: 'Indian Film Festival Stuttgart 2026 - Opening Night',
           slug: 'iffs-opening-night-2026',
           description:
             'Opening night of the 23rd Indian Film Festival Stuttgart with premiere screening, director Q&A and reception.',
@@ -293,10 +293,10 @@ async function main() {
           categories: ['arts-entertainment', 'cultural'],
         },
         {
-          title: 'Sikh Gurudwara Stuttgart — Vaisakhi Celebration',
+          title: 'Sikh Gurudwara Stuttgart - Vaisakhi Celebration',
           slug: 'vaisakhi-gurudwara-stuttgart-2026',
           description:
-            'Vaisakhi celebration at the Stuttgart Gurudwara — Akhand Path, Kirtan, Nagar Kirtan procession and langar for all.',
+            'Vaisakhi celebration at the Stuttgart Gurudwara - Akhand Path, Kirtan, Nagar Kirtan procession and langar for all.',
           communitySlug: 'sikh-gurudwara-stuttgart',
           venueName: 'Gurudwara Sahib Stuttgart',
           venueAddress: 'Industriestr. 44, 70565 Stuttgart',
@@ -307,7 +307,7 @@ async function main() {
           categories: ['religious', 'cultural'],
         },
         {
-          title: 'Bengali Association — Rabindra Jayanti 2026',
+          title: 'Bengali Association - Rabindra Jayanti 2026',
           slug: 'rabindra-jayanti-stuttgart-2026',
           description:
             "Celebrating Tagore's birth anniversary with Rabindra Sangeet performances, poetry recitation and a traditional Bengali dinner.",
@@ -323,10 +323,10 @@ async function main() {
 
         // ── Recurring events (inspired by Stuttgart Expats weekly cadence) ──
         {
-          title: 'Green Sox Cricket — Weekly Nets Practice',
+          title: 'Green Sox Cricket - Weekly Nets Practice',
           slug: 'green-sox-weekly-nets-2026',
           description:
-            'Weekly cricket nets session at Göppingen. Open to all skill levels — bats, balls and stumps provided. Come for a hit and fitness!',
+            'Weekly cricket nets session at Göppingen. Open to all skill levels - bats, balls and stumps provided. Come for a hit and fitness!',
           communitySlug: 'green-sox-goeppingen',
           venueName: 'Sportanlage Göppingen',
           venueAddress: 'Jahnstr. 12, 73033 Göppingen',
@@ -339,12 +339,12 @@ async function main() {
           categories: ['sports-fitness'],
         },
         {
-          title: 'Indians in Stuttgart — Monthly Social Hangout',
+          title: 'Indians in Stuttgart - Monthly Social Hangout',
           slug: 'indians-stuttgart-monthly-social-2026',
           description:
-            'Monthly social evening at a rotating venue in Stuttgart — food, drinks and networking. Venue announced in WhatsApp group each month.',
+            'Monthly social evening at a rotating venue in Stuttgart - food, drinks and networking. Venue announced in WhatsApp group each month.',
           communitySlug: 'indians-in-stuttgart',
-          venueName: 'TBA — check WhatsApp group',
+          venueName: 'TBA - check WhatsApp group',
           venueAddress: 'Stuttgart Mitte',
           startsAt: future(28, 19),
           endsAt: future(28, 23),
@@ -355,7 +355,7 @@ async function main() {
           categories: ['networking-social'],
         },
         {
-          title: 'ISCON Stuttgart — Sunday Satsang & Prasadam',
+          title: 'ISCON Stuttgart - Sunday Satsang & Prasadam',
           slug: 'iscon-sunday-satsang-2026',
           description:
             'Weekly Sunday satsang with kirtan, Bhagavad Gita discourse and free vegetarian prasadam. All are welcome.',
@@ -371,7 +371,7 @@ async function main() {
           categories: ['religious'],
         },
         {
-          title: 'Indian Professionals Stuttgart — Stammtisch',
+          title: 'Indian Professionals Stuttgart - Stammtisch',
           slug: 'ips-stammtisch-monthly-2026',
           description:
             'Monthly networking Stammtisch for Indian professionals in the Stuttgart metro area. Industry talks, career advice, and casual networking over beer.',

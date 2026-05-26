@@ -1,24 +1,24 @@
-# IndLokal — Design Guidelines
+# IndLokal - Design Guidelines
 
-_Version 2.0 — Pulse-mark release_
+_Version 2.0 - Pulse-mark release_
 _Owner: Brand & Marketing · Companion to `BRAND_GUIDELINES.md`_
 
-These guidelines cover the visual system: logo, colour, type, layout, iconography, photography, and the rules for social and ad creative. The product UI tokens already live in [`src/app/globals.css`](../../src/app/globals.css) — this document is the source of truth they map to.
+These guidelines cover the visual system: logo, colour, type, layout, iconography, photography, and the rules for social and ad creative. The product UI tokens already live in [`src/app/globals.css`](../../src/app/globals.css) - this document is the source of truth they map to.
 
 ---
 
-## 1. Logo system — the Pulse mark
+## 1. Logo system - the Pulse mark
 
-The IndLokal mark is a **pulse on a tile** — a bicolour pulse line set inside a rounded indigo tile. It is, deliberately, a picture of what the product does.
+The IndLokal mark is a **pulse on a tile** - a bicolour pulse line set inside a rounded indigo tile. It is, deliberately, a picture of what the product does.
 
 - The **rounded indigo tile** is the city, the platform, the local container.
 - The **cream half** of the pulse rises from the local German context on the left.
 - The **saffron half** descends with Indian community warmth on the right.
-- They **meet at a peak** — the moment of discovery, an event happening, a community pulsing.
+- They **meet at a peak** - the moment of discovery, an event happening, a community pulsing.
 
-The mark intentionally echoes the product’s signature **Pulse Score** ([`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) §8.6) — IndLokal is activity-led, and the mark says so. No pin clichés. No flame. No monogram. The bicolour line says one thing and means it.
+The mark intentionally echoes the product’s signature **Pulse Score** ([`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) §8.6) - IndLokal is activity-led, and the mark says so. No pin clichés. No flame. No monogram. The bicolour line says one thing and means it.
 
-The wordmark `IndLokal` always uses capital `I` and capital `L` — the camel-case is the brand idea (`Ind` + `Lokal`) made visible.
+The wordmark `IndLokal` always uses capital `I` and capital `L` - the camel-case is the brand idea (`Ind` + `Lokal`) made visible.
 
 ### 1.1 Variants
 
@@ -36,7 +36,7 @@ All assets live in [`docs/brand/assets/`](./assets/).
 
 ### 1.2 Clear space
 
-Minimum clear space around any logo lockup = **the height of the indigo tile’s corner radius** (roughly the stroke-width of the pulse line, on every side). Nothing — no text, no edge, no other logo — enters that space.
+Minimum clear space around any logo lockup = **the height of the indigo tile’s corner radius** (roughly the stroke-width of the pulse line, on every side). Nothing - no text, no edge, no other logo - enters that space.
 
 ### 1.3 Minimum size
 
@@ -52,14 +52,14 @@ Below these, swap to the mark or scale up.
 Do not:
 
 - Recolour the mark or wordmark outside the official palette.
-- Recolour either half of the pulse — the cream→saffron split is the brand idea, not decoration.
+- Recolour either half of the pulse - the cream→saffron split is the brand idea, not decoration.
 - Separate the two pulse halves, or move the peak off-centre. They meet at the apex; that’s the moment.
 - Flatten, raise, lower, or add extra spikes to the pulse. It is two strokes meeting at one peak. Always.
 - Stretch, skew, rotate, outline, drop-shadow, or 3D the logo.
 - Place the indigo logo on saturated colour backgrounds (cream, white, or saffron tints only).
 - Add a tagline _inside_ the logo lockup. Tagline is a copy element, set separately.
 - Recreate the wordmark in a different typeface. Always use the SVG.
-- Spell the wordmark `Indlokal`, `INDLOKAL`, `Ind Lokal`, `Ind-Lokal`, or `IndLocal`. It is `IndLokal` — capital `I`, capital `L`.
+- Spell the wordmark `Indlokal`, `INDLOKAL`, `Ind Lokal`, `Ind-Lokal`, or `IndLocal`. It is `IndLokal` - capital `I`, capital `L`.
 
 ---
 
@@ -67,7 +67,7 @@ Do not:
 
 The palette mirrors what already ships in product (`src/app/globals.css`) so brand and product never drift.
 
-### 2.1 Primary — Indigo (the Lokal)
+### 2.1 Primary - Indigo (the Lokal)
 
 | Token       | Hex       | Use                                      |
 | ----------- | --------- | ---------------------------------------- |
@@ -79,13 +79,13 @@ The palette mirrors what already ships in product (`src/app/globals.css`) so bra
 | `brand-700` | `#4338CA` | Hover, depth, headings on light          |
 | `brand-900` | `#312E81` | Dark text on light, deep backgrounds     |
 
-### 2.2 Accent — Saffron (the Ind)
+### 2.2 Accent - Saffron (the Ind)
 
 | Token        | Hex       | Use                                                                                  |
 | ------------ | --------- | ------------------------------------------------------------------------------------ |
 | `accent-100` | `#FEF3C7` | Highlight backgrounds                                                                |
 | `accent-300` | `#FCD34D` | Accent dots, highlight glyphs, the saffron half of the Pulse mark at small sizes     |
-| `accent-500` | `#F59E0B` | **Default accent** — the saffron half of the Pulse mark, callouts, single highlights |
+| `accent-500` | `#F59E0B` | **Default accent** - the saffron half of the Pulse mark, callouts, single highlights |
 | `accent-600` | `#D97706` | Pressed / dense accent                                                               |
 
 ### 2.3 Neutrals
@@ -111,7 +111,7 @@ The palette mirrors what already ships in product (`src/app/globals.css`) so bra
 1. **One accent per surface.** Saffron is a spice, not a sauce. Use it once per screen, ad, or post.
 2. **Indigo carries the brand.** Saffron supports it. Never invert this hierarchy.
 3. **Never use Indian-flag green** as a brand colour. We are not a flag; we are a community product.
-4. **Contrast.** All text must clear WCAG AA — minimum 4.5:1 for body, 3:1 for large text.
+4. **Contrast.** All text must clear WCAG AA - minimum 4.5:1 for body, 3:1 for large text.
 5. **Gradients are allowed sparingly:** `brand-700 → brand-500` for hero panels, `accent-500 → accent-300` for warmth moments. No three-colour gradients. No saffron-to-indigo gradients (muddy).
 
 ---
@@ -122,8 +122,8 @@ The palette mirrors what already ships in product (`src/app/globals.css`) so bra
 
 | Role                                   | Family             | Weights              | Source                                                                                                  |
 | -------------------------------------- | ------------------ | -------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Primary (UI + marketing)**           | **Inter**          | 400, 500, 600, 700   | [Google Fonts](https://fonts.google.com/specimen/Inter) — already loaded in product                     |
-| **Display (optional, headlines only)** | **Fraunces**       | 600, 700 (italic OK) | [Google Fonts](https://fonts.google.com/specimen/Fraunces) — for editorial / brand storytelling moments |
+| **Primary (UI + marketing)**           | **Inter**          | 400, 500, 600, 700   | [Google Fonts](https://fonts.google.com/specimen/Inter) - already loaded in product                     |
+| **Display (optional, headlines only)** | **Fraunces**       | 600, 700 (italic OK) | [Google Fonts](https://fonts.google.com/specimen/Fraunces) - for editorial / brand storytelling moments |
 | **Mono (numbers, dev)**                | **JetBrains Mono** | 400, 600             | [Google Fonts](https://fonts.google.com/specimen/JetBrains+Mono)                                        |
 
 Inter is the default. Fraunces is optional and reserved for big editorial headlines (campaign hero, blog cover, LinkedIn quote cards). Never mix more than two families on one surface.
@@ -154,7 +154,7 @@ Inter is the default. Fraunces is optional and reserved for big editorial headli
 
 - **8 px base grid.** Spacing scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 / 96.
 - **Radii** mirror product tokens: button 8, card 14, panel 16, badge pill.
-- **Shadows** are soft and short — never neon glow. Default: `0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(79,70,229,0.06)`.
+- **Shadows** are soft and short - never neon glow. Default: `0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(79,70,229,0.06)`.
 - **Cards** carry the brand more than backgrounds. Backgrounds stay quiet (`background` or `surface`); cards do the work.
 
 ---
@@ -171,22 +171,22 @@ Inter is the default. Fraunces is optional and reserved for big editorial headli
 
 ### 6.1 Photography principles
 
-- **Real people, real cities.** Indian diaspora in Germany — Stuttgart’s Schlossplatz, Berlin S-Bahn, Munich Englischer Garten, a Köln WG kitchen at Diwali.
+- **Real people, real cities.** Indian diaspora in Germany - Stuttgart’s Schlossplatz, Berlin S-Bahn, Munich Englischer Garten, a Köln WG kitchen at Diwali.
 - **Natural light, candid framing.** No corporate stock smiles. No over-saturated “diversity stock” shots.
-- **Mixed generations.** Students, families, aunties, professionals — visible, not tokenised.
-- **Activity over portrait.** Show people _doing_ something — cooking, dancing, queueing for chai, rehearsing.
+- **Mixed generations.** Students, families, aunties, professionals - visible, not tokenised.
+- **Activity over portrait.** Show people _doing_ something - cooking, dancing, queueing for chai, rehearsing.
 - **Hands and food are great.** Faces aren’t mandatory.
 
 ### 6.2 Illustration
 
 - Geometric, flat, two-tone (indigo + saffron + one neutral).
-- City silhouettes are allowed for city pages — line-only, no skyline clichés.
+- City silhouettes are allowed for city pages - line-only, no skyline clichés.
 - Avoid cartoon faces; use abstracted figures or props.
 
 ### 6.3 Don’ts
 
 - No clip-art elephants, henna borders, or “generic India” visual shortcuts.
-- No flag draping, no chakra as a logo motif (the sun in our mark is _not_ the chakra — keep it that way).
+- No flag draping, no chakra as a logo motif (the sun in our mark is _not_ the chakra - keep it that way).
 - No AI-generated imagery of identifiable people.
 
 ---
@@ -205,7 +205,7 @@ All cover/post templates live in [`docs/brand/assets/`](./assets/).
 
 ### Social copy rules
 
-- Profile picture = **mark only**, indigo on cream — never the full lockup (illegible at 32 px avatars).
+- Profile picture = **mark only**, indigo on cream - never the full lockup (illegible at 32 px avatars).
 - Cover = mark + wordmark + tagline + city note. Keep the right third clear of text (LinkedIn overlays the profile picture there).
 - Post hashtags: `#IndLokal #IndianInGermany #IndianDiaspora` + city-specific (e.g. `#IndianInStuttgart`). Max 5.
 
@@ -215,7 +215,7 @@ All cover/post templates live in [`docs/brand/assets/`](./assets/).
 
 ```
 Jane Doe
-IndLokal — Your Indian community, locally.
+IndLokal - Your Indian community, locally.
 jane@indlokal.de · indlokal.de
 ```
 
@@ -227,7 +227,7 @@ jane@indlokal.de · indlokal.de
 ## 9. Accessibility
 
 - WCAG 2.2 AA is the floor, not the ceiling.
-- Colour is never the only signal — pair with icon, text, or shape.
+- Colour is never the only signal - pair with icon, text, or shape.
 - All marketing imagery needs alt text describing what’s happening, not what it is. Good: _“Three friends sharing chai on a Stuttgart balcony at dusk.”_ Bad: _“People drinking tea.”_
 
 ---
@@ -244,7 +244,7 @@ jane@indlokal.de · indlokal.de
 
 | Thing          | Answer                                                                  |
 | -------------- | ----------------------------------------------------------------------- |
-| Brand name     | **IndLokal** — capital `I`, capital `L`, always                         |
+| Brand name     | **IndLokal** - capital `I`, capital `L`, always                         |
 | URL / handle   | `indlokal.de`, `indlokal.com`, `@indlokal` (lowercase)                  |
 | Primary colour | `#4F46E5` (brand-600)                                                   |
 | Accent colour  | `#F59E0B` (accent-500)                                                  |
@@ -252,5 +252,5 @@ jane@indlokal.de · indlokal.de
 | Body font      | Inter 400, 16/24                                                        |
 | Mark           | Bicolour pulse line on indigo tile (cream + saffron meeting at peak)    |
 | Logo on dark   | Use `logo-monochrome-light.svg`                                         |
-| Logo on photo  | Place on a solid indigo or cream patch — never directly on busy imagery |
+| Logo on photo  | Place on a solid indigo or cream patch - never directly on busy imagery |
 | Min logo size  | 120 px wide (lockup), 24 px wide (mark)                                 |

@@ -5,7 +5,7 @@ import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'My Events — Event Host' };
+export const metadata = { title: 'My Events - Event Host' };
 
 export default async function HostEventsPage() {
   const user = await getSessionUser();

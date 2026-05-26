@@ -102,7 +102,7 @@ export async function getCommunitiesByCity(
 }
 
 /**
- * Cursor-paginated community list — powers GET /api/v1/discovery/:citySlug/communities.
+ * Cursor-paginated community list - powers GET /api/v1/discovery/:citySlug/communities.
  */
 export async function getCommunitiesPage(
   citySlug: string,

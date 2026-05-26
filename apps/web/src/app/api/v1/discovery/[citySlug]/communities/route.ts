@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/discovery/:citySlug/communities — cursor-paginated community feed.
+ * GET /api/v1/discovery/:citySlug/communities - cursor-paginated community feed.
  * Public, no auth required. TDD-0003 §3.
  */
 

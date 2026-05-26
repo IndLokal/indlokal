@@ -50,4 +50,4 @@ Sticky action bar on scroll. Offline cached event renders with a small "Offline"
 
 ## 9. Risks & Open Questions
 
-- Time-zone display for users traveling — show event in venue local time with a sub-label in user TZ.
+- Time-zone display for users traveling - show event in venue local time with a sub-label in user TZ.

@@ -87,7 +87,7 @@ jobs:
 
       - name: Apply migrations to test database
         # Validates that the committed Prisma migrations apply cleanly.
-        # If this fails, Vercel will also fail — catch it here first.
+        # If this fails, Vercel will also fail - catch it here first.
         run: pnpm --filter web exec prisma migrate deploy
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/indlokal_test?schema=public

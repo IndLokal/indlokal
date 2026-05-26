@@ -20,7 +20,7 @@ const RECENT_KEY = 'indlokal.search.recent.v1';
 const MAX_RECENT = 8;
 
 /**
- * Mobile search shell — TDD-0007.
+ * Mobile search shell - TDD-0007.
  * Calls GET /api/v1/search/suggest as the user types, persists recent queries
  * locally, and routes COMMUNITY/EVENT suggestions to the matching detail screen.
  */

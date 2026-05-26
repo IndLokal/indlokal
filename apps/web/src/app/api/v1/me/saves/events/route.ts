@@ -1,5 +1,5 @@
 /**
- * GET /api/v1/me/saves/events?cursor&limit — Paginated saved events for the authenticated user.
+ * GET /api/v1/me/saves/events?cursor&limit - Paginated saved events for the authenticated user.
  * Requires access token. TDD-0010.
  */
 

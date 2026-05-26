@@ -1,5 +1,5 @@
 /**
- * Mobile search results — PRD-0007.
+ * Mobile search results - PRD-0007.
  * Reads `q`, `citySlug`, `type`, `range` from route params, calls
  * GET /api/v1/search, and renders Events + Communities groups.
  * Filter chips can refine type and date range; changes update params

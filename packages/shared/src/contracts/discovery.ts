@@ -1,5 +1,5 @@
 /**
- * Discovery contracts — TDD-0003.
+ * Discovery contracts - TDD-0003.
  *
  * Covers the city list, city detail, and per-city discovery feed
  * endpoints (/api/v1/cities and /api/v1/discovery/:citySlug/*).

@@ -34,7 +34,7 @@ export async function runLinkCheck(): Promise<JobResult> {
         OR: [{ lastVerifiedAt: null }, { lastVerifiedAt: { lt: oneDayAgo } }],
       },
       select: { id: true, url: true },
-      take: 100, // batch cap — prevents timeout with large datasets
+      take: 100, // batch cap - prevents timeout with large datasets
     });
 
     let verified = 0;

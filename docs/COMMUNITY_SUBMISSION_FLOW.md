@@ -41,15 +41,15 @@ After submission the user sees a clear confirmation: "under review, typically ap
 
 A visitor can reach the submission form from three places:
 
-1. **City nav bar** — "+ Submit" button (top right, every city page)
-2. **Communities listing page** — "Don't see your community? Submit it" callout (future)
-3. **Direct URL** — `/submit` (linkable, in sitemap with `changeFrequency: monthly`)
+1. **City nav bar** - "+ Submit" button (top right, every city page)
+2. **Communities listing page** - "Don't see your community? Submit it" callout (future)
+3. **Direct URL** - `/submit` (linkable, in sitemap with `changeFrequency: monthly`)
 
 ---
 
 ## 4. End-to-End Submission Flow
 
-### Step 1 — Form Completion (`/submit`)
+### Step 1 - Form Completion (`/submit`)
 
 The submission page (`src/app/submit/page.tsx`) is a server component that:
 
@@ -58,22 +58,22 @@ The submission page (`src/app/submit/page.tsx`) is a server component that:
 
 The form is grouped into four sections:
 
-#### Section A — Community Details
+#### Section A - Community Details
 
 | Field             | Required | Validation                |
 | ----------------- | -------- | ------------------------- |
-| Community name    | Yes      | 2–200 chars               |
-| Short description | Yes      | 10–2 000 chars            |
+| Community name    | Yes      | 2-200 chars               |
+| Short description | Yes      | 10-2 000 chars            |
 | City              | Yes      | Dropdown of active cities |
 
-#### Section B — Classification
+#### Section B - Classification
 
 | Field      | Required  | Notes                                                   |
 | ---------- | --------- | ------------------------------------------------------- |
 | Categories | Yes (≥ 1) | 11 available: Cultural, Sports, Professional, etc.      |
 | Languages  | No        | 13 options: Hindi, Telugu, Tamil, German, English, etc. |
 
-#### Section C — Access Channels
+#### Section C - Access Channels
 
 | Field                  | Required | Notes                                                                                              |
 | ---------------------- | -------- | -------------------------------------------------------------------------------------------------- |
@@ -82,19 +82,19 @@ The form is grouped into four sections:
 | Secondary channel type | No       | Optional second entry point                                                                        |
 | Secondary channel URL  | No       | Required if type is supplied                                                                       |
 
-#### Section D — Contact Information
+#### Section D - Contact Information
 
 | Field      | Required | Notes                                                                        |
 | ---------- | -------- | ---------------------------------------------------------------------------- |
 | Your name  | Yes      | Submitter's full name                                                        |
 | Your email | Yes      | Used as `metadata.submitter.email`; later linked to user account on approval |
 
-### Step 2 — Server Action
+### Step 2 - Server Action
 
 `submitCommunity()` in `src/app/submit/actions.ts`:
 
 1. Validate full form via Zod `submitCommunitySchema`
-2. Resolve city by `citySlug` — return error if not active
+2. Resolve city by `citySlug` - return error if not active
 3. Generate unique URL slug from community name using `slugify` (timestamp suffix on collision)
 4. Resolve category IDs from slugs
 5. Create `Community` with:
@@ -106,7 +106,7 @@ The form is grouped into four sections:
 
 On success, the form is replaced with a confirmation message: community name is shown, and the user is told to expect review within a few days.
 
-### Step 3 — Platform Admin Review
+### Step 3 - Platform Admin Review
 
 An operator visits `/admin/submissions`. For each `UNVERIFIED` community they see:
 
@@ -129,9 +129,9 @@ An operator visits `/admin/submissions`. For each `UNVERIFIED` community they se
 
 Community remains in the DB in either state. `INACTIVE` communities are not visible in discovery. A platform admin can manually reactivate if context changes.
 
-### Step 4 — Organiser Account Activation (Post-Approval)
+### Step 4 - Organiser Account Activation (Post-Approval)
 
-After the submission is approved, the submitter's email is not automatically promoted — they still need to **claim** the community they submitted. This is intentional:
+After the submission is approved, the submitter's email is not automatically promoted - they still need to **claim** the community they submitted. This is intentional:
 
 1. The newly approved `ACTIVE` community has `claimState: UNCLAIMED`
 2. The submitter visits their community page, sees the ClaimSection, and submits a claim
@@ -158,7 +158,7 @@ Community {
   }
 }
 
-CommunityCategory[] — one row per selected category
+CommunityCategory[] - one row per selected category
 
 AccessChannel {
   channelType: WHATSAPP
@@ -199,7 +199,7 @@ UNVERIFIED ──────────► ACTIVE   (approved by admin)
 
 ---
 
-## 8. Submission vs. Claim — Decision Guide
+## 8. Submission vs. Claim - Decision Guide
 
 Use this to help an organiser choose the right path:
 
@@ -219,7 +219,7 @@ Is your community already listed on IndLokal?
 
 | Route                    | File                                 | Purpose                                         |
 | ------------------------ | ------------------------------------ | ----------------------------------------------- |
-| `GET /submit`            | `src/app/submit/page.tsx`            | Server wrapper — fetches cities + categories    |
+| `GET /submit`            | `src/app/submit/page.tsx`            | Server wrapper - fetches cities + categories    |
 | Client form              | `src/app/submit/SubmitForm.tsx`      | Multi-section submission form                   |
 | `Server Action`          | `src/app/submit/actions.ts`          | `submitCommunity()`                             |
 | `GET /admin/submissions` | `src/app/admin/submissions/page.tsx` | Platform review queue                           |
@@ -241,9 +241,9 @@ Is your community already listed on IndLokal?
 
 ## 11. Future Enhancements
 
-- **Auto-claim on approval** — first-time submitter is automatically promoted to `COMMUNITY_ADMIN` when their submission is approved, bypassing the separate claim step
-- **Email notifications** — notify submitter when approved/rejected once email delivery is integrated
-- **Duplicate prevention** — fuzzy name matching against existing communities during submission to surface likely duplicates
-- **Logo upload** — image upload at submission time, stored in object storage
-- **Submission queue prioritisation** — rank submissions by city activity, completeness, and submitter engagement for faster high-value approvals
-- **Bulk seeding interface** — admin form for adding multiple communities from a spreadsheet
+- **Auto-claim on approval** - first-time submitter is automatically promoted to `COMMUNITY_ADMIN` when their submission is approved, bypassing the separate claim step
+- **Email notifications** - notify submitter when approved/rejected once email delivery is integrated
+- **Duplicate prevention** - fuzzy name matching against existing communities during submission to surface likely duplicates
+- **Logo upload** - image upload at submission time, stored in object storage
+- **Submission queue prioritisation** - rank submissions by city activity, completeness, and submitter engagement for faster high-value approvals
+- **Bulk seeding interface** - admin form for adding multiple communities from a spreadsheet

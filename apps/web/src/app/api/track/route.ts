@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
     const rl = checkRateLimit(trackLimiter, ip);
     if (!rl.allowed) {
-      return NextResponse.json({ ok: true }); // silently drop — non-critical telemetry
+      return NextResponse.json({ ok: true }); // silently drop - non-critical telemetry
     }
 
     const contentType = req.headers.get('content-type');
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     // Basic input validation
     if (!entityType || !entityId || !VALID_ENTITY_TYPES.has(entityType)) {
-      console.warn('[track] Invalid input — entityType=%s entityId=%s', entityType, entityId);
+      console.warn('[track] Invalid input - entityType=%s entityId=%s', entityType, entityId);
       return NextResponse.json({ ok: true });
     }
 
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
-    // Non-critical telemetry — don't surface to client but log for debugging
+    // Non-critical telemetry - don't surface to client but log for debugging
     console.error('[track] Failed to record interaction:', err);
   }
 

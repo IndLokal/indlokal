@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="800" height="220" role="img" aria-label="IndLokal">
-  <title>IndLokal — monochrome light (for dark backgrounds)</title>
+  <title>IndLokal - monochrome light (for dark backgrounds)</title>
   <!-- For dark backgrounds. Mark uses a soft cream tile so it stays visible. -->
   <g transform="translate(0,0)">
     <rect width="220" height="220" rx="48" fill="#FAFAF9"/>

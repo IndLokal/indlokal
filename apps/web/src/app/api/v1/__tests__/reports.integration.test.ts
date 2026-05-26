@@ -4,7 +4,7 @@
  * Key invariant: when an authenticated user submits a content report,
  * the `reporterUserId` field must be persisted to the database.
  *
- * @db — requires test database
+ * @db - requires test database
  */
 import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';

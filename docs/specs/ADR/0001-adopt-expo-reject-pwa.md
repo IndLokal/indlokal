@@ -14,9 +14,9 @@ The team is small, TypeScript- and React-fluent, and already operates the Next.j
 
 Build native iOS and Android apps using **Expo (React Native) + EAS**, organized in a **pnpm + Turborepo monorepo** alongside the existing Next.js app. Web and mobile share a single backend and a single contract:
 
-- `apps/web` — current Next.js app (unchanged delivery model).
-- `apps/mobile` — Expo app.
-- `packages/shared` — Zod schemas, generated typed client, analytics and notification catalogs.
+- `apps/web` - current Next.js app (unchanged delivery model).
+- `apps/mobile` - Expo app.
+- `packages/shared` - Zod schemas, generated typed client, analytics and notification catalogs.
 - Backend is the existing Next.js stack, exposed under versioned `/api/v1/*` (per [ADR-0002](0002-zod-as-contract.md)).
 
 A PWA is **explicitly rejected** as the primary mobile delivery channel.
@@ -27,7 +27,7 @@ This is a product-positioning decision before it is a tooling decision. The role
 
 - **Mobile is the retention surface.** It owns DAU/MAU, push opt-in, D30/D90, saved-event reminders, and the weekly digest loop. Habit formation happens here.
 - **Web is the acquisition and operations surface.** It owns SEO long-tail ("Indian events {city}", "Diwali near me"), shareable OG cards, the organizer/admin console, and the editorial and moderation pipeline. Web is the funnel and the back office.
-- **Push, deep links, share sheet, calendar, widgets, and (later) Live Activities are core product capabilities.** They are not enhancements layered on top of a content site; they are how the retention loops in [`MOBILE_APP_STRATEGY.md`](../../MOBILE_APP_STRATEGY.md) §5 and §7 actually work. A PWA cannot deliver them at the quality the product depends on, especially on iOS — which dominates the segments we target.
+- **Push, deep links, share sheet, calendar, widgets, and (later) Live Activities are core product capabilities.** They are not enhancements layered on top of a content site; they are how the retention loops in [`MOBILE_APP_STRATEGY.md`](../../MOBILE_APP_STRATEGY.md) §5 and §7 actually work. A PWA cannot deliver them at the quality the product depends on, especially on iOS - which dominates the segments we target.
 - **One backend, two clients.** The Next.js API is the single source of truth; web and mobile are thin clients over a shared Zod contract. This keeps the team small without splitting domain logic across stacks.
 
 ## Consequences
@@ -70,7 +70,7 @@ We are optimizing for **engagement, trust, and growth loops**, measured against 
 
 ## Future extensions
 
-The architecture is set up to absorb roadmap items from [`docs/AI_AGENT_PRODUCT.md`](../../AI_AGENT_PRODUCT.md), [`docs/AI_AGENT_ARCHITECTURE.md`](../../AI_AGENT_ARCHITECTURE.md), and `MOBILE_APP_STRATEGY.md` §10 without re-platforming:
+The architecture is set up to absorb roadmap items from [`docs/AI_PIPELINE_PRODUCT.md`](../../AI_PIPELINE_PRODUCT.md), [`docs/AI_PIPELINE_ARCHITECTURE.md`](../../AI_PIPELINE_ARCHITECTURE.md), and `MOBILE_APP_STRATEGY.md` §10 without re-platforming:
 
 - **Personalization engine.** `modules/scoring` already emits per-entity scores read by mobile via `/api/v1/discovery/*`. Adding a per-user `personalScore` is a new field plus a feed-rank flag, not a new system.
 - **Recommendation system.** Collaborative filtering on `UserInteraction`, `SavedEvent`, and `SavedCommunity` plugs into the same Discover feed and into notification gating ([TDD-0002](../TDD/0002-devices-and-notifications.md)). Recommendations become another producer on the notification outbox.

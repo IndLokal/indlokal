@@ -2,15 +2,17 @@ name: Cron Jobs
 
 # Simple MVP cron runner. GitHub Actions is good enough until these jobs become
 # user-visible or business-critical. Requires repository secrets:
-#   APP_URL      — production base URL, e.g. https://indlokal.de
-#   CRON_SECRET  — shared secret matching CRON_SECRET env var on Vercel
+#   APP_URL      - production base URL, e.g. https://indlokal.de
+#   CRON_SECRET  - shared secret matching CRON_SECRET env var on Vercel
 
 on:
   schedule:
     # Keep scores fresh enough for MVP demos.
     - cron: '0 */6 * * *'
-    # Daily maintenance and pipeline.
+    # Daily maintenance jobs.
     - cron: '0 3 * * *'
+    # Pipeline dispatcher fans out per-region (PRD/TDD-0029).
+    - cron: '5 2 * * *'
   workflow_dispatch:
     inputs:
       job:
@@ -27,7 +29,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'scores' || inputs.job == 'all')) ||
-      github.event_name == 'schedule'
+      (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
     steps:
       - name: POST /api/cron/scores
         run: |
@@ -38,22 +40,22 @@ jobs:
           cat /tmp/scores.json
           [ "$STATUS" -eq 200 ] || (echo "scores returned HTTP $STATUS" && exit 1)
 
-  pipeline:
-    name: AI content pipeline
+  pipeline_dispatch:
+    name: AI pipeline (dispatch all regions)
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
+      (github.event_name == 'schedule' && github.event.schedule == '5 2 * * *')
     steps:
-      - name: POST /api/cron/pipeline
+      - name: POST /api/cron/pipeline/dispatch
         run: |
-          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
-            --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline" \
+          STATUS=$(curl -s -o /tmp/pipeline-dispatch.json -w "%{http_code}" \
+            --max-time 90 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline/dispatch" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
-          cat /tmp/pipeline.json
-          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+          cat /tmp/pipeline-dispatch.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline dispatch returned HTTP $STATUS" && exit 1)
 
   links:
     name: Verify join links

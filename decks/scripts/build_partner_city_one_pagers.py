@@ -64,13 +64,13 @@ SINDELFINGEN = CityPitch(
         "Als Burger Sindelfingens und Mitgrunder von IndLokal mochte ich "
         "Ihnen ein Projekt vorstellen, das fur unsere Stadt direkt relevant "
         "ist. Sindelfingen beheimatet eine spurbare und wachsende indische "
-        "Community — vor allem Ingenieurinnen und Ingenieure bei Mercedes-"
+        "Community - vor allem Ingenieurinnen und Ingenieure bei Mercedes-"
         "Benz, Bosch (Renningen) und im weiteren Umfeld, oft mit ihren "
         "Familien neu in Deutschland. Die ersten 90 Tage entscheiden uber "
         "den Integrationserfolg, doch zentrale Information uber lokale "
         "Communities, Veranstaltungen und vertrauenswurdige Anlaufstellen "
         "ist heute in geschlossenen WhatsApp-Gruppen und veralteten "
-        "Facebook-Seiten verstreut. IndLokal schliesst diese Lucke — "
+        "Facebook-Seiten verstreut. IndLokal schliesst diese Lucke - "
         "stadtspezifisch, mehrsprachig (DE/EN, Hindi/Tamil/Telugu), mobil "
         "und mit klarer Verzahnung zu offiziellen Strukturen."
     ),
@@ -81,12 +81,12 @@ SINDELFINGEN = CityPitch(
          "mitgestalten."),
         ("Region-Stuttgart-Pilot: ",
          "Stadt Stuttgart fuhrt den 12-Monats-Pilot. Sindelfingen wird "
-         "als Partnerkommune sichtbar — mit eigenen Veranstaltungen und "
+         "als Partnerkommune sichtbar - mit eigenen Veranstaltungen und "
          "Inhalten, ohne stadtisches Budget zu binden."),
         ("Konkreter Mehrwert fur die Stadt: ",
          "Sichtbare Information fur die indische Community zu Anmeldung, "
          "VHS, Kitas, Schulen, Vereinen, Gesundheits- und "
-         "Beratungsangeboten in Sindelfingen — gepflegt von uns, "
+         "Beratungsangeboten in Sindelfingen - gepflegt von uns, "
          "verlinkt auf stadtische Quellen."),
         ("Belastbare Zahlen: ",
          "Quartalsweise Wirkungsberichte und unabhangige Evaluation "
@@ -107,10 +107,10 @@ SINDELFINGEN = CityPitch(
     ],
     ask_intro=(
         "Ein 30-minutiges Kennenlerngesprach mit der/dem "
-        "Integrationsbeauftragten der Stadt Sindelfingen — um "
+        "Integrationsbeauftragten der Stadt Sindelfingen - um "
         "vorzustellen:"
     ),
-    addressee_hint="Stadt Sindelfingen — Amt fur Bildung, Soziales und Kultur, Integrationsbeauftragte/r",
+    addressee_hint="Stadt Sindelfingen - Amt fur Bildung, Soziales und Kultur, Integrationsbeauftragte/r",
 )
 
 
@@ -128,12 +128,12 @@ WAIBLINGEN = CityPitch(
         "gesamten Rems-Murr-Kreis direkt relevant ist. Mit Stihl als "
         "Ankerarbeitgeber und einem wachsenden IT- und Engineering-"
         "Korridor lebt im Rems-Murr-Kreis eine spurbar wachsende indische "
-        "Community — viele neu in Deutschland, oft mit Familie. Die "
+        "Community - viele neu in Deutschland, oft mit Familie. Die "
         "ersten 90 Tage entscheiden uber den Integrationserfolg, doch "
         "zentrale Information uber lokale Communities, Veranstaltungen "
         "und vertrauenswurdige Anlaufstellen ist heute in geschlossenen "
         "WhatsApp-Gruppen und veralteten Facebook-Seiten verstreut. "
-        "IndLokal schliesst diese Lucke — stadtspezifisch, mehrsprachig "
+        "IndLokal schliesst diese Lucke - stadtspezifisch, mehrsprachig "
         "(DE/EN, Hindi/Tamil/Telugu), mobil und mit klarer Verzahnung zu "
         "offiziellen Strukturen."
     ),
@@ -144,12 +144,12 @@ WAIBLINGEN = CityPitch(
          "heraus mitgestalten."),
         ("Region-Stuttgart-Pilot: ",
          "Stadt Stuttgart fuhrt den 12-Monats-Pilot. Waiblingen wird als "
-         "Partnerkommune sichtbar — mit eigenen Veranstaltungen und "
+         "Partnerkommune sichtbar - mit eigenen Veranstaltungen und "
          "Inhalten, ohne stadtisches Budget zu binden."),
         ("Konkreter Mehrwert fur die Stadt: ",
          "Sichtbare Information fur die indische Community zu Anmeldung, "
          "VHS, Kitas, Schulen, Vereinen, Gesundheits- und "
-         "Beratungsangeboten in Waiblingen — gepflegt von uns, verlinkt "
+         "Beratungsangeboten in Waiblingen - gepflegt von uns, verlinkt "
          "auf stadtische Quellen."),
         ("Belastbare Zahlen: ",
          "Quartalsweise Wirkungsberichte und unabhangige Evaluation "
@@ -161,7 +161,7 @@ WAIBLINGEN = CityPitch(
     local_hooks_table=[
         ("Stihl HQ + Engineering-Korridor",
          "Wachsende indische IT- und Engineering-Cohorte"),
-        ("Landratsamt Rems-Murr-Kreis — Stabsstelle Integration",
+        ("Landratsamt Rems-Murr-Kreis - Stabsstelle Integration",
          "Naturlicher Co-Adressat fur Wirkung uber Waiblingen hinaus"),
         ("VHS Unteres Remstal + Stadtbibliothek",
          "Verlinkungs- und Veranstaltungspartner"),
@@ -171,10 +171,10 @@ WAIBLINGEN = CityPitch(
     ask_intro=(
         "Ein 30-minutiges Kennenlerngesprach mit der/dem "
         "Integrationsbeauftragten der Stadt Waiblingen (gerne auch "
-        "gemeinsam mit dem Landratsamt Rems-Murr-Kreis) — um "
+        "gemeinsam mit dem Landratsamt Rems-Murr-Kreis) - um "
         "vorzustellen:"
     ),
-    addressee_hint="Stadt Waiblingen — Fachbereich Bildung und Soziales, Integrationsbeauftragte/r",
+    addressee_hint="Stadt Waiblingen - Fachbereich Bildung und Soziales, Integrationsbeauftragte/r",
 )
 
 
@@ -294,7 +294,7 @@ def build_one(city: CityPitch) -> Path:
     section_heading(doc, "Was bereits existiert")
     bullet(doc, "Web-App indlokal.de und native iOS/Android-Apps live im Store.",
            bold_lead="Plattform: ")
-    bullet(doc, "Verifizierte Communities, Veranstaltungen und Ressourcen — mehrsprachig vorbereitet (DE/EN, Hindi/Tamil/Telugu).",
+    bullet(doc, "Verifizierte Communities, Veranstaltungen und Ressourcen - mehrsprachig vorbereitet (DE/EN, Hindi/Tamil/Telugu).",
            bold_lead="Inhalt: ")
     bullet(doc, "Komplett aus Eigenmitteln gebaut. Eine Forderung finanziert NICHT die Entwicklung, sondern Community-Arbeit, Partnerschaften und Evaluation.",
            bold_lead="Finanzierung bisher: ")
@@ -325,7 +325,7 @@ def build_one(city: CityPitch) -> Path:
     bullet(doc, "die Plattform live (Web + Mobile),")
     bullet(doc, "den geplanten Pilot-Umfang und die KPIs,")
     bullet(doc,
-           f"wie eine schlanke Partnerschaft aussehen kann — "
+           f"wie eine schlanke Partnerschaft aussehen kann - "
            f"Letter of Support, ggf. kleiner Baustein aus dem "
            f"{city.city}er Integrationsfonds, gemeinsame Sichtbarkeit, "
            f"Verlinkung mit stadtischen Angeboten.")

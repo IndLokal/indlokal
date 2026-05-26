@@ -1,5 +1,5 @@
 /**
- * POST /api/v1/auth/refresh — TDD-0001 §3, §8.
+ * POST /api/v1/auth/refresh - TDD-0001 §3, §8.
  * Rotates the refresh token and issues a fresh access JWT.
  */
 
