@@ -3,7 +3,11 @@ import { db } from '@/lib/db';
 
 const runId = Date.now().toString(36);
 const calendarId = `mmstuttgart-${runId}@example.com`;
+const embeddedCalendarId = Buffer.from(calendarId).toString('base64');
 const encodedCalendarId = encodeURIComponent(calendarId);
+const embeddedHolidayCalendarId = Buffer.from(
+  'de.german#holiday@group.v.calendar.google.com',
+).toString('base64');
 const testCitySlug = `stuttgart-calendar-${runId}`;
 const testCityName = `Stuttgart Calendar ${runId}`;
 let extractionMode: 'calendar-event' | 'duplicate-community' = 'calendar-event';
@@ -108,7 +112,7 @@ vi.mock('../extraction', () => ({
 const homepageHtml = `
   <html>
     <body>
-      <iframe src="https://calendar.google.com/calendar/embed?src=${encodedCalendarId}&src=de.german%23holiday%40group.v.calendar.google.com"></iframe>
+      <iframe src="https://calendar.google.com/calendar/embed?src=${embeddedCalendarId}&src=${embeddedHolidayCalendarId}"></iframe>
     </body>
   </html>
 `;

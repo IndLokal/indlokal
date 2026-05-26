@@ -456,7 +456,7 @@ async function resolveAndQueue(
       continue;
     }
 
-    if (isDupe.isDuplicate && isDupe.matchScore && isDupe.matchScore > 0.9) {
+    if (isDupe.isDuplicate) {
       result.itemsSkippedDuplicate++;
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
@@ -552,6 +552,9 @@ type DedupResult = {
   matchScore: number | null;
   matchKind: 'PIPELINE_ITEM' | 'ENTITY' | null;
 };
+
+const COMMUNITY_DUPLICATE_NAME_THRESHOLD = 0.5;
+const COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD = 0.35;
 
 async function checkDuplicate(
   item: ExtractedData,
@@ -836,10 +839,10 @@ async function checkCommunityDuplicate(
 
   for (const candidate of candidates) {
     const score = computeSimilarity(community.name.toLowerCase(), candidate.name.toLowerCase());
-    if (score > 0.7) {
+    if (score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD) {
       return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
-    if (score >= 0.5) {
+    if (score >= COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD) {
       borderlineCandidates.push({
         id: candidate.id,
         name: candidate.name,
@@ -891,7 +894,7 @@ async function checkCommunityDuplicate(
 
     const score = computeSimilarity(normalizedIncomingName, pendingName);
     if (
-      score > 0.7 ||
+      score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD ||
       (normalizedIncomingName.length >= 8 && normalizedIncomingName === pendingName)
     ) {
       return {

@@ -22,6 +22,23 @@ describe('embedded calendar helpers', () => {
     ]);
   });
 
+  it('decodes base64-encoded Google Calendar IDs from iframe embeds', () => {
+    const calendarId = Buffer.from('ev.mmstuttgart@gmail.com').toString('base64');
+    const holidayId = Buffer.from('de.german#holiday@group.v.calendar.google.com').toString(
+      'base64',
+    );
+    const html = `
+      <div>
+        <iframe src="https://calendar.google.com/calendar/embed?src=${calendarId}&src=${holidayId}"></iframe>
+      </div>
+    `;
+
+    expect(extractGoogleCalendarIdsFromHtml(html)).toEqual([
+      'ev.mmstuttgart@gmail.com',
+      'de.german#holiday@group.v.calendar.google.com',
+    ]);
+  });
+
   it('detects holiday calendar IDs', () => {
     expect(isHolidayCalendarId('de.german#holiday@group.v.calendar.google.com')).toBe(true);
     expect(isHolidayCalendarId('ev.mmstuttgart@gmail.com')).toBe(false);

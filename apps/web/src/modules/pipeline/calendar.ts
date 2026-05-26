@@ -28,6 +28,20 @@ export function buildGoogleCalendarIcsUrl(calendarId: string): string {
   return `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
 }
 
+function decodeEmbeddedGoogleCalendarId(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.includes('@')) return trimmed;
+  if (!/^[A-Za-z0-9+/_=-]+$/.test(trimmed)) return trimmed;
+
+  try {
+    const normalized = trimmed.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = Buffer.from(normalized, 'base64').toString('utf8').trim();
+    return decoded.includes('@') ? decoded : trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
 export function extractGoogleCalendarIdsFromHtml(html: string): string[] {
   const iframePattern = /<iframe\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi;
   const calendarIds = new Set<string>();
@@ -48,7 +62,7 @@ export function extractGoogleCalendarIdsFromHtml(html: string): string[] {
     if (!srcUrl.pathname.includes('/calendar/embed')) continue;
 
     for (const value of srcUrl.searchParams.getAll('src')) {
-      const trimmed = value.trim();
+      const trimmed = decodeEmbeddedGoogleCalendarId(value);
       if (trimmed) calendarIds.add(trimmed);
     }
   }
