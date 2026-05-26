@@ -232,7 +232,17 @@ export async function runPipeline(
       },
     });
   } catch (persistErr) {
-    console.error('[Pipeline] Failed to persist run history:', persistErr);
+    const message = String(persistErr);
+    const isMissingScopeColumns =
+      message.includes('scope_region_ids') || message.includes('scope_city_slugs');
+
+    if (isMissingScopeColumns) {
+      console.warn(
+        '[Pipeline] Run history persistence skipped: scope columns missing. Apply the latest migration.',
+      );
+    } else {
+      console.error('[Pipeline] Failed to persist run history:', persistErr);
+    }
   }
 
   console.log(
