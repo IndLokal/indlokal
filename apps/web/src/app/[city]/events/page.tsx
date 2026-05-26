@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { discovery as d } from '@indlokal/shared';
 import { getUpcomingEvents } from '@/modules/event';
 import { db } from '@/lib/db';
 import { EventCard } from '@/components/EventCard';
+import { BusinessLensTracker } from '@/components/analytics';
 
 /**
  * Event Listing — all upcoming events in a city.
@@ -16,7 +18,7 @@ import { EventCard } from '@/components/EventCard';
 
 type Props = {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ category?: string; cost?: string; type?: string }>;
+  searchParams: Promise<{ category?: string; cost?: string; type?: string; lens?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -32,6 +34,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EventsPage({ params, searchParams }: Props) {
   const { city } = await params;
   const filters = await searchParams;
+  const cost = filters.cost === 'free' || filters.cost === 'paid' ? filters.cost : undefined;
+  const type = filters.type === 'online' || filters.type === 'in-person' ? filters.type : undefined;
+  const lens = filters.lens === 'business' ? 'business' : undefined;
+
+  const baseCostTypeParams = new URLSearchParams();
+  if (cost) baseCostTypeParams.set('cost', cost);
+  if (type) baseCostTypeParams.set('type', type);
+  const allLensHref = baseCostTypeParams.toString()
+    ? `/${city}/events?${baseCostTypeParams.toString()}`
+    : `/${city}/events`;
+  const businessLensParams = new URLSearchParams(baseCostTypeParams);
+  businessLensParams.set('lens', 'business');
+  const businessLensHref = `/${city}/events?${businessLensParams.toString()}`;
 
   const cityRow = await db.city.findUnique({
     where: { slug: city },
@@ -40,22 +55,12 @@ export default async function EventsPage({ params, searchParams }: Props) {
   if (!cityRow || !cityRow.isActive) notFound();
 
   const events = await getUpcomingEvents(city, {
-    categorySlug: filters.category,
+    categorySlug: lens === 'business' ? undefined : filters.category,
+    categorySlugs: lens === 'business' ? [...d.BUSINESS_EVENT_CATEGORY_SLUGS] : undefined,
+    cost,
+    type,
     limit: 16,
   });
-
-  // Client-side-ish filters for cost and type (applied after fetch)
-  let filtered = events;
-  if (filters.cost === 'free') {
-    filtered = filtered.filter((e) => e.cost === 'free');
-  } else if (filters.cost === 'paid') {
-    filtered = filtered.filter((e) => e.cost && e.cost !== 'free');
-  }
-  if (filters.type === 'online') {
-    filtered = filtered.filter((e) => e.isOnline);
-  } else if (filters.type === 'in-person') {
-    filtered = filtered.filter((e) => !e.isOnline);
-  }
 
   const cityName = cityRow.name;
 
@@ -68,6 +73,8 @@ export default async function EventsPage({ params, searchParams }: Props) {
 
   return (
     <div className="space-y-8">
+      {lens === 'business' && <BusinessLensTracker city={city} surface="events_page" />}
+
       {/* Header */}
       <div>
         <nav className="text-muted mb-2 text-sm">
@@ -82,53 +89,90 @@ export default async function EventsPage({ params, searchParams }: Props) {
         </nav>
         <h1 className="text-3xl font-bold">Indian Events in {cityName}</h1>
         <p className="text-muted mt-2">
-          {filtered.length > 0
-            ? `${filtered.length} upcoming event${filtered.length !== 1 ? 's' : ''}`
+          {events.length > 0
+            ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
             : 'No upcoming events right now — check back soon.'}
         </p>
       </div>
 
       {/* Filters — horizontally scrollable on mobile */}
       <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        {/* Category filter */}
-        <Link
-          href={`/${city}/events`}
-          className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
-            !filters.category
-              ? 'border-brand-600 bg-brand-50 text-brand-700'
-              : 'border-border text-muted hover:border-border hover:text-foreground'
-          }`}
-        >
-          All
-        </Link>
-        {categories.map((cat) => {
-          const isActive = filters.category === cat.slug;
-          const href = `/${city}/events?category=${cat.slug}${filters.cost ? `&cost=${filters.cost}` : ''}${filters.type ? `&type=${filters.type}` : ''}`;
-          return (
+        {/* Lens filter */}
+        <>
+          <Link
+            href={allLensHref}
+            className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              lens !== 'business'
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
+            }`}
+          >
+            All events
+          </Link>
+          <Link
+            href={businessLensHref}
+            className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              lens === 'business'
+                ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
+            }`}
+          >
+            💼 Business & Careers
+          </Link>
+          <span className="text-border hidden self-center sm:inline">|</span>
+        </>
+
+        {/* Category filter (not shown in business lens because category is ignored there) */}
+        {lens !== 'business' && (
+          <>
             <Link
-              key={cat.slug}
-              href={href}
+              href={`/${city}/events`}
               className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
-                isActive
+                !filters.category
                   ? 'border-brand-600 bg-brand-50 text-brand-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'
               }`}
             >
-              {cat.icon} {cat.name}
+              All
             </Link>
-          );
-        })}
+            {categories.map((cat) => {
+              const isActive = filters.category === cat.slug;
+              const categoryParams = new URLSearchParams();
+              categoryParams.set('category', cat.slug);
+              if (cost) categoryParams.set('cost', cost);
+              if (type) categoryParams.set('type', type);
+              const href = `/${city}/events?${categoryParams.toString()}`;
+              return (
+                <Link
+                  key={cat.slug}
+                  href={href}
+                  className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+                    isActive
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-border text-muted hover:border-border hover:text-foreground'
+                  }`}
+                >
+                  {cat.icon} {cat.name}
+                </Link>
+              );
+            })}
 
-        {/* Divider */}
-        <span className="text-border hidden self-center sm:inline">|</span>
+            {/* Divider */}
+            <span className="text-border hidden self-center sm:inline">|</span>
+          </>
+        )}
 
         {/* Cost filter */}
         {(['free', 'paid'] as const).map((cost) => {
-          const isActive = filters.cost === cost;
-          const base = `/${city}/events?${filters.category ? `category=${filters.category}&` : ''}`;
-          const href = isActive
-            ? base.replace(/&$/, '')
-            : `${base}cost=${cost}${filters.type ? `&type=${filters.type}` : ''}`;
+          const isActive = cost === filters.cost;
+          const params = new URLSearchParams();
+          if (lens === 'business') params.set('lens', 'business');
+          if (lens !== 'business' && filters.category) params.set('category', filters.category);
+          if (!isActive) params.set('cost', cost);
+          if (type) params.set('type', type);
+          const href = params.toString()
+            ? `/${city}/events?${params.toString()}`
+            : `/${city}/events`;
           return (
             <Link
               key={cost}
@@ -146,9 +190,15 @@ export default async function EventsPage({ params, searchParams }: Props) {
 
         {/* Type filter */}
         {(['in-person', 'online'] as const).map((type) => {
-          const isActive = filters.type === type;
-          const base = `/${city}/events?${filters.category ? `category=${filters.category}&` : ''}${filters.cost ? `cost=${filters.cost}&` : ''}`;
-          const href = isActive ? base.replace(/&$/, '') : `${base}type=${type}`;
+          const isActive = type === filters.type;
+          const params = new URLSearchParams();
+          if (lens === 'business') params.set('lens', 'business');
+          if (lens !== 'business' && filters.category) params.set('category', filters.category);
+          if (cost) params.set('cost', cost);
+          if (!isActive) params.set('type', type);
+          const href = params.toString()
+            ? `/${city}/events?${params.toString()}`
+            : `/${city}/events`;
           return (
             <Link
               key={type}
@@ -166,9 +216,9 @@ export default async function EventsPage({ params, searchParams }: Props) {
       </div>
 
       {/* Event grid */}
-      {filtered.length > 0 && (
+      {events.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((event) => (
+          {events.map((event) => (
             <EventCard key={event.id} event={event} city={city} />
           ))}
         </div>

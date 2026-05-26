@@ -101,6 +101,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     });
     entries.push({
+      url: `${cityBase}/business-events`,
+      changeFrequency: 'daily',
+      priority: 0.7,
+    });
+    entries.push({
       url: `${cityBase}/communities`,
       changeFrequency: 'weekly',
       priority: 0.8,

@@ -85,7 +85,9 @@ const INSTITUTIONAL_HOST_SUFFIXES = [
   'aigev.org',
   'indoeuropean.eu',
   'cgimunich.gov.in',
+  'cgifrankfurt.gov.in',
   'indianembassyberlin.gov.in',
+  'mea.gov.in',
 ] as const;
 
 function normalizeUrl(input: string): URL | null {

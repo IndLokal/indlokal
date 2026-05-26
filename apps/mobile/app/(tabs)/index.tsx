@@ -26,6 +26,7 @@ type FeedState = {
 };
 
 type DiscoverTab = 'events' | 'communities' | 'trending';
+type EventLens = 'all' | 'business';
 
 const TABS: Array<{ id: DiscoverTab; label: string }> = [
   { id: 'events', label: 'Events' },
@@ -42,6 +43,7 @@ export default function DiscoverScreen() {
   const [feedError, setFeedError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<DiscoverTab>('events');
+  const [eventLens, setEventLens] = useState<EventLens>('all');
 
   // Load cities once.
   useEffect(() => {
@@ -88,16 +90,23 @@ export default function DiscoverScreen() {
     }
   }, [cities, selectedSlug]);
 
-  const loadFeed = useCallback(async (slug: string, force = false) => {
+  const loadFeed = useCallback(async (slug: string, force = false, lens: EventLens = 'all') => {
     setFeedLoading(true);
     setFeedError(null);
     try {
+      const eventsParams = new URLSearchParams({ limit: '10' });
+      if (lens === 'business') {
+        d.BUSINESS_EVENT_CATEGORY_SLUGS.forEach((categorySlug) => {
+          eventsParams.append('categorySlugs', categorySlug);
+        });
+      }
+
       const [eventsRes, communitiesRes, trendingRes] = await Promise.all([
         queryCache(
-          `feed:events:${slug}`,
+          `feed:events:${slug}:${lens}`,
           () =>
             authClient.getPublic<d.EventsPage>(
-              `/api/v1/discovery/${encodeURIComponent(slug)}/events?limit=10`,
+              `/api/v1/discovery/${encodeURIComponent(slug)}/events?${eventsParams.toString()}`,
             ),
           { ttl: 5 * 60 * 1000, force },
         ),
@@ -132,8 +141,8 @@ export default function DiscoverScreen() {
 
   useEffect(() => {
     if (!selectedSlug) return;
-    void loadFeed(selectedSlug);
-  }, [selectedSlug, loadFeed]);
+    void loadFeed(selectedSlug, false, eventLens);
+  }, [selectedSlug, loadFeed, eventLens]);
 
   async function selectCity(slug: string) {
     setSelectedSlug(slug);
@@ -143,7 +152,7 @@ export default function DiscoverScreen() {
   async function onRefresh() {
     if (!selectedSlug) return;
     setRefreshing(true);
-    await loadFeed(selectedSlug, true);
+    await loadFeed(selectedSlug, true, eventLens);
     setRefreshing(false);
   }
 
@@ -254,6 +263,37 @@ export default function DiscoverScreen() {
                 );
               })}
             </View>
+
+            {tab === 'events' && (
+              <View style={styles.lensRow}>
+                <Pressable
+                  onPress={() => setEventLens('all')}
+                  style={[styles.lensChip, eventLens === 'all' && styles.lensChipActive]}
+                >
+                  <Text
+                    style={[styles.lensChipText, eventLens === 'all' && styles.lensChipTextActive]}
+                  >
+                    All events
+                  </Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setEventLens('business')}
+                  style={[
+                    styles.lensChip,
+                    eventLens === 'business' && styles.lensChipBusinessActive,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.lensChipText,
+                      eventLens === 'business' && styles.lensChipBusinessTextActive,
+                    ]}
+                  >
+                    Business and careers
+                  </Text>
+                </Pressable>
+              </View>
+            )}
 
             {feedLoading && !feed && (
               <ActivityIndicator color={palette.brand[600]} style={styles.loading} />
@@ -384,6 +424,22 @@ const styles = StyleSheet.create({
   tabActive: { backgroundColor: '#fff' },
   tabText: { fontSize: typography.small, fontWeight: '600', color: palette.neutral.muted },
   tabTextActive: { color: palette.brand[700] },
+  lensRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
+  lensChip: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.badge,
+    backgroundColor: palette.neutral.mutedBg,
+  },
+  lensChipActive: { backgroundColor: palette.brand[100] },
+  lensChipBusinessActive: { backgroundColor: palette.accent[100] },
+  lensChipText: { fontSize: typography.small, fontWeight: '600', color: palette.neutral.muted },
+  lensChipTextActive: { color: palette.brand[700] },
+  lensChipBusinessTextActive: { color: palette.accent[700] },
   communityList: { gap: spacing.sm },
   communityCard: {
     backgroundColor: palette.neutral.surface,

@@ -46,6 +46,7 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
   const navLinks = [
     { href: `/${city}`, label: 'Feed' },
     { href: `/${city}/events`, label: 'Events' },
+    { href: `/${city}/business-events`, label: 'Business' },
     { href: `/${city}/communities`, label: 'Communities' },
     { href: `/${city}/resources`, label: 'Resources' },
     { href: `/${city}/search`, label: 'Search' },
