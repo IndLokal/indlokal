@@ -29,7 +29,7 @@ Mirror web `/submit` so users can contribute events and communities on the go, w
 
 ## 5. Out of Scope
 
-- OCR auto-extraction from flyer (Phase 2 — `docs/AI_AGENT_PRODUCT.md`).
+- OCR auto-extraction from flyer (Phase 2 — `docs/AI_PIPELINE_PRODUCT.md`).
 - Bulk import.
 
 ## 6. User Stories

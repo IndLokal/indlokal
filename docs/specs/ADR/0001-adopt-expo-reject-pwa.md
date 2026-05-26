@@ -70,7 +70,7 @@ We are optimizing for **engagement, trust, and growth loops**, measured against 
 
 ## Future extensions
 
-The architecture is set up to absorb roadmap items from [`docs/AI_AGENT_PRODUCT.md`](../../AI_AGENT_PRODUCT.md), [`docs/AI_AGENT_ARCHITECTURE.md`](../../AI_AGENT_ARCHITECTURE.md), and `MOBILE_APP_STRATEGY.md` §10 without re-platforming:
+The architecture is set up to absorb roadmap items from [`docs/AI_PIPELINE_PRODUCT.md`](../../AI_PIPELINE_PRODUCT.md), [`docs/AI_PIPELINE_ARCHITECTURE.md`](../../AI_PIPELINE_ARCHITECTURE.md), and `MOBILE_APP_STRATEGY.md` §10 without re-platforming:
 
 - **Personalization engine.** `modules/scoring` already emits per-entity scores read by mobile via `/api/v1/discovery/*`. Adding a per-user `personalScore` is a new field plus a feed-rank flag, not a new system.
 - **Recommendation system.** Collaborative filtering on `UserInteraction`, `SavedEvent`, and `SavedCommunity` plugs into the same Discover feed and into notification gating ([TDD-0002](../TDD/0002-devices-and-notifications.md)). Recommendations become another producer on the notification outbox.

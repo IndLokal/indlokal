@@ -3,7 +3,7 @@
 - **Status:** Draft
 - **Owner:** Founders
 - **Reviewers:** PM, Eng Lead
-- **Linked:** TDD-0022, AI_AGENT_PRODUCT.md, AI_AGENT_ARCHITECTURE.md
+- **Linked:** TDD-0022, AI_PIPELINE_PRODUCT.md, AI_PIPELINE_ARCHITECTURE.md
 
 ## 1. Problem
 

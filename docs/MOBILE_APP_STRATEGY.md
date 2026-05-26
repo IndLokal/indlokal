@@ -313,7 +313,7 @@ Each item below ships behind its own TDD:
 - **Phase 0 — Foundations:** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads, spec templates merged into `docs/specs/`.
 - **Phase 1 — App v1.0 MVP:** §4 scope. Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target — informed by existing competitive docs).
 - **Phase 2:** widgets, Live Activities, WhatsApp channel, organizer surface in-app, in-app inbox, referrals.
-- **Phase 3:** ticketing/RSVP + payments (Razorpay/Stripe), in-app chat per community, recommendations from `modules/scoring` + collaborative filtering, AI agent surface from `docs/AI_AGENT_*`.
+- **Phase 3:** ticketing/RSVP + payments (Razorpay/Stripe), in-app chat per community, recommendations from `modules/scoring` + collaborative filtering, AI agent surface from `docs/AI_PIPELINE_*`.
 
 ---
 
