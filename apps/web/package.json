@@ -37,6 +37,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1034.0",
     "@indlokal/shared": "workspace:*",
     "@prisma/client": "^6.6.0",
+    "csv-parse": "^6.2.1",
     "date-fns": "^4.1.0",
     "jose": "^6.2.2",
     "next": "16.2.6",
