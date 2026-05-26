@@ -1,0 +1,260 @@
+{
+  "baselineKeywords": [
+    "Indian community meetup",
+    "South Asian community meetup",
+    "Indian networking meetup",
+    "Indian cultural workshop",
+    "Indian volunteer group",
+    "Indian student club",
+    "South Asian student association",
+    "Indian professionals network",
+    "Indian startup meetup",
+    "Indian founder meetup",
+    "Indian entrepreneur network",
+    "Indian career fair",
+    "Indian tech talk",
+    "Indian product meetup",
+    "new Indian chapter",
+    "new Indian association",
+    "Indian cultural event",
+    "South Asian festival",
+    "indische Community Treffen",
+    "indischer Kulturverein Gruendung",
+    "suedasiatische Community Veranstaltung"
+  ],
+  "regions": [
+    {
+      "id": "baden-wuerttemberg",
+      "label": "Baden-Württemberg",
+      "searchCenter": "Stuttgart, Germany",
+      "state": "Baden-Württemberg",
+      "enabled": true
+    },
+    {
+      "id": "bavaria",
+      "label": "Bavaria",
+      "searchCenter": "Munich, Germany",
+      "state": "Bavaria",
+      "enabled": true
+    },
+    {
+      "id": "hesse",
+      "label": "Hesse",
+      "searchCenter": "Frankfurt, Germany",
+      "state": "Hesse",
+      "enabled": true
+    }
+  ],
+  "strategies": [
+    {
+      "id": "eventbrite-keyword",
+      "sourceType": "EVENTBRITE",
+      "kind": "keyword_search",
+      "contentScope": "keyword_discovery",
+      "label": "Eventbrite keyword search",
+      "radiusKm": 50,
+      "enabled": true
+    },
+    {
+      "id": "google-cse-keyword",
+      "sourceType": "GOOGLE_SEARCH",
+      "kind": "keyword_search",
+      "contentScope": "keyword_discovery",
+      "label": "Google Custom Search — Diaspora Communities",
+      "radiusKm": 100,
+      "enabled": true
+    },
+    {
+      "id": "duckduckgo-keyword",
+      "sourceType": "DUCKDUCKGO",
+      "kind": "keyword_search",
+      "contentScope": "keyword_discovery",
+      "label": "DuckDuckGo Web Search — Diaspora Communities",
+      "radiusKm": 100,
+      "enabled": true
+    },
+    {
+      "id": "web-cgi-munich",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Consulate General of India Munich — Official Portal",
+      "url": "https://www.cgimunich.gov.in/",
+      "hintCitySlug": "munich",
+      "enabled": true
+    },
+    {
+      "id": "web-cgi-frankfurt",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Consulate General of India Frankfurt — Official Portal",
+      "url": "https://cgifrankfurt.gov.in/",
+      "hintCitySlug": "frankfurt",
+      "enabled": true
+    },
+    {
+      "id": "web-indian-embassy-berlin",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Embassy of India Berlin — Official Portal",
+      "url": "https://indianembassyberlin.gov.in/",
+      "hintCitySlug": "berlin",
+      "enabled": true
+    },
+    {
+      "id": "web-mea-germany-missions",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "MEA India — Germany Missions Directory",
+      "url": "https://www.mea.gov.in/indian-missions-abroad-new.htm?country=Germany",
+      "enabled": true
+    },
+    {
+      "id": "indoeuropean-events",
+      "sourceType": "INDOEUROPEAN",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "IndoEuropean.eu — Events",
+      "url": "https://indoeuropean.eu/category/events/",
+      "enabled": true
+    },
+    {
+      "id": "indoeuropean-germany",
+      "sourceType": "INDOEUROPEAN",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "IndoEuropean.eu — Germany",
+      "url": "https://indoeuropean.eu/country/germany/",
+      "enabled": true
+    },
+    {
+      "id": "web-indoeuropean-associations",
+      "sourceType": "INDOEUROPEAN",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "IndoEuropean.eu — Indian Associations in Germany",
+      "url": "https://indoeuropean.eu/list-of-indian-association-in-germany/",
+      "enabled": true
+    },
+    {
+      "id": "web-indoeuropean-association-category",
+      "sourceType": "INDOEUROPEAN",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "IndoEuropean.eu — Association Category",
+      "url": "https://indoeuropean.eu/category/association/",
+      "enabled": true
+    },
+    {
+      "id": "web-indoeuropean-temples",
+      "sourceType": "INDOEUROPEAN",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "IndoEuropean.eu — Temples",
+      "url": "https://indoeuropean.eu/category/temples/",
+      "enabled": true
+    },
+    {
+      "id": "web-indiansingermany-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Indians in Germany — Events",
+      "url": "https://indiansingermany.org/events",
+      "enabled": true
+    },
+    {
+      "id": "web-aigev",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "Association of Indians in Germany e.V.",
+      "url": "https://www.aigev.org/",
+      "enabled": true
+    },
+    {
+      "id": "web-diz-bw",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_portal",
+      "label": "DIZ Baden-Württemberg e.V.",
+      "url": "https://diz-ev.de/bawue",
+      "enabled": true
+    },
+    {
+      "id": "web-stuttgartexpats-events",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "community_events",
+      "label": "Stuttgart Expats — Events (general expat, cross-reference)",
+      "url": "https://stuttgartexpats.com/stuttgart-events/",
+      "enabled": true
+    },
+    {
+      "id": "web-forum-der-kulturen-stuttgart",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "Forum der Kulturen Stuttgart — Member Associations (160+ Vereine)",
+      "url": "https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/",
+      "enabled": true
+    },
+    {
+      "id": "web-house-of-resources-stuttgart-map",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "House of Resources Stuttgart — Stadtteilkarte migrantischer Vereine",
+      "url": "https://house-of-resources-stuttgart.de/stadtteilkarte-kontakt-zu-vereinen/",
+      "enabled": true
+    },
+    {
+      "id": "web-amka-frankfurt",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "AMKA Frankfurt — Amt für multikulturelle Angelegenheiten (official city office)",
+      "url": "https://www.amka.de/",
+      "enabled": true
+    },
+    {
+      "id": "web-amka-frankfurt-vereine",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "AMKA Frankfurt — Registered Multicultural Associations Directory",
+      "url": "https://www.amka.de/vereine",
+      "enabled": true
+    },
+    {
+      "id": "web-vielfalt-bewegt-frankfurt",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Vielfalt bewegt Frankfurt — Official Diversity Portal",
+      "url": "https://www.vielfalt-bewegt-frankfurt.de/",
+      "enabled": true
+    },
+    {
+      "id": "web-integrationsbeauftragter-bw",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "official_portal",
+      "label": "Baden-Württemberg Integrationsministerium — Migrant Organisations",
+      "url": "https://sozialministerium.baden-wuerttemberg.de/de/integration/",
+      "enabled": true
+    },
+    {
+      "id": "web-morgen-muenchen-mitglieder",
+      "sourceType": "WEBSITE_SCRAPE",
+      "kind": "pinned_url",
+      "contentScope": "directory_listing",
+      "label": "MORGEN München — Migrant Organisation Member Associations",
+      "url": "https://morgen-muenchen.de/thema/mitgliedervereine/",
+      "enabled": true
+    }
+  ]
+}

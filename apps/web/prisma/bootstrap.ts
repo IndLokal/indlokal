@@ -28,6 +28,7 @@ import {
   PERSONA_TAXONOMY,
   type CitySeed,
 } from '../src/lib/config/cities';
+import { runPipelineSourceConfigBootstrap } from './pipeline-source-config';
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,7 @@ export type BootstrapResult = {
   cities: { created: number; updated: number; total: number };
   categories: { created: number; updated: number; total: number };
   personas: { created: number; updated: number; total: number };
+  pipelineSourceConfig: { upserted: number; disabledMissing: number };
   admin: { email: string; created: boolean };
 };
 
@@ -87,6 +89,7 @@ export async function runBootstrap(): Promise<BootstrapResult> {
     cities: { created: 0, updated: 0, total: 0 },
     categories: { created: 0, updated: 0, total: 0 },
     personas: { created: 0, updated: 0, total: 0 },
+    pipelineSourceConfig: { upserted: 0, disabledMissing: 0 },
     admin: { email: '', created: false },
   };
 
@@ -151,7 +154,10 @@ export async function runBootstrap(): Promise<BootstrapResult> {
   }
   result.personas.total = PERSONA_TAXONOMY.length;
 
-  // 5) Platform admin user — login uses magic-link to this email address.
+  // 5) Pipeline source config defaults (canonical keyword/region/strategy rows).
+  result.pipelineSourceConfig = await runPipelineSourceConfigBootstrap(prisma);
+
+  // 6) Platform admin user — login uses magic-link to this email address.
   const adminEmail = (process.env.ADMIN_EMAIL ?? DEFAULT_ADMIN_EMAIL).trim().toLowerCase();
   const existingAdmin = await prisma.user.findUnique({
     where: { email: adminEmail },
@@ -181,6 +187,7 @@ async function main() {
       `   Cities:     ${r.cities.total} (created ${r.cities.created}, updated ${r.cities.updated})\n` +
       `   Categories: ${r.categories.total} (created ${r.categories.created}, updated ${r.categories.updated})\n` +
       `   Personas:   ${r.personas.total} (created ${r.personas.created}, updated ${r.personas.updated})\n` +
+      `   Pipeline:   upserted ${r.pipelineSourceConfig.upserted}, disabled ${r.pipelineSourceConfig.disabledMissing}\n` +
       `   Admin user: ${r.admin.email} ${r.admin.created ? '(created)' : '(already existed, role enforced)'}`,
   );
   console.log(

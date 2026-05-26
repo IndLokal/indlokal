@@ -10,6 +10,7 @@
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
 import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
+import { PIPELINE_USER_AGENT } from './http';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {
@@ -98,6 +99,103 @@ function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
   }
 
   return output;
+}
+
+function getExpansionLimit(): number {
+  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_EXPANSION_LIMIT ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 6;
+}
+
+function getSecondHopExpansionLimit(): number {
+  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_SECOND_HOP_LIMIT ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8;
+}
+
+function supportsSecondHopExpansion(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
+  return process.env.PIPELINE_PINNED_SECOND_HOP === '1' && shouldExpandPinnedUrl(strategy);
+}
+
+function getExpansionSourceTypes(): Set<string> {
+  const raw = process.env.PIPELINE_PINNED_EXPANSION_SOURCE_TYPES ?? '';
+  return new Set(
+    raw
+      .split(',')
+      .map((entry) => entry.trim().toUpperCase())
+      .filter(Boolean),
+  );
+}
+
+function shouldExpandPinnedUrl(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
+  if (process.env.PIPELINE_PINNED_LINK_EXPANSION !== '1') return false;
+  const allowedSourceTypes = getExpansionSourceTypes();
+  if (allowedSourceTypes.size === 0) return false;
+  return (
+    allowedSourceTypes.has('*') || allowedSourceTypes.has(String(strategy.sourceType).toUpperCase())
+  );
+}
+
+function shouldSkipExpansionPath(pathname: string): boolean {
+  return /impressum|privacy|datenschutz|terms|cookie|kontakt|contact|login|signup|register|account|shop|cart/i.test(
+    pathname,
+  );
+}
+
+function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
+  const base = parseHttpUrl(baseUrl);
+  if (!base) return [];
+  const allowCrossHost = process.env.PIPELINE_PINNED_EXPANSION_ALLOW_CROSS_HOST === '1';
+
+  const linkPattern =
+    /<a\b[^>]*?\bhref=(?:"([^"#][^"]*?)"|'([^'#][^']*?)'|([^\s>"'#][^\s>]*))[^>]*>([\s\S]*?)<\/a>/gi;
+
+  const unique = new Set<string>();
+  for (const match of html.matchAll(linkPattern)) {
+    const rawHref = match[1] ?? match[2] ?? match[3];
+    if (!rawHref) continue;
+
+    let resolved: URL;
+    try {
+      resolved = new URL(rawHref, baseUrl);
+    } catch {
+      continue;
+    }
+
+    const parsed = parseHttpUrl(resolved.toString());
+    if (!parsed) continue;
+    if (isBlockedSearchHost(parsed.hostname)) continue;
+    if (!allowCrossHost && parsed.hostname !== base.hostname) continue;
+    if (shouldSkipExpansionPath(parsed.pathname.toLowerCase())) continue;
+
+    const canonical = `${parsed.origin}${parsed.pathname}`;
+    if (canonical === `${base.origin}${base.pathname}`) continue;
+    unique.add(canonical);
+  }
+
+  return [...unique].slice(0, getExpansionLimit());
+}
+
+async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url: string) {
+  const res = await fetch(url, {
+    headers: { 'User-Agent': PIPELINE_USER_AGENT },
+    signal: AbortSignal.timeout(10_000),
+  });
+  if (!res.ok) return null;
+
+  const rawHtml = await res.text();
+  const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
+  const imageUrls = extractImageUrls(html, url).slice(0, 5);
+  const text = collapseWhitespace(decodeHtmlEntities(htmlToText(html))).slice(0, 15_000);
+
+  return {
+    item: {
+      sourceType,
+      sourceUrl: url,
+      text,
+      imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
+      fetchedAt: new Date().toISOString(),
+    } satisfies RawContent,
+    html: rawHtml,
+  };
 }
 
 // ─── Keyword search: Eventbrite ────────────────────────
@@ -194,6 +292,7 @@ export async function fetchPinnedUrl(
 ): Promise<FetchResult> {
   const items: RawContent[] = [];
   const errors: string[] = [];
+  const discoveredUrls = new Set<string>([strategy.url]);
 
   try {
     const isFacebook = strategy.sourceType === 'FACEBOOK';
@@ -205,7 +304,7 @@ export async function fetchPinnedUrl(
       headers: {
         'User-Agent': isFacebook
           ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
-          : 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
+          : PIPELINE_USER_AGENT,
       },
       signal: AbortSignal.timeout(15_000),
     });
@@ -230,11 +329,65 @@ export async function fetchPinnedUrl(
       imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
       fetchedAt: new Date().toISOString(),
     });
+
+    if (shouldExpandPinnedUrl(strategy)) {
+      const links = extractPinnedExpansionLinks(rawHtml, strategy.url);
+      if (links.length > 0) {
+        for (const link of links) discoveredUrls.add(link);
+        const expanded = await Promise.allSettled(
+          links.map((url) => fetchExpandedPinnedPage(strategy.sourceType, url)),
+        );
+
+        const secondHopCandidates: string[] = [];
+
+        for (const outcome of expanded) {
+          if (outcome.status === 'fulfilled' && outcome.value) {
+            items.push(outcome.value.item);
+            if (supportsSecondHopExpansion(strategy)) {
+              const linksFromExpanded = extractPinnedExpansionLinks(
+                outcome.value.html,
+                outcome.value.item.sourceUrl,
+              );
+              for (const link of linksFromExpanded) {
+                if (!discoveredUrls.has(link)) {
+                  discoveredUrls.add(link);
+                  secondHopCandidates.push(link);
+                }
+              }
+            }
+          } else if (outcome.status === 'rejected') {
+            errors.push(`Expanded fetch ${strategy.url}: ${String(outcome.reason)}`);
+          }
+        }
+
+        if (supportsSecondHopExpansion(strategy) && secondHopCandidates.length > 0) {
+          const secondHopLinks = secondHopCandidates.slice(0, getSecondHopExpansionLimit());
+          const secondHop = await Promise.allSettled(
+            secondHopLinks.map((url) => fetchExpandedPinnedPage(strategy.sourceType, url)),
+          );
+
+          for (const outcome of secondHop) {
+            if (outcome.status === 'fulfilled' && outcome.value) {
+              items.push(outcome.value.item);
+            } else if (outcome.status === 'rejected') {
+              errors.push(`Second-hop fetch ${strategy.url}: ${String(outcome.reason)}`);
+            }
+          }
+        }
+      }
+    }
   } catch (err) {
     errors.push(`Fetch ${strategy.url}: ${String(err)}`);
   }
 
-  return { sourceId: strategy.id, items, errors };
+  const seen = new Set<string>();
+  const unique = items.filter((item) => {
+    if (seen.has(item.sourceUrl)) return false;
+    seen.add(item.sourceUrl);
+    return true;
+  });
+
+  return { sourceId: strategy.id, items: unique, errors };
 }
 
 // ─── Google Custom Search: discover scattered mentions ──
@@ -348,7 +501,7 @@ export async function fetchDuckDuckGoSearch(
 
       const res = await fetch(url, {
         headers: {
-          'User-Agent': 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
+          'User-Agent': PIPELINE_USER_AGENT,
         },
         signal: AbortSignal.timeout(15_000),
       });

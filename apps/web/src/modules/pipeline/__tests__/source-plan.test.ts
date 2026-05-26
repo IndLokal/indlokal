@@ -1,12 +1,14 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { SearchRegion, SearchStrategy } from '../types';
+import type { SearchRegion } from '../types';
+import type { KeywordStrategyTemplate } from '../runtime-config';
 
 const mocks = vi.hoisted(() => ({
   findCities: vi.fn(),
   groupCommunities: vi.fn(),
   groupEvents: vi.fn(),
-  getKeywordStrategies: vi.fn(),
-  getPinnedStrategies: vi.fn(),
+  getRuntimeKeywordSeeds: vi.fn(),
+  getRuntimeKeywordStrategies: vi.fn(),
+  getRuntimePinnedStrategies: vi.fn(),
   getDbCommunityStrategies: vi.fn(),
   getApprovedDynamicKeywords: vi.fn(),
 }));
@@ -19,9 +21,10 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('../config', () => ({
-  getKeywordStrategies: mocks.getKeywordStrategies,
-  getPinnedStrategies: mocks.getPinnedStrategies,
+vi.mock('../runtime-config', () => ({
+  getRuntimeKeywordSeeds: mocks.getRuntimeKeywordSeeds,
+  getRuntimeKeywordStrategies: mocks.getRuntimeKeywordStrategies,
+  getRuntimePinnedStrategies: mocks.getRuntimePinnedStrategies,
 }));
 
 vi.mock('../db-sources', async (importOriginal) => {
@@ -48,14 +51,13 @@ const regions: SearchRegion[] = [
   },
 ];
 
-const keywordStrategies: (SearchStrategy & { kind: 'keyword_search' })[] = [
+const keywordStrategies: KeywordStrategyTemplate[] = [
   {
     id: 'eventbrite-keyword',
     sourceType: 'EVENTBRITE',
     kind: 'keyword_search',
     label: 'Eventbrite',
     enabled: true,
-    keywords: ['fallback event'],
     radiusKm: 50,
   },
   {
@@ -64,7 +66,6 @@ const keywordStrategies: (SearchStrategy & { kind: 'keyword_search' })[] = [
     kind: 'keyword_search',
     label: 'Google',
     enabled: true,
-    keywords: ['fallback google'],
     radiusKm: 100,
   },
   {
@@ -73,7 +74,6 @@ const keywordStrategies: (SearchStrategy & { kind: 'keyword_search' })[] = [
     kind: 'keyword_search',
     label: 'DuckDuckGo',
     enabled: true,
-    keywords: ['fallback ddg'],
     radiusKm: 100,
   },
 ];
@@ -88,8 +88,9 @@ describe('buildPipelineSourcePlan', () => {
     delete process.env.PIPELINE_FORCE_KEYWORD_SEARCH;
     delete process.env.PIPELINE_ENABLE_DDG;
 
-    mocks.getKeywordStrategies.mockReturnValue(keywordStrategies);
-    mocks.getPinnedStrategies.mockReturnValue([]);
+    mocks.getRuntimeKeywordSeeds.mockResolvedValue(['Indian community meetup']);
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue(keywordStrategies);
+    mocks.getRuntimePinnedStrategies.mockResolvedValue([]);
     mocks.getDbCommunityStrategies.mockResolvedValue([]);
     mocks.getApprovedDynamicKeywords.mockResolvedValue([]);
     mocks.groupEvents.mockResolvedValue([]);

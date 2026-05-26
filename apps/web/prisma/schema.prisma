@@ -856,6 +856,30 @@ enum PipelineSourceType {
   USER_SUBMITTED
 }
 
+enum PipelineSourceConfigType {
+  REGION
+  STRATEGY
+  KEYWORD
+}
+
+model PipelineSourceConfig {
+  id         String                   @id @default(cuid())
+  configType PipelineSourceConfigType @map("config_type")
+  key        String
+  label      String
+  enabled    Boolean                  @default(true)
+  sourceType PipelineSourceType?      @map("source_type")
+  kind       String?                  // keyword_search | pinned_url
+  payload    Json?
+  updatedBy  String?                  @map("updated_by")
+  createdAt  DateTime                 @default(now()) @map("created_at")
+  updatedAt  DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([configType, key])
+  @@index([configType, enabled])
+  @@map("pipeline_source_configs")
+}
+
 model PipelineItem {
   id             String             @id @default(cuid())
   entityType     PipelineEntityType @map("entity_type")

@@ -98,6 +98,26 @@ To start the mobile app, run:
 | `pnpm db:migrate`       | Create/run local Prisma migrations         |
 | `pnpm openapi:generate` | Regenerate shared OpenAPI contract         |
 
+### Pipeline Source Config (No Runtime Hardcoding)
+
+The content pipeline runs from database-managed source config (no runtime static fallback).
+
+Bootstrap defaults are stored in [apps/web/prisma/data/pipeline-source-defaults.json](apps/web/prisma/data/pipeline-source-defaults.json) and synced into DB by the bootstrap flow; runtime reads DB config only.
+
+Keyword seeds are synced into DB as canonical `KEYWORD` config rows. Keyword search strategies in DB are provider templates only; the planner renders provider-specific query strings from that shared keyword pool at runtime.
+
+1. Apply migrations:
+   `pnpm --filter web db:migrate:deploy`
+2. Run bootstrap (includes pipeline source config defaults):
+   `pnpm --filter web db:bootstrap`
+
+To keep source URLs fresh in DB:
+
+1. Sync default source definitions:
+   `pnpm --filter web pipeline:sources:sync`
+2. Optional prune (disable DB rows no longer in defaults):
+   `pnpm --filter web pipeline:sources:sync:prune`
+
 ## Architecture
 
 **Monorepo, single backend.** The web app owns the Next.js API routes and Prisma data model. The mobile app consumes the same backend and shared contracts; it does not get a separate backend for MVP.
