@@ -222,10 +222,10 @@ export async function setCommunityStatusAction(formData: FormData) {
   await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
-  if (!id || !['ACTIVE', 'INACTIVE', 'UNVERIFIED', 'CLAIMED'].includes(status)) return;
+  if (!id || !['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(status)) return;
   await db.community.update({
     where: { id },
-    data: { status: status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' | 'CLAIMED' },
+    data: { status: status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' },
   });
   revalidatePath('/admin/data/communities');
 }
@@ -326,7 +326,7 @@ const ImportCommunity = z.object({
   languages: z.array(z.string()).default([]),
   personaSegments: z.array(z.string()).default([]),
   categorySlugs: z.array(z.string()).default([]),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'UNVERIFIED', 'CLAIMED']).default('UNVERIFIED'),
+  status: z.enum(['ACTIVE', 'INACTIVE', 'UNVERIFIED']).default('UNVERIFIED'),
   channels: z
     .array(
       z.object({

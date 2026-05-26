@@ -113,6 +113,7 @@ export async function approveClaim(formData: FormData) {
 
   if (community.city?.slug && community.slug) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+    revalidatePath(`/${community.city.slug}/communities`);
     if (community.claimedBy?.email) {
       try {
         await sendClaimApprovedEmail(
@@ -129,6 +130,8 @@ export async function approveClaim(formData: FormData) {
   // Refresh scores — trust score changes when claimed
   await refreshCommunityScore(id);
 
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/data/communities');
   revalidatePath('/admin/claims');
 }
 
@@ -157,6 +160,7 @@ export async function rejectClaim(formData: FormData) {
 
   if (community?.city?.slug && community?.slug) {
     revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+    revalidatePath(`/${community.city.slug}/communities`);
   }
   if (community?.claimedBy?.email && community?.name) {
     try {
@@ -165,6 +169,8 @@ export async function rejectClaim(formData: FormData) {
       // Email is best-effort
     }
   }
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/data/communities');
   revalidatePath('/admin/claims');
 }
 
