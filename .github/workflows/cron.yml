@@ -9,12 +9,17 @@ on:
   schedule:
     # Keep scores fresh enough for MVP demos.
     - cron: '0 */6 * * *'
-    # Daily maintenance and pipeline.
+    # Daily maintenance jobs.
     - cron: '0 3 * * *'
+    # Sharded pipeline runs to stay within time budgets.
+    - cron: '5 2 * * *'
+    - cron: '20 2 * * *'
+    - cron: '35 2 * * *'
+    - cron: '50 2 * * *'
   workflow_dispatch:
     inputs:
       job:
-        description: 'Job to run (links | keywords | relationships | enrichment | scores | pipeline | all)'
+        description: 'Job to run (links | keywords | relationships | enrichment | scores | pipeline | pipeline-berlin | pipeline-bw | pipeline-bavaria | pipeline-hesse | all)'
         required: false
         default: 'all'
 
@@ -27,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'scores' || inputs.job == 'all')) ||
-      github.event_name == 'schedule'
+      (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
     steps:
       - name: POST /api/cron/scores
         run: |
@@ -38,18 +43,69 @@ jobs:
           cat /tmp/scores.json
           [ "$STATUS" -eq 200 ] || (echo "scores returned HTTP $STATUS" && exit 1)
 
-  pipeline:
-    name: AI content pipeline
+  pipeline_berlin:
+    name: AI pipeline (Berlin)
     runs-on: ubuntu-latest
     if: >
-      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-berlin' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '5 2 * * *')
     steps:
-      - name: POST /api/cron/pipeline
+      - name: POST /api/cron/pipeline?region=berlin
         run: |
           STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
             --max-time 310 \
-            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=berlin" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/pipeline.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+
+  pipeline_bw:
+    name: AI pipeline (Baden-Wuerttemberg)
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-bw' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '20 2 * * *')
+    steps:
+      - name: POST /api/cron/pipeline?region=baden-wuerttemberg
+        run: |
+          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
+            --max-time 310 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=baden-wuerttemberg" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/pipeline.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+
+  pipeline_bavaria:
+    name: AI pipeline (Bavaria)
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-bavaria' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '35 2 * * *')
+    steps:
+      - name: POST /api/cron/pipeline?region=bavaria
+        run: |
+          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
+            --max-time 310 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=bavaria" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json")
+          cat /tmp/pipeline.json
+          [ "$STATUS" -eq 200 ] || (echo "pipeline returned HTTP $STATUS" && exit 1)
+
+  pipeline_hesse:
+    name: AI pipeline (Hesse)
+    runs-on: ubuntu-latest
+    if: >
+      (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'pipeline-hesse' || inputs.job == 'all')) ||
+      (github.event_name == 'schedule' && github.event.schedule == '50 2 * * *')
+    steps:
+      - name: POST /api/cron/pipeline?region=hesse
+        run: |
+          STATUS=$(curl -s -o /tmp/pipeline.json -w "%{http_code}" \
+            --max-time 310 \
+            -X POST "${{ secrets.APP_URL }}/api/cron/pipeline?region=hesse" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
           cat /tmp/pipeline.json

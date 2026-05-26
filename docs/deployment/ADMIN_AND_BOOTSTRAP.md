@@ -328,14 +328,17 @@ Cron is run by **GitHub Actions** ([.github/workflows/cron.yml](../../.github/wo
 not Vercel Cron. Each job POSTs to `/api/cron/{name}` with the
 `Authorization: Bearer ${CRON_SECRET}` header.
 
-| Schedule (UTC) | Endpoint                  | Purpose                                                                                  |
-| -------------- | ------------------------- | ---------------------------------------------------------------------------------------- |
-| every 6 h      | `/api/cron/scores`        | Recompute community scores **and** archive `UPCOMING → PAST` events whose end has passed |
-| 03:00 daily    | `/api/cron/pipeline`      | AI content pipeline                                                                      |
-| 03:00 daily    | `/api/cron/links`         | Verify community join-link health                                                        |
-| 03:00 daily    | `/api/cron/keywords`      | Refresh keyword suggestions                                                              |
-| 03:00 daily    | `/api/cron/relationships` | Infer related-community edges                                                            |
-| 03:00 daily    | `/api/cron/enrichment`    | Background community enrichment                                                          |
+| Schedule (UTC) | Endpoint                                       | Purpose                                                                                  |
+| -------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| every 6 h      | `/api/cron/scores`                             | Recompute community scores **and** archive `UPCOMING → PAST` events whose end has passed |
+| 02:05 daily    | `/api/cron/pipeline?region=berlin`             | AI content pipeline shard for Berlin                                                     |
+| 02:20 daily    | `/api/cron/pipeline?region=baden-wuerttemberg` | AI content pipeline shard for Baden-Wuerttemberg                                         |
+| 02:35 daily    | `/api/cron/pipeline?region=bavaria`            | AI content pipeline shard for Bavaria                                                    |
+| 02:50 daily    | `/api/cron/pipeline?region=hesse`              | AI content pipeline shard for Hesse                                                      |
+| 03:00 daily    | `/api/cron/links`                              | Verify community join-link health                                                        |
+| 03:00 daily    | `/api/cron/keywords`                           | Refresh keyword suggestions                                                              |
+| 03:00 daily    | `/api/cron/relationships`                      | Infer related-community edges                                                            |
+| 03:00 daily    | `/api/cron/enrichment`                         | Background community enrichment                                                          |
 
 Required secrets (set in **both** Vercel project env and GitHub repo secrets):
 

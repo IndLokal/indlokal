@@ -27,6 +27,9 @@ export const Events = {
   // Conversion — high-value business outcomes
   COMMUNITY_SUBMITTED: 'community_submitted',
   CLAIM_SUBMITTED: 'claim_submitted',
+
+  // Ops observability — scheduled pipeline health
+  PIPELINE_SHARD_COMPLETED: 'pipeline_shard_completed',
 } as const;
 
 export type AnalyticsEvent = (typeof Events)[keyof typeof Events];
