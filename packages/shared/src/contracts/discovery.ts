@@ -87,8 +87,24 @@ export const EventsQuery = z.object({
   cursor: z.string().optional(),
   limit: z.coerce.number().int().min(1).max(50).optional(),
   categorySlug: z.string().optional(),
+  categorySlugs: z
+    .preprocess((value) => {
+      if (value === undefined || value === null) return undefined;
+      const normalize = (raw: unknown[]) => [
+        ...new Set(raw.map((entry) => String(entry).trim().toLowerCase()).filter(Boolean)),
+      ];
+      if (Array.isArray(value)) {
+        return normalize(value.flatMap((entry) => String(entry).split(',')));
+      }
+      return normalize(String(value).split(','));
+    }, z.array(z.string()).min(1).max(10))
+    .optional(),
+  cost: z.enum(['free', 'paid']).optional(),
+  type: z.enum(['online', 'in-person']).optional(),
 });
 export type EventsQuery = z.infer<typeof EventsQuery>;
+
+export const BUSINESS_EVENT_CATEGORY_SLUGS = ['professional', 'networking-social'] as const;
 
 export const EventsPage = Page(EventCard);
 export type EventsPage = z.infer<typeof EventsPage>;

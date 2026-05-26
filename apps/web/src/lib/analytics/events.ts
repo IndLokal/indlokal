@@ -22,6 +22,7 @@ export const Events = {
   COMMUNITY_ACCESS_CLICKED: 'community_access_clicked',
   COMMUNITY_SAVED: 'community_saved',
   COMMUNITY_UNSAVED: 'community_unsaved',
+  BUSINESS_LENS_VIEWED: 'business_lens_viewed',
 
   // Conversion — high-value business outcomes
   COMMUNITY_SUBMITTED: 'community_submitted',

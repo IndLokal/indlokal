@@ -104,11 +104,39 @@ export async function getEventsPage(
     cursor?: string;
     limit: number;
     categorySlug?: string;
+    categorySlugs?: string[];
+    cost?: 'free' | 'paid';
+    type?: 'online' | 'in-person';
     communityId?: string;
   },
 ): Promise<{ items: EventListItem[]; hasMore: boolean; nextCursor?: string }> {
   const cityIds = await resolveCityIds(citySlug);
   if (!cityIds.length) return { items: [], hasMore: false };
+
+  const normalizedCategorySlugs = (opts.categorySlugs ?? [])
+    .map((slug) => slug.trim())
+    .filter(Boolean);
+
+  const categoryWhere =
+    normalizedCategorySlugs.length > 0
+      ? { categories: { some: { category: { slug: { in: normalizedCategorySlugs } } } } }
+      : opts.categorySlug
+        ? { categories: { some: { category: { slug: opts.categorySlug } } } }
+        : {};
+
+  const costWhere =
+    opts.cost === 'free'
+      ? { cost: 'free' }
+      : opts.cost === 'paid'
+        ? { NOT: [{ cost: null }, { cost: 'free' }] }
+        : {};
+
+  const typeWhere =
+    opts.type === 'online'
+      ? { isOnline: true }
+      : opts.type === 'in-person'
+        ? { isOnline: false }
+        : {};
 
   const rows = await db.event.findMany({
     where: {
@@ -118,9 +146,9 @@ export async function getEventsPage(
         gte: opts.from ?? new Date(),
         ...(opts.to && { lte: opts.to }),
       },
-      ...(opts.categorySlug && {
-        categories: { some: { category: { slug: opts.categorySlug } } },
-      }),
+      ...categoryWhere,
+      ...costWhere,
+      ...typeWhere,
       ...(opts.communityId && { communityId: opts.communityId }),
     },
     select: eventListSelect,
@@ -138,6 +166,9 @@ export async function getUpcomingEvents(
   citySlug: string,
   options?: {
     categorySlug?: string;
+    categorySlugs?: string[];
+    cost?: 'free' | 'paid';
+    type?: 'online' | 'in-person';
     limit?: number;
     offset?: number;
   },
@@ -145,14 +176,39 @@ export async function getUpcomingEvents(
   const cityIds = await resolveCityIds(citySlug);
   if (cityIds.length === 0) return [];
 
+  const normalizedCategorySlugs = (options?.categorySlugs ?? [])
+    .map((slug) => slug.trim())
+    .filter(Boolean);
+
+  const categoryWhere =
+    normalizedCategorySlugs.length > 0
+      ? { categories: { some: { category: { slug: { in: normalizedCategorySlugs } } } } }
+      : options?.categorySlug
+        ? { categories: { some: { category: { slug: options.categorySlug } } } }
+        : {};
+
+  const costWhere =
+    options?.cost === 'free'
+      ? { cost: 'free' }
+      : options?.cost === 'paid'
+        ? { NOT: [{ cost: null }, { cost: 'free' }] }
+        : {};
+
+  const typeWhere =
+    options?.type === 'online'
+      ? { isOnline: true }
+      : options?.type === 'in-person'
+        ? { isOnline: false }
+        : {};
+
   return db.event.findMany({
     where: {
       cityId: { in: cityIds },
       startsAt: { gte: new Date() },
       status: { not: 'CANCELLED' },
-      ...(options?.categorySlug && {
-        categories: { some: { category: { slug: options.categorySlug } } },
-      }),
+      ...categoryWhere,
+      ...costWhere,
+      ...typeWhere,
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
