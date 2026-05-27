@@ -641,10 +641,13 @@ async function resolveAndQueue(
       continue;
     }
 
-    // Skip events that have already passed - no value in queuing stale content
+    // Skip events from before the current calendar year. Events from earlier
+    // in the running year are still queued (they show as past on the public
+    // site but give us visibility that the source is producing content).
     if (item.type === 'EVENT' && item.date) {
       const eventDate = new Date(`${item.date}T23:59:59`);
-      if (!Number.isNaN(eventDate.getTime()) && eventDate < new Date()) {
+      const startOfCurrentYear = new Date(new Date().getFullYear(), 0, 1);
+      if (!Number.isNaN(eventDate.getTime()) && eventDate < startOfCurrentYear) {
         result.itemsSkippedPast++;
         decisionCounts.pastEvents++;
         continue;

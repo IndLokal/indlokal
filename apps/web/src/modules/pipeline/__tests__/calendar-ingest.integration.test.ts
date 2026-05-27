@@ -343,10 +343,12 @@ describe('@db pipeline calendar ingestion integration', () => {
 
     icsBody = buildIcsCalendar([
       buildIcsEvent({
-        uid: 'students-meet-2026@google.com',
+        // Prior-year event: pipeline drops events from before the running
+        // calendar year (events earlier in the current year are still queued).
+        uid: 'students-meet-2025@google.com',
         summary: "Students' Meet",
-        start: '20260510',
-        end: '20260511',
+        start: '20250510',
+        end: '20250511',
         location: 'Stuttgart',
         description: 'Students gathering',
       }),
