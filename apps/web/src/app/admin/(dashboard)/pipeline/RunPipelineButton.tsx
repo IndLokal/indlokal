@@ -43,12 +43,14 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
   const router = useRouter();
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
+  const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
   const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleRun(nextScope?: PipelineRunScope, scopeKey = 'all') {
     setRunningKey(scopeKey);
     setResult(null);
+    setDispatchMessage(null);
     setScope(null);
     setError(null);
 
@@ -60,7 +62,22 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
       });
 
       const payload = (await response.json()) as
-        | { ok: true; scope: PipelineRunScope | null; result: PipelineRunResult }
+        | {
+            ok: true;
+            mode: 'direct';
+            scope: PipelineRunScope | null;
+            result: PipelineRunResult;
+          }
+        | {
+            ok: true;
+            mode: 'dispatch';
+            dispatch: {
+              ok: boolean;
+              dispatched: string[];
+              failed?: Array<{ regionId: string; status: number | null; error?: string }>;
+              concurrency?: number;
+            };
+          }
         | { ok: false; error?: string };
 
       if (!response.ok || !payload.ok) {
@@ -69,8 +86,19 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
         );
       }
 
-      setResult(payload.result);
-      setScope(payload.scope);
+      if (payload.ok && payload.mode === 'dispatch') {
+        const failedCount = payload.dispatch.failed?.length ?? 0;
+        setDispatchMessage(
+          failedCount === 0
+            ? `Dispatched ${payload.dispatch.dispatched.length} regional cron shards.`
+            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`,
+        );
+        setScope(null);
+        setResult(null);
+      } else if (payload.ok && payload.mode === 'direct') {
+        setResult(payload.result);
+        setScope(payload.scope);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -107,6 +135,10 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
             >
               {runningKey === 'all' ? '⏳ Running all regions…' : 'Run all enabled regions'}
             </button>
+            <p className="text-muted text-xs">
+              Runs via cron-style regional dispatch (asynchronous). Use city/region shards below for
+              immediate per-run metrics.
+            </p>
 
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -266,6 +298,12 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
               </div>
             </details>
           )}
+        </div>
+      )}
+
+      {dispatchMessage && (
+        <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
+          {dispatchMessage}
         </div>
       )}
 
