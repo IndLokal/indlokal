@@ -5,8 +5,12 @@ import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
 import {
+  sendCollaboratorAccessApprovedEmail,
+  sendCollaboratorAccessRejectedEmail,
   sendClaimApprovedEmail,
   sendClaimRejectedEmail,
+  sendOrganizerCollaboratorApprovedNotificationEmail,
+  sendOrganizerCollaboratorRejectedNotificationEmail,
   sendSubmissionApprovedEmail,
 } from '@/lib/email';
 
@@ -259,7 +263,17 @@ export async function approveCollaboratorRequest(formData: FormData) {
       communityId: true,
       userId: true,
       status: true,
-      community: { select: { slug: true, city: { select: { slug: true } } } },
+      requestedByUserId: true,
+      requestedByUser: { select: { email: true } },
+      user: { select: { email: true } },
+      community: {
+        select: {
+          name: true,
+          slug: true,
+          city: { select: { slug: true } },
+          claimedBy: { select: { email: true } },
+        },
+      },
     },
   });
   if (!request || request.status !== 'PENDING') return;
@@ -279,6 +293,36 @@ export async function approveCollaboratorRequest(formData: FormData) {
     }),
   ]);
 
+  try {
+    if (request.user.email && request.community.city?.slug && request.community.slug) {
+      await sendCollaboratorAccessApprovedEmail(
+        request.user.email,
+        request.community.name,
+        request.community.city.slug,
+        request.community.slug,
+      );
+    }
+
+    const organizerNotificationEmails = new Set<string>();
+    if (request.community.claimedBy?.email) {
+      organizerNotificationEmails.add(request.community.claimedBy.email);
+    }
+    if (request.requestedByUser?.email) {
+      organizerNotificationEmails.add(request.requestedByUser.email);
+    }
+
+    for (const organizerEmail of organizerNotificationEmails) {
+      if (organizerEmail === request.user.email) continue;
+      await sendOrganizerCollaboratorApprovedNotificationEmail(
+        organizerEmail,
+        request.user.email,
+        request.community.name,
+      );
+    }
+  } catch {
+    // Email is best-effort - do not fail admin action
+  }
+
   if (request.community.city?.slug && request.community.slug) {
     revalidatePath(`/${request.community.city.slug}/communities/${request.community.slug}`);
     revalidatePath(`/${request.community.city.slug}/communities`);
@@ -293,7 +337,18 @@ export async function rejectCollaboratorRequest(formData: FormData) {
 
   const request = await db.communityCollaborator.findUnique({
     where: { id },
-    select: { id: true, status: true },
+    select: {
+      id: true,
+      status: true,
+      user: { select: { email: true } },
+      requestedByUser: { select: { email: true } },
+      community: {
+        select: {
+          name: true,
+          claimedBy: { select: { email: true } },
+        },
+      },
+    },
   });
   if (!request || request.status !== 'PENDING') return;
 
@@ -305,6 +360,31 @@ export async function rejectCollaboratorRequest(formData: FormData) {
       reviewedByUserId: reviewer.id,
     },
   });
+
+  try {
+    if (request.user.email) {
+      await sendCollaboratorAccessRejectedEmail(request.user.email, request.community.name);
+    }
+
+    const organizerNotificationEmails = new Set<string>();
+    if (request.community.claimedBy?.email) {
+      organizerNotificationEmails.add(request.community.claimedBy.email);
+    }
+    if (request.requestedByUser?.email) {
+      organizerNotificationEmails.add(request.requestedByUser.email);
+    }
+
+    for (const organizerEmail of organizerNotificationEmails) {
+      if (organizerEmail === request.user.email) continue;
+      await sendOrganizerCollaboratorRejectedNotificationEmail(
+        organizerEmail,
+        request.user.email,
+        request.community.name,
+      );
+    }
+  } catch {
+    // Email is best-effort - do not fail admin action
+  }
 
   revalidatePath('/admin/collaborators');
 }

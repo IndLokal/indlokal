@@ -246,6 +246,111 @@ export async function sendSubmissionApprovedEmail(
   );
 }
 
+/* ─── Collaborator access approved ─── */
+
+export async function sendCollaboratorAccessApprovedEmail(
+  to: string,
+  communityName: string,
+  citySlug: string,
+  communitySlug: string,
+): Promise<void> {
+  const communityUrl = `${APP_URL}/${citySlug}/communities/${communitySlug}`;
+  const organizerLoginUrl = `${APP_URL}/organizer/login?email=${encodeURIComponent(to)}`;
+
+  await sendEmail(
+    to,
+    `Organizer access approved for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Your organizer access is approved</h2>
+  <p>You can now manage <strong>${communityName}</strong> on IndLokal as a collaborator.</p>
+  <p style="margin:24px 0">
+    <a href="${organizerLoginUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Get organizer login link →
+    </a>
+  </p>
+  <p style="font-size:13px">
+    <a href="${communityUrl}" style="color:#4f46e5">View community page →</a>
+  </p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+export async function sendOrganizerCollaboratorApprovedNotificationEmail(
+  to: string,
+  collaboratorEmail: string,
+  communityName: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Collaborator approved for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Collaborator approved</h2>
+  <p><strong>${collaboratorEmail}</strong> is now an approved organizer collaborator for <strong>${communityName}</strong>.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Collaborator access rejected ─── */
+
+export async function sendCollaboratorAccessRejectedEmail(
+  to: string,
+  communityName: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Update on your organizer access request for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Access request update</h2>
+  <p>We reviewed your organizer collaborator request for <strong>${communityName}</strong> and were unable to approve it at this time.</p>
+  <p style="font-size:13px;color:#555">If this seems incorrect, you can submit a new request with additional context.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+export async function sendOrganizerCollaboratorRejectedNotificationEmail(
+  to: string,
+  collaboratorEmail: string,
+  communityName: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Collaborator request rejected for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Collaborator request rejected</h2>
+  <p>The collaborator access request from <strong>${collaboratorEmail}</strong> for <strong>${communityName}</strong> was rejected.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
 export async function sendStaleReEngagementEmail(
   to: string,
   organizerName: string,
