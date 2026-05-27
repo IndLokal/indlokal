@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
+import { BrandLink } from '@/components/BrandLink';
 
 export default async function HostLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -17,13 +18,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
       <header className="border-border sticky top-0 z-40 border-b bg-white shadow-sm">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link
+            <BrandLink
               href="/"
-              className="bg-brand-500 flex h-8 w-8 items-center justify-center rounded-lg font-bold text-white shadow-sm transition-opacity hover:opacity-80"
-              title="Back to site"
-            >
-              L
-            </Link>
+              markSize={32}
+              showName={false}
+              className="transition-opacity hover:opacity-80"
+            />
             <span className="text-foreground text-base font-bold tracking-tight">Event Host</span>
             <div className="bg-border h-5 w-px" />
             <nav className="hidden items-center gap-1 text-sm font-medium sm:flex">

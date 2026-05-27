@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { requireAdmin } from '@/lib/session';
 import { ADMIN_NAV_LINKS } from './nav-links';
+import { BrandLink } from '@/components/BrandLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +13,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="border-border border-b bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
           <div className="flex min-w-0 flex-1 items-center gap-4">
-            <Link href="/admin" className="shrink-0 text-lg font-bold">
-              IndLokal Admin
-            </Link>
+            <BrandLink href="/admin" markSize={32} showName={false} />
+            <span className="text-foreground text-lg font-bold">Admin</span>
             <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm sm:flex">
               {ADMIN_NAV_LINKS.map((link) => (
                 <Link

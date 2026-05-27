@@ -1,9 +1,8 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { siteConfig } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { MobileNav } from '@/components/MobileNav';
-import { LogoMark } from '@/components/Logo';
+import { BrandLink } from '@/components/BrandLink';
 import { Footer } from './Footer';
 
 type NavLink = {
@@ -34,15 +33,7 @@ export function AppShell({ children, subtitle, navLinks, maxWidth = 'max-w-7xl' 
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md sm:backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link
-              href="/"
-              className="flex items-center gap-2.5 transition-opacity hover:opacity-80"
-            >
-              <LogoMark size={36} className="rounded-xl shadow-sm" />
-              <span className="text-foreground hidden text-xl font-bold tracking-tight sm:inline-block">
-                {siteConfig.name}
-              </span>
-            </Link>
+            <BrandLink hideNameOnMobile />
 
             {subtitle && (
               <div className="text-brand-700 bg-brand-50 ring-brand-100 flex items-center rounded-full px-3 py-1 text-sm font-medium ring-1">

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { MobileNav } from '@/components/MobileNav';
+import { BrandLink } from '@/components/BrandLink';
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -19,13 +20,12 @@ export default async function OrganizerLayout({ children }: { children: React.Re
       <header className="border-border sticky top-0 z-40 border-b bg-white shadow-sm">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link
+            <BrandLink
               href="/"
-              className="bg-brand-500 flex h-8 w-8 items-center justify-center rounded-lg font-bold text-white shadow-sm transition-opacity hover:opacity-80"
-              title="Back to site"
-            >
-              L
-            </Link>
+              markSize={32}
+              showName={false}
+              className="transition-opacity hover:opacity-80"
+            />
 
             {/* Workspace switcher - shows active community name + chevron for multi-org */}
             {activeCommunity ? (

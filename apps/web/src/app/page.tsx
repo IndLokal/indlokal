@@ -8,7 +8,7 @@ import {
   getConfiguredCityName,
 } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
-import { LogoMark } from '@/components/Logo';
+import { BrandLink } from '@/components/BrandLink';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
@@ -18,12 +18,7 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <LogoMark size={36} className="rounded-xl shadow-sm" />
-            <span className="text-foreground text-xl font-bold tracking-tight">
-              {siteConfig.name}
-            </span>
-          </Link>
+          <BrandLink />
           <div className="flex items-center gap-3 text-sm">
             <Link href="/submit" className="btn-primary inline-flex px-4 py-2 text-sm">
               List a Community
