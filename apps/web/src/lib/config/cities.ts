@@ -34,6 +34,79 @@ export type UpcomingCity = {
   name: string;
   state: string;
   emoji?: string;
+  notes?: string;
+};
+
+export type CityCommunityProfile = {
+  emoji: string;
+  notes: string;
+};
+
+export const CITY_COMMUNITY_PROFILES: Record<string, CityCommunityProfile> = {
+  berlin: {
+    emoji: '🏛️',
+    notes: 'Student, startup, and tech hub.',
+  },
+  munich: {
+    emoji: '⚙️',
+    notes: 'Automotive, semiconductors, and engineering base.',
+  },
+  frankfurt: {
+    emoji: '🏦',
+    notes: 'Finance, consulting, aviation, and IT.',
+  },
+  hamburg: {
+    emoji: '⚓',
+    notes: 'Shipping, logistics, and global trade.',
+  },
+  dusseldorf: {
+    emoji: '🗼',
+    notes: 'NRW business and expat corridor.',
+  },
+  stuttgart: {
+    emoji: '🚗',
+    notes: 'Automotive and embedded engineering city.',
+  },
+  erlangen: {
+    emoji: '🏥',
+    notes: 'Siemens, FAU, and health-tech talent.',
+  },
+  cologne: {
+    emoji: '⛪',
+    notes: 'Media, services, and student ecosystem.',
+  },
+  aachen: {
+    emoji: '🎓',
+    notes: 'RWTH-led engineering student ecosystem.',
+  },
+  mannheim: {
+    emoji: '🏭',
+    notes: 'Industry, pharma, and Rhein-Neckar access.',
+  },
+  braunschweig: {
+    emoji: '✈️',
+    notes: 'Automotive R&D and aerospace cluster.',
+  },
+  essen: {
+    emoji: '🏗️',
+    notes: 'Core city in NRW industrial belt.',
+  },
+  bonn: {
+    emoji: '🌐',
+    notes: 'UN institutions, telecom, and academia.',
+  },
+  dresden: {
+    emoji: '💾',
+    notes: 'Semiconductor growth and deep-tech hiring.',
+  },
+  karlsruhe: {
+    emoji: '⚡',
+    notes: 'KIT, software, and research ecosystem.',
+  },
+  nuremberg: {
+    emoji: '🏯',
+    notes: 'Manufacturing and logistics powerhouse.',
+  },
 };
 
 /* ─── Active metro cities (currently prioritized markets) ────────────── */
@@ -730,10 +803,76 @@ export const CITY_NAME_ALIASES: Record<string, string> = Object.fromEntries(
  * These should stay focused on larger expansion metros, not secondary cities.
  */
 export const UPCOMING_CITIES: readonly UpcomingCity[] = [
-  { slug: 'hamburg', name: 'Hamburg', state: 'Hamburg', emoji: '⚓' },
-  { slug: 'dusseldorf', name: 'Düsseldorf', state: 'NRW', emoji: '🗼' },
-  { slug: 'cologne', name: 'Cologne', state: 'NRW', emoji: '⛪' },
-  { slug: 'nuremberg', name: 'Nuremberg', state: 'Bavaria', emoji: '🏯' },
+  {
+    slug: 'hamburg',
+    name: 'Hamburg',
+    state: 'Hamburg',
+    emoji: '⚓',
+    notes: CITY_COMMUNITY_PROFILES.hamburg.notes,
+  },
+  {
+    slug: 'dusseldorf',
+    name: 'Düsseldorf',
+    state: 'NRW',
+    emoji: '🗼',
+    notes: CITY_COMMUNITY_PROFILES.dusseldorf.notes,
+  },
+  {
+    slug: 'erlangen',
+    name: 'Erlangen',
+    state: 'Bavaria',
+    emoji: '🏥',
+    notes: CITY_COMMUNITY_PROFILES.erlangen.notes,
+  },
+  {
+    slug: 'cologne',
+    name: 'Cologne',
+    state: 'NRW',
+    emoji: '⛪',
+    notes: CITY_COMMUNITY_PROFILES.cologne.notes,
+  },
+  {
+    slug: 'aachen',
+    name: 'Aachen',
+    state: 'NRW',
+    emoji: '🎓',
+    notes: CITY_COMMUNITY_PROFILES.aachen.notes,
+  },
+  {
+    slug: 'braunschweig',
+    name: 'Braunschweig',
+    state: 'Lower Saxony',
+    emoji: '✈️',
+    notes: CITY_COMMUNITY_PROFILES.braunschweig.notes,
+  },
+  {
+    slug: 'essen',
+    name: 'Essen',
+    state: 'NRW',
+    emoji: '🏗️',
+    notes: CITY_COMMUNITY_PROFILES.essen.notes,
+  },
+  {
+    slug: 'bonn',
+    name: 'Bonn',
+    state: 'NRW',
+    emoji: '🌐',
+    notes: CITY_COMMUNITY_PROFILES.bonn.notes,
+  },
+  {
+    slug: 'dresden',
+    name: 'Dresden',
+    state: 'Saxony',
+    emoji: '💾',
+    notes: CITY_COMMUNITY_PROFILES.dresden.notes,
+  },
+  {
+    slug: 'nuremberg',
+    name: 'Nuremberg',
+    state: 'Bavaria',
+    emoji: '🏯',
+    notes: CITY_COMMUNITY_PROFILES.nuremberg.notes,
+  },
   { slug: 'wiesbaden', name: 'Wiesbaden', state: 'Hesse', emoji: '💧' },
   { slug: 'kassel', name: 'Kassel', state: 'Hesse', emoji: '🌳' },
 ] as const;

@@ -1,21 +1,13 @@
-import Link from 'next/link';
 import { ImportClient } from './ImportClient';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Bulk Import - Admin' };
 
 export default function ImportPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Bulk Import</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Bulk Import" backHref="/admin/data" backLabel="Data" />
       <p className="text-muted mt-2 text-sm">
         Upload a CSV file or paste JSON. Click <strong>Preview</strong> to see what would change,
         then <strong>Apply</strong> to commit. All operations use upserts keyed on{' '}
@@ -57,6 +49,6 @@ Senior Adults,senior,PERSONA,🧓,6,
   ]
 }`}</pre>
       </section>
-    </div>
+    </AdminPage>
   );
 }

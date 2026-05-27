@@ -63,12 +63,22 @@ export function AuditTable({ logs, operators }: Props) {
           <table className="w-full text-sm">
             <thead className="bg-muted-bg">
               <tr className="border-border border-b">
-                <th className="px-4 py-2.5 text-left text-xs font-medium">Action</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium">Entity type</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium">Entity ID</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium">Actor</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium">When</th>
-                <th className="px-4 py-2.5 text-left text-xs font-medium"></th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  Action
+                </th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  Entity type
+                </th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  Entity ID
+                </th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  Actor
+                </th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                  When
+                </th>
+                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide"></th>
               </tr>
             </thead>
             <tbody className="divide-border divide-y">
@@ -78,15 +88,15 @@ export function AuditTable({ logs, operators }: Props) {
                   className="hover:bg-muted-bg/50 cursor-pointer transition-colors"
                   onClick={() => setSelected(log)}
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-2">
                     <span
                       className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ACTION_CHIP[log.action] ?? 'bg-gray-100 text-gray-600'}`}
                     >
                       {log.action.replace('_', ' ')}
                     </span>
                   </td>
-                  <td className="text-muted px-4 py-3 font-mono text-xs">{log.entityType}</td>
-                  <td className="px-4 py-3">
+                  <td className="text-muted px-4 py-2 font-mono text-xs">{log.entityType}</td>
+                  <td className="px-4 py-2">
                     <span
                       className="text-muted max-w-[120px] cursor-default truncate font-mono text-xs"
                       title={log.entityId}
@@ -94,11 +104,11 @@ export function AuditTable({ logs, operators }: Props) {
                       {log.entityId.slice(0, 12)}…
                     </span>
                   </td>
-                  <td className="text-muted px-4 py-3 text-xs">{actorLabel(log.changedBy)}</td>
-                  <td className="text-muted px-4 py-3 text-xs" title={log.createdAt.toISOString()}>
+                  <td className="text-muted px-4 py-2 text-xs">{actorLabel(log.changedBy)}</td>
+                  <td className="text-muted px-4 py-2 text-xs" title={log.createdAt.toISOString()}>
                     {format(new Date(log.createdAt), 'dd MMM yyyy HH:mm')}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-2 text-right">
                     {entityLink(log.entityType, log.entityId) && (
                       <a
                         href={entityLink(log.entityType, log.entityId)!}

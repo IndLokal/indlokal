@@ -6,14 +6,15 @@ const NAV_COLUMNS = [
   {
     title: 'Cities',
     links: [
-      ...ACTIVE_CITIES.map((city) => ({
+      ...ACTIVE_CITIES.slice(0, 4).map((city) => ({
         label: city.charAt(0).toUpperCase() + city.slice(1),
         href: `/${city}`,
       })),
-      ...UPCOMING_CITIES.slice(0, 4).map((city) => ({
+      ...UPCOMING_CITIES.slice(0, 2).map((city) => ({
         label: `${city.name} ⁽ˢᵒᵒⁿ⁾`,
         href: `/${city.slug}`,
       })),
+      { label: 'All cities', href: '/' },
     ],
   },
   {
@@ -42,7 +43,7 @@ const NAV_COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="border-border/50 mt-16 border-t bg-gradient-to-b from-white to-slate-50">
+    <footer className="border-border/50 mt-10 border-t bg-gradient-to-b from-white to-slate-50">
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_repeat(4,1fr)] lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
@@ -91,15 +92,15 @@ export function Footer() {
           {/* Nav columns */}
           {NAV_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-foreground/70 mb-4 text-xs font-semibold uppercase tracking-wider">
+              <h4 className="text-foreground/70 mb-3 text-xs font-semibold uppercase tracking-wider">
                 {col.title}
               </h4>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 {col.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-muted hover:text-brand-600 inline-block py-1.5 text-sm transition-colors"
+                      className="text-muted hover:text-brand-600 inline-block py-1 text-sm transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -115,8 +116,8 @@ export function Footer() {
       <div className="border-border/40 border-t bg-slate-50/80">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-muted/80 text-xs">
-            &copy; {new Date().getFullYear()} {siteConfig.name}. Made with ❤️ for Indians in
-            Germany.
+            &copy; {new Date().getFullYear()} {siteConfig.name}. Built for Indians navigating life
+            in Germany.
           </p>
           <div className="text-muted/80 flex flex-wrap items-center gap-1 text-xs">
             <Link

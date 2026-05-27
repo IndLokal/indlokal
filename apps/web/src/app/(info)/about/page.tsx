@@ -3,40 +3,32 @@ import Link from 'next/link';
 import { content } from '@indlokal/shared';
 import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 import { CommunityActionGrid } from '@/components/content/community-actions';
+import { InfoPageHero } from '@/components/info/InfoPageHero';
 
 export const metadata: Metadata = {
   title: `About - ${siteConfig.name}`,
   description:
     'Learn about IndLokal - the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {
+  const lastReviewed = '27 May 2026';
   const actionCards = content.ACTION_GRID_ORDER.map((id) => content.COMMUNITY_ACTIONS[id]);
 
   return (
     <>
-      {/* Hero */}
-      <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pb-16 pt-20 text-center">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="bg-brand-500/20 absolute -right-32 -top-32 h-96 w-96 rounded-full blur-3xl" />
-          <div className="bg-accent-400/10 absolute -bottom-20 -left-20 h-72 w-72 rounded-full blur-3xl" />
-        </div>
-        <div className="relative mx-auto max-w-2xl">
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/10 px-4 py-1.5 text-sm font-medium text-white/90 backdrop-blur-sm">
-            Built for Indians in Germany
-          </span>
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
-            About {siteConfig.name}
-          </h1>
-          <p className="text-brand-200/80 mx-auto mt-4 max-w-xl text-lg leading-relaxed">
-            The city-first discovery platform for the Indian diaspora in Germany - communities,
-            events and expat-life resources, active near you.
-          </p>
-        </div>
-      </section>
+      <InfoPageHero
+        badge="Built for Indians in Germany"
+        title={`About ${siteConfig.name}`}
+        description="The city-first discovery platform for the Indian diaspora in Germany - communities, events and expat-life resources, active near you."
+        meta={`Last reviewed: ${lastReviewed}`}
+      />
 
       {/* Mission */}
-      <section className="mx-auto max-w-3xl px-4 py-16">
+      <section className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Our Mission</h2>
         <p className="text-muted mt-4 leading-relaxed">
           Make Indian community life in Germany visible, fresh, and easy to join - and put the
@@ -52,7 +44,7 @@ export default function AboutPage() {
       </section>
 
       {/* Action guide */}
-      <section className="bg-white px-4 py-16">
+      <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-6xl">
           <CommunityActionGrid
             title="Which action should I use?"
@@ -63,14 +55,14 @@ export default function AboutPage() {
       </section>
 
       {/* Three pillars */}
-      <section className="bg-white px-4 py-16">
+      <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
           <p className="text-muted mt-3 leading-relaxed">
             For every German city we cover, {siteConfig.name} brings together three things in one
             place - with equal weight.
           </p>
-          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-3">
             {[
               {
                 icon: '🪷',
@@ -102,11 +94,11 @@ export default function AboutPage() {
       </section>
 
       {/* Cities */}
-      <section className="mx-auto max-w-3xl px-4 py-16">
+      <section className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Where We Are</h2>
         <p className="text-muted mt-4 leading-relaxed">
-          We&apos;re currently live in {ACTIVE_CITIES.length} cities in Baden-Württemberg, with
-          plans to expand across Germany.
+          We&apos;re currently live in {ACTIVE_CITIES.length} cities across Germany, with a strong
+          footprint in Baden-Württemberg and expansion planned nationwide.
         </p>
         <div className="mt-6 flex flex-wrap gap-3">
           {ACTIVE_CITIES.map((city) => (
@@ -122,7 +114,7 @@ export default function AboutPage() {
       </section>
 
       {/* For organizers */}
-      <section className="relative overflow-hidden px-4 py-16 text-center">
+      <section className="relative overflow-hidden px-4 py-14 text-center sm:py-16">
         <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
         <div className="relative mx-auto max-w-xl">
           <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
@@ -143,14 +135,14 @@ export default function AboutPage() {
               href="/organizer/login"
               className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/20"
             >
-              Organiser login
+              Organizer login
             </Link>
           </div>
         </div>
       </section>
 
       {/* Contact */}
-      <section className="mx-auto max-w-3xl px-4 py-16 text-center">
+      <section className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Get in Touch</h2>
         <p className="text-muted mt-4 leading-relaxed">
           Have a question, suggestion, or want to partner with us?

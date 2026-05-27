@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Categories - Admin' };
@@ -14,16 +14,8 @@ export default async function AdminCategoriesPage() {
   const personas = all.filter((c) => c.type === 'PERSONA');
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories &amp; Personas</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Categories & Personas" backHref="/admin/data" backLabel="Data" />
 
       <section className="border-border mt-6 rounded-[var(--radius-card)] border p-5">
         <h2 className="text-sm font-semibold">Add taxonomy entry</h2>
@@ -57,7 +49,7 @@ export default async function AdminCategoriesPage() {
 
       <Section title="Categories" rows={cats} />
       <Section title="Personas" rows={personas} />
-    </div>
+    </AdminPage>
   );
 }
 
@@ -80,11 +72,21 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-3 py-2 font-medium">Icon</th>
-              <th className="text-muted px-3 py-2 font-medium">Name</th>
-              <th className="text-muted px-3 py-2 font-medium">Slug</th>
-              <th className="text-muted px-3 py-2 font-medium">Order</th>
-              <th className="text-muted px-3 py-2 font-medium">In use</th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Icon
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Name
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Slug
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Order
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                In use
+              </th>
               <th />
             </tr>
           </thead>

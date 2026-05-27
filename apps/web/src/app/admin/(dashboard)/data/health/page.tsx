@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Data Health - Admin' };
@@ -83,16 +84,8 @@ export default async function DataHealthPage() {
   const ref = catTotal === 0 || cityActive === 0;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Data Health</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Data Health" backHref="/admin/data" backLabel="Data" />
 
       {ref && (
         <div className="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-800">
@@ -118,7 +111,7 @@ export default async function DataHealthPage() {
           </div>
         ))}
       </div>
-    </div>
+    </AdminPage>
   );
 }
 

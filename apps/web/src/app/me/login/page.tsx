@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Sign in - IndLokal',
+  title: 'Account Sign In - IndLokal',
   robots: { index: false },
 };
 
@@ -22,9 +22,9 @@ export default async function LoginPage({
     <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center">
-          <h1 className="text-foreground text-2xl font-bold">Sign in to IndLokal</h1>
+          <h1 className="text-foreground text-2xl font-bold">Sign in to your account</h1>
           <p className="text-muted mt-2 text-sm">
-            Save communities and events you&apos;re interested in.
+            Access your profile, saved items, and workspace links.
           </p>
         </div>
 
@@ -35,13 +35,17 @@ export default async function LoginPage({
         )}
 
         <div className="card-base text-muted px-4 py-6 text-center text-sm">
-          Web sign-in is currently unavailable.
-          <br />
-          Please use the mobile app or{' '}
-          <Link href="/organizer/login" className="text-brand-600 hover:underline">
-            organizer login
-          </Link>
-          .
+          Account sign-in on web is currently unavailable.
+          <p className="mt-2">You can use the mobile app, or continue with an internal login:</p>
+          <div className="mt-2 space-x-3">
+            <Link href="/organizer/login" className="text-brand-600 hover:underline">
+              Organizer Home
+            </Link>
+            <span aria-hidden="true">·</span>
+            <Link href="/admin/login" className="text-brand-600 hover:underline">
+              IndLokal Admin
+            </Link>
+          </div>
         </div>
 
         <p className="text-muted text-center text-xs">

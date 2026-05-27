@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import type { ResourceType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 /**
  * Resource Category Page - all guides within one topic.
@@ -15,6 +15,7 @@ import { getResourcesForCity } from '@/modules/resources';
  */
 
 type Props = { params: Promise<{ city: string; category: string }> };
+type ResolverType = NonNullable<Parameters<typeof getResourcesForCity>[1]>['type'];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city, category } = await params;
@@ -25,6 +26,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `${cat.title} - Indian Expat Guide for ${cityName}`,
     description: `${cat.description} Practical guides for Indians in ${cityName}, Germany.`,
+    alternates: {
+      canonical: `/${city}/resources/${category}`,
+    },
   };
 }
 
@@ -45,7 +49,7 @@ export default async function ResourceCategoryPage({ params }: Props) {
 
   // Resolver returns CITY + METRO + STATE + COUNTRY rows for this category.
   const resources = await getResourcesForCity(city, {
-    type: resourceType as ResourceType,
+    type: resourceType as ResolverType,
   });
   resources.sort((a, b) => a.title.localeCompare(b.title));
 
@@ -166,6 +170,13 @@ export default async function ResourceCategoryPage({ params }: Props) {
           Suggest a resource →
         </Link>
       </section>
+
+      <CitySeoTemplateSection
+        city={city}
+        cityName={cityName}
+        topic="resource-category"
+        categoryTitle={cat.shortTitle}
+      />
     </div>
   );
 }

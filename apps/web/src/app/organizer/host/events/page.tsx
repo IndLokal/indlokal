@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Events - Event Host' };
@@ -27,20 +28,23 @@ export default async function HostEventsPage() {
     orderBy: { startsAt: 'asc' },
   });
 
-  const upcoming = events.filter((e) => new Date(e.startsAt) >= new Date());
-  const past = events.filter((e) => new Date(e.startsAt) < new Date());
+  const upcoming = events.filter((e: EventRow) => new Date(e.startsAt) >= new Date());
+  const past = events.filter((e: EventRow) => new Date(e.startsAt) < new Date());
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">My Events</h1>
-        <Link
-          href="/organizer/host/events/new"
-          className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
-        >
-          + New Event
-        </Link>
-      </div>
+      <OrganizerPageHeader
+        title="My Events"
+        description="View and update your submitted events."
+        actions={
+          <Link
+            href="/organizer/host/events/new"
+            className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
+          >
+            + New Event
+          </Link>
+        }
+      />
 
       {events.length === 0 ? (
         <div className="border-border rounded-[var(--radius-card)] border border-dashed py-16 text-center">

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
+import { communityOptions } from '@indlokal/shared';
 import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from './ReportIssueForm';
@@ -18,32 +19,6 @@ import { escapeJsonForHtmlScript } from '@/lib/html';
  */
 
 type Props = { params: Promise<{ city: string; slug: string }> };
-
-const CHANNEL_ICONS: Record<string, string> = {
-  WHATSAPP: '💬',
-  TELEGRAM: '✈️',
-  WEBSITE: '🌐',
-  FACEBOOK: '📘',
-  INSTAGRAM: '📸',
-  EMAIL: '✉️',
-  MEETUP: '🤝',
-  YOUTUBE: '▶️',
-  LINKEDIN: '💼',
-  OTHER: '🔗',
-};
-
-const CHANNEL_LABELS: Record<string, string> = {
-  WHATSAPP: 'WhatsApp',
-  TELEGRAM: 'Telegram',
-  WEBSITE: 'Website',
-  FACEBOOK: 'Facebook',
-  INSTAGRAM: 'Instagram',
-  EMAIL: 'Email',
-  MEETUP: 'Meetup',
-  YOUTUBE: 'YouTube',
-  LINKEDIN: 'LinkedIn',
-  OTHER: 'Link',
-};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -202,8 +177,18 @@ export default async function CommunityDetailPage({ params }: Props) {
                   key={ch.id}
                   href={ch.url}
                   channelType={ch.channelType}
-                  channelLabel={ch.label ?? CHANNEL_LABELS[ch.channelType] ?? ch.channelType}
-                  channelIcon={CHANNEL_ICONS[ch.channelType] ?? '🔗'}
+                  channelLabel={
+                    ch.label ??
+                    communityOptions.CHANNEL_TYPE_LABELS[
+                      ch.channelType as communityOptions.CommunityChannelType
+                    ] ??
+                    ch.channelType
+                  }
+                  channelIcon={
+                    communityOptions.CHANNEL_TYPE_ICONS[
+                      ch.channelType as communityOptions.CommunityChannelType
+                    ] ?? '🔗'
+                  }
                   communityId={community.id}
                   communitySlug={community.slug}
                   city={city}

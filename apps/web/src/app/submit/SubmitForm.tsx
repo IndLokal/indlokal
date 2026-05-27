@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { content } from '@indlokal/shared';
+import { content, communityOptions } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
 import { ContentCallout } from '@/components/content/community-actions';
 
@@ -11,36 +11,18 @@ type Props = {
   categories: { slug: string; name: string; icon: string | null }[];
 };
 
-const CHANNEL_OPTIONS = [
-  { value: 'WHATSAPP', label: 'WhatsApp' },
-  { value: 'TELEGRAM', label: 'Telegram' },
-  { value: 'WEBSITE', label: 'Website' },
-  { value: 'FACEBOOK', label: 'Facebook' },
-  { value: 'INSTAGRAM', label: 'Instagram' },
-  { value: 'EMAIL', label: 'Email' },
-  { value: 'MEETUP', label: 'Meetup' },
-  { value: 'OTHER', label: 'Other' },
-];
-
-const LANGUAGES = [
-  'Hindi',
-  'Telugu',
-  'Tamil',
-  'Kannada',
-  'Malayalam',
-  'Bengali',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Odia',
-  'Urdu',
-  'English',
-  'German',
-];
-
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors || errors.length === 0) return null;
   return <p className="mt-1 text-sm text-red-600">{errors[0]}</p>;
+}
+
+function FormError({ errors }: { errors?: string[] }) {
+  if (!errors || errors.length === 0) return null;
+  return (
+    <div className="rounded-[var(--radius-button)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      {errors[0]}
+    </div>
+  );
 }
 
 export function SubmitForm({ cities, categories }: Props) {
@@ -69,10 +51,15 @@ export function SubmitForm({ cities, categories }: Props) {
 
   return (
     <form action={formAction} className="space-y-8">
+      <FormError errors={errors._} />
+
       <ContentCallout
         title={content.COMMUNITY_ACTION_COPY.submitFormHint}
         body={content.COMMUNITY_ACTION_COPY.submitFormBody}
       />
+      <p className="text-muted text-sm">
+        Fields marked * are required. This usually takes 2-3 minutes.
+      </p>
 
       {/* Community details */}
       <fieldset className="card-base space-y-5 p-6">
@@ -154,7 +141,7 @@ export function SubmitForm({ cities, categories }: Props) {
         <legend className="text-foreground -ml-1 text-lg font-bold">Languages</legend>
         <p className="text-muted text-sm">Which languages are used in your community?</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {LANGUAGES.map((lang) => (
+          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
             <label
               key={lang}
               className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
@@ -181,12 +168,13 @@ export function SubmitForm({ cities, categories }: Props) {
               required
               className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
-              {CHANNEL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                <option key={channelType} value={channelType}>
+                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
                 </option>
               ))}
             </select>
+            <FieldError errors={errors.primaryChannelType} />
             <input
               name="primaryChannelUrl"
               type="url"
@@ -206,12 +194,13 @@ export function SubmitForm({ cities, categories }: Props) {
               className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <option value="">None</option>
-              {CHANNEL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                <option key={channelType} value={channelType}>
+                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
                 </option>
               ))}
             </select>
+            <FieldError errors={errors.secondaryChannelType} />
             <input
               name="secondaryChannelUrl"
               type="url"
@@ -219,6 +208,7 @@ export function SubmitForm({ cities, categories }: Props) {
               className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             />
           </div>
+          <FieldError errors={errors.secondaryChannelUrl} />
         </div>
       </fieldset>
 

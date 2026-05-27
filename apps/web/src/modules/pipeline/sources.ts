@@ -23,6 +23,47 @@ function parseHttpUrl(rawUrl: string): URL | null {
   }
 }
 
+function shouldTryHomepageVariants(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
+  return strategy.sourceType === 'DB_COMMUNITY' && strategy.id.endsWith('-website');
+}
+
+function buildPinnedFetchAttemptUrls(
+  strategy: SearchStrategy & { kind: 'pinned_url' },
+  rawUrl: string,
+): string[] {
+  const parsed = parseHttpUrl(rawUrl);
+  if (!parsed) return [rawUrl];
+
+  // Only DB community homepage strategies get host/protocol fallback probing.
+  // All other pinned URLs (including discovered event sub-pages) should be
+  // fetched exactly as configured to avoid wasted retries.
+  if (!shouldTryHomepageVariants(strategy)) {
+    return [parsed.toString()];
+  }
+
+  const hasWww = parsed.hostname.startsWith('www.');
+  const bareHost = parsed.hostname.replace(/^www\./, '');
+  const hostVariants = hasWww ? [parsed.hostname, bareHost] : [parsed.hostname, `www.${bareHost}`];
+  const protocolVariants: Array<'https:' | 'http:'> =
+    parsed.protocol === 'https:' ? ['https:', 'http:'] : ['http:', 'https:'];
+
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const protocol of protocolVariants) {
+    for (const host of hostVariants) {
+      const next = new URL(parsed.toString());
+      next.protocol = protocol;
+      next.hostname = host;
+      const key = next.toString();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      urls.push(key);
+    }
+  }
+
+  return urls;
+}
+
 function isBlockedSearchHost(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
   return (
@@ -303,17 +344,38 @@ export async function fetchPinnedUrl(
       ? strategy.url.replace('www.facebook.com', 'm.facebook.com')
       : strategy.url;
 
-    const res = await fetchTextWithFallback(fetchUrl, {
-      headers: {
-        'User-Agent': isFacebook
-          ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
-          : PIPELINE_USER_AGENT,
-      },
-      timeoutMs: 15_000,
-    });
+    const userAgent = isFacebook
+      ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
+      : PIPELINE_USER_AGENT;
 
-    if (!res.ok) {
-      return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
+    const attemptUrls = buildPinnedFetchAttemptUrls(strategy, fetchUrl);
+    let effectiveFetchUrl = fetchUrl;
+    let res = null as Awaited<ReturnType<typeof fetchTextWithFallback>> | null;
+    let lastError: unknown = null;
+    const failedAttempts: string[] = [];
+
+    for (const candidateUrl of attemptUrls) {
+      try {
+        const candidateResult = await fetchTextWithFallback(candidateUrl, {
+          headers: { 'User-Agent': userAgent },
+          timeoutMs: 15_000,
+        });
+        if (candidateResult.ok) {
+          res = candidateResult;
+          effectiveFetchUrl = candidateUrl;
+          break;
+        }
+
+        failedAttempts.push(`${candidateUrl} -> HTTP ${candidateResult.status}`);
+      } catch (err) {
+        lastError = err;
+        failedAttempts.push(`${candidateUrl} -> ${String(err)}`);
+      }
+    }
+
+    if (!res) {
+      const summary = failedAttempts.join(' | ');
+      throw lastError ?? new Error(`Failed to fetch ${strategy.url}. Attempts: ${summary}`);
     }
 
     const rawHtml = res.text;
@@ -322,7 +384,7 @@ export async function fetchPinnedUrl(
     // mostly noise for extraction and can drown useful page signals.
     const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
 
-    const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
+    const imageUrls = extractImageUrls(html, effectiveFetchUrl).slice(0, 5);
     const text = collapseWhitespace(decodeHtmlEntities(htmlToText(html))).slice(0, 15_000);
 
     items.push({
@@ -346,7 +408,7 @@ export async function fetchPinnedUrl(
     }
 
     if (shouldExpandPinnedUrl(strategy)) {
-      const links = extractPinnedExpansionLinks(rawHtml, strategy.url);
+      const links = extractPinnedExpansionLinks(rawHtml, effectiveFetchUrl);
       if (links.length > 0) {
         for (const link of links) discoveredUrls.add(link);
         const expanded = await Promise.allSettled(

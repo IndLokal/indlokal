@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { deleteResourceAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Resources - Admin' };
@@ -53,16 +53,8 @@ export default async function AdminResourcesPage({
   ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Resources</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Resources" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
         <label className="text-sm">
@@ -118,10 +110,18 @@ export default async function AdminResourcesPage({
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-3 py-2 font-medium">Title</th>
-              <th className="text-muted px-3 py-2 font-medium">Type</th>
-              <th className="text-muted px-3 py-2 font-medium">City</th>
-              <th className="text-muted px-3 py-2 font-medium">URL</th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Title
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Type
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                City
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                URL
+              </th>
               <th />
             </tr>
           </thead>
@@ -163,6 +163,6 @@ export default async function AdminResourcesPage({
           </tbody>
         </table>
       </div>
-    </div>
+    </AdminPage>
   );
 }

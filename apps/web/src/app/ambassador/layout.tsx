@@ -1,9 +1,15 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { BrandLink } from '@/components/BrandLink';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const NAV = [
   { href: '/ambassador', label: 'Dashboard' },
@@ -43,18 +49,17 @@ export default async function AmbassadorLayout({ children }: { children: React.R
       <header className="border-border border-b bg-white">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <div className="flex items-center gap-6">
-            <Link href="/ambassador" className="text-lg font-bold">
-              Ambassador Console
-            </Link>
+            <BrandLink href="/ambassador" markSize={32} showName={false} />
+            <span className="text-foreground text-lg font-bold">Ambassador Console</span>
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">
               {cityLabel}
             </span>
-            <nav className="hidden items-center gap-4 text-sm sm:flex">
+            <nav className="hidden items-center gap-1 text-sm sm:flex">
               {NAV.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-muted hover:text-foreground transition-colors"
+                  className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -71,7 +76,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
           </div>
         </div>
       </header>
-      <main>{children}</main>
+      <main className="mx-auto w-full max-w-5xl">{children}</main>
     </div>
   );
 }

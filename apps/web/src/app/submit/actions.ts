@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import type { ChannelType } from '@prisma/client';
+import { communityOptions } from '@indlokal/shared';
 import { submitCommunitySchema } from '@/lib/validation';
 import slugify from 'slugify';
 import { sendSubmissionReceivedEmail } from '@/lib/email';
@@ -22,7 +22,7 @@ export async function submitCommunity(
 ): Promise<SubmitResult> {
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!checkRateLimit(submitLimiter, ip).allowed) {
-    return { success: false, errors: { name: ['Too many submissions. Please try again later.'] } };
+    return { success: false, errors: { _: ['Too many submissions. Please try again later.'] } };
   }
 
   const raw = {
@@ -120,7 +120,7 @@ export async function submitCommunity(
       select: { id: true },
     });
   } catch {
-    return { success: false, errors: { name: ['Something went wrong. Please try again.'] } };
+    return { success: false, errors: { _: ['Something went wrong. Please try again.'] } };
   }
 
   if (categoryRows.length !== data.categories.length) {
@@ -131,7 +131,12 @@ export async function submitCommunity(
   }
 
   // Build access channels
-  const channels: { channelType: ChannelType; url: string; label: string; isPrimary: boolean }[] = [
+  const channels: {
+    channelType: communityOptions.CommunityChannelType;
+    url: string;
+    label: string;
+    isPrimary: boolean;
+  }[] = [
     {
       channelType: data.primaryChannelType,
       url: data.primaryChannelUrl,
@@ -180,7 +185,10 @@ export async function submitCommunity(
       },
     });
   } catch {
-    return { success: false, errors: { name: ['Failed to create community. Please try again.'] } };
+    return {
+      success: false,
+      errors: { _: ['Failed to create community. Please try again.'] },
+    };
   }
 
   // Email is best-effort - don't fail the submission if it doesn't send

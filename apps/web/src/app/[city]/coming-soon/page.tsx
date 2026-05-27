@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { siteConfig, UPCOMING_CITIES, ACTIVE_CITIES } from '@/lib/config';
+import { siteConfig, UPCOMING_CITIES, ACTIVE_CITIES, CITY_COMMUNITY_PROFILES } from '@/lib/config';
 import { Footer } from '@/components/layout';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
+import { BrandLink } from '@/components/BrandLink';
 
 type Props = {
   params: Promise<{ city: string }>;
@@ -17,15 +18,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city: slug } = await params;
   const city = getUpcomingCity(slug);
   if (!city) return {};
+  const profile = CITY_COMMUNITY_PROFILES[slug];
+  const descriptor = city.notes ?? profile?.notes;
   return {
     title: `${city.name} - Coming Soon | ${siteConfig.name}`,
-    description: `${siteConfig.name} is expanding to ${city.name}! Be the first to know when we launch for the Indian community in ${city.name}, Germany.`,
+    description: descriptor
+      ? `${siteConfig.name} is expanding to ${city.name}. ${descriptor}`
+      : `${siteConfig.name} is expanding to ${city.name}! Be the first to know when we launch for the Indian community in ${city.name}, Germany.`,
   };
 }
 
 export default async function ComingSoonPage({ params }: Props) {
   const { city: slug } = await params;
   const city = getUpcomingCity(slug);
+  const profile = CITY_COMMUNITY_PROFILES[slug];
+  const cityNotes = city?.notes ?? profile?.notes;
 
   // If it's not an upcoming city and not active, 404
   if (!city) {
@@ -43,14 +50,7 @@ export default async function ComingSoonPage({ params }: Props) {
     <>
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <span className="from-brand-500 to-brand-700 shadow-brand-500/20 flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br text-sm font-bold text-white shadow-md">
-              L
-            </span>
-            <span className="text-foreground text-xl font-bold tracking-tight">
-              {siteConfig.name}
-            </span>
-          </Link>
+          <BrandLink hideNameOnMobile />
           <NavAuthWidget />
         </div>
       </header>
@@ -71,6 +71,11 @@ export default async function ComingSoonPage({ params }: Props) {
               We&apos;re bringing {siteConfig.name} to the Indian community in {city.name},{' '}
               {city.state}. Communities, events, resources - all in one place.
             </p>
+            {cityNotes && (
+              <p className="text-brand-200/85 mx-auto mt-2 max-w-xl text-sm leading-relaxed">
+                {cityNotes}
+              </p>
+            )}
           </div>
         </section>
 

@@ -1,37 +1,67 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
+import {
+  siteConfig,
+  ACTIVE_CITIES,
+  UPCOMING_CITIES,
+  METRO_REGIONS,
+  CITY_COMMUNITY_PROFILES,
+} from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
-import { LogoMark } from '@/components/Logo';
+import { BrandLink } from '@/components/BrandLink';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
-const CITY_META: Record<string, { emoji: string; tagline: string }> = {
-  stuttgart: {
-    emoji: '🏰',
-    tagline: "Baden-Württemberg's capital",
-  },
-  karlsruhe: {
-    emoji: '⚡',
-    tagline: 'Tech hub of the south',
-  },
-  mannheim: {
-    emoji: '🎵',
-    tagline: 'Culture at the Rhine-Neckar',
+export const metadata: Metadata = {
+  title: `${siteConfig.name} - ${siteConfig.tagline}`,
+  description: siteConfig.description,
+  alternates: {
+    canonical: '/',
   },
 };
 
 export default function HomePage() {
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteConfig.name,
+    alternateName: 'Ind Lokal',
+    url: siteConfig.url,
+    description: siteConfig.description,
+    inLanguage: 'en',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteConfig.url}/{city}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/icon.svg`,
+    email: 'contact@indlokal.com',
+    sameAs: ['https://instagram.com/indlokal', 'https://linkedin.com/company/indlokal'],
+    areaServed: 'Germany',
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+
       {/* Header */}
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 transition-opacity hover:opacity-80">
-            <LogoMark size={36} className="rounded-xl shadow-sm" />
-            <span className="text-foreground text-xl font-bold tracking-tight">
-              {siteConfig.name}
-            </span>
-          </Link>
+          <BrandLink hideNameOnMobile />
           <div className="flex items-center gap-3 text-sm">
             <Link href="/submit" className="btn-primary inline-flex px-4 py-2 text-sm">
               List a Community
@@ -91,7 +121,7 @@ export default function HomePage() {
         <section className="relative z-10 mx-auto -mt-14 max-w-5xl px-4 pb-12">
           <div className="grid gap-4 sm:grid-cols-3">
             {ACTIVE_CITIES.map((city) => {
-              const meta = CITY_META[city] ?? { emoji: '🏙️', tagline: '' };
+              const profile = CITY_COMMUNITY_PROFILES[city];
               return (
                 <Link
                   key={city}
@@ -100,12 +130,11 @@ export default function HomePage() {
                 >
                   <div className="from-brand-500 to-brand-700 absolute inset-x-0 top-0 h-1 bg-gradient-to-r" />
                   <span className="from-brand-500 to-brand-700 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-2xl shadow-sm transition-transform duration-200 group-hover:scale-105">
-                    {meta.emoji}
+                    {profile?.emoji ?? '🏙️'}
                   </span>
                   <span className="text-foreground group-hover:text-brand-600 text-lg font-bold capitalize transition-colors">
                     {city}
                   </span>
-                  <span className="text-muted text-sm">{meta.tagline}</span>
                   {METRO_REGIONS[city] && (
                     <span className="text-muted/70 mt-1 text-xs leading-snug">
                       Incl.{' '}
@@ -132,24 +161,19 @@ export default function HomePage() {
               Expanding across Germany
             </h2>
             <p className="text-muted mx-auto mt-2 max-w-md text-sm">
-              We&apos;re bringing {siteConfig.name} to more cities. Click a city to see what&apos;s
-              planned.
+              We&apos;re bringing {siteConfig.name} to more cities. Explore where we launch next.
             </p>
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
             {UPCOMING_CITIES.map((city) => (
               <Link
                 key={city.slug}
                 href={`/${city.slug}`}
-                className="hover:ring-brand-200 group inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="border-border/70 hover:border-brand-300 hover:bg-brand-50 inline-flex items-center gap-1.5 rounded-full border bg-white px-3.5 py-2 text-sm font-medium transition-colors"
               >
-                <span className="text-lg">{city.emoji}</span>
-                <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">
-                  {city.name}
-                </span>
-                <span className="bg-accent-50 text-accent-700 ring-accent-200/60 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1">
-                  Soon
-                </span>
+                <span>{city.emoji}</span>
+                <span className="text-foreground">{city.name}</span>
+                <span className="text-muted text-xs">Soon</span>
               </Link>
             ))}
           </div>
@@ -204,7 +228,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA */}
-        <section className="relative overflow-hidden px-4 py-24 text-center">
+        <section className="relative overflow-hidden px-4 py-16 text-center sm:py-20">
           <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />

@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { NoteForm } from './NoteForm';
 import { StageSelector } from './StageSelector';
 import { PromoteButton } from './PromoteButton';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,15 +41,13 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
   const authorById = Object.fromEntries(authors.map((a) => [a.id, a.displayName ?? a.email]));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center gap-2 text-sm">
-        <Link href="/admin/outreach" className="text-muted hover:text-foreground">
-          Outreach CRM
-        </Link>
-        <span className="text-muted">/</span>
-        <span className="font-medium">{lead.community?.name ?? lead.suggestedName ?? 'Lead'}</span>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title={lead.community?.name ?? lead.suggestedName ?? 'Lead'}
+        description={`${lead.city.name} · ${lead.source}`}
+        backHref="/admin/outreach"
+        backLabel="Outreach CRM"
+      />
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Main content */}
@@ -175,6 +174,6 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
           )}
         </div>
       </div>
-    </div>
+    </AdminPage>
   );
 }

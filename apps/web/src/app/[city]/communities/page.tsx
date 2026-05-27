@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
+import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -35,6 +38,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: `${languageName} Communities in ${cityName}`,
       description: `Find ${languageName} communities, groups, and events in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/${encodeURIComponent(language.toLowerCase())}-communities`,
+      },
     };
   }
   if (category) {
@@ -42,11 +48,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: `Indian ${categoryName} Groups in ${cityName}`,
       description: `Discover Indian ${categoryName.toLowerCase()} groups, communities, and organizations in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/${encodeURIComponent(category.toLowerCase())}-groups`,
+      },
     };
   }
   return {
     title: `Indian Communities in ${cityName}`,
     description: `Browse Indian communities, associations, and groups in ${cityName}, Germany.`,
+    alternates: {
+      canonical: `/${city}/communities`,
+    },
   };
 }
 
@@ -65,61 +77,47 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     getSessionUser(),
   ]);
   const cityName = cityRow.name;
-  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
+  const savedCommunityIds = new Set(
+    user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
+  );
+  type CommunityItem = (typeof allCommunities)[number];
 
   // Optional language filter (for SEO pages like /telugu-communities)
   const languageName = language ? capitalize(language) : null;
   const communities = languageName
     ? allCommunities.filter(
-        (c) =>
+        (c: CommunityItem) =>
           c.languages?.some((l: string) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
       )
     : allCommunities;
 
+  const description =
+    communities.length > 0
+      ? languageName
+        ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
+        : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
+      : languageName
+        ? `No ${languageName} communities listed yet.`
+        : 'No communities listed yet.';
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          {languageName ? (
-            <>
-              <Link href={`/${city}/communities`} className="hover:underline">
-                Communities
-              </Link>
-              {' / '}
-              <span>{languageName}</span>
-            </>
-          ) : (
-            <span>Communities</span>
-          )}
-        </nav>
-        <h1 className="text-3xl font-bold">
-          {languageName
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel={languageName ? `${languageName} communities` : 'Communities'}
+        title={
+          languageName
             ? `${languageName} Communities in ${cityName}`
-            : `Indian Communities in ${cityName}`}
-        </h1>
-        <p className="text-muted mt-2">
-          {communities.length > 0
-            ? languageName
-              ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
-              : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
-            : languageName
-              ? `No ${languageName} communities listed yet.`
-              : 'No communities listed yet.'}
-        </p>
-      </div>
+            : `Indian Communities in ${cityName}`
+        }
+        description={description}
+      />
 
       {/* Community grid */}
       {communities.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {communities.map((community) => (
+          {communities.map((community: CommunityItem) => (
             <CommunityCard
               key={community.id}
               community={community}
@@ -132,37 +130,27 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
 
       {/* Empty state for language filter */}
       {languageName && communities.length === 0 && (
-        <div className="border-border text-muted rounded-[var(--radius-card)] border border-dashed p-10 text-center">
-          <p className="text-lg">No {languageName} communities yet</p>
-          <p className="mt-1 text-sm">Check back soon or browse all {cityName} communities.</p>
-          <a
-            href={`/${city}/communities`}
-            className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-          >
-            Browse all communities
-          </a>
-        </div>
+        <CitySubpageEmptyState
+          title={`No ${languageName} communities yet`}
+          description={`Check back soon or browse all ${cityName} communities.`}
+          actions={[
+            { href: `/${city}/communities`, label: 'Browse all communities', variant: 'primary' },
+          ]}
+        />
       )}
 
-      {/* Cross-links */}
-      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
-        <span>
-          Don&apos;t see your community?{' '}
-          <Link
-            href={`/${city}/suggest`}
-            className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-          >
-            Suggest one →
-          </Link>
-        </span>
-        <span className="text-border hidden sm:inline">|</span>
-        <Link
-          href={`/${city}/events`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          Browse events →
-        </Link>
-      </div>
+      {!language && !category && (
+        <CitySeoTemplateSection city={city} cityName={cityName} topic="communities" />
+      )}
+
+      <CitySubpageCrossLinks
+        lead={{
+          text: "Don't see your community?",
+          href: `/${city}/suggest`,
+          label: 'Suggest one →',
+        }}
+        links={[{ href: `/${city}/events`, label: 'Browse events →' }]}
+      />
     </div>
   );
 }

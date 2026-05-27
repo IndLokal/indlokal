@@ -9,11 +9,21 @@ type RegionOption = {
   label: string;
 };
 
-type RunPipelineButtonProps = {
-  regions: RegionOption[];
+type CityOption = {
+  slug: string;
+  label: string;
 };
 
-function getScopeLabel(scope: PipelineRunScope | null, regions: RegionOption[]): string {
+type RunPipelineButtonProps = {
+  regions: RegionOption[];
+  cities: CityOption[];
+};
+
+function getScopeLabel(
+  scope: PipelineRunScope | null,
+  regions: RegionOption[],
+  cities: CityOption[],
+): string {
   if (!scope?.regionIds?.length && !scope?.citySlugs?.length) return 'All enabled regions';
 
   if (scope?.regionIds?.length) {
@@ -23,19 +33,24 @@ function getScopeLabel(scope: PipelineRunScope | null, regions: RegionOption[]):
     return regionLabels.join(', ');
   }
 
-  return `Cities: ${(scope.citySlugs ?? []).join(', ')}`;
+  const cityLabels = (scope.citySlugs ?? []).map(
+    (slug) => cities.find((city) => city.slug === slug)?.label ?? slug,
+  );
+  return `Cities: ${cityLabels.join(', ')}`;
 }
 
-export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
+export default function RunPipelineButton({ regions, cities }: RunPipelineButtonProps) {
   const router = useRouter();
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
+  const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
   const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function handleRun(nextScope?: PipelineRunScope, scopeKey = 'all') {
     setRunningKey(scopeKey);
     setResult(null);
+    setDispatchMessage(null);
     setScope(null);
     setError(null);
 
@@ -47,7 +62,22 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
       });
 
       const payload = (await response.json()) as
-        | { ok: true; scope: PipelineRunScope | null; result: PipelineRunResult }
+        | {
+            ok: true;
+            mode: 'direct';
+            scope: PipelineRunScope | null;
+            result: PipelineRunResult;
+          }
+        | {
+            ok: true;
+            mode: 'dispatch';
+            dispatch: {
+              ok: boolean;
+              dispatched: string[];
+              failed?: Array<{ regionId: string; status: number | null; error?: string }>;
+              concurrency?: number;
+            };
+          }
         | { ok: false; error?: string };
 
       if (!response.ok || !payload.ok) {
@@ -56,8 +86,19 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
         );
       }
 
-      setResult(payload.result);
-      setScope(payload.scope);
+      if (payload.ok && payload.mode === 'dispatch') {
+        const failedCount = payload.dispatch.failed?.length ?? 0;
+        setDispatchMessage(
+          failedCount === 0
+            ? `Dispatched ${payload.dispatch.dispatched.length} regional cron shards.`
+            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`,
+        );
+        setScope(null);
+        setResult(null);
+      } else if (payload.ok && payload.mode === 'direct') {
+        setResult(payload.result);
+        setScope(payload.scope);
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -94,6 +135,10 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
             >
               {runningKey === 'all' ? '⏳ Running all regions…' : 'Run all enabled regions'}
             </button>
+            <p className="text-muted text-xs">
+              Runs via cron-style regional dispatch (asynchronous). Use city/region shards below for
+              immediate per-run metrics.
+            </p>
 
             <div>
               <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
@@ -112,6 +157,26 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
                 ))}
               </div>
             </div>
+
+            {cities.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                  City shards
+                </p>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                  {cities.map((city) => (
+                    <button
+                      key={city.slug}
+                      onClick={() => handleRun({ citySlugs: [city.slug] }, `city:${city.slug}`)}
+                      disabled={runningKey != null}
+                      className="btn-secondary justify-center px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {runningKey === `city:${city.slug}` ? `⏳ ${city.label}…` : city.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -124,7 +189,7 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
                 Pipeline complete in {(result.duration / 1000).toFixed(1)}s
               </p>
               <p className="mt-1 text-xs text-emerald-800/80">
-                Scope: {getScopeLabel(scope, regions)}
+                Scope: {getScopeLabel(scope, regions, cities)}
               </p>
             </div>
             <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
@@ -197,6 +262,48 @@ export default function RunPipelineButton({ regions }: RunPipelineButtonProps) {
               </ul>
             </details>
           )}
+
+          {result.cityBreakdown.length > 0 && (
+            <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+              <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                View city-level outcomes
+              </summary>
+              <div className="mt-3 overflow-x-auto">
+                <table className="min-w-full text-left text-xs">
+                  <thead className="text-slate-500">
+                    <tr>
+                      <th className="px-2 py-1 font-medium">City</th>
+                      <th className="px-2 py-1 font-medium">Extracted</th>
+                      <th className="px-2 py-1 font-medium">Queued (E/C)</th>
+                      <th className="px-2 py-1 font-medium">Duplicates (E/C)</th>
+                      <th className="px-2 py-1 font-medium">Past events</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.cityBreakdown.map((city) => (
+                      <tr key={city.citySlug} className="border-t border-slate-100 text-slate-700">
+                        <td className="px-2 py-1.5">{city.cityName}</td>
+                        <td className="px-2 py-1.5">{city.extracted}</td>
+                        <td className="px-2 py-1.5">
+                          {city.queuedEvents}/{city.queuedCommunities}
+                        </td>
+                        <td className="px-2 py-1.5">
+                          {city.duplicateEvents}/{city.duplicateCommunities}
+                        </td>
+                        <td className="px-2 py-1.5">{city.pastEvents}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      {dispatchMessage && (
+        <div className="mt-3 rounded-lg border border-sky-200 bg-sky-50 p-3 text-sm text-sky-800">
+          {dispatchMessage}
         </div>
       )}
 

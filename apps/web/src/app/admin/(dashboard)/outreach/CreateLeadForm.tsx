@@ -85,10 +85,11 @@ export function CreateLeadForm({ cities, defaultCityId, operators, currentUserId
           <label className="text-muted mb-1 block text-xs font-medium">Assign to</label>
           <select
             name="ownerUserId"
+            defaultValue={currentUserId}
             className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
           >
             {operators.map((op) => (
-              <option key={op.id} value={op.id} selected={op.id === currentUserId}>
+              <option key={op.id} value={op.id}>
                 {op.displayName ?? op.email}
               </option>
             ))}

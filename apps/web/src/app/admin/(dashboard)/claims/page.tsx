@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { approveClaim, rejectClaim } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Review Claims - Admin' };
 
@@ -14,23 +14,21 @@ export default async function AdminClaimsPage() {
     orderBy: { updatedAt: 'desc' },
   });
 
+  type ClaimRow = (typeof claims)[number];
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Claim Requests</h1>
-          <p className="text-muted mt-1 text-sm">{claims.length} pending review</p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Claim Requests"
+        description={`${claims.length} pending review`}
+        backHref="/admin"
+      />
 
       {claims.length === 0 ? (
         <p className="text-muted mt-12 text-center">No claims to review.</p>
       ) : (
         <div className="mt-8 space-y-6">
-          {claims.map((c) => {
+          {claims.map((c: ClaimRow) => {
             const meta = c.metadata as Record<string, unknown> | null;
             const claim = meta?.claimRequest as
               | {
@@ -136,6 +134,6 @@ export default async function AdminClaimsPage() {
           })}
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

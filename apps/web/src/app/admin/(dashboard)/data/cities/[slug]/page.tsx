@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { updateCityAction } from '../../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,16 +19,12 @@ export default async function EditCityPage({ params }: { params: Promise<{ slug:
   });
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Edit city - {city.name}</h1>
-        <Link
-          href="/admin/data/cities"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Cities
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title={`Edit city - ${city.name}`}
+        backHref="/admin/data/cities"
+        backLabel="Cities"
+      />
 
       <form action={updateCityAction} className="mt-6 grid gap-3 sm:grid-cols-2">
         <input type="hidden" name="id" value={city.id} />
@@ -88,7 +84,7 @@ export default async function EditCityPage({ params }: { params: Promise<{ slug:
           </button>
         </div>
       </form>
-    </div>
+    </AdminPage>
   );
 }
 

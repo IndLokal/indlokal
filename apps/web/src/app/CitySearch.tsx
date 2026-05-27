@@ -3,7 +3,12 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
+import {
+  ACTIVE_CITIES,
+  UPCOMING_CITIES,
+  METRO_REGIONS,
+  CITY_COMMUNITY_PROFILES,
+} from '@/lib/config';
 
 type Result = {
   label: string;
@@ -61,9 +66,10 @@ function buildResults(query: string): Result[] {
     if (city.name.toLowerCase().includes(q) || city.slug.includes(q)) {
       if (!seen.has(city.slug)) {
         seen.add(city.slug);
+        const profile = CITY_COMMUNITY_PROFILES[city.slug];
         results.push({
           label: `${city.emoji} ${city.name}`,
-          sublabel: 'Coming soon',
+          sublabel: city.notes ?? profile?.notes ?? 'Coming soon',
           href: `/${city.slug}/coming-soon`,
         });
       }

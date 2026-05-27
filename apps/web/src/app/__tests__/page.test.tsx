@@ -32,7 +32,7 @@ describe('HomePage', () => {
 
   it('renders the value proposition tagline', async () => {
     render(await HomePage());
-    expect(screen.getByText(/for the indian diaspora in germany/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/for the indian diaspora in germany/i).length).toBeGreaterThan(0);
   });
 
   it('renders a link for every active city', async () => {
@@ -49,6 +49,6 @@ describe('HomePage', () => {
 
   it('renders the "Expanding across Germany" section', async () => {
     render(await HomePage());
-    expect(screen.getByText(/expanding across germany/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/expanding across germany/i).length).toBeGreaterThan(0);
   });
 });

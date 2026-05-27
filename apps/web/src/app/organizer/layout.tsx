@@ -1,6 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { MobileNav } from '@/components/MobileNav';
+import { BrandLink } from '@/components/BrandLink';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
@@ -8,7 +14,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
   // Resolve active community for workspace switcher display
   const currentCommunityId = user ? await getCurrentCommunityId() : null;
   const activeCommunity = user
-    ? (user.claimedCommunities.find((c) => c.id === currentCommunityId) ??
+    ? (user.claimedCommunities.find((c: { id: string }) => c.id === currentCommunityId) ??
       user.claimedCommunities[0] ??
       null)
     : null;
@@ -19,13 +25,12 @@ export default async function OrganizerLayout({ children }: { children: React.Re
       <header className="border-border sticky top-0 z-40 border-b bg-white shadow-sm">
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
-            <Link
+            <BrandLink
               href="/"
-              className="bg-brand-500 flex h-8 w-8 items-center justify-center rounded-lg font-bold text-white shadow-sm transition-opacity hover:opacity-80"
-              title="Back to site"
-            >
-              L
-            </Link>
+              markSize={32}
+              showName={false}
+              className="transition-opacity hover:opacity-80"
+            />
 
             {/* Workspace switcher - shows active community name + chevron for multi-org */}
             {activeCommunity ? (
@@ -47,7 +52,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                 href="/organizer"
                 className="text-foreground hover:text-brand-600 text-base font-bold tracking-tight transition-colors"
               >
-                Organizer Portal
+                Organizer Home
               </Link>
             )}
 
@@ -73,13 +78,13 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                     href="/organizer/edit"
                     className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                   >
-                    Profile
+                    Community Profile
                   </Link>
                   <Link
                     href="/organizer/channels"
                     className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                   >
-                    Channels
+                    Community Links
                   </Link>
                   <Link
                     href="/organizer/events/new"
@@ -98,8 +103,8 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                     ...(isMultiOrg
                       ? [{ href: '/organizer/communities', label: 'Communities' }]
                       : []),
-                    { href: '/organizer/edit', label: 'Edit Profile' },
-                    { href: '/organizer/channels', label: 'Channels' },
+                    { href: '/organizer/edit', label: 'Community Profile' },
+                    { href: '/organizer/channels', label: 'Community Links' },
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },
                   ]}
                 />

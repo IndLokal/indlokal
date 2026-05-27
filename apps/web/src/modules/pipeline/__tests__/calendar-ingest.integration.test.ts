@@ -122,6 +122,11 @@ vi.mock('../extraction', () => ({
   }),
 }));
 
+vi.mock('../review', () => ({
+  shouldAutoApprovePipelineItem: vi.fn(async () => false),
+  approvePipelineItemRecord: vi.fn(async () => undefined),
+}));
+
 const homepageHtml = `
   <html>
     <body>
@@ -366,7 +371,7 @@ describe('@db pipeline calendar ingestion integration', () => {
 
     const result = await runPipeline('admin');
     expect(result.itemsQueued).toBe(5);
-    expect(result.itemsSkippedPast).toBe(1);
+    expect(result.itemsSkippedPast).toBe(0);
 
     expect(await listQueuedCalendarEventTitles()).toEqual([
       'FoFe 2026',

@@ -1,7 +1,8 @@
 import { requireSessionUser } from '@/lib/session';
 import AddEventForm from './AddEventForm';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
-export const metadata = { title: 'Add Event - Organizer' };
+export const metadata = { title: 'Share Event - Organizer' };
 
 export default async function AddEventPage() {
   const user = await requireSessionUser();
@@ -13,10 +14,10 @@ export default async function AddEventPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-foreground text-2xl font-bold">Add Event</h1>
-      <p className="text-muted mt-1 text-sm">
-        Events appear on your community page and the city events feed.
-      </p>
+      <OrganizerPageHeader
+        title="Share an event"
+        description="Share your upcoming event with your community."
+      />
       <div className="mt-8">
         <AddEventForm communityName={community.name} />
       </div>

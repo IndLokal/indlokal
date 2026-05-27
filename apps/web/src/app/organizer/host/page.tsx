@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +41,12 @@ export default async function HostDashboardPage() {
   return (
     <div className="space-y-8">
       <div>
-        <p className="text-muted text-sm">Host dashboard</p>
-        <h1 className="text-foreground mt-0.5 text-2xl font-bold">
-          {profile?.displayName ?? user.displayName ?? user.email}
-        </h1>
+        <OrganizerPageHeader
+          title={profile?.displayName ?? user.displayName ?? user.email}
+          description="Your host space"
+        />
         {profile?.links && profile.links.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="-mt-4 flex flex-wrap gap-2">
             {profile.links.map((link) => (
               <a
                 key={link}

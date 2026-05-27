@@ -1,18 +1,35 @@
 import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Ambassador Dashboard' };
 
 function KpiCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
     <div className="border-border rounded-[var(--radius-card)] border bg-white p-5">
-      <p className="text-muted text-xs font-medium uppercase tracking-wide">{label}</p>
+      <p className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">{label}</p>
       <p className="mt-1 text-3xl font-bold">{value}</p>
       {sub && <p className="text-muted mt-1 text-xs">{sub}</p>}
     </div>
   );
 }
+
+type RecentPipelineItem = {
+  id: string;
+  entityType: string;
+  extractedData: unknown;
+  confidence: number;
+  submittedBy: string | null;
+  city: { name: string };
+};
+
+type RecentEvent = {
+  id: string;
+  title: string;
+  startsAt: Date;
+  community: { name: string } | null;
+};
 
 export default async function AmbassadorDashboardPage() {
   const user = await requireCan('ambassador.read');
@@ -112,19 +129,16 @@ export default async function AmbassadorDashboardPage() {
   ]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold">Your city, this week</h1>
-        <p className="text-muted mt-1 text-sm">
-          {new Date().toLocaleDateString('en-GB', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long',
-            year: 'numeric',
-          })}
-        </p>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Ambassador Dashboard"
+        description={new Date().toLocaleDateString('en-GB', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })}
+      />
 
       {/* KPI row */}
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -144,13 +158,13 @@ export default async function AmbassadorDashboardPage() {
         </Link>
         <Link
           href="/ambassador/feedback"
-          className="border-border rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50"
+          className="border-border hover:bg-muted-bg rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
         >
           Log feedback
         </Link>
         <Link
           href="/ambassador/me"
-          className="border-border rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-gray-50"
+          className="border-border hover:bg-muted-bg rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors"
         >
           My scoreboard
         </Link>
@@ -159,12 +173,14 @@ export default async function AmbassadorDashboardPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         {/* Recent pipeline items */}
         <section>
-          <h2 className="mb-4 font-semibold">Pending in pipeline</h2>
+          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em]">
+            Pending in pipeline
+          </h2>
           {recentPipelineItems.length === 0 ? (
             <p className="text-muted text-sm">Nothing pending - all clear!</p>
           ) : (
             <div className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
-              {recentPipelineItems.map((item) => {
+              {recentPipelineItems.map((item: RecentPipelineItem) => {
                 const d = item.extractedData as Record<string, unknown>;
                 const name = (d?.name as string) || (d?.title as string) || '-';
                 const isMine = item.submittedBy === user.id;
@@ -193,12 +209,14 @@ export default async function AmbassadorDashboardPage() {
 
         {/* Upcoming events */}
         <section>
-          <h2 className="mb-4 font-semibold">Upcoming events to check in to</h2>
+          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em]">
+            Upcoming events to check in to
+          </h2>
           {recentEvents.length === 0 ? (
             <p className="text-muted text-sm">No events in the next 7 days.</p>
           ) : (
             <div className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
-              {recentEvents.map((ev) => (
+              {recentEvents.map((ev: RecentEvent) => (
                 <div key={ev.id} className="flex items-center justify-between px-4 py-3">
                   <div>
                     <p className="text-sm font-medium">{ev.title}</p>
@@ -225,6 +243,6 @@ export default async function AmbassadorDashboardPage() {
           )}
         </section>
       </div>
-    </div>
+    </AdminPage>
   );
 }

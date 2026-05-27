@@ -17,6 +17,14 @@ function normalizeScopeList(value: unknown): string[] {
   );
 }
 
+function getBaseUrl(req: NextRequest): string | null {
+  const explicit = process.env.APP_URL?.trim();
+  if (explicit) return explicit.replace(/\/$/, '');
+  const proto = req.headers.get('x-forwarded-proto') ?? 'https';
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host');
+  return host ? `${proto}://${host}` : null;
+}
+
 export async function POST(req: NextRequest) {
   try {
     await assertCan('pipeline.run');
@@ -36,12 +44,63 @@ export async function POST(req: NextRequest) {
           }
         : undefined;
 
+    // Align "Run all enabled regions" with cron semantics: region-sharded
+    // dispatch with per-shard lock/timeout behavior.
+    if (!scope) {
+      const baseUrl = getBaseUrl(req);
+      const canDispatch = Boolean(process.env.CRON_SECRET && baseUrl);
+
+      // Local/dev convenience: allow Run all to work without cron secrets by
+      // falling back to direct execution in-process.
+      if (!canDispatch) {
+        const result = await runPipeline('admin', undefined);
+        return NextResponse.json({
+          ok: true,
+          mode: 'direct',
+          scope: null,
+          result,
+          note: 'Cron dispatch unavailable; ran direct fallback.',
+        });
+      }
+
+      const dispatchRes = await fetch(`${baseUrl}/api/cron/pipeline/dispatch`, {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${process.env.CRON_SECRET}`,
+          'content-type': 'application/json',
+        },
+      });
+
+      const dispatchPayload = await dispatchRes.json().catch(() => null);
+      if (!dispatchRes.ok || !dispatchPayload?.ok) {
+        throw new Error(
+          `cron dispatch failed: ${
+            dispatchPayload?.error ?? dispatchPayload?.reason ?? dispatchRes.statusText
+          }`,
+        );
+      }
+
+      return NextResponse.json({ ok: true, mode: 'dispatch', dispatch: dispatchPayload });
+    }
+
     const result = await runPipeline('admin', scope);
-    return NextResponse.json({ ok: true, scope: scope ?? null, result });
+    return NextResponse.json({ ok: true, mode: 'direct', scope: scope ?? null, result });
   } catch (err) {
     console.error('[admin/pipeline/run]', err);
+    // Surface a more useful payload so the admin UI can pinpoint failures
+    // without having to dig through Vercel function logs. Includes the error
+    // name (e.g. TypeError, DOMException) and the first stack frame.
+    const name = err instanceof Error ? err.constructor.name : typeof err;
+    const message = err instanceof Error ? err.message : String(err);
+    const firstFrame =
+      err instanceof Error && typeof err.stack === 'string'
+        ? (err.stack.split('\n').find((line) => line.trim().startsWith('at ')) ?? null)
+        : null;
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      {
+        ok: false,
+        error: `${name}: ${message}${firstFrame ? ` (${firstFrame.trim()})` : ''}`,
+      },
       { status: 500 },
     );
   }

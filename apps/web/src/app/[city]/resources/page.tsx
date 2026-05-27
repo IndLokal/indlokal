@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 /**
  * Resources Hub - category card grid + journey checklist.
@@ -37,6 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Indian Expat Resources in ${cityName}`,
     description: `Practical guides for Indians in ${cityName} - city registration, driving licence, health insurance, taxes, Kindergeld, housing, grocery stores, and more.`,
+    alternates: {
+      canonical: `/${city}/resources`,
+    },
   };
 }
 
@@ -72,29 +77,18 @@ export default async function ResourcesHubPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
-      {/* Header */}
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          <span>Resources</span>
-        </nav>
-        <h1 className="text-2xl font-bold">Indian Expat Resources in {cityName}</h1>
-        <p className="text-muted mt-2 text-sm">
-          {totalGuides} practical guides on everything an Indian expat needs in {cityName} - from
-          Anmeldung to Kindergeld.
-        </p>
-      </div>
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel="Resources"
+        title={`Indian Expat Resources in ${cityName}`}
+        description={`${totalGuides} practical guides on everything an Indian expat needs in ${cityName} - from Anmeldung to Kindergeld.`}
+      />
 
       {/* Newcomer Journey - first 30 days checklist */}
       {essentialsCount > 0 && (
         <section className="border-brand-100 bg-brand-50/60 rounded-2xl border p-6">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h2 className="text-brand-900 text-lg font-semibold">
                 New to {cityName}? Start here
@@ -106,7 +100,7 @@ export default async function ResourcesHubPage({ params }: Props) {
             </div>
             <Link
               href={`/${city}/resources/journey`}
-              className="btn-primary shrink-0 px-4 py-2 text-sm"
+              className="btn-primary self-start px-4 py-2 text-sm sm:shrink-0"
             >
               Open checklist →
             </Link>
@@ -239,6 +233,8 @@ export default async function ResourcesHubPage({ params }: Props) {
           Suggest a service →
         </Link>
       </section>
+
+      <CitySeoTemplateSection city={city} cityName={cityName} topic="resources" />
     </div>
   );
 }

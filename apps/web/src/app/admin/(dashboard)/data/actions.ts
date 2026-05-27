@@ -2,6 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { communityOptions } from '@indlokal/shared';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
@@ -330,18 +331,7 @@ const ImportCommunity = z.object({
   channels: z
     .array(
       z.object({
-        channelType: z.enum([
-          'WHATSAPP',
-          'TELEGRAM',
-          'WEBSITE',
-          'FACEBOOK',
-          'INSTAGRAM',
-          'EMAIL',
-          'MEETUP',
-          'YOUTUBE',
-          'LINKEDIN',
-          'OTHER',
-        ]),
+        channelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES),
         url: z.string().url(),
         label: z.string().optional(),
         isPrimary: z.boolean().default(false),

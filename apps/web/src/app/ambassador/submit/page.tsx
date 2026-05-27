@@ -1,5 +1,6 @@
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AmbassadorSubmitForm } from './SubmitForm';
 
 export const metadata = { title: 'Submit - Ambassador' };
@@ -20,12 +21,14 @@ export default async function AmbassadorSubmitPage() {
   const defaultCityId = cityIds.length === 1 ? cityIds[0] : undefined;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold">Quick submit</h1>
-      <p className="text-muted mb-8 text-sm">
-        Your submission goes straight to the fast-track pipeline queue.
-      </p>
-      <AmbassadorSubmitForm cities={cities} defaultCityId={defaultCityId} />
-    </div>
+    <AdminPage>
+      <div className="max-w-xl">
+        <AdminPageHeader
+          title="Quick Submit"
+          description="Your submission goes straight to the fast-track pipeline queue."
+        />
+        <AmbassadorSubmitForm cities={cities} defaultCityId={defaultCityId} />
+      </div>
+    </AdminPage>
   );
 }

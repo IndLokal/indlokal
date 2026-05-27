@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { deleteEventAction, setEventStatusAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events - Admin' };
@@ -34,16 +34,8 @@ export default async function AdminEventsPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Events</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Events" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
         <label className="text-sm">
@@ -89,11 +81,21 @@ export default async function AdminEventsPage({
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-3 py-2 font-medium">Title</th>
-              <th className="text-muted px-3 py-2 font-medium">When</th>
-              <th className="text-muted px-3 py-2 font-medium">City</th>
-              <th className="text-muted px-3 py-2 font-medium">Community</th>
-              <th className="text-muted px-3 py-2 font-medium">Status</th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Title
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                When
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                City
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Community
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Status
+              </th>
               <th />
             </tr>
           </thead>
@@ -147,6 +149,6 @@ export default async function AdminEventsPage({
           </tbody>
         </table>
       </div>
-    </div>
+    </AdminPage>
   );
 }
