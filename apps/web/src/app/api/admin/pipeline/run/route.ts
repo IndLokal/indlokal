@@ -40,8 +40,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, scope: scope ?? null, result });
   } catch (err) {
     console.error('[admin/pipeline/run]', err);
+    // Surface a more useful payload so the admin UI can pinpoint failures
+    // without having to dig through Vercel function logs. Includes the error
+    // name (e.g. TypeError, DOMException) and the first stack frame.
+    const name = err instanceof Error ? err.constructor.name : typeof err;
+    const message = err instanceof Error ? err.message : String(err);
+    const firstFrame =
+      err instanceof Error && typeof err.stack === 'string'
+        ? (err.stack.split('\n').find((line) => line.trim().startsWith('at ')) ?? null)
+        : null;
     return NextResponse.json(
-      { ok: false, error: err instanceof Error ? err.message : String(err) },
+      {
+        ok: false,
+        error: `${name}: ${message}${firstFrame ? ` (${firstFrame.trim()})` : ''}`,
+      },
       { status: 500 },
     );
   }

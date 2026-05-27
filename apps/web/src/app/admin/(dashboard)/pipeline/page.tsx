@@ -20,6 +20,12 @@ export const metadata = { title: 'Content Pipeline - Admin' };
 
 export default async function AdminPipelinePage() {
   const regions = await getRuntimeEnabledRegions();
+  const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
+  const enabledCities = await db.city.findMany({
+    where: { slug: { in: enabledCitySlugs } },
+    select: { slug: true, name: true },
+    orderBy: { name: 'asc' },
+  });
   const sourceStats = await getSourceReliabilityStats();
   const items = await db.pipelineItem.findMany({
     where: { status: 'PENDING' },
@@ -81,6 +87,7 @@ export default async function AdminPipelinePage() {
           <div className="flex items-start gap-4">
             <RunPipelineButton
               regions={regions.map((region) => ({ id: region.id, label: region.label }))}
+              cities={enabledCities.map((city) => ({ slug: city.slug, label: city.name }))}
             />
           </div>
         </div>

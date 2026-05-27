@@ -161,6 +161,17 @@ export type ExtractedData = ExtractedEvent | ExtractedCommunity;
 
 // ─── Pipeline run metrics ──────────────────────────────
 
+export type PipelineCityBreakdown = {
+  citySlug: string;
+  cityName: string;
+  extracted: number;
+  queuedEvents: number;
+  queuedCommunities: number;
+  duplicateEvents: number;
+  duplicateCommunities: number;
+  pastEvents: number;
+};
+
 export type PipelineRunResult = {
   regionsScanned: number;
   sourcesProcessed: number;
@@ -186,4 +197,6 @@ export type PipelineRunResult = {
   budgetExceeded: boolean;
   /** PRD-0028: consecutive LLM failures tripped the circuit breaker. */
   circuitBreakerTripped: boolean;
+  /** City-level queue outcomes for scoped diagnosis (Berlin/Stuttgart etc.). */
+  cityBreakdown: PipelineCityBreakdown[];
 };

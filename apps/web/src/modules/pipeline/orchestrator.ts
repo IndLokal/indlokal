@@ -155,6 +155,7 @@ export async function runPipeline(
     itemsDroppedBadIndex: 0,
     budgetExceeded: false,
     circuitBreakerTripped: false,
+    cityBreakdown: [],
   };
 
   const scopeRegionIds = Array.from(
@@ -560,9 +561,11 @@ async function resolveAndQueue(
   });
   const sourceReliabilityByType = await getSourceReliabilityMap();
   const cityBySlug = new Map<string, { id: string; name: string }>();
+  const cityById = new Map<string, { slug: string; name: string }>();
 
   for (const c of cities) {
     cityBySlug.set(c.slug, { id: c.id, name: c.name });
+    cityById.set(c.id, { slug: c.slug, name: c.name });
   }
 
   const decisionCounts = {
@@ -576,6 +579,39 @@ async function resolveAndQueue(
     noCityCommunities: 0,
     pastEvents: 0,
   };
+
+  const cityDecisionMap = new Map<
+    string,
+    {
+      citySlug: string;
+      cityName: string;
+      extracted: number;
+      queuedEvents: number;
+      queuedCommunities: number;
+      duplicateEvents: number;
+      duplicateCommunities: number;
+      pastEvents: number;
+    }
+  >();
+
+  function getCityDecisionCounter(cityId: string) {
+    const existing = cityDecisionMap.get(cityId);
+    if (existing) return existing;
+
+    const city = cityById.get(cityId);
+    const created = {
+      citySlug: city?.slug ?? cityId,
+      cityName: city?.name ?? cityId,
+      extracted: 0,
+      queuedEvents: 0,
+      queuedCommunities: 0,
+      duplicateEvents: 0,
+      duplicateCommunities: 0,
+      pastEvents: 0,
+    };
+    cityDecisionMap.set(cityId, created);
+    return created;
+  }
 
   const fallbackCitySlug = process.env.PIPELINE_NO_CITY_FALLBACK_SLUG?.trim();
   const fallbackCity = fallbackCitySlug ? (cityBySlug.get(fallbackCitySlug) ?? null) : null;
@@ -641,6 +677,9 @@ async function resolveAndQueue(
       continue;
     }
 
+    const cityCounter = getCityDecisionCounter(cityId);
+    cityCounter.extracted++;
+
     // Skip events from before the current calendar year. Events from earlier
     // in the running year are still queued (they show as past on the public
     // site but give us visibility that the source is producing content).
@@ -650,6 +689,7 @@ async function resolveAndQueue(
       if (!Number.isNaN(eventDate.getTime()) && eventDate < startOfCurrentYear) {
         result.itemsSkippedPast++;
         decisionCounts.pastEvents++;
+        cityCounter.pastEvents++;
         continue;
       }
     }
@@ -662,6 +702,7 @@ async function resolveAndQueue(
       }
       result.itemsSkippedDuplicate++;
       decisionCounts.duplicateEvents++;
+      cityCounter.duplicateEvents++;
       continue;
     }
 
@@ -669,8 +710,10 @@ async function resolveAndQueue(
       result.itemsSkippedDuplicate++;
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
+        cityCounter.duplicateEvents++;
       } else {
         decisionCounts.duplicateCommunities++;
+        cityCounter.duplicateCommunities++;
       }
       continue;
     }
@@ -681,7 +724,10 @@ async function resolveAndQueue(
       reliability?.confidenceAdjustment ?? 0,
     );
     const resolvedCity = cityId
-      ? (cities.find((candidate) => candidate.id === cityId) ?? null)
+      ? (() => {
+          const city = cityById.get(cityId);
+          return city ? { id: cityId, name: city.name } : null;
+        })()
       : null;
     const queuedItem =
       !item.cityName && resolvedCity ? { ...item, cityName: resolvedCity.name } : item;
@@ -733,9 +779,11 @@ async function resolveAndQueue(
     result.itemsQueued++;
     if (queuedItem.type === 'EVENT') {
       decisionCounts.queuedEvents++;
+      cityCounter.queuedEvents++;
       if (isCityPending) decisionCounts.queuedPendingCityEvents++;
     } else {
       decisionCounts.queuedCommunities++;
+      cityCounter.queuedCommunities++;
       if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
     }
 
@@ -763,6 +811,13 @@ async function resolveAndQueue(
   console.log(
     `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
   );
+
+  result.cityBreakdown = [...cityDecisionMap.values()].sort((a, b) => {
+    const queuedDelta =
+      b.queuedEvents + b.queuedCommunities - (a.queuedEvents + a.queuedCommunities);
+    if (queuedDelta !== 0) return queuedDelta;
+    return b.extracted - a.extracted;
+  });
 }
 
 // ─── Deduplication ─────────────────────────────────────
