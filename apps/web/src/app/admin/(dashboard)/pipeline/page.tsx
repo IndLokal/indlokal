@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import {
   approveKeywordSuggestion,
@@ -15,6 +14,7 @@ import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Content Pipeline - Admin' };
 
@@ -46,8 +46,8 @@ export default async function AdminPipelinePage() {
     take: 12,
   });
 
-  const highConfidence = items.filter((i) => i.confidence >= 0.85);
-  const needsReview = items.filter((i) => i.confidence < 0.85);
+  const highConfidence = items.filter((i: (typeof items)[number]) => i.confidence >= 0.85);
+  const needsReview = items.filter((i: (typeof items)[number]) => i.confidence < 0.85);
 
   const recentlyProcessed = await db.pipelineItem.findMany({
     where: { status: { in: ['APPROVED', 'REJECTED'] } },
@@ -56,8 +56,20 @@ export default async function AdminPipelinePage() {
     take: 10,
   });
 
+  type EnabledCityRow = (typeof enabledCities)[number];
+  type PendingPipelineItem = (typeof items)[number];
+  type AutoApprovedItem = (typeof autoApprovedItems)[number];
+  type KeywordSuggestionRow = (typeof keywordSuggestions)[number];
+  type ProcessedItem = (typeof recentlyProcessed)[number];
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
+    <AdminPage>
+      <AdminPageHeader
+        title="Content Pipeline"
+        description="Run discovery, review extracted content, and manage approval workflow."
+        backHref="/admin"
+      />
+
       <div className="card-base p-6">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
           <div>
@@ -69,13 +81,8 @@ export default async function AdminPipelinePage() {
                 {regions.length} enabled regions
               </span>
             </div>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight text-slate-900">
-              Content Pipeline
-            </h1>
             <p className="text-muted mt-2 max-w-2xl text-sm leading-6">
-              Run discovery by region, review extracted items, and monitor which sources are
-              producing queueable content. Manual regional runs now mirror cron shards for easier
-              debugging.
+              Regional runs mirror cron shards to make debugging and source quality review easier.
             </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
@@ -87,21 +94,18 @@ export default async function AdminPipelinePage() {
           <div className="flex items-start gap-4">
             <RunPipelineButton
               regions={regions.map((region) => ({ id: region.id, label: region.label }))}
-              cities={enabledCities.map((city) => ({ slug: city.slug, label: city.name }))}
+              cities={enabledCities.map((city: EnabledCityRow) => ({
+                slug: city.slug,
+                label: city.name,
+              }))}
             />
           </div>
         </div>
 
-        <div className="mt-5 flex items-center justify-between border-t border-slate-200 pt-4">
+        <div className="mt-5 border-t border-slate-200 pt-4">
           <p className="text-muted text-xs">
             Review queue and source quality update automatically after each manual run.
           </p>
-          <Link
-            href="/admin"
-            className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
-          >
-            ← Dashboard
-          </Link>
         </div>
       </div>
 
@@ -138,7 +142,7 @@ export default async function AdminPipelinePage() {
             <input
               type="hidden"
               name="ids"
-              value={autoApprovedItems.map((item) => item.id).join(',')}
+              value={autoApprovedItems.map((item: AutoApprovedItem) => item.id).join(',')}
             />
             <button
               type="submit"
@@ -190,7 +194,7 @@ export default async function AdminPipelinePage() {
         <section className="mt-8">
           <h2 className="text-lg font-semibold">Keyword Suggestions</h2>
           <div className="mt-4 space-y-3">
-            {keywordSuggestions.map((suggestion) => (
+            {keywordSuggestions.map((suggestion: KeywordSuggestionRow) => (
               <div
                 key={suggestion.id}
                 className="card-base flex items-center justify-between gap-4 p-4"
@@ -236,7 +240,7 @@ export default async function AdminPipelinePage() {
         <section className="mt-8">
           <h2 className="text-lg font-semibold text-sky-700">Auto-Approved</h2>
           <div className="mt-4 space-y-2">
-            {autoApprovedItems.map((item) => {
+            {autoApprovedItems.map((item: AutoApprovedItem) => {
               const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
               const name = data.type === 'EVENT' ? data.title : data.name;
               return (
@@ -272,7 +276,11 @@ export default async function AdminPipelinePage() {
               ✅ High Confidence ({highConfidence.length})
             </h2>
             <form action={batchApprovePipelineItems}>
-              <input type="hidden" name="ids" value={highConfidence.map((i) => i.id).join(',')} />
+              <input
+                type="hidden"
+                name="ids"
+                value={highConfidence.map((i: PendingPipelineItem) => i.id).join(',')}
+              />
               <button
                 type="submit"
                 className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
@@ -282,7 +290,7 @@ export default async function AdminPipelinePage() {
             </form>
           </div>
           <div className="mt-4 space-y-4">
-            {highConfidence.map((item) => (
+            {highConfidence.map((item: PendingPipelineItem) => (
               <PipelineItemCard key={item.id} item={item} />
             ))}
           </div>
@@ -296,7 +304,7 @@ export default async function AdminPipelinePage() {
             ⚠️ Needs Review ({needsReview.length})
           </h2>
           <div className="mt-4 space-y-4">
-            {needsReview.map((item) => (
+            {needsReview.map((item: PendingPipelineItem) => (
               <PipelineItemCard key={item.id} item={item} />
             ))}
           </div>
@@ -314,7 +322,7 @@ export default async function AdminPipelinePage() {
         <section className="mt-12">
           <h2 className="text-muted text-lg font-semibold">Recently Processed</h2>
           <div className="mt-4 space-y-2">
-            {recentlyProcessed.map((item) => {
+            {recentlyProcessed.map((item: ProcessedItem) => {
               const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
               const name =
                 data.type === 'EVENT'
@@ -345,7 +353,7 @@ export default async function AdminPipelinePage() {
           </div>
         </section>
       )}
-    </div>
+    </AdminPage>
   );
 }
 

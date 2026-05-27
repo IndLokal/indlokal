@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { startOfISOWeek } from 'date-fns';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Ambassadors - Admin' };
 
@@ -68,22 +69,19 @@ export default async function AdminAmbassadorsPage() {
   const cityById = Object.fromEntries(recentCities.map((c) => [c.id, c.name]));
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">City Ambassadors</h1>
-          <p className="text-muted mt-1 text-sm">
-            {ambassadorAssignments.length} active ambassador
-            {ambassadorAssignments.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Link
-          href="/admin/team"
-          className="border-border rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
-        >
-          Manage roles →
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="City Ambassadors"
+        description={`${ambassadorAssignments.length} active ambassador${ambassadorAssignments.length !== 1 ? 's' : ''}`}
+        actions={
+          <Link
+            href="/admin/team"
+            className="border-border rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+          >
+            Manage roles →
+          </Link>
+        }
+      />
 
       {ambassadorAssignments.length === 0 ? (
         <p className="text-muted text-sm">
@@ -158,6 +156,6 @@ export default async function AdminAmbassadorsPage() {
           </table>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { MergeCommunityForm } from './merge-community-form';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Merge Communities - Admin' };
 
@@ -42,19 +43,12 @@ export default async function AdminMergePage() {
   type RecentMerge = (typeof recentMerges)[number];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Merge Communities</h1>
-          <p className="text-muted mt-1 text-sm">
-            Move events, channels, trust history, and claims from a duplicate record into a
-            canonical one.
-          </p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Merge Communities"
+        description="Move events, channels, trust history, and claims from a duplicate record into a canonical one."
+        backHref="/admin"
+      />
 
       <MergeCommunityForm communities={communities} cities={cities} />
 
@@ -91,6 +85,6 @@ export default async function AdminMergePage() {
           </div>
         </section>
       )}
-    </div>
+    </AdminPage>
   );
 }

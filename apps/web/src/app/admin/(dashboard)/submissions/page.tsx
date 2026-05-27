@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { approveSubmission, rejectSubmission } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Review Submissions - Admin' };
 
@@ -18,23 +18,23 @@ export default async function AdminSubmissionsPage() {
     orderBy: { createdAt: 'desc' },
   });
 
+  type SubmissionRow = (typeof submissions)[number];
+  type SubmissionCategoryRow = SubmissionRow['categories'][number];
+  type SubmissionChannelRow = SubmissionRow['accessChannels'][number];
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Community Submissions</h1>
-          <p className="text-muted mt-1 text-sm">{submissions.length} pending review</p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Community Submissions"
+        description={`${submissions.length} pending review`}
+        backHref="/admin"
+      />
 
       {submissions.length === 0 ? (
         <p className="text-muted mt-12 text-center">No submissions to review.</p>
       ) : (
         <div className="mt-8 space-y-6">
-          {submissions.map((c) => {
+          {submissions.map((c: SubmissionRow) => {
             const meta = c.metadata as Record<string, unknown> | null;
             const submitter = meta?.submitter as
               | { name?: string; email?: string; submittedAt?: string }
@@ -85,7 +85,7 @@ export default async function AdminSubmissionsPage() {
                 )}
 
                 <div className="mt-3 flex flex-wrap gap-2">
-                  {c.categories.map(({ category }) => (
+                  {c.categories.map(({ category }: SubmissionCategoryRow) => (
                     <span
                       key={category.slug}
                       className="bg-brand-50 text-brand-700 rounded-full px-2.5 py-0.5 text-xs font-medium"
@@ -97,7 +97,7 @@ export default async function AdminSubmissionsPage() {
 
                 {c.accessChannels.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                    {c.accessChannels.map((ch) => (
+                    {c.accessChannels.map((ch: SubmissionChannelRow) => (
                       <a
                         key={ch.id}
                         href={ch.url}
@@ -116,6 +116,6 @@ export default async function AdminSubmissionsPage() {
           })}
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

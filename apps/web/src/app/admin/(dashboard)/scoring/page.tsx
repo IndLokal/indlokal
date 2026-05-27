@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { subDays } from 'date-fns';
 import { ScoringJobPanel } from './ScoringJobPanel';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Scoring & Jobs - Admin' };
 
@@ -51,17 +52,15 @@ export default async function AdminScoringPage() {
     }),
   ]);
 
+  type StaleCommunityRow = (typeof staleCommunities)[number];
+
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Scoring &amp; Jobs</h1>
-          <p className="text-muted mt-1 text-sm">Run scoring refresh and maintenance jobs.</p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Scoring & Jobs"
+        description="Run scoring refresh and maintenance jobs."
+        backHref="/admin"
+      />
 
       {/* Stats row */}
       <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -102,7 +101,7 @@ export default async function AdminScoringPage() {
                 </tr>
               </thead>
               <tbody className="divide-border/50 divide-y">
-                {staleCommunities.map((c) => (
+                {staleCommunities.map((c: StaleCommunityRow) => (
                   <tr key={c.id} className="hover:bg-muted-bg">
                     <td className="px-4 py-3">
                       <Link
@@ -135,7 +134,7 @@ export default async function AdminScoringPage() {
           </div>
         )}
       </section>
-    </div>
+    </AdminPage>
   );
 }
 

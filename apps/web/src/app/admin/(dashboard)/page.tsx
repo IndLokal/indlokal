@@ -6,11 +6,12 @@
  * For the founding team to seed, edit, and curate content.
  * Not public-facing in MVP.
  */
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+
 export default function AdminDashboardPage() {
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <p className="text-muted mt-2">Content management for IndLokal.</p>
+    <AdminPage>
+      <AdminPageHeader title="Admin Dashboard" description="Content management for IndLokal." />
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <DashboardCard
@@ -61,7 +62,7 @@ export default function AdminDashboardPage() {
           href="/admin/audit"
         />
       </div>
-    </div>
+    </AdminPage>
   );
 }
 

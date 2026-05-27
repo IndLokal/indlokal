@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { createCityAction, deleteCityAction, toggleCityActiveAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Cities - Admin' };
@@ -13,19 +14,13 @@ export default async function AdminCitiesPage() {
   const metros = cities.filter((c) => c.isMetroPrimary);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Cities</h1>
-          <p className="text-muted mt-1 text-sm">{cities.length} total</p>
-        </div>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Cities"
+        description={`${cities.length} total`}
+        backHref="/admin/data"
+        backLabel="Data"
+      />
 
       <section className="border-border mt-6 rounded-[var(--radius-card)] border p-5">
         <h2 className="text-sm font-semibold">Add a city</h2>
@@ -118,7 +113,7 @@ export default async function AdminCitiesPage() {
           </tbody>
         </table>
       </div>
-    </div>
+    </AdminPage>
   );
 }
 

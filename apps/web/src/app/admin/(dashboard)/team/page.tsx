@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { requireCan } from '@/lib/auth/permissions';
 import { grantRole, revokeRole } from './actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Team - Admin' };
 
@@ -51,18 +51,12 @@ export default async function AdminTeamPage() {
   const canGrant = viewer.role === 'PLATFORM_ADMIN';
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Team & Role Assignments</h1>
-          <p className="text-muted mt-1 text-sm">
-            {assignments.length} active assignment{assignments.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Team & Role Assignments"
+        description={`${assignments.length} active assignment${assignments.length !== 1 ? 's' : ''}`}
+        backHref="/admin"
+      />
 
       {/* ── Grant form (PLATFORM_ADMIN only) ── */}
       {canGrant && (
@@ -185,6 +179,6 @@ export default async function AdminTeamPage() {
           </div>
         )}
       </section>
-    </div>
+    </AdminPage>
   );
 }

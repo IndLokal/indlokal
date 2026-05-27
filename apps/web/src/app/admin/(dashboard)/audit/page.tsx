@@ -3,6 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { AuditTable } from './AuditTable';
 import type { ContentLogAction } from '@prisma/client';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Audit Log - Admin' };
 export const dynamic = 'force-dynamic';
@@ -67,24 +68,21 @@ export default async function AdminAuditPage({
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold">Audit Log</h1>
-          <p className="text-muted mt-0.5 text-sm">
-            {totalCount.toLocaleString()} record{totalCount !== 1 ? 's' : ''}
-            {Object.keys(where).length > 0 ? ' matching filters' : ' total'}
-          </p>
-        </div>
-        {canExport && (
-          <a
-            href={`/admin/audit/export?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo }).toString()}`}
-            className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
-          >
-            Export CSV
-          </a>
-        )}
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Audit Log"
+        description={`${totalCount.toLocaleString()} record${totalCount !== 1 ? 's' : ''}${Object.keys(where).length > 0 ? ' matching filters' : ' total'}`}
+        actions={
+          canExport ? (
+            <a
+              href={`/admin/audit/export?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo }).toString()}`}
+              className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
+            >
+              Export CSV
+            </a>
+          ) : undefined
+        }
+      />
 
       {/* Filters */}
       <form method="GET" className="mt-6 flex flex-wrap gap-3">
@@ -194,6 +192,6 @@ export default async function AdminAuditPage({
           </div>
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

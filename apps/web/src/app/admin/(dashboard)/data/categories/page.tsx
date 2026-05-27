@@ -1,6 +1,6 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Categories - Admin' };
@@ -14,16 +14,8 @@ export default async function AdminCategoriesPage() {
   const personas = all.filter((c) => c.type === 'PERSONA');
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Categories &amp; Personas</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Categories & Personas" backHref="/admin/data" backLabel="Data" />
 
       <section className="border-border mt-6 rounded-[var(--radius-card)] border p-5">
         <h2 className="text-sm font-semibold">Add taxonomy entry</h2>
@@ -57,7 +49,7 @@ export default async function AdminCategoriesPage() {
 
       <Section title="Categories" rows={cats} />
       <Section title="Personas" rows={personas} />
-    </div>
+    </AdminPage>
   );
 }
 

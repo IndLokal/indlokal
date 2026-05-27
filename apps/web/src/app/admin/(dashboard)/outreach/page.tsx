@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { OutreachKanban } from './OutreachKanban';
 import { CreateLeadForm } from './CreateLeadForm';
 import type { OutreachStage } from '@prisma/client';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Outreach CRM - Admin' };
 export const dynamic = 'force-dynamic';
@@ -76,26 +77,21 @@ export default async function AdminOutreachPage({
   );
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Outreach CRM</h1>
-          <p className="text-muted mt-1 text-sm">
-            {leads.length} lead{leads.length !== 1 ? 's' : ''}
-          </p>
-        </div>
-
-        {/* Stage funnel summary */}
-        <div className="flex flex-wrap gap-2">
-          {STAGE_ORDER.map((s) => (
-            <div key={s} className="text-center">
-              <p className="text-lg font-bold">{stageCounts[s]}</p>
-              <p className="text-muted text-[10px]">{s.replace('_', ' ')}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Outreach CRM"
+        description={`${leads.length} lead${leads.length !== 1 ? 's' : ''}`}
+        actions={
+          <div className="flex flex-wrap gap-2">
+            {STAGE_ORDER.map((s) => (
+              <div key={s} className="text-center">
+                <p className="text-lg font-bold">{stageCounts[s]}</p>
+                <p className="text-muted text-[10px]">{s.replace('_', ' ')}</p>
+              </div>
+            ))}
+          </div>
+        }
+      />
 
       {/* Filters */}
       <form method="GET" className="mb-6 flex flex-wrap gap-3">
@@ -178,6 +174,6 @@ export default async function AdminOutreachPage({
           <CreateLeadForm cities={cities} operators={operators} currentUserId={''} />
         </div>
       </details>
-    </div>
+    </AdminPage>
   );
 }

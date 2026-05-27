@@ -1,7 +1,7 @@
-import Link from 'next/link';
 import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { reviewReport, resolveReport } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 const REPORT_TYPE_LABELS: Record<string, string> = {
   STALE_INFO: 'Stale info',
@@ -27,15 +27,15 @@ export default async function AdminReportsPage() {
     },
   });
 
+  type ReportRow = (typeof reports)[number];
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
-      <div>
-        <Link href="/admin" className="text-muted hover:text-foreground text-sm transition-colors">
-          ← Dashboard
-        </Link>
-        <h1 className="mt-2 text-2xl font-bold">Reports &amp; Suggestions</h1>
-        <p className="text-muted mt-1 text-sm">{reports.length} pending · sorted by newest first</p>
-      </div>
+    <AdminPage className="space-y-6">
+      <AdminPageHeader
+        title="Reports & Suggestions"
+        description={`${reports.length} pending · sorted by newest first`}
+        backHref="/admin"
+      />
 
       {reports.length === 0 ? (
         <p className="border-border text-muted rounded-[var(--radius-card)] border p-8 text-center">
@@ -43,7 +43,7 @@ export default async function AdminReportsPage() {
         </p>
       ) : (
         <div className="space-y-4">
-          {reports.map((report) => (
+          {reports.map((report: ReportRow) => (
             <div key={report.id} className="card-base p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
@@ -128,6 +128,6 @@ export default async function AdminReportsPage() {
           ))}
         </div>
       )}
-    </div>
+    </AdminPage>
   );
 }

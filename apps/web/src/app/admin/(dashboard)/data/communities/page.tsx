@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { deleteCommunityAction, setCommunityStatusAction } from '../actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Communities - Admin' };
@@ -44,16 +45,8 @@ export default async function AdminCommunitiesPage({
   ]);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Communities</h1>
-        <Link
-          href="/admin/data"
-          className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
-        >
-          ← Data
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader title="Communities" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
         <label className="text-sm">
@@ -186,6 +179,6 @@ export default async function AdminCommunitiesPage({
           </tbody>
         </table>
       </div>
-    </div>
+    </AdminPage>
   );
 }

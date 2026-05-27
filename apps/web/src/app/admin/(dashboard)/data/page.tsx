@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { runBootstrapAction } from './actions';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Data Management - Admin' };
@@ -43,18 +44,12 @@ export default async function DataHubPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Data Management</h1>
-          <p className="text-muted mt-1 text-sm">
-            Reference data, content tables, and bulk import for IndLokal.
-          </p>
-        </div>
-        <Link href="/admin" className="text-brand-600 hover:text-brand-700 text-sm hover:underline">
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Data Management"
+        description="Reference data, content tables, and bulk import for IndLokal."
+        backHref="/admin"
+      />
 
       <section className="mt-8 rounded-[var(--radius-card)] border border-amber-200 bg-amber-50 p-4">
         <div className="flex items-center justify-between gap-4">
@@ -88,6 +83,6 @@ export default async function DataHubPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </AdminPage>
   );
 }
