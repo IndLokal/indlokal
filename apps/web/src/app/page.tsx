@@ -6,7 +6,6 @@ import {
   UPCOMING_CITIES,
   METRO_REGIONS,
   CITY_COMMUNITY_PROFILES,
-  getConfiguredCityName,
 } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { BrandLink } from '@/components/BrandLink';

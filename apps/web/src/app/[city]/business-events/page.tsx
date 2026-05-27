@@ -7,7 +7,6 @@ import { getUpcomingEvents } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
-import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 

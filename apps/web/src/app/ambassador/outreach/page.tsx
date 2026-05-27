@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { OutreachKanban } from '@/app/admin/(dashboard)/outreach/OutreachKanban';
