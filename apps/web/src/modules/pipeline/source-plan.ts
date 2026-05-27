@@ -267,6 +267,7 @@ export async function buildPipelineSourcePlan(
   const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';
   const notes: string[] = [];
   const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
+  const forceAdminKeywordSearch = process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
 
   const staticPinned = await getRuntimePinnedStrategies();
   const dbPinnedAll = await getDbCommunityStrategies();
@@ -288,11 +289,11 @@ export async function buildPipelineSourcePlan(
     );
   }
 
-  const shouldRunKeywords = forceKeywordSearch || triggeredBy === 'admin' || cityGaps.length > 0;
+  const shouldRunKeywords = forceKeywordSearch || forceAdminKeywordSearch || cityGaps.length > 0;
   if (!shouldRunKeywords) {
     notes.push('skipping keyword search: no low-coverage DB city gaps');
   }
-  if (triggeredBy === 'admin' && !forceKeywordSearch) {
+  if (triggeredBy === 'admin' && forceAdminKeywordSearch && !forceKeywordSearch) {
     notes.push('admin run: forcing keyword search for wider discovery coverage');
   }
 
@@ -320,7 +321,7 @@ export async function buildPipelineSourcePlan(
             ? eventGapKeywords
             : [...eventGapKeywords, ...communityGapKeywords];
         const baselineKeywords =
-          forceKeywordSearch || triggeredBy === 'admin' ? baselineKeywordSeeds : [];
+          forceKeywordSearch || forceAdminKeywordSearch ? baselineKeywordSeeds : [];
         const canonicalKeywords = unique([
           ...gapKeywords,
           ...approvedKeywords,
