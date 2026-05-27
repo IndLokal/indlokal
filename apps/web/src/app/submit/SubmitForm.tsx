@@ -16,6 +16,15 @@ function FieldError({ errors }: { errors?: string[] }) {
   return <p className="mt-1 text-sm text-red-600">{errors[0]}</p>;
 }
 
+function FormError({ errors }: { errors?: string[] }) {
+  if (!errors || errors.length === 0) return null;
+  return (
+    <div className="rounded-[var(--radius-button)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+      {errors[0]}
+    </div>
+  );
+}
+
 export function SubmitForm({ cities, categories }: Props) {
   const [state, formAction, isPending] = useActionState<SubmitResult, FormData>(
     submitCommunity,
@@ -42,10 +51,15 @@ export function SubmitForm({ cities, categories }: Props) {
 
   return (
     <form action={formAction} className="space-y-8">
+      <FormError errors={errors._} />
+
       <ContentCallout
         title={content.COMMUNITY_ACTION_COPY.submitFormHint}
         body={content.COMMUNITY_ACTION_COPY.submitFormBody}
       />
+      <p className="text-muted text-sm">
+        Fields marked * are required. This usually takes 2-3 minutes.
+      </p>
 
       {/* Community details */}
       <fieldset className="card-base space-y-5 p-6">
@@ -160,6 +174,7 @@ export function SubmitForm({ cities, categories }: Props) {
                 </option>
               ))}
             </select>
+            <FieldError errors={errors.primaryChannelType} />
             <input
               name="primaryChannelUrl"
               type="url"
@@ -185,6 +200,7 @@ export function SubmitForm({ cities, categories }: Props) {
                 </option>
               ))}
             </select>
+            <FieldError errors={errors.secondaryChannelType} />
             <input
               name="secondaryChannelUrl"
               type="url"
@@ -192,6 +208,7 @@ export function SubmitForm({ cities, categories }: Props) {
               className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             />
           </div>
+          <FieldError errors={errors.secondaryChannelUrl} />
         </div>
       </fieldset>
 

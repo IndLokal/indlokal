@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ChannelType } from '@prisma/client';
+import { communityOptions } from '@indlokal/shared';
 
 export const submitCommunitySchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters').max(200),
@@ -7,9 +7,9 @@ export const submitCommunitySchema = z.object({
   citySlug: z.string().min(1, 'Please select a city'),
   categories: z.array(z.string()).min(1, 'Select at least one category').max(20),
   languages: z.array(z.string()).max(20).default([]),
-  primaryChannelType: z.nativeEnum(ChannelType),
+  primaryChannelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES),
   primaryChannelUrl: z.string().url('Please enter a valid URL'),
-  secondaryChannelType: z.nativeEnum(ChannelType).optional(),
+  secondaryChannelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES).optional(),
   secondaryChannelUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
   contactEmail: z.string().email('Please enter a valid email'),
   contactName: z.string().min(1, 'Please enter your name'),
