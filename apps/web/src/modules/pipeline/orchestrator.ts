@@ -408,14 +408,18 @@ async function fetchAllSources(
         item._hintCommunityName = strategy.hintCommunityName;
       }
       console.log(`[Pipeline] ${strategy.id} → ${fetchResult.items.length} items`);
-      return fetchResult;
+      return { strategy, fetchResult };
     }),
   );
   for (const outcome of pinnedOutcomes) {
     result.sourcesProcessed++;
     if (outcome.status === 'fulfilled') {
-      allRaw.push(...outcome.value.items);
-      result.errors.push(...outcome.value.errors);
+      allRaw.push(...outcome.value.fetchResult.items);
+      result.errors.push(
+        ...outcome.value.fetchResult.errors.map(
+          (error) => `[${outcome.value.strategy.id}] ${outcome.value.strategy.label}: ${error}`,
+        ),
+      );
     } else {
       result.errors.push(String(outcome.reason));
     }

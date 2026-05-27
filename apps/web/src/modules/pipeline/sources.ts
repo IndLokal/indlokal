@@ -23,6 +23,16 @@ function parseHttpUrl(rawUrl: string): URL | null {
   }
 }
 
+function getNonWwwVariantUrl(rawUrl: string): string | null {
+  const parsed = parseHttpUrl(rawUrl);
+  if (!parsed) return null;
+  if (!parsed.hostname.startsWith('www.')) return null;
+
+  const next = new URL(parsed.toString());
+  next.hostname = parsed.hostname.replace(/^www\./, '');
+  return next.toString();
+}
+
 function isBlockedSearchHost(hostname: string): boolean {
   const normalized = hostname.toLowerCase();
   return (
@@ -303,14 +313,37 @@ export async function fetchPinnedUrl(
       ? strategy.url.replace('www.facebook.com', 'm.facebook.com')
       : strategy.url;
 
-    const res = await fetchTextWithFallback(fetchUrl, {
-      headers: {
-        'User-Agent': isFacebook
-          ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
-          : PIPELINE_USER_AGENT,
-      },
-      timeoutMs: 15_000,
-    });
+    const userAgent = isFacebook
+      ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
+      : PIPELINE_USER_AGENT;
+
+    const fallbackUrl = getNonWwwVariantUrl(fetchUrl);
+    const attemptUrls = fallbackUrl ? [fetchUrl, fallbackUrl] : [fetchUrl];
+    let effectiveFetchUrl = fetchUrl;
+    let res = null as Awaited<ReturnType<typeof fetchTextWithFallback>> | null;
+    let lastError: unknown = null;
+
+    for (const candidateUrl of attemptUrls) {
+      try {
+        const candidateResult = await fetchTextWithFallback(candidateUrl, {
+          headers: { 'User-Agent': userAgent },
+          timeoutMs: 15_000,
+        });
+        res = candidateResult;
+        effectiveFetchUrl = candidateUrl;
+
+        // If the first candidate returned an HTTP status, don't mask it with
+        // a second hostname variant. Variant retries are only for transport/
+        // TLS hostname failures that throw.
+        break;
+      } catch (err) {
+        lastError = err;
+      }
+    }
+
+    if (!res) {
+      throw lastError ?? new Error(`Failed to fetch ${strategy.url}`);
+    }
 
     if (!res.ok) {
       return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
@@ -322,7 +355,7 @@ export async function fetchPinnedUrl(
     // mostly noise for extraction and can drown useful page signals.
     const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
 
-    const imageUrls = extractImageUrls(html, strategy.url).slice(0, 5);
+    const imageUrls = extractImageUrls(html, effectiveFetchUrl).slice(0, 5);
     const text = collapseWhitespace(decodeHtmlEntities(htmlToText(html))).slice(0, 15_000);
 
     items.push({
@@ -346,7 +379,7 @@ export async function fetchPinnedUrl(
     }
 
     if (shouldExpandPinnedUrl(strategy)) {
-      const links = extractPinnedExpansionLinks(rawHtml, strategy.url);
+      const links = extractPinnedExpansionLinks(rawHtml, effectiveFetchUrl);
       if (links.length > 0) {
         for (const link of links) discoveredUrls.add(link);
         const expanded = await Promise.allSettled(
