@@ -105,12 +105,12 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             label: noUpcomingEvents
               ? hasUpcomingLater
                 ? 'See upcoming events'
-                : 'Create an event'
+                : 'Suggest a listing'
               : 'See all events',
             href: noUpcomingEvents
               ? hasUpcomingLater
                 ? `/${city}/events`
-                : `/${city}/submit`
+                : `/${city}/suggest`
               : `/${city}/events`,
           }}
         />
@@ -137,10 +137,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
                     {hasUpcomingLater ? 'View upcoming events' : 'Browse communities'}
                   </Link>
                   <Link
-                    href={`/${city}/submit`}
+                    href={`/${city}/suggest`}
                     className="text-brand-700 bg-white px-4 py-2 text-sm font-semibold ring-1 ring-black/[0.08] transition-colors hover:bg-black/[0.02]"
                   >
-                    {hasUpcomingLater ? 'Submit another event' : 'Submit an event'}
+                    {hasUpcomingLater ? 'Suggest another listing' : 'Suggest a listing'}
                   </Link>
                 </div>
               </div>
@@ -169,7 +169,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <Link
                 href={`/${city}/communities`}
                 className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
@@ -177,15 +177,6 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
                 <p className="text-sm font-semibold text-sky-700">Join a community</p>
                 <p className="text-muted mt-1 text-xs">
                   Find active groups by category and language.
-                </p>
-              </Link>
-              <Link
-                href={`/${city}/submit`}
-                className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <p className="text-sm font-semibold text-emerald-700">Organize an event</p>
-                <p className="text-muted mt-1 text-xs">
-                  Post your meetup and get discovered in the city feed.
                 </p>
               </Link>
               <Link
