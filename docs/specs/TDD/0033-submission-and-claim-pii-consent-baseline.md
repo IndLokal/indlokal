@@ -69,9 +69,7 @@ In [apps/web/src/app/[city]/communities/[slug]/ClaimSection.tsx](apps/web/src/ap
 
 ## 5. Constants and versioning
 
-Add one shared constant in web app (or shared package if already used across surfaces):
-
-- `CONSENT_POLICY_VERSION = "2026-05-v1"`
+Use policy version string `2026-05-v1` consistently in submit and claim actions.
 
 Future updates should change version string and keep previous values in historical rows.
 
@@ -86,9 +84,8 @@ Future updates should change version string and keep previous values in historic
 
 Minimal instrumentation only:
 
-- Add analytics property to existing submit/claim events:
-  - `consent_policy_version`
-- No new event names required.
+- Keep existing submit/claim analytics events unchanged in this phase.
+- No new event names or properties required.
 
 ## 8. Test plan
 

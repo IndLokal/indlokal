@@ -19,9 +19,8 @@ Current risk is not "no legal pages"; it is weak consent UX evidence at the mome
 
 ## 3. Success Metrics
 
-- 100% of required-name/email flows show inline privacy notice + links at submission point.
 - 100% of required-name/email flows show inline collection notice with legal links at point of submission.
-- 100% of new submission/claim records contain consent receipt fields in metadata.
+- 100% of new submission/claim records contain notice receipt fields in metadata.
 - No measurable increase in form error/support tickets from consent UX changes.
 
 ## 4. Scope
