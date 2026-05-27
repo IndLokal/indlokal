@@ -5,7 +5,7 @@ import { getCityFeed } from '@/modules/discovery';
 import { CommunityCard } from '@/components/CommunityCard';
 import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';
-import { SectionHeader, EmptyState } from '@/components/ui';
+import { SectionHeader } from '@/components/ui';
 import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
 
 /**
@@ -49,6 +49,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
     counts,
   } = feed;
   const cityName = cityData.name;
+  const upcomingCount = thisWeek.events.length;
+  const noUpcomingEvents = upcomingCount === 0;
+  const lowUpcomingEvents = upcomingCount > 0 && upcomingCount <= 3;
+  const hasUpcomingLater = noUpcomingEvents && counts.upcomingEvents > 0;
   type ThisWeekEvent = (typeof thisWeek.events)[number];
   type RecentPastEvent = (typeof recentPastEvents)[number];
   type CategoryItem = (typeof categories)[number];
@@ -97,20 +101,137 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
       <section className="space-y-5">
         <SectionHeader
           title={thisWeek.expandedToMonth ? 'This Month' : 'This Week'}
-          action={{ label: 'See all events', href: `/${city}/events` }}
+          action={{
+            label: noUpcomingEvents
+              ? hasUpcomingLater
+                ? 'See upcoming events'
+                : 'Create an event'
+              : 'See all events',
+            href: noUpcomingEvents
+              ? hasUpcomingLater
+                ? `/${city}/events`
+                : `/${city}/submit`
+              : `/${city}/events`,
+          }}
         />
-        {thisWeek.events.length === 0 ? (
-          <EmptyState
-            icon="📅"
-            title="No events coming up"
-            description="Check back soon or browse all communities."
-            action={{ label: 'Browse communities', href: `/${city}/communities` }}
-          />
+        {noUpcomingEvents ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-[1.35fr,1fr]">
+              <div className="border-brand-200 bg-brand-50/30 rounded-[var(--radius-panel)] border border-dashed px-6 py-8">
+                <div className="ring-border/50 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-2xl shadow-sm ring-1">
+                  📆
+                </div>
+                <h3 className="text-foreground mt-4 text-lg font-semibold">
+                  Quiet month in {cityName}
+                </h3>
+                <p className="text-muted mt-1 text-sm leading-relaxed">
+                  {hasUpcomingLater
+                    ? `No major public events are listed for this month. ${counts.upcomingEvents} upcoming event${counts.upcomingEvents !== 1 ? 's are' : ' is'} already listed for the next months.`
+                    : 'No major public events are listed right now, but community activity continues through private meetups and ongoing groups.'}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-2.5">
+                  <Link
+                    href={hasUpcomingLater ? `/${city}/events` : `/${city}/communities`}
+                    className="btn-primary px-4 py-2 text-sm"
+                  >
+                    {hasUpcomingLater ? 'View upcoming events' : 'Browse communities'}
+                  </Link>
+                  <Link
+                    href={`/${city}/submit`}
+                    className="text-brand-700 bg-white px-4 py-2 text-sm font-semibold ring-1 ring-black/[0.08] transition-colors hover:bg-black/[0.02]"
+                  >
+                    {hasUpcomingLater ? 'Submit another event' : 'Submit an event'}
+                  </Link>
+                </div>
+              </div>
+
+              <div className="rounded-[var(--radius-panel)] bg-white p-5 shadow-sm ring-1 ring-black/[0.06]">
+                <h4 className="text-foreground text-sm font-semibold">City Pulse</h4>
+                <p className="text-muted mt-1 text-xs">Communities active this week</p>
+                <div className="mt-3 space-y-2.5">
+                  {activeCommunities.slice(0, 3).map((community: ActiveCommunity) => (
+                    <Link
+                      key={community.id}
+                      href={`/${city}/communities/${community.slug}`}
+                      className="hover:bg-muted-bg/60 flex items-center justify-between rounded-lg px-3 py-2 transition-colors"
+                    >
+                      <span className="text-foreground line-clamp-1 text-sm font-medium">
+                        {community.name}
+                      </span>
+                      <span className="text-muted ml-3 shrink-0 text-xs">
+                        {community._count.events > 0
+                          ? `${community._count.events} event${community._count.events !== 1 ? 's' : ''}`
+                          : `${community.memberCountApprox ? `~${community.memberCountApprox.toLocaleString()}` : 'Active'} members`}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Link
+                href={`/${city}/communities`}
+                className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <p className="text-sm font-semibold text-sky-700">Join a community</p>
+                <p className="text-muted mt-1 text-xs">
+                  Find active groups by category and language.
+                </p>
+              </Link>
+              <Link
+                href={`/${city}/submit`}
+                className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <p className="text-sm font-semibold text-emerald-700">Organize an event</p>
+                <p className="text-muted mt-1 text-xs">
+                  Post your meetup and get discovered in the city feed.
+                </p>
+              </Link>
+              <Link
+                href={`/${city}/resources`}
+                className="rounded-xl bg-white px-4 py-3 shadow-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <p className="text-sm font-semibold text-amber-700">Explore resources</p>
+                <p className="text-muted mt-1 text-xs">
+                  Useful city guides while you wait for new listings.
+                </p>
+              </Link>
+            </div>
+          </div>
         ) : (
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {thisWeek.events.map((event: ThisWeekEvent) => (
-              <EventCard key={event.id} event={event} city={city} />
-            ))}
+          <div className="space-y-4">
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {thisWeek.events.map((event: ThisWeekEvent) => (
+                <EventCard key={event.id} event={event} city={city} />
+              ))}
+            </div>
+
+            {lowUpcomingEvents && (
+              <div className="from-brand-50 to-accent-50/30 rounded-[var(--radius-panel)] bg-gradient-to-r p-4 ring-1 ring-black/[0.06]">
+                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-foreground text-sm font-semibold">
+                      More ways to stay active
+                    </p>
+                    <p className="text-muted text-xs">
+                      Low event volume this period. Explore communities and city resources.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Link href={`/${city}/communities`} className="btn-primary px-3 py-1.5 text-xs">
+                      Browse communities
+                    </Link>
+                    <Link
+                      href={`/${city}/resources`}
+                      className="text-foreground bg-white px-3 py-1.5 text-xs font-semibold ring-1 ring-black/[0.08] transition-colors hover:bg-black/[0.02]"
+                    >
+                      City resources
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </section>
