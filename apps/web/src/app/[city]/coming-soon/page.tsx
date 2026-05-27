@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { siteConfig, UPCOMING_CITIES, ACTIVE_CITIES } from '@/lib/config';
+import { siteConfig, UPCOMING_CITIES, ACTIVE_CITIES, CITY_COMMUNITY_PROFILES } from '@/lib/config';
 import { Footer } from '@/components/layout';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 
@@ -17,15 +17,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city: slug } = await params;
   const city = getUpcomingCity(slug);
   if (!city) return {};
+  const profile = CITY_COMMUNITY_PROFILES[slug];
+  const descriptor = city.notes ?? profile?.notes;
   return {
     title: `${city.name} - Coming Soon | ${siteConfig.name}`,
-    description: `${siteConfig.name} is expanding to ${city.name}! Be the first to know when we launch for the Indian community in ${city.name}, Germany.`,
+    description: descriptor
+      ? `${siteConfig.name} is expanding to ${city.name}. ${descriptor}`
+      : `${siteConfig.name} is expanding to ${city.name}! Be the first to know when we launch for the Indian community in ${city.name}, Germany.`,
   };
 }
 
 export default async function ComingSoonPage({ params }: Props) {
   const { city: slug } = await params;
   const city = getUpcomingCity(slug);
+  const profile = CITY_COMMUNITY_PROFILES[slug];
+  const cityNotes = city?.notes ?? profile?.notes;
 
   // If it's not an upcoming city and not active, 404
   if (!city) {
@@ -71,6 +77,11 @@ export default async function ComingSoonPage({ params }: Props) {
               We&apos;re bringing {siteConfig.name} to the Indian community in {city.name},{' '}
               {city.state}. Communities, events, resources - all in one place.
             </p>
+            {cityNotes && (
+              <p className="text-brand-200/85 mx-auto mt-2 max-w-xl text-sm leading-relaxed">
+                {cityNotes}
+              </p>
+            )}
           </div>
         </section>
 

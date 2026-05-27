@@ -6,6 +6,7 @@ export { siteConfig } from './site';
 export {
   ACTIVE_CITIES,
   ALL_CITY_SLUGS,
+  CITY_COMMUNITY_PROFILES,
   getConfiguredCityName,
   METRO_REGIONS,
   SATELLITE_TO_METRO,

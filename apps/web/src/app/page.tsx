@@ -1,26 +1,26 @@
 import Link from 'next/link';
-import { siteConfig, ACTIVE_CITIES, UPCOMING_CITIES, METRO_REGIONS } from '@/lib/config';
+import {
+  siteConfig,
+  ACTIVE_CITIES,
+  UPCOMING_CITIES,
+  METRO_REGIONS,
+  CITY_COMMUNITY_PROFILES,
+  getConfiguredCityName,
+} from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { LogoMark } from '@/components/Logo';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
-const CITY_META: Record<string, { emoji: string; tagline: string }> = {
-  stuttgart: {
-    emoji: '🏰',
-    tagline: "Baden-Württemberg's capital",
-  },
-  karlsruhe: {
-    emoji: '⚡',
-    tagline: 'Tech hub of the south',
-  },
-  mannheim: {
-    emoji: '🎵',
-    tagline: 'Culture at the Rhine-Neckar',
-  },
-};
-
 export default function HomePage() {
+  const cityInsightRows = [
+    ...ACTIVE_CITIES.map((slug) => ({ slug, name: getConfiguredCityName(slug) ?? slug })),
+    ...UPCOMING_CITIES.map((city) => ({ slug: city.slug, name: city.name })),
+  ].filter(
+    (entry, idx, arr) =>
+      !!CITY_COMMUNITY_PROFILES[entry.slug] && arr.findIndex((e) => e.slug === entry.slug) === idx,
+  );
+
   return (
     <>
       {/* Header */}
@@ -91,7 +91,7 @@ export default function HomePage() {
         <section className="relative z-10 mx-auto -mt-14 max-w-5xl px-4 pb-12">
           <div className="grid gap-4 sm:grid-cols-3">
             {ACTIVE_CITIES.map((city) => {
-              const meta = CITY_META[city] ?? { emoji: '🏙️', tagline: '' };
+              const profile = CITY_COMMUNITY_PROFILES[city];
               return (
                 <Link
                   key={city}
@@ -100,12 +100,11 @@ export default function HomePage() {
                 >
                   <div className="from-brand-500 to-brand-700 absolute inset-x-0 top-0 h-1 bg-gradient-to-r" />
                   <span className="from-brand-500 to-brand-700 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br text-2xl shadow-sm transition-transform duration-200 group-hover:scale-105">
-                    {meta.emoji}
+                    {profile?.emoji ?? '🏙️'}
                   </span>
                   <span className="text-foreground group-hover:text-brand-600 text-lg font-bold capitalize transition-colors">
                     {city}
                   </span>
-                  <span className="text-muted text-sm">{meta.tagline}</span>
                   {METRO_REGIONS[city] && (
                     <span className="text-muted/70 mt-1 text-xs leading-snug">
                       Incl.{' '}
@@ -132,26 +131,54 @@ export default function HomePage() {
               Expanding across Germany
             </h2>
             <p className="text-muted mx-auto mt-2 max-w-md text-sm">
-              We&apos;re bringing {siteConfig.name} to more cities. Click a city to see what&apos;s
-              planned.
+              We&apos;re bringing {siteConfig.name} to more cities. Explore where we launch next.
             </p>
           </div>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {UPCOMING_CITIES.map((city) => (
               <Link
                 key={city.slug}
                 href={`/${city.slug}`}
-                className="hover:ring-brand-200 group inline-flex items-center gap-2.5 rounded-xl bg-white px-4 py-3 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="hover:ring-brand-200 group rounded-xl bg-white p-5 text-left ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
               >
-                <span className="text-lg">{city.emoji}</span>
-                <span className="text-foreground group-hover:text-brand-600 font-medium transition-colors">
-                  {city.name}
-                </span>
-                <span className="bg-accent-50 text-accent-700 ring-accent-200/60 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1">
-                  Soon
-                </span>
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-foreground group-hover:text-brand-600 text-base font-semibold transition-colors">
+                    {city.emoji} {city.name}
+                  </span>
+                  <span className="bg-accent-50 text-accent-700 ring-accent-200/60 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1">
+                    Soon
+                  </span>
+                </div>
+                <p className="text-muted mt-2 text-sm">{city.state}</p>
               </Link>
             ))}
+          </div>
+        </section>
+
+        {/* Central city notes */}
+        <section className="mx-auto max-w-5xl px-4 pb-20">
+          <div className="text-center">
+            <h2 className="text-foreground text-xl font-bold sm:text-2xl">City ecosystem notes</h2>
+            <p className="text-muted mx-auto mt-2 max-w-2xl text-sm">
+              A centralized, concise note bank for each city. Update once in config, reflected
+              everywhere.
+            </p>
+          </div>
+          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {cityInsightRows.map((entry) => {
+              const profile = CITY_COMMUNITY_PROFILES[entry.slug];
+              return (
+                <div
+                  key={entry.slug}
+                  className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <p className="text-foreground text-sm font-semibold">
+                    {profile.emoji} {entry.name}
+                  </p>
+                  <p className="text-muted mt-1 text-sm leading-relaxed">{profile.notes}</p>
+                </div>
+              );
+            })}
           </div>
         </section>
 
