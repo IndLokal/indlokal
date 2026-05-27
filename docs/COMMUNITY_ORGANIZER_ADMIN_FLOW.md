@@ -1,199 +1,264 @@
-# Organiser Admin Flow
+# Community Organizer Admin Flow (Product Blueprint)
 
----
+## 1. Purpose and Scope
 
-## 1. What This Document Covers
+This document defines the target organizer admin product for IndLokal.
 
-The ongoing operational loop for a community organiser who has already **claimed** their community and received `COMMUNITY_ADMIN` role. This covers: logging in, managing community details, managing channels, posting events, and logging out.
+It covers:
 
-For the one-time claim process, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_FLOW.md).
+- Organizer workspace model for multi-community users
+- Collaborator lifecycle as a first-class team workflow
+- Community operations across profile, links, and events
+- Admin moderation touchpoints for safe access governance
 
----
+It does not describe implementation internals or code-level audit findings. It is a product operating blueprint.
 
-## 2. Authentication Model
+For claim ownership initiation, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_FLOW.md).
 
-IndLokal uses a **sessionless, token-in-cookie** approach - no third-party auth library.
+## 2. Product Outcomes
 
-| Concern       | Implementation                                                                                                                                            |
-| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Token storage | `User.sessionToken` (32-byte hex), `User.sessionTokenExpiry` (Date) stored in PostgreSQL                                                                  |
-| Cookie        | `lp_session` - HTTP-only, SameSite=Lax, 24h max-age                                                                                                       |
-| Guard         | `requireSessionUser()` in `src/lib/session.ts` - reads cookie, looks up user + claimed communities, redirects to `/organizer/login` if invalid or expired |
-| Logout        | POST to `/organizer/logout` - clears `lp_session` cookie + nulls token in DB                                                                              |
+The organizer console should reliably deliver three outcomes:
 
-Login trigger: visiting `/organizer/login` → `requestMagicLink()` → verify link displayed on screen → visiting `/organizer/verify?token=…` → cookie set → redirect to `/organizer`.
+1. Context certainty: organizer always knows which community they are operating.
+2. Team operability: owner can delegate safely and track collaborator state.
+3. Operational velocity: profile updates, link maintenance, and event publishing are predictable and fast.
 
----
+## 3. Personas
 
-## 3. Dashboard (`/organizer`)
+### 3.1 Primary owner
 
-The dashboard is the post-login landing page. It shows:
+Runs the community and remains owner of record.
 
-**Profile Completeness Meter**
-Checks 8 fields and shows a percentage bar:
+### 3.2 Collaborator manager
 
-- `name` (always filled)
-- `description`, `descriptionLong`, `logoUrl`, `bannerUrl`, `websiteUrl`
-- `languages` (non-empty array)
-- `memberCountApprox`
+Approved co-operator who helps maintain profile, links, and events.
 
-**Quick-Action Cards**
-Three cards linking to the three management sections: Edit Profile, Manage Channels, Add Event.
+### 3.3 Multi-community operator
 
-**Channel List**
-Current channels (type + handle) with a direct link into the Channels editor.
+Runs two or more communities and must switch context often without errors.
 
-**Public Page Link**
-Deeplink to the community's public page on IndLokal so the organiser can preview what visitors see.
+### 3.4 Platform admin
 
----
+Moderates collaborator access requests and handles exceptional governance actions.
 
-## 4. Edit Profile (`/organizer/edit`)
+## 4. Product Principles
 
-### Fields
+1. Workspace-first design: every organizer action is scoped to one active community.
+2. Explicit roles: owner and collaborator are visible and distinct.
+3. State transparency: pending, approved, rejected statuses are always visible.
+4. Deterministic navigation: clear route ownership by task, no mixed-purpose ambiguity.
+5. Safe default governance: collaborator access requires admin moderation in v1.
 
-| Field                | DB Column           | Validation                                    |
-| -------------------- | ------------------- | --------------------------------------------- |
-| Community Name       | `name`              | Non-empty string                              |
-| Short Description    | `description`       | Optional                                      |
-| Full Description     | `descriptionLong`   | Optional                                      |
-| Languages            | `languages`         | Array of strings; comma-separated in the form |
-| Founded Year         | `foundedYear`       | Optional integer                              |
-| Approx. Member Count | `memberCountApprox` | Optional integer                              |
+## 5. Relationship Model
 
-`logoUrl` and `bannerUrl` are intentionally excluded from the self-service form (media upload is a future feature). They can be set by a platform admin.
+- One community has one owner of record.
+- One community can have many collaborators.
+- One user can operate many communities as owner and/or collaborator.
 
-### Server Action: `editCommunityProfile()`
+Ownership and collaboration are intentionally separate concepts.
 
-Located in `src/app/organizer/edit/actions.ts`:
+## 6. Information Architecture
 
-1. `requireSessionUser()` → verify session + ownership
-2. Confirm the submitted `communityId` is in `user.claimedCommunities`
-3. Update `Community` with validated fields
-4. Create `ActivitySignal` with `signalType: PROFILE_UPDATED`
-5. Return success state displayed in the form
+## 6.1 Global organizer shell
 
----
+Required shell elements:
 
-## 5. Channels (`/organizer/channels`)
+- Active workspace identity: community name, city, and role label
+- Workspace switcher: quick switch and deep link to full communities index
+- Core navigation: Overview, Communities, Profile, Community Links, Collaborators, Events
+- Global primary action: New Event
 
-### Available Channel Types
+## 6.2 Canonical route map
 
-`WHATSAPP`, `TELEGRAM`, `INSTAGRAM`, `FACEBOOK`, `YOUTUBE`, `LINKEDIN`, `EMAIL`, `WEBSITE`, `OTHER`
+- `/organizer`: overview for active community
+- `/organizer/communities`: all accessible communities and switch controls
+- `/organizer/profile`: profile editor for active community
+- `/organizer/links`: channel manager for active community
+- `/organizer/collaborators`: team management for active community
+- `/organizer/events`: events list for active community
+- `/organizer/events/new`: event creation for active community
 
-### Add Channel: `addChannel()`
+Compatibility redirects:
 
-Located in `src/app/organizer/channels/actions.ts`:
+- `/organizer/edit` -> `/organizer/profile`
+- `/organizer/channels` -> `/organizer/links`
 
-1. `requireSessionUser()` + ownership check
-2. Validate channel type and handle
-3. If `isPrimary: true` is requested → unset all existing `isPrimary` flags first (one primary channel per community)
-4. Create new `Channel` record
-5. Return updated channel list
+Host routes remain separate and are not merged into community organizer IA.
 
-### Delete Channel: `deleteChannel()`
+## 7. Page Product Contracts
 
-Located in `src/app/organizer/channels/actions.ts`:
+## 7.1 Overview
 
-1. `requireSessionUser()` + ownership check
-2. Verify the `Channel.communityId` matches the organiser's community (prevents cross-community deletions)
-3. Delete channel
+Goal: daily operations cockpit.
 
----
+Must contain:
 
-## 6. Add Event (`/organizer/events/new`)
+- health strip: profile completeness, active collaborators, pending requests, upcoming events
+- next-best-actions list: complete profile, add primary channel, invite collaborator, add event
+- public preview links to community page and event outputs
 
-### Fields
+## 7.2 Communities
 
-| Field              | Required | Notes                                         |
-| ------------------ | -------- | --------------------------------------------- |
-| Title              | Yes      | Used as the event name                        |
-| City               | Yes      | Dropdown from organiser's claimed communities |
-| Start Date & Time  | Yes      | ISO datetime                                  |
-| End Date & Time    | No       | Optional                                      |
-| Venue / Address    | No       | Free text                                     |
-| Is Online?         | No       | Boolean checkbox                              |
-| Description        | No       | Long-form text                                |
-| Featured Image URL | No       | Direct URL; upload not supported at MVP       |
-| RSVP / Ticket URL  | No       | External link                                 |
+Goal: multi-community control center.
 
-### Server Action: `addEvent()`
+Must contain:
 
-Located in `src/app/organizer/events/new/actions.ts`:
+- all accessible communities with role badge
+- active marker and switch action
+- profile completeness and city context
+- fast open into active workflow
 
-1. `requireSessionUser()` + ownership check on submitted `communityId`
-2. Validate all fields via Zod schema
-3. Generate URL slug from title + date
-4. Create `Event` record:
-   - `source: COMMUNITY_SUBMITTED`
-   - `status: UPCOMING`
-   - `communityId` → organiser's community
-5. Create `ActivitySignal` with `signalType: EVENT_CREATED`
-6. Redirect to the new event page
+## 7.3 Profile
 
----
+Goal: structured community data editing.
 
-## 7. Activity Signals
+Must contain:
 
-| Signal            | Triggered By             | Purpose                                                         |
-| ----------------- | ------------------------ | --------------------------------------------------------------- |
-| `PROFILE_UPDATED` | `editCommunityProfile()` | Records that a human organiser actively maintains the profile   |
-| `EVENT_CREATED`   | `addEvent()`             | Records community activity; feeds into `activityScore` (future) |
+- active workspace banner
+- grouped fields with validation states
+- clear publish-surface messaging
+- reliable success and error feedback
 
----
+## 7.4 Community Links
 
-## 8. Permission Boundaries
+Goal: access channel lifecycle management.
 
-| Action                     | Who can do it                                 | Guard location                                         |
-| -------------------------- | --------------------------------------------- | ------------------------------------------------------ |
-| View organiser portal      | Any `COMMUNITY_ADMIN` with valid session      | `requireSessionUser()`                                 |
-| Edit a community's profile | Only the `claimedByUserId` matching organiser | `communityId in user.claimedCommunities` check         |
-| Delete a channel           | Only the organiser who owns that community    | `Channel.communityId` cross-check in `deleteChannel()` |
-| Post an event              | Only the community's organiser                | `communityId` ownership check                          |
-| Approve / reject claims    | Platform admin only                           | Separate `/admin/*` routes, no organiser access        |
-| Seed communities           | Platform team only                            | No self-service route                                  |
+Must contain:
 
----
+- current links table/list with primary indicator
+- add link flow with type, URL, optional label, primary toggle
+- remove link action
+- one-primary invariant messaging
 
-## 9. Routes & Files
+## 7.5 Collaborators
 
-| Route / Action                     | File                                            | Purpose                                                              |
-| ---------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------- |
-| `GET /organizer/login`             | `src/app/organizer/login/page.tsx`              | Magic link login form                                                |
-| `requestMagicLink()`               | `src/app/organizer/login/actions.ts`            | Server Action - generate token                                       |
-| `GET /organizer/verify`            | `src/app/organizer/verify/route.ts`             | Route handler - validate token, set cookie                           |
-| `POST /organizer/logout`           | `src/app/organizer/logout/route.ts`             | Route handler - clear cookie + null token                            |
-| Layout + nav header                | `src/app/organizer/layout.tsx`                  | Auth-aware nav (Overview, Edit Profile, Channels, Add Event)         |
-| `GET /organizer`                   | `src/app/organizer/page.tsx`                    | Dashboard - completeness meter, quick-actions, channels, public link |
-| `GET /organizer/edit`              | `src/app/organizer/edit/page.tsx`               | Edit profile page                                                    |
-| `EditProfileForm`                  | `src/app/organizer/edit/EditProfileForm.tsx`    | Form component (`useActionState`)                                    |
-| `editCommunityProfile()`           | `src/app/organizer/edit/actions.ts`             | Server Action - update community fields                              |
-| `GET /organizer/channels`          | `src/app/organizer/channels/page.tsx`           | Channels manager page                                                |
-| `ChannelsForm`                     | `src/app/organizer/channels/ChannelsForm.tsx`   | Form component - add/delete channels                                 |
-| `addChannel()` / `deleteChannel()` | `src/app/organizer/channels/actions.ts`         | Server Actions - channel management                                  |
-| `GET /organizer/events/new`        | `src/app/organizer/events/new/page.tsx`         | Add event page                                                       |
-| `AddEventForm`                     | `src/app/organizer/events/new/AddEventForm.tsx` | Form component                                                       |
-| `addEvent()`                       | `src/app/organizer/events/new/actions.ts`       | Server Action - create event                                         |
-| Session helper                     | `src/lib/session.ts`                            | Token generation, cookie read/write, auth guard                      |
+Goal: complete team workflow for a community.
 
----
+Must contain:
 
-## 10. Non-Goals (MVP)
+- owner block and role explanation
+- active collaborators list
+- pending requests list with source and age
+- invite form with idempotent duplicate handling
+- status microcopy for approval path and expectations
 
-- Logo / banner image upload
-- Event editing or deletion via the portal
-- Recurring events
-- Analytics or view/RSVP counts
-- Co-admin invitation
-- Role-based permissions within a single community (e.g., "event poster only")
+## 7.6 Events
 
----
+Goal: community-scoped event operations.
 
-## 11. Future Enhancements
+Must contain:
 
-- **Analytics tab** - views, event RSVPs, channel click-throughs
-- **Event editing** - `/organizer/events/[id]/edit`
-- **Recurring events** - weekly / monthly cadence with auto-expansion
-- **Co-admin invite** - primary admin sends magic link to a secondary manager
-- **Media upload** - S3/R2-backed logo and banner upload in the edit form
-- **Community transfer** - admin-mediated handover to a new organiser
+- list page with upcoming and past sections
+- create flow that confirms target community
+- visible submit state and clear post-submit result
+
+## 8. End-to-End Flows
+
+## 8.1 Login and context resolution
+
+1. User authenticates.
+2. Product resolves all accessible communities.
+3. Product resolves active workspace from saved selection or deterministic fallback.
+4. Organizer lands in overview with explicit active context.
+
+## 8.2 Community switch
+
+1. User picks a different community.
+2. Product verifies access.
+3. Product switches active context and returns user to intended organizer path.
+4. New context is immediately visible in header and page banner.
+
+## 8.3 Owner invite collaborator
+
+1. Owner/collaborator submits invite email.
+2. Product creates or reuses pending request.
+3. Admin moderates request.
+4. On approval, collaborator appears in active roster and gains access.
+
+## 8.4 Public request collaborator access
+
+1. User opens claimed community public page.
+2. User requests organizer access.
+3. Product records pending request.
+4. Admin approves/rejects.
+5. Ownership remains unchanged regardless of decision.
+
+## 9. Permission Matrix (v1)
+
+| Capability                              | Owner | Collaborator | Platform Admin               |
+| --------------------------------------- | ----- | ------------ | ---------------------------- |
+| View organizer workspace for community  | Yes   | Yes          | Yes                          |
+| Edit profile                            | Yes   | Yes          | Yes                          |
+| Manage links                            | Yes   | Yes          | Yes                          |
+| Create events                           | Yes   | Yes          | Yes                          |
+| Invite collaborator                     | Yes   | Yes          | Yes                          |
+| Approve or reject collaborator requests | No    | No           | Yes                          |
+| Transfer ownership                      | No    | No           | Yes (outside organizer flow) |
+
+## 10. UX Quality Bar
+
+1. Context-first UI: active community visible on every organizer page.
+2. Consistent components: shared page header, cards, tables, and form controls.
+3. Predictable states: loading, empty, success, and error states on every operation.
+4. Mobile operability: all core actions must be complete on mobile without loss of function.
+5. Reduced cognitive load: one primary purpose per page and no duplicate action paths.
+
+## 11. Product Metrics
+
+Primary metrics:
+
+- organizer weekly active operators
+- percent of organizers active in two or more communities
+- median time from collaborator invite to active access
+- events created per active community workspace
+
+Guardrail metrics:
+
+- context-mismatch action rate
+- duplicate invite rate
+- collaborator rejection rate
+
+## 12. Rollout Plan
+
+Phase 1: workspace and IA hardening
+
+- canonical route map
+- explicit context banner everywhere
+- communities page consistency
+
+Phase 2: collaborator workflow completion
+
+- dedicated collaborators page
+- full active and pending visibility
+- invite lifecycle clarity
+
+Phase 3: event operations completion
+
+- events list for community organizers
+- improved create-event confidence and result states
+
+Phase 4: instrumentation and optimization
+
+- complete analytics instrumentation
+- identify and fix low-conversion states
+
+## 13. Dependencies
+
+- Claim flow and claim state semantics
+- Admin moderation queue for collaborator requests
+- Organizer email notifications for collaborator decisions
+- Shared design system primitives for consistency
+
+## 14. Open Product Decisions
+
+1. Should collaborator removal be owner-only or owner plus collaborator?
+2. Should approved collaborators require owner acknowledgment on first entry?
+3. Should event edit/delete rights be fully symmetric between owner and collaborator?
+4. Should communities page show SLA-style health badges in v1 or v1.1?
+
+## 15. Spec Hand-off
+
+This flow document is the product baseline. Implementation must proceed through a paired PRD and TDD.
+
+- PRD: organizer workspace and collaborator lifecycle experience
+- TDD: route contracts, context resolver, permission enforcement, and rollout controls
