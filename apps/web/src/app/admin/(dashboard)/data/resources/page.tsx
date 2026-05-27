@@ -1,8 +1,10 @@
 import { db } from '@/lib/db';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteResourceAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Resources - Admin' };
@@ -10,9 +12,16 @@ export const metadata = { title: 'Resources - Admin' };
 export default async function AdminResourcesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; type?: string; q?: string }>;
+  searchParams: Promise<{
+    city?: string;
+    type?: string;
+    q?: string;
+    page?: string;
+    pageSize?: string;
+  }>;
 }) {
   const sp = await searchParams;
+  const pagination = parseOffsetPagination(sp);
   const where: {
     city?: { slug: string };
     resourceType?: string;
@@ -22,12 +31,17 @@ export default async function AdminResourcesPage({
   if (sp.type) where.resourceType = sp.type;
   if (sp.q) where.title = { contains: sp.q, mode: 'insensitive' };
 
-  const [resources, cities] = await Promise.all([
+  const [totalCount, resources, cities] = await Promise.all([
+    db.resource.count({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      where: where as any,
+    }),
     db.resource.findMany({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       where: where as any,
-      orderBy: { updatedAt: 'desc' },
-      take: 200,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      skip: pagination.skip,
+      take: pagination.take,
       include: { city: { select: { name: true, slug: true } } },
     }),
     db.city.findMany({
@@ -36,6 +50,12 @@ export default async function AdminResourcesPage({
       orderBy: { name: 'asc' },
     }),
   ]);
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount,
+    itemCount: resources.length,
+  });
 
   const types = [
     'CONSULAR_SERVICE',
@@ -59,6 +79,7 @@ export default async function AdminResourcesPage({
       <AdminPageHeader title="Resources" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6" method="get">
+        <input type="hidden" name="pageSize" value={String(pagination.pageSize)} />
         <AdminFilterBar className="border-border">
           <AdminFilterItem label="Search">
             <input
@@ -100,7 +121,11 @@ export default async function AdminResourcesPage({
         </AdminFilterBar>
       </form>
 
-      <p className="text-muted mt-4 text-xs">{resources.length} shown (cap 200)</p>
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
 
       <AdminTableWrap className="mt-3">
         <AdminTable>
@@ -151,6 +176,12 @@ export default async function AdminResourcesPage({
           </tbody>
         </AdminTable>
       </AdminTableWrap>
+
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
     </AdminPage>
   );
 }
