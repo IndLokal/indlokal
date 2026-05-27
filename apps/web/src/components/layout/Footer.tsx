@@ -116,8 +116,8 @@ export function Footer() {
       <div className="border-border/40 border-t bg-slate-50/80">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
           <p className="text-muted/80 text-xs">
-            &copy; {new Date().getFullYear()} {siteConfig.name}. Made with ❤️ for Indians in
-            Germany.
+            &copy; {new Date().getFullYear()} {siteConfig.name}. Built for Indians navigating life
+            in Germany.
           </p>
           <div className="text-muted/80 flex flex-wrap items-center gap-1 text-xs">
             <Link
