@@ -15,11 +15,64 @@ import {
 export async function approveSubmission(formData: FormData) {
   await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
+  const grantOwnership = formData.has('grantOwnership');
   if (!id) return;
+
+  const existing = await db.community.findUnique({
+    where: { id },
+    select: {
+      claimState: true,
+      claimedByUserId: true,
+      metadata: true,
+    },
+  });
+  if (!existing) return;
+
+  const meta = existing.metadata as Record<string, unknown> | null;
+  const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
+
+  // Ownership is an explicit admin decision during approval.
+  let ownerUserId: string | null = null;
+  if (
+    grantOwnership &&
+    submitter?.email &&
+    existing.claimState === 'UNCLAIMED' &&
+    !existing.claimedByUserId
+  ) {
+    const email = submitter.email.trim().toLowerCase();
+    const owner = await db.user.upsert({
+      where: { email },
+      update: {
+        ...(submitter.name ? { displayName: submitter.name } : {}),
+      },
+      create: {
+        email,
+        ...(submitter.name ? { displayName: submitter.name } : {}),
+        role: 'COMMUNITY_ADMIN',
+      },
+      select: { id: true, role: true },
+    });
+
+    if (owner.role === 'USER') {
+      await db.user.update({
+        where: { id: owner.id },
+        data: { role: 'COMMUNITY_ADMIN' },
+      });
+    }
+    ownerUserId = owner.id;
+  }
 
   const community = await db.community.update({
     where: { id },
-    data: { status: 'ACTIVE' },
+    data: {
+      status: 'ACTIVE',
+      ...(ownerUserId
+        ? {
+            claimState: 'CLAIMED',
+            claimedByUserId: ownerUserId,
+          }
+        : {}),
+    },
     select: {
       name: true,
       slug: true,
@@ -28,16 +81,28 @@ export async function approveSubmission(formData: FormData) {
     },
   });
 
-  await db.trustSignal.create({
-    data: {
-      entityType: 'COMMUNITY',
-      communityId: id,
-      signalType: 'ADMIN_VERIFIED',
-    },
-  });
+  await db.$transaction([
+    db.trustSignal.create({
+      data: {
+        entityType: 'COMMUNITY',
+        communityId: id,
+        signalType: 'ADMIN_VERIFIED',
+      },
+    }),
+    ...(ownerUserId
+      ? [
+          db.trustSignal.create({
+            data: {
+              entityType: 'COMMUNITY',
+              communityId: id,
+              signalType: 'COMMUNITY_CLAIMED',
+              createdBy: ownerUserId,
+            },
+          }),
+        ]
+      : []),
+  ]);
 
-  const meta = community.metadata as Record<string, unknown> | null;
-  const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
   if (submitter?.email && community.city?.slug && community.slug) {
     try {
       await sendSubmissionApprovedEmail(
@@ -46,6 +111,7 @@ export async function approveSubmission(formData: FormData) {
         community.name,
         community.city.slug,
         community.slug,
+        Boolean(ownerUserId),
       );
     } catch {
       // Email is best-effort - don't fail admin action
@@ -54,6 +120,11 @@ export async function approveSubmission(formData: FormData) {
 
   // Refresh scores - trust and completeness change on approval
   await refreshCommunityScore(id);
+
+  if (community.city?.slug && community.slug) {
+    revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+    revalidatePath(`/${community.city.slug}/communities`);
+  }
 
   revalidateTag('city-feed', 'max');
   revalidatePath('/admin/submissions');

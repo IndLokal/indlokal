@@ -11,6 +11,7 @@ export const submitCommunitySchema = z.object({
   primaryChannelUrl: z.string().url('Please enter a valid URL'),
   secondaryChannelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES).optional(),
   secondaryChannelUrl: z.string().url('Please enter a valid URL').optional().or(z.literal('')),
+  ownershipIntent: z.boolean().default(false),
   contactEmail: z.string().email('Please enter a valid email'),
   contactName: z.string().min(1, 'Please enter your name'),
 });

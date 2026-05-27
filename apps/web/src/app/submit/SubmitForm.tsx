@@ -221,6 +221,17 @@ export function SubmitForm({ cities, categories }: Props) {
           We&apos;ll use this to follow up about your submission. Not displayed publicly.
         </p>
 
+        <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
+          <input type="checkbox" name="ownershipIntent" className="accent-brand-500 mt-0.5" />
+          <span className="text-foreground leading-relaxed">
+            I represent this community and want organizer ownership after approval.
+            <span className="text-muted mt-1 block text-xs">
+              Use the same email for organizer login after approval.
+            </span>
+          </span>
+        </label>
+        <FieldError errors={errors.ownershipIntent} />
+
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="contactName" className="text-foreground block text-sm font-medium">

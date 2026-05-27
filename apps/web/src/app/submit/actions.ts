@@ -35,6 +35,7 @@ export async function submitCommunity(
     primaryChannelUrl: formData.get('primaryChannelUrl') as string,
     secondaryChannelType: (formData.get('secondaryChannelType') as string) || undefined,
     secondaryChannelUrl: (formData.get('secondaryChannelUrl') as string) || undefined,
+    ownershipIntent: formData.get('ownershipIntent') === 'on',
     contactEmail: formData.get('contactEmail') as string,
     contactName: formData.get('contactName') as string,
   };
@@ -171,6 +172,7 @@ export async function submitCommunity(
           submitter: {
             name: data.contactName,
             email: data.contactEmail,
+            ownershipIntent: data.ownershipIntent,
             submittedAt: new Date().toISOString(),
           },
           city: {

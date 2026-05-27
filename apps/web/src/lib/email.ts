@@ -203,8 +203,10 @@ export async function sendSubmissionApprovedEmail(
   communityName: string,
   citySlug: string,
   communitySlug: string,
+  ownershipGranted = false,
 ): Promise<void> {
   const communityUrl = `${APP_URL}/${citySlug}/communities/${communitySlug}`;
+  const organizerUrl = `${APP_URL}/organizer`;
 
   await sendEmail(
     to,
@@ -221,9 +223,15 @@ export async function sendSubmissionApprovedEmail(
       View your community page →
     </a>
   </p>
-  <p style="font-size:13px">Want to manage your listing and add events as the organizer? 
-    <a href="${APP_URL}/${citySlug}/communities/${communitySlug}" style="color:#4f46e5">Claim your community →</a>
-  </p>
+  ${
+    ownershipGranted
+      ? `<p style="font-size:13px">Organizer ownership has been approved for your email. 
+    <a href="${organizerUrl}" style="color:#4f46e5">Open organizer dashboard →</a>
+  </p>`
+      : `<p style="font-size:13px">Want to manage your listing and add events as the organizer? 
+    <a href="${communityUrl}" style="color:#4f46e5">Claim your community →</a>
+  </p>`
+  }
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>

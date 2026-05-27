@@ -75,6 +75,7 @@ column and is the single source of truth for what is shipped.
 | ADR-0006                | Pipeline is ETL, not Agent (terminology lock-in)                            | Accepted    | Done - `AI_AGENT_*.md` renamed to `AI_PIPELINE_*.md` on 2026-05-26      |
 | ADR-0007                | Resource scope and resolution model                                         | Accepted    | In progress (this branch)                                               |
 | PRD/TDD-0030            | Resources v2 - scope, satellite parity, first-30-days journey               | Approved    | In progress (`feat/resources-v2-spec-driven`)                           |
+| PRD/TDD-0031            | Submission ownership and claim lifecycle alignment                          | Draft       | In progress (spec-first; interim auto-claim shipped)                    |
 | PRD-0019 / TDD-0019     | Auth completion - onboarding, session restore, profile & account management | Implemented | Implemented                                                             |
 | PRD/TDD-0019            | Admin Auth v2 minimal hardening (gate-first, no new auth)                   | Draft       | In progress (spec-first)                                                |
 | PRD/TDD-0013            | Pipeline review & submissions queue scoping                                 | Draft       | Done - queue scoped to user submissions; admin-approved → ACTIVE        |
