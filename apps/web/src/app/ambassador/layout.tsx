@@ -49,12 +49,12 @@ export default async function AmbassadorLayout({ children }: { children: React.R
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">
               {cityLabel}
             </span>
-            <nav className="hidden items-center gap-4 text-sm sm:flex">
+            <nav className="hidden items-center gap-1 text-sm sm:flex">
               {NAV.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-muted hover:text-foreground transition-colors"
+                  className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                 >
                   {link.label}
                 </Link>
@@ -71,7 +71,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
           </div>
         </div>
       </header>
-      <main>{children}</main>
+      <main className="mx-auto w-full max-w-5xl">{children}</main>
     </div>
   );
 }

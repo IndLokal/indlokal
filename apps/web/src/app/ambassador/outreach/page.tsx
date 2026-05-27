@@ -3,6 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { OutreachKanban } from '@/app/admin/(dashboard)/outreach/OutreachKanban';
 import { CreateLeadForm } from '@/app/admin/(dashboard)/outreach/CreateLeadForm';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
 export const metadata = { title: 'Outreach - Ambassador Console' };
 export const dynamic = 'force-dynamic';
@@ -38,24 +39,17 @@ export default async function AmbassadorOutreachPage() {
   const defaultCityId = cityScopes.length === 1 ? cityScopes[0] : undefined;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      {/* Header */}
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Outreach Pipeline</h1>
-          <p className="text-muted mt-1 text-sm">Communities you are cultivating in your city</p>
-        </div>
-        <Link
-          href="/ambassador"
-          className="text-muted rounded-lg border px-3 py-2 text-sm hover:bg-gray-50"
-        >
-          ← Dashboard
-        </Link>
-      </div>
+    <AdminPage>
+      <AdminPageHeader
+        title="Outreach Pipeline"
+        description="Communities you are cultivating in your city"
+        backHref="/ambassador"
+        backLabel="Dashboard"
+      />
 
       {leads.length === 0 ? (
         <div className="border-border mb-8 rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-          <p className="text-muted text-sm">No leads yet - add your first lead below.</p>
+          <p className="text-muted text-sm">No leads yet. Add your first lead below.</p>
         </div>
       ) : (
         <OutreachKanban leads={leads} showCityBadge={cityScopes.length !== 1} />
@@ -63,7 +57,7 @@ export default async function AmbassadorOutreachPage() {
 
       {/* Create lead */}
       <details className="mt-10">
-        <summary className="cursor-pointer text-sm font-semibold hover:underline">
+        <summary className="border-border hover:bg-muted-bg inline-flex cursor-pointer rounded-[var(--radius-button)] border px-3 py-2 text-sm font-semibold transition-colors">
           + Add lead
         </summary>
         <div className="border-border mt-4 max-w-lg rounded-[var(--radius-card)] border p-6">
@@ -75,6 +69,6 @@ export default async function AmbassadorOutreachPage() {
           />
         </div>
       </details>
-    </div>
+    </AdminPage>
   );
 }

@@ -1,5 +1,6 @@
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { FeedbackForm } from './FeedbackForm';
 
 export const metadata = { title: 'Feedback - Ambassador' };
@@ -20,12 +21,14 @@ export default async function AmbassadorFeedbackPage() {
   const defaultCityId = cityIds.length === 1 ? cityIds[0] : undefined;
 
   return (
-    <div className="mx-auto max-w-xl px-4 py-8">
-      <h1 className="mb-2 text-2xl font-bold">Log feedback</h1>
-      <p className="text-muted mb-8 text-sm">
-        Spotted something wrong, missing, or broken? Tell the ops team.
-      </p>
-      <FeedbackForm cities={cities} defaultCityId={defaultCityId} />
-    </div>
+    <AdminPage>
+      <div className="max-w-xl">
+        <AdminPageHeader
+          title="Log Feedback"
+          description="Spotted something wrong, missing, or broken? Tell the ops team."
+        />
+        <FeedbackForm cities={cities} defaultCityId={defaultCityId} />
+      </div>
+    </AdminPage>
   );
 }
