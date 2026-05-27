@@ -6,6 +6,7 @@ import { getUpcomingEvents } from '@/modules/event';
 import { db } from '@/lib/db';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 
 /**
  * Event Listing - all upcoming events in a city.
@@ -70,30 +71,26 @@ export default async function EventsPage({ params, searchParams }: Props) {
     select: { name: true, slug: true, icon: true },
     orderBy: { sortOrder: 'asc' },
   });
+  type CategoryItem = (typeof categories)[number];
+
+  const description =
+    events.length > 0
+      ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
+      : 'No upcoming events right now - check back soon.';
 
   return (
     <div className="space-y-8">
       {lens === 'business' && <BusinessLensTracker city={city} surface="events_page" />}
 
-      {/* Header */}
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          <span>Events</span>
-        </nav>
-        <h1 className="text-3xl font-bold">Indian Events in {cityName}</h1>
-        <p className="text-muted mt-2">
-          {events.length > 0
-            ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
-            : 'No upcoming events right now - check back soon.'}
-        </p>
-      </div>
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel={lens === 'business' ? 'Business events' : 'Events'}
+        title={
+          lens === 'business' ? `Business Events in ${cityName}` : `Indian Events in ${cityName}`
+        }
+        description={description}
+      />
 
       {/* Filters - horizontally scrollable on mobile */}
       <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
@@ -135,7 +132,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             >
               All
             </Link>
-            {categories.map((cat) => {
+            {categories.map((cat: CategoryItem) => {
               const isActive = filters.category === cat.slug;
               const categoryParams = new URLSearchParams();
               categoryParams.set('category', cat.slug);

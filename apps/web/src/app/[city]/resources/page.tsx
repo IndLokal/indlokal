@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 
 /**
  * Resources Hub - category card grid + journey checklist.
@@ -72,24 +73,13 @@ export default async function ResourcesHubPage({ params }: Props) {
 
   return (
     <div className="space-y-10">
-      {/* Header */}
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          <span>Resources</span>
-        </nav>
-        <h1 className="text-2xl font-bold">Indian Expat Resources in {cityName}</h1>
-        <p className="text-muted mt-2 text-sm">
-          {totalGuides} practical guides on everything an Indian expat needs in {cityName} - from
-          Anmeldung to Kindergeld.
-        </p>
-      </div>
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel="Resources"
+        title={`Indian Expat Resources in ${cityName}`}
+        description={`${totalGuides} practical guides on everything an Indian expat needs in ${cityName} - from Anmeldung to Kindergeld.`}
+      />
 
       {/* Newcomer Journey - first 30 days checklist */}
       {essentialsCount > 0 && (

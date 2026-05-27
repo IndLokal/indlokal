@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -65,61 +66,47 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     getSessionUser(),
   ]);
   const cityName = cityRow.name;
-  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
+  const savedCommunityIds = new Set(
+    user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
+  );
+  type CommunityItem = (typeof allCommunities)[number];
 
   // Optional language filter (for SEO pages like /telugu-communities)
   const languageName = language ? capitalize(language) : null;
   const communities = languageName
     ? allCommunities.filter(
-        (c) =>
+        (c: CommunityItem) =>
           c.languages?.some((l: string) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
       )
     : allCommunities;
 
+  const description =
+    communities.length > 0
+      ? languageName
+        ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
+        : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
+      : languageName
+        ? `No ${languageName} communities listed yet.`
+        : 'No communities listed yet.';
+
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          {languageName ? (
-            <>
-              <Link href={`/${city}/communities`} className="hover:underline">
-                Communities
-              </Link>
-              {' / '}
-              <span>{languageName}</span>
-            </>
-          ) : (
-            <span>Communities</span>
-          )}
-        </nav>
-        <h1 className="text-3xl font-bold">
-          {languageName
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel={languageName ? `${languageName} communities` : 'Communities'}
+        title={
+          languageName
             ? `${languageName} Communities in ${cityName}`
-            : `Indian Communities in ${cityName}`}
-        </h1>
-        <p className="text-muted mt-2">
-          {communities.length > 0
-            ? languageName
-              ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
-              : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
-            : languageName
-              ? `No ${languageName} communities listed yet.`
-              : 'No communities listed yet.'}
-        </p>
-      </div>
+            : `Indian Communities in ${cityName}`
+        }
+        description={description}
+      />
 
       {/* Community grid */}
       {communities.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {communities.map((community) => (
+          {communities.map((community: CommunityItem) => (
             <CommunityCard
               key={community.id}
               community={community}

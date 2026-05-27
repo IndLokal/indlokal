@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { getUpcomingEvents } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
+import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -34,30 +35,22 @@ export default async function BusinessEventsPage({ params }: Props) {
   });
 
   const cityName = cityRow.name;
+  const description =
+    events.length > 0
+      ? `${events.length} upcoming professional and networking events`
+      : `No business events listed right now in ${cityName}.`;
 
   return (
     <div className="space-y-8">
       <BusinessLensTracker city={city} surface="business_events_page" />
 
-      <div>
-        <nav className="text-muted mb-2 text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {cityName}
-          </Link>
-          {' / '}
-          <span>Business events</span>
-        </nav>
-
-        <h1 className="text-3xl font-bold">Business and Careers Events in {cityName}</h1>
-        <p className="text-muted mt-2">
-          {events.length > 0
-            ? `${events.length} upcoming professional and networking events`
-            : `No business events listed right now in ${cityName}.`}
-        </p>
-      </div>
+      <CitySubpageHeader
+        city={city}
+        cityName={cityName}
+        sectionLabel="Business events"
+        title={`Business and Careers Events in ${cityName}`}
+        description={description}
+      />
 
       {events.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
