@@ -3,7 +3,12 @@
 import { useState, useActionState } from 'react';
 import Link from 'next/link';
 import { content, communityOptions } from '@indlokal/shared';
-import { claimCommunity, type ClaimResult } from './actions';
+import {
+  claimCommunity,
+  requestOrganizerAccess,
+  type AccessRequestResult,
+  type ClaimResult,
+} from './actions';
 
 type Props = {
   communityId: string;
@@ -33,6 +38,7 @@ const RELATIONSHIPS = [
 
 export function ClaimSection({ communityId, communityName, claimState }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [requestExpanded, setRequestExpanded] = useState(false);
   const [evidenceLinks, setEvidenceLinks] = useState<EvidenceRow[]>([
     { id: 1, type: 'WHATSAPP', url: '' },
   ]);
@@ -40,6 +46,10 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
     claimCommunity,
     null,
   );
+  const [accessState, accessFormAction, accessPending] = useActionState<
+    AccessRequestResult,
+    FormData
+  >(requestOrganizerAccess, null);
 
   const updateEvidence = (id: number, patch: Partial<EvidenceRow>) => {
     setEvidenceLinks((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -60,11 +70,141 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
   };
 
   if (claimState === 'CLAIMED') {
+    if (accessState?.success) {
+      return (
+        <div className="rounded-xl border border-green-200 bg-green-50 p-5">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">✓</span>
+            <h3 className="font-semibold text-green-800">Access request submitted</h3>
+          </div>
+          <p className="mt-2 text-sm text-green-700">
+            Thanks. Our team will review your organizer access request and get back to you soon.
+          </p>
+        </div>
+      );
+    }
+
+    const accessErrors = accessState?.success === false ? accessState.errors : {};
+
     return (
-      <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-        <span>✓</span>
-        <span className="font-medium">Claimed</span>
-        <span className="text-green-600">- This listing is managed by the community organizer</span>
+      <div className="space-y-3 rounded-lg border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-700">
+        <div className="flex items-center gap-2">
+          <span>✓</span>
+          <span className="font-medium">Claimed</span>
+          <span className="text-green-600">
+            - This listing is already managed by an organizer team
+          </span>
+        </div>
+
+        {!requestExpanded ? (
+          <button
+            type="button"
+            onClick={() => setRequestExpanded(true)}
+            className="btn-secondary border-green-300 bg-white px-4 py-2 text-sm"
+          >
+            Request organizer access
+          </button>
+        ) : (
+          <form
+            action={accessFormAction}
+            className="space-y-3 rounded-lg border border-green-200 bg-white p-4"
+          >
+            <input type="hidden" name="communityId" value={communityId} />
+
+            <p className="text-muted text-xs">
+              Already helping run this community? Request collaborator access and we&apos;ll review
+              it.
+            </p>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label htmlFor="access-name" className="text-foreground block text-sm font-medium">
+                  Your Name *
+                </label>
+                <input
+                  id="access-name"
+                  name="name"
+                  type="text"
+                  required
+                  className="border-border mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                />
+                {accessErrors.name && (
+                  <p className="mt-1 text-xs text-red-600">{accessErrors.name[0]}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="access-email" className="text-foreground block text-sm font-medium">
+                  Your Email *
+                </label>
+                <input
+                  id="access-email"
+                  name="email"
+                  type="email"
+                  required
+                  className="border-border mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                />
+                {accessErrors.email && (
+                  <p className="mt-1 text-xs text-red-600">{accessErrors.email[0]}</p>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="access-relationship"
+                className="text-foreground block text-sm font-medium"
+              >
+                Your relationship to {communityName} *
+              </label>
+              <input
+                id="access-relationship"
+                name="relationship"
+                required
+                placeholder="e.g. Co-organizer, events lead"
+                className="border-border mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+              />
+              {accessErrors.relationship && (
+                <p className="mt-1 text-xs text-red-600">{accessErrors.relationship[0]}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="access-message" className="text-foreground block text-sm font-medium">
+                Message (optional)
+              </label>
+              <textarea
+                id="access-message"
+                name="message"
+                rows={2}
+                maxLength={500}
+                className="border-border mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                placeholder="Share context that helps with verification"
+              />
+              {accessErrors.message && (
+                <p className="mt-1 text-xs text-red-600">{accessErrors.message[0]}</p>
+              )}
+            </div>
+
+            {accessErrors._ && <p className="text-xs text-red-600">{accessErrors._[0]}</p>}
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={accessPending}
+                className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
+              >
+                {accessPending ? 'Submitting...' : 'Submit access request'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRequestExpanded(false)}
+                className="btn-secondary px-4 py-2 text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { content, communityOptions } from '@indlokal/shared';
 import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { ContentCallout } from '@/components/content/community-actions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
+import { CollaboratorInviteCard } from './CollaboratorInviteCard';
 
 export default async function OrganizerDashboardPage() {
   const user = await requireSessionUser();
@@ -153,6 +154,8 @@ export default async function OrganizerDashboardPage() {
           </div>
         </div>
       )}
+
+      <CollaboratorInviteCard />
 
       {/* View public page */}
       <p className="text-muted text-sm">

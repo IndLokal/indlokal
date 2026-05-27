@@ -245,6 +245,70 @@ export async function rejectClaim(formData: FormData) {
   revalidatePath('/admin/claims');
 }
 
+/* --- Collaborator request actions --- */
+
+export async function approveCollaboratorRequest(formData: FormData) {
+  const reviewer = await assertCan('claims.approve');
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  const request = await db.communityCollaborator.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      communityId: true,
+      userId: true,
+      status: true,
+      community: { select: { slug: true, city: { select: { slug: true } } } },
+    },
+  });
+  if (!request || request.status !== 'PENDING') return;
+
+  await db.$transaction([
+    db.communityCollaborator.update({
+      where: { id: request.id },
+      data: {
+        status: 'ACTIVE',
+        reviewedAt: new Date(),
+        reviewedByUserId: reviewer.id,
+      },
+    }),
+    db.user.updateMany({
+      where: { id: request.userId, role: 'USER' },
+      data: { role: 'COMMUNITY_ADMIN' },
+    }),
+  ]);
+
+  if (request.community.city?.slug && request.community.slug) {
+    revalidatePath(`/${request.community.city.slug}/communities/${request.community.slug}`);
+    revalidatePath(`/${request.community.city.slug}/communities`);
+  }
+  revalidatePath('/admin/collaborators');
+}
+
+export async function rejectCollaboratorRequest(formData: FormData) {
+  const reviewer = await assertCan('claims.reject');
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  const request = await db.communityCollaborator.findUnique({
+    where: { id },
+    select: { id: true, status: true },
+  });
+  if (!request || request.status !== 'PENDING') return;
+
+  await db.communityCollaborator.update({
+    where: { id: request.id },
+    data: {
+      status: 'REJECTED',
+      reviewedAt: new Date(),
+      reviewedByUserId: reviewer.id,
+    },
+  });
+
+  revalidatePath('/admin/collaborators');
+}
+
 /* --- Report actions --- */
 
 export async function reviewReport(formData: FormData) {
