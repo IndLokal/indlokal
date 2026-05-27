@@ -13,6 +13,11 @@ const testCityName = `Stuttgart Calendar ${runId}`;
 let extractionMode: 'calendar-event' | 'duplicate-community' = 'calendar-event';
 let hasPipelineItemsTable = true;
 
+const syntheticCityWhere = {
+  slug: { startsWith: 'stuttgart-calendar-' },
+  name: { startsWith: 'Stuttgart Calendar ' },
+} as const;
+
 async function detectPipelineItemsTable() {
   const result = (await db.$queryRaw`
     SELECT EXISTS (
@@ -23,6 +28,25 @@ async function detectPipelineItemsTable() {
   `) as Array<{ exists: boolean }>;
 
   return Boolean(result[0]?.exists);
+}
+
+async function cleanupSyntheticCalendarCities() {
+  const syntheticCities = await db.city.findMany({
+    where: syntheticCityWhere,
+    select: { id: true },
+  });
+
+  if (syntheticCities.length === 0) return;
+
+  const cityIds = syntheticCities.map((city) => city.id);
+
+  // Delete dependent rows first to avoid FK violations on city delete.
+  await db.event.deleteMany({ where: { cityId: { in: cityIds } } });
+  await db.resource.deleteMany({ where: { cityId: { in: cityIds } } });
+  await db.pipelineItem.deleteMany({ where: { cityId: { in: cityIds } } });
+  await db.community.deleteMany({ where: { cityId: { in: cityIds } } });
+
+  await db.city.deleteMany({ where: { id: { in: cityIds } } });
 }
 
 vi.mock('../runtime-config', () => ({
@@ -229,12 +253,7 @@ let icsBody = juneEventIcs;
 describe('@db pipeline calendar ingestion integration', () => {
   beforeEach(async () => {
     // Safety cleanup for previous interrupted runs of this test fixture.
-    await db.city.deleteMany({
-      where: {
-        slug: { startsWith: 'stuttgart-calendar-' },
-        name: { startsWith: 'Stuttgart Calendar ' },
-      },
-    });
+    await cleanupSyntheticCalendarCities();
   });
 
   beforeEach(async (ctx) => {
@@ -307,12 +326,7 @@ describe('@db pipeline calendar ingestion integration', () => {
     await db.pipelineItem.deleteMany({
       where: { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
     });
-    await db.city.deleteMany({
-      where: {
-        slug: { startsWith: 'stuttgart-calendar-' },
-        name: { startsWith: 'Stuttgart Calendar ' },
-      },
-    });
+    await cleanupSyntheticCalendarCities();
     vi.restoreAllMocks();
     await db.$disconnect();
   });
