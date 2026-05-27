@@ -835,7 +835,7 @@ const MANNHEIM: DirectoryEntry[] = [
     channels: [
       {
         channelType: 'WEBSITE',
-        url: 'https://www.malayalee.de/',
+        url: 'http://www.malayalee.de/',
         isPrimary: true,
         label: 'Website',
       },
