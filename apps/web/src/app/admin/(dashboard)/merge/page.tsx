@@ -42,7 +42,7 @@ export default async function AdminMergePage() {
   type RecentMerge = (typeof recentMerges)[number];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Merge Communities</h1>

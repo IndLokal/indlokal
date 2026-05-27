@@ -158,8 +158,8 @@ export function MergeCommunityForm({ communities, cities }: Props) {
 
       <div className="text-muted text-xs">{filtered.length} candidates after filters</div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="space-y-2 rounded-xl border border-black/10 p-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="border-border/70 space-y-2 rounded-[var(--radius-card)] border bg-white p-4">
           <label className="block text-sm font-medium" htmlFor="primary-search">
             Primary community
           </label>
@@ -186,7 +186,7 @@ export function MergeCommunityForm({ communities, cities }: Props) {
           </select>
         </section>
 
-        <section className="space-y-2 rounded-xl border border-black/10 p-4">
+        <section className="border-border/70 space-y-2 rounded-[var(--radius-card)] border bg-white p-4">
           <label className="block text-sm font-medium" htmlFor="secondary-search">
             Secondary community
           </label>
@@ -215,7 +215,7 @@ export function MergeCommunityForm({ communities, cities }: Props) {
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="rounded-xl border border-black/10 bg-white p-4">
+        <div className="border-border/70 rounded-[var(--radius-card)] border bg-white p-4">
           <p className="text-muted text-xs uppercase tracking-wide">Primary summary</p>
           {selectedPrimary ? (
             <div className="mt-2 text-sm">
@@ -230,7 +230,7 @@ export function MergeCommunityForm({ communities, cities }: Props) {
           )}
         </div>
 
-        <div className="rounded-xl border border-black/10 bg-white p-4">
+        <div className="border-border/70 rounded-[var(--radius-card)] border bg-white p-4">
           <p className="text-muted text-xs uppercase tracking-wide">Secondary summary</p>
           {selectedSecondary ? (
             <div className="mt-2 text-sm">
