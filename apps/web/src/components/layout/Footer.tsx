@@ -92,15 +92,15 @@ export function Footer() {
           {/* Nav columns */}
           {NAV_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-foreground/70 mb-4 text-xs font-semibold uppercase tracking-wider">
+              <h4 className="text-foreground/70 mb-3 text-xs font-semibold uppercase tracking-wider">
                 {col.title}
               </h4>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 {col.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-muted hover:text-brand-600 inline-block py-1.5 text-sm transition-colors"
+                      className="text-muted hover:text-brand-600 inline-block py-1 text-sm transition-colors"
                     >
                       {link.label}
                     </Link>

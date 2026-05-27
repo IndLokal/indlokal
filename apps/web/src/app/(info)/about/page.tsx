@@ -25,7 +25,7 @@ export default function AboutPage() {
       />
 
       {/* Mission */}
-      <section className="mx-auto max-w-3xl px-4 py-16">
+      <section className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Our Mission</h2>
         <p className="text-muted mt-4 leading-relaxed">
           Make Indian community life in Germany visible, fresh, and easy to join - and put the
@@ -41,7 +41,7 @@ export default function AboutPage() {
       </section>
 
       {/* Action guide */}
-      <section className="bg-white px-4 py-16">
+      <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-6xl">
           <CommunityActionGrid
             title="Which action should I use?"
@@ -52,14 +52,14 @@ export default function AboutPage() {
       </section>
 
       {/* Three pillars */}
-      <section className="bg-white px-4 py-16">
+      <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
           <p className="text-muted mt-3 leading-relaxed">
             For every German city we cover, {siteConfig.name} brings together three things in one
             place - with equal weight.
           </p>
-          <div className="mt-8 grid gap-6 sm:grid-cols-3">
+          <div className="mt-8 grid gap-5 sm:grid-cols-3">
             {[
               {
                 icon: '🪷',
@@ -91,7 +91,7 @@ export default function AboutPage() {
       </section>
 
       {/* Cities */}
-      <section className="mx-auto max-w-3xl px-4 py-16">
+      <section className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Where We Are</h2>
         <p className="text-muted mt-4 leading-relaxed">
           We&apos;re currently live in {ACTIVE_CITIES.length} cities across Germany, with a strong
@@ -111,7 +111,7 @@ export default function AboutPage() {
       </section>
 
       {/* For organizers */}
-      <section className="relative overflow-hidden px-4 py-16 text-center">
+      <section className="relative overflow-hidden px-4 py-14 text-center sm:py-16">
         <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
         <div className="relative mx-auto max-w-xl">
           <h2 className="text-2xl font-extrabold text-white sm:text-3xl">
@@ -139,7 +139,7 @@ export default function AboutPage() {
       </section>
 
       {/* Contact */}
-      <section className="mx-auto max-w-3xl px-4 py-16 text-center">
+      <section className="mx-auto max-w-3xl px-4 py-12 text-center sm:py-14">
         <h2 className="text-foreground text-2xl font-extrabold">Get in Touch</h2>
         <p className="text-muted mt-4 leading-relaxed">
           Have a question, suggestion, or want to partner with us?
