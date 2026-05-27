@@ -6,14 +6,15 @@ const NAV_COLUMNS = [
   {
     title: 'Cities',
     links: [
-      ...ACTIVE_CITIES.map((city) => ({
+      ...ACTIVE_CITIES.slice(0, 4).map((city) => ({
         label: city.charAt(0).toUpperCase() + city.slice(1),
         href: `/${city}`,
       })),
-      ...UPCOMING_CITIES.slice(0, 4).map((city) => ({
+      ...UPCOMING_CITIES.slice(0, 2).map((city) => ({
         label: `${city.name} ⁽ˢᵒᵒⁿ⁾`,
         href: `/${city.slug}`,
       })),
+      { label: 'All cities', href: '/' },
     ],
   },
   {
@@ -42,7 +43,7 @@ const NAV_COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="border-border/50 mt-16 border-t bg-gradient-to-b from-white to-slate-50">
+    <footer className="border-border/50 mt-10 border-t bg-gradient-to-b from-white to-slate-50">
       {/* Main footer content */}
       <div className="mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_repeat(4,1fr)] lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">

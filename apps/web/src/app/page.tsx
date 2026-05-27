@@ -13,14 +13,6 @@ import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
 export default function HomePage() {
-  const cityInsightRows = [
-    ...ACTIVE_CITIES.map((slug) => ({ slug, name: getConfiguredCityName(slug) ?? slug })),
-    ...UPCOMING_CITIES.map((city) => ({ slug: city.slug, name: city.name })),
-  ].filter(
-    (entry, idx, arr) =>
-      !!CITY_COMMUNITY_PROFILES[entry.slug] && arr.findIndex((e) => e.slug === entry.slug) === idx,
-  );
-
   return (
     <>
       {/* Header */}
@@ -134,51 +126,18 @@ export default function HomePage() {
               We&apos;re bringing {siteConfig.name} to more cities. Explore where we launch next.
             </p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-7 flex flex-wrap items-center justify-center gap-2.5">
             {UPCOMING_CITIES.map((city) => (
               <Link
                 key={city.slug}
                 href={`/${city.slug}`}
-                className="hover:ring-brand-200 group rounded-xl bg-white p-5 text-left ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                className="border-border/70 hover:border-brand-300 hover:bg-brand-50 inline-flex items-center gap-1.5 rounded-full border bg-white px-3.5 py-2 text-sm font-medium transition-colors"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-foreground group-hover:text-brand-600 text-base font-semibold transition-colors">
-                    {city.emoji} {city.name}
-                  </span>
-                  <span className="bg-accent-50 text-accent-700 ring-accent-200/60 rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1">
-                    Soon
-                  </span>
-                </div>
-                <p className="text-muted mt-2 text-sm">{city.state}</p>
+                <span>{city.emoji}</span>
+                <span className="text-foreground">{city.name}</span>
+                <span className="text-muted text-xs">Soon</span>
               </Link>
             ))}
-          </div>
-        </section>
-
-        {/* Central city notes */}
-        <section className="mx-auto max-w-5xl px-4 pb-20">
-          <div className="text-center">
-            <h2 className="text-foreground text-xl font-bold sm:text-2xl">City ecosystem notes</h2>
-            <p className="text-muted mx-auto mt-2 max-w-2xl text-sm">
-              A centralized, concise note bank for each city. Update once in config, reflected
-              everywhere.
-            </p>
-          </div>
-          <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {cityInsightRows.map((entry) => {
-              const profile = CITY_COMMUNITY_PROFILES[entry.slug];
-              return (
-                <div
-                  key={entry.slug}
-                  className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <p className="text-foreground text-sm font-semibold">
-                    {profile.emoji} {entry.name}
-                  </p>
-                  <p className="text-muted mt-1 text-sm leading-relaxed">{profile.notes}</p>
-                </div>
-              );
-            })}
           </div>
         </section>
 
@@ -231,7 +190,7 @@ export default function HomePage() {
         </section>
 
         {/* CTA */}
-        <section className="relative overflow-hidden px-4 py-24 text-center">
+        <section className="relative overflow-hidden px-4 py-16 text-center sm:py-20">
           <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_rgba(255,255,255,0.15),transparent_50%)]" />
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSA2MCAwIEwgMCAwIDAgNjAiIGZpbGw9Im5vbmUiIHN0cm9rZT0icmdiYSgyNTUsMjU1LDI1NSwwLjA1KSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-50" />
