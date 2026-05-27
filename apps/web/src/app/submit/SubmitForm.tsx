@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { content, communityOptions } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
 import { ContentCallout } from '@/components/content/community-actions';
@@ -10,6 +10,16 @@ type Props = {
   cities: { slug: string; name: string }[];
   categories: { slug: string; name: string; icon: string | null }[];
 };
+
+type ChannelDraft = {
+  id: number;
+  channelType: (typeof communityOptions.CHANNEL_TYPE_VALUES)[number];
+  url: string;
+  label: string;
+  isPrimary: boolean;
+};
+
+const MAX_CHANNELS = 6;
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors || errors.length === 0) return null;
@@ -30,6 +40,52 @@ export function SubmitForm({ cities, categories }: Props) {
     submitCommunity,
     null,
   );
+  const [channels, setChannels] = useState<ChannelDraft[]>([
+    {
+      id: 1,
+      channelType: communityOptions.CHANNEL_TYPE_VALUES[0],
+      url: '',
+      label: '',
+      isPrimary: true,
+    },
+  ]);
+
+  const addChannelRow = () => {
+    setChannels((prev) => {
+      if (prev.length >= MAX_CHANNELS) return prev;
+      const nextId = Math.max(...prev.map((c) => c.id)) + 1;
+      return [
+        ...prev,
+        {
+          id: nextId,
+          channelType: communityOptions.CHANNEL_TYPE_VALUES[0],
+          url: '',
+          label: '',
+          isPrimary: false,
+        },
+      ];
+    });
+  };
+
+  const removeChannelRow = (id: number) => {
+    setChannels((prev) => {
+      if (prev.length === 1) return prev;
+      const removed = prev.find((c) => c.id === id);
+      const next = prev.filter((c) => c.id !== id);
+      if (removed?.isPrimary && next.length > 0) {
+        return next.map((c, index) => ({ ...c, isPrimary: index === 0 }));
+      }
+      return next;
+    });
+  };
+
+  const updateChannel = (id: number, patch: Partial<ChannelDraft>) => {
+    setChannels((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  };
+
+  const setPrimary = (id: number) => {
+    setChannels((prev) => prev.map((c) => ({ ...c, isPrimary: c.id === id })));
+  };
 
   if (state?.success) {
     return (
@@ -155,61 +211,103 @@ export function SubmitForm({ cities, categories }: Props) {
 
       {/* Access Channels */}
       <fieldset className="card-base space-y-5 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">Access Channel *</legend>
+        <legend className="text-foreground -ml-1 text-lg font-bold">Access Channels *</legend>
         <p className="text-muted text-sm">
-          How can people find/join your community? At least one link is required.
+          Add where people can join or follow your community. Max {MAX_CHANNELS} links.
         </p>
-
-        <div className="border-border rounded-[var(--radius-button)] border p-4">
-          <p className="text-muted mb-2 text-sm font-medium">Primary Channel</p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <select
-              name="primaryChannelType"
-              required
-              className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+        <div className="space-y-3">
+          {channels.map((channel, index) => (
+            <div
+              key={channel.id}
+              className="border-border rounded-[var(--radius-button)] border p-4"
             >
-              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
-                <option key={channelType} value={channelType}>
-                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
-                </option>
-              ))}
-            </select>
-            <FieldError errors={errors.primaryChannelType} />
-            <input
-              name="primaryChannelUrl"
-              type="url"
-              required
-              placeholder="https://chat.whatsapp.com/..."
-              className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-            />
-          </div>
-          <FieldError errors={errors.primaryChannelUrl} />
+              <div className="mb-2 flex items-center justify-between">
+                <p className="text-muted text-sm font-medium">Channel {index + 1}</p>
+                {channels.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeChannelRow(channel.id)}
+                    className="text-xs font-medium text-red-600 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-[180px,1fr]">
+                <select
+                  value={channel.channelType}
+                  onChange={(e) =>
+                    updateChannel(channel.id, {
+                      channelType: e.target.value as ChannelDraft['channelType'],
+                    })
+                  }
+                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                >
+                  {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                    <option key={channelType} value={channelType}>
+                      {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="url"
+                  value={channel.url}
+                  onChange={(e) => updateChannel(channel.id, { url: e.target.value })}
+                  placeholder="https://..."
+                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                />
+              </div>
+
+              <div className="mt-3 grid gap-3 sm:grid-cols-[1fr,180px]">
+                <input
+                  type="text"
+                  value={channel.label}
+                  onChange={(e) => updateChannel(channel.id, { label: e.target.value })}
+                  placeholder="Optional label (e.g. Join on Telegram)"
+                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                />
+                <label className="text-foreground flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    checked={channel.isPrimary}
+                    onChange={() => setPrimary(channel.id)}
+                    className="accent-brand-500"
+                  />
+                  Set as primary
+                </label>
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="border-border rounded-[var(--radius-button)] border border-dashed p-4">
-          <p className="text-muted mb-2 text-sm font-medium">Secondary Channel (optional)</p>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            <select
-              name="secondaryChannelType"
-              className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-            >
-              <option value="">None</option>
-              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
-                <option key={channelType} value={channelType}>
-                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
-                </option>
-              ))}
-            </select>
-            <FieldError errors={errors.secondaryChannelType} />
-            <input
-              name="secondaryChannelUrl"
-              type="url"
-              placeholder="https://..."
-              className="border-border flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-            />
-          </div>
-          <FieldError errors={errors.secondaryChannelUrl} />
+        <div className="flex items-center justify-between">
+          <button
+            type="button"
+            onClick={addChannelRow}
+            disabled={channels.length >= MAX_CHANNELS}
+            className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+          >
+            + Add channel
+          </button>
+          <p className="text-muted text-xs">
+            {channels.length}/{MAX_CHANNELS} channels
+          </p>
         </div>
+
+        <input
+          type="hidden"
+          name="channelsJson"
+          value={JSON.stringify(
+            channels.map(({ channelType, url, label, isPrimary }) => ({
+              channelType,
+              url,
+              label,
+              isPrimary,
+            })),
+          )}
+        />
+        <FieldError errors={errors.channels} />
       </fieldset>
 
       {/* Contact Information */}

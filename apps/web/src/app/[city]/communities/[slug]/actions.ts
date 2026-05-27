@@ -22,15 +22,31 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
     };
   }
 
+  const evidenceLinksJson = (formData.get('evidenceLinksJson') as string) || '[]';
+  let parsedEvidenceLinks: Array<{ type: string; url: string }> = [];
+  try {
+    const rawEvidence = JSON.parse(evidenceLinksJson) as unknown;
+    parsedEvidenceLinks = Array.isArray(rawEvidence)
+      ? (rawEvidence as Array<{ type: string; url: string }>)
+      : [];
+  } catch {
+    parsedEvidenceLinks = [];
+  }
+
+  const whatsappUrl = (formData.get('whatsappUrl') as string) || '';
+  const telegramUrl = (formData.get('telegramUrl') as string) || '';
+  const socialUrl = (formData.get('socialUrl') as string) || '';
+
   const raw = {
     communityId: formData.get('communityId') as string,
     email: formData.get('email') as string,
     name: formData.get('name') as string,
     relationship: formData.get('relationship') as string,
     message: (formData.get('message') as string) || '',
-    whatsappUrl: (formData.get('whatsappUrl') as string) || '',
-    telegramUrl: (formData.get('telegramUrl') as string) || '',
-    socialUrl: (formData.get('socialUrl') as string) || '',
+    evidenceLinks: parsedEvidenceLinks,
+    whatsappUrl,
+    telegramUrl,
+    socialUrl,
   };
 
   const parsed = claimCommunitySchema.safeParse(raw);
@@ -42,6 +58,14 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
   }
 
   const data = parsed.data;
+  const evidenceLinks =
+    data.evidenceLinks.length > 0
+      ? data.evidenceLinks
+      : ([
+          whatsappUrl ? { type: 'WHATSAPP', url: whatsappUrl } : null,
+          telegramUrl ? { type: 'TELEGRAM', url: telegramUrl } : null,
+          socialUrl ? { type: 'OTHER', url: socialUrl } : null,
+        ].filter(Boolean) as Array<{ type: string; url: string }>);
 
   return withAction(
     async () => {
@@ -86,6 +110,7 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
             claimRequest: {
               relationship: data.relationship,
               message: data.message,
+              evidenceLinks,
               whatsappUrl: data.whatsappUrl || undefined,
               telegramUrl: data.telegramUrl || undefined,
               socialUrl: data.socialUrl || undefined,

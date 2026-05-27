@@ -3,7 +3,6 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, UPLOAD_BUCKET, UPLOAD_PRESIGN_TTL_SECONDS } from '@/lib/storage';
 import { computeSimilarity } from '@/modules/pipeline';
-import type { ChannelType } from '@prisma/client';
 import { submit as s } from '@indlokal/shared';
 type EventSubmission = s.EventSubmission;
 type CommunitySubmission = s.CommunitySubmission;
@@ -129,22 +128,38 @@ export async function createCommunitySubmission(
     }
   }
 
-  const channels: { channelType: ChannelType; url: string; label: string; isPrimary: boolean }[] = [
-    {
-      channelType: data.primaryChannelType as ChannelType,
-      url: data.primaryChannelUrl,
-      label: data.primaryChannelType,
-      isPrimary: true,
-    },
-  ];
-  if (data.secondaryChannelType && data.secondaryChannelUrl) {
-    channels.push({
-      channelType: data.secondaryChannelType as ChannelType,
-      url: data.secondaryChannelUrl,
-      label: data.secondaryChannelType,
-      isPrimary: false,
-    });
-  }
+  const channelsInput: Array<{
+    channelType: string;
+    url: string;
+    label?: string;
+    isPrimary?: boolean;
+  }> =
+    data.channels && data.channels.length > 0
+      ? data.channels
+      : [
+          {
+            channelType: data.primaryChannelType ?? '',
+            url: data.primaryChannelUrl ?? '',
+            isPrimary: true,
+          },
+          ...(data.secondaryChannelType && data.secondaryChannelUrl
+            ? [
+                {
+                  channelType: data.secondaryChannelType,
+                  url: data.secondaryChannelUrl,
+                  isPrimary: false,
+                },
+              ]
+            : []),
+        ].filter((channel) => channel.channelType && channel.url);
+
+  const channels: { channelType: string; url: string; label: string; isPrimary: boolean }[] =
+    channelsInput.map((channel) => ({
+      channelType: channel.channelType,
+      url: channel.url,
+      label: channel.label || channel.channelType,
+      isPrimary: channel.isPrimary ?? false,
+    }));
 
   const extractedData = {
     name: data.name,

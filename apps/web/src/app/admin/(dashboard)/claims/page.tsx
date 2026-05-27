@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { communityOptions } from '@indlokal/shared';
 import { approveClaim, rejectClaim } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 
@@ -35,29 +36,59 @@ export default async function AdminClaimsPage() {
                   relationship?: string;
                   message?: string;
                   requestedAt?: string;
+                  evidenceLinks?: { type?: string; url?: string }[];
                   whatsappUrl?: string;
                   telegramUrl?: string;
                   socialUrl?: string;
                 }
               | undefined;
 
-            const evidenceLinks = [
+            const typeLabel = communityOptions.CHANNEL_TYPE_LABELS;
+            const typeIcon = communityOptions.CHANNEL_TYPE_ICONS;
+            const typeColor: Record<string, string> = {
+              WHATSAPP: 'bg-green-100 text-green-700 hover:bg-green-200',
+              TELEGRAM: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+              WEBSITE: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
+              FACEBOOK: 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200',
+              INSTAGRAM: 'bg-pink-100 text-pink-700 hover:bg-pink-200',
+              EMAIL: 'bg-cyan-100 text-cyan-700 hover:bg-cyan-200',
+              MEETUP: 'bg-rose-100 text-rose-700 hover:bg-rose-200',
+              YOUTUBE: 'bg-red-100 text-red-700 hover:bg-red-200',
+              LINKEDIN: 'bg-sky-100 text-sky-700 hover:bg-sky-200',
+              OTHER: 'bg-slate-100 text-slate-700 hover:bg-slate-200',
+            };
+
+            const structuredEvidence = (claim?.evidenceLinks ?? [])
+              .filter((ev) => Boolean(ev?.url))
+              .map((ev) => {
+                const key = ev.type ?? 'OTHER';
+                return {
+                  label: `${typeIcon[key as keyof typeof typeIcon] ?? '🔗'} ${typeLabel[key as keyof typeof typeLabel] ?? 'Other'}`,
+                  url: ev.url as string,
+                  color: typeColor[key] ?? typeColor.OTHER,
+                };
+              });
+
+            const legacyEvidence = [
               claim?.whatsappUrl && {
                 label: 'WhatsApp',
                 url: claim.whatsappUrl,
-                color: 'bg-green-100 text-green-700 hover:bg-green-200',
+                color: typeColor.WHATSAPP,
               },
               claim?.telegramUrl && {
                 label: 'Telegram',
                 url: claim.telegramUrl,
-                color: 'bg-blue-100 text-blue-700 hover:bg-blue-200',
+                color: typeColor.TELEGRAM,
               },
               claim?.socialUrl && {
-                label: 'Website / Social',
+                label: `${typeIcon.OTHER} Other`,
                 url: claim.socialUrl,
-                color: 'bg-purple-100 text-purple-700 hover:bg-purple-200',
+                color: typeColor.OTHER,
               },
             ].filter(Boolean) as { label: string; url: string; color: string }[];
+
+            const evidenceLinks =
+              structuredEvidence.length > 0 ? structuredEvidence : legacyEvidence;
 
             return (
               <div key={c.id} className="card-base p-6">
@@ -82,7 +113,7 @@ export default async function AdminClaimsPage() {
                         {evidenceLinks.length > 0 && (
                           <div className="border-border mt-2 border-t pt-2">
                             <p className="text-muted text-xs font-medium uppercase tracking-wide">
-                              Evidence ({evidenceLinks.length}/3)
+                              Evidence ({evidenceLinks.length})
                             </p>
                             <div className="mt-1.5 flex flex-wrap gap-2">
                               {evidenceLinks.map((ev) => (

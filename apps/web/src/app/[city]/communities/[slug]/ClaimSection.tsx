@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from 'react';
 import Link from 'next/link';
-import { content } from '@indlokal/shared';
+import { content, communityOptions } from '@indlokal/shared';
 import { claimCommunity, type ClaimResult } from './actions';
 
 type Props = {
@@ -10,6 +10,19 @@ type Props = {
   communityName: string;
   claimState: string;
 };
+
+type EvidenceRow = {
+  id: number;
+  type: communityOptions.CommunityChannelType;
+  url: string;
+};
+
+const EVIDENCE_TYPES = communityOptions.CHANNEL_TYPE_VALUES.map((value) => ({
+  value,
+  label: communityOptions.CHANNEL_TYPE_LABELS[value],
+}));
+
+const MAX_EVIDENCE_LINKS = 5;
 
 const RELATIONSHIPS = [
   { value: 'organizer', label: 'I am the organizer / founder' },
@@ -20,10 +33,31 @@ const RELATIONSHIPS = [
 
 export function ClaimSection({ communityId, communityName, claimState }: Props) {
   const [expanded, setExpanded] = useState(false);
+  const [evidenceLinks, setEvidenceLinks] = useState<EvidenceRow[]>([
+    { id: 1, type: 'WHATSAPP', url: '' },
+  ]);
   const [state, formAction, isPending] = useActionState<ClaimResult, FormData>(
     claimCommunity,
     null,
   );
+
+  const updateEvidence = (id: number, patch: Partial<EvidenceRow>) => {
+    setEvidenceLinks((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  };
+
+  const addEvidence = () => {
+    setEvidenceLinks((prev) => {
+      if (prev.length >= MAX_EVIDENCE_LINKS) return prev;
+      const nextId = Math.max(...prev.map((row) => row.id)) + 1;
+      const selected = new Set(prev.map((row) => row.type));
+      const nextType = EVIDENCE_TYPES.find((type) => !selected.has(type.value))?.value ?? 'OTHER';
+      return [...prev, { id: nextId, type: nextType, url: '' }];
+    });
+  };
+
+  const removeEvidence = (id: number) => {
+    setEvidenceLinks((prev) => (prev.length <= 1 ? prev : prev.filter((row) => row.id !== id)));
+  };
 
   if (claimState === 'CLAIMED') {
     return (
@@ -167,51 +201,89 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
               <span className="text-muted font-normal">(optional - helps us verify faster)</span>
             </p>
             <div className="mt-3 space-y-3">
-              <div>
-                <label htmlFor="claim-whatsapp" className="text-muted block text-sm">
-                  WhatsApp group link
-                </label>
-                <input
-                  id="claim-whatsapp"
-                  name="whatsappUrl"
-                  type="url"
-                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                  placeholder="https://chat.whatsapp.com/..."
-                />
-                {errors.whatsappUrl && (
-                  <p className="mt-1 text-sm text-red-600">{errors.whatsappUrl[0]}</p>
-                )}
+              {evidenceLinks.map((row, index) => {
+                const selectedByOthers = new Set(
+                  evidenceLinks.filter((item) => item.id !== row.id).map((item) => item.type),
+                );
+                const availableTypes = EVIDENCE_TYPES.filter(
+                  (option) => !selectedByOthers.has(option.value),
+                );
+
+                return (
+                  <div
+                    key={row.id}
+                    className="border-border rounded-[var(--radius-button)] border p-3"
+                  >
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-muted text-xs font-medium uppercase tracking-wide">
+                        Evidence link {index + 1}
+                      </p>
+                      {evidenceLinks.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeEvidence(row.id)}
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid gap-2 sm:grid-cols-[170px,1fr]">
+                      <select
+                        value={row.type}
+                        onChange={(e) =>
+                          updateEvidence(row.id, {
+                            type: e.target.value as EvidenceRow['type'],
+                          })
+                        }
+                        className="border-border focus:border-brand-500 focus:ring-brand-100 rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                      >
+                        {availableTypes.map((option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
+                      </select>
+
+                      <input
+                        type="url"
+                        value={row.url}
+                        onChange={(e) => updateEvidence(row.id, { url: e.target.value })}
+                        className="border-border focus:border-brand-500 focus:ring-brand-100 rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+
+              <div className="flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={addEvidence}
+                  disabled={evidenceLinks.length >= MAX_EVIDENCE_LINKS}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-50"
+                >
+                  + Add proof link
+                </button>
+                <p className="text-muted text-xs">
+                  {evidenceLinks.length}/{MAX_EVIDENCE_LINKS}
+                </p>
               </div>
-              <div>
-                <label htmlFor="claim-telegram" className="text-muted block text-sm">
-                  Telegram group link
-                </label>
-                <input
-                  id="claim-telegram"
-                  name="telegramUrl"
-                  type="url"
-                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                  placeholder="https://t.me/..."
-                />
-                {errors.telegramUrl && (
-                  <p className="mt-1 text-sm text-red-600">{errors.telegramUrl[0]}</p>
+
+              <input
+                type="hidden"
+                name="evidenceLinksJson"
+                value={JSON.stringify(
+                  evidenceLinks
+                    .map((row) => ({ type: row.type, url: row.url.trim() }))
+                    .filter((row) => row.url.length > 0),
                 )}
-              </div>
-              <div>
-                <label htmlFor="claim-social" className="text-muted block text-sm">
-                  Website or social profile
-                </label>
-                <input
-                  id="claim-social"
-                  name="socialUrl"
-                  type="url"
-                  className="border-border focus:border-brand-500 focus:ring-brand-100 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                  placeholder="https://instagram.com/... or your website"
-                />
-                {errors.socialUrl && (
-                  <p className="mt-1 text-sm text-red-600">{errors.socialUrl[0]}</p>
-                )}
-              </div>
+              />
+              {errors.evidenceLinks && (
+                <p className="mt-1 text-sm text-red-600">{errors.evidenceLinks[0]}</p>
+              )}
             </div>
           </div>
 
