@@ -113,12 +113,24 @@ export default async function AdminCommunitiesPage({
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-3 py-2 font-medium">Community</th>
-              <th className="text-muted px-3 py-2 font-medium">City</th>
-              <th className="text-muted px-3 py-2 font-medium">Lifecycle Status</th>
-              <th className="text-muted px-3 py-2 font-medium">Claim Status</th>
-              <th className="text-muted px-3 py-2 font-medium">Events</th>
-              <th className="text-muted px-3 py-2 font-medium">Channels</th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Community
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                City
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Lifecycle Status
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Claim Status
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Events
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Channels
+              </th>
               <th />
             </tr>
           </thead>

@@ -128,31 +128,43 @@ export default async function AdminTeamPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-muted-bg border-border border-b text-left text-xs font-medium uppercase tracking-wide">
-                  <th className="px-4 py-3">User</th>
-                  <th className="px-4 py-3">Role</th>
-                  <th className="px-4 py-3">City scope</th>
-                  <th className="px-4 py-3">Granted</th>
-                  {canGrant && <th className="px-4 py-3">Actions</th>}
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    User
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    Role
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    City scope
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    Granted
+                  </th>
+                  {canGrant && (
+                    <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                      Actions
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
                 {assignments.map((a) => (
                   <tr key={a.id} className="hover:bg-muted-bg/50 transition-colors">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <span className="font-medium">{a.user.displayName ?? a.user.email}</span>
                       {a.user.displayName && (
                         <span className="text-muted ml-2 text-xs">{a.user.email}</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${ROLE_BADGE[a.role] ?? 'bg-gray-100 text-gray-600'}`}
                       >
                         {ROLE_LABELS[a.role] ?? a.role}
                       </span>
                     </td>
-                    <td className="text-muted px-4 py-3 text-xs">{a.cityId ?? '-'}</td>
-                    <td className="text-muted px-4 py-3 text-xs">
+                    <td className="text-muted px-4 py-2 text-xs">{a.cityId ?? '-'}</td>
+                    <td className="text-muted px-4 py-2 text-xs">
                       {new Date(a.grantedAt).toLocaleDateString('en-GB', {
                         day: 'numeric',
                         month: 'short',
@@ -160,7 +172,7 @@ export default async function AdminTeamPage() {
                       })}
                     </td>
                     {canGrant && (
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-2">
                         <form action={revokeRole}>
                           <input type="hidden" name="id" value={a.id} />
                           <button

@@ -81,11 +81,21 @@ export default async function AdminEventsPage({
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-3 py-2 font-medium">Title</th>
-              <th className="text-muted px-3 py-2 font-medium">When</th>
-              <th className="text-muted px-3 py-2 font-medium">City</th>
-              <th className="text-muted px-3 py-2 font-medium">Community</th>
-              <th className="text-muted px-3 py-2 font-medium">Status</th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Title
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                When
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                City
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Community
+              </th>
+              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Status
+              </th>
               <th />
             </tr>
           </thead>

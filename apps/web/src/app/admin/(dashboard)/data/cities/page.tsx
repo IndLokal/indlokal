@@ -59,12 +59,22 @@ export default async function AdminCitiesPage() {
         <table className="w-full text-sm">
           <thead className="border-border bg-muted-bg border-b text-left">
             <tr>
-              <th className="text-muted px-4 py-2 font-medium">Name</th>
-              <th className="text-muted px-4 py-2 font-medium">Slug</th>
-              <th className="text-muted px-4 py-2 font-medium">State</th>
-              <th className="text-muted px-4 py-2 font-medium">Metro</th>
-              <th className="text-muted px-4 py-2 font-medium">Active</th>
-              <th className="text-muted px-4 py-2 font-medium" />
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Name
+              </th>
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Slug
+              </th>
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                State
+              </th>
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Metro
+              </th>
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                Active
+              </th>
+              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide" />
             </tr>
           </thead>
           <tbody>

@@ -94,16 +94,24 @@ export default async function AdminScoringPage() {
             <table className="w-full text-sm">
               <thead className="border-border bg-muted-bg border-b text-left">
                 <tr>
-                  <th className="text-muted px-4 py-2 font-medium">Community</th>
-                  <th className="text-muted px-4 py-2 font-medium">City</th>
-                  <th className="text-muted px-4 py-2 font-medium">Last Activity</th>
-                  <th className="text-muted px-4 py-2 font-medium">Score</th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    Community
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    City
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    Last Activity
+                  </th>
+                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
+                    Score
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-border/50 divide-y">
                 {staleCommunities.map((c: StaleCommunityRow) => (
                   <tr key={c.id} className="hover:bg-muted-bg">
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <Link
                         href={`/${c.city.slug}/communities/${c.slug}`}
                         className="text-brand-600 font-medium hover:underline"
@@ -112,8 +120,8 @@ export default async function AdminScoringPage() {
                         {c.name}
                       </Link>
                     </td>
-                    <td className="text-muted px-4 py-3">{c.city.name}</td>
-                    <td className="text-muted px-4 py-3">
+                    <td className="text-muted px-4 py-2">{c.city.name}</td>
+                    <td className="text-muted px-4 py-2">
                       {c.lastActivityAt
                         ? c.lastActivityAt.toLocaleDateString('en-GB', {
                             day: 'numeric',
@@ -122,7 +130,7 @@ export default async function AdminScoringPage() {
                           })
                         : 'Never'}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-2">
                       <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
                         {Math.round(c.activityScore ?? 0)}
                       </span>
