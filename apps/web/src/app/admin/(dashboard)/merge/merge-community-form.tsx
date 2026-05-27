@@ -1,14 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import type { CommunityStatus } from '@prisma/client';
 import { mergeCommunities } from './actions';
 
 type CommunityRow = {
   id: string;
   name: string;
   slug: string;
-  status: CommunityStatus;
+  status: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' | 'CLAIMED';
   claimState: 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
   updatedAt: Date | string;
   city: { name: string; slug: string };
