@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { approveCollaboratorRequest, rejectCollaboratorRequest } from '../actions';
@@ -20,11 +21,87 @@ function buildQueryString(params: Record<string, string | number | undefined>) {
 }
 
 type Props = {
-  searchParams: Promise<{ communityPage?: string; requestPage?: string }>;
+  searchParams: Promise<{
+    communityPage?: string;
+    requestPage?: string;
+    city?: string;
+    q?: string;
+    access?: string;
+    source?: string;
+  }>;
 };
 
 export default async function AdminCollaboratorRequestsPage({ searchParams }: Props) {
   const sp = await searchParams;
+
+  const citySlug = (sp.city ?? '').trim();
+  const query = (sp.q ?? '').trim();
+  const access = ['ALL', 'CLAIMED', 'COLLABORATORS'].includes(sp.access ?? '')
+    ? (sp.access as 'ALL' | 'CLAIMED' | 'COLLABORATORS')
+    : 'ALL';
+  const source = ['ALL', 'PUBLIC_REQUEST', 'OWNER_INVITE'].includes(sp.source ?? '')
+    ? (sp.source as 'ALL' | 'PUBLIC_REQUEST' | 'OWNER_INVITE')
+    : 'ALL';
+
+  const communityWhere: Prisma.CommunityWhereInput = {
+    OR:
+      access === 'CLAIMED'
+        ? [{ claimState: 'CLAIMED' }]
+        : access === 'COLLABORATORS'
+          ? [{ collaborators: { some: {} } }]
+          : [{ claimState: 'CLAIMED' }, { collaborators: { some: {} } }],
+  };
+
+  if (citySlug) {
+    communityWhere.city = { slug: citySlug };
+  }
+
+  if (query) {
+    communityWhere.AND = [
+      {
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { slug: { contains: query, mode: 'insensitive' } },
+          { claimedBy: { email: { contains: query, mode: 'insensitive' } } },
+          { claimedBy: { displayName: { contains: query, mode: 'insensitive' } } },
+          {
+            collaborators: {
+              some: {
+                user: {
+                  OR: [
+                    { email: { contains: query, mode: 'insensitive' } },
+                    { displayName: { contains: query, mode: 'insensitive' } },
+                  ],
+                },
+              },
+            },
+          },
+        ],
+      },
+    ];
+  }
+
+  const requestWhere: Prisma.CommunityCollaboratorWhereInput = {
+    status: 'PENDING',
+  };
+
+  if (citySlug) {
+    requestWhere.community = { city: { slug: citySlug } };
+  }
+  if (source !== 'ALL') {
+    requestWhere.source = source;
+  }
+  if (query) {
+    requestWhere.OR = [
+      { community: { name: { contains: query, mode: 'insensitive' } } },
+      { community: { slug: { contains: query, mode: 'insensitive' } } },
+      { user: { email: { contains: query, mode: 'insensitive' } } },
+      { user: { displayName: { contains: query, mode: 'insensitive' } } },
+      { requestedByUser: { email: { contains: query, mode: 'insensitive' } } },
+      { requestedByUser: { displayName: { contains: query, mode: 'insensitive' } } },
+      { requestedEmail: { contains: query, mode: 'insensitive' } },
+    ];
+  }
 
   const communityPageSize = 20;
   const requestPageSize = 20;
@@ -32,13 +109,14 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   const requestedCommunityPage = parsePage(sp.communityPage);
   const requestedRequestPage = parsePage(sp.requestPage);
 
-  const [communityTotalCount, requestTotalCount] = await Promise.all([
-    db.community.count({
-      where: {
-        OR: [{ claimState: 'CLAIMED' }, { collaborators: { some: {} } }],
-      },
+  const [communityTotalCount, requestTotalCount, cities] = await Promise.all([
+    db.community.count({ where: communityWhere }),
+    db.communityCollaborator.count({ where: requestWhere }),
+    db.city.findMany({
+      where: { isActive: true },
+      select: { slug: true, name: true },
+      orderBy: { name: 'asc' },
     }),
-    db.communityCollaborator.count({ where: { status: 'PENDING' } }),
   ]);
 
   const communityTotalPages = Math.max(1, Math.ceil(communityTotalCount / communityPageSize));
@@ -48,9 +126,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
 
   const [communityAccess, requests] = await Promise.all([
     db.community.findMany({
-      where: {
-        OR: [{ claimState: 'CLAIMED' }, { collaborators: { some: {} } }],
-      },
+      where: communityWhere,
       select: {
         id: true,
         name: true,
@@ -74,7 +150,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
       take: communityPageSize,
     }),
     db.communityCollaborator.findMany({
-      where: { status: 'PENDING' },
+      where: requestWhere,
       include: {
         community: {
           select: {
@@ -99,6 +175,67 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         description={`${requestTotalCount} pending review · ${communityTotalCount} communities with organizer access data`}
         backHref="/admin"
       />
+
+      <section className="mt-8 rounded-[var(--radius-card)] border p-4">
+        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" method="GET">
+          <div>
+            <label className="text-muted mb-1 block text-xs font-medium">Search</label>
+            <input
+              name="q"
+              defaultValue={query}
+              placeholder="Community, slug, organizer email"
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="text-muted mb-1 block text-xs font-medium">City</label>
+            <select
+              name="city"
+              defaultValue={citySlug}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All cities</option>
+              {cities.map((city) => (
+                <option key={city.slug} value={city.slug}>
+                  {city.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-muted mb-1 block text-xs font-medium">Access scope</label>
+            <select
+              name="access"
+              defaultValue={access}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="ALL">All access records</option>
+              <option value="CLAIMED">Claimed communities only</option>
+              <option value="COLLABORATORS">Communities with collaborators</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-muted mb-1 block text-xs font-medium">Request source</label>
+            <select
+              name="source"
+              defaultValue={source}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="ALL">All pending requests</option>
+              <option value="PUBLIC_REQUEST">Public request</option>
+              <option value="OWNER_INVITE">Owner invite</option>
+            </select>
+          </div>
+          <div className="flex items-end gap-2">
+            <button type="submit" className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white">
+              Apply
+            </button>
+            <Link href="/admin/collaborators" className="rounded-md border px-3 py-2 text-sm">
+              Reset
+            </Link>
+          </div>
+        </form>
+      </section>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Community Access Map</h2>
@@ -194,6 +331,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                   href={buildQueryString({
                     communityPage: Math.max(1, communityPage - 1),
                     requestPage,
+                    city: citySlug || undefined,
+                    q: query || undefined,
+                    access,
+                    source,
                   })}
                   className={`rounded-md border px-3 py-1.5 text-sm ${communityPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
                 >
@@ -206,6 +347,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                   href={buildQueryString({
                     communityPage: Math.min(communityTotalPages, communityPage + 1),
                     requestPage,
+                    city: citySlug || undefined,
+                    q: query || undefined,
+                    access,
+                    source,
                   })}
                   className={`rounded-md border px-3 py-1.5 text-sm ${communityPage >= communityTotalPages ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
                 >
@@ -299,6 +444,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                   href={buildQueryString({
                     communityPage,
                     requestPage: Math.max(1, requestPage - 1),
+                    city: citySlug || undefined,
+                    q: query || undefined,
+                    access,
+                    source,
                   })}
                   className={`rounded-md border px-3 py-1.5 text-sm ${requestPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
                 >
@@ -311,6 +460,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                   href={buildQueryString({
                     communityPage,
                     requestPage: Math.min(requestTotalPages, requestPage + 1),
+                    city: citySlug || undefined,
+                    q: query || undefined,
+                    access,
+                    source,
                   })}
                   className={`rounded-md border px-3 py-1.5 text-sm ${requestPage >= requestTotalPages ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
                 >
