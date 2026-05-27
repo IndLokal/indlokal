@@ -10,7 +10,7 @@
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
 import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
-import { PIPELINE_USER_AGENT } from './http';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
 
 function parseHttpUrl(rawUrl: string): URL | null {
@@ -127,6 +127,7 @@ function getExpansionSourceTypes(): Set<string> {
 }
 
 function shouldExpandPinnedUrl(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
+  if (strategy.sourceType === 'DB_COMMUNITY') return true;
   if (process.env.PIPELINE_PINNED_LINK_EXPANSION !== '1') return false;
   const allowedSourceTypes = getExpansionSourceTypes();
   if (allowedSourceTypes.size === 0) return false;
@@ -176,13 +177,13 @@ function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
 }
 
 async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url: string) {
-  const res = await fetch(url, {
+  const res = await fetchTextWithFallback(url, {
     headers: { 'User-Agent': PIPELINE_USER_AGENT },
-    signal: AbortSignal.timeout(10_000),
+    timeoutMs: 10_000,
   });
   if (!res.ok) return null;
 
-  const rawHtml = await res.text();
+  const rawHtml = res.text;
   const html = stripHtmlTagBlocks(rawHtml, ['script', 'style']);
   const imageUrls = extractImageUrls(html, url).slice(0, 5);
   const text = collapseWhitespace(decodeHtmlEntities(htmlToText(html))).slice(0, 15_000);
@@ -228,9 +229,9 @@ export async function fetchEventbriteKeywords(
       // Only return future events - no point queuing things that have already happened
       url.searchParams.set('start_date.range_start', new Date().toISOString());
 
-      const res = await fetch(url.toString(), {
+      const res = await fetchTextWithFallback(url.toString(), {
         headers: { Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(15_000),
+        timeoutMs: 15_000,
       });
 
       if (!res.ok) {
@@ -238,7 +239,7 @@ export async function fetchEventbriteKeywords(
         continue;
       }
 
-      const data = (await res.json()) as {
+      const data = JSON.parse(res.text) as {
         events?: Array<{
           id: string;
           name?: { text?: string };
@@ -302,20 +303,20 @@ export async function fetchPinnedUrl(
       ? strategy.url.replace('www.facebook.com', 'm.facebook.com')
       : strategy.url;
 
-    const res = await fetch(fetchUrl, {
+    const res = await fetchTextWithFallback(fetchUrl, {
       headers: {
         'User-Agent': isFacebook
           ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
           : PIPELINE_USER_AGENT,
       },
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
     });
 
     if (!res.ok) {
       return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
     }
 
-    const rawHtml = await res.text();
+    const rawHtml = res.text;
 
     // Strip script/style blocks before text extraction. Their contents are
     // mostly noise for extraction and can drown useful page signals.
@@ -441,16 +442,14 @@ export async function fetchGoogleSearch(
       url.searchParams.set('q', query);
       url.searchParams.set('num', '10');
 
-      const res = await fetch(url.toString(), {
-        signal: AbortSignal.timeout(15_000),
-      });
+      const res = await fetchTextWithFallback(url.toString(), { timeoutMs: 15_000 });
 
       if (!res.ok) {
         errors.push(`Google CSE "${keyword}" in ${region.id}: HTTP ${res.status}`);
         continue;
       }
 
-      const data = (await res.json()) as {
+      const data = JSON.parse(res.text) as {
         items?: Array<{
           title?: string;
           link?: string;
@@ -513,11 +512,11 @@ export async function fetchDuckDuckGoSearch(
       const query = `${keyword} ${region.searchCenter}`;
       const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 
-      const res = await fetch(url, {
+      const res = await fetchTextWithFallback(url, {
         headers: {
           'User-Agent': PIPELINE_USER_AGENT,
         },
-        signal: AbortSignal.timeout(15_000),
+        timeoutMs: 15_000,
       });
 
       if (!res.ok) {
@@ -525,7 +524,7 @@ export async function fetchDuckDuckGoSearch(
         continue;
       }
 
-      const html = await res.text();
+      const html = res.text;
 
       // Parse DDG HTML results: extract uddg-encoded URLs and their surrounding text
       // DDG result links contain uddg= parameter with percent-encoded real URL

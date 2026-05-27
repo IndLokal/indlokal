@@ -307,6 +307,8 @@ export async function getDbCommunityStrategies(): Promise<
           label: `${community.name} (Meetup events)`,
           url: eventsUrl,
           hintCitySlug: community.city.slug,
+          hintCommunityId: community.id,
+          hintCommunityName: community.name,
           enabled: true,
         });
       } else {
@@ -318,6 +320,8 @@ export async function getDbCommunityStrategies(): Promise<
           label: `${community.name} (website)`,
           url: channel.url,
           hintCitySlug: community.city.slug,
+          hintCommunityId: community.id,
+          hintCommunityName: community.name,
           enabled: true,
         });
 
@@ -366,6 +370,8 @@ export async function getDbCommunityStrategies(): Promise<
         label: `${job.community.name} (${new URL(eventUrl).pathname})`,
         url: eventUrl,
         hintCitySlug: job.community.city.slug,
+        hintCommunityId: job.community.id,
+        hintCommunityName: job.community.name,
         enabled: true,
       });
     }

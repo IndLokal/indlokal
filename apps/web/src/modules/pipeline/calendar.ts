@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { PIPELINE_USER_AGENT } from './http';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { decodeHtmlEntities } from './text';
 import type { ExtractedEvent, RawContent } from './types';
 
@@ -341,9 +341,9 @@ export async function fetchEmbeddedGoogleCalendarEvents(
       const alreadySynced = await hasCalendarFeedSyncedThisMonth(sourceType, feedUrl, triggeredBy);
       if (alreadySynced) continue;
 
-      const feedRes = await fetch(feedUrl, {
+      const feedRes = await fetchTextWithFallback(feedUrl, {
         headers: { 'User-Agent': PIPELINE_USER_AGENT },
-        signal: AbortSignal.timeout(15_000),
+        timeoutMs: 15_000,
       });
 
       if (!feedRes.ok) {
@@ -351,7 +351,7 @@ export async function fetchEmbeddedGoogleCalendarEvents(
         continue;
       }
 
-      const ics = await feedRes.text();
+      const ics = feedRes.text;
       const events = parseGoogleCalendarIcsEvents(ics);
       for (const event of events) {
         items.push(toCalendarEventRawContent(sourceType, feedUrl, calendarId, event));

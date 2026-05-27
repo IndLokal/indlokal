@@ -4,7 +4,7 @@ import { Prisma, type RelationshipType } from '@prisma/client';
 import { callOpenAI } from './extraction';
 import { getRuntimeKeywordSeeds } from './runtime-config';
 import { htmlToText } from './text';
-import { PIPELINE_USER_AGENT } from './http';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import type { ExtractedCommunity } from './types';
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
@@ -125,12 +125,12 @@ function stripHtml(input: string): string {
 
 async function fetchSourceText(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url, {
+    const response = await fetchTextWithFallback(url, {
       headers: { 'User-Agent': PIPELINE_USER_AGENT },
-      signal: AbortSignal.timeout(15_000),
+      timeoutMs: 15_000,
     });
     if (!response.ok) return null;
-    const text = await response.text();
+    const text = response.text;
     const cleaned = stripHtml(text);
     return cleaned.slice(0, 12_000);
   } catch {

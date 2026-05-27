@@ -402,7 +402,9 @@ async function fetchAllSources(
     pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
-        (item as RawContent & { _hintCitySlug?: string })._hintCitySlug = strategy.hintCitySlug;
+        item._hintCitySlug = strategy.hintCitySlug;
+        item._hintCommunityId = strategy.hintCommunityId;
+        item._hintCommunityName = strategy.hintCommunityName;
       }
       console.log(`[Pipeline] ${strategy.id} → ${fetchResult.items.length} items`);
       return fetchResult;
@@ -542,7 +544,7 @@ async function resolveAndQueue(
   const hintedCitySlugs = [
     ...new Set(
       relevantItems
-        .map((item) => (item as RawContent & { _hintCitySlug?: string })._hintCitySlug)
+        .map((item) => item._hintCitySlug)
         .filter((slug): slug is string => typeof slug === 'string' && slug.trim().length > 0),
     ),
   ];
@@ -592,7 +594,7 @@ async function resolveAndQueue(
     }
 
     if (!cityId) {
-      const hint = (sourceRaw as RawContent & { _hintCitySlug?: string })._hintCitySlug;
+      const hint = sourceRaw._hintCitySlug;
       if (hint) {
         const match = cityBySlug.get(hint);
         if (match) cityId = match.id;
@@ -698,9 +700,9 @@ async function resolveAndQueue(
           : cityConflict
             ? cityConflictReason
             : undefined,
-        metadata:
-          isCityPending || cityConflict
-            ? ({
+        metadata: {
+          ...(isCityPending || cityConflict
+            ? {
                 cityResolution: {
                   status: isCityPending ? 'PENDING' : 'CORRECTED',
                   extractedCityName: item.cityName ?? null,
@@ -709,8 +711,18 @@ async function resolveAndQueue(
                     ? 'No city match found in configured cities/aliases.'
                     : (cityConflictReason ?? 'City conflict corrected from event signals.'),
                 },
-              } as Prisma.InputJsonValue)
-            : undefined,
+              }
+            : {}),
+          ...(sourceRaw._hintCommunityId || sourceRaw._hintCommunityName
+            ? {
+                sourceHints: {
+                  communityId: sourceRaw._hintCommunityId ?? null,
+                  communityName: sourceRaw._hintCommunityName ?? null,
+                  citySlug: sourceRaw._hintCitySlug ?? null,
+                },
+              }
+            : {}),
+        } as Prisma.InputJsonValue,
       },
       select: { id: true },
     });
@@ -726,7 +738,9 @@ async function resolveAndQueue(
 
     const autoApprove =
       queuedItem.type === 'EVENT'
-        ? { eligible: false, reason: 'event-admin-approval-required' }
+        ? sourceRaw.sourceType === 'DB_COMMUNITY' && !isCityPending && !cityConflict
+          ? { eligible: true, reason: 'trusted-db-community-event' }
+          : { eligible: false, reason: 'event-admin-approval-required' }
         : shouldAutoApprovePipelineItem({
             item: { ...queuedItem, confidence },
             sourceType: sourceRaw.sourceType as PipelineSourceType,

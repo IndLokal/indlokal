@@ -5,6 +5,80 @@ import slugify from 'slugify';
 import type { SourceReliabilityStat } from './reliability';
 import type { ExtractedCommunity, ExtractedData, ExtractedEvent } from './types';
 
+const COMMUNITY_MATCH_STOPWORDS = new Set([
+  'community',
+  'commmunity',
+  'stuttgart',
+  'munich',
+  'muenchen',
+  'frankfurt',
+  'berlin',
+  'karlsruhe',
+  'mannheim',
+  'heidelberg',
+  'germany',
+  'deutschland',
+  'e',
+  'v',
+  'ev',
+  'verein',
+  'association',
+  'group',
+  'community',
+]);
+
+function normalizeMatchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/ä/g, 'ae')
+    .replace(/ö/g, 'oe')
+    .replace(/ü/g, 'ue')
+    .replace(/ß/g, 'ss')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function compactMatchText(value: string): string {
+  return normalizeMatchText(value).replace(/\s+/g, '');
+}
+
+function tokenizeMatchText(value: string): string[] {
+  return normalizeMatchText(value)
+    .split(' ')
+    .map((token) => token.trim())
+    .filter((token) => token.length > 2 && !COMMUNITY_MATCH_STOPWORDS.has(token));
+}
+
+function scoreCommunityMatch(event: ExtractedEvent, communityName: string): number {
+  const eventText = [event.title, event.hostCommunity ?? '', event.venueName ?? ''].join(' ');
+  const eventCompact = compactMatchText(eventText);
+  const communityCompact = compactMatchText(communityName);
+  if (!eventCompact || !communityCompact) return 0;
+
+  let score = 0;
+  if (eventCompact.includes(communityCompact) || communityCompact.includes(eventCompact)) {
+    score += 6;
+  }
+
+  const eventTokens = new Set(tokenizeMatchText(eventText));
+  const communityTokens = tokenizeMatchText(communityName);
+  let overlap = 0;
+  for (const token of communityTokens) {
+    if (eventTokens.has(token)) overlap += 1;
+  }
+
+  score += overlap * 2;
+
+  if (event.hostCommunity) {
+    const hostCompact = compactMatchText(event.hostCommunity);
+    if (hostCompact && communityCompact.includes(hostCompact)) score += 4;
+    if (hostCompact && hostCompact.includes(communityCompact)) score += 4;
+  }
+
+  return score;
+}
+
 export function shouldAutoApprovePipelineItem(input: {
   item: ExtractedData;
   sourceType: PipelineSourceType;
@@ -88,7 +162,11 @@ function buildAccessChannels(community: ExtractedCommunity): Array<{
   return channels;
 }
 
-async function createEventFromExtraction(event: ExtractedEvent, cityId: string): Promise<string> {
+async function createEventFromExtraction(
+  event: ExtractedEvent,
+  cityId: string,
+  preferredCommunityId?: string,
+): Promise<string> {
   const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
     const parsed = new Date(`${dateStr}T${timeStr}:00`);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
@@ -115,8 +193,30 @@ async function createEventFromExtraction(event: ExtractedEvent, cityId: string):
     }
   }
 
+  const candidateCommunities = await db.community.findMany({
+    where: { cityId, mergedIntoId: null },
+    select: { id: true, name: true },
+  });
+
   let communityId: string | undefined;
-  if (event.hostCommunity) {
+  let bestCommunityScore = 0;
+  for (const candidate of candidateCommunities) {
+    const score = scoreCommunityMatch(event, candidate.name);
+    if (score > bestCommunityScore) {
+      bestCommunityScore = score;
+      communityId = candidate.id;
+    }
+  }
+
+  if (!communityId && preferredCommunityId) {
+    const preferred = await db.community.findFirst({
+      where: { id: preferredCommunityId, cityId, mergedIntoId: null },
+      select: { id: true },
+    });
+    communityId = preferred?.id;
+  }
+
+  if (!communityId && event.hostCommunity) {
     const match = await db.community.findFirst({
       where: {
         cityId,
@@ -281,6 +381,18 @@ export async function approvePipelineItemRecord(
   const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
   let createdEntityId: string;
   let contentLogAction: 'CREATED' | 'UPDATED' = 'CREATED';
+  const metadata =
+    item.metadata && typeof item.metadata === 'object' && !Array.isArray(item.metadata)
+      ? (item.metadata as Record<string, unknown>)
+      : null;
+  const sourceHints =
+    metadata && typeof metadata.sourceHints === 'object' && metadata.sourceHints
+      ? (metadata.sourceHints as Record<string, unknown>)
+      : null;
+  const hintedCommunityId =
+    sourceHints && typeof sourceHints.communityId === 'string'
+      ? sourceHints.communityId.trim() || undefined
+      : undefined;
 
   if (item.reviewKind === 'ENRICHMENT' && item.entityType === 'COMMUNITY' && item.targetEntityId) {
     createdEntityId = await applyCommunityEnrichmentSuggestion(
@@ -289,7 +401,11 @@ export async function approvePipelineItemRecord(
     );
     contentLogAction = 'UPDATED';
   } else if (item.entityType === 'EVENT') {
-    createdEntityId = await createEventFromExtraction(data as ExtractedEvent, item.cityId);
+    createdEntityId = await createEventFromExtraction(
+      data as ExtractedEvent,
+      item.cityId,
+      hintedCommunityId,
+    );
 
     const created = await db.event.findUnique({
       where: { id: createdEntityId },
