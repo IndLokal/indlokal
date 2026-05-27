@@ -47,13 +47,20 @@ export async function POST(req: NextRequest) {
     // Align "Run all enabled regions" with cron semantics: region-sharded
     // dispatch with per-shard lock/timeout behavior.
     if (!scope) {
-      if (!process.env.CRON_SECRET) {
-        throw new Error('CRON_SECRET is not configured; cannot dispatch sharded cron runs');
-      }
-
       const baseUrl = getBaseUrl(req);
-      if (!baseUrl) {
-        throw new Error('Cannot resolve APP_URL/Host for cron dispatch');
+      const canDispatch = Boolean(process.env.CRON_SECRET && baseUrl);
+
+      // Local/dev convenience: allow Run all to work without cron secrets by
+      // falling back to direct execution in-process.
+      if (!canDispatch) {
+        const result = await runPipeline('admin', undefined);
+        return NextResponse.json({
+          ok: true,
+          mode: 'direct',
+          scope: null,
+          result,
+          note: 'Cron dispatch unavailable; ran direct fallback.',
+        });
       }
 
       const dispatchRes = await fetch(`${baseUrl}/api/cron/pipeline/dispatch`, {
