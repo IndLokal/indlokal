@@ -20,6 +20,10 @@ vi.mock('@/lib/db', async (importOriginal) => {
   return { ...mod, db: testDb };
 });
 
+vi.mock('@/lib/email', () => ({
+  sendReportNotificationEmail: vi.fn(async () => undefined),
+}));
+
 import { POST } from '@/app/api/v1/reports/route';
 
 // ─── Setup ─────────────────────────────────────────────────────────────────
