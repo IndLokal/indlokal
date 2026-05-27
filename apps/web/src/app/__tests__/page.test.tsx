@@ -49,6 +49,6 @@ describe('HomePage', () => {
 
   it('renders the "Expanding across Germany" section', async () => {
     render(await HomePage());
-    expect(screen.getByText(/expanding across germany/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/expanding across germany/i).length).toBeGreaterThan(0);
   });
 });
