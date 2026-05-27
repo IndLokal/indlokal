@@ -13,7 +13,7 @@ export type CityFeedData = {
   /** Events for this week (or this month if sparse) */
   thisWeek: {
     events: EventListItem[];
-    expandedToMonth: boolean;
+    expandedTo30Days: boolean;
   };
 
   /** Top communities by activity score */

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { format, endOfWeek, endOfMonth } from 'date-fns';
+import { addDays, endOfWeek, format } from 'date-fns';
 import { db } from '@/lib/db';
 import { getEventsThisWeek } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
@@ -42,12 +42,12 @@ export default async function IndianEventsThisWeekPage({ params }: Props) {
   if (!cityRow || !cityRow.isActive) notFound();
 
   const cityName = cityRow.name;
-  const { events, expandedToMonth } = await getEventsThisWeek(city);
+  const { events, expandedTo30Days } = await getEventsThisWeek(city);
 
   const now = new Date();
-  const windowEnd = expandedToMonth ? endOfMonth(now) : endOfWeek(now, { weekStartsOn: 1 });
-  const windowLabel = expandedToMonth
-    ? `this month (until ${format(windowEnd, 'MMMM d')})`
+  const windowEnd = expandedTo30Days ? addDays(now, 30) : endOfWeek(now, { weekStartsOn: 1 });
+  const windowLabel = expandedTo30Days
+    ? `in the next 30 days (until ${format(windowEnd, 'MMMM d')})`
     : `this week (until ${format(windowEnd, 'EEEE, MMM d')})`;
 
   return (

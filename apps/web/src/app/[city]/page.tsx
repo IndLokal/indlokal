@@ -100,7 +100,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
       {/* This Week / Month */}
       <section className="space-y-5">
         <SectionHeader
-          title={thisWeek.expandedToMonth ? 'This Month' : 'This Week'}
+          title={thisWeek.expandedTo30Days ? 'Next 30 Days' : 'This Week'}
           action={{
             label: noUpcomingEvents
               ? hasUpcomingLater
@@ -122,11 +122,11 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
                   📆
                 </div>
                 <h3 className="text-foreground mt-4 text-lg font-semibold">
-                  Quiet month in {cityName}
+                  Quiet stretch in {cityName}
                 </h3>
                 <p className="text-muted mt-1 text-sm leading-relaxed">
                   {hasUpcomingLater
-                    ? `No major public events are listed for this month. ${counts.upcomingEvents} upcoming event${counts.upcomingEvents !== 1 ? 's are' : ' is'} already listed for the next months.`
+                    ? `No major public events are listed in the next 30 days. ${counts.upcomingEvents} upcoming event${counts.upcomingEvents !== 1 ? 's are' : ' is'} already listed for later dates.`
                     : 'No major public events are listed right now, but community activity continues through private meetups and ongoing groups.'}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2.5">
