@@ -68,7 +68,7 @@ export default async function AdminAmbassadorsPage() {
   const cityById = Object.fromEntries(recentCities.map((c) => [c.id, c.name]));
 
   return (
-    <div className="px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">City Ambassadors</h1>

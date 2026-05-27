@@ -76,7 +76,7 @@ export default async function AdminOutreachPage({
   );
 
   return (
-    <div className="px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>

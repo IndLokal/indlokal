@@ -83,7 +83,7 @@ export default async function DataHealthPage() {
   const ref = catTotal === 0 || cityActive === 0;
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Data Health</h1>
         <Link

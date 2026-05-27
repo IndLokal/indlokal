@@ -6,7 +6,7 @@ export const metadata = { title: 'Bulk Import - Admin' };
 
 export default function ImportPage() {
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Bulk Import</h1>
         <Link

@@ -19,7 +19,7 @@ export default async function EditCityPage({ params }: { params: Promise<{ slug:
   });
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Edit city - {city.name}</h1>
         <Link

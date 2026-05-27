@@ -40,7 +40,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
   const authorById = Object.fromEntries(authors.map((a) => [a.id, a.displayName ?? a.email]));
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center gap-2 text-sm">
         <Link href="/admin/outreach" className="text-muted hover:text-foreground">

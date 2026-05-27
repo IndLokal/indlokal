@@ -13,7 +13,7 @@ export default async function AdminCitiesPage() {
   const metros = cities.filter((c) => c.isMetroPrimary);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8">
+    <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cities</h1>
