@@ -2,23 +2,8 @@
 
 import { useActionState } from 'react';
 import Link from 'next/link';
+import { communityOptions } from '@indlokal/shared';
 import { editCommunityProfile, type EditProfileResult } from './actions';
-
-const LANGUAGES = [
-  'Hindi',
-  'Telugu',
-  'Tamil',
-  'Kannada',
-  'Malayalam',
-  'Bengali',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Odia',
-  'Urdu',
-  'English',
-  'German',
-];
 
 type Community = {
   name: string;
@@ -92,7 +77,7 @@ export default function EditProfileForm({ community }: { community: Community })
       <div>
         <p className="text-foreground block text-sm font-medium">Languages</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {LANGUAGES.map((lang) => (
+          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
             <label key={lang} className="flex items-center gap-2">
               <input
                 type="checkbox"

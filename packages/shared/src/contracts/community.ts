@@ -6,21 +6,11 @@ import { z } from 'zod';
 import { Cuid, IsoDateTime } from './common';
 import { CommunityStatus, ClaimState, CityRef, CategoryRef } from './discovery';
 import { TrustSignalType } from './events';
+import { CHANNEL_TYPE_VALUES } from '../config/community-options';
 
 // ─── Access channels ──────────────────────────────────────────────────────
 
-export const ChannelType = z.enum([
-  'WHATSAPP',
-  'TELEGRAM',
-  'WEBSITE',
-  'FACEBOOK',
-  'INSTAGRAM',
-  'EMAIL',
-  'MEETUP',
-  'YOUTUBE',
-  'LINKEDIN',
-  'OTHER',
-]);
+export const ChannelType = z.enum(CHANNEL_TYPE_VALUES);
 export type ChannelType = z.infer<typeof ChannelType>;
 
 export const AccessChannel = z.object({

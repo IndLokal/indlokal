@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { communityOptions } from '@indlokal/shared';
 import { updatePreferences, type PreferencesResult } from './actions';
 
 type City = { id: string; name: string; slug: string };
@@ -11,33 +12,6 @@ type Props = {
   currentPersonas: string[];
   currentLanguages: string[];
 };
-
-const PERSONA_OPTIONS = [
-  { value: 'student', label: 'Student' },
-  { value: 'family', label: 'Family / Parents' },
-  { value: 'professional', label: 'Professional' },
-  { value: 'newcomer', label: 'Newcomer (< 2 years in Germany)' },
-  { value: 'cultural', label: 'Cultural enthusiast' },
-  { value: 'religious', label: 'Religious / Spiritual' },
-  { value: 'sports', label: 'Sports & Fitness' },
-  { value: 'food', label: 'Food & Cooking' },
-];
-
-const LANGUAGES = [
-  'Hindi',
-  'Telugu',
-  'Tamil',
-  'Kannada',
-  'Malayalam',
-  'Bengali',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Odia',
-  'Urdu',
-  'English',
-  'German',
-];
 
 export function PreferencesForm({
   cities,
@@ -77,19 +51,19 @@ export function PreferencesForm({
         <p className="text-foreground text-sm font-medium">I identify as</p>
         <p className="text-muted mt-0.5 text-xs">Select all that apply</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {PERSONA_OPTIONS.map((p) => (
+          {communityOptions.PERSONA_SEGMENT_VALUES.map((persona) => (
             <label
-              key={p.value}
+              key={persona}
               className="border-border hover:bg-muted-bg flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <input
                 type="checkbox"
                 name="personaSegments"
-                value={p.value}
-                defaultChecked={currentPersonas.includes(p.value)}
+                value={persona}
+                defaultChecked={currentPersonas.includes(persona)}
                 className="accent-brand-500"
               />
-              {p.label}
+              {communityOptions.PERSONA_SEGMENT_LABELS[persona]}
             </label>
           ))}
         </div>
@@ -99,7 +73,7 @@ export function PreferencesForm({
       <div>
         <p className="text-foreground text-sm font-medium">My Languages</p>
         <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {LANGUAGES.map((lang) => (
+          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
             <label
               key={lang}
               className="border-border hover:bg-muted-bg flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-sm"

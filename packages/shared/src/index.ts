@@ -20,4 +20,5 @@ export * as search from './contracts/search';
 export * as submit from './contracts/submit';
 export * as resources from './contracts/resources';
 export * as resourceCategories from './config/resource-categories';
+export * as communityOptions from './config/community-options';
 export * as content from './content';

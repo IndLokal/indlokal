@@ -1,20 +1,8 @@
 'use client';
 
 import { useActionState } from 'react';
+import { communityOptions } from '@indlokal/shared';
 import { addChannel, deleteChannel, type ChannelResult } from './actions';
-
-const CHANNEL_OPTIONS = [
-  { value: 'WHATSAPP', label: '💬 WhatsApp' },
-  { value: 'TELEGRAM', label: '✈️ Telegram' },
-  { value: 'WEBSITE', label: '🌐 Website' },
-  { value: 'FACEBOOK', label: '📘 Facebook' },
-  { value: 'INSTAGRAM', label: '📸 Instagram' },
-  { value: 'EMAIL', label: '✉️ Email' },
-  { value: 'MEETUP', label: '🤝 Meetup' },
-  { value: 'YOUTUBE', label: '▶️ YouTube' },
-  { value: 'LINKEDIN', label: '💼 LinkedIn' },
-  { value: 'OTHER', label: '🔗 Other' },
-];
 
 type Channel = {
   id: string;
@@ -103,9 +91,10 @@ export default function ChannelsForm({ channels }: Props) {
                 className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               >
                 <option value="">Select...</option>
-                {CHANNEL_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
+                {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                  <option key={channelType} value={channelType}>
+                    {communityOptions.CHANNEL_TYPE_ICONS[channelType]}{' '}
+                    {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
                   </option>
                 ))}
               </select>

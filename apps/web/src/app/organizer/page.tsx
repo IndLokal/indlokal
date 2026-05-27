@@ -1,21 +1,8 @@
 import Link from 'next/link';
-import { content } from '@indlokal/shared';
+import { content, communityOptions } from '@indlokal/shared';
 import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { ContentCallout } from '@/components/content/community-actions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
-
-const CHANNEL_ICONS: Record<string, string> = {
-  WHATSAPP: '💬',
-  TELEGRAM: '✈️',
-  WEBSITE: '🌐',
-  FACEBOOK: '📘',
-  INSTAGRAM: '📸',
-  EMAIL: '✉️',
-  MEETUP: '🤝',
-  YOUTUBE: '▶️',
-  LINKEDIN: '💼',
-  OTHER: '🔗',
-};
 
 export default async function OrganizerDashboardPage() {
   const user = await requireSessionUser();
@@ -151,7 +138,10 @@ export default async function OrganizerDashboardPage() {
                   rel="noopener noreferrer"
                   className="border-border text-foreground hover:bg-muted-bg inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-1.5 text-sm transition-colors"
                 >
-                  {CHANNEL_ICONS[ch.channelType] ?? '🔗'} {ch.label ?? ch.channelType}
+                  {communityOptions.CHANNEL_TYPE_ICONS[
+                    ch.channelType as communityOptions.CommunityChannelType
+                  ] ?? '🔗'}{' '}
+                  {ch.label ?? ch.channelType}
                   {ch.isPrimary && (
                     <span className="bg-brand-100 text-brand-600 rounded-full px-1.5 text-xs">
                       Primary

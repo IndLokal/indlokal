@@ -2,24 +2,13 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { communityOptions } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import type { ChannelType } from '@prisma/client';
 
 const addChannelSchema = z.object({
-  channelType: z.enum([
-    'WHATSAPP',
-    'TELEGRAM',
-    'WEBSITE',
-    'FACEBOOK',
-    'INSTAGRAM',
-    'EMAIL',
-    'MEETUP',
-    'YOUTUBE',
-    'LINKEDIN',
-    'OTHER',
-  ]),
+  channelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES),
   url: z.string().url('Please enter a valid URL'),
   label: z.string().max(100).optional().or(z.literal('')),
   isPrimary: z.coerce.boolean().default(false),
@@ -37,7 +26,8 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
   }
   const currentId = await getCurrentCommunityId();
   const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
+    user.claimedCommunities[0];
 
   const parsed = addChannelSchema.safeParse({
     channelType: formData.get('channelType'),
@@ -68,7 +58,7 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
       await db.accessChannel.create({
         data: {
           communityId: community.id,
-          channelType: channelType as ChannelType,
+          channelType,
           url,
           label: label || null,
           isPrimary,
@@ -89,7 +79,8 @@ export async function deleteChannel(formData: FormData) {
   if (!user || user.claimedCommunities.length === 0) return;
   const currentId = await getCurrentCommunityId();
   const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
+    user.claimedCommunities[0];
 
   const channelId = formData.get('channelId') as string;
   if (!channelId) return;

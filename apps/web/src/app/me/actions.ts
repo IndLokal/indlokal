@@ -1,37 +1,15 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { communityOptions } from '@indlokal/shared';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
 
 export type PreferencesResult = { success: true } | { success: false; error: string } | null;
 
-const VALID_PERSONAS = [
-  'student',
-  'family',
-  'professional',
-  'newcomer',
-  'cultural',
-  'religious',
-  'sports',
-  'food',
-];
-const VALID_LANGUAGES = [
-  'Hindi',
-  'Telugu',
-  'Tamil',
-  'Kannada',
-  'Malayalam',
-  'Bengali',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Odia',
-  'Urdu',
-  'English',
-  'German',
-];
+const VALID_PERSONAS = new Set(communityOptions.PERSONA_SEGMENT_VALUES);
+const VALID_LANGUAGES = new Set(communityOptions.COMMUNITY_LANGUAGE_VALUES);
 
 export async function updatePreferences(
   _prev: PreferencesResult,
@@ -42,10 +20,10 @@ export async function updatePreferences(
 
   const cityId = (formData.get('cityId') as string) || null;
   const personaSegments = (formData.getAll('personaSegments') as string[]).filter((p) =>
-    VALID_PERSONAS.includes(p),
+    VALID_PERSONAS.has(p as (typeof communityOptions.PERSONA_SEGMENT_VALUES)[number]),
   );
   const preferredLanguages = (formData.getAll('preferredLanguages') as string[]).filter((l) =>
-    VALID_LANGUAGES.includes(l),
+    VALID_LANGUAGES.has(l as (typeof communityOptions.COMMUNITY_LANGUAGE_VALUES)[number]),
   );
 
   return withAction(

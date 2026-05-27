@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useActionState } from 'react';
-import { content } from '@indlokal/shared';
+import { content, communityOptions } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
 import { ContentCallout } from '@/components/content/community-actions';
 
@@ -10,33 +10,6 @@ type Props = {
   cities: { slug: string; name: string }[];
   categories: { slug: string; name: string; icon: string | null }[];
 };
-
-const CHANNEL_OPTIONS = [
-  { value: 'WHATSAPP', label: 'WhatsApp' },
-  { value: 'TELEGRAM', label: 'Telegram' },
-  { value: 'WEBSITE', label: 'Website' },
-  { value: 'FACEBOOK', label: 'Facebook' },
-  { value: 'INSTAGRAM', label: 'Instagram' },
-  { value: 'EMAIL', label: 'Email' },
-  { value: 'MEETUP', label: 'Meetup' },
-  { value: 'OTHER', label: 'Other' },
-];
-
-const LANGUAGES = [
-  'Hindi',
-  'Telugu',
-  'Tamil',
-  'Kannada',
-  'Malayalam',
-  'Bengali',
-  'Marathi',
-  'Gujarati',
-  'Punjabi',
-  'Odia',
-  'Urdu',
-  'English',
-  'German',
-];
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors || errors.length === 0) return null;
@@ -154,7 +127,7 @@ export function SubmitForm({ cities, categories }: Props) {
         <legend className="text-foreground -ml-1 text-lg font-bold">Languages</legend>
         <p className="text-muted text-sm">Which languages are used in your community?</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {LANGUAGES.map((lang) => (
+          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
             <label
               key={lang}
               className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
@@ -181,9 +154,9 @@ export function SubmitForm({ cities, categories }: Props) {
               required
               className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
-              {CHANNEL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                <option key={channelType} value={channelType}>
+                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
                 </option>
               ))}
             </select>
@@ -206,9 +179,9 @@ export function SubmitForm({ cities, categories }: Props) {
               className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
             >
               <option value="">None</option>
-              {CHANNEL_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
+              {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                <option key={channelType} value={channelType}>
+                  {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
                 </option>
               ))}
             </select>
