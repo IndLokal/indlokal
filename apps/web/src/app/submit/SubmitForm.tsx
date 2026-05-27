@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import { useActionState, useMemo, useState } from 'react';
-import { content, communityOptions } from '@indlokal/shared';
+import { communityOptions } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
-import { ContentCallout } from '@/components/content/community-actions';
 
 type Props = {
   cities: { slug: string; name: string }[];
@@ -20,6 +19,7 @@ type ChannelDraft = {
 };
 
 const MAX_CHANNELS = 6;
+const INITIAL_CATEGORY_COUNT = 6;
 
 function FieldError({ errors }: { errors?: string[] }) {
   if (!errors || errors.length === 0) return null;
@@ -44,6 +44,8 @@ export function SubmitForm({ cities, categories }: Props) {
   const [selectedCitySlug, setSelectedCitySlug] = useState('');
   const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
   const [cityClientError, setCityClientError] = useState<string | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
+  const [expandedChannelLabelIds, setExpandedChannelLabelIds] = useState<number[]>([]);
   const [channels, setChannels] = useState<ChannelDraft[]>([
     {
       id: 1,
@@ -103,6 +105,10 @@ export function SubmitForm({ cities, categories }: Props) {
       .slice(0, 12);
   }, [cities, cityQuery]);
 
+  const visibleCategories = showAllCategories
+    ? categories
+    : categories.slice(0, INITIAL_CATEGORY_COUNT);
+
   const syncCitySelection = (value: string) => {
     const normalized = value.trim().toLowerCase();
     const exact = cities.find((city) => {
@@ -141,7 +147,7 @@ export function SubmitForm({ cities, categories }: Props) {
   return (
     <form
       action={formAction}
-      className="space-y-8"
+      className="space-y-6"
       onSubmit={(event) => {
         if (!selectedCitySlug) {
           event.preventDefault();
@@ -151,31 +157,71 @@ export function SubmitForm({ cities, categories }: Props) {
     >
       <FormError errors={errors._} />
 
-      <ContentCallout
-        title={content.COMMUNITY_ACTION_COPY.submitFormHint}
-        body={content.COMMUNITY_ACTION_COPY.submitFormBody}
-      />
-      <p className="text-muted text-sm">
-        Fields marked * are required. This usually takes 2-3 minutes.
-      </p>
-
       {/* Community details */}
-      <fieldset className="card-base space-y-5 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">Community Details</legend>
+      <fieldset className="card-base space-y-4 p-4 sm:p-5">
+        <legend className="text-foreground -ml-1 text-base font-bold">Community Details</legend>
 
-        <div>
-          <label htmlFor="name" className="text-foreground block text-sm font-medium">
-            Community Name *
-          </label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            required
-            className="input-base mt-1"
-            placeholder="e.g. Telugu Association Stuttgart"
-          />
-          <FieldError errors={errors.name} />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="name" className="text-foreground block text-sm font-medium">
+              Community Name *
+            </label>
+            <input
+              id="name"
+              name="name"
+              type="text"
+              required
+              className="input-base mt-1"
+              placeholder="e.g. Telugu Association Stuttgart"
+            />
+            <FieldError errors={errors.name} />
+          </div>
+
+          <div>
+            <label htmlFor="citySlug" className="text-foreground block text-sm font-medium">
+              City *
+            </label>
+            <div className="relative mt-1">
+              <input
+                id="citySlug"
+                type="text"
+                value={cityQuery}
+                autoComplete="off"
+                placeholder="Search city by name"
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setCityQuery(value);
+                  syncCitySelection(value);
+                  setCityClientError(null);
+                }}
+                onFocus={() => setIsCityMenuOpen(true)}
+                onBlur={() => {
+                  setIsCityMenuOpen(false);
+                  syncCitySelection(cityQuery);
+                }}
+                className="input-base"
+              />
+
+              {isCityMenuOpen && filteredCities.length > 0 && (
+                <div className="border-border mt-1 max-h-56 w-full overflow-y-auto rounded-[var(--radius-button)] border bg-white shadow-sm">
+                  {filteredCities.map((city) => (
+                    <button
+                      key={city.slug}
+                      type="button"
+                      onMouseDown={(event) => event.preventDefault()}
+                      onClick={() => handleCityPick(city)}
+                      className="hover:bg-brand-50 block w-full px-3 py-2 text-left text-sm"
+                    >
+                      <span className="text-foreground">{city.name}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <input type="hidden" name="citySlug" value={selectedCitySlug} />
+            {cityClientError ? <FieldError errors={[cityClientError]} /> : null}
+            <FieldError errors={errors.citySlug} />
+          </div>
         </div>
 
         <div>
@@ -192,60 +238,14 @@ export function SubmitForm({ cities, categories }: Props) {
           />
           <FieldError errors={errors.description} />
         </div>
-
-        <div>
-          <label htmlFor="citySlug" className="text-foreground block text-sm font-medium">
-            City *
-          </label>
-          <div className="relative mt-1">
-            <input
-              id="citySlug"
-              type="text"
-              value={cityQuery}
-              autoComplete="off"
-              placeholder="Search city by name"
-              onChange={(event) => {
-                const value = event.target.value;
-                setCityQuery(value);
-                syncCitySelection(value);
-                setCityClientError(null);
-              }}
-              onFocus={() => setIsCityMenuOpen(true)}
-              onBlur={() => {
-                setIsCityMenuOpen(false);
-                syncCitySelection(cityQuery);
-              }}
-              className="input-base"
-            />
-
-            {isCityMenuOpen && filteredCities.length > 0 && (
-              <div className="border-border mt-1 max-h-56 w-full overflow-y-auto rounded-[var(--radius-button)] border bg-white shadow-sm">
-                {filteredCities.map((city) => (
-                  <button
-                    key={city.slug}
-                    type="button"
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => handleCityPick(city)}
-                    className="hover:bg-brand-50 block w-full px-3 py-2 text-left text-sm"
-                  >
-                    <span className="text-foreground">{city.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <input type="hidden" name="citySlug" value={selectedCitySlug} />
-          {cityClientError ? <FieldError errors={[cityClientError]} /> : null}
-          <FieldError errors={errors.citySlug} />
-        </div>
       </fieldset>
 
-      {/* Categories */}
-      <fieldset className="card-base space-y-4 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">Categories *</legend>
+      {/* Categories + Languages */}
+      <fieldset className="card-base space-y-4 p-4 sm:p-5">
+        <legend className="text-foreground -ml-1 text-base font-bold">Categories *</legend>
         <p className="text-muted text-sm">Select at least one that fits your community.</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {categories.map((cat) => (
+          {visibleCategories.map((cat) => (
             <label
               key={cat.slug}
               className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
@@ -262,94 +262,135 @@ export function SubmitForm({ cities, categories }: Props) {
             </label>
           ))}
         </div>
+        {categories.length > INITIAL_CATEGORY_COUNT && (
+          <button
+            type="button"
+            onClick={() => setShowAllCategories((prev) => !prev)}
+            className="text-brand-700 text-xs font-medium hover:underline"
+          >
+            {showAllCategories ? 'Show fewer categories' : 'Show all categories'}
+          </button>
+        )}
         <FieldError errors={errors.categories} />
-      </fieldset>
 
-      {/* Languages */}
-      <fieldset className="card-base space-y-4 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">Languages</legend>
-        <p className="text-muted text-sm">Which languages are used in your community?</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
-            <label
-              key={lang}
-              className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
-            >
-              <input type="checkbox" name="languages" value={lang} className="accent-brand-500" />
-              <span>{lang}</span>
-            </label>
-          ))}
-        </div>
+        <details className="group pt-1">
+          <summary className="text-foreground cursor-pointer text-sm font-medium">
+            Languages <span className="text-muted text-xs font-normal">(optional)</span>
+          </summary>
+          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
+              <label
+                key={lang}
+                className="border-border hover:bg-brand-50 hover:border-brand-200 has-[:checked]:bg-brand-50 has-[:checked]:border-brand-300 has-[:checked]:text-brand-700 flex cursor-pointer items-center gap-2 rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-all"
+              >
+                <input type="checkbox" name="languages" value={lang} className="accent-brand-500" />
+                <span>{lang}</span>
+              </label>
+            ))}
+          </div>
+        </details>
       </fieldset>
 
       {/* Access Channels */}
-      <fieldset className="card-base space-y-5 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">Access Channels *</legend>
-        <p className="text-muted text-sm">
+      <fieldset className="card-base space-y-4 p-4 sm:p-5">
+        <legend className="text-foreground -ml-1 text-base font-bold">Access Channels *</legend>
+        <p className="text-muted text-xs">
           Add where people can join or follow your community. Max {MAX_CHANNELS} links.
         </p>
         <div className="space-y-3">
           {channels.map((channel, index) => (
             <div
               key={channel.id}
-              className="border-border rounded-[var(--radius-button)] border p-4"
+              className="border-border rounded-[var(--radius-button)] border p-3"
             >
-              <div className="mb-2 flex items-center justify-between">
-                <p className="text-muted text-sm font-medium">Channel {index + 1}</p>
-                {channels.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeChannelRow(channel.id)}
-                    className="text-xs font-medium text-red-600 hover:underline"
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
+              {(() => {
+                const isLabelExpanded = expandedChannelLabelIds.includes(channel.id);
+                const showAdvancedFields =
+                  channels.length > 1 || Boolean(channel.label) || isLabelExpanded;
 
-              <div className="grid gap-3 sm:grid-cols-[180px,1fr]">
-                <select
-                  value={channel.channelType}
-                  onChange={(e) =>
-                    updateChannel(channel.id, {
-                      channelType: e.target.value as ChannelDraft['channelType'],
-                    })
-                  }
-                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-                >
-                  {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
-                    <option key={channelType} value={channelType}>
-                      {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
-                    </option>
-                  ))}
-                </select>
-                <input
-                  type="url"
-                  value={channel.url}
-                  onChange={(e) => updateChannel(channel.id, { url: e.target.value })}
-                  placeholder="https://..."
-                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-                />
-              </div>
+                return (
+                  <>
+                    <div className="mb-2 flex items-center justify-between">
+                      <p className="text-muted text-sm font-medium">Channel {index + 1}</p>
+                      {channels.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeChannelRow(channel.id)}
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
 
-              <div className="mt-3 grid gap-3 sm:grid-cols-[1fr,180px]">
-                <input
-                  type="text"
-                  value={channel.label}
-                  onChange={(e) => updateChannel(channel.id, { label: e.target.value })}
-                  placeholder="Optional label (e.g. Join on Telegram)"
-                  className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-                />
-                <label className="text-foreground flex items-center gap-2 text-sm">
-                  <input
-                    type="radio"
-                    checked={channel.isPrimary}
-                    onChange={() => setPrimary(channel.id)}
-                    className="accent-brand-500"
-                  />
-                  Set as primary
-                </label>
-              </div>
+                    <div className="grid gap-3 sm:grid-cols-[180px,1fr]">
+                      <select
+                        value={channel.channelType}
+                        onChange={(e) =>
+                          updateChannel(channel.id, {
+                            channelType: e.target.value as ChannelDraft['channelType'],
+                          })
+                        }
+                        className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                      >
+                        {communityOptions.CHANNEL_TYPE_VALUES.map((channelType) => (
+                          <option key={channelType} value={channelType}>
+                            {communityOptions.CHANNEL_TYPE_LABELS[channelType]}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        type="url"
+                        value={channel.url}
+                        onChange={(e) => updateChannel(channel.id, { url: e.target.value })}
+                        placeholder="https://..."
+                        className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                      />
+                    </div>
+
+                    {showAdvancedFields && (
+                      <div className="mt-3 grid gap-3 sm:grid-cols-[1fr,180px]">
+                        <input
+                          type="text"
+                          value={channel.label}
+                          onChange={(e) => updateChannel(channel.id, { label: e.target.value })}
+                          placeholder="Optional label (e.g. Join on Telegram)"
+                          className="border-border rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+                        />
+                        {channels.length > 1 ? (
+                          <label className="text-foreground flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              checked={channel.isPrimary}
+                              onChange={() => setPrimary(channel.id)}
+                              className="accent-brand-500"
+                            />
+                            Set as primary
+                          </label>
+                        ) : (
+                          <div className="text-muted flex items-center text-xs">
+                            Primary channel
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {channels.length === 1 && !channel.label && !isLabelExpanded && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedChannelLabelIds((prev) =>
+                            prev.includes(channel.id) ? prev : [...prev, channel.id],
+                          )
+                        }
+                        className="text-brand-700 mt-2 text-xs font-medium hover:underline"
+                      >
+                        Add optional label
+                      </button>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           ))}
         </div>
@@ -384,11 +425,11 @@ export function SubmitForm({ cities, categories }: Props) {
       </fieldset>
 
       {/* Contact Information */}
-      <fieldset className="card-base space-y-5 p-6">
-        <legend className="text-foreground -ml-1 text-lg font-bold">
+      <fieldset className="card-base space-y-4 p-4 sm:p-5">
+        <legend className="text-foreground -ml-1 text-base font-bold">
           Your Contact Information
         </legend>
-        <p className="text-muted text-sm">
+        <p className="text-muted text-xs">
           We&apos;ll use this to follow up about your submission. Not displayed publicly.
         </p>
 
