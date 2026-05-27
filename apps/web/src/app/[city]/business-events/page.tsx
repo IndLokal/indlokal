@@ -7,6 +7,7 @@ import { getUpcomingEvents } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -78,21 +79,12 @@ export default async function BusinessEventsPage({ params }: Props) {
         </div>
       )}
 
-      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
-        <Link
-          href={`/${city}/events`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          All events →
-        </Link>
-        <span className="text-border hidden sm:inline">|</span>
-        <Link
-          href={`/${city}/resources/business-setup`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          Business setup resources →
-        </Link>
-      </div>
+      <CitySubpageCrossLinks
+        links={[
+          { href: `/${city}/events`, label: 'All events →' },
+          { href: `/${city}/resources/business-setup`, label: 'Business setup resources →' },
+        ]}
+      />
     </div>
   );
 }

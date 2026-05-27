@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -131,25 +132,14 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {/* Cross-links */}
-      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
-        <span>
-          Don&apos;t see your community?{' '}
-          <Link
-            href={`/${city}/suggest`}
-            className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-          >
-            Suggest one →
-          </Link>
-        </span>
-        <span className="text-border hidden sm:inline">|</span>
-        <Link
-          href={`/${city}/events`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          Browse events →
-        </Link>
-      </div>
+      <CitySubpageCrossLinks
+        lead={{
+          text: "Don't see your community?",
+          href: `/${city}/suggest`,
+          label: 'Suggest one →',
+        }}
+        links={[{ href: `/${city}/events`, label: 'Browse events →' }]}
+      />
     </div>
   );
 }

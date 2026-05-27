@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 
 /**
  * Event Listing - all upcoming events in a city.
@@ -221,22 +222,12 @@ export default async function EventsPage({ params, searchParams }: Props) {
         </div>
       )}
 
-      {/* Cross-links */}
-      <div className="border-border/50 bg-muted-bg text-muted flex flex-wrap items-center justify-center gap-x-6 gap-y-2 rounded-[var(--radius-card)] border p-4 text-sm">
-        <Link
-          href={`/${city}/communities`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          Browse communities →
-        </Link>
-        <span className="text-border hidden sm:inline">|</span>
-        <Link
-          href={`/${city}/search`}
-          className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
-        >
-          Search everything →
-        </Link>
-      </div>
+      <CitySubpageCrossLinks
+        links={[
+          { href: `/${city}/communities`, label: 'Browse communities →' },
+          { href: `/${city}/search`, label: 'Search everything →' },
+        ]}
+      />
     </div>
   );
 }
