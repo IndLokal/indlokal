@@ -155,7 +155,9 @@ export default async function OrganizerDashboardPage() {
         </div>
       )}
 
-      <CollaboratorInviteCard />
+      <section id="collaborators" className="scroll-mt-24">
+        <CollaboratorInviteCard />
+      </section>
 
       {/* View public page */}
       <p className="text-muted text-sm">

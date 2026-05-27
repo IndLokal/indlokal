@@ -87,6 +87,12 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                     Community Links
                   </Link>
                   <Link
+                    href="/organizer#collaborators"
+                    className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
+                  >
+                    Collaborators
+                  </Link>
+                  <Link
                     href="/organizer/events/new"
                     className="text-brand-600 hover:bg-brand-50 hover:text-brand-700 ml-2 rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                   >
@@ -105,6 +111,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                       : []),
                     { href: '/organizer/edit', label: 'Community Profile' },
                     { href: '/organizer/channels', label: 'Community Links' },
+                    { href: '/organizer#collaborators', label: 'Collaborators' },
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },
                   ]}
                 />

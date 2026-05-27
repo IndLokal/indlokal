@@ -27,8 +27,8 @@ export default function AdminDashboardPage() {
         />
         <DashboardCard title="Claims" description="Review claim requests" href="/admin/claims" />
         <DashboardCard
-          title="Collaborators"
-          description="Review organizer collaborator access requests"
+          title="Organizer Access"
+          description="View organizers and collaborators by community, and review pending access"
           href="/admin/collaborators"
         />
         <DashboardCard
