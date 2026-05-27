@@ -15,6 +15,32 @@ export default function AdminDashboardPage() {
       <AdminPageHeader title="Admin Dashboard" description="Content management for IndLokal." />
 
       <DashboardSection
+        title="Data and Automation"
+        description="Catalog quality, ingestion, and ranking"
+        cards={[
+          {
+            title: 'Data Management',
+            description: 'Cities, categories, communities, events, resources, and import tools',
+            href: '/admin/data',
+            links: [
+              { label: 'Communities', href: '/admin/data/communities' },
+              { label: 'Events', href: '/admin/data/events' },
+              { label: 'Resources', href: '/admin/data/resources' },
+            ],
+          },
+          {
+            title: 'Automation Ops',
+            description: 'Pipeline review, scoring refresh, and merge operations',
+            href: '/admin/pipeline',
+            links: [
+              { label: 'Scoring', href: '/admin/scoring' },
+              { label: 'Merge Communities', href: '/admin/merge' },
+            ],
+          },
+        ]}
+      />
+
+      <DashboardSection
         title="Review Queues"
         description="Daily moderation and approval work"
         cards={[
@@ -55,32 +81,6 @@ export default function AdminDashboardPage() {
             description: 'Team permissions and ambassador performance in one place',
             href: '/admin/team',
             links: [{ label: 'Ambassador Stats', href: '/admin/ambassadors' }],
-          },
-        ]}
-      />
-
-      <DashboardSection
-        title="Data and Automation"
-        description="Catalog quality, ingestion, and ranking"
-        cards={[
-          {
-            title: 'Data Management',
-            description: 'Cities, categories, communities, events, resources, and import tools',
-            href: '/admin/data',
-            links: [
-              { label: 'Communities', href: '/admin/data/communities' },
-              { label: 'Events', href: '/admin/data/events' },
-              { label: 'Resources', href: '/admin/data/resources' },
-            ],
-          },
-          {
-            title: 'Automation Ops',
-            description: 'Pipeline review, scoring refresh, and merge operations',
-            href: '/admin/pipeline',
-            links: [
-              { label: 'Scoring', href: '/admin/scoring' },
-              { label: 'Merge Communities', href: '/admin/merge' },
-            ],
           },
         ]}
       />
