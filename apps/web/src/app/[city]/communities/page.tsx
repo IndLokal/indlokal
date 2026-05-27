@@ -6,6 +6,7 @@ import { getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
+import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -120,16 +121,13 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
 
       {/* Empty state for language filter */}
       {languageName && communities.length === 0 && (
-        <div className="border-border text-muted rounded-[var(--radius-card)] border border-dashed p-10 text-center">
-          <p className="text-lg">No {languageName} communities yet</p>
-          <p className="mt-1 text-sm">Check back soon or browse all {cityName} communities.</p>
-          <a
-            href={`/${city}/communities`}
-            className="btn-primary mt-4 inline-block px-4 py-2 text-sm"
-          >
-            Browse all communities
-          </a>
-        </div>
+        <CitySubpageEmptyState
+          title={`No ${languageName} communities yet`}
+          description={`Check back soon or browse all ${cityName} communities.`}
+          actions={[
+            { href: `/${city}/communities`, label: 'Browse all communities', variant: 'primary' },
+          ]}
+        />
       )}
 
       <CitySubpageCrossLinks

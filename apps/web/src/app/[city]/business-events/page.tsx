@@ -8,6 +8,7 @@ import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
+import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -60,23 +61,14 @@ export default async function BusinessEventsPage({ params }: Props) {
           ))}
         </div>
       ) : (
-        <div className="border-border rounded-xl border border-dashed p-10 text-center">
-          <p className="text-muted text-lg">No business events yet</p>
-          <p className="text-muted mt-1 text-sm">
-            Try the full events feed or browse active communities for upcoming updates.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
-            <Link href={`/${city}/events`} className="btn-primary inline-block px-4 py-2 text-sm">
-              View all events
-            </Link>
-            <Link
-              href={`/${city}/communities`}
-              className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
-            >
-              Browse communities
-            </Link>
-          </div>
-        </div>
+        <CitySubpageEmptyState
+          title="No business events yet"
+          description="Try the full events feed or browse active communities for upcoming updates."
+          actions={[
+            { href: `/${city}/events`, label: 'View all events', variant: 'primary' },
+            { href: `/${city}/communities`, label: 'Browse communities' },
+          ]}
+        />
       )}
 
       <CitySubpageCrossLinks
