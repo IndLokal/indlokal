@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useMemo, useState } from 'react';
+import { startTransition, useActionState, useMemo, useState } from 'react';
 import { communityOptions } from '@indlokal/shared';
 import { submitCommunity, type SubmitResult } from './actions';
 
@@ -156,7 +156,9 @@ export function SubmitForm({ cities, categories }: Props) {
 
         const form = event.currentTarget;
         const formData = new FormData(form);
-        formAction(formData);
+        startTransition(() => {
+          formAction(formData);
+        });
       }}
     >
       <FormError errors={errors._} />
