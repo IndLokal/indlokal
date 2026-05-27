@@ -1,14 +1,14 @@
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { AuditTable } from './AuditTable';
 import type { ContentLogAction } from '@prisma/client';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const metadata = { title: 'Audit Log - Admin' };
 export const dynamic = 'force-dynamic';
-
-const PAGE_SIZE = 50;
 
 export default async function AdminAuditPage({
   searchParams,
@@ -26,7 +26,7 @@ export default async function AdminAuditPage({
   const filterChangedBy = sp.changedBy ?? '';
   const filterFrom = sp.from ?? '';
   const filterTo = sp.to ?? '';
-  const page = Math.max(1, parseInt(sp.page ?? '1', 10));
+  const pagination = parseOffsetPagination(sp, { defaultPageSize: 50 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = {};
@@ -49,9 +49,9 @@ export default async function AdminAuditPage({
     db.contentLog.count({ where }),
     db.contentLog.findMany({
       where,
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
+      orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+      skip: pagination.skip,
+      take: pagination.take,
     }),
     // Operators for changedBy picker (anyone who has ever written a log)
     db.user.findMany({
@@ -65,7 +65,12 @@ export default async function AdminAuditPage({
     }),
   ]);
 
-  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount,
+    itemCount: logs.length,
+  });
 
   return (
     <AdminPage>
@@ -85,6 +90,8 @@ export default async function AdminAuditPage({
       />
 
       <form method="GET" className="mt-6">
+        <input type="hidden" name="page" value="1" />
+        <input type="hidden" name="pageSize" value={String(pagination.pageSize)} />
         <AdminFilterBar className="border-border">
           <AdminFilterItem label="Entity Type">
             <select
@@ -163,32 +170,11 @@ export default async function AdminAuditPage({
       {/* Table + drawer */}
       <AuditTable logs={logs} operators={operators} />
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex items-center justify-between text-sm">
-          <span className="text-muted">
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            {page > 1 && (
-              <a
-                href={`?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo, page: String(page - 1) }).toString()}`}
-                className="border-border text-muted hover:text-foreground rounded-lg border px-3 py-1.5 transition-colors"
-              >
-                ← Previous
-              </a>
-            )}
-            {page < totalPages && (
-              <a
-                href={`?${new URLSearchParams({ entityType: filterEntityType, entityId: filterEntityId, action: filterAction, changedBy: filterChangedBy, from: filterFrom, to: filterTo, page: String(page + 1) }).toString()}`}
-                className="border-border text-muted hover:text-foreground rounded-lg border px-3 py-1.5 transition-colors"
-              >
-                Next →
-              </a>
-            )}
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        className="mt-6"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
     </AdminPage>
   );
 }
