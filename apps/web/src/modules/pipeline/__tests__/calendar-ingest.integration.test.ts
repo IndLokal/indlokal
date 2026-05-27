@@ -227,6 +227,16 @@ const autumnEventsIcs = [
 let icsBody = juneEventIcs;
 
 describe('@db pipeline calendar ingestion integration', () => {
+  beforeEach(async () => {
+    // Safety cleanup for previous interrupted runs of this test fixture.
+    await db.city.deleteMany({
+      where: {
+        slug: { startsWith: 'stuttgart-calendar-' },
+        name: { startsWith: 'Stuttgart Calendar ' },
+      },
+    });
+  });
+
   beforeEach(async (ctx) => {
     hasPipelineItemsTable = await detectPipelineItemsTable();
     if (!hasPipelineItemsTable) {
@@ -296,6 +306,12 @@ describe('@db pipeline calendar ingestion integration', () => {
 
     await db.pipelineItem.deleteMany({
       where: { sourceUrl: { contains: `/calendar/ical/${encodedCalendarId}/public/basic.ics` } },
+    });
+    await db.city.deleteMany({
+      where: {
+        slug: { startsWith: 'stuttgart-calendar-' },
+        name: { startsWith: 'Stuttgart Calendar ' },
+      },
     });
     vi.restoreAllMocks();
     await db.$disconnect();
