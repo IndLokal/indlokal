@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { MobileNav } from '@/components/MobileNav';
 import { BrandLink } from '@/components/BrandLink';
+import { OrganizerNav } from '@/components/organizer/nav';
+import { buildOrganizerWorkspace, type OrganizerSessionCommunity } from '@/lib/organizer/workspace';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -11,107 +13,72 @@ export const metadata: Metadata = {
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();
 
-  // Resolve active community for workspace switcher display
   const currentCommunityId = user ? await getCurrentCommunityId() : null;
-  const activeCommunity = user
-    ? (user.claimedCommunities.find((c: { id: string }) => c.id === currentCommunityId) ??
-      user.claimedCommunities[0] ??
-      null)
+  const workspace = user
+    ? buildOrganizerWorkspace<OrganizerSessionCommunity>(user, currentCommunityId)
     : null;
-  const isMultiOrg = (user?.claimedCommunities.length ?? 0) > 1;
+  const activeCommunity = workspace?.community ?? null;
+  const activeRole = workspace?.role ?? null;
+  const isMultiOrg = workspace?.isMultiCommunity ?? false;
+  const accountLabel = user?.displayName ?? user?.email ?? 'Account';
+  const accountInitial = accountLabel.charAt(0).toUpperCase();
+
+  const navLinks = [
+    { href: '/organizer', label: 'Overview' },
+    { href: '/organizer/profile', label: 'Community Page' },
+    { href: '/organizer/links', label: 'Links' },
+    { href: '/organizer/collaborators', label: 'Team' },
+    { href: '/organizer/events', label: 'Events' },
+  ];
 
   return (
     <div className="bg-background flex min-h-screen flex-col">
-      <header className="border-border sticky top-0 z-40 border-b bg-white shadow-sm">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6">
+      <header className="border-border z-40 border-b bg-white shadow-sm">
+        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
             <BrandLink
               href="/"
               markSize={32}
               showName={false}
-              className="transition-opacity hover:opacity-80"
+              className="flex shrink-0 items-center transition-opacity hover:opacity-80"
             />
 
             {/* Workspace switcher - shows active community name + chevron for multi-org */}
             {activeCommunity ? (
-              isMultiOrg ? (
-                <Link
-                  href="/organizer/communities"
-                  className="text-foreground hover:text-brand-600 flex items-center gap-1.5 text-base font-bold tracking-tight transition-colors"
-                >
-                  {activeCommunity.name}
-                  <span className="text-muted text-sm">⌄</span>
-                </Link>
-              ) : (
-                <span className="text-foreground text-base font-bold tracking-tight">
-                  {activeCommunity.name}
+              <Link
+                href={isMultiOrg ? '/organizer/communities' : '/organizer'}
+                className="border-border hover:bg-muted-bg flex h-10 min-w-0 max-w-[220px] items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
+                aria-label={
+                  isMultiOrg ? 'Switch community workspace' : 'Current community workspace'
+                }
+              >
+                <span className="bg-brand-100 text-brand-700 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                  {activeCommunity.name.charAt(0)}
                 </span>
-              )
+                <span className="min-w-0">
+                  <span className="text-foreground block truncate text-[13px] font-semibold leading-4">
+                    {activeCommunity.name}
+                  </span>
+                  <span className="text-muted block truncate text-[11px] leading-3">
+                    {activeCommunity.city.name}
+                    {activeRole ? ` · ${activeRole === 'OWNER' ? 'Owner' : 'Collaborator'}` : ''}
+                  </span>
+                </span>
+                {isMultiOrg && <span className="text-muted ml-auto shrink-0 text-xs">⌄</span>}
+              </Link>
             ) : (
               <Link
                 href="/organizer"
-                className="text-foreground hover:text-brand-600 text-base font-bold tracking-tight transition-colors"
+                className="text-foreground hover:text-brand-600 text-sm font-semibold transition-colors"
               >
                 Organizer Home
               </Link>
             )}
-
             {user && (
-              <div className="ml-4 hidden items-center gap-2 sm:flex">
-                <div className="bg-border mr-2 h-5 w-px" />
-                <nav className="flex items-center gap-1 text-sm font-medium">
-                  <Link
-                    href="/organizer"
-                    className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                  >
-                    Overview
-                  </Link>
-                  {isMultiOrg && (
-                    <Link
-                      href="/organizer/communities"
-                      className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                    >
-                      Communities
-                    </Link>
-                  )}
-                  <Link
-                    href="/organizer/edit"
-                    className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                  >
-                    Community Profile
-                  </Link>
-                  <Link
-                    href="/organizer/channels"
-                    className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                  >
-                    Community Links
-                  </Link>
-                  <Link
-                    href="/organizer#collaborators"
-                    className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                  >
-                    Collaborators
-                  </Link>
-                  <Link
-                    href="/organizer/events/new"
-                    className="text-brand-600 hover:bg-brand-50 hover:text-brand-700 ml-2 rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-                  >
-                    + New Event
-                  </Link>
-                </nav>
-              </div>
-            )}
-            {user && (
-              <div className="ml-2 sm:hidden">
+              <div className="ml-1 sm:hidden">
                 <MobileNav
                   links={[
-                    { href: '/organizer', label: 'Overview' },
-                    ...(isMultiOrg
-                      ? [{ href: '/organizer/communities', label: 'Communities' }]
-                      : []),
-                    { href: '/organizer/edit', label: 'Community Profile' },
-                    { href: '/organizer/channels', label: 'Community Links' },
-                    { href: '/organizer#collaborators', label: 'Collaborators' },
+                    ...navLinks,
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },
                   ]}
                 />
@@ -121,19 +88,29 @@ export default async function OrganizerLayout({ children }: { children: React.Re
 
           <div className="flex items-center gap-4">
             {user ? (
-              <div className="border-border flex items-center gap-4 border-l pl-4">
-                <span className="text-muted bg-muted-bg border-border/50 hidden max-w-[200px] truncate rounded-[var(--radius-badge)] border px-2.5 py-1 text-sm font-medium sm:inline-block">
-                  {user.email}
-                </span>
-                <form action="/organizer/logout" method="POST">
-                  <button
-                    type="submit"
-                    className="text-muted hover:text-destructive text-sm font-medium transition-colors"
-                  >
-                    Log out
-                  </button>
-                </form>
-              </div>
+              <details className="group relative hidden sm:block">
+                <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
+                  <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
+                    {accountInitial}
+                  </span>
+                  <span className="text-muted hidden text-xs font-semibold lg:inline">Account</span>
+                  <span className="text-muted text-xs">⌄</span>
+                </summary>
+                <div className="border-border absolute right-0 mt-2 w-72 rounded-[var(--radius-card)] border bg-white p-3 shadow-lg">
+                  <p className="text-foreground truncate text-sm font-semibold">{accountLabel}</p>
+                  <p className="text-muted mt-0.5 truncate text-xs">{user.email}</p>
+                  <div className="border-border mt-3 border-t pt-3">
+                    <form action="/organizer/logout" method="POST">
+                      <button
+                        type="submit"
+                        className="hover:bg-muted-bg text-muted hover:text-destructive w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
+                      >
+                        Log out
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </details>
             ) : (
               <Link href="/organizer/login" className="btn-primary px-4 py-2 text-sm">
                 Login
@@ -141,9 +118,14 @@ export default async function OrganizerLayout({ children }: { children: React.Re
             )}
           </div>
         </div>
+        {user && (
+          <div className="border-border bg-muted-bg/35 hidden border-t sm:block">
+            <OrganizerNav links={navLinks} />
+          </div>
+        )}
       </header>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
         {children}
       </main>
     </div>
