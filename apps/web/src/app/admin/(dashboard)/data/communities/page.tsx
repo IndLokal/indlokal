@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { deleteCommunityAction, setCommunityStatusAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Communities - Admin' };
@@ -48,92 +50,73 @@ export default async function AdminCommunitiesPage({
     <AdminPage>
       <AdminPageHeader title="Communities" backHref="/admin/data" backLabel="Data" />
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
-        <label className="text-sm">
-          <div className="text-muted">Search</div>
-          <input
-            name="q"
-            defaultValue={sp.q ?? ''}
-            placeholder="name…"
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          />
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">City</div>
-          <select
-            name="city"
-            defaultValue={sp.city ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- all -</option>
-            {cities.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">Lifecycle Status</div>
-          <select
-            name="status"
-            defaultValue={sp.status ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- any -</option>
-            <option value="ACTIVE">Active</option>
-            <option value="INACTIVE">Inactive</option>
-            <option value="UNVERIFIED">Unverified</option>
-          </select>
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">Claim Status</div>
-          <select
-            name="claimState"
-            defaultValue={sp.claimState ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- any -</option>
-            <option value="UNCLAIMED">Unclaimed</option>
-            <option value="CLAIM_PENDING">Claim pending</option>
-            <option value="CLAIMED">Claimed</option>
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="bg-brand-600 hover:bg-brand-700 rounded-md px-3 py-1.5 text-sm text-white"
-        >
-          Filter
-        </button>
+      <form className="mt-6" method="get">
+        <AdminFilterBar className="border-border">
+          <AdminFilterItem label="Search">
+            <input
+              name="q"
+              defaultValue={sp.q ?? ''}
+              placeholder="name..."
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            />
+          </AdminFilterItem>
+          <AdminFilterItem label="City">
+            <select
+              name="city"
+              defaultValue={sp.city ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All cities</option>
+              {cities.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Lifecycle Status">
+            <select
+              name="status"
+              defaultValue={sp.status ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">Any status</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="UNVERIFIED">Unverified</option>
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Claim Status">
+            <select
+              name="claimState"
+              defaultValue={sp.claimState ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">Any claim state</option>
+              <option value="UNCLAIMED">Unclaimed</option>
+              <option value="CLAIM_PENDING">Claim pending</option>
+              <option value="CLAIMED">Claimed</option>
+            </select>
+          </AdminFilterItem>
+          <AdminFilterActions resetHref="/admin/data/communities" />
+        </AdminFilterBar>
       </form>
 
       <p className="text-muted mt-4 text-xs">{communities.length} shown (cap 200)</p>
 
-      <div className="border-border mt-3 overflow-hidden rounded-[var(--radius-card)] border">
-        <table className="w-full text-sm">
-          <thead className="border-border bg-muted-bg border-b text-left">
+      <AdminTableWrap className="mt-3">
+        <AdminTable>
+          <AdminTableHead>
             <tr>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Community
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                City
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Lifecycle Status
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Claim Status
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Events
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Channels
-              </th>
-              <th />
+              <AdminTh>Community</AdminTh>
+              <AdminTh>City</AdminTh>
+              <AdminTh>Lifecycle Status</AdminTh>
+              <AdminTh>Claim Status</AdminTh>
+              <AdminTh>Events</AdminTh>
+              <AdminTh>Channels</AdminTh>
+              <AdminTh>Actions</AdminTh>
             </tr>
-          </thead>
+          </AdminTableHead>
           <tbody>
             {communities.map((c) => (
               <tr key={c.id} className="border-border border-b last:border-b-0">
@@ -189,8 +172,8 @@ export default async function AdminCommunitiesPage({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </AdminTable>
+      </AdminTableWrap>
     </AdminPage>
   );
 }

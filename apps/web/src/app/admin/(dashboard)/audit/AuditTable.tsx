@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import type { ContentLog, ContentLogAction } from '@prisma/client';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 type Operator = { id: string; email: string; displayName: string | null };
 
@@ -59,28 +60,18 @@ export function AuditTable({ logs, operators }: Props) {
           <p className="text-muted text-sm">No audit records match these filters.</p>
         </div>
       ) : (
-        <div className="border-border mt-6 overflow-x-auto rounded-[var(--radius-card)] border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted-bg">
-              <tr className="border-border border-b">
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Action
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Entity type
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Entity ID
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Actor
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  When
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide"></th>
+        <AdminTableWrap className="mt-6">
+          <AdminTable>
+            <AdminTableHead>
+              <tr>
+                <AdminTh>Action</AdminTh>
+                <AdminTh>Entity type</AdminTh>
+                <AdminTh>Entity ID</AdminTh>
+                <AdminTh>Actor</AdminTh>
+                <AdminTh>When</AdminTh>
+                <AdminTh>Link</AdminTh>
               </tr>
-            </thead>
+            </AdminTableHead>
             <tbody className="divide-border divide-y">
               {logs.map((log) => (
                 <tr
@@ -124,8 +115,8 @@ export function AuditTable({ logs, operators }: Props) {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+        </AdminTableWrap>
       )}
 
       {/* Drawer */}

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { approveCollaboratorRequest, rejectCollaboratorRequest } from '../actions';
 
 export const metadata = { title: 'Collaborator Requests - Admin' };
@@ -176,19 +177,17 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         backHref="/admin"
       />
 
-      <section className="mt-8 rounded-[var(--radius-card)] border p-4">
-        <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5" method="GET">
-          <div>
-            <label className="text-muted mb-1 block text-xs font-medium">Search</label>
+      <form method="GET" className="mt-8">
+        <AdminFilterBar className="border-border">
+          <AdminFilterItem label="Search">
             <input
               name="q"
               defaultValue={query}
               placeholder="Community, slug, organizer email"
               className="border-border w-full rounded border px-3 py-2 text-sm"
             />
-          </div>
-          <div>
-            <label className="text-muted mb-1 block text-xs font-medium">City</label>
+          </AdminFilterItem>
+          <AdminFilterItem label="City">
             <select
               name="city"
               defaultValue={citySlug}
@@ -201,9 +200,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="text-muted mb-1 block text-xs font-medium">Access scope</label>
+          </AdminFilterItem>
+          <AdminFilterItem label="Access scope">
             <select
               name="access"
               defaultValue={access}
@@ -213,9 +211,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               <option value="CLAIMED">Claimed communities only</option>
               <option value="COLLABORATORS">Communities with collaborators</option>
             </select>
-          </div>
-          <div>
-            <label className="text-muted mb-1 block text-xs font-medium">Request source</label>
+          </AdminFilterItem>
+          <AdminFilterItem label="Request source">
             <select
               name="source"
               defaultValue={source}
@@ -225,17 +222,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               <option value="PUBLIC_REQUEST">Public request</option>
               <option value="OWNER_INVITE">Owner invite</option>
             </select>
-          </div>
-          <div className="flex items-end gap-2">
-            <button type="submit" className="rounded-md bg-slate-900 px-3 py-2 text-sm text-white">
-              Apply
-            </button>
-            <Link href="/admin/collaborators" className="rounded-md border px-3 py-2 text-sm">
-              Reset
-            </Link>
-          </div>
-        </form>
-      </section>
+          </AdminFilterItem>
+          <AdminFilterActions resetHref="/admin/collaborators" />
+        </AdminFilterBar>
+      </form>
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Community Access Map</h2>

@@ -3,6 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { startOfISOWeek } from 'date-fns';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const metadata = { title: 'Ambassadors - Admin' };
 
@@ -88,33 +89,19 @@ export default async function AdminAmbassadorsPage() {
           No active city ambassadors. Assign the CITY_AMBASSADOR role via the Team page.
         </p>
       ) : (
-        <div className="border-border overflow-x-auto rounded-[var(--radius-card)] border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-border border-b bg-gray-50">
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Ambassador
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  City
-                </th>
-                <th className="text-muted px-4 py-2 text-right text-xs font-medium uppercase tracking-wide">
-                  Submissions (wk)
-                </th>
-                <th className="text-muted px-4 py-2 text-right text-xs font-medium uppercase tracking-wide">
-                  Submissions (all)
-                </th>
-                <th className="text-muted px-4 py-2 text-right text-xs font-medium uppercase tracking-wide">
-                  Check-ins (wk)
-                </th>
-                <th className="text-muted px-4 py-2 text-right text-xs font-medium uppercase tracking-wide">
-                  Check-ins (all)
-                </th>
-                <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                  Granted
-                </th>
+        <AdminTableWrap>
+          <AdminTable>
+            <AdminTableHead>
+              <tr>
+                <AdminTh>Ambassador</AdminTh>
+                <AdminTh>City</AdminTh>
+                <AdminTh className="text-right">Submissions (wk)</AdminTh>
+                <AdminTh className="text-right">Submissions (all)</AdminTh>
+                <AdminTh className="text-right">Check-ins (wk)</AdminTh>
+                <AdminTh className="text-right">Check-ins (all)</AdminTh>
+                <AdminTh>Granted</AdminTh>
               </tr>
-            </thead>
+            </AdminTableHead>
             <tbody className="divide-border divide-y">
               {ambassadorAssignments.map((a) => {
                 const uid = a.userId;
@@ -153,8 +140,8 @@ export default async function AdminAmbassadorsPage() {
                 );
               })}
             </tbody>
-          </table>
-        </div>
+          </AdminTable>
+        </AdminTableWrap>
       )}
     </AdminPage>
   );
