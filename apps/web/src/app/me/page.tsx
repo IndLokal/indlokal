@@ -7,7 +7,7 @@ import { db } from '@/lib/db';
 import { PreferencesForm } from './PreferencesForm';
 
 export const metadata: Metadata = {
-  title: 'My Profile - IndLokal',
+  title: 'My Account - IndLokal',
   robots: { index: false },
 };
 
@@ -57,6 +57,37 @@ export default async function MePage() {
   ]);
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
+  const isAdminLike = user.role === 'PLATFORM_ADMIN' || user.role === 'OPS_LEAD';
+  const hasOrganizerAccess = isAdminLike || user.claimedCommunities.length > 0;
+  const hasAmbassadorAccess =
+    isAdminLike ||
+    user.roleAssignments.some(
+      (a: { role: string; revokedAt: Date | null }) => a.role === 'CITY_AMBASSADOR' && !a.revokedAt,
+    );
+  const hasHostAccess = user.role === 'EVENT_HOST' || user.role === 'PLATFORM_ADMIN';
+
+  type SavedCommunityItem = {
+    community: {
+      id: string;
+      name: string;
+      slug: string;
+      description: string | null;
+      logoUrl: string | null;
+      city: { name: string; slug: string };
+    };
+  };
+
+  type SavedEventItem = {
+    event: {
+      id: string;
+      title: string;
+      slug: string;
+      startsAt: Date;
+      venueName: string | null;
+      isOnline: boolean;
+      city: { name: string; slug: string };
+    };
+  };
 
   return (
     <div className="mx-auto max-w-3xl space-y-10 px-4 py-10">
@@ -80,6 +111,39 @@ export default async function MePage() {
           <p className="text-muted text-sm">{user.email}</p>
         </div>
       </div>
+
+      {/* Workspaces */}
+      <section>
+        <h2 className="text-xl font-semibold">Workspaces</h2>
+        <p className="text-muted mt-1 text-sm">
+          Personal settings and internal work tools are both available from here.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <Link href="/" className="btn-secondary px-4 py-2 text-sm">
+            Explore cities
+          </Link>
+          {hasOrganizerAccess && (
+            <Link href="/organizer" className="btn-secondary px-4 py-2 text-sm">
+              Organizer workspace →
+            </Link>
+          )}
+          {hasHostAccess && (
+            <Link href="/organizer/host" className="btn-secondary px-4 py-2 text-sm">
+              Event host workspace →
+            </Link>
+          )}
+          {hasAmbassadorAccess && (
+            <Link href="/ambassador" className="btn-secondary px-4 py-2 text-sm">
+              Ambassador workspace →
+            </Link>
+          )}
+          {isAdminLike && (
+            <Link href="/admin" className="btn-secondary px-4 py-2 text-sm">
+              Admin workspace →
+            </Link>
+          )}
+        </div>
+      </section>
 
       {/* Preferences */}
       <section>
@@ -112,7 +176,7 @@ export default async function MePage() {
           </p>
         ) : (
           <div className="mt-4 space-y-3">
-            {savedCommunities.map(({ community }) => (
+            {savedCommunities.map(({ community }: SavedCommunityItem) => (
               <Link
                 key={community.id}
                 href={`/${community.city.slug}/communities/${community.slug}`}
@@ -144,16 +208,6 @@ export default async function MePage() {
         )}
       </section>
 
-      {/* Quick links */}
-      <section className="flex flex-wrap gap-3 text-sm">
-        <Link href="/" className="btn-secondary px-4 py-2 text-sm">
-          Explore cities
-        </Link>
-        <Link href="/organizer/login" className="btn-secondary px-4 py-2 text-sm">
-          Organizer dashboard →
-        </Link>
-      </section>
-
       {/* Saved Events */}
       <section>
         <h2 className="text-xl font-semibold">Saved Events</h2>
@@ -161,7 +215,7 @@ export default async function MePage() {
           <p className="text-muted mt-3 text-sm">No saved events yet.</p>
         ) : (
           <div className="mt-4 space-y-3">
-            {savedEvents.map(({ event }) => (
+            {savedEvents.map(({ event }: SavedEventItem) => (
               <Link
                 key={event.id}
                 href={`/${event.city.slug}/events/${event.slug}`}
