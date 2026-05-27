@@ -1145,6 +1145,42 @@ async function checkCommunityDuplicate(
     };
   }
 
+  // Also treat merged/inactive aliases as duplicates, mapped to their
+  // canonical target. This prevents repeatedly re-queuing names that were
+  // already merged (e.g. legal-name variants ending in e.V.).
+  const mergedAliases = await db.community.findMany({
+    where: { cityId, mergedIntoId: { not: null } },
+    select: { name: true, mergedIntoId: true },
+  });
+
+  const normalizedIncomingAlias = community.name
+    .toLowerCase()
+    .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+
+  for (const alias of mergedAliases) {
+    const normalizedAlias = alias.name
+      .toLowerCase()
+      .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+    const score = computeSimilarity(normalizedIncomingAlias, normalizedAlias);
+    if (
+      score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD ||
+      (normalizedIncomingAlias.length >= 8 && normalizedIncomingAlias === normalizedAlias)
+    ) {
+      return {
+        isDuplicate: true,
+        matchedId: alias.mergedIntoId,
+        matchScore: score,
+        matchKind: 'ENTITY',
+      };
+    }
+  }
+
   const pendingCommunityItems = await db.pipelineItem.findMany({
     where: {
       cityId,
