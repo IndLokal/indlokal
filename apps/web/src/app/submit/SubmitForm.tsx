@@ -146,13 +146,17 @@ export function SubmitForm({ cities, categories }: Props) {
 
   return (
     <form
-      action={formAction}
       className="space-y-6"
       onSubmit={(event) => {
+        event.preventDefault();
         if (!selectedCitySlug) {
-          event.preventDefault();
           setCityClientError('Please select a city from the list.');
+          return;
         }
+
+        const form = event.currentTarget;
+        const formData = new FormData(form);
+        formAction(formData);
       }}
     >
       <FormError errors={errors._} />
