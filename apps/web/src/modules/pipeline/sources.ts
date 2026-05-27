@@ -23,14 +23,45 @@ function parseHttpUrl(rawUrl: string): URL | null {
   }
 }
 
-function getNonWwwVariantUrl(rawUrl: string): string | null {
-  const parsed = parseHttpUrl(rawUrl);
-  if (!parsed) return null;
-  if (!parsed.hostname.startsWith('www.')) return null;
+function shouldTryHomepageVariants(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
+  return strategy.sourceType === 'DB_COMMUNITY' && strategy.id.endsWith('-website');
+}
 
-  const next = new URL(parsed.toString());
-  next.hostname = parsed.hostname.replace(/^www\./, '');
-  return next.toString();
+function buildPinnedFetchAttemptUrls(
+  strategy: SearchStrategy & { kind: 'pinned_url' },
+  rawUrl: string,
+): string[] {
+  const parsed = parseHttpUrl(rawUrl);
+  if (!parsed) return [rawUrl];
+
+  // Only DB community homepage strategies get host/protocol fallback probing.
+  // All other pinned URLs (including discovered event sub-pages) should be
+  // fetched exactly as configured to avoid wasted retries.
+  if (!shouldTryHomepageVariants(strategy)) {
+    return [parsed.toString()];
+  }
+
+  const hasWww = parsed.hostname.startsWith('www.');
+  const bareHost = parsed.hostname.replace(/^www\./, '');
+  const hostVariants = hasWww ? [parsed.hostname, bareHost] : [parsed.hostname, `www.${bareHost}`];
+  const protocolVariants: Array<'https:' | 'http:'> =
+    parsed.protocol === 'https:' ? ['https:', 'http:'] : ['http:', 'https:'];
+
+  const urls: string[] = [];
+  const seen = new Set<string>();
+  for (const protocol of protocolVariants) {
+    for (const host of hostVariants) {
+      const next = new URL(parsed.toString());
+      next.protocol = protocol;
+      next.hostname = host;
+      const key = next.toString();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      urls.push(key);
+    }
+  }
+
+  return urls;
 }
 
 function isBlockedSearchHost(hostname: string): boolean {
@@ -317,11 +348,11 @@ export async function fetchPinnedUrl(
       ? 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.120 Mobile Safari/537.36'
       : PIPELINE_USER_AGENT;
 
-    const fallbackUrl = getNonWwwVariantUrl(fetchUrl);
-    const attemptUrls = fallbackUrl ? [fetchUrl, fallbackUrl] : [fetchUrl];
+    const attemptUrls = buildPinnedFetchAttemptUrls(strategy, fetchUrl);
     let effectiveFetchUrl = fetchUrl;
     let res = null as Awaited<ReturnType<typeof fetchTextWithFallback>> | null;
     let lastError: unknown = null;
+    const failedAttempts: string[] = [];
 
     for (const candidateUrl of attemptUrls) {
       try {
@@ -329,24 +360,22 @@ export async function fetchPinnedUrl(
           headers: { 'User-Agent': userAgent },
           timeoutMs: 15_000,
         });
-        res = candidateResult;
-        effectiveFetchUrl = candidateUrl;
+        if (candidateResult.ok) {
+          res = candidateResult;
+          effectiveFetchUrl = candidateUrl;
+          break;
+        }
 
-        // If the first candidate returned an HTTP status, don't mask it with
-        // a second hostname variant. Variant retries are only for transport/
-        // TLS hostname failures that throw.
-        break;
+        failedAttempts.push(`${candidateUrl} -> HTTP ${candidateResult.status}`);
       } catch (err) {
         lastError = err;
+        failedAttempts.push(`${candidateUrl} -> ${String(err)}`);
       }
     }
 
     if (!res) {
-      throw lastError ?? new Error(`Failed to fetch ${strategy.url}`);
-    }
-
-    if (!res.ok) {
-      return { sourceId: strategy.id, items, errors: [`HTTP ${res.status} from ${strategy.url}`] };
+      const summary = failedAttempts.join(' | ');
+      throw lastError ?? new Error(`Failed to fetch ${strategy.url}. Attempts: ${summary}`);
     }
 
     const rawHtml = res.text;
