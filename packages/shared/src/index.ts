@@ -22,3 +22,4 @@ export * as resources from './contracts/resources';
 export * as resourceCategories from './config/resource-categories';
 export * as communityOptions from './config/community-options';
 export * as content from './content';
+export * from './pagination';
