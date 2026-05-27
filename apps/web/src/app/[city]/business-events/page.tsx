@@ -9,6 +9,7 @@ import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -19,6 +20,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Business and Careers Events in ${cityName}`,
     description: `Discover Indian business networking, professional meetups, startup gatherings, and career events in ${cityName}.`,
+    alternates: {
+      canonical: `/${city}/business-events`,
+    },
   };
 }
 
@@ -82,6 +86,8 @@ export default async function BusinessEventsPage({ params }: Props) {
           Business setup resources →
         </Link>
       </div>
+
+      <CitySeoTemplateSection city={city} cityName={cityName} topic="business-events" />
     </div>
   );
 }

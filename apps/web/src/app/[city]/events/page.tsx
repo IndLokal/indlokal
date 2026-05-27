@@ -8,6 +8,7 @@ import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 /**
  * Event Listing - all upcoming events in a city.
@@ -23,13 +24,42 @@ type Props = {
   searchParams: Promise<{ category?: string; cost?: string; type?: string; lens?: string }>;
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
   const { city } = await params;
+  const filters = await searchParams;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
+
+  const hasFilters = Boolean(filters.category || filters.cost || filters.type);
+
+  if (filters.lens === 'business') {
+    return {
+      title: `Business Events in ${cityName}`,
+      description: `Business networking and careers events for Indians in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/business-events`,
+      },
+      robots: { index: false, follow: true },
+    };
+  }
+
+  if (hasFilters) {
+    return {
+      title: `Indian Events in ${cityName}`,
+      description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/events`,
+      },
+      robots: { index: false, follow: true },
+    };
+  }
+
   return {
     title: `Indian Events in ${cityName}`,
     description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+    alternates: {
+      canonical: `/${city}/events`,
+    },
   };
 }
 
@@ -370,6 +400,10 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <EventCard key={event.id} event={event} city={city} />
           ))}
         </div>
+      )}
+
+      {!filters.category && !filters.cost && !filters.type && lens !== 'business' && (
+        <CitySeoTemplateSection city={city} cityName={cityName} topic="events" />
       )}
 
       <CitySubpageCrossLinks

@@ -7,6 +7,7 @@ import { CommunityCard } from '@/components/CommunityCard';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -137,6 +138,10 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
             { href: `/${city}/communities`, label: 'Browse all communities', variant: 'primary' },
           ]}
         />
+      )}
+
+      {!language && !category && (
+        <CitySeoTemplateSection city={city} cityName={cityName} topic="communities" />
       )}
 
       <CitySubpageCrossLinks

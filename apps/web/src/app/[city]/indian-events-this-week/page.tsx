@@ -5,6 +5,7 @@ import { format, endOfWeek, endOfMonth } from 'date-fns';
 import { db } from '@/lib/db';
 import { getEventsThisWeek } from '@/modules/event';
 import { EventCard } from '@/components/EventCard';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 /**
  * Programmatic SEO: Indian Events This Week
@@ -25,6 +26,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Indian Events This Week in ${cityName} (until ${weekEnd})`,
     description: `What's happening for Indians in ${cityName} this week? Upcoming community events, festivals, meetups, and cultural gatherings.`,
+    alternates: {
+      canonical: `/${city}/indian-events-this-week`,
+    },
   };
 }
 
@@ -85,6 +89,8 @@ export default async function IndianEventsThisWeekPage({ params }: Props) {
           See all upcoming events in {cityName} →
         </Link>
       </div>
+
+      <CitySeoTemplateSection city={city} cityName={cityName} topic="weekly-events" />
     </div>
   );
 }

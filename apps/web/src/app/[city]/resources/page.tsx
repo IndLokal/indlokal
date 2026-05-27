@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity } from '@/modules/resources';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
+import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
 /**
  * Resources Hub - category card grid + journey checklist.
@@ -38,6 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: `Indian Expat Resources in ${cityName}`,
     description: `Practical guides for Indians in ${cityName} - city registration, driving licence, health insurance, taxes, Kindergeld, housing, grocery stores, and more.`,
+    alternates: {
+      canonical: `/${city}/resources`,
+    },
   };
 }
 
@@ -229,6 +233,8 @@ export default async function ResourcesHubPage({ params }: Props) {
           Suggest a service →
         </Link>
       </section>
+
+      <CitySeoTemplateSection city={city} cityName={cityName} topic="resources" />
     </div>
   );
 }
