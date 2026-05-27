@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { AddHostEventForm } from './AddHostEventForm';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
 export const metadata = { title: 'Post an Event - Event Host' };
 
@@ -19,13 +20,10 @@ export default async function HostNewEventPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Post an event</h1>
-        <p className="text-muted mt-1 text-sm">
-          Your event will appear in the IndLokal feed with your name as host. Events are reviewed
-          before going live.
-        </p>
-      </div>
+      <OrganizerPageHeader
+        title="Post an event"
+        description="Your event appears in the IndLokal feed with your name as host. Events are reviewed before going live."
+      />
 
       <div className="card-base p-6">
         <AddHostEventForm cities={cities} defaultCityId={defaultCityId} />

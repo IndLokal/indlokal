@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { content } from '@indlokal/shared';
 import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { ContentCallout } from '@/components/content/community-actions';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
 const CHANNEL_ICONS: Record<string, string> = {
   WHATSAPP: '💬',
@@ -20,7 +21,8 @@ export default async function OrganizerDashboardPage() {
   const user = await requireSessionUser();
   const currentId = await getCurrentCommunityId();
   const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
+    user.claimedCommunities[0];
 
   if (!community) {
     return (
@@ -48,15 +50,10 @@ export default async function OrganizerDashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <p className="text-muted text-sm">Managing</p>
-        <h1 className="text-foreground mt-0.5 text-2xl font-bold">{community.name}</h1>
-        <p className="text-muted mt-1 text-sm">{community.city.name}</p>
-      </div>
+      <OrganizerPageHeader title={community.name} description={community.city.name} />
 
       <ContentCallout
-        title="What is this dashboard for?"
+        title="What can I do here?"
         body={content.COMMUNITY_ACTION_COPY.organizerDashboardBody}
       />
 
@@ -77,7 +74,7 @@ export default async function OrganizerDashboardPage() {
           className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="text-2xl">🔗</div>
-          <h2 className="text-foreground mt-3 font-semibold">Manage join links</h2>
+          <h2 className="text-foreground mt-3 font-semibold">Community links</h2>
           <p className="text-muted mt-1 text-sm">
             Add or remove WhatsApp, Telegram, website, and other access links.
           </p>
@@ -135,26 +132,34 @@ export default async function OrganizerDashboardPage() {
               href="/organizer/channels"
               className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
             >
-              Manage
+              Edit links
             </Link>
           </div>
           <div className="mt-3 flex flex-wrap gap-2">
-            {community.accessChannels.map((ch) => (
-              <a
-                key={ch.id}
-                href={ch.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="border-border text-foreground hover:bg-muted-bg inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-1.5 text-sm transition-colors"
-              >
-                {CHANNEL_ICONS[ch.channelType] ?? '🔗'} {ch.label ?? ch.channelType}
-                {ch.isPrimary && (
-                  <span className="bg-brand-100 text-brand-600 rounded-full px-1.5 text-xs">
-                    Primary
-                  </span>
-                )}
-              </a>
-            ))}
+            {community.accessChannels.map(
+              (ch: {
+                id: string;
+                url: string;
+                channelType: string;
+                label: string | null;
+                isPrimary: boolean;
+              }) => (
+                <a
+                  key={ch.id}
+                  href={ch.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-border text-foreground hover:bg-muted-bg inline-flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-1.5 text-sm transition-colors"
+                >
+                  {CHANNEL_ICONS[ch.channelType] ?? '🔗'} {ch.label ?? ch.channelType}
+                  {ch.isPrimary && (
+                    <span className="bg-brand-100 text-brand-600 rounded-full px-1.5 text-xs">
+                      Primary
+                    </span>
+                  )}
+                </a>
+              ),
+            )}
           </div>
         </div>
       )}

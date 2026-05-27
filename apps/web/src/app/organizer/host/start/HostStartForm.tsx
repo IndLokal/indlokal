@@ -16,7 +16,7 @@ export function HostStartForm({ cities }: { cities: City[] }) {
         <h2 className="font-semibold">Check your email</h2>
         <p className="mt-1 text-sm">
           We sent a one-time sign-in link to <strong>{state.email}</strong>. Click it to access your
-          event host dashboard.
+          host space.
         </p>
       </div>
     );

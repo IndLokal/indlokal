@@ -43,7 +43,7 @@ export default function EditProfileForm({ community }: { community: Community })
         <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
           ✓ Profile updated successfully.{' '}
           <Link href="/organizer" className="underline">
-            Back to dashboard
+            Back to organizer home
           </Link>
         </div>
       )}

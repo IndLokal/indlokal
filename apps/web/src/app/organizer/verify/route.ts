@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       <p>Click below to complete your one-time sign in.</p>
       <form method="POST" action="/organizer/verify">
         <input type="hidden" name="token" value="${escapedToken}" />
-        <button type="submit">Continue to organizer dashboard</button>
+        <button type="submit">Continue to organizer home</button>
       </form>
       <small>This extra step prevents email scanners from consuming your one-time link.</small>
     </main>

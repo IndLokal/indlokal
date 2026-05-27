@@ -1,7 +1,8 @@
 import { requireSessionUser } from '@/lib/session';
 import EditProfileForm from './EditProfileForm';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
-export const metadata = { title: 'Edit Profile - Organizer' };
+export const metadata = { title: 'Community Profile - Organizer' };
 
 export default async function EditProfilePage() {
   const user = await requireSessionUser();
@@ -13,10 +14,10 @@ export default async function EditProfilePage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-foreground text-2xl font-bold">Edit Profile</h1>
-      <p className="text-muted mt-1 text-sm">
-        Changes are reflected immediately on the public page.
-      </p>
+      <OrganizerPageHeader
+        title="Community profile"
+        description="Changes are reflected immediately on the public page."
+      />
       <div className="mt-8">
         <EditProfileForm community={community} />
       </div>

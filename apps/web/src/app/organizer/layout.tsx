@@ -8,7 +8,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
   // Resolve active community for workspace switcher display
   const currentCommunityId = user ? await getCurrentCommunityId() : null;
   const activeCommunity = user
-    ? (user.claimedCommunities.find((c) => c.id === currentCommunityId) ??
+    ? (user.claimedCommunities.find((c: { id: string }) => c.id === currentCommunityId) ??
       user.claimedCommunities[0] ??
       null)
     : null;
@@ -47,7 +47,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                 href="/organizer"
                 className="text-foreground hover:text-brand-600 text-base font-bold tracking-tight transition-colors"
               >
-                Organizer Portal
+                Organizer Home
               </Link>
             )}
 
@@ -73,13 +73,13 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                     href="/organizer/edit"
                     className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                   >
-                    Profile
+                    Community Profile
                   </Link>
                   <Link
                     href="/organizer/channels"
                     className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
                   >
-                    Channels
+                    Community Links
                   </Link>
                   <Link
                     href="/organizer/events/new"
@@ -98,8 +98,8 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                     ...(isMultiOrg
                       ? [{ href: '/organizer/communities', label: 'Communities' }]
                       : []),
-                    { href: '/organizer/edit', label: 'Edit Profile' },
-                    { href: '/organizer/channels', label: 'Channels' },
+                    { href: '/organizer/edit', label: 'Community Profile' },
+                    { href: '/organizer/channels', label: 'Community Links' },
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },
                   ]}
                 />

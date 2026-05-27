@@ -1,7 +1,8 @@
 import { requireSessionUser } from '@/lib/session';
 import ChannelsForm from './ChannelsForm';
+import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
-export const metadata = { title: 'Manage Channels - Organizer' };
+export const metadata = { title: 'Community Links - Organizer' };
 
 export default async function ChannelsPage() {
   const user = await requireSessionUser();
@@ -13,8 +14,10 @@ export default async function ChannelsPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-foreground text-2xl font-bold">Manage Channels</h1>
-      <p className="text-muted mt-1 text-sm">Control how people join and follow your community.</p>
+      <OrganizerPageHeader
+        title="Community links"
+        description="Choose how people can join and follow your community."
+      />
       <ChannelsForm
         channels={community.accessChannels}
         citySlug={community.city.slug}

@@ -34,7 +34,7 @@ export default function OrganizerLoginPage() {
           <p className="mt-2.5 text-sm leading-relaxed text-emerald-800">
             We&apos;ve sent an access link for{' '}
             <strong className="font-semibold">{state.communityName}</strong> to your email address.
-            Click the link to securely open your dashboard.
+            Click the link to securely open your organizer home.
           </p>
           <p className="mt-6 border-t border-emerald-200/50 pt-4 text-xs font-medium text-emerald-600/70">
             Secure link expires in 24 hours. Check your spam folder if you don&apos;t see it.
@@ -48,7 +48,7 @@ export default function OrganizerLoginPage() {
     <div className="flex min-h-[60vh] items-center justify-center px-4">
       <div className="w-full max-w-md">
         <div className="card-base px-8 py-10 text-center">
-          <h1 className="text-foreground text-2xl font-bold tracking-tight">Organizer Login</h1>
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">Organizer access</h1>
           <p className="text-muted mt-2 text-sm">
             Enter your email address to receive a secure login link. This is for approved organizers
             - the person or team that already runs a community listing.
