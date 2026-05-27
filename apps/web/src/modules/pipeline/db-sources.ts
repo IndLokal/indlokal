@@ -22,6 +22,25 @@ import {
 } from './freshness';
 import { PIPELINE_USER_AGENT } from './http';
 
+// Fallback list used only when homepage anchor discovery finds nothing for a
+// site (typically because the nav is rendered client-side). Each candidate is
+// HEAD-probed before being emitted, so 404/405 responses never reach the
+// fetcher and never show up in pipeline_runs.errors.
+const WEBSITE_EVENT_PATH_FALLBACK_CANDIDATES = [
+  'events',
+  'event',
+  'calendar',
+  'activities',
+  'upcoming-events',
+  'programme',
+  'program',
+  'veranstaltungen',
+  'termine',
+] as const;
+
+const CANDIDATE_PROBE_TIMEOUT_MS = 4_000;
+const CANDIDATE_PROBE_CONCURRENCY = 5;
+
 function getDetailPageScore(url: string, labelOrText = ''): number {
   const combined = `${url} ${labelOrText}`;
   const yearScore = getYearSignalScore(combined);
@@ -87,6 +106,83 @@ function isStableEventListingUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function buildFallbackCandidatePaths(websiteUrl: string): string[] {
+  try {
+    const parsed = new URL(websiteUrl);
+    const basePath = parsed.pathname.replace(/\/+$/, '');
+    const roots = new Set<string>();
+
+    // Only expand from origin. Nested expansion (origin + /about-us/events) is
+    // almost always wrong and is the historical source of 404 noise.
+    roots.add(parsed.origin);
+    if (basePath && basePath !== '/' && basePath.split('/').filter(Boolean).length === 1) {
+      // One safe nested root: /<lang>/events where the channel URL is
+      // language-prefixed (e.g. /de/, /en/). Anything deeper is dropped.
+      const seg = basePath.replace(/^\//, '');
+      if (/^[a-z]{2}(-[a-z]{2})?$/i.test(seg)) {
+        roots.add(`${parsed.origin}${basePath}`);
+      }
+    }
+
+    const candidates = new Set<string>();
+    for (const root of roots) {
+      for (const segment of WEBSITE_EVENT_PATH_FALLBACK_CANDIDATES) {
+        const candidate = `${root}/${segment}`.replace(/([^:]\/)\/+/, '$1');
+        candidates.add(candidate);
+      }
+    }
+
+    return [...candidates].filter(isStableEventListingUrl);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Cheap existence check: HEAD first; on 405 or other rejection of HEAD, try
+ * a GET with a short timeout and only check the response status. Returns true
+ * only for 2xx and final-redirected 2xx.
+ */
+async function probeUrlExists(url: string): Promise<boolean> {
+  const headers = { 'User-Agent': PIPELINE_USER_AGENT };
+  const signal = AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { method: 'HEAD', headers, signal, redirect: 'follow' });
+    if (res.ok) return true;
+    if (res.status === 405 || res.status === 501) {
+      // Server doesn't allow HEAD — verify with GET.
+      const getRes = await fetch(url, {
+        method: 'GET',
+        headers,
+        signal: AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS),
+        redirect: 'follow',
+      });
+      // Abort body read; we only care about the status.
+      try {
+        await getRes.body?.cancel();
+      } catch {
+        // ignore
+      }
+      return getRes.ok;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+async function probeCandidatesInParallel(urls: string[]): Promise<string[]> {
+  const survivors: string[] = [];
+  for (let i = 0; i < urls.length; i += CANDIDATE_PROBE_CONCURRENCY) {
+    const batch = urls.slice(i, i + CANDIDATE_PROBE_CONCURRENCY);
+    const results = await Promise.all(
+      batch.map((u) => probeUrlExists(u).then((ok) => ({ u, ok }))),
+    );
+    for (const { u, ok } of results) if (ok) survivors.push(u);
+  }
+  return survivors;
 }
 
 /**
@@ -180,6 +276,13 @@ export async function getDbCommunityStrategies(): Promise<
   });
 
   const strategies: (SearchStrategy & { kind: 'pinned_url' })[] = [];
+  const strategyIds = new Set<string>();
+
+  const pushStrategy = (strategy: SearchStrategy & { kind: 'pinned_url' }) => {
+    if (strategyIds.has(strategy.id)) return;
+    strategyIds.add(strategy.id);
+    strategies.push(strategy);
+  };
 
   // Phase 1: generate all strategies that don't require extra HTTP fetches
   // (Meetup events pages + Website homepages), and collect the Website channels
@@ -197,7 +300,7 @@ export async function getDbCommunityStrategies(): Promise<
         // Scrape /events/ - the group homepage has org info (→ COMMUNITY,
         // deduped); the events page has upcoming event listings (→ EVENTs).
         const eventsUrl = base.endsWith('/events') ? `${base}/` : `${base}/events/`;
-        strategies.push({
+        pushStrategy({
           id: `db-${community.slug}-meetup`,
           sourceType: 'DB_COMMUNITY',
           kind: 'pinned_url',
@@ -208,7 +311,7 @@ export async function getDbCommunityStrategies(): Promise<
         });
       } else {
         // Homepage: always include (useful for community discovery)
-        strategies.push({
+        pushStrategy({
           id: `db-${community.slug}-website`,
           sourceType: 'DB_COMMUNITY',
           kind: 'pinned_url',
@@ -217,17 +320,31 @@ export async function getDbCommunityStrategies(): Promise<
           hintCitySlug: community.city.slug,
           enabled: true,
         });
-        // Queue this channel for parallel event-link discovery below
+
+        // Queue this channel for parallel event-link discovery below.
+        // Heuristic path expansion (calendar/upcoming-events/programme/...)
+        // is no longer emitted blindly — see Phase 2 for HEAD-probed fallback.
         websiteJobs.push({ community, url: channel.url });
       }
     }
   }
 
   // Phase 2: discover event sub-pages from all WEBSITE homepages in parallel.
-  // Running these concurrently instead of sequentially avoids adding 10-30s
-  // of serial HTTP latency before the pipeline main fetch phase starts.
+  // Primary: parse <a href> anchors from the actual homepage HTML and keep the
+  // top-scoring event-listing-like links. Only links that actually exist on
+  // the page are emitted, eliminating 404 noise.
+  //
+  // Fallback (only when primary returns 0): HEAD-probe a short list of common
+  // event paths (calendar, upcoming-events, programme, ...) and emit only the
+  // ones that respond 2xx. This catches sites with client-rendered nav.
   const discoveryResults = await Promise.allSettled(
-    websiteJobs.map(({ url }) => discoverEventLinks(url)),
+    websiteJobs.map(async ({ url }) => {
+      const links = await discoverEventLinks(url);
+      if (links.length > 0) return links;
+      const candidates = buildFallbackCandidatePaths(url);
+      if (candidates.length === 0) return [];
+      return probeCandidatesInParallel(candidates);
+    }),
   );
 
   for (let i = 0; i < websiteJobs.length; i++) {
@@ -242,7 +359,7 @@ export async function getDbCommunityStrategies(): Promise<
         .replace(/[^a-z0-9]+/gi, '-')
         .replace(/^-|-$/g, '')
         .slice(0, 30);
-      strategies.push({
+      pushStrategy({
         id: `db-${job.community.slug}-website-${pathKey}`,
         sourceType: 'DB_COMMUNITY',
         kind: 'pinned_url',
