@@ -36,14 +36,14 @@ export default async function LoginPage({
 
         <div className="card-base text-muted px-4 py-6 text-center text-sm">
           Account sign-in on web is currently unavailable.
-          <p className="mt-2">You can use the mobile app, or continue with a workspace login:</p>
+          <p className="mt-2">You can use the mobile app, or continue with an internal login:</p>
           <div className="mt-2 space-x-3">
             <Link href="/organizer/login" className="text-brand-600 hover:underline">
-              Organizer
+              Organizer Home
             </Link>
             <span aria-hidden="true">·</span>
             <Link href="/admin/login" className="text-brand-600 hover:underline">
-              Admin
+              IndLokal Admin
             </Link>
           </div>
         </div>
