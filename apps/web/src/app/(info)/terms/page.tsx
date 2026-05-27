@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
+import { InfoPageHero } from '@/components/info/InfoPageHero';
 
 export const metadata: Metadata = {
   title: `Terms of Service - ${siteConfig.name}`,
@@ -8,32 +8,25 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  const lastUpdated = '17 April 2026';
+  const lastUpdated = '27 May 2026';
+  const legalUrl = siteConfig.url.includes('localhost') ? 'https://indlokal.com' : siteConfig.url;
 
   return (
     <>
-      <div className="mx-auto max-w-3xl px-4 py-16">
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
-          >
-            ← Back to Home
-          </Link>
-        </div>
+      <InfoPageHero
+        title="Terms of Service"
+        description={`Review the terms for using ${siteConfig.name}.`}
+        meta={`Last updated: ${lastUpdated}`}
+      />
 
-        <h1 className="text-foreground text-3xl font-extrabold tracking-tight sm:text-4xl">
-          Terms of Service
-        </h1>
-        <p className="text-muted mt-2 text-sm">Last updated: {lastUpdated}</p>
-
-        <div className="prose-legal mt-10 space-y-8">
+      <div className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
+        <div className="prose-legal mt-6 space-y-8 sm:mt-8">
           <section>
             <h2>1. Acceptance of Terms</h2>
             <p>
               By accessing or using {siteConfig.name} (the &quot;Service&quot;), available at{' '}
-              <a href={siteConfig.url} className="text-brand-600 hover:underline">
-                {siteConfig.url}
+              <a href={legalUrl} className="text-brand-600 hover:underline">
+                {legalUrl}
               </a>
               , you agree to be bound by these Terms of Service. If you do not agree, please do not
               use the Service.

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
+import { InfoPageHero } from '@/components/info/InfoPageHero';
 
 export const metadata: Metadata = {
   title: `Contact - ${siteConfig.name}`,
@@ -8,22 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
+  const lastReviewed = '27 May 2026';
+
   return (
     <>
-      {/* Hero */}
-      <section className="from-brand-900 via-brand-800 to-brand-700 relative overflow-hidden bg-gradient-to-br px-4 pb-16 pt-20 text-center">
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="bg-brand-500/20 absolute -right-32 -top-32 h-96 w-96 rounded-full blur-3xl" />
-        </div>
-        <div className="relative mx-auto max-w-xl">
-          <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            Contact Us
-          </h1>
-          <p className="text-brand-200/80 mx-auto mt-4 max-w-md text-lg leading-relaxed">
-            Have a question, suggestion, or want to work with us? We&apos;d love to hear from you.
-          </p>
-        </div>
-      </section>
+      <InfoPageHero
+        title="Contact Us"
+        description="Have a question, suggestion, or want to work with us? We'd love to hear from you."
+        meta={`Last reviewed: ${lastReviewed}`}
+      />
 
       <div className="mx-auto max-w-3xl px-4 py-16">
         <div className="grid gap-8 sm:grid-cols-2">
