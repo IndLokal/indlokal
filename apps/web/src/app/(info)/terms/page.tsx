@@ -5,6 +5,9 @@ import { InfoPageHero } from '@/components/info/InfoPageHero';
 export const metadata: Metadata = {
   title: `Terms of Service - ${siteConfig.name}`,
   description: `Terms of Service for ${siteConfig.name}.`,
+  alternates: {
+    canonical: '/terms',
+  },
 };
 
 export default function TermsPage() {

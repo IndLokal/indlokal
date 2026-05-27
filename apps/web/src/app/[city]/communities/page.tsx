@@ -38,6 +38,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: `${languageName} Communities in ${cityName}`,
       description: `Find ${languageName} communities, groups, and events in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/${encodeURIComponent(language.toLowerCase())}-communities`,
+      },
     };
   }
   if (category) {
@@ -45,11 +48,17 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     return {
       title: `Indian ${categoryName} Groups in ${cityName}`,
       description: `Discover Indian ${categoryName.toLowerCase()} groups, communities, and organizations in ${cityName}, Germany.`,
+      alternates: {
+        canonical: `/${city}/${encodeURIComponent(category.toLowerCase())}-groups`,
+      },
     };
   }
   return {
     title: `Indian Communities in ${cityName}`,
     description: `Browse Indian communities, associations, and groups in ${cityName}, Germany.`,
+    alternates: {
+      canonical: `/${city}/communities`,
+    },
   };
 }
 

@@ -1,7 +1,12 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { MobileNav } from '@/components/MobileNav';
 import { BrandLink } from '@/components/BrandLink';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const user = await getSessionUser();

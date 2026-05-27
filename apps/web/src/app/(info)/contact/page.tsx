@@ -6,6 +6,9 @@ import { InfoPageHero } from '@/components/info/InfoPageHero';
 export const metadata: Metadata = {
   title: `Contact - ${siteConfig.name}`,
   description: `Get in touch with the ${siteConfig.name} team.`,
+  alternates: {
+    canonical: '/contact',
+  },
 };
 
 export default function ContactPage() {

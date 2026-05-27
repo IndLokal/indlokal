@@ -5,6 +5,9 @@ import { InfoPageHero } from '@/components/info/InfoPageHero';
 export const metadata: Metadata = {
   title: `Privacy Policy - ${siteConfig.name}`,
   description: `Privacy Policy for ${siteConfig.name}. Learn how we collect, use, and protect your data.`,
+  alternates: {
+    canonical: '/privacy',
+  },
 };
 
 export default function PrivacyPolicyPage() {

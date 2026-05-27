@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   siteConfig,
@@ -12,9 +13,52 @@ import { BrandLink } from '@/components/BrandLink';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
+export const metadata: Metadata = {
+  title: `${siteConfig.name} - ${siteConfig.tagline}`,
+  description: siteConfig.description,
+  alternates: {
+    canonical: '/',
+  },
+};
+
 export default function HomePage() {
+  const websiteSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: siteConfig.name,
+    alternateName: 'Ind Lokal',
+    url: siteConfig.url,
+    description: siteConfig.description,
+    inLanguage: 'en',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${siteConfig.url}/{city}/search?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  };
+
+  const organizationSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: siteConfig.name,
+    url: siteConfig.url,
+    logo: `${siteConfig.url}/icon.svg`,
+    email: 'contact@indlokal.com',
+    sameAs: ['https://instagram.com/indlokal', 'https://linkedin.com/company/indlokal'],
+    areaServed: 'Germany',
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
+      />
+
       {/* Header */}
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">

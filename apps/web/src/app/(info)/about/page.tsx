@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: `About - ${siteConfig.name}`,
   description:
     'Learn about IndLokal - the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
+  alternates: {
+    canonical: '/about',
+  },
 };
 
 export default function AboutPage() {

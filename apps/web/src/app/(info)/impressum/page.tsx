@@ -5,6 +5,9 @@ import { InfoPageHero } from '@/components/info/InfoPageHero';
 export const metadata: Metadata = {
   title: `Impressum - ${siteConfig.name}`,
   description: `Legal notice (Impressum) for ${siteConfig.name} in accordance with German law (§ 5 DDG).`,
+  alternates: {
+    canonical: '/impressum',
+  },
 };
 
 export default function ImpressumPage() {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireCan } from '@/lib/auth/permissions';
@@ -5,6 +6,10 @@ import { db } from '@/lib/db';
 import { BrandLink } from '@/components/BrandLink';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 const NAV = [
   { href: '/ambassador', label: 'Dashboard' },
