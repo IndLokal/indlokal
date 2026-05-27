@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
+import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { redirect } from 'next/navigation';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 
@@ -7,13 +7,11 @@ export const metadata = { title: 'My Communities - Organizer Portal' };
 export const dynamic = 'force-dynamic';
 
 export default async function OrganizerCommunitiesPage() {
-  const user = await requireSessionUser();
+  const { user, community: activeCommunity } = await requireOrganizerWorkspace();
 
   if (user.claimedCommunities.length === 0) {
     redirect('/organizer');
   }
-
-  const currentId = await getCurrentCommunityId();
 
   return (
     <div className="space-y-8">
@@ -30,12 +28,13 @@ export default async function OrganizerCommunitiesPage() {
             id: string;
             name: string;
             description: string | null;
+            claimedByUserId: string | null;
             languages: string[];
             accessChannels: unknown[];
             logoUrl: string | null;
             city: { name: string };
           }) => {
-            const isActive = (currentId ?? user.claimedCommunities[0]?.id) === c.id;
+            const isActive = activeCommunity?.id === c.id;
             const completeness = [
               !!c.name,
               !!c.description,
@@ -46,6 +45,7 @@ export default async function OrganizerCommunitiesPage() {
             const pct = Math.round(
               (completeness.filter(Boolean).length / completeness.length) * 100,
             );
+            const isOwner = c.claimedByUserId === user.id;
 
             return (
               <div
@@ -60,11 +60,16 @@ export default async function OrganizerCommunitiesPage() {
                     <h2 className="truncate font-semibold">{c.name}</h2>
                     <p className="text-muted text-sm">{c.city.name}</p>
                   </div>
-                  {isActive && (
-                    <span className="bg-brand-50 text-brand-700 ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium">
-                      Active
+                  <div className="ml-auto flex shrink-0 items-center gap-2">
+                    <span className="bg-muted-bg text-muted rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                      {isOwner ? 'Owner' : 'Collaborator'}
                     </span>
-                  )}
+                    {isActive && (
+                      <span className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 text-[10px] font-medium">
+                        Active
+                      </span>
+                    )}
+                  </div>
                 </div>
 
                 {/* Profile completeness */}
@@ -82,23 +87,28 @@ export default async function OrganizerCommunitiesPage() {
                 </div>
 
                 <div className="mt-4 flex gap-2">
-                  {!isActive && (
-                    <form action="/organizer/switch" method="POST" className="flex-1">
+                  {!isActive ? (
+                    <form
+                      action="/organizer/switch?next=/organizer"
+                      method="POST"
+                      className="flex-1"
+                    >
                       <input type="hidden" name="communityId" value={c.id} />
                       <button
                         type="submit"
-                        className="border-border hover:bg-muted-bg w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
+                        className="border-brand-200 text-brand-700 hover:bg-brand-50 w-full rounded-lg border px-3 py-2 text-sm font-medium transition-colors"
                       >
-                        Switch
+                        Switch & open
                       </button>
                     </form>
+                  ) : (
+                    <Link
+                      href="/organizer"
+                      className="border-brand-200 text-brand-700 hover:bg-brand-50 flex-1 rounded-lg border px-3 py-2 text-center text-sm font-medium transition-colors"
+                    >
+                      Open workspace →
+                    </Link>
                   )}
-                  <Link
-                    href="/organizer"
-                    className="border-brand-200 text-brand-700 hover:bg-brand-50 flex-1 rounded-lg border px-3 py-2 text-center text-sm font-medium transition-colors"
-                  >
-                    Open →
-                  </Link>
                 </div>
               </div>
             );

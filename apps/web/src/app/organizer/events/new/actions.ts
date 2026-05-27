@@ -6,9 +6,12 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
+import {
+  resolveActiveOrganizerCommunity,
+  type OrganizerSessionCommunity,
+} from '@/lib/organizer/workspace';
 
 const addEventSchema = z.object({
   title: z.string().min(3).max(200),
@@ -42,8 +45,14 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
+    user.claimedCommunities,
+    currentId,
+  );
+
+  if (!community) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
 
   const raw = {
     title: formData.get('title') as string,
@@ -113,7 +122,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
       await db.activitySignal.create({
         data: {
           communityId: community.id,
-          signalType: ActivitySignalType.EVENT_CREATED,
+          signalType: 'EVENT_CREATED',
         },
       });
 

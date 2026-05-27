@@ -1,9 +1,11 @@
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
 import { getCurrentCommunityId, getSessionUser } from '@/lib/session';
+import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 
 const inviteCollaboratorSchema = z.object({
   email: z.string().email(),
@@ -25,8 +27,11 @@ export async function inviteCollaborator(
   }
 
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity(user.claimedCommunities, currentId);
+
+  if (!community) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
 
   const raw = {
     email: ((formData.get('email') as string) || '').trim().toLowerCase(),
@@ -108,6 +113,9 @@ export async function inviteCollaborator(
           },
         },
       });
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
 
       return { success: true } as InviteCollaboratorResult;
     },

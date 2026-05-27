@@ -31,7 +31,7 @@ export default function ChannelsForm({ channels }: Props) {
       {/* Existing channels */}
       {channels.length > 0 && (
         <div className="card-base p-6">
-          <h2 className="text-foreground font-semibold">Current channels</h2>
+          <h2 className="text-foreground text-lg font-semibold">Current channels</h2>
           <ul className="mt-4 space-y-3">
             {channels.map((ch) => (
               <li
@@ -73,7 +73,7 @@ export default function ChannelsForm({ channels }: Props) {
 
       {/* Add channel form */}
       <div className="card-base p-6">
-        <h2 className="text-foreground font-semibold">Add a channel</h2>
+        <h2 className="text-foreground text-lg font-semibold">Add a channel</h2>
 
         {state?.success && (
           <p className="mt-3 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">

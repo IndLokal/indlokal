@@ -6,6 +6,10 @@ import { communityOptions } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
+import {
+  resolveActiveOrganizerCommunity,
+  type OrganizerSessionCommunity,
+} from '@/lib/organizer/workspace';
 
 const addChannelSchema = z.object({
   channelType: z.enum(communityOptions.CHANNEL_TYPE_VALUES),
@@ -25,9 +29,14 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
-    user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
+    user.claimedCommunities,
+    currentId,
+  );
+
+  if (!community) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
 
   const parsed = addChannelSchema.safeParse({
     channelType: formData.get('channelType'),
@@ -66,6 +75,7 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
       });
 
       revalidatePath('/organizer');
+      revalidatePath('/organizer/links');
       revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
 
       return { success: true } as ChannelResult;
@@ -78,9 +88,11 @@ export async function deleteChannel(formData: FormData) {
   const user = await getSessionUser();
   if (!user || user.claimedCommunities.length === 0) return;
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
-    user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
+    user.claimedCommunities,
+    currentId,
+  );
+  if (!community) return;
 
   const channelId = formData.get('channelId') as string;
   if (!channelId) return;
@@ -96,7 +108,7 @@ export async function deleteChannel(formData: FormData) {
       await db.accessChannel.delete({ where: { id: channelId } });
 
       revalidatePath('/organizer');
-      revalidatePath('/organizer/channels');
+      revalidatePath('/organizer/links');
       revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
     },
     () => undefined,

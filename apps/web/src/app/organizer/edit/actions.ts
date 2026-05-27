@@ -5,8 +5,11 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
+import {
+  resolveActiveOrganizerCommunity,
+  type OrganizerSessionCommunity,
+} from '@/lib/organizer/workspace';
 
 const editProfileSchema = z.object({
   name: z.string().min(2).max(200),
@@ -38,8 +41,14 @@ export async function editCommunityProfile(
   }
 
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
+    user.claimedCommunities,
+    currentId,
+  );
+
+  if (!community) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
 
   const languagesRaw = formData.getAll('languages') as string[];
 
@@ -84,7 +93,7 @@ export async function editCommunityProfile(
       await db.activitySignal.create({
         data: {
           communityId: community.id,
-          signalType: ActivitySignalType.PROFILE_UPDATED,
+          signalType: 'PROFILE_UPDATED',
         },
       });
 
@@ -93,6 +102,7 @@ export async function editCommunityProfile(
 
       revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
       revalidatePath('/organizer');
+      revalidatePath('/organizer/profile');
       revalidateTag('city-feed', 'max');
 
       return { success: true } as EditProfileResult;
