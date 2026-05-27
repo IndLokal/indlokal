@@ -97,3 +97,17 @@ This interim behavior is acceptable short-term, but should be superseded by expl
   - Mitigation: default admin toggle pre-filled based on ownership intent.
 - **Historical data ambiguity**: old submissions lack ownership-intent field.
   - Open question: should backfill auto-claim all, or only rows with claim evidence/contact-domain confidence?
+
+## 10. Implementation Notes (Shipped Delta - 2026-05-27)
+
+Ownership decision and post-approval clarity improvements shipped:
+
+1. Submission approval email now clearly separates:
+
+- listing-live confirmation (public page)
+- organizer-access next step when ownership is granted
+
+2. Ownership-granted emails now include organizer-login CTA with prefilled email.
+3. Organizer login page accepts `?email=` prefill from approval link for lower friction.
+4. Admin submissions approval UI now includes explicit "Will grant organizer access on approve: Yes/No" safeguard near approve action.
+5. Approval-side safeguard is live-updating with checkbox state to reduce missed ownership decisions.

@@ -54,6 +54,16 @@ Phase 3 (New-community creation flow parity):
 - Add optional channel input when promoting outreach lead to community.
 - Persist provided channels during create.
 
+Phase 4 (Submission UX compaction and discoverability):
+
+- Replace long city dropdown with searchable city input mapped to existing DB city slugs.
+- Keep city labels human-readable (no slug/technical suffixes in UI choices).
+- Reduce submit form first-view height using progressive disclosure:
+  - show limited category set by default with expand/collapse control
+  - collapse optional language selection behind a disclosure section
+  - keep optional channel label input hidden until explicitly expanded
+- Remove duplicate instructional blocks in submit page/form to reduce visual repetition.
+
 ## 5. Out of Scope
 
 - Channel verification automation (link health checks).
@@ -101,6 +111,20 @@ When promotion completes
 Then created community includes that access channel.
 ```
 
+```gherkin
+Given a user opens the submit form city field
+When they type at least one character
+Then matching city options are filtered from existing DB-backed cities
+And selecting an option submits the correct city slug.
+```
+
+```gherkin
+Given a user sees the submit form
+When they have not expanded optional sections
+Then optional language and advanced channel-label controls are collapsed by default
+And the page has no duplicate introductory guidance blocks.
+```
+
 ## 8. UX Principles
 
 - Progressive disclosure: start with one channel row, reveal "+ Add channel" for more.
@@ -116,3 +140,17 @@ Then created community includes that access channel.
   - Mitigation: backward-compatible contract period supporting legacy fields and new array.
 - **Open question:** should claim evidence links write into `accessChannels` after approval or stay as review-only evidence?
 - **Decision:** max channel count is fixed at 6 for this iteration.
+
+## 10. Implementation Notes (Shipped Delta - 2026-05-27)
+
+Shipped in web:
+
+1. Flexible submission channels (max 6, exactly one primary, dedupe guardrails).
+2. Claim evidence repeater with unique type selection per row and structured metadata storage.
+3. Outreach promote flow supports optional starter channel.
+4. Submit city selector is now searchable and mapped to canonical city slugs.
+5. Submit UI is compacted using progressive disclosure and duplicate copy removal.
+
+Known follow-up:
+
+- Mobile UI parity remains out of scope for this spec and can be tracked separately.

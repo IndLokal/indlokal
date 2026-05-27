@@ -20,6 +20,7 @@ export default function OrganizerLoginPage() {
     null,
   );
   const searchParams = useSearchParams();
+  const prefilledEmail = searchParams.get('email') ?? '';
   const urlError = searchParams.get('error');
   const urlErrorMessage = urlError ? ERROR_MESSAGES[urlError] : null;
 
@@ -78,9 +79,13 @@ export default function OrganizerLoginPage() {
                 type="email"
                 required
                 autoComplete="email"
+                defaultValue={prefilledEmail}
                 className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:outline-none focus:ring-1"
                 placeholder="you@example.com"
               />
+              {prefilledEmail ? (
+                <p className="text-muted text-xs">Using the email from your approval link.</p>
+              ) : null}
             </div>
 
             {state?.success === false && (

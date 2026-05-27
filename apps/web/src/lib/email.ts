@@ -207,6 +207,7 @@ export async function sendSubmissionApprovedEmail(
 ): Promise<void> {
   const communityUrl = `${APP_URL}/${citySlug}/communities/${communitySlug}`;
   const organizerUrl = `${APP_URL}/organizer`;
+  const organizerLoginUrl = `${APP_URL}/organizer/login?email=${encodeURIComponent(to)}`;
 
   await sendEmail(
     to,
@@ -225,11 +226,16 @@ export async function sendSubmissionApprovedEmail(
   </p>
   ${
     ownershipGranted
-      ? `<p style="font-size:13px">Organizer ownership has been approved for your email. 
-    <a href="${organizerUrl}" style="color:#4f46e5">Open organizer dashboard →</a>
-  </p>`
-      : `<p style="font-size:13px">Want to manage your listing and add events as the organizer? 
-    <a href="${communityUrl}" style="color:#4f46e5">Claim your community →</a>
+      ? `<p style="font-size:14px"><strong>You are approved as organizer.</strong> Next step: request your secure login link using the same email.</p>
+  <p style="margin:16px 0 20px 0">
+    <a href="${organizerLoginUrl}"
+       style="background:#111827;color:#fff;text-decoration:none;padding:10px 18px;border-radius:8px;font-weight:600;display:inline-block;font-size:14px">
+      Get organizer access link →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#555">Already signed in? <a href="${organizerUrl}" style="color:#4f46e5">Open organizer dashboard →</a></p>`
+      : `<p style="font-size:13px">Your listing is live, but organizer access is not enabled yet for this email.
+    <a href="${communityUrl}" style="color:#4f46e5">Claim your community to get edit access →</a>
   </p>`
   }
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">

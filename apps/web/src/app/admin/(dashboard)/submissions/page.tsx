@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { approveSubmission, rejectSubmission } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { ApproveSubmissionForm } from './ApproveSubmissionForm';
 
 export const metadata = { title: 'Review Submissions - Admin' };
 
@@ -68,24 +69,11 @@ export default async function AdminSubmissionsPage() {
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <form action={approveSubmission}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <label className="mb-2 flex items-center gap-2 text-xs text-slate-600">
-                        <input
-                          type="checkbox"
-                          name="grantOwnership"
-                          defaultChecked={ownershipIntent}
-                          className="accent-brand-500"
-                        />
-                        Grant organizer ownership to submitter email
-                      </label>
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                      >
-                        Approve
-                      </button>
-                    </form>
+                    <ApproveSubmissionForm
+                      submissionId={c.id}
+                      defaultGrantOwnership={ownershipIntent}
+                      action={approveSubmission}
+                    />
                     <form action={rejectSubmission}>
                       <input type="hidden" name="id" value={c.id} />
                       <button

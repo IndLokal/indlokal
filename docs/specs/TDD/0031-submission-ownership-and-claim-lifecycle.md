@@ -54,6 +54,13 @@ Server actions involved:
 - `approveSubmission` - applies status + claim decision atomically.
 - `approveClaim` / `rejectClaim` - unchanged semantics for independent claim flow.
 
+Related UX/email surfaces (shipped):
+
+- `apps/web/src/lib/email.ts` (`sendSubmissionApprovedEmail` ownership-granted CTA update)
+- `apps/web/src/app/organizer/login/page.tsx` (prefill `email` query param)
+- `apps/web/src/app/admin/(dashboard)/submissions/page.tsx`
+- `apps/web/src/app/admin/(dashboard)/submissions/ApproveSubmissionForm.tsx`
+
 No public API contract changes required in Phase A.
 
 ## 5. Revalidation and cache
@@ -113,3 +120,9 @@ Dashboard checks:
 - Disable ownership linking in `approveSubmission` (status approval remains).
 - Keep claim flow (`CLAIM_PENDING -> CLAIMED`) as fallback route.
 - Re-run correction script to reset unintended owner links where required.
+
+## 11. Shipped Delta (2026-05-27)
+
+1. Approval email copy and CTA now explicitly guide ownership-granted users to organizer access instead of only public listing view.
+2. Organizer login page supports approval-link prefill for email continuity.
+3. Admin approval safeguard now shows an explicit grant/no-grant badge and updates live with checkbox state.

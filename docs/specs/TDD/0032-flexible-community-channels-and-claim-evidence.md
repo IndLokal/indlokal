@@ -1,6 +1,6 @@
 # TDD-0032: Flexible community channels and claim evidence capture
 
-- **Status:** Draft
+- **Status:** Shipped
 - **Linked PRD:** PRD-0032
 - **Owner:** Founders
 
@@ -22,6 +22,10 @@ Surfaces touched:
    - `apps/web/src/app/api/v1/submissions/community/route.ts`
 4. Outreach promotion flow:
    - `apps/web/src/app/admin/(dashboard)/outreach/actions.ts`
+5. Submit city selection and UX compaction:
+
+- `apps/web/src/app/submit/page.tsx`
+- `apps/web/src/app/submit/SubmitForm.tsx`
 
 ## 2. Data model changes
 
@@ -76,6 +80,15 @@ Validation rules:
   - remove action
 - Start with one row by default.
 - "Add channel" button appends row up to cap.
+- City selector behavior:
+  - searchable text input filters existing cities
+  - selected option writes hidden canonical `citySlug` field
+  - submission blocked client-side if no valid mapped city is selected
+- First-view compaction behavior:
+  - categories can be expanded/collapsed
+  - languages are collapsed by default
+  - optional channel label field is revealed on-demand
+  - duplicate instruction blocks removed from form surface
 
 ### 4.2 Claim form
 
@@ -137,8 +150,21 @@ Admin metrics:
 4. Ship outreach promote optional channel input.
 5. Remove legacy parser after clients are migrated.
 
+Implementation status (2026-05-27):
+
+- Completed for web submit + claim + outreach paths.
+- Legacy parser compatibility remains in place.
+
 ## 9. Backout plan
 
 - Keep legacy primary/secondary fields parser active.
 - Hide repeater UI behind a feature flag and revert to fixed fields if needed.
 - Preserve stored channel rows; no destructive migration required.
+
+## 10. Shipped Verification Snapshot
+
+- Validation source-of-truth: `apps/web/src/lib/validation.ts`
+- Shared contract updated: `packages/shared/src/contracts/submit.ts`
+- Submission action parser and persistence: `apps/web/src/app/submit/actions.ts`
+- Claim action evidence persistence: `apps/web/src/app/[city]/communities/[slug]/actions.ts`
+- Admin claims evidence rendering fallback support: `apps/web/src/app/admin/(dashboard)/claims/page.tsx`
