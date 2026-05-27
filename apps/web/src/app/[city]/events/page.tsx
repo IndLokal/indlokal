@@ -79,6 +79,21 @@ export default async function EventsPage({ params, searchParams }: Props) {
       ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
       : 'No upcoming events right now - check back soon.';
 
+  const activeCategoryName = filters.category
+    ? (categories.find((cat: CategoryItem) => cat.slug === filters.category)?.name ??
+      filters.category)
+    : null;
+  const activeCostLabel = cost ? (cost === 'free' ? 'Free' : 'Paid') : null;
+  const activeTypeLabel = type ? (type === 'in-person' ? 'In-person' : 'Online') : null;
+
+  const activeFilterSummary = [
+    activeCategoryName ? `Category: ${activeCategoryName}` : null,
+    activeCostLabel ? `Cost: ${activeCostLabel}` : null,
+    activeTypeLabel ? `Format: ${activeTypeLabel}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <div className="space-y-8">
       {lens === 'business' && <BusinessLensTracker city={city} surface="events_page" />}
@@ -93,10 +108,9 @@ export default async function EventsPage({ params, searchParams }: Props) {
         description={description}
       />
 
-      {/* Filters - horizontally scrollable on mobile */}
-      <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0">
-        {/* Lens filter */}
-        <>
+      {/* Mobile filters: lens first, advanced filters in expandable panel */}
+      <div className="space-y-2 sm:hidden">
+        <div className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           <Link
             href={allLensHref}
             className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
@@ -117,6 +131,142 @@ export default async function EventsPage({ params, searchParams }: Props) {
           >
             💼 Business & Careers
           </Link>
+        </div>
+
+        <details className="border-border rounded-[var(--radius-button)] border bg-white p-3">
+          <summary className="text-muted cursor-pointer list-none text-sm font-medium marker:hidden">
+            {activeFilterSummary ? `Filters: ${activeFilterSummary}` : 'More filters'}
+          </summary>
+
+          <div className="mt-3 space-y-3">
+            {lens !== 'business' && (
+              <div className="space-y-2">
+                <p className="text-muted text-xs font-semibold uppercase tracking-wide">Category</p>
+                <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                  <Link
+                    href={`/${city}/events`}
+                    className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                      !filters.category
+                        ? 'border-brand-600 bg-brand-50 text-brand-700'
+                        : 'border-border text-muted hover:border-border hover:text-foreground'
+                    }`}
+                  >
+                    All
+                  </Link>
+                  {categories.map((cat: CategoryItem) => {
+                    const isActive = filters.category === cat.slug;
+                    const categoryParams = new URLSearchParams();
+                    categoryParams.set('category', cat.slug);
+                    if (cost) categoryParams.set('cost', cost);
+                    if (type) categoryParams.set('type', type);
+                    const href = `/${city}/events?${categoryParams.toString()}`;
+                    return (
+                      <Link
+                        key={cat.slug}
+                        href={href}
+                        className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                          isActive
+                            ? 'border-brand-600 bg-brand-50 text-brand-700'
+                            : 'border-border text-muted hover:border-border hover:text-foreground'
+                        }`}
+                      >
+                        {cat.icon} {cat.name}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Cost</p>
+              <div className="flex flex-wrap gap-2">
+                {(['free', 'paid'] as const).map((costOption) => {
+                  const isActive = costOption === filters.cost;
+                  const params = new URLSearchParams();
+                  if (lens === 'business') params.set('lens', 'business');
+                  if (lens !== 'business' && filters.category)
+                    params.set('category', filters.category);
+                  if (!isActive) params.set('cost', costOption);
+                  if (type) params.set('type', type);
+                  const href = params.toString()
+                    ? `/${city}/events?${params.toString()}`
+                    : `/${city}/events`;
+                  return (
+                    <Link
+                      key={costOption}
+                      href={href}
+                      className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium capitalize transition-colors active:opacity-70 ${
+                        isActive
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
+                          : 'border-border text-muted hover:border-border hover:text-foreground'
+                      }`}
+                    >
+                      {costOption}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Format</p>
+              <div className="flex flex-wrap gap-2">
+                {(['in-person', 'online'] as const).map((typeOption) => {
+                  const isActive = typeOption === filters.type;
+                  const params = new URLSearchParams();
+                  if (lens === 'business') params.set('lens', 'business');
+                  if (lens !== 'business' && filters.category)
+                    params.set('category', filters.category);
+                  if (cost) params.set('cost', cost);
+                  if (!isActive) params.set('type', typeOption);
+                  const href = params.toString()
+                    ? `/${city}/events?${params.toString()}`
+                    : `/${city}/events`;
+                  return (
+                    <Link
+                      key={typeOption}
+                      href={href}
+                      className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                        isActive
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-border text-muted hover:border-border hover:text-foreground'
+                      }`}
+                    >
+                      {typeOption === 'in-person' ? '📍 In-person' : '🌐 Online'}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      {/* Desktop filters */}
+      <div className="hidden flex-wrap gap-2 sm:flex">
+        {/* Lens filter */}
+        <>
+          <Link
+            href={allLensHref}
+            className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              lens !== 'business'
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
+            }`}
+          >
+            All events
+          </Link>
+          <Link
+            href={businessLensHref}
+            className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              lens === 'business'
+                ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
+            }`}
+          >
+            💼 Business & Careers
+          </Link>
           <span className="text-border hidden self-center sm:inline">|</span>
         </>
 
@@ -125,7 +275,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
           <>
             <Link
               href={`/${city}/events`}
-              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
                 !filters.category
                   ? 'border-brand-600 bg-brand-50 text-brand-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'
@@ -144,7 +294,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
                 <Link
                   key={cat.slug}
                   href={href}
-                  className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+                  className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
                     isActive
                       ? 'border-brand-600 bg-brand-50 text-brand-700'
                       : 'border-border text-muted hover:border-border hover:text-foreground'
@@ -175,7 +325,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <Link
               key={cost}
               href={href}
-              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium capitalize transition-colors active:opacity-70 ${
+              className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium capitalize transition-colors active:opacity-70 ${
                 isActive
                   ? 'border-brand-600 bg-brand-50 text-brand-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'
@@ -201,7 +351,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             <Link
               key={type}
               href={href}
-              className={`inline-flex shrink-0 items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
                 isActive
                   ? 'border-blue-600 bg-blue-50 text-blue-700'
                   : 'border-border text-muted hover:border-border hover:text-foreground'

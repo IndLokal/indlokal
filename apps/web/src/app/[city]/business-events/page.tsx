@@ -71,12 +71,17 @@ export default async function BusinessEventsPage({ params }: Props) {
         />
       )}
 
-      <CitySubpageCrossLinks
-        links={[
-          { href: `/${city}/events`, label: 'All events →' },
-          { href: `/${city}/resources/business-setup`, label: 'Business setup resources →' },
-        ]}
-      />
+      <div className="border-border/50 bg-muted-bg flex flex-wrap items-center justify-center gap-3 rounded-[var(--radius-card)] border p-4">
+        <Link href={`/${city}/events`} className="btn-primary px-4 py-2 text-sm">
+          All events
+        </Link>
+        <Link
+          href={`/${city}/resources/business-setup`}
+          className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
+        >
+          Business setup resources →
+        </Link>
+      </div>
     </div>
   );
 }

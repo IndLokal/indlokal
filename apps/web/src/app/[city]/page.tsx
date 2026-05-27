@@ -36,7 +36,9 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
 
   const [feed, user] = await Promise.all([getCityFeed(city), getSessionUser()]);
   if (!feed) notFound();
-  const savedCommunityIds = new Set(user?.savedCommunities.map((s) => s.communityId) ?? []);
+  const savedCommunityIds = new Set(
+    user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
+  );
 
   const {
     city: cityData,
@@ -47,6 +49,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
     counts,
   } = feed;
   const cityName = cityData.name;
+  type ThisWeekEvent = (typeof thisWeek.events)[number];
+  type RecentPastEvent = (typeof recentPastEvents)[number];
+  type CategoryItem = (typeof categories)[number];
+  type ActiveCommunity = (typeof activeCommunities)[number];
 
   // Category card palette - brand indigo with a saffron alternate per design system.
   const CAT_COLORS = [
@@ -91,7 +97,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
       <section className="space-y-5">
         <SectionHeader
           title={thisWeek.expandedToMonth ? 'This Month' : 'This Week'}
-          action={{ label: 'See all events →', href: `/${city}/events` }}
+          action={{ label: 'See all events', href: `/${city}/events` }}
         />
         {thisWeek.events.length === 0 ? (
           <EmptyState
@@ -102,7 +108,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           />
         ) : (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {thisWeek.events.map((event) => (
+            {thisWeek.events.map((event: ThisWeekEvent) => (
               <EventCard key={event.id} event={event} city={city} />
             ))}
           </div>
@@ -117,7 +123,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             subtitle={`Catch up on what's been active in ${cityName}`}
           />
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {recentPastEvents.map((event) => (
+            {recentPastEvents.map((event: RecentPastEvent) => (
               <EventCard key={event.id} event={event} city={city} past />
             ))}
           </div>
@@ -129,7 +135,7 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         <section className="space-y-5">
           <SectionHeader title="Browse by Category" />
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {categories.map((cat, i) => (
+            {categories.map((cat: CategoryItem, i: number) => (
               <Link
                 key={cat.slug}
                 href={`/${city}/communities?category=${cat.slug}`}
@@ -156,10 +162,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
       <section className="space-y-5">
         <SectionHeader
           title="Active Communities"
-          action={{ label: 'See all →', href: `/${city}/communities` }}
+          action={{ label: 'See all', href: `/${city}/communities` }}
         />
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {activeCommunities.map((community) => (
+          {activeCommunities.map((community: ActiveCommunity) => (
             <CommunityCard
               key={community.id}
               community={community}
