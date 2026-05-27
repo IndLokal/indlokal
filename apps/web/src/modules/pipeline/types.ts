@@ -35,6 +35,11 @@ export type RawContent = {
   text: string;
   imageUrls?: string[];
   fetchedAt: string; // ISO 8601
+  // Internal pipeline hints (not persisted by source adapters):
+  // propagated from pinned strategy to improve city/community resolution.
+  _hintCitySlug?: string;
+  _hintCommunityId?: string;
+  _hintCommunityName?: string;
 };
 
 /** Result from a source adapter fetch */
@@ -74,6 +79,10 @@ export type SearchStrategy = {
       scope?: 'GENERIC' | 'CITY' | 'REGION';
       /** Optional: if we know the city in advance (e.g. CGI Munich serves all BaWü) */
       hintCitySlug?: string;
+      /** Optional: DB community hint for deterministic event-to-community mapping. */
+      hintCommunityId?: string;
+      /** Optional: human-readable community name hint for audit/debug metadata. */
+      hintCommunityName?: string;
       /** Optional: if URL is region-level (state-level) rather than city-specific. */
       hintState?: string;
     }
