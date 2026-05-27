@@ -1,7 +1,9 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
-import { escapeHtmlAttribute } from '@/lib/html';
+
+const ORGANIZER_VERIFY_TOKEN_COOKIE = 'organizer_verify_token';
 
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token');
@@ -10,7 +12,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/organizer/login?error=missing_token', request.url));
   }
 
-  const escapedToken = escapeHtmlAttribute(rawToken);
   const html = `<!DOCTYPE html>
 <html lang="en">
   <head>
@@ -32,7 +33,6 @@ export async function GET(request: NextRequest) {
       <h1>Confirm organizer login</h1>
       <p>Click below to complete your one-time sign in.</p>
       <form method="POST" action="/organizer/verify">
-        <input type="hidden" name="token" value="${escapedToken}" />
         <button type="submit">Continue to organizer home</button>
       </form>
       <small>This extra step prevents email scanners from consuming your one-time link.</small>
@@ -40,17 +40,29 @@ export async function GET(request: NextRequest) {
   </body>
 </html>`;
 
-  return new NextResponse(html, {
+  const response = new NextResponse(html, {
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store, no-cache, must-revalidate',
     },
   });
+
+  response.cookies.set(ORGANIZER_VERIFY_TOKEN_COOKIE, rawToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/organizer/verify',
+    maxAge: 10 * 60,
+  });
+
+  return response;
 }
 
 export async function POST(request: NextRequest) {
-  const formData = await request.formData();
-  const rawToken = String(formData.get('token') ?? '').trim();
+  const jar = await cookies();
+  const cookieToken = jar.get(ORGANIZER_VERIFY_TOKEN_COOKIE)?.value ?? '';
+  const rawToken = cookieToken.trim();
+  jar.delete(ORGANIZER_VERIFY_TOKEN_COOKIE);
 
   // POST→GET redirects must use 303 so the browser switches to GET on the
   // target URL. NextResponse.redirect() defaults to 307 which preserves the
