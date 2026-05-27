@@ -20,6 +20,8 @@ export async function submitCommunity(
   _prev: SubmitResult,
   formData: FormData,
 ): Promise<SubmitResult> {
+  const noticePolicyVersion = '2026-05-v1';
+  const noticeRecordedAt = new Date().toISOString();
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!checkRateLimit(submitLimiter, ip).allowed) {
     return { success: false, errors: { _: ['Too many submissions. Please try again later.'] } };
@@ -172,6 +174,11 @@ export async function submitCommunity(
             email: data.contactEmail,
             ownershipIntent: data.ownershipIntent,
             submittedAt: new Date().toISOString(),
+            notice: {
+              policyVersion: noticePolicyVersion,
+              source: 'submit_form',
+              recordedAt: noticeRecordedAt,
+            },
           },
           city: {
             submittedCitySlug: city.slug,

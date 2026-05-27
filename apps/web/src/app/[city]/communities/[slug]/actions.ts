@@ -14,6 +14,8 @@ export type ClaimResult =
   | null;
 
 export async function claimCommunity(_prev: ClaimResult, formData: FormData): Promise<ClaimResult> {
+  const noticePolicyVersion = '2026-05-v1';
+  const noticeRecordedAt = new Date().toISOString();
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!checkRateLimit(reportLimiter, ip).allowed) {
     return {
@@ -115,6 +117,11 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
               telegramUrl: data.telegramUrl || undefined,
               socialUrl: data.socialUrl || undefined,
               requestedAt: new Date().toISOString(),
+              notice: {
+                policyVersion: noticePolicyVersion,
+                source: 'claim_form',
+                recordedAt: noticeRecordedAt,
+              },
             },
           },
         },

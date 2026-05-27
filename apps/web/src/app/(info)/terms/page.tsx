@@ -92,7 +92,20 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>6. Acceptable Use</h2>
+            <h2>6. Service Communications</h2>
+            <p>
+              By submitting community or claim information and providing an email address, you agree
+              that we may contact you regarding your submission or claim, including verification,
+              status updates, and requests for clarification.
+            </p>
+            <p>
+              If you use organizer or admin account access, you also agree to receive essential
+              account communications such as magic-link login emails and security-related notices.
+            </p>
+          </section>
+
+          <section>
+            <h2>7. Acceptable Use</h2>
             <p>You agree not to:</p>
             <ul>
               <li>Use the Service for any unlawful purpose</li>
@@ -105,7 +118,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>7. Intellectual Property</h2>
+            <h2>8. Intellectual Property</h2>
             <p>
               The Service&apos;s design, code, and branding are the property of {siteConfig.name}.
               Community-submitted content remains the property of the respective communities. By
@@ -115,7 +128,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>8. Disclaimer</h2>
+            <h2>9. Disclaimer</h2>
             <p>
               The Service is provided &quot;as is&quot; without warranties of any kind. We do not
               guarantee the accuracy or completeness of community or event information. We are not
@@ -125,7 +138,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>9. Limitation of Liability</h2>
+            <h2>10. Limitation of Liability</h2>
             <p>
               To the maximum extent permitted by law, {siteConfig.name} shall not be liable for any
               indirect, incidental, special, or consequential damages arising from the use of the
@@ -135,7 +148,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>10. Changes to Terms</h2>
+            <h2>11. Changes to Terms</h2>
             <p>
               We may update these Terms from time to time. Continued use of the Service after
               changes are posted constitutes acceptance. We will make reasonable efforts to notify
@@ -144,7 +157,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>11. Governing Law</h2>
+            <h2>12. Governing Law</h2>
             <p>
               These Terms are governed by the laws of the Federal Republic of Germany. Any disputes
               shall be subject to the exclusive jurisdiction of the courts in Stuttgart, Germany.
@@ -152,7 +165,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2>12. Contact</h2>
+            <h2>13. Contact</h2>
             <p>
               For questions about these Terms, contact us at{' '}
               <a href="mailto:legal@indlokal.com" className="text-brand-600 hover:underline">

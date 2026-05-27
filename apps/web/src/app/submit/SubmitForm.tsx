@@ -472,6 +472,19 @@ export function SubmitForm({ cities, categories }: Props) {
             <FieldError errors={errors.contactEmail} />
           </div>
         </div>
+
+        <p className="text-muted text-xs leading-relaxed">
+          By submitting, you agree that IndLokal may process your submitted name and email to review
+          this request, as described in our{' '}
+          <Link href="/privacy" className="text-brand-600 hover:underline">
+            Privacy Policy
+          </Link>{' '}
+          and{' '}
+          <Link href="/terms" className="text-brand-600 hover:underline">
+            Terms
+          </Link>
+          .
+        </p>
       </fieldset>
 
       <button
