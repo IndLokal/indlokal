@@ -92,6 +92,14 @@ export default function PrivacyPolicyPage() {
               <li>Providing and maintaining the Service</li>
               <li>Authenticating user accounts</li>
               <li>Processing community submissions and claims</li>
+              <li>
+                Using submitted email addresses to follow up on submissions and claims (for example,
+                verification, approval status, or required clarifications)
+              </li>
+              <li>
+                Sending essential service communications, including organizer/admin magic-link login
+                emails and security-related account notifications
+              </li>
               <li>Communicating with you about the Service</li>
               <li>Improving the Service through aggregated, anonymized analytics</li>
               <li>Complying with legal obligations</li>

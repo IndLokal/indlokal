@@ -1,9 +1,9 @@
-import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { AuditTable } from './AuditTable';
 import type { ContentLogAction } from '@prisma/client';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 
 export const metadata = { title: 'Audit Log - Admin' };
 export const dynamic = 'force-dynamic';
@@ -84,83 +84,80 @@ export default async function AdminAuditPage({
         }
       />
 
-      {/* Filters */}
-      <form method="GET" className="mt-6 flex flex-wrap gap-3">
-        <select
-          name="entityType"
-          defaultValue={filterEntityType}
-          className="border-border rounded-lg border px-3 py-1.5 text-sm"
-        >
-          <option value="">All entity types</option>
-          <option value="community">community</option>
-          <option value="event">event</option>
-          <option value="resource">resource</option>
-          <option value="role_assignment">role_assignment</option>
-          <option value="pipeline_item">pipeline_item</option>
-          <option value="outreach_lead">outreach_lead</option>
-        </select>
-
-        <input
-          name="entityId"
-          defaultValue={filterEntityId}
-          placeholder="Entity ID…"
-          className="border-border w-40 rounded-lg border px-3 py-1.5 font-mono text-sm"
-        />
-
-        <select
-          name="action"
-          defaultValue={filterAction}
-          className="border-border rounded-lg border px-3 py-1.5 text-sm"
-        >
-          <option value="">All actions</option>
-          <option value="CREATED">CREATED</option>
-          <option value="UPDATED">UPDATED</option>
-          <option value="VERIFIED">VERIFIED</option>
-          <option value="ARCHIVED">ARCHIVED</option>
-          <option value="SCORE_REFRESHED">SCORE_REFRESHED</option>
-          <option value="ROLE_GRANTED">ROLE_GRANTED</option>
-          <option value="ROLE_REVOKED">ROLE_REVOKED</option>
-        </select>
-
-        <select
-          name="changedBy"
-          defaultValue={filterChangedBy}
-          className="border-border rounded-lg border px-3 py-1.5 text-sm"
-        >
-          <option value="">All actors</option>
-          <option value="system">system</option>
-          {operators.map((op) => (
-            <option key={op.id} value={op.id}>
-              {op.displayName ?? op.email}
-            </option>
-          ))}
-        </select>
-
-        <input
-          name="from"
-          type="date"
-          defaultValue={filterFrom}
-          className="border-border rounded-lg border px-3 py-1.5 text-sm"
-        />
-        <input
-          name="to"
-          type="date"
-          defaultValue={filterTo}
-          className="border-border rounded-lg border px-3 py-1.5 text-sm"
-        />
-
-        <button
-          type="submit"
-          className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-1.5 text-sm font-medium text-white transition-colors"
-        >
-          Filter
-        </button>
-        <Link
-          href="/admin/audit"
-          className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-lg border px-3 py-1.5 text-sm transition-colors"
-        >
-          Clear
-        </Link>
+      <form method="GET" className="mt-6">
+        <AdminFilterBar className="border-border">
+          <AdminFilterItem label="Entity Type">
+            <select
+              name="entityType"
+              defaultValue={filterEntityType}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All entity types</option>
+              <option value="community">community</option>
+              <option value="event">event</option>
+              <option value="resource">resource</option>
+              <option value="role_assignment">role_assignment</option>
+              <option value="pipeline_item">pipeline_item</option>
+              <option value="outreach_lead">outreach_lead</option>
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Entity ID">
+            <input
+              name="entityId"
+              defaultValue={filterEntityId}
+              placeholder="Entity ID..."
+              className="border-border w-full rounded border px-3 py-2 font-mono text-sm"
+            />
+          </AdminFilterItem>
+          <AdminFilterItem label="Action">
+            <select
+              name="action"
+              defaultValue={filterAction}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All actions</option>
+              <option value="CREATED">CREATED</option>
+              <option value="UPDATED">UPDATED</option>
+              <option value="VERIFIED">VERIFIED</option>
+              <option value="ARCHIVED">ARCHIVED</option>
+              <option value="SCORE_REFRESHED">SCORE_REFRESHED</option>
+              <option value="ROLE_GRANTED">ROLE_GRANTED</option>
+              <option value="ROLE_REVOKED">ROLE_REVOKED</option>
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Changed By">
+            <select
+              name="changedBy"
+              defaultValue={filterChangedBy}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All actors</option>
+              <option value="system">system</option>
+              {operators.map((op) => (
+                <option key={op.id} value={op.id}>
+                  {op.displayName ?? op.email}
+                </option>
+              ))}
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="From">
+            <input
+              name="from"
+              type="date"
+              defaultValue={filterFrom}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            />
+          </AdminFilterItem>
+          <AdminFilterItem label="To">
+            <input
+              name="to"
+              type="date"
+              defaultValue={filterTo}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            />
+          </AdminFilterItem>
+          <AdminFilterActions resetHref="/admin/audit" />
+        </AdminFilterBar>
       </form>
 
       {/* Table + drawer */}

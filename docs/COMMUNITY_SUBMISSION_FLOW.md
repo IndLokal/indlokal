@@ -27,9 +27,9 @@ A manually reviewed submission pipeline ensures the directory maintains quality.
 
 The form collects the minimum viable profile. The organiser is not asked to write a perfect description or upload a logo on day one. They can complete those via the organiser portal after approval.
 
-### 2.3 Submission ≠ Account
+### 2.3 Submission ≠ Immediate Organiser Access
 
-Submitting a community does not create an organiser account. The user fills a form, submits, and waits. When the platform approves the submission, the submitter's email is automatically upgraded to `COMMUNITY_ADMIN`. This avoids "empty account" accumulation from submissions that never get approved.
+Submitting a community does not immediately grant organiser access. The user fills a form, submits, and waits for admin review. During approval, admin explicitly decides whether to grant organiser ownership to the submitter email.
 
 ### 2.4 Transparent Status
 
@@ -82,12 +82,13 @@ The form is grouped into four sections:
 | Secondary channel type | No       | Optional second entry point                                                                        |
 | Secondary channel URL  | No       | Required if type is supplied                                                                       |
 
-#### Section D - Contact Information
+#### Section D - Contact Information & Ownership Intent
 
-| Field      | Required | Notes                                                                        |
-| ---------- | -------- | ---------------------------------------------------------------------------- |
-| Your name  | Yes      | Submitter's full name                                                        |
-| Your email | Yes      | Used as `metadata.submitter.email`; later linked to user account on approval |
+| Field                                 | Required | Notes                                                                                |
+| ------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
+| Your name                             | Yes      | Submitter's full name                                                                |
+| Your email                            | Yes      | Used as `metadata.submitter.email`; can be linked to organiser ownership on approval |
+| "I represent this community" checkbox | No       | Captured as `ownershipIntent` and shown in admin review                              |
 
 ### Step 2 - Server Action
 
@@ -95,14 +96,18 @@ The form is grouped into four sections:
 
 1. Validate full form via Zod `submitCommunitySchema`
 2. Resolve city by `citySlug` - return error if not active
-3. Generate unique URL slug from community name using `slugify` (timestamp suffix on collision)
-4. Resolve category IDs from slugs
-5. Create `Community` with:
+3. Run duplicate-name similarity check against active communities in target city (reject if too similar)
+4. Generate unique URL slug from community name using `slugify` (timestamp suffix on collision)
+5. Resolve category IDs from slugs
+6. Create `Community` with:
    - `status: UNVERIFIED`
    - `claimState: UNCLAIMED`
    - `source: COMMUNITY_SUBMITTED`
-   - `metadata.submitter: { name, email, submittedAt }`
+
+- `metadata.submitter: { name, email, ownershipIntent, submittedAt }`
+
 6. Create `AccessChannel` rows (primary + optional secondary)
+7. Send submission-received email (best-effort)
 
 On success, the form is replaced with a confirmation message: community name is shown, and the user is told to expect review within a few days.
 
@@ -119,8 +124,16 @@ An operator visits `/admin/submissions`. For each `UNVERIFIED` community they se
 **Approve** → `approveSubmission()`:
 
 - `Community.status → ACTIVE`
+- Optional ownership grant (explicit admin checkbox):
+  - `Community.claimState → CLAIMED`
+  - `Community.claimedByUserId → submitter user`
+  - submitter user created/upgraded to `COMMUNITY_ADMIN` if needed
 - Creates `TrustSignal` with `signalType: ADMIN_VERIFIED`
-- Revalidates `/admin/submissions`
+- Creates `COMMUNITY_CLAIMED` trust signal when ownership is granted
+- Sends approval email (best-effort) with conditional CTA:
+  - If ownership granted: organizer dashboard link
+  - Else: claim-community CTA
+- Revalidates admin + public community routes
 
 **Reject** → `rejectSubmission()`:
 
@@ -129,17 +142,20 @@ An operator visits `/admin/submissions`. For each `UNVERIFIED` community they se
 
 Community remains in the DB in either state. `INACTIVE` communities are not visible in discovery. A platform admin can manually reactivate if context changes.
 
-### Step 4 - Organiser Account Activation (Post-Approval)
+### Step 4 - Organiser Access After Approval
 
-After the submission is approved, the submitter's email is not automatically promoted - they still need to **claim** the community they submitted. This is intentional:
+After approval, ownership outcome depends on admin decision in `/admin/submissions`:
 
-1. The newly approved `ACTIVE` community has `claimState: UNCLAIMED`
-2. The submitter visits their community page, sees the ClaimSection, and submits a claim
-3. Because their email was the original submitter, the admin can cross-reference and fast-approve
-4. On claim approval: `User.role → COMMUNITY_ADMIN`
-5. The organiser can now log in to the organiser portal
+1. **If "Grant ownership" is checked**:
 
-_Future:_ auto-approve claim for the original submitter email, shortcutting the manual step.
+- community becomes `ACTIVE + CLAIMED`
+- submitter email gets organizer ownership
+- submitter can log in to organizer portal
+
+2. **If unchecked**:
+
+- community becomes `ACTIVE + UNCLAIMED`
+- submitter can still claim later via Claim Flow
 
 ---
 
@@ -154,7 +170,12 @@ Community {
   claimState: UNCLAIMED
   source: COMMUNITY_SUBMITTED
   metadata: {
-    submitter: { name: "Rahul Sharma", email: "rahul@example.com", submittedAt: "..." }
+    submitter: {
+      name: "Rahul Sharma",
+      email: "rahul@example.com",
+      ownershipIntent: true,
+      submittedAt: "..."
+    }
   }
 }
 
@@ -173,13 +194,13 @@ AccessChannel {
 
 All validation lives in `src/lib/validation.ts` as the `submitCommunitySchema` Zod schema.
 
-| Rule                  | Detail                                                                     |
-| --------------------- | -------------------------------------------------------------------------- |
-| Name uniqueness       | Not enforced at schema level; admin reviewer spot-checks for duplicates    |
-| Channel URL validity  | Validated as URL by Zod; channel reachability is not tested at submit time |
-| Duplicate submission  | No hard block; admin reviewer merges/deduplicates manually at MVP          |
-| City must be active   | Server-side check; returns field error if city slug is inactive            |
-| Categories must exist | Server-side resolution; invalid slugs are silently dropped                 |
+| Rule                  | Detail                                                                                   |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| Name uniqueness       | Not enforced at schema level; server uses similarity guard against likely duplicates     |
+| Channel URL validity  | Validated as URL by Zod; channel reachability is not tested at submit time               |
+| Duplicate submission  | Hard block when similarity to existing active name in city is above configured threshold |
+| City must be active   | Server-side check; returns field error if city slug is inactive                          |
+| Categories must exist | Server checks all selected categories resolve; mismatches return field error             |
 
 ---
 
@@ -217,14 +238,14 @@ Is your community already listed on IndLokal?
 
 ## 9. Routes & Files Reference
 
-| Route                    | File                                 | Purpose                                         |
-| ------------------------ | ------------------------------------ | ----------------------------------------------- |
-| `GET /submit`            | `src/app/submit/page.tsx`            | Server wrapper - fetches cities + categories    |
-| Client form              | `src/app/submit/SubmitForm.tsx`      | Multi-section submission form                   |
-| `Server Action`          | `src/app/submit/actions.ts`          | `submitCommunity()`                             |
-| `GET /admin/submissions` | `src/app/admin/submissions/page.tsx` | Platform review queue                           |
-| `Server Actions`         | `src/app/admin/actions.ts`           | `approveSubmission()`, `rejectSubmission()`     |
-| Validation schemas       | `src/lib/validation.ts`              | `submitCommunitySchema`, `claimCommunitySchema` |
+| Route                    | File                                             | Purpose                                         |
+| ------------------------ | ------------------------------------------------ | ----------------------------------------------- |
+| `GET /submit`            | `src/app/submit/page.tsx`                        | Server wrapper - fetches cities + categories    |
+| Client form              | `src/app/submit/SubmitForm.tsx`                  | Multi-section submission form                   |
+| `Server Action`          | `src/app/submit/actions.ts`                      | `submitCommunity()`                             |
+| `GET /admin/submissions` | `src/app/admin/(dashboard)/submissions/page.tsx` | Platform review queue                           |
+| `Server Actions`         | `src/app/admin/(dashboard)/actions.ts`           | `approveSubmission()`, `rejectSubmission()`     |
+| Validation schemas       | `src/lib/validation.ts`                          | `submitCommunitySchema`, `claimCommunitySchema` |
 
 ---
 
@@ -234,15 +255,14 @@ Is your community already listed on IndLokal?
 - Auto-approval for trusted submitters
 - Bulk submission (one community per form)
 - Image / logo upload at submission time
-- Email notifications to submitter on approval or rejection
-- Auto-claim for the original submitter
+- Auto-approval without admin review
 
 ---
 
 ## 11. Future Enhancements
 
-- **Auto-claim on approval** - first-time submitter is automatically promoted to `COMMUNITY_ADMIN` when their submission is approved, bypassing the separate claim step
-- **Email notifications** - notify submitter when approved/rejected once email delivery is integrated
+- **Rejected-submission email** - notify submitter explicitly when a submission is rejected
+- **Ownership evidence capture** - require stronger proof when ownership intent is selected
 - **Duplicate prevention** - fuzzy name matching against existing communities during submission to surface likely duplicates
 - **Logo upload** - image upload at submission time, stored in object storage
 - **Submission queue prioritisation** - rank submissions by city activity, completeness, and submitter engagement for faster high-value approvals

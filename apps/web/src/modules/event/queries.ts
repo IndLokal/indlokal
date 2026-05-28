@@ -1,6 +1,6 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { SCORING } from '@/lib/config';
-import { endOfWeek, endOfMonth } from 'date-fns';
+import { addDays, endOfWeek } from 'date-fns';
 import type { EventWithRelations, EventListItem, EventDetailRow } from './types';
 
 export const eventListSelect = {
@@ -36,13 +36,13 @@ export async function getEventBySlug(slug: string): Promise<EventWithRelations |
 /**
  * Get events for "This Week" in a city.
  * Implements sparse-content resilience: if fewer than SPARSE_CONTENT_THRESHOLD
- * events this week, auto-expands to "this month".
+ * events this week, auto-expands to "next 30 days".
  */
 export async function getEventsThisWeek(
   citySlug: string,
-): Promise<{ events: EventListItem[]; expandedToMonth: boolean }> {
+): Promise<{ events: EventListItem[]; expandedTo30Days: boolean }> {
   const cityIds = await resolveCityIds(citySlug);
-  if (cityIds.length === 0) return { events: [], expandedToMonth: false };
+  if (cityIds.length === 0) return { events: [], expandedTo30Days: false };
 
   const now = new Date();
   const weekEnd = endOfWeek(now, { weekStartsOn: 1 }); // Monday start
@@ -69,16 +69,16 @@ export async function getEventsThisWeek(
   });
 
   if (weekEvents.length >= SCORING.SPARSE_CONTENT_THRESHOLD) {
-    return { events: weekEvents, expandedToMonth: false };
+    return { events: weekEvents, expandedTo30Days: false };
   }
 
-  // Sparse content - expand to this month
-  const monthEnd = endOfMonth(now);
-  const monthEvents = await db.event.findMany({
+  // Sparse content - expand to rolling next 30 days
+  const rollingWindowEnd = addDays(now, 30);
+  const rollingWindowEvents = await db.event.findMany({
     where: {
       cityId: { in: cityIds },
       OR: [
-        { startsAt: { gte: now, lte: monthEnd } },
+        { startsAt: { gte: now, lte: rollingWindowEnd } },
         { AND: [{ startsAt: { lt: now } }, { endsAt: { gte: now } }] },
       ],
       status: { not: 'CANCELLED' },
@@ -87,7 +87,7 @@ export async function getEventsThisWeek(
     orderBy: { startsAt: 'asc' },
   });
 
-  return { events: monthEvents, expandedToMonth: true };
+  return { events: rollingWindowEvents, expandedTo30Days: true };
 }
 
 /**

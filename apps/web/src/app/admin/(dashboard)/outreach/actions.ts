@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
+import { communityOptions } from '@indlokal/shared';
 import type { OutreachStage } from '@prisma/client';
 
 export type OutreachResult =
@@ -140,7 +141,31 @@ export async function promoteLeadToCommunity(
   const user = await assertCan('outreach.write');
 
   const leadId = (formData.get('leadId') as string | null)?.trim();
+  const channelType = (formData.get('channelType') as string | null)?.trim();
+  const channelUrl = (formData.get('channelUrl') as string | null)?.trim();
+  const channelLabel = (formData.get('channelLabel') as string | null)?.trim();
   if (!leadId) return { success: false, error: 'Missing lead ID.' };
+
+  const hasType = Boolean(channelType);
+  const hasUrl = Boolean(channelUrl);
+  if (hasType !== hasUrl) {
+    return {
+      success: false,
+      error: 'Provide both channel type and URL, or leave both empty.',
+    };
+  }
+
+  if (hasType && !communityOptions.CHANNEL_TYPE_VALUES.includes(channelType as never)) {
+    return { success: false, error: 'Invalid channel type.' };
+  }
+
+  if (hasUrl) {
+    try {
+      new URL(channelUrl as string);
+    } catch {
+      return { success: false, error: 'Please enter a valid channel URL.' };
+    }
+  }
 
   const lead = await db.outreachLead.findUnique({
     where: { id: leadId },
@@ -170,6 +195,20 @@ export async function promoteLeadToCommunity(
         cityId: lead.cityId,
         status: 'UNVERIFIED',
         source: 'ADMIN_SEED',
+        ...(hasType && hasUrl
+          ? {
+              accessChannels: {
+                create: [
+                  {
+                    channelType: channelType as communityOptions.CommunityChannelType,
+                    url: channelUrl as string,
+                    label: channelLabel || (channelType as string),
+                    isPrimary: true,
+                  },
+                ],
+              },
+            }
+          : {}),
       },
     });
 
@@ -182,7 +221,9 @@ export async function promoteLeadToCommunity(
       data: {
         leadId,
         authorId: user.id,
-        body: `Promoted to community **${c.name}** (id: ${c.id}).`,
+        body: `Promoted to community **${c.name}** (id: ${c.id})${
+          hasType && hasUrl ? ` with channel ${channelType}.` : '.'
+        }`,
       },
     });
 

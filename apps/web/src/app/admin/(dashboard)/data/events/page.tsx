@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { deleteEventAction, setEventStatusAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events - Admin' };
@@ -37,68 +39,53 @@ export default async function AdminEventsPage({
     <AdminPage>
       <AdminPageHeader title="Events" backHref="/admin/data" backLabel="Data" />
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
-        <label className="text-sm">
-          <div className="text-muted">City</div>
-          <select
-            name="city"
-            defaultValue={sp.city ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- all -</option>
-            {cities.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">Status</div>
-          <select
-            name="status"
-            defaultValue={sp.status ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- any -</option>
-            <option value="UPCOMING">Upcoming</option>
-            <option value="ONGOING">Ongoing</option>
-            <option value="PAST">Past</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="bg-brand-600 hover:bg-brand-700 rounded-md px-3 py-1.5 text-sm text-white"
-        >
-          Filter
-        </button>
+      <form className="mt-6" method="get">
+        <AdminFilterBar className="border-border">
+          <AdminFilterItem label="City">
+            <select
+              name="city"
+              defaultValue={sp.city ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All cities</option>
+              {cities.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Status">
+            <select
+              name="status"
+              defaultValue={sp.status ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">Any status</option>
+              <option value="UPCOMING">Upcoming</option>
+              <option value="ONGOING">Ongoing</option>
+              <option value="PAST">Past</option>
+              <option value="CANCELLED">Cancelled</option>
+            </select>
+          </AdminFilterItem>
+          <AdminFilterActions resetHref="/admin/data/events" />
+        </AdminFilterBar>
       </form>
 
       <p className="text-muted mt-4 text-xs">{events.length} shown (cap 200)</p>
 
-      <div className="border-border mt-3 overflow-hidden rounded-[var(--radius-card)] border">
-        <table className="w-full text-sm">
-          <thead className="border-border bg-muted-bg border-b text-left">
+      <AdminTableWrap className="mt-3">
+        <AdminTable>
+          <AdminTableHead>
             <tr>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Title
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                When
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                City
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Community
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Status
-              </th>
-              <th />
+              <AdminTh>Title</AdminTh>
+              <AdminTh>When</AdminTh>
+              <AdminTh>City</AdminTh>
+              <AdminTh>Community</AdminTh>
+              <AdminTh>Status</AdminTh>
+              <AdminTh>Actions</AdminTh>
             </tr>
-          </thead>
+          </AdminTableHead>
           <tbody>
             {events.map((e) => (
               <tr key={e.id} className="border-border border-b last:border-b-0">
@@ -147,8 +134,8 @@ export default async function AdminEventsPage({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </AdminTable>
+      </AdminTableWrap>
     </AdminPage>
   );
 }

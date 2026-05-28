@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { approveSubmission, rejectSubmission } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { ApproveSubmissionForm } from './ApproveSubmissionForm';
 
 export const metadata = { title: 'Review Submissions - Admin' };
 
@@ -37,8 +38,14 @@ export default async function AdminSubmissionsPage() {
           {submissions.map((c: SubmissionRow) => {
             const meta = c.metadata as Record<string, unknown> | null;
             const submitter = meta?.submitter as
-              | { name?: string; email?: string; submittedAt?: string }
+              | {
+                  name?: string;
+                  email?: string;
+                  submittedAt?: string;
+                  ownershipIntent?: boolean;
+                }
               | undefined;
+            const ownershipIntent = submitter?.ownershipIntent === true;
 
             return (
               <div key={c.id} className="card-base p-6">
@@ -57,17 +64,16 @@ export default async function AdminSubmissionsPage() {
                         {submitter.email && ` (${submitter.email})`}
                       </p>
                     )}
+                    <p className="text-muted mt-1 text-xs">
+                      Submitter requested ownership: {ownershipIntent ? 'Yes' : 'No'}
+                    </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <form action={approveSubmission}>
-                      <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                      >
-                        Approve
-                      </button>
-                    </form>
+                    <ApproveSubmissionForm
+                      submissionId={c.id}
+                      defaultGrantOwnership={ownershipIntent}
+                      action={approveSubmission}
+                    />
                     <form action={rejectSubmission}>
                       <input type="hidden" name="id" value={c.id} />
                       <button

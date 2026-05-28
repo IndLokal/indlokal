@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { requireCan } from '@/lib/auth/permissions';
 import { grantRole, revokeRole } from './actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const metadata = { title: 'Team - Admin' };
 
@@ -124,29 +125,17 @@ export default async function AdminTeamPage() {
         {assignments.length === 0 ? (
           <p className="text-muted text-sm">No role assignments yet.</p>
         ) : (
-          <div className="border-border overflow-hidden rounded-[var(--radius-card)] border">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted-bg border-border border-b text-left text-xs font-medium uppercase tracking-wide">
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    User
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    Role
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    City scope
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    Granted
-                  </th>
-                  {canGrant && (
-                    <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                      Actions
-                    </th>
-                  )}
+          <AdminTableWrap>
+            <AdminTable>
+              <AdminTableHead>
+                <tr>
+                  <AdminTh>User</AdminTh>
+                  <AdminTh>Role</AdminTh>
+                  <AdminTh>City scope</AdminTh>
+                  <AdminTh>Granted</AdminTh>
+                  {canGrant && <AdminTh>Actions</AdminTh>}
                 </tr>
-              </thead>
+              </AdminTableHead>
               <tbody className="divide-border divide-y">
                 {assignments.map((a) => (
                   <tr key={a.id} className="hover:bg-muted-bg/50 transition-colors">
@@ -187,8 +176,8 @@ export default async function AdminTeamPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </AdminTable>
+          </AdminTableWrap>
         )}
       </section>
     </AdminPage>

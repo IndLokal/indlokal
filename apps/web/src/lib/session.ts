@@ -119,6 +119,18 @@ export async function getSessionUser() {
             accessChannels: true,
           },
         },
+        collaboratorMemberships: {
+          where: { status: 'ACTIVE' },
+          include: {
+            community: {
+              include: {
+                city: { select: { id: true, name: true, slug: true } },
+                categories: { include: { category: true } },
+                accessChannels: true,
+              },
+            },
+          },
+        },
         savedCommunities: { select: { communityId: true } },
         savedEvents: { select: { eventId: true } },
       },
@@ -152,7 +164,18 @@ export async function getSessionUser() {
       }
     }
 
-    return user;
+    const collaboratorCommunities = user.collaboratorMemberships.map((m) => m.community);
+    const mergedClaimedCommunities = [...user.claimedCommunities];
+    for (const community of collaboratorCommunities) {
+      if (!mergedClaimedCommunities.some((existing) => existing.id === community.id)) {
+        mergedClaimedCommunities.push(community);
+      }
+    }
+
+    return {
+      ...user,
+      claimedCommunities: mergedClaimedCommunities,
+    };
   } catch {
     // DB unreachable (e.g. Neon cold start) - treat as no session so the
     // page still renders instead of crashing on first request.

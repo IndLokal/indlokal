@@ -47,6 +47,7 @@ export async function requestMagicLink(
     email: string;
     role: string;
     claimedCommunities: { name: string }[];
+    collaboratorMemberships: { community: { name: string } }[];
   } | null = null;
   try {
     user = await db.user.findUnique({
@@ -55,6 +56,10 @@ export async function requestMagicLink(
         claimedCommunities: {
           where: { claimState: 'CLAIMED' },
           select: { name: true },
+        },
+        collaboratorMemberships: {
+          where: { status: 'ACTIVE' },
+          select: { community: { select: { name: true } } },
         },
       },
     });
@@ -71,7 +76,11 @@ export async function requestMagicLink(
     };
   }
 
-  if (user.role === 'COMMUNITY_ADMIN' && user.claimedCommunities.length === 0) {
+  if (
+    user.role === 'COMMUNITY_ADMIN' &&
+    user.claimedCommunities.length === 0 &&
+    user.collaboratorMemberships.length === 0
+  ) {
     return {
       success: false,
       error: 'Your account exists but has no approved community claim yet.',
@@ -90,7 +99,10 @@ export async function requestMagicLink(
   // Generate a one-time magic link token (separate from session token)
   const rawToken = await createMagicLinkToken(user.id);
 
-  const label = user.claimedCommunities[0]?.name ?? user.email;
+  const label =
+    user.claimedCommunities[0]?.name ??
+    user.collaboratorMemberships[0]?.community.name ??
+    user.email;
   try {
     await sendMagicLinkEmail(user.email, rawToken, label);
   } catch {

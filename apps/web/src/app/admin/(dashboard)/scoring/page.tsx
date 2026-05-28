@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { subDays } from 'date-fns';
 import { ScoringJobPanel } from './ScoringJobPanel';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminStatsStrip } from '@/components/admin/stats-strip';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const metadata = { title: 'Scoring & Jobs - Admin' };
 
@@ -62,12 +64,15 @@ export default async function AdminScoringPage() {
         backHref="/admin"
       />
 
-      {/* Stats row */}
-      <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <StatCard label="Active communities" value={totalActive} color="indigo" />
-        <StatCard label="Trending" value={trendingCount} color="green" />
-        <StatCard label="Stale (90d)" value={staleCount} color="yellow" />
-        <StatCard label="Very stale (180d)" value={veryStaleCount} color="red" />
+      <div className="mt-8">
+        <AdminStatsStrip
+          items={[
+            { key: 'active', label: 'Active communities', value: totalActive },
+            { key: 'trending', label: 'Trending', value: trendingCount },
+            { key: 'stale90', label: 'Stale (90d)', value: staleCount },
+            { key: 'stale180', label: 'Very stale (180d)', value: veryStaleCount },
+          ]}
+        />
       </div>
 
       {brokenLinksCount > 0 && (
@@ -90,24 +95,16 @@ export default async function AdminScoringPage() {
         {staleCommunities.length === 0 ? (
           <p className="text-muted mt-4 text-sm">All communities have recent activity.</p>
         ) : (
-          <div className="border-border mt-4 overflow-hidden rounded-[var(--radius-card)] border">
-            <table className="w-full text-sm">
-              <thead className="border-border bg-muted-bg border-b text-left">
+          <AdminTableWrap className="mt-4">
+            <AdminTable>
+              <AdminTableHead>
                 <tr>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    Community
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    City
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    Last Activity
-                  </th>
-                  <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                    Score
-                  </th>
+                  <AdminTh>Community</AdminTh>
+                  <AdminTh>City</AdminTh>
+                  <AdminTh>Last Activity</AdminTh>
+                  <AdminTh>Score</AdminTh>
                 </tr>
-              </thead>
+              </AdminTableHead>
               <tbody className="divide-border/50 divide-y">
                 {staleCommunities.map((c: StaleCommunityRow) => (
                   <tr key={c.id} className="hover:bg-muted-bg">
@@ -138,33 +135,10 @@ export default async function AdminScoringPage() {
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+            </AdminTable>
+          </AdminTableWrap>
         )}
       </section>
     </AdminPage>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: 'indigo' | 'green' | 'yellow' | 'red';
-}) {
-  const colors = {
-    indigo: 'bg-brand-50 text-brand-700',
-    green: 'bg-green-50 text-green-700',
-    yellow: 'bg-yellow-50 text-yellow-700',
-    red: 'bg-red-50 text-red-700',
-  };
-  return (
-    <div className={`rounded-xl p-4 ${colors[color]}`}>
-      <p className="text-2xl font-bold">{value}</p>
-      <p className="mt-0.5 text-sm">{label}</p>
-    </div>
   );
 }

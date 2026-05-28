@@ -20,9 +20,32 @@ export async function submitCommunity(
   _prev: SubmitResult,
   formData: FormData,
 ): Promise<SubmitResult> {
+  const noticePolicyVersion = '2026-05-v1';
+  const noticeRecordedAt = new Date().toISOString();
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   if (!checkRateLimit(submitLimiter, ip).allowed) {
     return { success: false, errors: { _: ['Too many submissions. Please try again later.'] } };
+  }
+
+  const channelsJson = (formData.get('channelsJson') as string) || '[]';
+  let parsedChannels: Array<{
+    channelType: communityOptions.CommunityChannelType;
+    url: string;
+    label?: string;
+    isPrimary?: boolean;
+  }> = [];
+  try {
+    const rawChannels = JSON.parse(channelsJson) as unknown;
+    parsedChannels = Array.isArray(rawChannels)
+      ? (rawChannels as Array<{
+          channelType: communityOptions.CommunityChannelType;
+          url: string;
+          label?: string;
+          isPrimary?: boolean;
+        }>)
+      : [];
+  } catch {
+    parsedChannels = [];
   }
 
   const raw = {
@@ -31,10 +54,8 @@ export async function submitCommunity(
     citySlug: formData.get('citySlug') as string,
     categories: formData.getAll('categories') as string[],
     languages: formData.getAll('languages') as string[],
-    primaryChannelType: formData.get('primaryChannelType') as string,
-    primaryChannelUrl: formData.get('primaryChannelUrl') as string,
-    secondaryChannelType: (formData.get('secondaryChannelType') as string) || undefined,
-    secondaryChannelUrl: (formData.get('secondaryChannelUrl') as string) || undefined,
+    channels: parsedChannels,
+    ownershipIntent: formData.get('ownershipIntent') === 'on',
     contactEmail: formData.get('contactEmail') as string,
     contactName: formData.get('contactName') as string,
   };
@@ -48,16 +69,6 @@ export async function submitCommunity(
   }
 
   const data = parsed.data;
-
-  // Secondary channel type requires a URL
-  if (data.secondaryChannelType && !data.secondaryChannelUrl) {
-    return {
-      success: false,
-      errors: {
-        secondaryChannelUrl: ['A URL is required when a secondary channel type is selected'],
-      },
-    };
-  }
 
   // Resolve city, dedup-check, and resolve categories - all DB reads that
   // must run before the write. Wrapped together so a cold-start DB error
@@ -136,22 +147,12 @@ export async function submitCommunity(
     url: string;
     label: string;
     isPrimary: boolean;
-  }[] = [
-    {
-      channelType: data.primaryChannelType,
-      url: data.primaryChannelUrl,
-      label: data.primaryChannelType,
-      isPrimary: true,
-    },
-  ];
-  if (data.secondaryChannelType && data.secondaryChannelUrl) {
-    channels.push({
-      channelType: data.secondaryChannelType,
-      url: data.secondaryChannelUrl,
-      label: data.secondaryChannelType,
-      isPrimary: false,
-    });
-  }
+  }[] = data.channels.map((channel) => ({
+    channelType: channel.channelType,
+    url: channel.url,
+    label: channel.label?.trim() || channel.channelType,
+    isPrimary: channel.isPrimary,
+  }));
 
   // Create community as UNVERIFIED
   try {
@@ -171,7 +172,13 @@ export async function submitCommunity(
           submitter: {
             name: data.contactName,
             email: data.contactEmail,
+            ownershipIntent: data.ownershipIntent,
             submittedAt: new Date().toISOString(),
+            notice: {
+              policyVersion: noticePolicyVersion,
+              source: 'submit_form',
+              recordedAt: noticeRecordedAt,
+            },
           },
           city: {
             submittedCitySlug: city.slug,

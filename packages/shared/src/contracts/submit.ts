@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CHANNEL_TYPE_VALUES } from '../config/community-options';
 
 // ─── Allowed upload content-types ─────────────────────────────────────────
 
@@ -67,25 +68,50 @@ export type EventSubmission = z.infer<typeof EventSubmission>;
 // ─── Community submission ──────────────────────────────────────────────────
 
 export const ChannelSubmission = z.object({
-  channelType: z.string().min(1),
+  channelType: z.enum(CHANNEL_TYPE_VALUES),
   url: z.string().url(),
+  label: z.string().max(100).optional(),
   isPrimary: z.boolean().optional().default(false),
 });
 
-export const CommunitySubmission = z.object({
-  name: z.string().min(2).max(200),
-  description: z.string().min(10).max(2000),
-  citySlug: z.string().min(1),
-  categories: z.array(z.string()).min(1).max(20),
-  languages: z.array(z.string()).max(20).optional().default([]),
-  primaryChannelType: z.string().min(1),
-  primaryChannelUrl: z.string().url(),
-  secondaryChannelType: z.string().optional(),
-  secondaryChannelUrl: z.string().url().optional().or(z.literal('')),
-  contactEmail: z.string().email(),
-  contactName: z.string().min(1).max(200),
-  imageKey: z.string().optional(),
-});
+export const CommunitySubmission = z
+  .object({
+    name: z.string().min(2).max(200),
+    description: z.string().min(10).max(2000),
+    citySlug: z.string().min(1),
+    categories: z.array(z.string()).min(1).max(20),
+    languages: z.array(z.string()).max(20).optional().default([]),
+    channels: z.array(ChannelSubmission).min(1).max(6).optional(),
+    primaryChannelType: z.enum(CHANNEL_TYPE_VALUES).optional(),
+    primaryChannelUrl: z.string().url().optional(),
+    secondaryChannelType: z.enum(CHANNEL_TYPE_VALUES).optional(),
+    secondaryChannelUrl: z.string().url().optional().or(z.literal('')),
+    contactEmail: z.string().email(),
+    contactName: z.string().min(1).max(200),
+    imageKey: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    const channels = data.channels ?? [];
+
+    if (channels.length === 0 && (!data.primaryChannelType || !data.primaryChannelUrl)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['channels'],
+        message: 'Provide at least one channel.',
+      });
+    }
+
+    if (channels.length > 0) {
+      const primaryCount = channels.filter((channel) => channel.isPrimary).length;
+      if (primaryCount !== 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['channels'],
+          message: 'Exactly one channel must be primary.',
+        });
+      }
+    }
+  });
 export type CommunitySubmission = z.infer<typeof CommunitySubmission>;
 
 // ─── Suggest community submission ─────────────────────────────────────────

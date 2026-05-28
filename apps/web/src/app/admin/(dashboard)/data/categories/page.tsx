@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Categories - Admin' };
@@ -68,28 +69,18 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
   return (
     <section className="mt-8">
       <h2 className="text-lg font-semibold">{title}</h2>
-      <div className="border-border mt-3 overflow-hidden rounded-[var(--radius-card)] border">
-        <table className="w-full text-sm">
-          <thead className="border-border bg-muted-bg border-b text-left">
+      <AdminTableWrap className="mt-3">
+        <AdminTable>
+          <AdminTableHead>
             <tr>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Icon
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Name
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Slug
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Order
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                In use
-              </th>
-              <th />
+              <AdminTh>Icon</AdminTh>
+              <AdminTh>Name</AdminTh>
+              <AdminTh>Slug</AdminTh>
+              <AdminTh>Order</AdminTh>
+              <AdminTh>In use</AdminTh>
+              <AdminTh>Actions</AdminTh>
             </tr>
-          </thead>
+          </AdminTableHead>
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-border border-b align-top last:border-b-0">
@@ -152,8 +143,8 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </AdminTable>
+      </AdminTableWrap>
     </section>
   );
 }

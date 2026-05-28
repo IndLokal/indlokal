@@ -57,7 +57,7 @@ export default async function SubmitPage() {
         <SubmitForm
           cities={cities.map((city) => ({
             slug: city.slug,
-            name: city.metroRegion ? `${city.name} (${city.metroRegion.name} metro)` : city.name,
+            name: city.name,
           }))}
           categories={categories}
         />

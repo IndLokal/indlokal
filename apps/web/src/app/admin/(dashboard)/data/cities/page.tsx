@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { db } from '@/lib/db';
 import { createCityAction, deleteCityAction, toggleCityActiveAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Cities - Admin' };
@@ -55,28 +56,18 @@ export default async function AdminCitiesPage() {
         </form>
       </section>
 
-      <div className="border-border mt-8 overflow-hidden rounded-[var(--radius-card)] border">
-        <table className="w-full text-sm">
-          <thead className="border-border bg-muted-bg border-b text-left">
+      <AdminTableWrap className="mt-8">
+        <AdminTable>
+          <AdminTableHead>
             <tr>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Name
-              </th>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Slug
-              </th>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                State
-              </th>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Metro
-              </th>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Active
-              </th>
-              <th className="text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide" />
+              <AdminTh>Name</AdminTh>
+              <AdminTh>Slug</AdminTh>
+              <AdminTh>State</AdminTh>
+              <AdminTh>Metro</AdminTh>
+              <AdminTh>Active</AdminTh>
+              <AdminTh>Actions</AdminTh>
             </tr>
-          </thead>
+          </AdminTableHead>
           <tbody>
             {cities.map((c) => (
               <tr key={c.id} className="border-border border-b last:border-b-0">
@@ -121,8 +112,8 @@ export default async function AdminCitiesPage() {
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </AdminTable>
+      </AdminTableWrap>
     </AdminPage>
   );
 }

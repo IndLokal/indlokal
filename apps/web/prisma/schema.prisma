@@ -95,6 +95,18 @@ enum ClaimState {
   CLAIMED
 }
 
+enum CollaboratorStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+}
+
+enum CollaboratorSource {
+  OWNER_INVITE
+  PUBLIC_REQUEST
+  ADMIN_ADD
+}
+
 enum ContentSource {
   ADMIN_SEED
   COMMUNITY_SUBMITTED
@@ -152,6 +164,7 @@ model Community {
   sourceEdges      RelationshipEdge[] @relation("SourceEdges")
   targetEdges      RelationshipEdge[] @relation("TargetEdges")
   outreachLeads    OutreachLead[]
+  collaborators    CommunityCollaborator[]
 
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
@@ -545,6 +558,9 @@ model User {
   sessionTokenExpiry DateTime? @map("session_token_expiry")
 
   claimedCommunities Community[] @relation("ClaimedCommunities")
+  collaboratorMemberships CommunityCollaborator[] @relation("CommunityCollaboratorUser")
+  collaboratorRequests    CommunityCollaborator[] @relation("CommunityCollaboratorRequestedBy")
+  collaboratorReviews     CommunityCollaborator[] @relation("CommunityCollaboratorReviewedBy")
   interactions       UserInteraction[]
   savedCommunities   SavedCommunity[]
   savedEvents        SavedEvent[]
@@ -564,6 +580,31 @@ model User {
   lastActiveAt       DateTime? @map("last_active_at")
 
   @@map("users")
+}
+
+model CommunityCollaborator {
+  id                String             @id @default(cuid())
+  communityId       String             @map("community_id")
+  community         Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  userId            String             @map("user_id")
+  user              User               @relation("CommunityCollaboratorUser", fields: [userId], references: [id], onDelete: Cascade)
+  status            CollaboratorStatus @default(PENDING)
+  source            CollaboratorSource
+  requestedByUserId String?            @map("requested_by_user_id")
+  requestedByUser   User?              @relation("CommunityCollaboratorRequestedBy", fields: [requestedByUserId], references: [id], onDelete: SetNull)
+  requestedEmail    String?            @map("requested_email")
+  reviewedAt        DateTime?          @map("reviewed_at")
+  reviewedByUserId  String?            @map("reviewed_by_user_id")
+  reviewedByUser    User?              @relation("CommunityCollaboratorReviewedBy", fields: [reviewedByUserId], references: [id], onDelete: SetNull)
+  metadata          Json?
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+
+  @@unique([communityId, userId], map: "community_collaborators_community_user_key")
+  @@index([communityId, status])
+  @@index([requestedEmail, status])
+  @@index([userId, status])
+  @@map("community_collaborators")
 }
 
 // ─────────────────────────────────────────────────

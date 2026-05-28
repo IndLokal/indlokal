@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { deleteResourceAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
+import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Resources - Admin' };
@@ -56,75 +58,61 @@ export default async function AdminResourcesPage({
     <AdminPage>
       <AdminPageHeader title="Resources" backHref="/admin/data" backLabel="Data" />
 
-      <form className="mt-6 flex flex-wrap items-end gap-3" method="get">
-        <label className="text-sm">
-          <div className="text-muted">Search</div>
-          <input
-            name="q"
-            defaultValue={sp.q ?? ''}
-            placeholder="title…"
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          />
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">City</div>
-          <select
-            name="city"
-            defaultValue={sp.city ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- all -</option>
-            {cities.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="text-sm">
-          <div className="text-muted">Type</div>
-          <select
-            name="type"
-            defaultValue={sp.type ?? ''}
-            className="border-border mt-1 rounded-md border px-2 py-1.5 text-sm"
-          >
-            <option value="">- any -</option>
-            {types.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
-        </label>
-        <button
-          type="submit"
-          className="bg-brand-600 hover:bg-brand-700 rounded-md px-3 py-1.5 text-sm text-white"
-        >
-          Filter
-        </button>
+      <form className="mt-6" method="get">
+        <AdminFilterBar className="border-border">
+          <AdminFilterItem label="Search">
+            <input
+              name="q"
+              defaultValue={sp.q ?? ''}
+              placeholder="title..."
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            />
+          </AdminFilterItem>
+          <AdminFilterItem label="City">
+            <select
+              name="city"
+              defaultValue={sp.city ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All cities</option>
+              {cities.map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </AdminFilterItem>
+          <AdminFilterItem label="Type">
+            <select
+              name="type"
+              defaultValue={sp.type ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">Any type</option>
+              {types.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </AdminFilterItem>
+          <AdminFilterActions resetHref="/admin/data/resources" />
+        </AdminFilterBar>
       </form>
 
       <p className="text-muted mt-4 text-xs">{resources.length} shown (cap 200)</p>
 
-      <div className="border-border mt-3 overflow-hidden rounded-[var(--radius-card)] border">
-        <table className="w-full text-sm">
-          <thead className="border-border bg-muted-bg border-b text-left">
+      <AdminTableWrap className="mt-3">
+        <AdminTable>
+          <AdminTableHead>
             <tr>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Title
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                Type
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                City
-              </th>
-              <th className="text-muted px-3 py-2 text-left text-xs font-medium uppercase tracking-wide">
-                URL
-              </th>
-              <th />
+              <AdminTh>Title</AdminTh>
+              <AdminTh>Type</AdminTh>
+              <AdminTh>City</AdminTh>
+              <AdminTh>URL</AdminTh>
+              <AdminTh>Actions</AdminTh>
             </tr>
-          </thead>
+          </AdminTableHead>
           <tbody>
             {resources.map((r) => (
               <tr key={r.id} className="border-border border-b last:border-b-0">
@@ -161,8 +149,8 @@ export default async function AdminResourcesPage({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+        </AdminTable>
+      </AdminTableWrap>
     </AdminPage>
   );
 }
