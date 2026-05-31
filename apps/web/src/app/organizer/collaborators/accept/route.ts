@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 
 const COLLAB_INVITE_TOKEN_COOKIE = 'collab_invite_token';
 const COLLAB_INVITE_ID_COOKIE = 'collab_invite_id';
+const INVITE_HANDOFF_MAX_AGE_SECONDS = 24 * 60 * 60;
 
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token') ?? '';
@@ -36,6 +37,8 @@ export async function GET(request: NextRequest) {
       <h1>Accept collaborator invite</h1>
       <p>Click below to activate your collaborator access and sign in.</p>
       <form method="POST" action="/organizer/collaborators/accept">
+        <input type="hidden" name="token" value="${rawToken}" />
+        <input type="hidden" name="invite" value="${inviteId}" />
         <button type="submit">Accept invite and continue</button>
       </form>
       <small>This extra step prevents email scanners from auto-accepting your invite.</small>
@@ -55,7 +58,7 @@ export async function GET(request: NextRequest) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/organizer/collaborators/accept',
-    maxAge: 10 * 60,
+    maxAge: INVITE_HANDOFF_MAX_AGE_SECONDS,
   });
 
   response.cookies.set(COLLAB_INVITE_ID_COOKIE, inviteId, {
@@ -63,7 +66,7 @@ export async function GET(request: NextRequest) {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     path: '/organizer/collaborators/accept',
-    maxAge: 10 * 60,
+    maxAge: INVITE_HANDOFF_MAX_AGE_SECONDS,
   });
 
   return response;
@@ -71,11 +74,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const jar = await cookies();
-  const rawToken = (jar.get(COLLAB_INVITE_TOKEN_COOKIE)?.value ?? '').trim();
-  const inviteId = (jar.get(COLLAB_INVITE_ID_COOKIE)?.value ?? '').trim();
-
-  jar.delete(COLLAB_INVITE_TOKEN_COOKIE);
-  jar.delete(COLLAB_INVITE_ID_COOKIE);
+  const formData = await request.formData();
+  const rawToken = (
+    (formData.get('token') as string | null) ??
+    jar.get(COLLAB_INVITE_TOKEN_COOKIE)?.value ??
+    ''
+  ).trim();
+  const inviteId = (
+    (formData.get('invite') as string | null) ??
+    jar.get(COLLAB_INVITE_ID_COOKIE)?.value ??
+    ''
+  ).trim();
 
   const seeOther = (path: string) =>
     NextResponse.redirect(new URL(path, request.url), { status: 303 });
@@ -88,25 +97,7 @@ export async function POST(request: NextRequest) {
     const tokenHash = await hashToken(rawToken);
     const now = new Date();
 
-    const claim = await db.magicLinkToken.updateMany({
-      where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
-      data: { usedAt: now },
-    });
-
-    if (claim.count === 0) {
-      return seeOther('/organizer/login?error=expired_token');
-    }
-
-    const magicLink = await db.magicLinkToken.findUnique({
-      where: { tokenHash },
-      select: { userId: true },
-    });
-
-    if (!magicLink?.userId) {
-      return seeOther('/organizer/login?error=invalid_token');
-    }
-
-    const accepted = await db.$transaction(async (tx) => {
+    const txResult = await db.$transaction(async (tx) => {
       const invite = await tx.communityCollaborator.findUnique({
         where: { id: inviteId },
         select: {
@@ -118,10 +109,27 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      if (!invite) return false;
-      if (invite.userId !== magicLink.userId) return false;
-      if (invite.source !== 'COMMUNITY_ADMIN_INVITE') return false;
-      if (invite.status !== 'PENDING') return false;
+      if (!invite) return { ok: false as const, error: 'invalid_invite' };
+      if (invite.source !== 'COMMUNITY_ADMIN_INVITE')
+        return { ok: false as const, error: 'invalid_invite' };
+      if (invite.status !== 'PENDING') return { ok: false as const, error: 'invalid_invite' };
+
+      const magicLink = await tx.magicLinkToken.findUnique({
+        where: { tokenHash },
+        select: { id: true, userId: true, usedAt: true, expiresAt: true },
+      });
+
+      if (!magicLink || magicLink.expiresAt <= now || magicLink.usedAt) {
+        return { ok: false as const, error: 'expired_token' };
+      }
+
+      if (invite.userId !== magicLink.userId)
+        return { ok: false as const, error: 'invalid_invite' };
+
+      await tx.magicLinkToken.update({
+        where: { id: magicLink.id },
+        data: { usedAt: now },
+      });
 
       await tx.communityCollaborator.update({
         where: { id: invite.id },
@@ -145,15 +153,18 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      return true;
+      return { ok: true as const, userId: magicLink.userId };
     });
 
-    if (!accepted) {
-      return seeOther('/organizer/login?error=invalid_invite');
+    if (!txResult.ok) {
+      return seeOther(`/organizer/login?error=${txResult.error}`);
     }
 
+    jar.delete(COLLAB_INVITE_TOKEN_COOKIE);
+    jar.delete(COLLAB_INVITE_ID_COOKIE);
+
     const sessionToken = generateSessionToken();
-    await createSession(magicLink.userId, sessionToken);
+    await createSession(txResult.userId, sessionToken);
 
     revalidatePath('/organizer');
     revalidatePath('/organizer/collaborators');

@@ -164,6 +164,7 @@ export async function inviteCollaborator(
             name: normalizedName,
             note: data.note,
             invitedAt: new Date().toISOString(),
+            inviteEmailLastSentAt: new Date().toISOString(),
           },
         },
         create: {
@@ -178,6 +179,7 @@ export async function inviteCollaborator(
             name: normalizedName,
             note: data.note,
             invitedAt: new Date().toISOString(),
+            inviteEmailLastSentAt: new Date().toISOString(),
           },
         },
         select: { id: true },
@@ -224,6 +226,16 @@ const promoteSchema = z.object({
 const resendInviteSchema = z.object({
   collaboratorId: z.string().min(1),
 });
+
+const RESEND_INVITE_COOLDOWN_MS = 30 * 1000;
+
+function parseLastInviteEmailSentAt(metadata: unknown): Date | null {
+  if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+  const raw = (metadata as { inviteEmailLastSentAt?: unknown }).inviteEmailLastSentAt;
+  if (typeof raw !== 'string' || raw.trim().length === 0) return null;
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 
 async function resolveActiveCommunityId(): Promise<{ userId: string; communityId: string } | null> {
   const user = await getSessionUser();
@@ -354,6 +366,7 @@ export async function resendCollaboratorInvite(
           status: true,
           source: true,
           requestedEmail: true,
+          metadata: true,
           community: { select: { name: true } },
           user: { select: { email: true } },
         },
@@ -378,6 +391,14 @@ export async function resendCollaboratorInvite(
         } as CollaboratorMutationResult;
       }
 
+      const lastSentAt = parseLastInviteEmailSentAt(invite.metadata);
+      if (lastSentAt && Date.now() - lastSentAt.getTime() < RESEND_INVITE_COOLDOWN_MS) {
+        return {
+          success: false,
+          error: 'Invite was just sent. Please wait a few seconds before resending.',
+        } as CollaboratorMutationResult;
+      }
+
       const rawToken = await createMagicLinkToken(invite.userId);
       const acceptUrl = `${appUrl}/organizer/collaborators/accept?token=${encodeURIComponent(rawToken)}&invite=${encodeURIComponent(invite.id)}`;
 
@@ -387,6 +408,21 @@ export async function resendCollaboratorInvite(
         acceptUrl,
         user.displayName ?? user.email,
       );
+
+      const metadataObj =
+        invite.metadata && typeof invite.metadata === 'object' && !Array.isArray(invite.metadata)
+          ? (invite.metadata as Record<string, unknown>)
+          : {};
+
+      await db.communityCollaborator.update({
+        where: { id: invite.id },
+        data: {
+          metadata: {
+            ...metadataObj,
+            inviteEmailLastSentAt: new Date().toISOString(),
+          },
+        },
+      });
 
       revalidatePath('/organizer/collaborators');
       return { success: true } as CollaboratorMutationResult;
