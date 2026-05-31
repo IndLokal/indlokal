@@ -45,6 +45,16 @@ export async function hostSignUp(
 
   const { email, displayName, cityId, link1, link2 } = parsed.data;
 
+  // City is the discovery partition key — verify the submitted id resolves to
+  // a real, active city before attaching it to the host's profile.
+  const cityExists = await db.city.findFirst({
+    where: { id: cityId, isActive: true },
+    select: { id: true },
+  });
+  if (!cityExists) {
+    return { success: false, error: 'Please select a valid city.' };
+  }
+
   // Rate limits
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   const ipRl = checkRateLimit(magicLinkIpLimiter, ip);

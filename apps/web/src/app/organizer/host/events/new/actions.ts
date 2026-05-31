@@ -100,6 +100,16 @@ export async function addHostEvent(
     };
   }
 
+  // City is the discovery partition key — never trust a client-supplied id.
+  // Verify it resolves to a real, active city before creating the event.
+  const city = await db.city.findFirst({
+    where: { id: data.cityId, isActive: true },
+    select: { id: true },
+  });
+  if (!city) {
+    return { success: false, errors: { cityId: ['Please select a valid city.'] } };
+  }
+
   return withAction(
     async () => {
       // Generate a unique slug with retry on collision (avoids TOCTOU race)

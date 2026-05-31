@@ -87,7 +87,9 @@ describe('@db host lane', () => {
     form.set('endsAt', new Date(Date.now() + 90_000_000).toISOString());
     form.set('cost', 'free');
 
-    await expect(addHostEvent(null, form)).rejects.toThrow(/NEXT_REDIRECT/);
+    await expect(addHostEvent(null, form)).rejects.toThrow(
+      /NEXT_REDIRECT:\/organizer\/host\/events/,
+    );
 
     const event = await testDb.event.findFirst({ where: { createdByUserId: host.id } });
     expect(event?.moderationState).toBe('PENDING_REVIEW');
@@ -144,7 +146,7 @@ describe('@db community lane', () => {
     validForm.set('endsAt', new Date(Date.now() + 90_000_000).toISOString());
     validForm.set('cost', 'free');
 
-    await expect(addEvent(null, validForm)).rejects.toThrow(/NEXT_REDIRECT/);
+    await expect(addEvent(null, validForm)).rejects.toThrow(/NEXT_REDIRECT:\/organizer\/events/);
 
     const created = await testDb.event.findFirst({ where: { communityId: community.id } });
     expect(created?.moderationState).toBe('PUBLISHED');

@@ -102,6 +102,7 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
             <th className="hidden px-4 py-2.5 text-left text-xs font-medium sm:table-cell">City</th>
             <th className="px-4 py-2.5 text-left text-xs font-medium">Date</th>
             <th className="px-4 py-2.5 text-left text-xs font-medium">Status</th>
+            <th className="px-4 py-2.5 text-left text-xs font-medium">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-border divide-y">
@@ -109,8 +110,7 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
             <tr key={event.id} className="hover:bg-muted-bg/50 transition-colors">
               <td className="px-4 py-3">
                 <Link
-                  href={`/${event.city.slug}/events/${event.slug}`}
-                  target="_blank"
+                  href={`/organizer/events/${event.slug}`}
                   className="font-medium hover:underline"
                 >
                   {event.title}
@@ -127,6 +127,24 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
                   status={event.status}
                   moderationState={event.moderationState}
                 />
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={`/${event.city.slug}/events/${event.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-brand-600 hover:text-brand-700 text-xs font-medium hover:underline"
+                  >
+                    View public
+                  </Link>
+                  <Link
+                    href={`/organizer/events/${event.slug}/edit`}
+                    className="text-xs font-medium text-emerald-700 hover:underline"
+                  >
+                    Edit details
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}
