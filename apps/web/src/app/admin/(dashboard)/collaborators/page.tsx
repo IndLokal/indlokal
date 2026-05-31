@@ -71,6 +71,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
 
   const requestWhere: Prisma.CommunityCollaboratorWhereInput = {
     status: 'PENDING',
+    source: 'PUBLIC_REQUEST',
   };
 
   if (citySlug) {
@@ -182,7 +183,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
     <AdminPage>
       <AdminPageHeader
         title="Organizer and Collaborator Access"
-        description={`${requestTotalCount} pending review · ${communityTotalCount} communities with organizer access data`}
+        description={`${requestTotalCount} public requests pending review · ${communityTotalCount} communities with organizer access data`}
         backHref="/admin"
       />
 
@@ -235,9 +236,9 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               defaultValue={source}
               className="border-border w-full rounded border px-3 py-2 text-sm"
             >
-              <option value="ALL">All pending requests</option>
+              <option value="ALL">Public requests (default)</option>
               <option value="PUBLIC_REQUEST">Public request</option>
-              <option value="COMMUNITY_ADMIN_INVITE">Organizer invite</option>
+              <option value="COMMUNITY_ADMIN_INVITE">Organizer invite (self-accept)</option>
             </select>
           </AdminFilterItem>
           <AdminFilterActions resetHref="/admin/collaborators" />
@@ -352,7 +353,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
       </section>
 
       <section className="mt-10">
-        <h2 className="text-lg font-semibold">Pending Collaborator Requests</h2>
+        <h2 className="text-lg font-semibold">Pending Collaborator Requests (Platform Review)</h2>
 
         {requestTotalCount === 0 ? (
           <p className="text-muted mt-6 text-center">No collaborator requests to review.</p>

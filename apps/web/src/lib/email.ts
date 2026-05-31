@@ -308,11 +308,14 @@ export async function sendOrganizerCollaboratorApprovedNotificationEmail(
 export async function sendCollaboratorInviteRequestedEmail(
   to: string,
   communityName: string,
+  acceptUrl: string,
   inviterName?: string,
 ): Promise<void> {
+  const safeCommunityName = communityName?.trim() || 'this community';
+
   await sendEmail(
     to,
-    `Collaborator invite request for "${communityName}"`,
+    `Accept collaborator invite for "${safeCommunityName}"`,
     `
 <!DOCTYPE html>
 <html>
@@ -320,9 +323,16 @@ export async function sendCollaboratorInviteRequestedEmail(
   <h2 style="margin-top:0">You've been invited as a collaborator</h2>
   <p>
     ${inviterName ? `<strong>${inviterName}</strong> invited you` : 'You were invited'} to help manage
-    <strong>${communityName}</strong> on IndLokal.
+    <strong>${safeCommunityName}</strong> on IndLokal.
   </p>
-  <p>Your access request is now pending admin review. You'll get another email when access is approved.</p>
+  <p>Confirm this invite to activate your collaborator access.</p>
+  <p style="margin:24px 0">
+    <a href="${acceptUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Accept collaborator invite →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">This one-time link expires in 24 hours.</p>
   <p style="font-size:13px;color:#666">If this wasn't expected, you can ignore this email.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>

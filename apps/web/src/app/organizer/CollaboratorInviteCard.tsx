@@ -10,7 +10,7 @@ type CollaboratorInviteCardProps = {
 
 export function CollaboratorInviteCard({
   title = 'Collaborators',
-  description = 'Invite another organizer by email. Access requests are reviewed by admin.',
+  description = 'Invite another organizer by email. Access becomes active when they accept the invite link.',
 }: CollaboratorInviteCardProps) {
   const [state, formAction, isPending] = useActionState<InviteCollaboratorResult, FormData>(
     inviteCollaborator,

@@ -4,6 +4,7 @@ import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { CollaboratorInviteCard } from '../CollaboratorInviteCard';
+import { resendCollaboratorInviteAction } from './actions';
 
 export const metadata = { title: 'Collaborators - Organizer' };
 
@@ -154,7 +155,7 @@ export default async function OrganizerCollaboratorsPage() {
           <div>
             <h2 className="text-foreground text-lg font-semibold">Pending requests</h2>
             <p className="text-muted mt-1 text-sm">
-              Pending collaborator requests stay here until reviewed by admin.
+              Requests here are waiting for collaborator acceptance or platform review.
             </p>
           </div>
           <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
@@ -178,6 +179,9 @@ export default async function OrganizerCollaboratorsPage() {
                   <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Requested
                   </th>
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                    Action
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-border divide-y">
@@ -200,12 +204,29 @@ export default async function OrganizerCollaboratorsPage() {
                             collaborator.requestedByUser.email}
                         </p>
                       )}
+                      <p className="text-muted mt-1 text-xs">
+                        {collaborator.source === 'COMMUNITY_ADMIN_INVITE'
+                          ? 'Awaiting collaborator email confirmation'
+                          : 'Awaiting platform review'}
+                      </p>
                     </td>
                     <td className="text-muted px-4 py-3 text-sm">
                       {sourceLabel(collaborator.source)}
                     </td>
                     <td className="text-muted px-4 py-3 text-sm">
                       {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {collaborator.source === 'COMMUNITY_ADMIN_INVITE' ? (
+                        <form action={resendCollaboratorInviteAction}>
+                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                          <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                            Resend invite
+                          </button>
+                        </form>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -217,7 +238,7 @@ export default async function OrganizerCollaboratorsPage() {
 
       <CollaboratorInviteCard
         title="Invite collaborator"
-        description="Send a collaborator access request by email. Admin review is required before access becomes active."
+        description="Send an invite by email. Collaborator access becomes active when they accept the invite link."
       />
     </div>
   );

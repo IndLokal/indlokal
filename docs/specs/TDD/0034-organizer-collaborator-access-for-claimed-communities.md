@@ -60,7 +60,7 @@ Behavior:
 - Primary owner (or existing active collaborator) submits collaborator email.
 - Upsert user if needed.
 - Create pending collaborator request with `source=COMMUNITY_ADMIN_INVITE`.
-- Admin approval required in v1.
+- Invitee receives an email link and becomes `ACTIVE` on acceptance.
 
 ### 3.3 Admin moderation
 

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
-import { getCurrentCommunityId, getSessionUser } from '@/lib/session';
+import { createMagicLinkToken, getCurrentCommunityId, getSessionUser } from '@/lib/session';
 import { sendCollaboratorInviteRequestedEmail } from '@/lib/email';
 import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 import {
@@ -42,6 +42,9 @@ export async function inviteCollaborator(
     return { success: false, errors: { _: ['No active community found.'] } };
   }
 
+  const inviterLabel = user.displayName ?? user.email;
+  const communityName = community.name;
+
   // ADR-0008: inviting requires OWNER (organizer) authority, checked on the
   // backend against CommunityCollaborator (not the workspace cookie).
   if (!canManageCommunity(user, community.id)) {
@@ -67,6 +70,23 @@ export async function inviteCollaborator(
 
   const data = parsed.data;
   const normalizedName = data.name || undefined;
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
+
+  async function sendInviteEmail(targetUserId: string, inviteId: string): Promise<boolean> {
+    try {
+      const rawToken = await createMagicLinkToken(targetUserId);
+      const acceptUrl = `${appUrl}/organizer/collaborators/accept?token=${encodeURIComponent(rawToken)}&invite=${encodeURIComponent(inviteId)}`;
+      await sendCollaboratorInviteRequestedEmail(
+        data.email,
+        communityName,
+        acceptUrl,
+        inviterLabel,
+      );
+      return true;
+    } catch {
+      return false;
+    }
+  }
 
   return withAction(
     async () => {
@@ -100,7 +120,7 @@ export async function inviteCollaborator(
             userId: target.id,
           },
         },
-        select: { status: true },
+        select: { id: true, status: true, source: true },
       });
 
       if (existing?.status === 'ACTIVE') {
@@ -111,13 +131,21 @@ export async function inviteCollaborator(
       }
 
       if (existing?.status === 'PENDING') {
+        if (existing.source === 'COMMUNITY_ADMIN_INVITE') {
+          return {
+            success: true,
+            message:
+              'Invite is still pending acceptance. Use Resend invite to send another acceptance email.',
+          } as InviteCollaboratorResult;
+        }
+
         return {
           success: true,
           message: 'An invite request is already pending admin review for this collaborator.',
         } as InviteCollaboratorResult;
       }
 
-      await db.communityCollaborator.upsert({
+      const invite = await db.communityCollaborator.upsert({
         where: {
           communityId_userId: {
             communityId: community.id,
@@ -152,18 +180,13 @@ export async function inviteCollaborator(
             invitedAt: new Date().toISOString(),
           },
         },
+        select: { id: true },
       });
 
-      let message = 'Invite request submitted and email sent to collaborator.';
-      try {
-        await sendCollaboratorInviteRequestedEmail(
-          data.email,
-          community.name,
-          user.displayName ?? user.email,
-        );
-      } catch {
-        message = 'Invite request submitted. Email delivery failed, but admin can still review it.';
-      }
+      const sent = await sendInviteEmail(target.id, invite.id);
+      const message = sent
+        ? 'Invite sent. Collaborator must accept via email to become active.'
+        : 'Invite request submitted, but email delivery failed. Ask the collaborator to try again later.';
 
       revalidatePath('/organizer');
       revalidatePath('/organizer/collaborators');
@@ -192,6 +215,10 @@ const removeSchema = z.object({
 
 const transferSchema = z.object({
   targetUserId: z.string().min(1),
+});
+
+const resendInviteSchema = z.object({
+  collaboratorId: z.string().min(1),
 });
 
 async function resolveActiveCommunityId(): Promise<{ userId: string; communityId: string } | null> {
@@ -273,6 +300,80 @@ export async function removeCollaborator(
     },
     () => ({ success: false, error: 'Something went wrong. Please try again.' }),
   );
+}
+
+/** Re-send acceptance email for a pending organizer invite. OWNER only. */
+export async function resendCollaboratorInvite(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canManageCommunity(user, ctx.communityId)) {
+    return { success: false, error: 'Only the organizer can resend collaborator invites.' };
+  }
+
+  const parsed = resendInviteSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
+
+  return withAction(
+    async () => {
+      const invite = await db.communityCollaborator.findUnique({
+        where: { id: parsed.data.collaboratorId },
+        select: {
+          id: true,
+          communityId: true,
+          userId: true,
+          status: true,
+          source: true,
+          requestedEmail: true,
+          community: { select: { name: true } },
+          user: { select: { email: true } },
+        },
+      });
+
+      if (!invite || invite.communityId !== ctx.communityId) {
+        return { success: false, error: 'Invite not found.' } as CollaboratorMutationResult;
+      }
+
+      if (invite.source !== 'COMMUNITY_ADMIN_INVITE' || invite.status !== 'PENDING') {
+        return {
+          success: false,
+          error: 'Only pending organizer invites can be resent.',
+        } as CollaboratorMutationResult;
+      }
+
+      const recipientEmail = invite.user.email ?? invite.requestedEmail;
+      if (!recipientEmail) {
+        return {
+          success: false,
+          error: 'Invite email is missing for this collaborator.',
+        } as CollaboratorMutationResult;
+      }
+
+      const rawToken = await createMagicLinkToken(invite.userId);
+      const acceptUrl = `${appUrl}/organizer/collaborators/accept?token=${encodeURIComponent(rawToken)}&invite=${encodeURIComponent(invite.id)}`;
+
+      await sendCollaboratorInviteRequestedEmail(
+        recipientEmail,
+        invite.community.name,
+        acceptUrl,
+        user.displayName ?? user.email,
+      );
+
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Could not resend invite email. Please try again.' }),
+  );
+}
+
+export async function resendCollaboratorInviteAction(formData: FormData): Promise<void> {
+  await resendCollaboratorInvite(null, formData);
 }
 
 /**

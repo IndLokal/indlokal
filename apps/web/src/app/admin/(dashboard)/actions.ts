@@ -309,6 +309,7 @@ export async function approveCollaboratorRequest(formData: FormData) {
       communityId: true,
       userId: true,
       status: true,
+      source: true,
       requestedByUserId: true,
       requestedByUser: { select: { email: true } },
       user: { select: { email: true } },
@@ -322,7 +323,7 @@ export async function approveCollaboratorRequest(formData: FormData) {
       },
     },
   });
-  if (!request || request.status !== 'PENDING') return;
+  if (!request || request.status !== 'PENDING' || request.source !== 'PUBLIC_REQUEST') return;
 
   // ADR-0008: approving grants community authority via the membership row +
   // audit log - never a global User.role.
@@ -393,6 +394,7 @@ export async function rejectCollaboratorRequest(formData: FormData) {
     select: {
       id: true,
       status: true,
+      source: true,
       user: { select: { email: true } },
       requestedByUser: { select: { email: true } },
       community: {
@@ -403,7 +405,7 @@ export async function rejectCollaboratorRequest(formData: FormData) {
       },
     },
   });
-  if (!request || request.status !== 'PENDING') return;
+  if (!request || request.status !== 'PENDING' || request.source !== 'PUBLIC_REQUEST') return;
 
   await db.communityCollaborator.update({
     where: { id: request.id },

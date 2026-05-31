@@ -47,7 +47,7 @@ Moderates collaborator access requests and handles exceptional governance action
 2. Explicit roles: organizer and collaborator are visible and distinct.
 3. State transparency: pending, approved, rejected statuses are always visible.
 4. Deterministic navigation: clear route ownership by task, no mixed-purpose ambiguity.
-5. Safe default governance: collaborator access requires admin moderation in v1.
+5. Safe default governance: organizer invites activate on invitee acceptance; platform moderation remains for public help requests.
 
 ## 5. Relationship Model
 
