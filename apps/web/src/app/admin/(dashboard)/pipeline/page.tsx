@@ -66,7 +66,7 @@ export default async function AdminPipelinePage({
   const highConfidence = items.filter((i: (typeof items)[number]) => i.confidence >= 0.85);
 
   const recentlyProcessed = await db.pipelineItem.findMany({
-    where: { status: { in: ['APPROVED', 'REJECTED'] } },
+    where: { status: { in: ['APPROVED', 'REJECTED', 'MERGED'] } },
     include: { city: { select: { name: true } } },
     orderBy: { reviewedAt: 'desc' },
     take: 10,

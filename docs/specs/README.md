@@ -84,6 +84,7 @@ column and is the single source of truth for what is shipped.
 | PRD/TDD-0036            | Community governance & scoped authority (2-role, flag-free)                 | Accepted    | In progress (this branch)                                               |
 | ADR-0009                | Event moderation axis (orthogonal to lifecycle) + creator authority         | Accepted    | Spec-first (events governance)                                          |
 | PRD/TDD-0037            | Event governance and approval model                                         | Implemented | Moderation axis + admin review queue shipped                            |
+| PRD/TDD-0038            | Event host workspace dashboard (organizer-parity)                           | Implemented | Host overview/stats, profile editing, completeness shipped              |
 | PRD-0019 / TDD-0019     | Auth completion - onboarding, session restore, profile & account management | Implemented | Implemented                                                             |
 | PRD/TDD-0019            | Admin Auth v2 minimal hardening (gate-first, no new auth)                   | Draft       | In progress (spec-first)                                                |
 | PRD/TDD-0013            | Pipeline review & submissions queue scoping                                 | Draft       | Done - queue scoped to user submissions; admin-approved → ACTIVE        |

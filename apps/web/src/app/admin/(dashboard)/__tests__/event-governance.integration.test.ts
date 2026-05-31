@@ -61,7 +61,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 import { approveEvent, rejectEvent } from '../actions';
-import { addEvent } from '@/app/organizer/events/new/actions';
+import { addEvent } from '@/app/organizer/(community)/events/new/actions';
 import { addHostEvent } from '@/app/organizer/host/events/new/actions';
 
 beforeEach(async () => {

@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
-import { BrandLink } from '@/components/BrandLink';
+import { db } from '@/lib/db';
+import { PortalShell } from '@/components/organizer/portal-shell';
+import { getHostProfile } from '@/lib/organizer/host-workspace';
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -18,64 +20,60 @@ export default async function HostLayout({ children }: { children: React.ReactNo
     redirect('/organizer');
   }
 
+  const profile = getHostProfile(user);
+  const hostName = profile.displayName || user.displayName || user.email;
+
+  const [latestPublishedEvent, profileCity] = await Promise.all([
+    db.event.findFirst({
+      where: { createdByUserId: user.id, moderationState: 'PUBLISHED' },
+      select: { slug: true, city: { select: { slug: true } } },
+      orderBy: { startsAt: 'desc' },
+    }),
+    profile.cityId
+      ? db.city.findUnique({ where: { id: profile.cityId }, select: { slug: true } })
+      : Promise.resolve(null),
+  ]);
+
+  const publicViewHref = latestPublishedEvent
+    ? `/${latestPublishedEvent.city.slug}/events/${latestPublishedEvent.slug}`
+    : profileCity
+      ? `/${profileCity.slug}/events`
+      : '/';
+
+  const navLinks = [
+    { href: '/organizer/host', label: 'Dashboard' },
+    { href: '/organizer/host/events', label: 'My Events' },
+    { href: '/organizer/host/profile', label: 'Host Profile' },
+  ];
+
+  const titleSlot = (
+    <Link
+      href="/organizer/host/profile"
+      className="border-border hover:bg-muted-bg flex h-10 min-w-0 max-w-[220px] items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
+      aria-label="Event Host Profile"
+    >
+      <span className="bg-brand-100 text-brand-700 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+        {hostName.charAt(0).toUpperCase()}
+      </span>
+      <span className="min-w-0">
+        <span className="text-foreground block truncate text-[13px] font-semibold leading-4">
+          {hostName}
+        </span>
+        <span className="text-muted block truncate text-[11px] leading-3">Event host</span>
+      </span>
+    </Link>
+  );
+
   return (
-    <div className="bg-background flex min-h-screen flex-col">
-      <header className="border-border sticky top-0 z-40 border-b bg-white shadow-sm">
-        <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-6">
-            <BrandLink
-              href="/organizer/host"
-              markSize={32}
-              showName={false}
-              className="transition-opacity hover:opacity-80"
-            />
-            <span className="text-foreground text-base font-bold tracking-tight">Event Host</span>
-            <div className="bg-border h-5 w-px" />
-            <nav className="hidden items-center gap-1 text-sm font-medium sm:flex">
-              <Link
-                href="/organizer/host"
-                className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/organizer/host/events"
-                className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-              >
-                My Events
-              </Link>
-              <Link
-                href="/organizer/host/events/new"
-                className="text-brand-600 hover:bg-brand-50 hover:text-brand-700 ml-2 rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
-              >
-                + New Event
-              </Link>
-            </nav>
-          </div>
-          <div className="border-border flex items-center gap-4 border-l pl-4">
-            <span className="text-muted hidden max-w-[200px] truncate text-sm sm:inline">
-              {user.displayName ?? user.email}
-            </span>
-            <Link
-              href="/me"
-              className="text-muted hover:text-foreground text-sm font-medium transition-colors"
-            >
-              My profile
-            </Link>
-            <form action="/organizer/logout" method="POST">
-              <button
-                type="submit"
-                className="text-muted hover:text-destructive text-sm font-medium transition-colors"
-              >
-                Log out
-              </button>
-            </form>
-          </div>
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-        {children}
-      </main>
-    </div>
+    <PortalShell
+      brandHref="/organizer/host"
+      titleSlot={titleSlot}
+      navLinks={navLinks}
+      cta={{ href: '/organizer/host/events/new', label: '+ New Event' }}
+      publicViewHref={publicViewHref}
+      account={{ label: user.displayName ?? user.email, email: user.email }}
+    >
+      {children}
+    </PortalShell>
   );
 }

@@ -46,6 +46,25 @@ import { withLlmContext } from './llm-context';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
+import {
+  COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD,
+  DEDUP_ACTIVE_STATUSES,
+  DEDUP_QUEUE_SCAN_LIMIT,
+  EVENT_DATE_WINDOW_DAYS,
+  computeSimilarity,
+  findRejectedCommunityMatch,
+  findRejectedEventMatch,
+  hasStrongEventIdentityEvidence,
+  isCommunityNameMatch,
+  isEventTitleMatch,
+  normalizeComparableUrl,
+  normalizeCommunityName,
+  normalizeSourceUrlForDedup,
+} from './dedup';
+
+// Re-export dedup primitives that other modules and unit tests import from here
+// for backwards compatibility. The canonical definitions live in ./dedup.
+export { computeSimilarity, normalizeEventTitleForDedup } from './dedup';
 import type {
   ExtractedData,
   ExtractedEvent,
@@ -579,6 +598,7 @@ async function resolveAndQueue(
     queuedPendingCityCommunities: 0,
     duplicateEvents: 0,
     duplicateCommunities: 0,
+    rejectedSuppressed: 0,
     noCityEvents: 0,
     noCityCommunities: 0,
     pastEvents: 0,
@@ -722,6 +742,31 @@ async function resolveAndQueue(
       continue;
     }
 
+    // Rejection memory: an admin already turned this item down in a previous
+    // run. Suppress it so we don't re-queue the same source/title/name every
+    // day. This is checked AFTER the active-duplicate check (a still-pending or
+    // approved match is preferred) but BEFORE we queue anything new.
+    const rejectedMatch =
+      item.type === 'EVENT'
+        ? await findRejectedEventMatch({ event: item, cityId, sourceUrl: sourceRaw.sourceUrl })
+        : await findRejectedCommunityMatch({
+            community: item,
+            cityId,
+            sourceUrl: sourceRaw.sourceUrl,
+          });
+    if (rejectedMatch) {
+      // Counted under the duplicate bucket for run-history persistence (no new
+      // schema column), but logged distinctly for diagnosis.
+      result.itemsSkippedDuplicate++;
+      decisionCounts.rejectedSuppressed++;
+      console.log(
+        `[Pipeline] Skipped (previously rejected: ${rejectedMatch.reason}): ${
+          item.type === 'EVENT' ? item.title : item.name
+        }`,
+      );
+      continue;
+    }
+
     const reliability = sourceReliabilityByType.get(sourceRaw.sourceType as PipelineSourceType);
     const confidence = applySourceConfidenceAdjustment(
       item.confidence,
@@ -813,7 +858,7 @@ async function resolveAndQueue(
   }
 
   console.log(
-    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
+    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; previously-rejected suppressed ${decisionCounts.rejectedSuppressed}; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
   );
 
   result.cityBreakdown = [...cityDecisionMap.values()].sort((a, b) => {
@@ -833,9 +878,6 @@ type DedupResult = {
   matchKind: 'PIPELINE_ITEM' | 'ENTITY' | null;
 };
 
-const COMMUNITY_DUPLICATE_NAME_THRESHOLD = 0.5;
-const COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD = 0.35;
-
 async function checkDuplicate(
   item: ExtractedData,
   cityId: string,
@@ -851,20 +893,6 @@ async function checkDuplicate(
   return checkCommunityDuplicate(item, cityId);
 }
 
-function normalizeSourceUrlForDedup(sourceUrl: string | null | undefined): string | null {
-  if (!sourceUrl) return null;
-  try {
-    const url = new URL(sourceUrl);
-    const pathname = decodeURIComponent(url.pathname).replace(/\/+$/, '') || '/';
-    const eventIdentityFragment = url.hash.startsWith('#uid=')
-      ? `#uid=${decodeURIComponent(url.hash.slice(5))}`
-      : '';
-    return `${url.hostname.toLowerCase()}${pathname}${eventIdentityFragment}`;
-  } catch {
-    return sourceUrl.toLowerCase().replace(/\/+$/, '');
-  }
-}
-
 async function checkSourceUrlDuplicate(
   sourceUrl: string,
   cityId: string,
@@ -876,7 +904,7 @@ async function checkSourceUrlDuplicate(
       sourceUrl,
       cityId,
       entityType,
-      status: { in: ['PENDING', 'APPROVED'] },
+      status: { in: [...DEDUP_ACTIVE_STATUSES] },
     },
     select: { id: true },
   });
@@ -904,11 +932,11 @@ async function checkSourceUrlDuplicate(
     where: {
       cityId,
       entityType,
-      status: { in: ['PENDING', 'APPROVED'] },
+      status: { in: [...DEDUP_ACTIVE_STATUSES] },
       sourceUrl: { not: null },
     },
     orderBy: { createdAt: 'desc' },
-    take: 300,
+    take: DEDUP_QUEUE_SCAN_LIMIT,
     select: { id: true, sourceUrl: true },
   });
 
@@ -988,27 +1016,6 @@ function inferCityFromEventSignals(
   return null;
 }
 
-export function normalizeEventTitleForDedup(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/\b(20\d{2})\b/g, ' ')
-    .replace(/\b(berlin|stuttgart|frankfurt|karlsruhe|mannheim|munich|muenchen|münchen)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-}
-
-function normalizeComparableUrl(value: string | null | undefined): string | null {
-  if (!value) return null;
-  try {
-    const url = new URL(value);
-    const pathname = url.pathname.replace(/\/$/, '');
-    return `${url.hostname.toLowerCase()}${pathname}`;
-  } catch {
-    return value.toLowerCase().replace(/\/$/, '');
-  }
-}
-
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {
   if (!event.date) {
     return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
@@ -1027,10 +1034,16 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
       cityId,
       startsAt: { gte: startOfWindow, lte: endOfWindow },
     },
-    select: { id: true, title: true, registrationUrl: true },
+    select: {
+      id: true,
+      title: true,
+      registrationUrl: true,
+      startsAt: true,
+      venueName: true,
+      community: { select: { name: true } },
+    },
   });
 
-  const normalizedIncomingTitle = normalizeEventTitleForDedup(event.title);
   const incomingRegistrationUrl = normalizeComparableUrl(event.registrationUrl);
 
   for (const candidate of candidates) {
@@ -1044,10 +1057,23 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     }
 
     const score = computeSimilarity(event.title.toLowerCase(), candidate.title.toLowerCase());
-    const normalizedCandidateTitle = normalizeEventTitleForDedup(candidate.title);
-    const canonicalTitleMatch =
-      normalizedIncomingTitle.length >= 8 && normalizedIncomingTitle === normalizedCandidateTitle;
-    if (score > 0.7 || canonicalTitleMatch) {
+    if (
+      isEventTitleMatch(event.title, candidate.title) &&
+      hasStrongEventIdentityEvidence(
+        {
+          date: event.date,
+          time: event.time,
+          venueName: event.venueName,
+          hostCommunity: event.hostCommunity,
+        },
+        {
+          date: candidate.startsAt.toISOString().slice(0, 10),
+          time: candidate.startsAt.toISOString().slice(11, 16),
+          venueName: candidate.venueName,
+          hostCommunity: candidate.community?.name ?? null,
+        },
+      )
+    ) {
       return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
   }
@@ -1056,7 +1082,7 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     where: {
       cityId,
       entityType: 'EVENT',
-      status: { in: ['PENDING', 'APPROVED'] },
+      status: { in: [...DEDUP_ACTIVE_STATUSES] },
     },
     select: { id: true, extractedData: true },
   });
@@ -1068,7 +1094,7 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     const candidateDate = new Date(`${pendingEvent.date}T12:00:00`);
     if (Number.isNaN(candidateDate.getTime())) continue;
     const dayDiff = Math.abs(eventDate.getTime() - candidateDate.getTime()) / (1000 * 60 * 60 * 24);
-    if (dayDiff > 1) continue;
+    if (dayDiff > EVENT_DATE_WINDOW_DAYS) continue;
 
     const pendingRegistrationUrl = normalizeComparableUrl(pendingEvent.registrationUrl ?? null);
     if (
@@ -1085,10 +1111,23 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
     }
 
     const score = computeSimilarity(event.title.toLowerCase(), pendingEvent.title.toLowerCase());
-    const normalizedPendingTitle = normalizeEventTitleForDedup(pendingEvent.title);
-    const canonicalTitleMatch =
-      normalizedIncomingTitle.length >= 8 && normalizedIncomingTitle === normalizedPendingTitle;
-    if (score > 0.7 || canonicalTitleMatch) {
+    if (
+      isEventTitleMatch(event.title, pendingEvent.title) &&
+      hasStrongEventIdentityEvidence(
+        {
+          date: event.date,
+          time: event.time,
+          venueName: event.venueName,
+          hostCommunity: event.hostCommunity,
+        },
+        {
+          date: pendingEvent.date,
+          time: pendingEvent.time,
+          venueName: pendingEvent.venueName,
+          hostCommunity: pendingEvent.hostCommunity,
+        },
+      )
+    ) {
       return {
         isDuplicate: true,
         matchedId: candidate.id,
@@ -1117,9 +1156,13 @@ async function checkCommunityDuplicate(
     cityName: string;
   }> = [];
 
+  // Normalized incoming name (umlauts folded, legal suffixes stripped) reused
+  // across the live, merged-alias, and pending comparisons below.
+  const normalizedIncomingName = normalizeCommunityName(community.name);
+
   for (const candidate of candidates) {
-    const score = computeSimilarity(community.name.toLowerCase(), candidate.name.toLowerCase());
-    if (score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD) {
+    const score = computeSimilarity(normalizedIncomingName, normalizeCommunityName(candidate.name));
+    if (isCommunityNameMatch(community.name, candidate.name)) {
       return { isDuplicate: true, matchedId: candidate.id, matchScore: score, matchKind: 'ENTITY' };
     }
     if (score >= COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD) {
@@ -1153,29 +1196,12 @@ async function checkCommunityDuplicate(
     select: { name: true, mergedIntoId: true },
   });
 
-  const normalizedIncomingAlias = community.name
-    .toLowerCase()
-    .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
-
   for (const alias of mergedAliases) {
-    const normalizedAlias = alias.name
-      .toLowerCase()
-      .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ');
-    const score = computeSimilarity(normalizedIncomingAlias, normalizedAlias);
-    if (
-      score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD ||
-      (normalizedIncomingAlias.length >= 8 && normalizedIncomingAlias === normalizedAlias)
-    ) {
+    if (alias.mergedIntoId && isCommunityNameMatch(community.name, alias.name)) {
       return {
         isDuplicate: true,
         matchedId: alias.mergedIntoId,
-        matchScore: score,
+        matchScore: computeSimilarity(normalizedIncomingName, normalizeCommunityName(alias.name)),
         matchKind: 'ENTITY',
       };
     }
@@ -1185,38 +1211,23 @@ async function checkCommunityDuplicate(
     where: {
       cityId,
       entityType: 'COMMUNITY',
-      status: { in: ['PENDING', 'APPROVED'] },
+      status: { in: [...DEDUP_ACTIVE_STATUSES] },
     },
     select: { id: true, extractedData: true },
   });
-
-  const normalizedIncomingName = community.name
-    .toLowerCase()
-    .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .replace(/\s+/g, ' ');
 
   for (const pending of pendingCommunityItems) {
     const pendingCommunity = pending.extractedData as unknown as Partial<ExtractedData>;
     if (pendingCommunity.type !== 'COMMUNITY' || !pendingCommunity.name) continue;
 
-    const pendingName = String(pendingCommunity.name)
-      .toLowerCase()
-      .replace(/\b(e\.?\s?v\.?|verein|society|association|community|group|chapter)\b/g, ' ')
-      .replace(/[^a-z0-9]+/g, ' ')
-      .trim()
-      .replace(/\s+/g, ' ');
-
-    const score = computeSimilarity(normalizedIncomingName, pendingName);
-    if (
-      score >= COMMUNITY_DUPLICATE_NAME_THRESHOLD ||
-      (normalizedIncomingName.length >= 8 && normalizedIncomingName === pendingName)
-    ) {
+    if (isCommunityNameMatch(community.name, String(pendingCommunity.name))) {
       return {
         isDuplicate: true,
         matchedId: pending.id,
-        matchScore: score,
+        matchScore: computeSimilarity(
+          normalizedIncomingName,
+          normalizeCommunityName(String(pendingCommunity.name)),
+        ),
         matchKind: 'PIPELINE_ITEM',
       };
     }
@@ -1304,17 +1315,3 @@ function mergeExtractedEvents(base: ExtractedEvent, incoming: ExtractedEvent): E
  * Simple string similarity (Dice coefficient on bigrams).
  * Good enough for dedup - not a full fuzzy match.
  */
-export function computeSimilarity(a: string, b: string): number {
-  if (a === b) return 1;
-  if (a.length < 2 || b.length < 2) return 0;
-
-  const bigramsA = new Set<string>();
-  for (let i = 0; i < a.length - 1; i++) bigramsA.add(a.slice(i, i + 2));
-
-  let intersection = 0;
-  for (let i = 0; i < b.length - 1; i++) {
-    if (bigramsA.has(b.slice(i, i + 2))) intersection++;
-  }
-
-  return (2 * intersection) / (a.length - 1 + (b.length - 1));
-}
