@@ -47,6 +47,7 @@ vi.mock('@/lib/analytics/server', () => ({ captureServerEvent: vi.fn() }));
 import {
   inviteCollaborator,
   promoteCollaboratorToAdmin,
+  resendCollaboratorInvite,
   removeCollaborator,
   transferOwnership,
 } from '../actions';
@@ -153,6 +154,75 @@ describe('@db inviteCollaborator', () => {
     expect(result).toMatchObject({ success: true });
     const invited = await testDb.user.findUnique({ where: { email: 'named-collab@example.com' } });
     expect(invited?.displayName).toBe('Priya Sharma');
+  });
+});
+
+describe('@db resendCollaboratorInvite', () => {
+  it('resends pending organizer invite and records latest send timestamp', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const invited = await createUser(testDb, { email: 'pending-resend@example.com' });
+    const invite = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: invited.id,
+        role: 'COLLABORATOR',
+        status: 'PENDING',
+        source: 'COMMUNITY_ADMIN_INVITE',
+        requestedByUserId: owner.id,
+        requestedEmail: invited.email,
+        metadata: {
+          invitedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+          inviteEmailLastSentAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+        },
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('collaboratorId', invite.id);
+    const result = await resendCollaboratorInvite(null, form);
+
+    expect(result).toEqual({ success: true });
+    const updated = await testDb.communityCollaborator.findUnique({
+      where: { id: invite.id },
+      select: { metadata: true },
+    });
+    const metadata = (updated?.metadata ?? null) as { inviteEmailLastSentAt?: string } | null;
+    expect(typeof metadata?.inviteEmailLastSentAt).toBe('string');
+  });
+
+  it('blocks immediate duplicate resend attempts with cooldown error', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const invited = await createUser(testDb, { email: 'pending-cooldown@example.com' });
+    const invite = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: invited.id,
+        role: 'COLLABORATOR',
+        status: 'PENDING',
+        source: 'COMMUNITY_ADMIN_INVITE',
+        requestedByUserId: owner.id,
+        requestedEmail: invited.email,
+        metadata: {
+          invitedAt: new Date().toISOString(),
+          inviteEmailLastSentAt: new Date().toISOString(),
+        },
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('collaboratorId', invite.id);
+    const result = await resendCollaboratorInvite(null, form);
+
+    expect(result).toMatchObject({ success: false });
+    if (result && 'success' in result && result.success === false) {
+      expect(result.error).toContain('Please wait a few seconds');
+    }
   });
 });
 
