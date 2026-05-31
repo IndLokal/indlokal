@@ -15,6 +15,7 @@ function sourceLabel(source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMI
 
 type CollaboratorRow = {
   id: string;
+  role: 'COMMUNITY_ADMIN' | 'COLLABORATOR';
   status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'REMOVED';
   source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD';
   requestedEmail: string | null;
@@ -39,6 +40,7 @@ export default async function OrganizerCollaboratorsPage() {
         where: { status: { in: ['ACTIVE', 'PENDING'] } },
         select: {
           id: true,
+          role: true,
           status: true,
           source: true,
           requestedEmail: true,
@@ -54,7 +56,8 @@ export default async function OrganizerCollaboratorsPage() {
 
   const collaborators: CollaboratorRow[] = collaboratorData?.collaborators ?? [];
   const activeCollaborators = collaborators.filter(
-    (collaborator: CollaboratorRow) => collaborator.status === 'ACTIVE',
+    (collaborator: CollaboratorRow) =>
+      collaborator.status === 'ACTIVE' && collaborator.role === 'COLLABORATOR',
   );
   const pendingCollaborators = collaborators.filter(
     (collaborator: CollaboratorRow) => collaborator.status === 'PENDING',
@@ -106,17 +109,17 @@ export default async function OrganizerCollaboratorsPage() {
         {activeCollaborators.length === 0 ? (
           <p className="text-muted mt-4 text-sm">No active collaborators yet.</p>
         ) : (
-          <div className="border-border mt-4 overflow-x-auto rounded-[var(--radius-card)] border">
+          <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
             <table className="w-full min-w-[620px] text-sm">
               <thead className="bg-muted-bg text-left">
                 <tr className="border-border border-b">
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Collaborator
                   </th>
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Source
                   </th>
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Approved
                   </th>
                 </tr>
@@ -162,17 +165,17 @@ export default async function OrganizerCollaboratorsPage() {
         {pendingCollaborators.length === 0 ? (
           <p className="text-muted mt-4 text-sm">No pending collaborator requests.</p>
         ) : (
-          <div className="border-border mt-4 overflow-x-auto rounded-[var(--radius-card)] border">
+          <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
             <table className="w-full min-w-[620px] text-sm">
               <thead className="bg-muted-bg text-left">
                 <tr className="border-border border-b">
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Requested access for
                   </th>
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Source
                   </th>
-                  <th className="text-muted px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
                     Requested
                   </th>
                 </tr>
