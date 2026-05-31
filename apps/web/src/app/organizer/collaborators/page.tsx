@@ -158,7 +158,6 @@ export default async function OrganizerCollaboratorsPage() {
                 </thead>
                 <tbody className="divide-border divide-y">
                   {activeMembers.map((collaborator: CollaboratorRow) => {
-                    const isPrimaryAdmin = collaborator.userId === primaryAdminUserId;
                     return (
                       <tr key={collaborator.id}>
                         <td className="px-4 py-3">
@@ -168,7 +167,7 @@ export default async function OrganizerCollaboratorsPage() {
                           <p className="text-muted mt-0.5 text-xs">{collaborator.user.email}</p>
                         </td>
                         <td className="text-muted px-4 py-3 text-sm">
-                          {isPrimaryAdmin ? 'Primary admin' : roleLabel(collaborator.role)}
+                          {roleLabel(collaborator.role)}
                         </td>
                         <td className="text-muted px-4 py-3 text-sm">
                           {sourceLabel(collaborator.source)}
@@ -212,23 +211,19 @@ export default async function OrganizerCollaboratorsPage() {
                                 </>
                               ) : null}
 
-                              {!isPrimaryAdmin ? (
-                                <form action={removeCollaboratorAction}>
-                                  <input
-                                    type="hidden"
-                                    name="collaboratorId"
-                                    value={collaborator.id}
-                                  />
-                                  <button
-                                    type="submit"
-                                    className="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                                  >
-                                    Remove
-                                  </button>
-                                </form>
-                              ) : (
-                                <span className="text-muted text-xs">Primary admin</span>
-                              )}
+                              <form action={removeCollaboratorAction}>
+                                <input
+                                  type="hidden"
+                                  name="collaboratorId"
+                                  value={collaborator.id}
+                                />
+                                <button
+                                  type="submit"
+                                  className="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                                >
+                                  Remove
+                                </button>
+                              </form>
                             </div>
                           </td>
                         ) : null}

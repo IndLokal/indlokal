@@ -2,7 +2,6 @@ import { db } from '@/lib/db';
 import {
   approveKeywordSuggestion,
   approvePipelineItem,
-  batchApprovePipelineItems,
   rejectKeywordSuggestion,
   rejectPipelineItem,
   revertAutoApprovedItems,
@@ -23,8 +22,9 @@ export const metadata = { title: 'Content Pipeline - Admin' };
 export default async function AdminPipelinePage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const sp = await searchParams;
   const regions = await getRuntimeEnabledRegions();
   const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
   const enabledCities = await db.city.findMany({
@@ -35,7 +35,7 @@ export default async function AdminPipelinePage({
   const sourceStats = await getSourceReliabilityStats();
 
   // Pagination for pipeline items
-  const { page, pageSize, skip, take } = parseOffsetPagination(searchParams, {
+  const { page, pageSize, skip, take } = parseOffsetPagination(sp, {
     defaultPageSize: 25,
     maxPageSize: 100,
   });
@@ -64,7 +64,6 @@ export default async function AdminPipelinePage({
   });
 
   const highConfidence = items.filter((i: (typeof items)[number]) => i.confidence >= 0.85);
-  const needsReview = items.filter((i: (typeof items)[number]) => i.confidence < 0.85);
 
   const recentlyProcessed = await db.pipelineItem.findMany({
     where: { status: { in: ['APPROVED', 'REJECTED'] } },
@@ -90,7 +89,7 @@ export default async function AdminPipelinePage({
   const getPageHref = (targetPage: number) =>
     buildPageHref({
       page: targetPage,
-      searchParams: { ...searchParams, page: String(targetPage), pageSize: String(pageSize) },
+      searchParams: { ...sp, page: String(targetPage), pageSize: String(pageSize) },
     });
 
   return (

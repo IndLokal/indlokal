@@ -13,14 +13,15 @@ export const metadata = { title: 'Scoring & Jobs - Admin' };
 export default async function AdminScoringPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  const sp = await searchParams;
   const now = new Date();
   const stale90 = subDays(now, 90);
   const stale180 = subDays(now, 180);
 
   // Pagination for stale communities
-  const { page, pageSize, skip, take } = parseOffsetPagination(searchParams, {
+  const { page, pageSize, skip, take } = parseOffsetPagination(sp, {
     defaultPageSize: 30,
     maxPageSize: 100,
   });
@@ -86,7 +87,7 @@ export default async function AdminScoringPage({
   const getPageHref = (targetPage: number) =>
     buildPageHref({
       page: targetPage,
-      searchParams: { ...searchParams, page: String(targetPage), pageSize: String(pageSize) },
+      searchParams: { ...sp, page: String(targetPage), pageSize: String(pageSize) },
     });
 
   return (

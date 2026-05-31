@@ -254,11 +254,19 @@ export async function removeCollaborator(
     async () => {
       const member = await db.communityCollaborator.findUnique({
         where: { id: parsed.data.collaboratorId },
-        select: { id: true, communityId: true, userId: true, role: true },
+        select: { id: true, communityId: true, userId: true, role: true, status: true },
       });
       if (!member || member.communityId !== ctx.communityId) {
         return { success: false, error: 'Collaborator not found.' } as CollaboratorMutationResult;
       }
+
+      if (member.status === 'REMOVED' || member.status === 'REJECTED') {
+        return {
+          success: false,
+          error: 'This collaborator is already inactive.',
+        } as CollaboratorMutationResult;
+      }
+
       if (member.role === 'COMMUNITY_ADMIN') {
         const community = await db.community.findUnique({
           where: { id: ctx.communityId },
@@ -475,7 +483,7 @@ export async function transferOwnership(
           },
         });
 
-        return { ok: true as const };
+        return { ok: true as const, previousRole: target.role };
       });
 
       if (!result.ok) {
@@ -485,7 +493,7 @@ export async function transferOwnership(
       await captureServerEvent(user.id, Events.COMMUNITY_ROLE_CHANGED, {
         community_id: ctx.communityId,
         target_user_id: parsed.data.targetUserId,
-        from_role: 'COLLABORATOR',
+        from_role: result.previousRole,
         to_role: 'COMMUNITY_ADMIN',
       });
 
