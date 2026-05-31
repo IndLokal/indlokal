@@ -5,13 +5,25 @@ import { ScoringJobPanel } from './ScoringJobPanel';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminStatsStrip } from '@/components/admin/stats-strip';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const metadata = { title: 'Scoring & Jobs - Admin' };
 
-export default async function AdminScoringPage() {
+export default async function AdminScoringPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   const now = new Date();
   const stale90 = subDays(now, 90);
   const stale180 = subDays(now, 180);
+
+  // Pagination for stale communities
+  const { page, pageSize, skip, take } = parseOffsetPagination(searchParams, {
+    defaultPageSize: 30,
+    maxPageSize: 100,
+  });
 
   const [
     totalActive,
@@ -20,6 +32,7 @@ export default async function AdminScoringPage() {
     veryStaleCount,
     brokenLinksCount,
     staleCommunities,
+    totalStaleCount,
   ] = await Promise.all([
     db.community.count({ where: { status: 'ACTIVE' } }),
     db.community.count({ where: { status: 'ACTIVE', isTrending: true } }),
@@ -50,11 +63,31 @@ export default async function AdminScoringPage() {
         city: { select: { name: true, slug: true } },
       },
       orderBy: { activityScore: 'asc' },
-      take: 30,
+      skip,
+      take,
+    }),
+    db.community.count({
+      where: {
+        status: 'ACTIVE',
+        OR: [{ lastActivityAt: null }, { lastActivityAt: { lt: stale90 } }],
+      },
     }),
   ]);
 
   type StaleCommunityRow = (typeof staleCommunities)[number];
+
+  const paginationMeta = buildOffsetPaginationMeta({
+    page,
+    pageSize,
+    totalCount: totalStaleCount,
+    itemCount: staleCommunities.length,
+  });
+
+  const getPageHref = (targetPage: number) =>
+    buildPageHref({
+      page: targetPage,
+      searchParams: { ...searchParams, page: String(targetPage), pageSize: String(pageSize) },
+    });
 
   return (
     <AdminPage>
@@ -85,12 +118,15 @@ export default async function AdminScoringPage() {
       {/* Job controls */}
       <ScoringJobPanel />
 
-      {/* Stale communities list */}
+      {/* Stale communities list with pagination */}
       <section className="mt-10">
-        <h2 className="text-lg font-semibold">
-          Stale Communities{' '}
-          <span className="text-muted text-sm font-normal">(no activity in 90+ days)</span>
-        </h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">
+            Stale Communities{' '}
+            <span className="text-muted text-sm font-normal">(no activity in 90+ days)</span>
+          </h2>
+          <PaginationControls meta={paginationMeta} getPageHref={getPageHref} />
+        </div>
 
         {staleCommunities.length === 0 ? (
           <p className="text-muted mt-4 text-sm">All communities have recent activity.</p>
@@ -138,6 +174,9 @@ export default async function AdminScoringPage() {
             </AdminTable>
           </AdminTableWrap>
         )}
+        <div className="mt-4">
+          <PaginationControls meta={paginationMeta} getPageHref={getPageHref} />
+        </div>
       </section>
     </AdminPage>
   );

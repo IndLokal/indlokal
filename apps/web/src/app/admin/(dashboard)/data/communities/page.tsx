@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteCommunityAction, setCommunityStatusAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Communities - Admin' };
@@ -11,9 +13,17 @@ export const metadata = { title: 'Communities - Admin' };
 export default async function AdminCommunitiesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; status?: string; claimState?: string; q?: string }>;
+  searchParams: Promise<{
+    city?: string;
+    status?: string;
+    claimState?: string;
+    q?: string;
+    page?: string;
+    pageSize?: string;
+  }>;
 }) {
   const sp = await searchParams;
+  const pagination = parseOffsetPagination(sp);
   const where: {
     city?: { slug: string };
     status?: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
@@ -29,11 +39,13 @@ export default async function AdminCommunitiesPage({
   }
   if (sp.q) where.name = { contains: sp.q, mode: 'insensitive' };
 
-  const [communities, cities] = await Promise.all([
+  const [totalCount, communities, cities] = await Promise.all([
+    db.community.count({ where }),
     db.community.findMany({
       where,
-      orderBy: { updatedAt: 'desc' },
-      take: 200,
+      orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
+      skip: pagination.skip,
+      take: pagination.take,
       include: {
         city: { select: { name: true, slug: true } },
         _count: { select: { events: true, accessChannels: true } },
@@ -45,12 +57,19 @@ export default async function AdminCommunitiesPage({
       orderBy: { name: 'asc' },
     }),
   ]);
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount,
+    itemCount: communities.length,
+  });
 
   return (
     <AdminPage>
       <AdminPageHeader title="Communities" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6" method="get">
+        <input type="hidden" name="pageSize" value={String(pagination.pageSize)} />
         <AdminFilterBar className="border-border">
           <AdminFilterItem label="Search">
             <input
@@ -102,7 +121,11 @@ export default async function AdminCommunitiesPage({
         </AdminFilterBar>
       </form>
 
-      <p className="text-muted mt-4 text-xs">{communities.length} shown (cap 200)</p>
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
 
       <AdminTableWrap className="mt-3">
         <AdminTable>
@@ -174,6 +197,12 @@ export default async function AdminCommunitiesPage({
           </tbody>
         </AdminTable>
       </AdminTableWrap>
+
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
     </AdminPage>
   );
 }

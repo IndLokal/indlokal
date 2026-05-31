@@ -15,10 +15,16 @@ import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const metadata = { title: 'Content Pipeline - Admin' };
 
-export default async function AdminPipelinePage() {
+export default async function AdminPipelinePage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>;
+}) {
   const regions = await getRuntimeEnabledRegions();
   const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
   const enabledCities = await db.city.findMany({
@@ -27,11 +33,22 @@ export default async function AdminPipelinePage() {
     orderBy: { name: 'asc' },
   });
   const sourceStats = await getSourceReliabilityStats();
-  const items = await db.pipelineItem.findMany({
-    where: { status: 'PENDING' },
-    include: { city: { select: { name: true, slug: true } } },
-    orderBy: [{ confidence: 'desc' }, { createdAt: 'desc' }],
+
+  // Pagination for pipeline items
+  const { page, pageSize, skip, take } = parseOffsetPagination(searchParams, {
+    defaultPageSize: 25,
+    maxPageSize: 100,
   });
+  const [items, totalCount] = await Promise.all([
+    db.pipelineItem.findMany({
+      where: { status: 'PENDING' },
+      include: { city: { select: { name: true, slug: true } } },
+      orderBy: [{ confidence: 'desc' }, { createdAt: 'desc' }],
+      skip,
+      take,
+    }),
+    db.pipelineItem.count({ where: { status: 'PENDING' } }),
+  ]);
 
   const autoApprovedItems = await db.pipelineItem.findMany({
     where: { autoApproved: true, status: 'APPROVED' },
@@ -56,11 +73,25 @@ export default async function AdminPipelinePage() {
     take: 10,
   });
 
+  // Type aliases for rendering
   type EnabledCityRow = (typeof enabledCities)[number];
   type PendingPipelineItem = (typeof items)[number];
   type AutoApprovedItem = (typeof autoApprovedItems)[number];
   type KeywordSuggestionRow = (typeof keywordSuggestions)[number];
   type ProcessedItem = (typeof recentlyProcessed)[number];
+
+  const paginationMeta = buildOffsetPaginationMeta({
+    page,
+    pageSize,
+    totalCount,
+    itemCount: items.length,
+  });
+
+  const getPageHref = (targetPage: number) =>
+    buildPageHref({
+      page: targetPage,
+      searchParams: { ...searchParams, page: String(targetPage), pageSize: String(pageSize) },
+    });
 
   return (
     <AdminPage>
@@ -268,54 +299,27 @@ export default async function AdminPipelinePage() {
         </section>
       )}
 
-      {/* ─── High confidence batch approve ─── */}
-      {highConfidence.length > 0 && (
-        <section className="mt-8">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-green-700">
-              ✅ High Confidence ({highConfidence.length})
-            </h2>
-            <form action={batchApprovePipelineItems}>
-              <input
-                type="hidden"
-                name="ids"
-                value={highConfidence.map((i: PendingPipelineItem) => i.id).join(',')}
-              />
-              <button
-                type="submit"
-                className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-              >
-                Approve All High Confidence
-              </button>
-            </form>
-          </div>
-          <div className="mt-4 space-y-4">
-            {highConfidence.map((item: PendingPipelineItem) => (
+      {/* ─── Paginated review queue ─── */}
+      <section className="mt-8">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-green-700">Review Queue ({totalCount})</h2>
+          <PaginationControls meta={paginationMeta} getPageHref={getPageHref} />
+        </div>
+        {items.length === 0 ? (
+          <p className="text-muted mt-12 text-center">
+            No items in the review queue. Run the pipeline to fetch new content.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {items.map((item: PendingPipelineItem) => (
               <PipelineItemCard key={item.id} item={item} />
             ))}
           </div>
-        </section>
-      )}
-
-      {/* ─── Needs review ─── */}
-      {needsReview.length > 0 && (
-        <section className="mt-8">
-          <h2 className="text-lg font-semibold text-amber-700">
-            ⚠️ Needs Review ({needsReview.length})
-          </h2>
-          <div className="mt-4 space-y-4">
-            {needsReview.map((item: PendingPipelineItem) => (
-              <PipelineItemCard key={item.id} item={item} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {items.length === 0 && (
-        <p className="text-muted mt-12 text-center">
-          No items in the review queue. Run the pipeline to fetch new content.
-        </p>
-      )}
+        )}
+        <div className="mt-4">
+          <PaginationControls meta={paginationMeta} getPageHref={getPageHref} />
+        </div>
+      </section>
 
       {/* ─── Recent history ─── */}
       {recentlyProcessed.length > 0 && (

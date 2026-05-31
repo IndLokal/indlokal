@@ -9,7 +9,13 @@ type NavLink = {
   highlight?: boolean;
 };
 
-export function MobileNav({ links }: { links: NavLink[] }) {
+export function MobileNav({
+  links,
+  className = 'sm:hidden',
+}: {
+  links: NavLink[];
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
 
   // Lock body scroll when menu is open
@@ -29,7 +35,7 @@ export function MobileNav({ links }: { links: NavLink[] }) {
   }
 
   return (
-    <div className="sm:hidden">
+    <div className={className}>
       {/* Hamburger - 44×44 tap target */}
       <button
         onClick={() => setOpen(!open)}

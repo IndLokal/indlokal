@@ -1,25 +1,12 @@
-import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 import { approveCollaboratorRequest, rejectCollaboratorRequest } from '../actions';
 
 export const metadata = { title: 'Collaborator Requests - Admin' };
-
-function parsePage(value: string | undefined): number {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || parsed < 1) return 1;
-  return parsed;
-}
-
-function buildQueryString(params: Record<string, string | number | undefined>) {
-  const searchParams = new URLSearchParams();
-  for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) searchParams.set(key, String(value));
-  }
-  return `?${searchParams.toString()}`;
-}
 
 type Props = {
   searchParams: Promise<{
@@ -104,11 +91,16 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
     ];
   }
 
-  const communityPageSize = 20;
-  const requestPageSize = 20;
-
-  const requestedCommunityPage = parsePage(sp.communityPage);
-  const requestedRequestPage = parsePage(sp.requestPage);
+  const communityPagination = parseOffsetPagination(sp, {
+    pageParam: 'communityPage',
+    pageSizeParam: 'communityPageSize',
+    defaultPageSize: 20,
+  });
+  const requestPagination = parseOffsetPagination(sp, {
+    pageParam: 'requestPage',
+    pageSizeParam: 'requestPageSize',
+    defaultPageSize: 20,
+  });
 
   const [communityTotalCount, requestTotalCount, cities] = await Promise.all([
     db.community.count({ where: communityWhere }),
@@ -120,10 +112,14 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
     }),
   ]);
 
-  const communityTotalPages = Math.max(1, Math.ceil(communityTotalCount / communityPageSize));
-  const requestTotalPages = Math.max(1, Math.ceil(requestTotalCount / requestPageSize));
-  const communityPage = Math.min(requestedCommunityPage, communityTotalPages);
-  const requestPage = Math.min(requestedRequestPage, requestTotalPages);
+  const communityPage = Math.min(
+    communityPagination.page,
+    Math.max(1, Math.ceil(communityTotalCount / communityPagination.pageSize)),
+  );
+  const requestPage = Math.min(
+    requestPagination.page,
+    Math.max(1, Math.ceil(requestTotalCount / requestPagination.pageSize)),
+  );
 
   const [communityAccess, requests] = await Promise.all([
     db.community.findMany({
@@ -147,8 +143,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         },
       },
       orderBy: { name: 'asc' },
-      skip: (communityPage - 1) * communityPageSize,
-      take: communityPageSize,
+      skip: (communityPage - 1) * communityPagination.pageSize,
+      take: communityPagination.pageSize,
     }),
     db.communityCollaborator.findMany({
       where: requestWhere,
@@ -164,10 +160,23 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         requestedByUser: { select: { email: true, displayName: true } },
       },
       orderBy: { createdAt: 'desc' },
-      skip: (requestPage - 1) * requestPageSize,
-      take: requestPageSize,
+      skip: (requestPage - 1) * requestPagination.pageSize,
+      take: requestPagination.pageSize,
     }),
   ]);
+
+  const communityPaginationMeta = buildOffsetPaginationMeta({
+    page: communityPage,
+    pageSize: communityPagination.pageSize,
+    totalCount: communityTotalCount,
+    itemCount: communityAccess.length,
+  });
+  const requestPaginationMeta = buildOffsetPaginationMeta({
+    page: requestPage,
+    pageSize: requestPagination.pageSize,
+    totalCount: requestTotalCount,
+    itemCount: requests.length,
+  });
 
   return (
     <AdminPage>
@@ -178,6 +187,14 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
       />
 
       <form method="GET" className="mt-8">
+        <input type="hidden" name="communityPage" value="1" />
+        <input type="hidden" name="requestPage" value="1" />
+        <input
+          type="hidden"
+          name="communityPageSize"
+          value={String(communityPagination.pageSize)}
+        />
+        <input type="hidden" name="requestPageSize" value={String(requestPagination.pageSize)} />
         <AdminFilterBar className="border-border">
           <AdminFilterItem label="Search">
             <input
@@ -235,8 +252,12 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         ) : (
           <div className="space-y-4">
             <p className="text-muted text-sm">
-              Showing {Math.min((communityPage - 1) * communityPageSize + 1, communityTotalCount)}-
-              {Math.min(communityPage * communityPageSize, communityTotalCount)} of{' '}
+              Showing{' '}
+              {Math.min(
+                (communityPage - 1) * communityPagination.pageSize + 1,
+                communityTotalCount,
+              )}
+              -{Math.min(communityPage * communityPagination.pageSize, communityTotalCount)} of{' '}
               {communityTotalCount} communities.
             </p>
 
@@ -315,39 +336,17 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               );
             })}
 
-            {communityTotalPages > 1 ? (
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Link
-                  href={buildQueryString({
-                    communityPage: Math.max(1, communityPage - 1),
-                    requestPage,
-                    city: citySlug || undefined,
-                    q: query || undefined,
-                    access,
-                    source,
-                  })}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${communityPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
-                >
-                  Previous
-                </Link>
-                <span className="text-muted text-sm">
-                  Page {communityPage} of {communityTotalPages}
-                </span>
-                <Link
-                  href={buildQueryString({
-                    communityPage: Math.min(communityTotalPages, communityPage + 1),
-                    requestPage,
-                    city: citySlug || undefined,
-                    q: query || undefined,
-                    access,
-                    source,
-                  })}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${communityPage >= communityTotalPages ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
-                >
-                  Next
-                </Link>
-              </div>
-            ) : null}
+            <PaginationControls
+              className="pt-2"
+              meta={communityPaginationMeta}
+              getPageHref={(page) =>
+                buildPageHref({
+                  searchParams: sp,
+                  pageParam: 'communityPage',
+                  page,
+                })
+              }
+            />
           </div>
         )}
       </section>
@@ -360,9 +359,10 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
         ) : (
           <div className="mt-6 space-y-4">
             <p className="text-muted text-sm">
-              Showing {Math.min((requestPage - 1) * requestPageSize + 1, requestTotalCount)}-
-              {Math.min(requestPage * requestPageSize, requestTotalCount)} of {requestTotalCount}{' '}
-              pending requests.
+              Showing{' '}
+              {Math.min((requestPage - 1) * requestPagination.pageSize + 1, requestTotalCount)}-
+              {Math.min(requestPage * requestPagination.pageSize, requestTotalCount)} of{' '}
+              {requestTotalCount} pending requests.
             </p>
 
             {requests.map((request) => {
@@ -428,39 +428,17 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               );
             })}
 
-            {requestTotalPages > 1 ? (
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <Link
-                  href={buildQueryString({
-                    communityPage,
-                    requestPage: Math.max(1, requestPage - 1),
-                    city: citySlug || undefined,
-                    q: query || undefined,
-                    access,
-                    source,
-                  })}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${requestPage <= 1 ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
-                >
-                  Previous
-                </Link>
-                <span className="text-muted text-sm">
-                  Page {requestPage} of {requestTotalPages}
-                </span>
-                <Link
-                  href={buildQueryString({
-                    communityPage,
-                    requestPage: Math.min(requestTotalPages, requestPage + 1),
-                    city: citySlug || undefined,
-                    q: query || undefined,
-                    access,
-                    source,
-                  })}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${requestPage >= requestTotalPages ? 'pointer-events-none opacity-50' : 'hover:bg-muted-bg'}`}
-                >
-                  Next
-                </Link>
-              </div>
-            ) : null}
+            <PaginationControls
+              className="pt-2"
+              meta={requestPaginationMeta}
+              getPageHref={(page) =>
+                buildPageHref({
+                  searchParams: sp,
+                  pageParam: 'requestPage',
+                  page,
+                })
+              }
+            />
           </div>
         )}
       </section>
