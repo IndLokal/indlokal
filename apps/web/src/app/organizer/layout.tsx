@@ -61,7 +61,9 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                   </span>
                   <span className="text-muted block truncate text-[11px] leading-3">
                     {activeCommunity.city.name}
-                    {activeRole ? ` · ${activeRole === 'OWNER' ? 'Owner' : 'Collaborator'}` : ''}
+                    {activeRole
+                      ? ` · ${activeRole === 'COMMUNITY_ADMIN' ? 'Community admin' : 'Collaborator'}`
+                      : ''}
                   </span>
                 </span>
                 {isMultiOrg && <span className="text-muted ml-auto shrink-0 text-xs">⌄</span>}

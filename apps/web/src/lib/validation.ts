@@ -23,7 +23,10 @@ export const submitCommunitySchema = z
     categories: z.array(z.string()).min(1, 'Select at least one category').max(20),
     languages: z.array(z.string()).max(20).default([]),
     channels: z.array(submitChannelSchema).min(1, 'Add at least one channel').max(6),
-    ownershipIntent: z.boolean().default(false),
+    // PRD/TDD-0036: submitter declares their relationship to the community.
+    // HELP_RUN -> eligible for organizer ownership on approval; JUST_ADDING ->
+    // listing only, no ownership.
+    relationship: z.enum(['HELP_RUN', 'JUST_ADDING']).default('JUST_ADDING'),
     contactEmail: z.string().email('Please enter a valid email'),
     contactName: z.string().min(1, 'Please enter your name'),
   })

@@ -7,16 +7,16 @@ import { CollaboratorInviteCard } from '../CollaboratorInviteCard';
 
 export const metadata = { title: 'Collaborators - Organizer' };
 
-function sourceLabel(source: 'OWNER_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD') {
-  if (source === 'OWNER_INVITE') return 'Owner invite';
+function sourceLabel(source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD') {
+  if (source === 'COMMUNITY_ADMIN_INVITE') return 'Organizer invite';
   if (source === 'PUBLIC_REQUEST') return 'Public request';
   return 'Admin add';
 }
 
 type CollaboratorRow = {
   id: string;
-  status: 'ACTIVE' | 'PENDING' | 'REJECTED';
-  source: 'OWNER_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD';
+  status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'REMOVED';
+  source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD';
   requestedEmail: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
@@ -74,7 +74,7 @@ export default async function OrganizerCollaboratorsPage() {
       />
 
       <section className="card-base p-6">
-        <h2 className="text-foreground text-lg font-semibold">Primary owner</h2>
+        <h2 className="text-foreground text-lg font-semibold">Primary community admin</h2>
         <p className="text-muted mt-1 text-sm">
           Ownership remains separate from collaborator access. Admin handles ownership transfer.
         </p>
@@ -82,7 +82,7 @@ export default async function OrganizerCollaboratorsPage() {
           <p className="text-foreground font-medium">
             {collaboratorData?.claimedBy?.displayName ??
               collaboratorData?.claimedBy?.email ??
-              'No owner on record'}
+              'No community admin on record'}
           </p>
           {collaboratorData?.claimedBy?.email && (
             <p className="text-muted mt-1">{collaboratorData.claimedBy.email}</p>

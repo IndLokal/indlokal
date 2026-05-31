@@ -1,7 +1,7 @@
 -- PRD/TDD-0034 minimal v1: collaborator access requests for claimed communities.
 
 CREATE TYPE "CollaboratorStatus" AS ENUM ('PENDING', 'ACTIVE', 'REJECTED');
-CREATE TYPE "CollaboratorSource" AS ENUM ('OWNER_INVITE', 'PUBLIC_REQUEST', 'ADMIN_ADD');
+CREATE TYPE "CollaboratorSource" AS ENUM ('COMMUNITY_ADMIN_INVITE', 'PUBLIC_REQUEST', 'ADMIN_ADD');
 
 CREATE TABLE "community_collaborators" (
   "id"                    TEXT NOT NULL,

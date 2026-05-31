@@ -62,7 +62,7 @@ export default async function OrganizerCommunitiesPage() {
                   </div>
                   <div className="ml-auto flex shrink-0 items-center gap-2">
                     <span className="bg-muted-bg text-muted rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                      {isOwner ? 'Owner' : 'Collaborator'}
+                      {isOwner ? 'Community admin' : 'Collaborator'}
                     </span>
                     {isActive && (
                       <span className="bg-brand-50 text-brand-700 rounded-full px-2 py-0.5 text-[10px] font-medium">

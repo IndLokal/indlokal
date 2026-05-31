@@ -28,7 +28,7 @@ describe('resolveActiveOrganizerCommunity', () => {
 
 describe('getOrganizerWorkspaceRole', () => {
   it('marks the owner of record as OWNER', () => {
-    expect(getOrganizerWorkspaceRole('user-1', communities[0])).toBe('OWNER');
+    expect(getOrganizerWorkspaceRole('user-1', communities[0])).toBe('COMMUNITY_ADMIN');
   });
 
   it('marks non-owner access as COLLABORATOR', () => {

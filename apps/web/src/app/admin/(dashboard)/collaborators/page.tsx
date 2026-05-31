@@ -40,8 +40,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   const access = ['ALL', 'CLAIMED', 'COLLABORATORS'].includes(sp.access ?? '')
     ? (sp.access as 'ALL' | 'CLAIMED' | 'COLLABORATORS')
     : 'ALL';
-  const source = ['ALL', 'PUBLIC_REQUEST', 'OWNER_INVITE'].includes(sp.source ?? '')
-    ? (sp.source as 'ALL' | 'PUBLIC_REQUEST' | 'OWNER_INVITE')
+  const source = ['ALL', 'PUBLIC_REQUEST', 'COMMUNITY_ADMIN_INVITE'].includes(sp.source ?? '')
+    ? (sp.source as 'ALL' | 'PUBLIC_REQUEST' | 'COMMUNITY_ADMIN_INVITE')
     : 'ALL';
 
   const communityWhere: Prisma.CommunityWhereInput = {
@@ -220,7 +220,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
             >
               <option value="ALL">All pending requests</option>
               <option value="PUBLIC_REQUEST">Public request</option>
-              <option value="OWNER_INVITE">Owner invite</option>
+              <option value="COMMUNITY_ADMIN_INVITE">Organizer invite</option>
             </select>
           </AdminFilterItem>
           <AdminFilterActions resetHref="/admin/collaborators" />

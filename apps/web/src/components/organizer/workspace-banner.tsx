@@ -26,7 +26,7 @@ export function OrganizerWorkspaceBanner({
         </div>
         {role && (
           <span className="text-muted shrink-0 rounded-full border border-black/5 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-            {role === 'OWNER' ? 'Owner' : 'Collaborator'}
+            {role === 'COMMUNITY_ADMIN' ? 'Community admin' : 'Collaborator'}
           </span>
         )}
         {showSwitchLink && (

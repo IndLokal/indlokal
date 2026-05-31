@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import type { CollaboratorRole } from '@prisma/client';
 import { db } from '@/lib/db';
 
 const COOKIE_NAME = 'lp_session';
@@ -172,9 +173,22 @@ export async function getSessionUser() {
       }
     }
 
+    // ADR-0008 / TDD-0036: role-bearing community authority. Authorization
+    // reads this (not User.role, not the workspace cookie). Includes a
+    // mid-rollout fallback so claimed owners without a backfilled OWNER row
+    // are still treated as OWNER.
+    const communityMemberships: Array<{ communityId: string; role: CollaboratorRole }> =
+      user.collaboratorMemberships.map((m) => ({ communityId: m.communityId, role: m.role }));
+    for (const community of user.claimedCommunities) {
+      if (!communityMemberships.some((m) => m.communityId === community.id)) {
+        communityMemberships.push({ communityId: community.id, role: 'COMMUNITY_ADMIN' });
+      }
+    }
+
     return {
       ...user,
       claimedCommunities: mergedClaimedCommunities,
+      communityMemberships,
     };
   } catch {
     // DB unreachable (e.g. Neon cold start) - treat as no session so the

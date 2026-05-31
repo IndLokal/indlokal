@@ -35,7 +35,7 @@ export default async function OrganizerDashboardPage() {
     <div className="mx-auto max-w-4xl space-y-6">
       <OrganizerPageHeader
         title={community.name}
-        description={`${community.city.name} · ${role === 'OWNER' ? 'Owner workspace' : 'Collaborator workspace'}`}
+        description={`${community.city.name} · ${role === 'COMMUNITY_ADMIN' ? 'Community admin workspace' : 'Collaborator workspace'}`}
       />
 
       <ContentCallout

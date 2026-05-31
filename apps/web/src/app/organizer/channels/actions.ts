@@ -6,6 +6,7 @@ import { communityOptions } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
+import { canEditCommunity } from '@/lib/auth/community-permissions';
 import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
@@ -36,6 +37,14 @@ export async function addChannel(_prev: ChannelResult, formData: FormData): Prom
 
   if (!community) {
     return { success: false, errors: { _: ['No active community found.'] } };
+  }
+
+  // ADR-0008: enforce per-community authority on the backend, not the cookie.
+  if (!canEditCommunity(user, community.id)) {
+    return {
+      success: false,
+      errors: { _: ['You do not have permission to edit this community.'] },
+    };
   }
 
   const parsed = addChannelSchema.safeParse({
@@ -93,6 +102,9 @@ export async function deleteChannel(formData: FormData) {
     currentId,
   );
   if (!community) return;
+
+  // ADR-0008: enforce per-community authority on the backend, not the cookie.
+  if (!canEditCommunity(user, community.id)) return;
 
   const channelId = formData.get('channelId') as string;
   if (!channelId) return;

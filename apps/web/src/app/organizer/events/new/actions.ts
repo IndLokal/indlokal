@@ -8,6 +8,7 @@ import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
+import { canEditCommunity } from '@/lib/auth/community-permissions';
 import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
@@ -52,6 +53,14 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
 
   if (!community) {
     return { success: false, errors: { _: ['No active community found.'] } };
+  }
+
+  // ADR-0008: enforce per-community authority on the backend, not the cookie.
+  if (!canEditCommunity(user, community.id)) {
+    return {
+      success: false,
+      errors: { _: ['You do not have permission to add events for this community.'] },
+    };
   }
 
   const raw = {

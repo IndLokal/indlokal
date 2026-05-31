@@ -512,6 +512,46 @@ async function main() {
   console.log(`✅ Ambassador seed: 1 role assignment, ${leadsSeeded} new outreach leads`);
   // ────────────────────────────────────────────────────────────────────────
 
+  // ─── Demo organizer with an OWNER community membership (ADR-0008) ───────
+  // Organizer access is a community relationship, not a profile role: the
+  // organizer's authority comes from the CLAIMED community + the OWNER
+  // CommunityCollaborator row, never from User.role.
+  const organizerEmail = 'organizer@indlokal.com';
+  const firstCommunity = allCommunities[0];
+  if (firstCommunity) {
+    const organizer =
+      (await prisma.user.findUnique({ where: { email: organizerEmail } })) ??
+      (await prisma.user.create({
+        data: {
+          email: organizerEmail,
+          displayName: 'Demo Organizer',
+          role: 'USER',
+          cityId: stuttgart.id,
+        },
+      }));
+
+    await prisma.community.update({
+      where: { id: firstCommunity.id },
+      data: { claimState: 'CLAIMED', claimedByUserId: organizer.id },
+    });
+
+    await prisma.communityCollaborator.upsert({
+      where: {
+        communityId_userId: { communityId: firstCommunity.id, userId: organizer.id },
+      },
+      update: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+      create: {
+        communityId: firstCommunity.id,
+        userId: organizer.id,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+      },
+    });
+    console.log(`✅ Organizer seed: ${organizerEmail} owns "${firstCommunity.slug}"`);
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
   const resourceCount = await prisma.resource.count();
 
   console.log('\n✅ Seed complete!');

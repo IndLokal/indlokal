@@ -1,6 +1,6 @@
 import { getCurrentCommunityId, requireSessionUser } from '@/lib/session';
 
-export type OrganizerWorkspaceRole = 'OWNER' | 'COLLABORATOR';
+export type OrganizerWorkspaceRole = 'COMMUNITY_ADMIN' | 'COLLABORATOR';
 export type OrganizerSessionUser = Awaited<ReturnType<typeof requireSessionUser>>;
 export type OrganizerSessionCommunity = OrganizerSessionUser['claimedCommunities'][number];
 
@@ -32,7 +32,7 @@ export function getOrganizerWorkspaceRole<TCommunity extends OrganizerCommunityL
   userId: string,
   community: TCommunity,
 ): OrganizerWorkspaceRole {
-  return community.claimedByUserId === userId ? 'OWNER' : 'COLLABORATOR';
+  return community.claimedByUserId === userId ? 'COMMUNITY_ADMIN' : 'COLLABORATOR';
 }
 
 export function buildOrganizerWorkspace<TCommunity extends OrganizerCommunityLike>(

@@ -28,6 +28,9 @@ export const Events = {
   COMMUNITY_SUBMITTED: 'community_submitted',
   CLAIM_SUBMITTED: 'claim_submitted',
 
+  // Governance - community authority changes (ADR-0008 / TDD-0036)
+  COMMUNITY_ROLE_CHANGED: 'community_role_changed',
+
   // Ops observability - scheduled pipeline health
   PIPELINE_SHARD_COMPLETED: 'pipeline_shard_completed',
   PIPELINE_DISPATCHED: 'pipeline_dispatched',
