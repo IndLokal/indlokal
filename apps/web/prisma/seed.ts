@@ -554,6 +554,11 @@ async function main() {
     // One published community event + one pending host submission, so the
     // moderation axis and admin review queue are exercisable out of the box.
     const hostEmail = 'host@indlokal.com';
+    const hostProfile = {
+      displayName: 'Demo Host',
+      cityId: stuttgart.id,
+      links: ['https://instagram.com/demohost', 'https://demohost.example'],
+    };
     const host =
       (await prisma.user.findUnique({ where: { email: hostEmail } })) ??
       (await prisma.user.create({
@@ -562,8 +567,21 @@ async function main() {
           displayName: 'Demo Host',
           role: 'EVENT_HOST',
           cityId: stuttgart.id,
+          metadata: { hostProfile },
         },
       }));
+    // Ensure the demo host always has a filled-out profile for the workspace demo.
+    await prisma.user.update({
+      where: { id: host.id },
+      data: {
+        metadata: {
+          ...(typeof host.metadata === 'object' && host.metadata !== null
+            ? (host.metadata as object)
+            : {}),
+          hostProfile,
+        },
+      },
+    });
 
     await prisma.event.upsert({
       where: { slug: 'demo-community-diwali-mixer' },
@@ -602,6 +620,72 @@ async function main() {
         cityId: stuttgart.id,
         source: 'USER_SUGGESTED',
         moderationState: 'PENDING_REVIEW',
+        createdByUserId: host.id,
+        metadata: { hostUserId: host.id },
+      },
+    });
+
+    // A live (published, upcoming) host event so the host overview shows real
+    // "Live" / "Next up" signals, plus a past and a declined event.
+    await prisma.event.upsert({
+      where: { slug: 'demo-host-live-concert' },
+      update: { moderationState: 'PUBLISHED' },
+      create: {
+        slug: 'demo-host-live-concert',
+        title: 'Sitar Evening (Live)',
+        description: 'A published host event seeded for the host workspace demo.',
+        venueName: 'Liederhalle',
+        venueAddress: 'Berliner Pl. 1-3, 70174 Stuttgart',
+        startsAt: future(8, 19),
+        endsAt: future(8, 22),
+        cost: 'free',
+        status: 'UPCOMING',
+        cityId: stuttgart.id,
+        source: 'USER_SUGGESTED',
+        moderationState: 'PUBLISHED',
+        createdByUserId: host.id,
+        metadata: { hostUserId: host.id },
+      },
+    });
+
+    await prisma.event.upsert({
+      where: { slug: 'demo-host-past-workshop' },
+      update: { moderationState: 'PUBLISHED' },
+      create: {
+        slug: 'demo-host-past-workshop',
+        title: 'Cooking Workshop (Past)',
+        description: 'A past host event seeded for the host workspace demo.',
+        venueName: 'Markthalle',
+        venueAddress: 'Dorotheenstr. 4, 70173 Stuttgart',
+        startsAt: future(-10, 18),
+        endsAt: future(-10, 20),
+        cost: 'free',
+        status: 'PAST',
+        cityId: stuttgart.id,
+        source: 'USER_SUGGESTED',
+        moderationState: 'PUBLISHED',
+        createdByUserId: host.id,
+        metadata: { hostUserId: host.id },
+      },
+    });
+
+    await prisma.event.upsert({
+      where: { slug: 'demo-host-declined-party' },
+      update: { moderationState: 'REJECTED' },
+      create: {
+        slug: 'demo-host-declined-party',
+        title: 'Rooftop Party (Declined)',
+        description: 'A declined host event seeded to demo the "needs attention" panel.',
+        venueName: 'Rooftop',
+        venueAddress: 'Stuttgart',
+        startsAt: future(20, 21),
+        endsAt: future(20, 23),
+        cost: 'paid',
+        status: 'UPCOMING',
+        cityId: stuttgart.id,
+        source: 'USER_SUGGESTED',
+        moderationState: 'REJECTED',
+        reviewReason: 'Insufficient venue details — please add a full address and resubmit.',
         createdByUserId: host.id,
         metadata: { hostUserId: host.id },
       },

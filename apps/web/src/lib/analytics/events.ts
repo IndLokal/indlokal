@@ -35,6 +35,9 @@ export const Events = {
   HOST_EVENT_SUBMITTED_FOR_REVIEW: 'host_event_submitted_for_review',
   EVENT_REVIEW_DECISION: 'event_review_decision',
 
+  // Event host workspace (PRD-0038)
+  HOST_PROFILE_UPDATED: 'host_profile_updated',
+
   // Ops observability - scheduled pipeline health
   PIPELINE_SHARD_COMPLETED: 'pipeline_shard_completed',
   PIPELINE_DISPATCHED: 'pipeline_dispatched',
