@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
+import { AMBASSADOR_NAV_LINKS } from './nav-links';
 import { BrandLink } from '@/components/BrandLink';
 
 export const dynamic = 'force-dynamic';
@@ -10,14 +11,6 @@ export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
-
-const NAV = [
-  { href: '/ambassador', label: 'Dashboard' },
-  { href: '/ambassador/submit', label: 'Submit' },
-  { href: '/ambassador/outreach', label: 'Outreach' },
-  { href: '/ambassador/feedback', label: 'Feedback' },
-  { href: '/ambassador/me', label: 'My Score' },
-];
 
 export default async function AmbassadorLayout({ children }: { children: React.ReactNode }) {
   const user = await requireCan('ambassador.read');
@@ -49,29 +42,29 @@ export default async function AmbassadorLayout({ children }: { children: React.R
   return (
     <div className="bg-background min-h-screen">
       <header className="border-border border-b bg-white">
-        <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-4">
+          <div className="flex min-w-0 flex-1 items-center gap-4">
             <BrandLink href="/ambassador" markSize={32} showName={false} />
-            <span className="text-foreground text-lg font-bold">Ambassador Console</span>
+            <span className="text-foreground text-lg font-bold">Ambassador</span>
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">
               {cityLabel}
             </span>
-            <nav className="hidden items-center gap-1 text-sm sm:flex">
-              {NAV.map((link) => (
+            <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm sm:flex">
+              {AMBASSADOR_NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-muted hover:bg-muted-bg hover:text-foreground rounded-[var(--radius-button)] px-3 py-1.5 transition-colors"
+                  className="hover:text-foreground transition-colors"
                 >
                   {link.label}
                 </Link>
               ))}
             </nav>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-muted hidden max-w-[180px] truncate text-xs sm:inline">
-              {user.role === 'PLATFORM_ADMIN' ? '(admin preview)' : ''}
-            </span>
+          <div className="flex shrink-0 items-center gap-3">
+            {user.role === 'PLATFORM_ADMIN' && (
+              <span className="text-muted hidden text-xs sm:inline">(admin preview)</span>
+            )}
             <details className="group relative">
               <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
                 <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
@@ -96,7 +89,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
                   >
                     Public site
                   </Link>
-                  <form action="/organizer/logout" method="POST">
+                  <form action="/ambassador/logout" method="POST">
                     <button
                       type="submit"
                       className="hover:bg-muted-bg text-muted hover:text-destructive w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
