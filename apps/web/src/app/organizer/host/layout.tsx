@@ -24,7 +24,7 @@ export default async function HostLayout({ children }: { children: React.ReactNo
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-6">
             <BrandLink
-              href="/"
+              href="/organizer/host"
               markSize={32}
               showName={false}
               className="transition-opacity hover:opacity-80"
@@ -56,6 +56,12 @@ export default async function HostLayout({ children }: { children: React.ReactNo
             <span className="text-muted hidden max-w-[200px] truncate text-sm sm:inline">
               {user.displayName ?? user.email}
             </span>
+            <Link
+              href="/me"
+              className="text-muted hover:text-foreground text-sm font-medium transition-colors"
+            >
+              My profile
+            </Link>
             <form action="/organizer/logout" method="POST">
               <button
                 type="submit"

@@ -22,9 +22,28 @@ export async function NavAuthWidget() {
   }
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
+  const hasOrganizerAccess =
+    user.role === 'PLATFORM_ADMIN' ||
+    user.role === 'COMMUNITY_ADMIN' ||
+    (user.communityMemberships?.length ?? 0) > 0;
+  const hasHostAccess = user.role === 'EVENT_HOST' || user.role === 'PLATFORM_ADMIN';
+  const dashboardHref = hasOrganizerAccess
+    ? '/organizer'
+    : hasHostAccess
+      ? '/organizer/host'
+      : null;
 
   return (
     <div className="flex items-center gap-3">
+      {dashboardHref && (
+        <Link
+          href={dashboardHref}
+          className="text-muted hover:text-foreground inline-flex items-center rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors sm:text-sm"
+        >
+          Dashboard
+        </Link>
+      )}
+
       <Link
         href="/me"
         className="text-muted hover:text-foreground flex items-center gap-2 text-sm transition-colors"
