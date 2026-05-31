@@ -1,20 +1,18 @@
 'use server';
 
-import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { db } from '@/lib/db';
-import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
+import { getCurrentCommunityId, getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { refreshCommunityScore } from '@/modules/scoring';
-import slugify from 'slugify';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
 import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
 } from '@/lib/organizer/workspace';
 
-const addEventSchema = z.object({
+const editEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
   startsAt: z
@@ -34,16 +32,20 @@ const addEventSchema = z.object({
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
 });
 
-export type AddEventResult =
-  | { success: true; eventSlug: string }
+export type EditEventResult =
+  | { success: true }
   | { success: false; errors: Record<string, string[]> }
   | null;
 
-export async function addEvent(_prev: AddEventResult, formData: FormData): Promise<AddEventResult> {
+export async function editEvent(
+  _prev: EditEventResult,
+  formData: FormData,
+): Promise<EditEventResult> {
   const user = await getSessionUser();
   if (!user || user.claimedCommunities.length === 0) {
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
+
   const currentId = await getCurrentCommunityId();
   const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
     user.claimedCommunities,
@@ -54,12 +56,21 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     return { success: false, errors: { _: ['No active community found.'] } };
   }
 
-  // ADR-0008: enforce per-community authority on the backend, not the cookie.
   if (!canEditCommunity(user, community.id)) {
     return {
       success: false,
-      errors: { _: ['You do not have permission to add events for this community.'] },
+      errors: { _: ['You do not have permission to edit events for this community.'] },
     };
+  }
+
+  const slug = formData.get('slug') as string;
+  const existing = await db.event.findFirst({
+    where: { slug, communityId: community.id },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    return { success: false, errors: { _: ['Event not found.'] } };
   }
 
   const raw = {
@@ -76,7 +87,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     cost: (formData.get('cost') as string) || 'free',
   };
 
-  const parsed = addEventSchema.safeParse(raw);
+  const parsed = editEventSchema.safeParse(raw);
   if (!parsed.success) {
     return {
       success: false,
@@ -85,64 +96,36 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   }
 
   const data = parsed.data;
-
-  // Validate ordering: endsAt must be after startsAt
-  if (data.endsAt && data.endsAt !== '' && new Date(data.endsAt) <= new Date(data.startsAt)) {
+  if (new Date(data.endsAt) <= new Date(data.startsAt)) {
     return {
       success: false,
       errors: { endsAt: ['End time must be after start time'] },
     };
   }
 
-  // Generate slug
-  const baseSlug = slugify(data.title, { lower: true, strict: true });
-  const dateStr = new Date(data.startsAt).toISOString().slice(0, 10).replace(/-/g, '');
-  let slug = `${baseSlug}-${dateStr}`;
-
   return withAction(
     async () => {
-      const exists = await db.event.findUnique({ where: { slug } });
-      if (exists) {
-        slug = `${slug}-${Date.now()}`;
-      }
-
-      await db.event.create({
+      await db.event.update({
+        where: { id: existing.id },
         data: {
           title: data.title,
-          slug,
           description: data.description || null,
-          communityId: community.id,
-          cityId: community.city.id,
+          startsAt: new Date(data.startsAt),
+          endsAt: new Date(data.endsAt),
           venueName: data.venueName || null,
           venueAddress: data.venueAddress || null,
-          startsAt: new Date(data.startsAt),
-          endsAt: data.endsAt ? new Date(data.endsAt) : null,
           isOnline: data.isOnline,
           onlineLink: data.onlineLink || null,
           imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
-          status: 'UPCOMING',
-          source: 'COMMUNITY_SUBMITTED',
-          // ADR-0009: community-trusted lane publishes immediately and records
-          // the accountable creator.
           moderationState: 'PUBLISHED',
-          createdByUserId: user.id,
         },
       });
-
-      await db.activitySignal.create({
-        data: {
-          communityId: community.id,
-          signalType: 'EVENT_CREATED',
-        },
-      });
-
-      // Refresh scores so new events immediately affect rankings
-      await refreshCommunityScore(community.id);
 
       revalidateTag('city-feed', 'max');
       redirect('/organizer/events');
+      return { success: true } as EditEventResult;
     },
     () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
   );

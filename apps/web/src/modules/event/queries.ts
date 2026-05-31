@@ -23,8 +23,8 @@ export const eventListSelect = {
  * Get a single event with full relations.
  */
 export async function getEventBySlug(slug: string): Promise<EventWithRelations | null> {
-  return db.event.findUnique({
-    where: { slug },
+  return db.event.findFirst({
+    where: { slug, moderationState: 'PUBLISHED' },
     include: {
       community: { select: { id: true, name: true, slug: true, logoUrl: true } },
       city: true,
@@ -63,6 +63,7 @@ export async function getEventsThisWeek(
       cityId: { in: cityIds },
       ...upcomingOrOngoing,
       status: { not: 'CANCELLED' },
+      moderationState: 'PUBLISHED',
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
@@ -82,6 +83,7 @@ export async function getEventsThisWeek(
         { AND: [{ startsAt: { lt: now } }, { endsAt: { gte: now } }] },
       ],
       status: { not: 'CANCELLED' },
+      moderationState: 'PUBLISHED',
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
@@ -142,6 +144,7 @@ export async function getEventsPage(
     where: {
       cityId: { in: cityIds },
       status: { not: 'CANCELLED' },
+      moderationState: 'PUBLISHED',
       startsAt: {
         gte: opts.from ?? new Date(),
         ...(opts.to && { lte: opts.to }),
@@ -206,6 +209,7 @@ export async function getUpcomingEvents(
       cityId: { in: cityIds },
       startsAt: { gte: new Date() },
       status: { not: 'CANCELLED' },
+      moderationState: 'PUBLISHED',
       ...categoryWhere,
       ...costWhere,
       ...typeWhere,
@@ -222,8 +226,8 @@ export async function getUpcomingEvents(
  * from the same community. Powers GET /api/v1/events/:slug.
  */
 export async function getEventDetail(slug: string): Promise<EventDetailRow | null> {
-  const event = await db.event.findUnique({
-    where: { slug },
+  const event = await db.event.findFirst({
+    where: { slug, moderationState: 'PUBLISHED' },
     include: {
       community: { select: { id: true, name: true, slug: true, logoUrl: true } },
       city: { select: { name: true, slug: true } },
@@ -244,6 +248,7 @@ export async function getEventDetail(slug: string): Promise<EventDetailRow | nul
           id: { not: event.id },
           startsAt: { gte: new Date() },
           status: { not: 'CANCELLED' },
+          moderationState: 'PUBLISHED',
         },
         select: eventListSelect,
         orderBy: { startsAt: 'asc' },

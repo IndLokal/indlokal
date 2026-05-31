@@ -22,6 +22,9 @@ export default async function OrganizerLayout({ children }: { children: React.Re
   const isMultiOrg = workspace?.isMultiCommunity ?? false;
   const accountLabel = user?.displayName ?? user?.email ?? 'Account';
   const accountInitial = accountLabel.charAt(0).toUpperCase();
+  const publicViewHref = activeCommunity
+    ? `/${activeCommunity.city.slug}/communities/${activeCommunity.slug}`
+    : '/';
 
   const navLinks = [
     { href: '/organizer', label: 'Overview' },
@@ -37,7 +40,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
             <BrandLink
-              href="/"
+              href="/organizer"
               markSize={32}
               showName={false}
               className="flex shrink-0 items-center transition-opacity hover:opacity-80"
@@ -81,6 +84,7 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                 <MobileNav
                   links={[
                     ...navLinks,
+                    { href: publicViewHref, label: 'Public View' },
                     { href: '/organizer/events/new', label: '+ New Event', highlight: true },
                   ]}
                 />
@@ -89,6 +93,14 @@ export default async function OrganizerLayout({ children }: { children: React.Re
           </div>
 
           <div className="flex items-center gap-4">
+            {user && (
+              <Link
+                href={publicViewHref}
+                className="text-muted hover:text-foreground hidden text-sm font-medium transition-colors sm:inline"
+              >
+                Public view
+              </Link>
+            )}
             {user ? (
               <details className="group relative hidden sm:block">
                 <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
@@ -102,6 +114,12 @@ export default async function OrganizerLayout({ children }: { children: React.Re
                   <p className="text-foreground truncate text-sm font-semibold">{accountLabel}</p>
                   <p className="text-muted mt-0.5 truncate text-xs">{user.email}</p>
                   <div className="border-border mt-3 border-t pt-3">
+                    <Link
+                      href="/me"
+                      className="hover:bg-muted-bg text-muted hover:text-foreground block w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
+                    >
+                      My profile
+                    </Link>
                     <form action="/organizer/logout" method="POST">
                       <button
                         type="submit"

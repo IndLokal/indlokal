@@ -43,6 +43,12 @@ export default async function CommunityDetailPage({ params }: Props) {
     notFound();
   }
 
+  // City is the discovery partition key: a community only exists under its own
+  // city path. Canonicalize if reached via a different (or stale) city segment.
+  if (community.city.slug !== city) {
+    redirect(`/${community.city.slug}/communities/${slug}`);
+  }
+
   const now = new Date();
   const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= now);
   const pastEvents = community.events.filter((e) => new Date(e.startsAt) < now);

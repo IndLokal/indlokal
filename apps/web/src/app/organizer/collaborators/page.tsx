@@ -77,13 +77,13 @@ export default async function OrganizerCollaboratorsPage() {
   const pendingCollaborators = collaborators.filter(
     (collaborator: CollaboratorRow) => collaborator.status === 'PENDING',
   );
+  const pageDescription = canManageTeam
+    ? 'Manage who can help operate this community and track pending access requests.'
+    : 'View who can help operate this community.';
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <OrganizerPageHeader
-        title="Team"
-        description="Manage who can help operate this community and track pending access requests."
-      />
+      <OrganizerPageHeader title="Team" description={pageDescription} />
       <OrganizerWorkspaceBanner
         communityName={community.name}
         cityName={community.city.name}
@@ -113,8 +113,9 @@ export default async function OrganizerCollaboratorsPage() {
           <div>
             <h2 className="text-foreground text-lg font-semibold">Active team</h2>
             <p className="text-muted mt-1 text-sm">
-              People who can already access this organizer workspace, excluding the primary admin
-              shown above.
+              {canManageTeam
+                ? 'People who can already access this organizer workspace, excluding the primary admin shown above.'
+                : 'People who can already access this organizer workspace.'}
             </p>
           </div>
           <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
@@ -237,96 +238,103 @@ export default async function OrganizerCollaboratorsPage() {
         )}
       </section>
 
-      <section className="card-base p-6">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-foreground text-lg font-semibold">Pending requests</h2>
-            <p className="text-muted mt-1 text-sm">
-              Requests here are waiting for collaborator acceptance or platform review.
-            </p>
+      {canManageTeam ? (
+        <section className="card-base p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-foreground text-lg font-semibold">Pending requests</h2>
+              <p className="text-muted mt-1 text-sm">
+                Pending organizer invites need acceptance. Public help requests are reviewed on the
+                admin collaborators page.
+              </p>
+            </div>
+            <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
+              {pendingCollaborators.length}
+            </span>
           </div>
-          <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
-            {pendingCollaborators.length}
-          </span>
-        </div>
 
-        {pendingCollaborators.length === 0 ? (
-          <p className="text-muted mt-4 text-sm">No pending collaborator requests.</p>
-        ) : (
-          <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
-            <table className="w-full min-w-[620px] text-sm">
-              <thead className="bg-muted-bg text-left">
-                <tr className="border-border border-b">
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Requested access for
-                  </th>
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Source
-                  </th>
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Requested
-                  </th>
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
-                {pendingCollaborators.map((collaborator: CollaboratorRow) => (
-                  <tr key={collaborator.id}>
-                    <td className="px-4 py-3">
-                      <p className="text-foreground font-medium">
-                        {collaborator.user.displayName ??
-                          collaborator.user.email ??
-                          collaborator.requestedEmail ??
-                          'Pending collaborator'}
-                      </p>
-                      <p className="text-muted mt-0.5 text-xs">
-                        {collaborator.user.email ?? collaborator.requestedEmail ?? 'Awaiting email'}
-                      </p>
-                      {collaborator.requestedByUser?.email && (
-                        <p className="text-muted mt-1 text-xs">
-                          Requested by{' '}
-                          {collaborator.requestedByUser.displayName ??
-                            collaborator.requestedByUser.email}
-                        </p>
-                      )}
-                      <p className="text-muted mt-1 text-xs">
-                        {collaborator.source === 'COMMUNITY_ADMIN_INVITE'
-                          ? 'Awaiting collaborator email confirmation'
-                          : 'Awaiting platform review'}
-                      </p>
-                    </td>
-                    <td className="text-muted px-4 py-3 text-sm">
-                      {sourceLabel(collaborator.source)}
-                    </td>
-                    <td className="text-muted px-4 py-3 text-sm">
-                      {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {collaborator.source === 'COMMUNITY_ADMIN_INVITE' ? (
-                        <form action={resendCollaboratorInviteAction}>
-                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
-                          <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-                            Resend invite
-                          </button>
-                        </form>
-                      ) : (
-                        <span className="text-muted">-</span>
-                      )}
-                    </td>
+          {pendingCollaborators.length === 0 ? (
+            <p className="text-muted mt-4 text-sm">No pending organizer invites.</p>
+          ) : (
+            <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
+              <table className="w-full min-w-[620px] text-sm">
+                <thead className="bg-muted-bg text-left">
+                  <tr className="border-border border-b">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Requested access for
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Source
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Requested
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Action
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+                </thead>
+                <tbody className="divide-border divide-y">
+                  {pendingCollaborators.map((collaborator: CollaboratorRow) => (
+                    <tr key={collaborator.id}>
+                      <td className="px-4 py-3">
+                        <p className="text-foreground font-medium">
+                          {collaborator.user.displayName ??
+                            collaborator.user.email ??
+                            collaborator.requestedEmail ??
+                            'Pending collaborator'}
+                        </p>
+                        <p className="text-muted mt-0.5 text-xs">
+                          {collaborator.user.email ??
+                            collaborator.requestedEmail ??
+                            'Awaiting email'}
+                        </p>
+                        {collaborator.requestedByUser?.email && (
+                          <p className="text-muted mt-1 text-xs">
+                            Requested by{' '}
+                            {collaborator.requestedByUser.displayName ??
+                              collaborator.requestedByUser.email}
+                          </p>
+                        )}
+                        <p className="text-muted mt-1 text-xs">
+                          {collaborator.source === 'COMMUNITY_ADMIN_INVITE'
+                            ? 'Awaiting collaborator email confirmation'
+                            : 'Awaiting platform review'}
+                        </p>
+                      </td>
+                      <td className="text-muted px-4 py-3 text-sm">
+                        {sourceLabel(collaborator.source)}
+                      </td>
+                      <td className="text-muted px-4 py-3 text-sm">
+                        {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
+                      </td>
+                      <td className="px-4 py-3 text-sm">
+                        {collaborator.source === 'COMMUNITY_ADMIN_INVITE' ? (
+                          <form action={resendCollaboratorInviteAction}>
+                            <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                            <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                              Resend invite
+                            </button>
+                          </form>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+      ) : null}
 
-      <CollaboratorInviteCard
-        title="Invite collaborator"
-        description="Send an invite by email. Collaborator access becomes active when they accept the invite link."
-      />
+      {canManageTeam ? (
+        <CollaboratorInviteCard
+          title="Invite collaborator"
+          description="Send an invite by email. Collaborator access becomes active when they accept the invite link."
+        />
+      ) : null}
     </div>
   );
 }

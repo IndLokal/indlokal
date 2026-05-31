@@ -30,18 +30,23 @@ export default async function OrganizerDashboardPage() {
   ];
   const doneCount = completeness.filter((c) => c.done).length;
   const pct = Math.round((doneCount / completeness.length) * 100);
+  const isAdmin = role === 'COMMUNITY_ADMIN';
+  const dashboardBody = isAdmin
+    ? content.COMMUNITY_ACTION_COPY.organizerDashboardBody
+    : 'This dashboard is for approved collaborators too. You can view the community page, manage links, and add events for the active community.';
+  const teamCardTitle = isAdmin ? 'Team management' : 'Team';
+  const teamCardBody = isAdmin
+    ? 'Manage collaborator access, pending approvals, and ownership context for this community.'
+    : 'See who helps operate this community. Team management actions are available to the community organizer.';
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <OrganizerPageHeader
         title={community.name}
-        description={`${community.city.name} · ${role === 'COMMUNITY_ADMIN' ? 'Community admin workspace' : 'Collaborator workspace'}`}
+        description={`${community.city.name} · ${isAdmin ? 'Community admin workspace' : 'Collaborator workspace'}`}
       />
 
-      <ContentCallout
-        title="What can I do here?"
-        body={content.COMMUNITY_ACTION_COPY.organizerDashboardBody}
-      />
+      <ContentCallout title="What can I do here?" body={dashboardBody} />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {/* Quick actions */}
@@ -76,10 +81,8 @@ export default async function OrganizerDashboardPage() {
           <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
             Team
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Team</h2>
-          <p className="text-muted mt-1 text-sm leading-6">
-            Invite and manage the people who help operate this community.
-          </p>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">{teamCardTitle}</h2>
+          <p className="text-muted mt-1 text-sm leading-6">{teamCardBody}</p>
         </Link>
         <Link
           href="/organizer/events/new"
@@ -174,17 +177,14 @@ export default async function OrganizerDashboardPage() {
       <div className="card-base p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-foreground text-lg font-semibold">Team management</h2>
-            <p className="text-muted mt-1 text-sm">
-              Manage collaborator access, pending approvals, and ownership context for this
-              community.
-            </p>
+            <h2 className="text-foreground text-lg font-semibold">{teamCardTitle}</h2>
+            <p className="text-muted mt-1 text-sm">{teamCardBody}</p>
           </div>
           <Link
             href="/organizer/collaborators"
             className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
           >
-            Open team →
+            {isAdmin ? 'Open team management →' : 'View team →'}
           </Link>
         </div>
       </div>

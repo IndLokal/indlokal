@@ -219,6 +219,16 @@ enum EventStatus {
   CANCELLED
 }
 
+// ADR-0009: moderation is a first-class axis, orthogonal to the EventStatus
+// lifecycle axis. "May this event be seen?" — not "where is it in time?".
+// Provenance (trusted-on-create vs reviewer-approved) is derived from `source`
+// + ContentLog, not a separate state, so the enum stays minimal.
+enum EventModerationState {
+  PUBLISHED
+  PENDING_REVIEW
+  REJECTED
+}
+
 model Event {
   id          String  @id @default(cuid())
   title       String
@@ -251,6 +261,15 @@ model Event {
   source   ContentSource @default(ADMIN_SEED)
   metadata Json?
 
+  // ADR-0009: moderation axis + accountable creator + review record.
+  moderationState EventModerationState @default(PUBLISHED) @map("moderation_state")
+  createdByUserId String?              @map("created_by_user_id")
+  createdBy       User?                @relation("CreatedEvents", fields: [createdByUserId], references: [id])
+  reviewedById    String?              @map("reviewed_by_id")
+  reviewedBy      User?                @relation("ReviewedEvents", fields: [reviewedById], references: [id])
+  reviewedAt      DateTime?            @map("reviewed_at")
+  reviewReason    String?              @map("review_reason")
+
   categories   EventCategory[]
   trustSignals TrustSignal[]   @relation("EventTrustSignals")
   savedBy      SavedEvent[]
@@ -263,6 +282,9 @@ model Event {
   @@index([communityId, startsAt])
   @@index([status])
   @@index([startsAt])
+  @@index([moderationState])
+  @@index([moderationState, startsAt])
+  @@index([createdByUserId])
   @@map("events")
 }
 
@@ -575,6 +597,8 @@ model User {
 
   createdCommunities      Community[]              @relation("CreatedCommunities")
   claimedCommunities      Community[]              @relation("ClaimedCommunities")
+  createdEvents           Event[]                  @relation("CreatedEvents")
+  reviewedEvents          Event[]                  @relation("ReviewedEvents")
   collaboratorMemberships CommunityCollaborator[]  @relation("CommunityCollaboratorUser")
   collaboratorRequests    CommunityCollaborator[]  @relation("CommunityCollaboratorRequestedBy")
   collaboratorReviews     CommunityCollaborator[]  @relation("CommunityCollaboratorReviewedBy")

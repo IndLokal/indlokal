@@ -549,6 +549,64 @@ async function main() {
       },
     });
     console.log(`✅ Organizer seed: ${organizerEmail} owns "${firstCommunity.slug}"`);
+
+    // ─── Event governance demo (ADR-0009) ────────────────────────────────
+    // One published community event + one pending host submission, so the
+    // moderation axis and admin review queue are exercisable out of the box.
+    const hostEmail = 'host@indlokal.com';
+    const host =
+      (await prisma.user.findUnique({ where: { email: hostEmail } })) ??
+      (await prisma.user.create({
+        data: {
+          email: hostEmail,
+          displayName: 'Demo Host',
+          role: 'EVENT_HOST',
+          cityId: stuttgart.id,
+        },
+      }));
+
+    await prisma.event.upsert({
+      where: { slug: 'demo-community-diwali-mixer' },
+      update: { moderationState: 'PUBLISHED' },
+      create: {
+        slug: 'demo-community-diwali-mixer',
+        title: 'Community Diwali Mixer',
+        description: 'A published community event seeded for governance demos.',
+        venueName: 'Community Hall',
+        venueAddress: 'Königstr. 1, 70173 Stuttgart',
+        startsAt: future(15, 18),
+        endsAt: future(15, 21),
+        cost: 'free',
+        status: 'UPCOMING',
+        cityId: stuttgart.id,
+        communityId: firstCommunity.id,
+        source: 'COMMUNITY_SUBMITTED',
+        moderationState: 'PUBLISHED',
+        createdByUserId: organizer.id,
+      },
+    });
+
+    await prisma.event.upsert({
+      where: { slug: 'demo-host-pending-meetup' },
+      update: { moderationState: 'PENDING_REVIEW' },
+      create: {
+        slug: 'demo-host-pending-meetup',
+        title: 'Host Submitted Meetup (Pending Review)',
+        description: 'A host-submitted event awaiting admin review.',
+        venueName: 'Co-working Space',
+        venueAddress: 'Calwer Str. 11, 70173 Stuttgart',
+        startsAt: future(25, 19),
+        endsAt: future(25, 21),
+        cost: 'free',
+        status: 'UPCOMING',
+        cityId: stuttgart.id,
+        source: 'USER_SUGGESTED',
+        moderationState: 'PENDING_REVIEW',
+        createdByUserId: host.id,
+        metadata: { hostUserId: host.id },
+      },
+    });
+    console.log('✅ Event governance seed: 1 published community + 1 pending host event');
   }
   // ────────────────────────────────────────────────────────────────────────
 

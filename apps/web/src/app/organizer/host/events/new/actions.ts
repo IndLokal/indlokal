@@ -6,6 +6,8 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import slugify from 'slugify';
 import { Prisma } from '@prisma/client';
 
@@ -19,9 +21,8 @@ const addHostEventSchema = z.object({
     .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid start date' }),
   endsAt: z
     .string()
-    .optional()
-    .or(z.literal(''))
-    .refine((v) => !v || !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
+    .min(1, 'End date is required')
+    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
   venueName: z.string().max(200).optional().or(z.literal('')),
   venueAddress: z.string().max(500).optional().or(z.literal('')),
   isOnline: z.coerce.boolean().default(false),
@@ -50,10 +51,9 @@ export async function addHostEvent(
   if (user.role === 'EVENT_HOST') {
     const unverifiedCount = await db.event.count({
       where: {
-        metadata: { path: ['hostUserId'], equals: user.id },
+        createdByUserId: user.id,
         startsAt: { gte: new Date() },
-        status: 'UPCOMING',
-        trustSignals: { none: {} },
+        moderationState: 'PENDING_REVIEW',
       },
     });
     if (unverifiedCount >= HOST_UNVERIFIED_CAP) {
@@ -92,6 +92,24 @@ export async function addHostEvent(
 
   const data = parsed.data;
 
+  // Validate ordering: endsAt must be after startsAt
+  if (new Date(data.endsAt) <= new Date(data.startsAt)) {
+    return {
+      success: false,
+      errors: { endsAt: ['End time must be after start time'] },
+    };
+  }
+
+  // City is the discovery partition key — never trust a client-supplied id.
+  // Verify it resolves to a real, active city before creating the event.
+  const city = await db.city.findFirst({
+    where: { id: data.cityId, isActive: true },
+    select: { id: true },
+  });
+  if (!city) {
+    return { success: false, errors: { cityId: ['Please select a valid city.'] } };
+  }
+
   return withAction(
     async () => {
       // Generate a unique slug with retry on collision (avoids TOCTOU race)
@@ -118,7 +136,10 @@ export async function addHostEvent(
               onlineLink: data.onlineLink || null,
               registrationUrl: data.registrationUrl || null,
               cost: data.cost,
-              source: 'USER_SUGGESTED', // unverified host submission - needs review
+              source: 'USER_SUGGESTED', // unverified host submission
+              // ADR-0009: host lane is vetted before public visibility.
+              moderationState: 'PENDING_REVIEW',
+              createdByUserId: user.id,
               metadata: { hostUserId: user.id },
             },
           });
@@ -136,6 +157,11 @@ export async function addHostEvent(
       }
       if (!event) throw new Error('Could not generate unique slug after 5 attempts');
       const createdEvent = event;
+
+      await captureServerEvent(user.id, Events.HOST_EVENT_SUBMITTED_FOR_REVIEW, {
+        eventId: createdEvent.id,
+        cityId: data.cityId,
+      });
 
       revalidateTag(`city-events-${data.cityId}`, 'max');
 
