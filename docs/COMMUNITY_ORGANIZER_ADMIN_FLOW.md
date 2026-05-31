@@ -13,21 +13,21 @@ It covers:
 
 It does not describe implementation internals or code-level audit findings. It is a product operating blueprint.
 
-For claim ownership initiation, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_FLOW.md).
+For claim initiation, see [COMMUNITY_CLAIM_FLOW.md](./COMMUNITY_CLAIM_FLOW.md).
 
 ## 2. Product Outcomes
 
 The organizer console should reliably deliver three outcomes:
 
 1. Context certainty: organizer always knows which community they are operating.
-2. Team operability: owner can delegate safely and track collaborator state.
+2. Team operability: organizer can delegate safely and track collaborator state.
 3. Operational velocity: profile updates, link maintenance, and event publishing are predictable and fast.
 
 ## 3. Personas
 
-### 3.1 Primary owner
+### 3.1 Primary organizer
 
-Runs the community and remains owner of record.
+Runs the community and remains organizer of record.
 
 ### 3.2 Collaborator manager
 
@@ -44,18 +44,18 @@ Moderates collaborator access requests and handles exceptional governance action
 ## 4. Product Principles
 
 1. Workspace-first design: every organizer action is scoped to one active community.
-2. Explicit roles: owner and collaborator are visible and distinct.
+2. Explicit roles: organizer and collaborator are visible and distinct.
 3. State transparency: pending, approved, rejected statuses are always visible.
 4. Deterministic navigation: clear route ownership by task, no mixed-purpose ambiguity.
 5. Safe default governance: collaborator access requires admin moderation in v1.
 
 ## 5. Relationship Model
 
-- One community has one owner of record.
+- One community has one organizer of record.
 - One community can have many collaborators.
-- One user can operate many communities as owner and/or collaborator.
+- One user can operate many communities as organizer and/or collaborator.
 
-Ownership and collaboration are intentionally separate concepts.
+Organizer and collaborator are intentionally separate concepts.
 
 ## 6. Information Architecture
 
@@ -136,7 +136,7 @@ Goal: complete team workflow for a community.
 
 Must contain:
 
-- owner block and role explanation
+- organizer block and role explanation
 - active collaborators list
 - pending requests list with source and age
 - invite form with idempotent duplicate handling
@@ -168,9 +168,9 @@ Must contain:
 3. Product switches active context and returns user to intended organizer path.
 4. New context is immediately visible in header and page banner.
 
-## 8.3 Owner invite collaborator
+## 8.3 Organizer invite collaborator
 
-1. Owner/collaborator submits invite email.
+1. Organizer or collaborator submits invite email.
 2. Product creates or reuses pending request.
 3. Admin moderates request.
 4. On approval, collaborator appears in active roster and gains access.
@@ -181,19 +181,19 @@ Must contain:
 2. User requests organizer access.
 3. Product records pending request.
 4. Admin approves/rejects.
-5. Ownership remains unchanged regardless of decision.
+5. Organizer of record remains unchanged regardless of decision.
 
 ## 9. Permission Matrix (v1)
 
-| Capability                              | Owner | Collaborator | Platform Admin               |
-| --------------------------------------- | ----- | ------------ | ---------------------------- |
-| View organizer workspace for community  | Yes   | Yes          | Yes                          |
-| Edit profile                            | Yes   | Yes          | Yes                          |
-| Manage links                            | Yes   | Yes          | Yes                          |
-| Create events                           | Yes   | Yes          | Yes                          |
-| Invite collaborator                     | Yes   | Yes          | Yes                          |
-| Approve or reject collaborator requests | No    | No           | Yes                          |
-| Transfer ownership                      | No    | No           | Yes (outside organizer flow) |
+| Capability                              | Organizer | Collaborator | Platform Admin               |
+| --------------------------------------- | --------- | ------------ | ---------------------------- |
+| View organizer workspace for community  | Yes       | Yes          | Yes                          |
+| Edit profile                            | Yes       | Yes          | Yes                          |
+| Manage links                            | Yes       | Yes          | Yes                          |
+| Create events                           | Yes       | Yes          | Yes                          |
+| Invite collaborator                     | Yes       | Yes          | Yes                          |
+| Approve or reject collaborator requests | No        | No           | Yes                          |
+| Transfer responsibility (organizer)     | No        | No           | Yes (outside organizer flow) |
 
 ## 10. UX Quality Bar
 
@@ -251,9 +251,9 @@ Phase 4: instrumentation and optimization
 
 ## 14. Open Product Decisions
 
-1. Should collaborator removal be owner-only or owner plus collaborator?
-2. Should approved collaborators require owner acknowledgment on first entry?
-3. Should event edit/delete rights be fully symmetric between owner and collaborator?
+1. Should collaborator removal be organizer-only or organizer plus collaborator?
+2. Should approved collaborators require organizer acknowledgment on first entry?
+3. Should event edit/delete rights be fully symmetric between organizer and collaborator?
 4. Should communities page show SLA-style health badges in v1 or v1.1?
 
 ## 15. Spec Hand-off
