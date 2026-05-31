@@ -5,6 +5,27 @@ import { db } from '@/lib/db';
 
 const ORGANIZER_VERIFY_TOKEN_COOKIE = 'organizer_verify_token';
 
+// ADR-0008: organizer access is a community relationship, not a profile role.
+// PLATFORM_ADMIN and the deferred EVENT_HOST role stay role-based.
+const ORGANIZER_USER_SELECT = {
+  id: true,
+  role: true,
+  claimedCommunities: { where: { claimState: 'CLAIMED' as const }, select: { id: true } },
+  collaboratorMemberships: { where: { status: 'ACTIVE' as const }, select: { id: true } },
+} as const;
+
+type OrganizerEligibleUser = {
+  role: string;
+  claimedCommunities: { id: string }[];
+  collaboratorMemberships: { id: string }[];
+};
+
+function isEligibleOrganizer(user: OrganizerEligibleUser | null | undefined): boolean {
+  if (!user) return false;
+  if (user.role === 'PLATFORM_ADMIN' || user.role === 'EVENT_HOST') return true;
+  return user.claimedCommunities.length > 0 || user.collaboratorMemberships.length > 0;
+}
+
 export async function GET(request: NextRequest) {
   const rawToken = request.nextUrl.searchParams.get('token');
 
@@ -87,13 +108,10 @@ export async function POST(request: NextRequest) {
     if (claim.count === 0) {
       const existing = await db.magicLinkToken.findUnique({
         where: { tokenHash },
-        include: { user: { select: { id: true, role: true } } },
+        include: { user: { select: ORGANIZER_USER_SELECT } },
       });
 
-      if (
-        !existing ||
-        !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(existing.user.role)
-      ) {
+      if (!existing || !isEligibleOrganizer(existing.user)) {
         return seeOther('/organizer/login?error=invalid_token');
       }
 
@@ -113,13 +131,10 @@ export async function POST(request: NextRequest) {
 
     const magicLink = await db.magicLinkToken.findUnique({
       where: { tokenHash },
-      include: { user: { select: { id: true, role: true } } },
+      include: { user: { select: ORGANIZER_USER_SELECT } },
     });
 
-    if (
-      !magicLink ||
-      !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(magicLink.user.role)
-    ) {
+    if (!magicLink || !isEligibleOrganizer(magicLink.user)) {
       return seeOther('/organizer/login?error=invalid_token');
     }
 

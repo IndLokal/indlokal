@@ -6,10 +6,10 @@
 
 The **Community Self-Submission Flow** allows a community organiser whose community is _not yet listed_ on IndLokal to submit it for review. It is distinct from the Claim Flow:
 
-| Flow                | Precondition                             | Use case                                      |
-| ------------------- | ---------------------------------------- | --------------------------------------------- |
-| **Self-Submission** | Community does not exist in the platform | Brand new listing request                     |
-| **Claim**           | Community already exists (pre-seeded)    | Organiser takes ownership of existing listing |
+| Flow                | Precondition                             | Use case                             |
+| ------------------- | ---------------------------------------- | ------------------------------------ |
+| **Self-Submission** | Community does not exist in the platform | Brand new listing request            |
+| **Claim**           | Community already exists (pre-seeded)    | Organiser claims an existing listing |
 
 Both flows converge at admin review and result in an approved, organiser-managed community. Neither allows self-publishing without oversight.
 
@@ -27,9 +27,18 @@ A manually reviewed submission pipeline ensures the directory maintains quality.
 
 The form collects the minimum viable profile. The organiser is not asked to write a perfect description or upload a logo on day one. They can complete those via the organiser portal after approval.
 
-### 2.3 Submission ≠ Immediate Organiser Access
+### 2.3 Submission ≠ Self-Publishing
 
-Submitting a community does not immediately grant organiser access. The user fills a form, submits, and waits for admin review. During approval, admin explicitly decides whether to grant organiser ownership to the submitter email.
+Submitting a community does not publish it directly. The user fills a form, submits, and
+waits for admin review. What the submitter gets on approval depends on the **relationship
+they declare** at submit time, not on a separate reviewer choice:
+
+- **"I am one of the organizers"** → on approval the submitter becomes the **organizer**.
+- **"I am sharing a community I know about"** → the community is published but stays **unclaimed and claimable**;
+  the submitter keeps no community authority.
+- **"I am sharing a community I know about" + suggests an organizer** → published and claimable, and the
+  platform **invites the suggested person to claim**. A named third party is never
+  auto-granted authority — they must claim and be verified.
 
 ### 2.4 Transparent Status
 
@@ -82,13 +91,14 @@ The form is grouped into four sections:
 | Secondary channel type | No       | Optional second entry point                                                                        |
 | Secondary channel URL  | No       | Required if type is supplied                                                                       |
 
-#### Section D - Contact Information & Ownership Intent
+#### Section D - Contact Information & Relationship
 
-| Field                                 | Required | Notes                                                                                |
-| ------------------------------------- | -------- | ------------------------------------------------------------------------------------ |
-| Your name                             | Yes      | Submitter's full name                                                                |
-| Your email                            | Yes      | Used as `metadata.submitter.email`; can be linked to organiser ownership on approval |
-| "I represent this community" checkbox | No       | Captured as `ownershipIntent` and shown in admin review                              |
+| Field                            | Required | Notes                                                                                                                          |
+| -------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Your name                        | Yes      | Submitter's full name                                                                                                          |
+| Your email                       | Yes      | Used as `metadata.submitter.email`                                                                                             |
+| Your relationship                | Yes      | "I am one of the organizers" → organizer on approval; "I am sharing a community I know about" → published & claimable          |
+| Suggested organizer (name/email) | No       | Only for "I am sharing a community I know about": the platform invites this person to claim — it does not grant them authority |
 
 ### Step 2 - Server Action
 
@@ -104,7 +114,7 @@ The form is grouped into four sections:
    - `claimState: UNCLAIMED`
    - `source: COMMUNITY_SUBMITTED`
 
-- `metadata.submitter: { name, email, ownershipIntent, submittedAt }`
+- `metadata.submitter: { name, email, relationship, suggestedOrganizer?, submittedAt }`
 
 6. Create `AccessChannel` rows (primary + optional secondary)
 7. Send submission-received email (best-effort)
@@ -124,15 +134,17 @@ An operator visits `/admin/submissions`. For each `UNVERIFIED` community they se
 **Approve** → `approveSubmission()`:
 
 - `Community.status → ACTIVE`
-- Optional ownership grant (explicit admin checkbox):
-  - `Community.claimState → CLAIMED`
-  - `Community.claimedByUserId → submitter user`
-  - submitter user created/upgraded to `COMMUNITY_ADMIN` if needed
+- Outcome follows the submitter's **declared relationship** (not a separate reviewer grant):
+  - **"I am one of the organizers"**: `Community.claimState → CLAIMED`, `claimedByUserId → submitter user`,
+    submitter user created/upgraded to organizer access if needed; creates a
+    `COMMUNITY_CLAIMED` trust signal.
+  - **"I am sharing a community I know about"**: `Community.claimState → UNCLAIMED` — published and claimable.
+  - **Suggested organizer provided**: stays `UNCLAIMED`, and the suggested person is invited
+    to claim.
 - Creates `TrustSignal` with `signalType: ADMIN_VERIFIED`
-- Creates `COMMUNITY_CLAIMED` trust signal when ownership is granted
 - Sends approval email (best-effort) with conditional CTA:
-  - If ownership granted: organizer dashboard link
-  - Else: claim-community CTA
+  - If submitter became organizer: organizer dashboard link
+  - Else: claim-community CTA (sent to the submitter, and to the suggested organizer if named)
 - Revalidates admin + public community routes
 
 **Reject** → `rejectSubmission()`:
@@ -144,18 +156,19 @@ Community remains in the DB in either state. `INACTIVE` communities are not visi
 
 ### Step 4 - Organiser Access After Approval
 
-After approval, ownership outcome depends on admin decision in `/admin/submissions`:
+After approval, the outcome follows the relationship the submitter declared on the form:
 
-1. **If "Grant ownership" is checked**:
+1. **"I am one of the organizers"**:
 
 - community becomes `ACTIVE + CLAIMED`
-- submitter email gets organizer ownership
-- submitter can log in to organizer portal
+- submitter gets organizer access
+- submitter can log in to the organizer portal
 
-2. **If unchecked**:
+2. **"I am sharing a community I know about"**:
 
 - community becomes `ACTIVE + UNCLAIMED`
-- submitter can still claim later via Claim Flow
+- submitter keeps no authority and can still claim later via the Claim Flow
+- if a suggested organizer was named, that person is invited to claim
 
 ---
 
@@ -173,7 +186,8 @@ Community {
     submitter: {
       name: "Rahul Sharma",
       email: "rahul@example.com",
-      ownershipIntent: true,
+      relationship: "HELP_RUN" | "JUST_ADDING",  // internal enum values backing the user-facing options
+      suggestedOrganizer?: { name, email },  // only for "just adding"
       submittedAt: "..."
     }
   }
@@ -187,6 +201,8 @@ AccessChannel {
   isPrimary: true
 }
 ```
+
+Note: `HELP_RUN` is an internal storage value; in the form, users see the plain-language option "I am one of the organizers."
 
 ---
 
@@ -251,7 +267,7 @@ Is your community already listed on IndLokal?
 
 ## 10. Non-Goals (MVP)
 
-- Duplicate detection or fuzzy-match prevention (handled manually by admin reviewer)
+- Fully automated duplicate resolution (there is already a server-side similarity block + admin review)
 - Auto-approval for trusted submitters
 - Bulk submission (one community per form)
 - Image / logo upload at submission time
@@ -262,7 +278,7 @@ Is your community already listed on IndLokal?
 ## 11. Future Enhancements
 
 - **Rejected-submission email** - notify submitter explicitly when a submission is rejected
-- **Ownership evidence capture** - require stronger proof when ownership intent is selected
+- **Relationship evidence capture** - require stronger proof when the submitter declares they help run the community
 - **Duplicate prevention** - fuzzy name matching against existing communities during submission to surface likely duplicates
 - **Logo upload** - image upload at submission time, stored in object storage
 - **Submission queue prioritisation** - rank submissions by city activity, completeness, and submitter engagement for faster high-value approvals

@@ -1,8 +1,10 @@
 import { db } from '@/lib/db';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteEventAction, setEventStatusAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events - Admin' };
@@ -10,9 +12,10 @@ export const metadata = { title: 'Events - Admin' };
 export default async function AdminEventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; status?: string }>;
+  searchParams: Promise<{ city?: string; status?: string; page?: string; pageSize?: string }>;
 }) {
   const sp = await searchParams;
+  const pagination = parseOffsetPagination(sp);
   const where: {
     city?: { slug: string };
     status?: 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED';
@@ -22,11 +25,13 @@ export default async function AdminEventsPage({
     where.status = sp.status as 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED';
   }
 
-  const [events, cities] = await Promise.all([
+  const [totalCount, events, cities] = await Promise.all([
+    db.event.count({ where }),
     db.event.findMany({
       where,
-      orderBy: { startsAt: 'desc' },
-      take: 200,
+      orderBy: [{ startsAt: 'desc' }, { id: 'desc' }],
+      skip: pagination.skip,
+      take: pagination.take,
       include: {
         city: { select: { name: true, slug: true } },
         community: { select: { name: true, slug: true } },
@@ -34,12 +39,19 @@ export default async function AdminEventsPage({
     }),
     db.city.findMany({ where: { isActive: true }, select: { slug: true, name: true } }),
   ]);
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount,
+    itemCount: events.length,
+  });
 
   return (
     <AdminPage>
       <AdminPageHeader title="Events" backHref="/admin/data" backLabel="Data" />
 
       <form className="mt-6" method="get">
+        <input type="hidden" name="pageSize" value={String(pagination.pageSize)} />
         <AdminFilterBar className="border-border">
           <AdminFilterItem label="City">
             <select
@@ -72,7 +84,11 @@ export default async function AdminEventsPage({
         </AdminFilterBar>
       </form>
 
-      <p className="text-muted mt-4 text-xs">{events.length} shown (cap 200)</p>
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
 
       <AdminTableWrap className="mt-3">
         <AdminTable>
@@ -136,6 +152,12 @@ export default async function AdminEventsPage({
           </tbody>
         </AdminTable>
       </AdminTableWrap>
+
+      <PaginationControls
+        className="mt-4"
+        meta={paginationMeta}
+        getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+      />
     </AdminPage>
   );
 }

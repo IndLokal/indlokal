@@ -4,6 +4,8 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import {
   sendCollaboratorAccessApprovedEmail,
   sendCollaboratorAccessRejectedEmail,
@@ -12,6 +14,8 @@ import {
   sendOrganizerCollaboratorApprovedNotificationEmail,
   sendOrganizerCollaboratorRejectedNotificationEmail,
   sendSubmissionApprovedEmail,
+  sendHostEventApprovedEmail,
+  sendHostEventRejectedEmail,
 } from '@/lib/email';
 
 /* --- Submission actions --- */
@@ -36,6 +40,9 @@ export async function approveSubmission(formData: FormData) {
   const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
 
   // Ownership is an explicit admin decision during approval.
+  // ADR-0008: granting organizer access creates an OWNER membership row + audit
+  // log - never a global User.role. Defaulted from the submitter's declared
+  // relationship.
   let ownerUserId: string | null = null;
   if (
     grantOwnership &&
@@ -52,17 +59,10 @@ export async function approveSubmission(formData: FormData) {
       create: {
         email,
         ...(submitter.name ? { displayName: submitter.name } : {}),
-        role: 'COMMUNITY_ADMIN',
+        role: 'USER',
       },
-      select: { id: true, role: true },
+      select: { id: true },
     });
-
-    if (owner.role === 'USER') {
-      await db.user.update({
-        where: { id: owner.id },
-        data: { role: 'COMMUNITY_ADMIN' },
-      });
-    }
     ownerUserId = owner.id;
   }
 
@@ -95,6 +95,30 @@ export async function approveSubmission(formData: FormData) {
     }),
     ...(ownerUserId
       ? [
+          db.communityCollaborator.upsert({
+            where: { communityId_userId: { communityId: id, userId: ownerUserId } },
+            update: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+            create: {
+              communityId: id,
+              userId: ownerUserId,
+              role: 'COMMUNITY_ADMIN',
+              status: 'ACTIVE',
+              source: 'ADMIN_ADD',
+            },
+          }),
+          db.contentLog.create({
+            data: {
+              entityType: 'community',
+              entityId: id,
+              action: 'ROLE_GRANTED',
+              changedBy: ownerUserId,
+              metadata: {
+                targetUserId: ownerUserId,
+                toRole: 'COMMUNITY_ADMIN',
+                via: 'submission_approval',
+              },
+            },
+          }),
           db.trustSignal.create({
             data: {
               entityType: 'COMMUNITY',
@@ -150,7 +174,7 @@ export async function rejectSubmission(formData: FormData) {
 /* --- Claim actions --- */
 
 export async function approveClaim(formData: FormData) {
-  await assertCan('claims.approve');
+  const reviewer = await assertCan('claims.approve');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -166,22 +190,48 @@ export async function approveClaim(formData: FormData) {
   });
 
   if (!community?.claimedByUserId) return;
+  const ownerUserId = community.claimedByUserId;
 
+  // ADR-0008: a community-scoped approval grants community authority via an
+  // OWNER membership row + audit log - never a global User.role.
   await db.$transaction([
     db.community.update({
       where: { id },
       data: { claimState: 'CLAIMED' },
     }),
-    db.user.update({
-      where: { id: community.claimedByUserId },
-      data: { role: 'COMMUNITY_ADMIN' },
+    db.communityCollaborator.upsert({
+      where: { communityId_userId: { communityId: id, userId: ownerUserId } },
+      update: {
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        reviewedAt: new Date(),
+        reviewedByUserId: reviewer.id,
+      },
+      create: {
+        communityId: id,
+        userId: ownerUserId,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+        reviewedAt: new Date(),
+        reviewedByUserId: reviewer.id,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'community',
+        entityId: id,
+        action: 'ROLE_GRANTED',
+        changedBy: reviewer.id,
+        metadata: { targetUserId: ownerUserId, toRole: 'COMMUNITY_ADMIN', via: 'claim_approval' },
+      },
     }),
     db.trustSignal.create({
       data: {
         entityType: 'COMMUNITY',
         communityId: id,
         signalType: 'ADMIN_VERIFIED',
-        createdBy: community.claimedByUserId,
+        createdBy: ownerUserId,
       },
     }),
   ]);
@@ -263,6 +313,7 @@ export async function approveCollaboratorRequest(formData: FormData) {
       communityId: true,
       userId: true,
       status: true,
+      source: true,
       requestedByUserId: true,
       requestedByUser: { select: { email: true } },
       user: { select: { email: true } },
@@ -276,8 +327,10 @@ export async function approveCollaboratorRequest(formData: FormData) {
       },
     },
   });
-  if (!request || request.status !== 'PENDING') return;
+  if (!request || request.status !== 'PENDING' || request.source !== 'PUBLIC_REQUEST') return;
 
+  // ADR-0008: approving grants community authority via the membership row +
+  // audit log - never a global User.role.
   await db.$transaction([
     db.communityCollaborator.update({
       where: { id: request.id },
@@ -287,9 +340,14 @@ export async function approveCollaboratorRequest(formData: FormData) {
         reviewedByUserId: reviewer.id,
       },
     }),
-    db.user.updateMany({
-      where: { id: request.userId, role: 'USER' },
-      data: { role: 'COMMUNITY_ADMIN' },
+    db.contentLog.create({
+      data: {
+        entityType: 'community',
+        entityId: request.communityId,
+        action: 'ROLE_GRANTED',
+        changedBy: reviewer.id,
+        metadata: { targetUserId: request.userId, via: 'collaborator_approval' },
+      },
     }),
   ]);
 
@@ -340,6 +398,7 @@ export async function rejectCollaboratorRequest(formData: FormData) {
     select: {
       id: true,
       status: true,
+      source: true,
       user: { select: { email: true } },
       requestedByUser: { select: { email: true } },
       community: {
@@ -350,7 +409,7 @@ export async function rejectCollaboratorRequest(formData: FormData) {
       },
     },
   });
-  if (!request || request.status !== 'PENDING') return;
+  if (!request || request.status !== 'PENDING' || request.source !== 'PUBLIC_REQUEST') return;
 
   await db.communityCollaborator.update({
     where: { id: request.id },
@@ -415,4 +474,118 @@ export async function resolveReport(formData: FormData) {
   });
 
   revalidatePath('/admin/reports');
+}
+
+/* --- Event moderation actions (ADR-0009) --- */
+
+async function loadReviewableEvent(id: string) {
+  return db.event.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      moderationState: true,
+      createdByUserId: true,
+      city: { select: { slug: true } },
+      createdBy: { select: { email: true, displayName: true } },
+    },
+  });
+}
+
+export async function approveEvent(formData: FormData) {
+  const reviewer = await assertCan('events.review.approve');
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  const event = await loadReviewableEvent(id);
+  if (!event || event.moderationState !== 'PENDING_REVIEW') return;
+
+  await db.$transaction([
+    db.event.update({
+      where: { id },
+      data: {
+        moderationState: 'PUBLISHED',
+        reviewedById: reviewer.id,
+        reviewedAt: new Date(),
+        reviewReason: null,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'event',
+        entityId: id,
+        action: 'UPDATED',
+        changedBy: reviewer.id,
+        metadata: { decision: 'approved', moderationState: 'PUBLISHED' },
+      },
+    }),
+  ]);
+
+  await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
+    eventId: id,
+    decision: 'approved',
+  });
+
+  if (event.createdBy?.email && event.city?.slug) {
+    try {
+      await sendHostEventApprovedEmail(
+        event.createdBy.email,
+        event.title,
+        event.city.slug,
+        event.slug,
+      );
+    } catch {
+      // Email is best-effort
+    }
+  }
+
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/events');
+}
+
+export async function rejectEvent(formData: FormData) {
+  const reviewer = await assertCan('events.review.reject');
+  const id = formData.get('id') as string;
+  const reason = ((formData.get('reason') as string) ?? '').trim() || null;
+  if (!id) return;
+
+  const event = await loadReviewableEvent(id);
+  if (!event || event.moderationState !== 'PENDING_REVIEW') return;
+
+  await db.$transaction([
+    db.event.update({
+      where: { id },
+      data: {
+        moderationState: 'REJECTED',
+        reviewedById: reviewer.id,
+        reviewedAt: new Date(),
+        reviewReason: reason,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'event',
+        entityId: id,
+        action: 'UPDATED',
+        changedBy: reviewer.id,
+        metadata: { decision: 'rejected', moderationState: 'REJECTED', reason },
+      },
+    }),
+  ]);
+
+  await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
+    eventId: id,
+    decision: 'rejected',
+  });
+
+  if (event.createdBy?.email) {
+    try {
+      await sendHostEventRejectedEmail(event.createdBy.email, event.title, reason);
+    } catch {
+      // Email is best-effort
+    }
+  }
+
+  revalidatePath('/admin/events');
 }

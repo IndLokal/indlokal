@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { getEventBySlug } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
@@ -31,6 +31,13 @@ export default async function EventDetailPage({ params }: Props) {
   const { city, slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
+
+  // City is the discovery partition key: an event only exists under its own
+  // city path. If the slug is reached via a different (or stale) city segment,
+  // canonicalize to the event's actual city instead of rendering a duplicate.
+  if (event.city.slug !== city) {
+    redirect(`/${event.city.slug}/events/${slug}`);
+  }
 
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;

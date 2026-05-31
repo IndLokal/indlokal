@@ -169,6 +169,65 @@ export async function sendClaimRejectedEmail(to: string, communityName: string):
   );
 }
 
+/* ─── Host event approved (ADR-0009) ─── */
+
+export async function sendHostEventApprovedEmail(
+  to: string,
+  eventTitle: string,
+  citySlug: string,
+  eventSlug: string,
+): Promise<void> {
+  const eventUrl = `${APP_URL}/${citySlug}/events/${eventSlug}`;
+
+  await sendEmail(
+    to,
+    `Your event "${eventTitle}" is now live`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Your event is live!</h2>
+  <p>We reviewed <strong>${eventTitle}</strong> and it's now published on IndLokal. People in your city can discover it.</p>
+  <p style="margin:28px 0">
+    <a href="${eventUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      View your event →
+    </a>
+  </p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Host event rejected (ADR-0009) ─── */
+
+export async function sendHostEventRejectedEmail(
+  to: string,
+  eventTitle: string,
+  reason: string | null,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Update on your event "${eventTitle}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Event update: ${eventTitle}</h2>
+  <p>We reviewed <strong>${eventTitle}</strong> and were unable to publish it at this time.</p>
+  ${reason ? `<p style="background:#f9fafb;border-left:3px solid #e5e7eb;padding:12px 16px;color:#444"><strong>Reason:</strong> ${reason}</p>` : ''}
+  <p>If you can address this, please update the event details and re-submit, or reply to this email with questions.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
 /* ─── Submission received ─── */
 
 export async function sendSubmissionReceivedEmail(
@@ -297,6 +356,43 @@ export async function sendOrganizerCollaboratorApprovedNotificationEmail(
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Collaborator approved</h2>
   <p><strong>${collaboratorEmail}</strong> is now an approved organizer collaborator for <strong>${communityName}</strong>.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+export async function sendCollaboratorInviteRequestedEmail(
+  to: string,
+  communityName: string,
+  acceptUrl: string,
+  inviterName?: string,
+): Promise<void> {
+  const safeCommunityName = communityName?.trim() || 'this community';
+
+  await sendEmail(
+    to,
+    `Accept collaborator invite for "${safeCommunityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">You've been invited as a collaborator</h2>
+  <p>
+    ${inviterName ? `<strong>${inviterName}</strong> invited you` : 'You were invited'} to help manage
+    <strong>${safeCommunityName}</strong> on IndLokal.
+  </p>
+  <p>Confirm this invite to activate your collaborator access.</p>
+  <p style="margin:24px 0">
+    <a href="${acceptUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Accept collaborator invite →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">This one-time link expires in 24 hours.</p>
+  <p style="font-size:13px;color:#666">If this wasn't expected, you can ignore this email.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>

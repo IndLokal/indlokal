@@ -1,16 +1,11 @@
 import Link from 'next/link';
 import { content, communityOptions } from '@indlokal/shared';
-import { requireSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { ContentCallout } from '@/components/content/community-actions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
-import { CollaboratorInviteCard } from './CollaboratorInviteCard';
+import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 
 export default async function OrganizerDashboardPage() {
-  const user = await requireSessionUser();
-  const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c: { id: string }) => c.id === currentId) ??
-    user.claimedCommunities[0];
+  const { community, role } = await requireOrganizerWorkspace();
 
   if (!community) {
     return (
@@ -35,45 +30,69 @@ export default async function OrganizerDashboardPage() {
   ];
   const doneCount = completeness.filter((c) => c.done).length;
   const pct = Math.round((doneCount / completeness.length) * 100);
+  const isAdmin = role === 'COMMUNITY_ADMIN';
+  const dashboardBody = isAdmin
+    ? content.COMMUNITY_ACTION_COPY.organizerDashboardBody
+    : 'This dashboard is for approved collaborators too. You can view the community page, manage links, and add events for the active community.';
+  const teamCardTitle = isAdmin ? 'Team management' : 'Team';
+  const teamCardBody = isAdmin
+    ? 'Manage collaborator access, pending approvals, and ownership context for this community.'
+    : 'See who helps operate this community. Team management actions are available to the community organizer.';
 
   return (
-    <div className="space-y-8">
-      <OrganizerPageHeader title={community.name} description={community.city.name} />
-
-      <ContentCallout
-        title="What can I do here?"
-        body={content.COMMUNITY_ACTION_COPY.organizerDashboardBody}
+    <div className="mx-auto max-w-4xl space-y-6">
+      <OrganizerPageHeader
+        title={community.name}
+        description={`${community.city.name} · ${isAdmin ? 'Community admin workspace' : 'Collaborator workspace'}`}
       />
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ContentCallout title="What can I do here?" body={dashboardBody} />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {/* Quick actions */}
         <Link
-          href="/organizer/edit"
-          className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          href="/organizer/profile"
+          className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="text-2xl">✏️</div>
-          <h2 className="text-foreground mt-3 font-semibold">Edit profile</h2>
-          <p className="text-muted mt-1 text-sm">
-            Update the name, description, languages, and details people see first.
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+            Page
+          </span>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Community page</h2>
+          <p className="text-muted mt-1 text-sm leading-6">
+            Update the public name, description, languages, and details people see first.
           </p>
         </Link>
         <Link
-          href="/organizer/channels"
-          className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          href="/organizer/links"
+          className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="text-2xl">🔗</div>
-          <h2 className="text-foreground mt-3 font-semibold">Community links</h2>
-          <p className="text-muted mt-1 text-sm">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+            Links
+          </span>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Community links</h2>
+          <p className="text-muted mt-1 text-sm leading-6">
             Add or remove WhatsApp, Telegram, website, and other access links.
           </p>
         </Link>
         <Link
-          href="/organizer/events/new"
-          className="card-base group p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
+          href="/organizer/collaborators"
+          className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="text-2xl">📅</div>
-          <h2 className="text-foreground mt-3 font-semibold">Add event</h2>
-          <p className="text-muted mt-1 text-sm">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+            Team
+          </span>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">{teamCardTitle}</h2>
+          <p className="text-muted mt-1 text-sm leading-6">{teamCardBody}</p>
+        </Link>
+        <Link
+          href="/organizer/events/new"
+          className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+        >
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+            Event
+          </span>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Add event</h2>
+          <p className="text-muted mt-1 text-sm leading-6">
             Post an upcoming event so it appears on the community page and city feed.
           </p>
         </Link>
@@ -82,7 +101,7 @@ export default async function OrganizerDashboardPage() {
       {/* Profile completeness */}
       <div className="card-base p-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-foreground font-semibold">Profile completeness</h2>
+          <h2 className="text-foreground text-lg font-semibold">Profile completeness</h2>
           <span className="text-brand-600 text-sm font-medium">{pct}%</span>
         </div>
         <div className="bg-muted-bg mt-3 h-2 overflow-hidden rounded-full">
@@ -103,10 +122,10 @@ export default async function OrganizerDashboardPage() {
         </div>
         {pct < 100 && (
           <Link
-            href="/organizer/edit"
+            href="/organizer/profile"
             className="text-brand-600 hover:text-brand-700 mt-4 inline-block text-sm font-medium hover:underline"
           >
-            Complete profile →
+            Complete community page →
           </Link>
         )}
       </div>
@@ -115,9 +134,9 @@ export default async function OrganizerDashboardPage() {
       {community.accessChannels.length > 0 && (
         <div className="card-base p-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-foreground font-semibold">Access channels</h2>
+            <h2 className="text-foreground text-lg font-semibold">Access channels</h2>
             <Link
-              href="/organizer/channels"
+              href="/organizer/links"
               className="text-brand-600 hover:text-brand-700 text-sm hover:underline"
             >
               Edit links
@@ -155,9 +174,20 @@ export default async function OrganizerDashboardPage() {
         </div>
       )}
 
-      <section id="collaborators" className="scroll-mt-24">
-        <CollaboratorInviteCard />
-      </section>
+      <div className="card-base p-6">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-foreground text-lg font-semibold">{teamCardTitle}</h2>
+            <p className="text-muted mt-1 text-sm">{teamCardBody}</p>
+          </div>
+          <Link
+            href="/organizer/collaborators"
+            className="text-brand-600 hover:text-brand-700 text-sm font-medium hover:underline"
+          >
+            {isAdmin ? 'Open team management →' : 'View team →'}
+          </Link>
+        </div>
+      </div>
 
       {/* View public page */}
       <p className="text-muted text-sm">

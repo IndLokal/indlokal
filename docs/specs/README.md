@@ -79,6 +79,11 @@ column and is the single source of truth for what is shipped.
 | PRD/TDD-0032            | Flexible community channels and claim evidence capture                      | Draft       | In progress - web phases 1-4 shipped; mobile parity deferred            |
 | PRD/TDD-0033            | Submission and claim PII notice baseline                                    | Draft       | In progress - notice + metadata receipt shipped for submit/claim        |
 | PRD/TDD-0034            | Organizer collaborator access for claimed communities (minimal v1)          | Draft       | Not started                                                             |
+| PRD/TDD-0035            | Organizer admin workspace & collaborator operations                         | Draft       | Not started                                                             |
+| ADR-0008                | CommunityCollaborator is the authoritative, role-bearing membership         | Accepted    | In progress (this branch)                                               |
+| PRD/TDD-0036            | Community governance & scoped authority (2-role, flag-free)                 | Accepted    | In progress (this branch)                                               |
+| ADR-0009                | Event moderation axis (orthogonal to lifecycle) + creator authority         | Accepted    | Spec-first (events governance)                                          |
+| PRD/TDD-0037            | Event governance and approval model                                         | Implemented | Moderation axis + admin review queue shipped                            |
 | PRD-0019 / TDD-0019     | Auth completion - onboarding, session restore, profile & account management | Implemented | Implemented                                                             |
 | PRD/TDD-0019            | Admin Auth v2 minimal hardening (gate-first, no new auth)                   | Draft       | In progress (spec-first)                                                |
 | PRD/TDD-0013            | Pipeline review & submissions queue scoping                                 | Draft       | Done - queue scoped to user submissions; admin-approved → ACTIVE        |

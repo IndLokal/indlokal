@@ -12,6 +12,8 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const user = await requireAdmin();
+  const accountLabel = user.displayName ?? user.email ?? 'Account';
+  const accountInitial = accountLabel.charAt(0).toUpperCase();
 
   return (
     <div className="bg-background min-h-screen">
@@ -33,23 +35,41 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </nav>
           </div>
           <div className="flex shrink-0 items-center gap-3">
-            <span
-              className="text-muted hidden max-w-[180px] truncate text-xs xl:inline"
-              title={user.email}
-            >
-              {user.email}
-            </span>
-            <Link href="/" className="text-muted hover:text-foreground text-sm transition-colors">
-              ← Back to site
-            </Link>
-            <form action="/admin/logout" method="POST">
-              <button
-                type="submit"
-                className="border-border text-muted hover:text-foreground hover:bg-muted-bg rounded-md border px-2.5 py-1 text-xs transition-colors"
-              >
-                Sign out
-              </button>
-            </form>
+            <details className="group relative">
+              <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
+                <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
+                  {accountInitial}
+                </span>
+                <span className="text-muted hidden text-xs font-semibold lg:inline">Account</span>
+                <span className="text-muted text-xs">⌄</span>
+              </summary>
+              <div className="border-border absolute right-0 mt-2 w-72 rounded-[var(--radius-card)] border bg-white p-3 shadow-lg">
+                <p className="text-foreground truncate text-sm font-semibold">{accountLabel}</p>
+                <p className="text-muted mt-0.5 truncate text-xs">{user.email}</p>
+                <div className="border-border mt-3 border-t pt-3">
+                  <Link
+                    href="/me"
+                    className="hover:bg-muted-bg text-muted hover:text-foreground block w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
+                  >
+                    My profile
+                  </Link>
+                  <Link
+                    href="/"
+                    className="hover:bg-muted-bg text-muted hover:text-foreground block w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
+                  >
+                    Public site
+                  </Link>
+                  <form action="/admin/logout" method="POST">
+                    <button
+                      type="submit"
+                      className="hover:bg-muted-bg text-muted hover:text-destructive w-full rounded-[var(--radius-button)] px-3 py-2 text-left text-sm font-medium transition-colors"
+                    >
+                      Sign out
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </details>
           </div>
         </div>
       </header>

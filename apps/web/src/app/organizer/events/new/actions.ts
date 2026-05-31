@@ -6,9 +6,13 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { ActivitySignalType } from '@prisma/client';
 import { refreshCommunityScore } from '@/modules/scoring';
 import slugify from 'slugify';
+import { canEditCommunity } from '@/lib/auth/community-permissions';
+import {
+  resolveActiveOrganizerCommunity,
+  type OrganizerSessionCommunity,
+} from '@/lib/organizer/workspace';
 
 const addEventSchema = z.object({
   title: z.string().min(3).max(200),
@@ -19,9 +23,8 @@ const addEventSchema = z.object({
     .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid start date' }),
   endsAt: z
     .string()
-    .optional()
-    .or(z.literal(''))
-    .refine((v) => !v || !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
+    .min(1, 'End date is required')
+    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
   venueName: z.string().max(200).optional().or(z.literal('')),
   venueAddress: z.string().max(500).optional().or(z.literal('')),
   isOnline: z.coerce.boolean().default(false),
@@ -42,8 +45,22 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     return { success: false, errors: { _: ['Not authenticated'] } };
   }
   const currentId = await getCurrentCommunityId();
-  const community =
-    user.claimedCommunities.find((c) => c.id === currentId) ?? user.claimedCommunities[0];
+  const community = resolveActiveOrganizerCommunity<OrganizerSessionCommunity>(
+    user.claimedCommunities,
+    currentId,
+  );
+
+  if (!community) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
+
+  // ADR-0008: enforce per-community authority on the backend, not the cookie.
+  if (!canEditCommunity(user, community.id)) {
+    return {
+      success: false,
+      errors: { _: ['You do not have permission to add events for this community.'] },
+    };
+  }
 
   const raw = {
     title: formData.get('title') as string,
@@ -89,7 +106,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
         slug = `${slug}-${Date.now()}`;
       }
 
-      const event = await db.event.create({
+      await db.event.create({
         data: {
           title: data.title,
           slug,
@@ -107,13 +124,17 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           cost: data.cost,
           status: 'UPCOMING',
           source: 'COMMUNITY_SUBMITTED',
+          // ADR-0009: community-trusted lane publishes immediately and records
+          // the accountable creator.
+          moderationState: 'PUBLISHED',
+          createdByUserId: user.id,
         },
       });
 
       await db.activitySignal.create({
         data: {
           communityId: community.id,
-          signalType: ActivitySignalType.EVENT_CREATED,
+          signalType: 'EVENT_CREATED',
         },
       });
 
@@ -121,7 +142,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
       await refreshCommunityScore(community.id);
 
       revalidateTag('city-feed', 'max');
-      redirect(`/${community.city.slug}/events/${event.slug}`);
+      redirect('/organizer/events');
     },
     () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
   );

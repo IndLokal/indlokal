@@ -3,7 +3,15 @@
 import { useActionState } from 'react';
 import { inviteCollaborator, type InviteCollaboratorResult } from './collaborators/actions';
 
-export function CollaboratorInviteCard() {
+type CollaboratorInviteCardProps = {
+  title?: string;
+  description?: string;
+};
+
+export function CollaboratorInviteCard({
+  title = 'Collaborators',
+  description = 'Invite another organizer by email. Access becomes active when they accept the invite link.',
+}: CollaboratorInviteCardProps) {
   const [state, formAction, isPending] = useActionState<InviteCollaboratorResult, FormData>(
     inviteCollaborator,
     null,
@@ -11,18 +19,33 @@ export function CollaboratorInviteCard() {
 
   return (
     <div className="card-base p-6">
-      <h2 className="text-foreground font-semibold">Collaborators</h2>
-      <p className="text-muted mt-1 text-sm">
-        Invite another organizer by email. Access requests are reviewed by admin.
-      </p>
+      <h2 className="text-foreground font-semibold">{title}</h2>
+      <p className="text-muted mt-1 text-sm">{description}</p>
 
       {state?.success ? (
         <p className="mt-3 rounded-[var(--radius-button)] border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Invite request submitted.
+          {state.message}
         </p>
       ) : null}
 
       <form action={formAction} className="mt-4 space-y-3">
+        <div>
+          <label htmlFor="invite-name" className="text-foreground block text-sm font-medium">
+            Collaborator name (optional)
+          </label>
+          <input
+            id="invite-name"
+            name="name"
+            type="text"
+            maxLength={120}
+            className="input-base mt-1"
+            placeholder="Priya Sharma"
+          />
+          {state?.success === false && state.errors.name ? (
+            <p className="mt-1 text-sm text-red-600">{state.errors.name[0]}</p>
+          ) : null}
+        </div>
+
         <div>
           <label htmlFor="invite-email" className="text-foreground block text-sm font-medium">
             Collaborator email

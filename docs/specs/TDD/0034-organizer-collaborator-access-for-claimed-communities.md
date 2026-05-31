@@ -22,7 +22,7 @@ Add table: `CommunityCollaborator`
 - `communityId` (FK)
 - `userId` (FK)
 - `status` enum: `PENDING | ACTIVE | REJECTED`
-- `source` enum/string: `OWNER_INVITE | PUBLIC_REQUEST | ADMIN_ADD`
+- `source` enum/string: `COMMUNITY_ADMIN_INVITE | PUBLIC_REQUEST | ADMIN_ADD`
 - `requestedByUserId` nullable
 - `requestedEmail` nullable (for pre-account invite flow)
 - `createdAt`, `updatedAt`, `reviewedAt`, `reviewedByUserId` nullable
@@ -59,8 +59,8 @@ Behavior:
 
 - Primary owner (or existing active collaborator) submits collaborator email.
 - Upsert user if needed.
-- Create pending collaborator request with `source=OWNER_INVITE`.
-- Admin approval required in v1.
+- Create pending collaborator request with `source=COMMUNITY_ADMIN_INVITE`.
+- Invitee receives an email link and becomes `ACTIVE` on acceptance.
 
 ### 3.3 Admin moderation
 

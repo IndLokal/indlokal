@@ -67,23 +67,18 @@ export async function requestMagicLink(
     return { success: false, error: 'Something went wrong. Please try again.' };
   }
 
-  if (!user || !['COMMUNITY_ADMIN', 'EVENT_HOST', 'PLATFORM_ADMIN'].includes(user.role)) {
+  // ADR-0008: organizer access is a community relationship, not a profile role.
+  // Allow anyone with a claimed community or an active collaborator membership.
+  // PLATFORM_ADMIN and the deferred EVENT_HOST role remain role-based gates.
+  const hasCommunityRelationship =
+    !!user && (user.claimedCommunities.length > 0 || user.collaboratorMemberships.length > 0);
+  const isRoleBasedOrganizer = user?.role === 'PLATFORM_ADMIN' || user?.role === 'EVENT_HOST';
+  if (!user || (!isRoleBasedOrganizer && !hasCommunityRelationship)) {
     // Vague error to prevent email enumeration
     return {
       success: false,
       error:
-        'No organizer account found for that email. Have you claimed a community or signed up as an event host?',
-    };
-  }
-
-  if (
-    user.role === 'COMMUNITY_ADMIN' &&
-    user.claimedCommunities.length === 0 &&
-    user.collaboratorMemberships.length === 0
-  ) {
-    return {
-      success: false,
-      error: 'Your account exists but has no approved community claim yet.',
+        'No organizer account found for that email. Have you claimed a community or been invited as a collaborator?',
     };
   }
 

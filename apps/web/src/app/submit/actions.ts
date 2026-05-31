@@ -55,7 +55,7 @@ export async function submitCommunity(
     categories: formData.getAll('categories') as string[],
     languages: formData.getAll('languages') as string[],
     channels: parsedChannels,
-    ownershipIntent: formData.get('ownershipIntent') === 'on',
+    relationship: (formData.get('relationship') as string) || 'JUST_ADDING',
     contactEmail: formData.get('contactEmail') as string,
     contactName: formData.get('contactName') as string,
   };
@@ -154,6 +154,27 @@ export async function submitCommunity(
     isPrimary: channel.isPrimary,
   }));
 
+  // Create or resolve a submitter user so createdByUserId is tracked
+  let submitterUserId: string | null = null;
+  try {
+    const email = data.contactEmail.trim().toLowerCase();
+    const submitter = await db.user.upsert({
+      where: { email },
+      update: {
+        ...(data.contactName ? { displayName: data.contactName } : {}),
+      },
+      create: {
+        email,
+        ...(data.contactName ? { displayName: data.contactName } : {}),
+        role: 'USER',
+      },
+      select: { id: true },
+    });
+    submitterUserId = submitter.id;
+  } catch {
+    // best-effort; submission should still proceed even if user upsert fails
+  }
+
   // Create community as UNVERIFIED
   try {
     await db.community.create({
@@ -167,12 +188,14 @@ export async function submitCommunity(
         languages: data.languages,
         status: 'UNVERIFIED',
         claimState: 'UNCLAIMED',
+        createdByUserId: submitterUserId,
         source: 'COMMUNITY_SUBMITTED',
         metadata: {
           submitter: {
             name: data.contactName,
             email: data.contactEmail,
-            ownershipIntent: data.ownershipIntent,
+            relationship: data.relationship,
+            ownershipIntent: data.relationship === 'HELP_RUN',
             submittedAt: new Date().toISOString(),
             notice: {
               policyVersion: noticePolicyVersion,

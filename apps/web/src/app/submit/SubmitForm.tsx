@@ -439,16 +439,38 @@ export function SubmitForm({ cities, categories }: Props) {
           We&apos;ll use this to follow up about your submission. Not displayed publicly.
         </p>
 
-        <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
-          <input type="checkbox" name="ownershipIntent" className="accent-brand-500 mt-0.5" />
-          <span className="text-foreground leading-relaxed">
-            I represent this community and want organizer ownership after approval.
-            <span className="text-muted mt-1 block text-xs">
-              Use the same email for organizer login after approval.
+        <fieldset className="space-y-2">
+          <legend className="text-foreground text-sm font-medium">
+            How are you connected to this community?
+          </legend>
+          <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
+            <input
+              type="radio"
+              name="relationship"
+              value="HELP_RUN"
+              className="accent-brand-500 mt-0.5"
+            />
+            <span className="text-foreground leading-relaxed">
+              I am one of the organizers and want to manage this listing after approval.
+              <span className="text-muted mt-1 block text-xs">
+                Use the same email for organizer login after approval.
+              </span>
             </span>
-          </span>
-        </label>
-        <FieldError errors={errors.ownershipIntent} />
+          </label>
+          <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
+            <input
+              type="radio"
+              name="relationship"
+              value="JUST_ADDING"
+              defaultChecked
+              className="accent-brand-500 mt-0.5"
+            />
+            <span className="text-foreground leading-relaxed">
+              I am sharing a community I know about.
+            </span>
+          </label>
+          <FieldError errors={errors.relationship} />
+        </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
