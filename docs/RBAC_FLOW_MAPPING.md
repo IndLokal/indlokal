@@ -138,9 +138,11 @@ reference path for becoming an organizer.
 **Guarantees & notes**
 
 - The inviter **picks the role**, and it can only be collaborator.
+- Invite acceptance is explicit (scanner-safe confirm page + button), not auto-accepted on link open.
 - **Organizer responsibility is not invitable** — it only moves via transfer (Flow G).
 - Re-inviting someone who is already a member or already invited does nothing
   (no duplicates).
+- Re-sending a pending organizer invite is allowed but server-throttled to prevent accidental duplicate sends.
 
 ---
 
@@ -149,7 +151,7 @@ reference path for becoming an organizer.
 **Story.** A member of the public asks to help run a community that already has an organizer.
 
 - **Who starts it:** any member, from the community's page.
-- **Approval:** the community's organizer, or the platform team.
+- **Approval:** the platform team.
 - **Authority after:** the requester joins the people list as a **collaborator**.
 
 **Guarantees & notes**
@@ -235,15 +237,15 @@ platform roles in [RBAC_AND_AUTHORIZATION.md](./RBAC_AND_AUTHORIZATION.md) §5.2
 
 ### Community flows
 
-| Flow                      |   Member    | Collaborator |  Organizer  | Platform team |
-| ------------------------- | :---------: | :----------: | :---------: | :-----------: |
-| A Seed                    |             |              |             |       ✓       |
-| B Submit                  | ✓ (submit)  |              |             |  ✓ (approve)  |
-| C Claim                   |  ✓ (claim)  |              |             |  ✓ (approve)  |
-| D Invite                  |             |              |      ✓      |               |
-| E Request to help         | ✓ (request) |              | ✓ (approve) |  ✓ (approve)  |
-| F Remove collaborator     |             |              |      ✓      |               |
-| G Transfer responsibility |             |              |      ✓      |       ✓       |
+| Flow                      |   Member    | Collaborator | Organizer | Platform team |
+| ------------------------- | :---------: | :----------: | :-------: | :-----------: |
+| A Seed                    |             |              |           |       ✓       |
+| B Submit                  | ✓ (submit)  |              |           |  ✓ (approve)  |
+| C Claim                   |  ✓ (claim)  |              |           |  ✓ (approve)  |
+| D Invite                  |             |              |     ✓     |               |
+| E Request to help         | ✓ (request) |              |           |  ✓ (approve)  |
+| F Remove collaborator     |             |              |     ✓     |               |
+| G Transfer responsibility |             |              |     ✓     |       ✓       |
 
 ### Platform flows
 

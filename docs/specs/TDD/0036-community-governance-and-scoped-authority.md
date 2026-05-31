@@ -52,10 +52,18 @@ Dev backout: `git revert` the code change and `pnpm prisma migrate reset`.
 
 - `inviteCollaborator` — role-less (always creates a `COLLABORATOR` request); remove the
   `role`/`ASSIGNABLE_ROLES` input; enforce `canManageCommunity` unconditionally.
+- `resendCollaboratorInvite` — OWNER-only resend for `COMMUNITY_ADMIN_INVITE` + `PENDING`, with
+  server cooldown and metadata timestamp (`inviteEmailLastSentAt`) to avoid accidental duplicate sends.
 - `setCollaboratorRole` — **deleted** (no tiers to set).
 - `removeCollaborator` — kept; refuses to remove the `COMMUNITY_ADMIN`; enforces `canManageCommunity`.
 - `transferOwnership` — kept; demotes outgoing `COMMUNITY_ADMIN → COLLABORATOR` (was `ADMIN`); promotes target
   to `COMMUNITY_ADMIN`; syncs `claimedByUserId`; logs.
+
+`apps/web/src/app/organizer/collaborators/accept/route.ts`:
+
+- `GET` stores handoff token/invite and renders a scanner-safe confirmation page.
+- `POST` requires explicit user submit, validates invite + token in one transaction, consumes token
+  only after invite checks, activates collaborator, and signs user in.
 
 `apps/web/src/app/admin/(dashboard)/actions.ts`:
 

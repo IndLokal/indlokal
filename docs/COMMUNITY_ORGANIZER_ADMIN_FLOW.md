@@ -170,30 +170,32 @@ Must contain:
 
 ## 8.3 Organizer invite collaborator
 
-1. Organizer or collaborator submits invite email.
-2. Product creates or reuses pending request.
-3. Admin moderates request.
-4. On approval, collaborator appears in active roster and gains access.
+1. Organizer submits invite email.
+2. Product creates or reuses pending request (`source=COMMUNITY_ADMIN_INVITE`).
+3. Invitee accepts email invite link (scanner-safe confirm page + explicit accept button).
+4. On acceptance, collaborator is activated and signed into organizer workspace.
+5. Resend invite is available for pending organizer invites, with server cooldown to prevent accidental duplicate sends.
 
 ## 8.4 Public request collaborator access
 
 1. User opens claimed community public page.
 2. User requests organizer access.
-3. Product records pending request.
-4. Admin approves/rejects.
+3. Product records pending request (`source=PUBLIC_REQUEST`).
+4. Admin approves/rejects public request.
 5. Organizer of record remains unchanged regardless of decision.
 
 ## 9. Permission Matrix (v1)
 
-| Capability                              | Organizer | Collaborator | Platform Admin               |
-| --------------------------------------- | --------- | ------------ | ---------------------------- |
-| View organizer workspace for community  | Yes       | Yes          | Yes                          |
-| Edit profile                            | Yes       | Yes          | Yes                          |
-| Manage links                            | Yes       | Yes          | Yes                          |
-| Create events                           | Yes       | Yes          | Yes                          |
-| Invite collaborator                     | Yes       | Yes          | Yes                          |
-| Approve or reject collaborator requests | No        | No           | Yes                          |
-| Transfer responsibility (organizer)     | No        | No           | Yes (outside organizer flow) |
+| Capability                             | Organizer | Collaborator | Platform Admin          |
+| -------------------------------------- | --------- | ------------ | ----------------------- |
+| View organizer workspace for community | Yes       | Yes          | Yes                     |
+| Edit profile                           | Yes       | Yes          | Yes                     |
+| Manage links                           | Yes       | Yes          | Yes                     |
+| Create events                          | Yes       | Yes          | Yes                     |
+| Invite collaborator                    | Yes       | No           | Yes (admin tools only)  |
+| Resend pending organizer invite        | Yes       | No           | Yes (admin tools only)  |
+| Approve or reject public help requests | No        | No           | Yes                     |
+| Transfer responsibility (organizer)    | Yes       | No           | Yes (recovery/override) |
 
 ## 10. UX Quality Bar
 
@@ -246,6 +248,7 @@ Phase 4: instrumentation and optimization
 
 - Claim flow and claim state semantics
 - Admin moderation queue for collaborator requests
+- Collaborator invite acceptance route with scanner-safe confirmation step
 - Organizer email notifications for collaborator decisions
 - Shared design system primitives for consistency
 
