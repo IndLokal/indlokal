@@ -33,7 +33,7 @@ export default async function OrganizerDashboardPage() {
   const isAdmin = role === 'COMMUNITY_ADMIN';
   const dashboardBody = isAdmin
     ? content.COMMUNITY_ACTION_COPY.organizerDashboardBody
-    : 'This dashboard is for approved collaborators too. You can view the community page, manage links, and add events for the active community.';
+    : 'This dashboard is for approved collaborators too. You can view the Community Profile, manage links, and add events for the active community.';
   const teamCardTitle = isAdmin ? 'Team management' : 'Team';
   const teamCardBody = isAdmin
     ? 'Manage collaborator access, pending approvals, and ownership context for this community.'
@@ -57,7 +57,9 @@ export default async function OrganizerDashboardPage() {
           <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
             Page
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Community page</h2>
+          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">
+            Community Profile
+          </h2>
           <p className="text-muted mt-1 text-sm leading-6">
             Update the public name, description, languages, and details people see first.
           </p>
@@ -125,7 +127,7 @@ export default async function OrganizerDashboardPage() {
             href="/organizer/profile"
             className="text-brand-600 hover:text-brand-700 mt-4 inline-block text-sm font-medium hover:underline"
           >
-            Complete community page →
+            Complete Community Profile →
           </Link>
         )}
       </div>

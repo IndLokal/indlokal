@@ -13,7 +13,13 @@ function isActivePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function OrganizerNav({ links }: { links: OrganizerNavLink[] }) {
+export function OrganizerNav({
+  links,
+  cta,
+}: {
+  links: OrganizerNavLink[];
+  cta?: { href: string; label: string };
+}) {
   const pathname = usePathname();
 
   return (
@@ -36,12 +42,14 @@ export function OrganizerNav({ links }: { links: OrganizerNavLink[] }) {
           </Link>
         );
       })}
-      <Link
-        href="/organizer/events/new"
-        className="text-brand-600 hover:text-brand-700 ml-auto shrink-0 whitespace-nowrap rounded-[var(--radius-button)] px-3 py-1.5 leading-5 transition-colors hover:bg-white"
-      >
-        + New Event
-      </Link>
+      {cta && (
+        <Link
+          href={cta.href}
+          className="text-brand-600 hover:text-brand-700 ml-auto shrink-0 whitespace-nowrap rounded-[var(--radius-button)] px-3 py-1.5 leading-5 transition-colors hover:bg-white"
+        >
+          {cta.label}
+        </Link>
+      )}
     </nav>
   );
 }

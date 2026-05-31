@@ -15,7 +15,7 @@ export default async function OrganizerProfilePage() {
   return (
     <div className="max-w-2xl">
       <OrganizerPageHeader
-        title="Community page"
+        title="Community Profile"
         description="Edit the public community listing visitors see on IndLokal."
       />
       <OrganizerWorkspaceBanner
