@@ -36,6 +36,9 @@ export async function approveSubmission(formData: FormData) {
   const submitter = meta?.submitter as { name?: string; email?: string } | undefined;
 
   // Ownership is an explicit admin decision during approval.
+  // ADR-0008: granting organizer access creates an OWNER membership row + audit
+  // log - never a global User.role. Defaulted from the submitter's declared
+  // relationship.
   let ownerUserId: string | null = null;
   if (
     grantOwnership &&
@@ -52,17 +55,10 @@ export async function approveSubmission(formData: FormData) {
       create: {
         email,
         ...(submitter.name ? { displayName: submitter.name } : {}),
-        role: 'COMMUNITY_ADMIN',
+        role: 'USER',
       },
-      select: { id: true, role: true },
+      select: { id: true },
     });
-
-    if (owner.role === 'USER') {
-      await db.user.update({
-        where: { id: owner.id },
-        data: { role: 'COMMUNITY_ADMIN' },
-      });
-    }
     ownerUserId = owner.id;
   }
 
@@ -95,6 +91,30 @@ export async function approveSubmission(formData: FormData) {
     }),
     ...(ownerUserId
       ? [
+          db.communityCollaborator.upsert({
+            where: { communityId_userId: { communityId: id, userId: ownerUserId } },
+            update: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+            create: {
+              communityId: id,
+              userId: ownerUserId,
+              role: 'COMMUNITY_ADMIN',
+              status: 'ACTIVE',
+              source: 'ADMIN_ADD',
+            },
+          }),
+          db.contentLog.create({
+            data: {
+              entityType: 'community',
+              entityId: id,
+              action: 'ROLE_GRANTED',
+              changedBy: ownerUserId,
+              metadata: {
+                targetUserId: ownerUserId,
+                toRole: 'COMMUNITY_ADMIN',
+                via: 'submission_approval',
+              },
+            },
+          }),
           db.trustSignal.create({
             data: {
               entityType: 'COMMUNITY',
@@ -150,7 +170,7 @@ export async function rejectSubmission(formData: FormData) {
 /* --- Claim actions --- */
 
 export async function approveClaim(formData: FormData) {
-  await assertCan('claims.approve');
+  const reviewer = await assertCan('claims.approve');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -166,22 +186,48 @@ export async function approveClaim(formData: FormData) {
   });
 
   if (!community?.claimedByUserId) return;
+  const ownerUserId = community.claimedByUserId;
 
+  // ADR-0008: a community-scoped approval grants community authority via an
+  // OWNER membership row + audit log - never a global User.role.
   await db.$transaction([
     db.community.update({
       where: { id },
       data: { claimState: 'CLAIMED' },
     }),
-    db.user.update({
-      where: { id: community.claimedByUserId },
-      data: { role: 'COMMUNITY_ADMIN' },
+    db.communityCollaborator.upsert({
+      where: { communityId_userId: { communityId: id, userId: ownerUserId } },
+      update: {
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        reviewedAt: new Date(),
+        reviewedByUserId: reviewer.id,
+      },
+      create: {
+        communityId: id,
+        userId: ownerUserId,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+        reviewedAt: new Date(),
+        reviewedByUserId: reviewer.id,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'community',
+        entityId: id,
+        action: 'ROLE_GRANTED',
+        changedBy: reviewer.id,
+        metadata: { targetUserId: ownerUserId, toRole: 'COMMUNITY_ADMIN', via: 'claim_approval' },
+      },
     }),
     db.trustSignal.create({
       data: {
         entityType: 'COMMUNITY',
         communityId: id,
         signalType: 'ADMIN_VERIFIED',
-        createdBy: community.claimedByUserId,
+        createdBy: ownerUserId,
       },
     }),
   ]);
@@ -278,6 +324,8 @@ export async function approveCollaboratorRequest(formData: FormData) {
   });
   if (!request || request.status !== 'PENDING') return;
 
+  // ADR-0008: approving grants community authority via the membership row +
+  // audit log - never a global User.role.
   await db.$transaction([
     db.communityCollaborator.update({
       where: { id: request.id },
@@ -287,9 +335,14 @@ export async function approveCollaboratorRequest(formData: FormData) {
         reviewedByUserId: reviewer.id,
       },
     }),
-    db.user.updateMany({
-      where: { id: request.userId, role: 'USER' },
-      data: { role: 'COMMUNITY_ADMIN' },
+    db.contentLog.create({
+      data: {
+        entityType: 'community',
+        entityId: request.communityId,
+        action: 'ROLE_GRANTED',
+        changedBy: reviewer.id,
+        metadata: { targetUserId: request.userId, via: 'collaborator_approval' },
+      },
     }),
   ]);
 

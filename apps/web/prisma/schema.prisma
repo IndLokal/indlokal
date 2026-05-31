@@ -15,35 +15,35 @@ datasource db {
 // ─────────────────────────────────────────────────────────
 
 model City {
-  id                     String   @id @default(cuid())
-  name                   String
-  slug                   String   @unique
-  state                  String   // Bundesland
-  country                String   @default("Germany")
-  latitude               Float?
-  longitude              Float?
-  population             Int?
+  id                      String  @id @default(cuid())
+  name                    String
+  slug                    String  @unique
+  state                   String // Bundesland
+  country                 String  @default("Germany")
+  latitude                Float?
+  longitude               Float?
+  population              Int?
   diasporaDensityEstimate Int?    @map("diaspora_density_estimate")
-  isActive               Boolean  @default(false) @map("is_active")
-  timezone               String   @default("Europe/Berlin")
+  isActive                Boolean @default(false) @map("is_active")
+  timezone                String  @default("Europe/Berlin")
 
   // Metro region support - Stuttgart metro includes satellites
-  isMetroPrimary         Boolean  @default(false) @map("is_metro_primary")
-  metroRegionId          String?  @map("metro_region_id")
-  metroRegion            City?    @relation("MetroRegion", fields: [metroRegionId], references: [id])
-  satelliteCities        City[]   @relation("MetroRegion")
+  isMetroPrimary  Boolean @default(false) @map("is_metro_primary")
+  metroRegionId   String? @map("metro_region_id")
+  metroRegion     City?   @relation("MetroRegion", fields: [metroRegionId], references: [id])
+  satelliteCities City[]  @relation("MetroRegion")
 
-  communities            Community[]
-  events                 Event[]
-  resources              Resource[]
-  users                  User[]
-  userInteractions       UserInteraction[]
-  contentReports         ContentReport[] @relation("CityReports")
-  pipelineItems          PipelineItem[]
-  outreachLeads          OutreachLead[]
+  communities      Community[]
+  events           Event[]
+  resources        Resource[]
+  users            User[]
+  userInteractions UserInteraction[]
+  contentReports   ContentReport[]   @relation("CityReports")
+  pipelineItems    PipelineItem[]
+  outreachLeads    OutreachLead[]
 
-  createdAt              DateTime @default(now()) @map("created_at")
-  updatedAt              DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("cities")
 }
@@ -72,8 +72,8 @@ model Category {
   communities CommunityCategory[]
   events      EventCategory[]
 
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("categories")
 }
@@ -86,6 +86,9 @@ enum CommunityStatus {
   ACTIVE
   INACTIVE
   UNVERIFIED
+  // Deprecated (PRD/TDD-0036): ownership state lives in `claimState` + the
+  // COMMUNITY_ADMIN collaborator row. Never written; retained only to avoid a Postgres
+  // enum-value drop with no behavioral payoff.
   CLAIMED
 }
 
@@ -99,12 +102,22 @@ enum CollaboratorStatus {
   PENDING
   ACTIVE
   REJECTED
+  REMOVED
 }
 
 enum CollaboratorSource {
-  OWNER_INVITE
+  COMMUNITY_ADMIN_INVITE
   PUBLIC_REQUEST
   ADMIN_ADD
+}
+
+// ADR-0008 / TDD-0036: a community's membership has exactly two roles. The
+// single COMMUNITY_ADMIN row (the organizer) mirrors Community.claimedByUserId
+// (kept in sync); everyone else is a COLLABORATOR. Authorization reads this table via
+// lib/auth/community-permissions.ts, not User.role.
+enum CollaboratorRole {
+  COMMUNITY_ADMIN
+  COLLABORATOR
 }
 
 enum ContentSource {
@@ -115,67 +128,70 @@ enum ContentSource {
 }
 
 model Community {
-  id               String          @id @default(cuid())
-  name             String
-  slug             String          @unique
-  description      String?
-  descriptionLong  String?         @map("description_long")
+  id              String  @id @default(cuid())
+  name            String
+  slug            String  @unique
+  description     String?
+  descriptionLong String? @map("description_long")
 
-  cityId           String          @map("city_id")
-  city             City            @relation(fields: [cityId], references: [id])
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
 
-  personaSegments  String[]        @map("persona_segments") // student, family, professional, etc.
-  languages        String[]        // Hindi, Telugu, Tamil, etc.
-  foundedYear      Int?            @map("founded_year")
-  memberCountApprox Int?           @map("member_count_approx")
+  personaSegments   String[] @map("persona_segments") // student, family, professional, etc.
+  languages         String[] // Hindi, Telugu, Tamil, etc.
+  foundedYear       Int?     @map("founded_year")
+  memberCountApprox Int?     @map("member_count_approx")
 
-  status           CommunityStatus @default(UNVERIFIED)
-  claimState       ClaimState      @default(UNCLAIMED) @map("claim_state")
-  claimedByUserId  String?         @map("claimed_by_user_id")
-  claimedBy        User?           @relation("ClaimedCommunities", fields: [claimedByUserId], references: [id])
-  mergedIntoId     String?         @map("merged_into_id")
-  mergedInto       Community?      @relation("CommunityMerge", fields: [mergedIntoId], references: [id])
-  mergedCommunities Community[]    @relation("CommunityMerge")
-  redirectSlug     String?         @map("redirect_slug")
+  status            CommunityStatus @default(UNVERIFIED)
+  claimState        ClaimState      @default(UNCLAIMED) @map("claim_state")
+  createdByUserId   String?         @map("created_by_user_id")
+  createdBy         User?           @relation("CreatedCommunities", fields: [createdByUserId], references: [id])
+  claimedByUserId   String?         @map("claimed_by_user_id")
+  claimedBy         User?           @relation("ClaimedCommunities", fields: [claimedByUserId], references: [id])
+  mergedIntoId      String?         @map("merged_into_id")
+  mergedInto        Community?      @relation("CommunityMerge", fields: [mergedIntoId], references: [id])
+  mergedCommunities Community[]     @relation("CommunityMerge")
+  redirectSlug      String?         @map("redirect_slug")
 
-  logoUrl          String?         @map("logo_url")
-  coverImageUrl    String?         @map("cover_image_url")
-  metadata         Json?           // JSONB for flexible attributes
+  logoUrl       String? @map("logo_url")
+  coverImageUrl String? @map("cover_image_url")
+  metadata      Json? // JSONB for flexible attributes
 
-  source           ContentSource   @default(ADMIN_SEED)
+  source ContentSource @default(ADMIN_SEED)
 
   // Computed scores (updated by scoring cron)
-  activityScore    Float           @default(0) @map("activity_score")
-  trustScore       Float           @default(0) @map("trust_score")
-  completenessScore Float          @default(0) @map("completeness_score")
-  scoreBreakdown   Json?           @map("score_breakdown") // Pulse Score breakdown
-  isTrending       Boolean         @default(false) @map("is_trending")
+  activityScore     Float   @default(0) @map("activity_score")
+  trustScore        Float   @default(0) @map("trust_score")
+  completenessScore Float   @default(0) @map("completeness_score")
+  scoreBreakdown    Json?   @map("score_breakdown") // Pulse Score breakdown
+  isTrending        Boolean @default(false) @map("is_trending")
 
   // Relationships
-  categories       CommunityCategory[]
-  events           Event[]
-  accessChannels   AccessChannel[]
-  activitySignals  ActivitySignal[]
-  trustSignals     TrustSignal[]   @relation("CommunityTrustSignals")
-  reports          ContentReport[] @relation("CommunityReports")
-  savedBy          SavedCommunity[]
+  categories      CommunityCategory[]
+  events          Event[]
+  accessChannels  AccessChannel[]
+  activitySignals ActivitySignal[]
+  trustSignals    TrustSignal[]       @relation("CommunityTrustSignals")
+  reports         ContentReport[]     @relation("CommunityReports")
+  savedBy         SavedCommunity[]
 
   // Edges - relationships to other entities
-  sourceEdges      RelationshipEdge[] @relation("SourceEdges")
-  targetEdges      RelationshipEdge[] @relation("TargetEdges")
-  outreachLeads    OutreachLead[]
-  collaborators    CommunityCollaborator[]
+  sourceEdges   RelationshipEdge[]      @relation("SourceEdges")
+  targetEdges   RelationshipEdge[]      @relation("TargetEdges")
+  outreachLeads OutreachLead[]
+  collaborators CommunityCollaborator[]
 
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
-  lastActivityAt   DateTime? @map("last_activity_at")
-  lastEnrichedAt   DateTime? @map("last_enriched_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  lastActivityAt DateTime? @map("last_activity_at")
+  lastEnrichedAt DateTime? @map("last_enriched_at")
 
   @@index([cityId])
   @@index([activityScore])
   @@index([status])
   @@index([cityId, status])
   @@index([claimState])
+  @@index([createdByUserId])
   @@index([mergedIntoId])
   @@index([redirectSlug])
   @@map("communities")
@@ -204,43 +220,43 @@ enum EventStatus {
 }
 
 model Event {
-  id              String       @id @default(cuid())
-  title           String
-  slug            String       @unique
-  description     String?
+  id          String  @id @default(cuid())
+  title       String
+  slug        String  @unique
+  description String?
 
-  communityId     String?      @map("community_id")
-  community       Community?   @relation(fields: [communityId], references: [id])
+  communityId String?    @map("community_id")
+  community   Community? @relation(fields: [communityId], references: [id])
 
-  cityId          String       @map("city_id")
-  city            City         @relation(fields: [cityId], references: [id])
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
 
-  venueName       String?      @map("venue_name")
-  venueAddress    String?      @map("venue_address")
-  latitude        Float?
-  longitude       Float?
+  venueName    String? @map("venue_name")
+  venueAddress String? @map("venue_address")
+  latitude     Float?
+  longitude    Float?
 
-  startsAt        DateTime     @map("starts_at")
-  endsAt          DateTime?    @map("ends_at")
-  isRecurring     Boolean      @default(false) @map("is_recurring")
-  recurrenceRule  String?      @map("recurrence_rule") // RRULE format
+  startsAt       DateTime  @map("starts_at")
+  endsAt         DateTime? @map("ends_at")
+  isRecurring    Boolean   @default(false) @map("is_recurring")
+  recurrenceRule String?   @map("recurrence_rule") // RRULE format
 
-  isOnline        Boolean      @default(false) @map("is_online")
-  onlineLink      String?      @map("online_link")
-  registrationUrl String?      @map("registration_url")
-  cost            String?      // "free", "paid", "unclear", or amount
+  isOnline        Boolean @default(false) @map("is_online")
+  onlineLink      String? @map("online_link")
+  registrationUrl String? @map("registration_url")
+  cost            String? // "free", "paid", "unclear", or amount
 
-  imageUrl        String?      @map("image_url")
-  status          EventStatus  @default(UPCOMING)
-  source          ContentSource @default(ADMIN_SEED)
-  metadata        Json?
+  imageUrl String?       @map("image_url")
+  status   EventStatus   @default(UPCOMING)
+  source   ContentSource @default(ADMIN_SEED)
+  metadata Json?
 
-  categories      EventCategory[]
-  trustSignals    TrustSignal[] @relation("EventTrustSignals")
-  savedBy         SavedEvent[]
+  categories   EventCategory[]
+  trustSignals TrustSignal[]   @relation("EventTrustSignals")
+  savedBy      SavedEvent[]
 
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([cityId, startsAt])
   @@index([communityId])
@@ -279,18 +295,18 @@ enum ChannelType {
 }
 
 model AccessChannel {
-  id           String      @id @default(cuid())
-  communityId  String      @map("community_id")
-  community    Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  channelType  ChannelType @map("channel_type")
-  url          String
-  label        String?
-  isPrimary    Boolean     @default(false) @map("is_primary")
-  isVerified   Boolean     @default(false) @map("is_verified")
-  lastVerifiedAt DateTime? @map("last_verified_at")
+  id             String      @id @default(cuid())
+  communityId    String      @map("community_id")
+  community      Community   @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  channelType    ChannelType @map("channel_type")
+  url            String
+  label          String?
+  isPrimary      Boolean     @default(false) @map("is_primary")
+  isVerified     Boolean     @default(false) @map("is_verified")
+  lastVerifiedAt DateTime?   @map("last_verified_at")
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([communityId])
   @@map("access_channels")
@@ -307,15 +323,15 @@ enum ActivitySignalType {
   LINK_VERIFIED
   EVENT_IMPORTED
   EXTERNAL_MENTION
-  EVENT_VERIFIED_ATTENDED  // ambassador check-in (PRD-0015)
+  EVENT_VERIFIED_ATTENDED // ambassador check-in (PRD-0015)
 }
 
 model ActivitySignal {
   id          String             @id @default(cuid())
   communityId String             @map("community_id")
   community   Community          @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  eventId     String?            @map("event_id")       // set for EVENT_VERIFIED_ATTENDED (PRD-0015)
-  createdBy   String?            @map("created_by")     // userId of ambassador / system
+  eventId     String?            @map("event_id") // set for EVENT_VERIFIED_ATTENDED (PRD-0015)
+  createdBy   String?            @map("created_by") // userId of ambassador / system
   signalType  ActivitySignalType @map("signal_type")
   occurredAt  DateTime           @default(now()) @map("occurred_at")
   metadata    Json?
@@ -347,20 +363,20 @@ enum TrustSignalType {
 }
 
 model TrustSignal {
-  id         String               @id @default(cuid())
+  id         String                @id @default(cuid())
   entityType TrustSignalEntityType @map("entity_type")
 
   // Polymorphic relation - one of these will be set
-  communityId String?             @map("community_id")
-  community   Community?          @relation("CommunityTrustSignals", fields: [communityId], references: [id], onDelete: Cascade)
-  eventId     String?             @map("event_id")
-  event       Event?              @relation("EventTrustSignals", fields: [eventId], references: [id], onDelete: Cascade)
+  communityId String?    @map("community_id")
+  community   Community? @relation("CommunityTrustSignals", fields: [communityId], references: [id], onDelete: Cascade)
+  eventId     String?    @map("event_id")
+  event       Event?     @relation("EventTrustSignals", fields: [eventId], references: [id], onDelete: Cascade)
 
-  signalType  TrustSignalType     @map("signal_type")
-  createdBy   String?             @map("created_by") // user id or "system"
-  metadata    Json?
+  signalType TrustSignalType @map("signal_type")
+  createdBy  String?         @map("created_by") // user id or "system"
+  metadata   Json?
 
-  createdAt   DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([communityId])
   @@index([eventId])
@@ -389,7 +405,7 @@ model RelationshipEdge {
   strength          Float            @default(1.0)
   metadata          Json?
 
-  createdAt         DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@unique([sourceCommunityId, targetCommunityId, relationshipType])
   @@map("relationship_edges")
@@ -459,30 +475,30 @@ model Resource {
   // Phase A (TDD-0030 §2): cityId becomes nullable. The resolver uses
   // scope + scopeRegion as the source of truth. Phase B will drop this
   // column in a follow-up migration.
-  cityId       String?      @map("city_id")
-  city         City?        @relation(fields: [cityId], references: [id])
+  cityId String? @map("city_id")
+  city   City?   @relation(fields: [cityId], references: [id])
 
   // ── PRD/TDD-0030 - scope-based resolution ──
   scope          ResourceScope      @default(CITY)
   scopeRegion    String?            @map("scope_region")
   audiences      ResourceAudience[] @default([])
-  lifecycleStage ResourceStage[]    @default([])  @map("lifecycle_stage")
+  lifecycleStage ResourceStage[]    @default([]) @map("lifecycle_stage")
   priority       Int                @default(50)
   isEssential    Boolean            @default(false) @map("is_essential")
 
-  url          String?
-  description  String?
-  validFrom    DateTime?    @map("valid_from")
-  validUntil   DateTime?    @map("valid_until")
-  isHidden      Boolean      @default(false) @map("is_hidden")
-  hiddenReason  String?      @map("hidden_reason")
-  lastReviewedAt DateTime?   @map("last_reviewed_at")
-  reviewCadenceDays Int      @default(180) @map("review_cadence_days")
-  source       ContentSource @default(ADMIN_SEED)
-  metadata     Json?
+  url               String?
+  description       String?
+  validFrom         DateTime?     @map("valid_from")
+  validUntil        DateTime?     @map("valid_until")
+  isHidden          Boolean       @default(false) @map("is_hidden")
+  hiddenReason      String?       @map("hidden_reason")
+  lastReviewedAt    DateTime?     @map("last_reviewed_at")
+  reviewCadenceDays Int           @default(180) @map("review_cadence_days")
+  source            ContentSource @default(ADMIN_SEED)
+  metadata          Json?
 
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([cityId])
   @@index([resourceType])
@@ -500,12 +516,12 @@ model Resource {
 enum UserRole {
   USER
   COMMUNITY_ADMIN
-  EVENT_HOST          // owns events, no community (PRD-0017)
-  PARTNER_ORG_ADMIN   // owns N communities under an org (future)
-  CITY_AMBASSADOR     // city-scoped field operator (PRD-0015)
-  CONTENT_EDITOR      // social/content support (PRD-0014)
-  OPS_LEAD            // ops & community growth (PRD-0014)
-  PARTNERSHIPS_LEAD   // strategic partner (PRD-0014)
+  EVENT_HOST // owns events, no community (PRD-0017)
+  PARTNER_ORG_ADMIN // owns N communities under an org (future)
+  CITY_AMBASSADOR // city-scoped field operator (PRD-0015)
+  CONTENT_EDITOR // social/content support (PRD-0014)
+  OPS_LEAD // ops & community growth (PRD-0014)
+  PARTNERSHIPS_LEAD // strategic partner (PRD-0014)
   PLATFORM_ADMIN
 }
 
@@ -524,8 +540,8 @@ model RoleAssignment {
   userId    String    @map("user_id")
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   role      UserRole
-  cityId    String?   @map("city_id")    // scope for CITY_AMBASSADOR
-  orgId     String?   @map("org_id")     // scope for PARTNER_ORG_ADMIN (future)
+  cityId    String?   @map("city_id") // scope for CITY_AMBASSADOR
+  orgId     String?   @map("org_id") // scope for PARTNER_ORG_ADMIN (future)
   grantedBy String    @map("granted_by") // userId of granting admin
   grantedAt DateTime  @default(now()) @map("granted_at")
   revokedAt DateTime? @map("revoked_at") // null = active
@@ -536,48 +552,49 @@ model RoleAssignment {
 }
 
 model User {
-  id                 String   @id @default(cuid())
-  email              String   @unique
-  displayName        String?  @map("display_name")
+  id          String  @id @default(cuid())
+  email       String  @unique
+  displayName String? @map("display_name")
 
-  cityId             String?  @map("city_id")
-  city               City?    @relation(fields: [cityId], references: [id])
+  cityId String? @map("city_id")
+  city   City?   @relation(fields: [cityId], references: [id])
 
   personaSegments    String[] @map("persona_segments")
   preferredLanguages String[] @map("preferred_languages")
   onboardingComplete Boolean  @default(false) @map("onboarding_complete")
 
-  role               UserRole @default(USER)
+  role UserRole @default(USER)
 
   // OAuth
-  googleId             String?   @unique @map("google_id")
-  appleId              String?   @unique @map("apple_id")
-  avatarUrl            String?   @map("avatar_url")
+  googleId  String? @unique @map("google_id")
+  appleId   String? @unique @map("apple_id")
+  avatarUrl String? @map("avatar_url")
 
   sessionToken       String?   @unique @map("session_token")
   sessionTokenExpiry DateTime? @map("session_token_expiry")
 
-  claimedCommunities Community[] @relation("ClaimedCommunities")
-  collaboratorMemberships CommunityCollaborator[] @relation("CommunityCollaboratorUser")
-  collaboratorRequests    CommunityCollaborator[] @relation("CommunityCollaboratorRequestedBy")
-  collaboratorReviews     CommunityCollaborator[] @relation("CommunityCollaboratorReviewedBy")
-  interactions       UserInteraction[]
-  savedCommunities   SavedCommunity[]
-  savedEvents        SavedEvent[]
-  magicLinkTokens    MagicLinkToken[]
-  refreshTokens      RefreshToken[]
-  roleAssignments    RoleAssignment[]
-  contentReports     ContentReport[]  @relation("ReporterUser")
+  createdCommunities      Community[]              @relation("CreatedCommunities")
+  claimedCommunities      Community[]              @relation("ClaimedCommunities")
+  collaboratorMemberships CommunityCollaborator[]  @relation("CommunityCollaboratorUser")
+  collaboratorRequests    CommunityCollaborator[]  @relation("CommunityCollaboratorRequestedBy")
+  collaboratorReviews     CommunityCollaborator[]  @relation("CommunityCollaboratorReviewedBy")
+  interactions            UserInteraction[]
+  savedCommunities        SavedCommunity[]
+  savedEvents             SavedEvent[]
+  magicLinkTokens         MagicLinkToken[]
+  refreshTokens           RefreshToken[]
+  roleAssignments         RoleAssignment[]
+  contentReports          ContentReport[]          @relation("ReporterUser")
   devices                 Device[]
   notificationPreferences NotificationPreference[]
   quietHours              QuietHours?
   notificationOutbox      NotificationOutbox[]
   inboxItems              InboxItem[]
 
-  metadata           Json?    // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
+  metadata Json? // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
 
-  createdAt          DateTime @default(now()) @map("created_at")
-  lastActiveAt       DateTime? @map("last_active_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastActiveAt DateTime? @map("last_active_at")
 
   @@map("users")
 }
@@ -589,6 +606,7 @@ model CommunityCollaborator {
   userId            String             @map("user_id")
   user              User               @relation("CommunityCollaboratorUser", fields: [userId], references: [id], onDelete: Cascade)
   status            CollaboratorStatus @default(PENDING)
+  role              CollaboratorRole   @default(COLLABORATOR)
   source            CollaboratorSource
   requestedByUserId String?            @map("requested_by_user_id")
   requestedByUser   User?              @relation("CommunityCollaboratorRequestedBy", fields: [requestedByUserId], references: [id], onDelete: SetNull)
@@ -602,6 +620,7 @@ model CommunityCollaborator {
 
   @@unique([communityId, userId], map: "community_collaborators_community_user_key")
   @@index([communityId, status])
+  @@index([communityId, role])
   @@index([requestedEmail, status])
   @@index([userId, status])
   @@map("community_collaborators")
@@ -612,13 +631,13 @@ model CommunityCollaborator {
 // ─────────────────────────────────────────────────
 
 model MagicLinkToken {
-  id        String   @id @default(cuid())
-  tokenHash String   @unique @map("token_hash") // SHA-256 hash of the raw token
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime @map("expires_at")
+  id        String    @id @default(cuid())
+  tokenHash String    @unique @map("token_hash") // SHA-256 hash of the raw token
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime  @map("expires_at")
   usedAt    DateTime? @map("used_at") // set when consumed - prevents replay
-  createdAt DateTime @default(now()) @map("created_at")
+  createdAt DateTime  @default(now()) @map("created_at")
 
   @@index([userId])
   @@map("magic_link_tokens")
@@ -636,11 +655,11 @@ model RefreshToken {
   userId      String    @map("user_id")
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   tokenHash   String    @unique @map("token_hash") // SHA-256(rawToken)
-  deviceId    String?   @map("device_id")          // joins to Device (TDD-0002, future)
+  deviceId    String?   @map("device_id") // joins to Device (TDD-0002, future)
   issuedAt    DateTime  @default(now()) @map("issued_at")
   expiresAt   DateTime  @map("expires_at")
   revokedAt   DateTime? @map("revoked_at")
-  rotatedToId String?   @map("rotated_to_id")      // chain for reuse detection
+  rotatedToId String?   @map("rotated_to_id") // chain for reuse detection
   userAgent   String?   @map("user_agent")
   ip          String?
 
@@ -716,7 +735,7 @@ model QuietHours {
   userId   String @id @map("user_id")
   user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   startMin Int    @default(1320) @map("start_min") // 22:00
-  endMin   Int    @default(480)  @map("end_min")   // 08:00
+  endMin   Int    @default(480) @map("end_min") // 08:00
   timezone String @default("Europe/Berlin")
 
   @@map("quiet_hours")
@@ -786,12 +805,12 @@ model UserInteraction {
   entityId        String                @map("entity_id")
   interactionType InteractionType       @map("interaction_type")
 
-  cityId          String?               @map("city_id")
-  city            City?                 @relation(fields: [cityId], references: [id])
+  cityId String? @map("city_id")
+  city   City?   @relation(fields: [cityId], references: [id])
 
-  metadata        Json?                 // search query text, referrer, etc.
+  metadata Json? // search query text, referrer, etc.
 
-  createdAt       DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([entityType, entityId])
   @@index([userId])
@@ -818,17 +837,17 @@ enum ReportStatus {
 }
 
 model ContentReport {
-  id             String       @id @default(cuid())
-  reportType     ReportType   @map("report_type")
+  id         String     @id @default(cuid())
+  reportType ReportType @map("report_type")
 
   // For reports: the community being reported
-  communityId    String?      @map("community_id")
-  community      Community?   @relation("CommunityReports", fields: [communityId], references: [id])
+  communityId String?    @map("community_id")
+  community   Community? @relation("CommunityReports", fields: [communityId], references: [id])
 
   // For suggestions: free-text name + city
-  suggestedName  String?      @map("suggested_name")
-  cityId         String?      @map("city_id")
-  city           City?        @relation("CityReports", fields: [cityId], references: [id])
+  suggestedName String? @map("suggested_name")
+  cityId        String? @map("city_id")
+  city          City?   @relation("CityReports", fields: [cityId], references: [id])
 
   details        String?
   reporterEmail  String?      @map("reporter_email")
@@ -838,7 +857,7 @@ model ContentReport {
   reporter       User?        @relation("ReporterUser", fields: [reporterUserId], references: [id])
   status         ReportStatus @default(PENDING)
 
-  createdAt      DateTime @default(now()) @map("created_at")
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@index([status, createdAt])
   @@index([communityId])
@@ -862,11 +881,11 @@ model SavedCommunity {
 }
 
 model SavedEvent {
-  userId   String   @map("user_id")
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventId  String   @map("event_id")
-  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  savedAt  DateTime @default(now()) @map("saved_at")
+  userId  String   @map("user_id")
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId String   @map("event_id")
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  savedAt DateTime @default(now()) @map("saved_at")
 
   @@id([userId, eventId])
   @@map("saved_events")
@@ -893,7 +912,7 @@ model ContentLog {
   action     ContentLogAction
   source     ContentSource    @default(ADMIN_SEED)
   changedBy  String?          @map("changed_by") // admin user ID or "system"
-  metadata   Json?            // diff details, previous values, notes
+  metadata   Json? // diff details, previous values, notes
   createdAt  DateTime         @default(now()) @map("created_at")
 
   @@index([entityType, entityId])
@@ -952,7 +971,7 @@ model PipelineSourceConfig {
   label      String
   enabled    Boolean                  @default(true)
   sourceType PipelineSourceType?      @map("source_type")
-  kind       String?                  // keyword_search | pinned_url
+  kind       String? // keyword_search | pinned_url
   payload    Json?
   updatedBy  String?                  @map("updated_by")
   createdAt  DateTime                 @default(now()) @map("created_at")
@@ -964,46 +983,46 @@ model PipelineSourceConfig {
 }
 
 model PipelineItem {
-  id             String             @id @default(cuid())
-  entityType     PipelineEntityType @map("entity_type")
-  status         PipelineItemStatus @default(PENDING)
-  reviewKind     PipelineReviewKind @default(DISCOVERY) @map("review_kind")
+  id         String             @id @default(cuid())
+  entityType PipelineEntityType @map("entity_type")
+  status     PipelineItemStatus @default(PENDING)
+  reviewKind PipelineReviewKind @default(DISCOVERY) @map("review_kind")
 
   // Source provenance
-  sourceType     PipelineSourceType @map("source_type")
-  sourceUrl      String?            @map("source_url")
-  rawContent     String?            @map("raw_content")    // original scraped text/HTML (for audit)
+  sourceType PipelineSourceType @map("source_type")
+  sourceUrl  String?            @map("source_url")
+  rawContent String?            @map("raw_content") // original scraped text/HTML (for audit)
 
   // LLM-extracted structured data
-  extractedData  Json               @map("extracted_data")  // the structured event/community JSON
-  confidence     Float              @default(0)             // 0-1 overall confidence from LLM
+  extractedData Json  @map("extracted_data") // the structured event/community JSON
+  confidence    Float @default(0) // 0-1 overall confidence from LLM
 
   // City context
-  cityId         String             @map("city_id")
-  city           City               @relation(fields: [cityId], references: [id])
+  cityId String @map("city_id")
+  city   City   @relation(fields: [cityId], references: [id])
 
   // Dedup - matched against an existing entity
-  matchedEntityId String?           @map("matched_entity_id") // existing event/community id if dupe detected
-  matchScore      Float?            @map("match_score")       // 0-1 similarity score
+  matchedEntityId String? @map("matched_entity_id") // existing event/community id if dupe detected
+  matchScore      Float?  @map("match_score") // 0-1 similarity score
 
   // Review tracking
-  reviewedBy     String?            @map("reviewed_by")
-  reviewedAt     DateTime?          @map("reviewed_at")
-  reviewNotes    String?            @map("review_notes")
-  autoApproved   Boolean            @default(false) @map("auto_approved")
-  autoApprovalReason String?        @map("auto_approval_reason")
-  targetEntityId String?            @map("target_entity_id")
+  reviewedBy         String?   @map("reviewed_by")
+  reviewedAt         DateTime? @map("reviewed_at")
+  reviewNotes        String?   @map("review_notes")
+  autoApproved       Boolean   @default(false) @map("auto_approved")
+  autoApprovalReason String?   @map("auto_approval_reason")
+  targetEntityId     String?   @map("target_entity_id")
 
   // The entity created/updated after approval
-  createdEntityId String?           @map("created_entity_id")
+  createdEntityId String? @map("created_entity_id")
 
   // User-submitted fields
-  imageKey       String?            @map("image_key")   // key of uploaded MediaAsset
-  submittedBy    String?            @map("submitted_by") // userId if authenticated
-  metadata       Json?              // flexible metadata (e.g. submittedByRole for ambassador fast-track)
+  imageKey    String? @map("image_key") // key of uploaded MediaAsset
+  submittedBy String? @map("submitted_by") // userId if authenticated
+  metadata    Json? // flexible metadata (e.g. submittedByRole for ambassador fast-track)
 
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
   @@index([cityId])
@@ -1017,30 +1036,30 @@ model PipelineItem {
 // ─────────────────────────────────────────────────
 
 model PipelineRun {
-  id                    String   @id @default(cuid())
-  triggeredBy           String   @default("cron") @map("triggered_by")
-  scopeRegionIds        String[] @default([]) @map("scope_region_ids")
-  scopeCitySlugs        String[] @default([]) @map("scope_city_slugs")
-  regionsScanned        Int      @map("regions_scanned")
-  sourcesProcessed      Int      @map("sources_processed")
-  itemsFetched          Int      @map("items_fetched")
-  itemsPassedFilter     Int      @map("items_passed_filter")
-  itemsExtracted        Int      @map("items_extracted")
-  itemsQueued           Int      @map("items_queued")
-  itemsSkippedDuplicate Int      @map("items_skipped_duplicate")
-  itemsSkippedNoCity    Int      @map("items_skipped_no_city")
-  itemsSkippedPast      Int      @default(0) @map("items_skipped_past")
-  llmCalls              Int      @map("llm_calls")
-  llmTokensEstimate     Int      @map("llm_tokens_estimate")
-  durationMs            Int      @map("duration_ms")
-  errors                String[]
+  id                      String            @id @default(cuid())
+  triggeredBy             String            @default("cron") @map("triggered_by")
+  scopeRegionIds          String[]          @default([]) @map("scope_region_ids")
+  scopeCitySlugs          String[]          @default([]) @map("scope_city_slugs")
+  regionsScanned          Int               @map("regions_scanned")
+  sourcesProcessed        Int               @map("sources_processed")
+  itemsFetched            Int               @map("items_fetched")
+  itemsPassedFilter       Int               @map("items_passed_filter")
+  itemsExtracted          Int               @map("items_extracted")
+  itemsQueued             Int               @map("items_queued")
+  itemsSkippedDuplicate   Int               @map("items_skipped_duplicate")
+  itemsSkippedNoCity      Int               @map("items_skipped_no_city")
+  itemsSkippedPast        Int               @default(0) @map("items_skipped_past")
+  llmCalls                Int               @map("llm_calls")
+  llmTokensEstimate       Int               @map("llm_tokens_estimate")
+  durationMs              Int               @map("duration_ms")
+  errors                  String[]
   filterFailures          Int               @default(0) @map("filter_failures")
   extractRetriesExhausted Int               @default(0) @map("extract_retries_exhausted")
   itemsDroppedBadIndex    Int               @default(0) @map("items_dropped_bad_index")
   budgetExceeded          Boolean           @default(false) @map("budget_exceeded")
   circuitBreakerTripped   Boolean           @default(false) @map("circuit_breaker_tripped")
-  createdAt             DateTime @default(now()) @map("created_at")
-  llmCallAudits         PipelineLlmCall[]
+  createdAt               DateTime          @default(now()) @map("created_at")
+  llmCallAudits           PipelineLlmCall[]
 
   @@index([createdAt])
   @@map("pipeline_runs")
@@ -1098,16 +1117,16 @@ enum KeywordSuggestionStatus {
 }
 
 model KeywordSuggestion {
-  id          String                  @id @default(cuid())
-  keyword     String                  @unique
-  normalizedKeyword String            @unique @map("normalized_keyword")
-  status      KeywordSuggestionStatus @default(PENDING)
-  confidence  Float                   @default(0)
-  sourceCount Int                     @default(0) @map("source_count")
-  evidence    Json?
-  reviewedAt  DateTime?               @map("reviewed_at")
-  createdAt   DateTime                @default(now()) @map("created_at")
-  updatedAt   DateTime                @updatedAt @map("updated_at")
+  id                String                  @id @default(cuid())
+  keyword           String                  @unique
+  normalizedKeyword String                  @unique @map("normalized_keyword")
+  status            KeywordSuggestionStatus @default(PENDING)
+  confidence        Float                   @default(0)
+  sourceCount       Int                     @default(0) @map("source_count")
+  evidence          Json?
+  reviewedAt        DateTime?               @map("reviewed_at")
+  createdAt         DateTime                @default(now()) @map("created_at")
+  updatedAt         DateTime                @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
   @@map("keyword_suggestions")
@@ -1131,19 +1150,19 @@ model OutreachLead {
   id            String        @id @default(cuid())
   cityId        String        @map("city_id")
   city          City          @relation(fields: [cityId], references: [id])
-  communityId   String?       @map("community_id")   // set when linked / promoted
+  communityId   String?       @map("community_id") // set when linked / promoted
   community     Community?    @relation(fields: [communityId], references: [id])
-  suggestedName String?       @map("suggested_name")  // raw name before community exists
-  channelHint   String?       @map("channel_hint")    // WA link / IG handle / email
-  ownerUserId   String        @map("owner_user_id")   // assigned operator
-  source        String        // 'ambassador' | 'pipeline' | 'manual' | 'partner'
+  suggestedName String?       @map("suggested_name") // raw name before community exists
+  channelHint   String?       @map("channel_hint") // WA link / IG handle / email
+  ownerUserId   String        @map("owner_user_id") // assigned operator
+  source        String // 'ambassador' | 'pipeline' | 'manual' | 'partner'
   stage         OutreachStage @default(NEW)
   nextActionAt  DateTime?     @map("next_action_at")
-  metadata      Json?         // flexible extension bag
+  metadata      Json? // flexible extension bag
   createdAt     DateTime      @default(now()) @map("created_at")
   updatedAt     DateTime      @updatedAt @map("updated_at")
 
-  notes         OutreachNote[]
+  notes OutreachNote[]
 
   @@index([cityId, stage])
   @@index([ownerUserId, stage])

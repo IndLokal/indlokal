@@ -22,6 +22,11 @@
 import type { UserRole } from '@prisma/client';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
+import {
+  canEditCommunity,
+  canManageCommunity,
+  type CommunityMembership,
+} from '@/lib/auth/community-permissions';
 
 // ─────────────────────────────────────────────────
 // Action catalog
@@ -140,6 +145,9 @@ export type SessionUser = {
     orgId: string | null;
     revokedAt: Date | null;
   }>;
+  /** ADR-0008: role-bearing community authority (from CommunityCollaborator). */
+  communityMemberships?: CommunityMembership[];
+  claimedCommunities?: ReadonlyArray<{ id: string; claimedByUserId?: string | null }>;
 };
 
 // ─────────────────────────────────────────────────
@@ -156,12 +164,22 @@ export type SessionUser = {
 export function can(
   user: SessionUser | null | undefined,
   action: Action,
-  scope?: { cityId?: string; orgId?: string },
+  scope?: { cityId?: string; orgId?: string; communityId?: string },
 ): boolean {
   if (!user) return false;
 
   // PLATFORM_ADMIN is always granted everything.
   if (user.role === 'PLATFORM_ADMIN') return true;
+
+  // ADR-0008: community-scoped actions delegate to the community-authority
+  // helper (CommunityCollaborator), never User.role or the workspace cookie.
+  if (scope?.communityId) {
+    if (action === 'organizer.edit' || action === 'organizer.events.write') {
+      return canEditCommunity(user, scope.communityId);
+    }
+    // Member-management actions require OWNER/ADMIN.
+    return canManageCommunity(user, scope.communityId);
+  }
 
   // Also check active (non-revoked) RoleAssignment rows.
   const activeAssignments = user.roleAssignments.filter((a) => !a.revokedAt);
@@ -174,12 +192,13 @@ export function can(
     const allowed = ROLE_ACTIONS[assignment.role] ?? [];
     if (!allowed.includes(action)) continue;
 
-    // If the action requires a city scope, verify it matches.
-    if (scope?.cityId && assignment.cityId) {
+    // V-3 fix (AUDIT-0001): when an action carries a scope, a matching scoped
+    // assignment is REQUIRED. Previously an assignment with a null scope
+    // silently satisfied any scoped request.
+    if (scope?.cityId) {
       if (assignment.cityId !== scope.cityId) continue;
     }
-    // If the action requires an org scope, verify it matches.
-    if (scope?.orgId && assignment.orgId) {
+    if (scope?.orgId) {
       if (assignment.orgId !== scope.orgId) continue;
     }
 
@@ -202,7 +221,7 @@ export function can(
  */
 export async function assertCan(
   action: Action,
-  scope?: { cityId?: string; orgId?: string },
+  scope?: { cityId?: string; orgId?: string; communityId?: string },
 ): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect('/admin/login');
@@ -218,7 +237,7 @@ export async function assertCan(
  */
 export async function requireCan(
   action: Action,
-  scope?: { cityId?: string; orgId?: string },
+  scope?: { cityId?: string; orgId?: string; communityId?: string },
 ): Promise<SessionUser> {
   const user = await getSessionUser();
   if (!user) redirect('/admin/login');

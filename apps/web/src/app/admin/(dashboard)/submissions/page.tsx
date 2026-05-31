@@ -42,10 +42,14 @@ export default async function AdminSubmissionsPage() {
                   name?: string;
                   email?: string;
                   submittedAt?: string;
+                  relationship?: 'HELP_RUN' | 'JUST_ADDING';
                   ownershipIntent?: boolean;
                 }
               | undefined;
-            const ownershipIntent = submitter?.ownershipIntent === true;
+            // PRD/TDD-0036: ownership default follows the declared relationship
+            // (older submissions only carry the legacy ownershipIntent flag).
+            const helpsRun =
+              submitter?.relationship === 'HELP_RUN' || submitter?.ownershipIntent === true;
 
             return (
               <div key={c.id} className="card-base p-6">
@@ -65,13 +69,13 @@ export default async function AdminSubmissionsPage() {
                       </p>
                     )}
                     <p className="text-muted mt-1 text-xs">
-                      Submitter requested ownership: {ownershipIntent ? 'Yes' : 'No'}
+                      Submitter relationship: {helpsRun ? 'Organizer' : 'Just sharing'}
                     </p>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <ApproveSubmissionForm
                       submissionId={c.id}
-                      defaultGrantOwnership={ownershipIntent}
+                      defaultGrantOwnership={helpsRun}
                       action={approveSubmission}
                     />
                     <form action={rejectSubmission}>

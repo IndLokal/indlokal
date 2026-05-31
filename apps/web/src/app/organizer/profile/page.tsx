@@ -1,11 +1,11 @@
-import AddEventForm from './AddEventForm';
+import EditProfileForm from '../edit/EditProfileForm';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 
-export const metadata = { title: 'Share Event - Organizer' };
+export const metadata = { title: 'Community Profile - Organizer' };
 
-export default async function AddEventPage() {
+export default async function OrganizerProfilePage() {
   const { community, role, isMultiCommunity } = await requireOrganizerWorkspace();
 
   if (!community) {
@@ -15,10 +15,8 @@ export default async function AddEventPage() {
   return (
     <div className="max-w-2xl">
       <OrganizerPageHeader
-        title="Share an event"
-        description="Share your upcoming event with your active community workspace."
-        backHref="/organizer/events"
-        backLabel="Back to events"
+        title="Community page"
+        description="Edit the public community listing visitors see on IndLokal."
       />
       <OrganizerWorkspaceBanner
         communityName={community.name}
@@ -27,7 +25,7 @@ export default async function AddEventPage() {
         showSwitchLink={isMultiCommunity}
       />
       <div className="mt-8">
-        <AddEventForm communityName={community.name} />
+        <EditProfileForm community={community} />
       </div>
     </div>
   );
