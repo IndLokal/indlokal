@@ -22,27 +22,34 @@ export async function NavAuthWidget() {
   }
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
-  const hasOrganizerAccess =
+  const hasActiveAmbassadorAssignment =
+    user.roleAssignments?.some((a) => a.role === 'CITY_AMBASSADOR' && !a.revokedAt) ?? false;
+  const hasOrganizerMembership = (user.communityMemberships?.length ?? 0) > 0;
+  const hasAdminConsoleAccess =
     user.role === 'PLATFORM_ADMIN' ||
-    user.role === 'COMMUNITY_ADMIN' ||
-    (user.communityMemberships?.length ?? 0) > 0;
-  const hasHostAccess = user.role === 'EVENT_HOST' || user.role === 'PLATFORM_ADMIN';
-  const dashboardHref = hasOrganizerAccess
-    ? '/organizer'
-    : hasHostAccess
-      ? '/organizer/host'
-      : null;
+    user.role === 'OPS_LEAD' ||
+    user.role === 'PARTNERSHIPS_LEAD' ||
+    user.role === 'CONTENT_EDITOR';
+
+  // Route every signed-in persona to its primary workspace from public pages.
+  const dashboardHref = hasAdminConsoleAccess
+    ? '/admin'
+    : user.role === 'CITY_AMBASSADOR' || hasActiveAmbassadorAssignment
+      ? '/ambassador'
+      : user.role === 'COMMUNITY_ADMIN' || hasOrganizerMembership
+        ? '/organizer'
+        : user.role === 'EVENT_HOST'
+          ? '/organizer/host'
+          : '/me';
 
   return (
     <div className="flex items-center gap-3">
-      {dashboardHref && (
-        <Link
-          href={dashboardHref}
-          className="text-muted hover:text-foreground inline-flex items-center rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors sm:text-sm"
-        >
-          Dashboard
-        </Link>
-      )}
+      <Link
+        href={dashboardHref}
+        className="text-muted hover:text-foreground inline-flex items-center rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors sm:text-sm"
+      >
+        Dashboard
+      </Link>
 
       <Link
         href="/me"
