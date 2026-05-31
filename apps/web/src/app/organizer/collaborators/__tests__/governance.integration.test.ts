@@ -44,7 +44,12 @@ vi.mock('@/lib/session', async (importOriginal) => {
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/analytics/server', () => ({ captureServerEvent: vi.fn() }));
 
-import { inviteCollaborator, removeCollaborator, transferOwnership } from '../actions';
+import {
+  inviteCollaborator,
+  promoteCollaboratorToAdmin,
+  removeCollaborator,
+  transferOwnership,
+} from '../actions';
 
 beforeEach(async () => {
   await cleanDb();
@@ -198,6 +203,71 @@ describe('@db removeCollaborator', () => {
     });
     expect(updated?.status).toBe('REMOVED');
     expect(updated?.reviewedByUserId).toBe(owner.id);
+  });
+
+  it('allows removing a non-primary community admin', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const secondAdmin = await createUser(testDb, { email: 'second-admin@example.com' });
+    const secondAdminRow = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: secondAdmin.id,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('collaboratorId', secondAdminRow.id);
+    const result = await removeCollaborator(null, form);
+
+    expect(result).toEqual({ success: true });
+    const updated = await testDb.communityCollaborator.findUnique({
+      where: { id: secondAdminRow.id },
+      select: { status: true, role: true },
+    });
+    expect(updated?.status).toBe('REMOVED');
+    expect(updated?.role).toBe('COMMUNITY_ADMIN');
+  });
+});
+
+describe('@db promoteCollaboratorToAdmin', () => {
+  it('promotes target collaborator without demoting existing admin', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const promoted = await createUser(testDb, { email: 'promoted@example.com' });
+    await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: promoted.id,
+        role: 'COLLABORATOR',
+        status: 'ACTIVE',
+        source: 'COMMUNITY_ADMIN_INVITE',
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('targetUserId', promoted.id);
+    const result = await promoteCollaboratorToAdmin(null, form);
+    expect(result).toEqual({ success: true });
+
+    const admins = await testDb.communityCollaborator.findMany({
+      where: { communityId: community.id, role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+      select: { userId: true },
+    });
+
+    expect(admins).toHaveLength(2);
+    expect(admins.map((row) => row.userId)).toContain(owner.id);
+    expect(admins.map((row) => row.userId)).toContain(promoted.id);
+
+    const refreshed = await testDb.community.findUnique({ where: { id: community.id } });
+    expect(refreshed?.claimedByUserId).toBe(owner.id);
   });
 });
 

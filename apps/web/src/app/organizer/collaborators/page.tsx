@@ -4,7 +4,12 @@ import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { CollaboratorInviteCard } from '../CollaboratorInviteCard';
-import { resendCollaboratorInviteAction } from './actions';
+import {
+  promoteCollaboratorToAdminAction,
+  removeCollaboratorAction,
+  resendCollaboratorInviteAction,
+  transferOwnershipAction,
+} from './actions';
 
 export const metadata = { title: 'Collaborators - Organizer' };
 
@@ -14,8 +19,14 @@ function sourceLabel(source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMI
   return 'Admin add';
 }
 
+function roleLabel(role: 'COMMUNITY_ADMIN' | 'COLLABORATOR') {
+  if (role === 'COMMUNITY_ADMIN') return 'Community admin';
+  return 'Collaborator';
+}
+
 type CollaboratorRow = {
   id: string;
+  userId: string;
   role: 'COMMUNITY_ADMIN' | 'COLLABORATOR';
   status: 'ACTIVE' | 'PENDING' | 'REJECTED' | 'REMOVED';
   source: 'COMMUNITY_ADMIN_INVITE' | 'PUBLIC_REQUEST' | 'ADMIN_ADD';
@@ -36,11 +47,12 @@ export default async function OrganizerCollaboratorsPage() {
   const collaboratorData = await db.community.findUnique({
     where: { id: community.id },
     select: {
-      claimedBy: { select: { email: true, displayName: true } },
+      claimedBy: { select: { id: true, email: true, displayName: true } },
       collaborators: {
         where: { status: { in: ['ACTIVE', 'PENDING'] } },
         select: {
           id: true,
+          userId: true,
           role: true,
           status: true,
           source: true,
@@ -56,9 +68,11 @@ export default async function OrganizerCollaboratorsPage() {
   });
 
   const collaborators: CollaboratorRow[] = collaboratorData?.collaborators ?? [];
-  const activeCollaborators = collaborators.filter(
+  const primaryAdminUserId = collaboratorData?.claimedBy?.id ?? null;
+  const canManageTeam = role === 'COMMUNITY_ADMIN';
+  const activeMembers = collaborators.filter(
     (collaborator: CollaboratorRow) =>
-      collaborator.status === 'ACTIVE' && collaborator.role === 'COLLABORATOR',
+      collaborator.status === 'ACTIVE' && collaborator.userId !== primaryAdminUserId,
   );
   const pendingCollaborators = collaborators.filter(
     (collaborator: CollaboratorRow) => collaborator.status === 'PENDING',
@@ -80,7 +94,7 @@ export default async function OrganizerCollaboratorsPage() {
       <section className="card-base p-6">
         <h2 className="text-foreground text-lg font-semibold">Primary community admin</h2>
         <p className="text-muted mt-1 text-sm">
-          Ownership remains separate from collaborator access. Admin handles ownership transfer.
+          Ownership remains separate from collaborator access. Use Transfer ownership when needed.
         </p>
         <div className="border-border mt-4 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm">
           <p className="text-foreground font-medium">
@@ -97,56 +111,134 @@ export default async function OrganizerCollaboratorsPage() {
       <section className="card-base p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-foreground text-lg font-semibold">Active collaborators</h2>
+            <h2 className="text-foreground text-lg font-semibold">Active team</h2>
             <p className="text-muted mt-1 text-sm">
-              People who can already access this organizer workspace.
+              People who can already access this organizer workspace, excluding the primary admin
+              shown above.
             </p>
           </div>
           <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
-            {activeCollaborators.length}
+            {activeMembers.length}
           </span>
         </div>
 
-        {activeCollaborators.length === 0 ? (
-          <p className="text-muted mt-4 text-sm">No active collaborators yet.</p>
+        {activeMembers.length === 0 ? (
+          <p className="text-muted mt-4 text-sm">No active team members yet.</p>
         ) : (
-          <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
-            <table className="w-full min-w-[620px] text-sm">
-              <thead className="bg-muted-bg text-left">
-                <tr className="border-border border-b">
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Collaborator
-                  </th>
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Source
-                  </th>
-                  <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
-                    Approved
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-border divide-y">
-                {activeCollaborators.map((collaborator: CollaboratorRow) => (
-                  <tr key={collaborator.id}>
-                    <td className="px-4 py-3">
-                      <p className="text-foreground font-medium">
-                        {collaborator.user.displayName ?? collaborator.user.email}
-                      </p>
-                      <p className="text-muted mt-0.5 text-xs">{collaborator.user.email}</p>
-                    </td>
-                    <td className="text-muted px-4 py-3 text-sm">
-                      {sourceLabel(collaborator.source)}
-                    </td>
-                    <td className="text-muted px-4 py-3 text-sm">
-                      {collaborator.reviewedAt
-                        ? formatDistanceToNow(collaborator.reviewedAt, { addSuffix: true })
-                        : 'Recently approved'}
-                    </td>
+          <>
+            {canManageTeam ? (
+              <p className="text-muted mt-3 text-xs">
+                Grant admin access adds admin permissions. Transfer ownership changes the primary
+                admin. Remove cannot remove the primary admin directly.
+              </p>
+            ) : null}
+
+            <div className="border-border mt-4 max-h-[26rem] overflow-auto rounded-[var(--radius-card)] border">
+              <table className="w-full min-w-[620px] text-sm">
+                <thead className="bg-muted-bg text-left">
+                  <tr className="border-border border-b">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Member
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Role
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Source
+                    </th>
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      Approved
+                    </th>
+                    {canManageTeam ? (
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                        Action
+                      </th>
+                    ) : null}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-border divide-y">
+                  {activeMembers.map((collaborator: CollaboratorRow) => {
+                    const isPrimaryAdmin = collaborator.userId === primaryAdminUserId;
+                    return (
+                      <tr key={collaborator.id}>
+                        <td className="px-4 py-3">
+                          <p className="text-foreground font-medium">
+                            {collaborator.user.displayName ?? collaborator.user.email}
+                          </p>
+                          <p className="text-muted mt-0.5 text-xs">{collaborator.user.email}</p>
+                        </td>
+                        <td className="text-muted px-4 py-3 text-sm">
+                          {isPrimaryAdmin ? 'Primary admin' : roleLabel(collaborator.role)}
+                        </td>
+                        <td className="text-muted px-4 py-3 text-sm">
+                          {sourceLabel(collaborator.source)}
+                        </td>
+                        <td className="text-muted px-4 py-3 text-sm">
+                          {collaborator.reviewedAt
+                            ? formatDistanceToNow(collaborator.reviewedAt, { addSuffix: true })
+                            : 'Recently approved'}
+                        </td>
+                        {canManageTeam ? (
+                          <td className="px-4 py-3 text-sm">
+                            <div className="flex flex-wrap items-center gap-2">
+                              {collaborator.role === 'COLLABORATOR' ? (
+                                <>
+                                  <form action={promoteCollaboratorToAdminAction}>
+                                    <input
+                                      type="hidden"
+                                      name="targetUserId"
+                                      value={collaborator.userId}
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="btn-secondary px-3 py-1.5 text-xs"
+                                    >
+                                      Grant admin access
+                                    </button>
+                                  </form>
+                                  <form action={transferOwnershipAction}>
+                                    <input
+                                      type="hidden"
+                                      name="targetUserId"
+                                      value={collaborator.userId}
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="btn-secondary px-3 py-1.5 text-xs"
+                                    >
+                                      Transfer ownership
+                                    </button>
+                                  </form>
+                                </>
+                              ) : null}
+
+                              {!isPrimaryAdmin ? (
+                                <form action={removeCollaboratorAction}>
+                                  <input
+                                    type="hidden"
+                                    name="collaboratorId"
+                                    value={collaborator.id}
+                                  />
+                                  <button
+                                    type="submit"
+                                    className="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                                  >
+                                    Remove
+                                  </button>
+                                </form>
+                              ) : (
+                                <span className="text-muted text-xs">Primary admin</span>
+                              )}
+                            </div>
+                          </td>
+                        ) : null}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </section>
 

@@ -217,6 +217,10 @@ const transferSchema = z.object({
   targetUserId: z.string().min(1),
 });
 
+const promoteSchema = z.object({
+  targetUserId: z.string().min(1),
+});
+
 const resendInviteSchema = z.object({
   collaboratorId: z.string().min(1),
 });
@@ -230,7 +234,7 @@ async function resolveActiveCommunityId(): Promise<{ userId: string; communityId
   return { userId: user.id, communityId: community.id };
 }
 
-/** Remove a collaborator. OWNER only; the OWNER cannot be removed. */
+/** Remove a team member. OWNER only; primary admin cannot be removed directly. */
 export async function removeCollaborator(
   _prev: CollaboratorMutationResult,
   formData: FormData,
@@ -256,10 +260,17 @@ export async function removeCollaborator(
         return { success: false, error: 'Collaborator not found.' } as CollaboratorMutationResult;
       }
       if (member.role === 'COMMUNITY_ADMIN') {
-        return {
-          success: false,
-          error: 'The owner cannot be removed. Transfer ownership first.',
-        } as CollaboratorMutationResult;
+        const community = await db.community.findUnique({
+          where: { id: ctx.communityId },
+          select: { claimedByUserId: true },
+        });
+
+        if (community?.claimedByUserId === member.userId) {
+          return {
+            success: false,
+            error: 'Primary admin cannot be removed directly. Transfer primary admin first.',
+          } as CollaboratorMutationResult;
+        }
       }
 
       await db.$transaction([
@@ -300,6 +311,10 @@ export async function removeCollaborator(
     },
     () => ({ success: false, error: 'Something went wrong. Please try again.' }),
   );
+}
+
+export async function removeCollaboratorAction(formData: FormData): Promise<void> {
+  await removeCollaborator(null, formData);
 }
 
 /** Re-send acceptance email for a pending organizer invite. OWNER only. */
@@ -480,4 +495,87 @@ export async function transferOwnership(
     },
     () => ({ success: false, error: 'Something went wrong. Please try again.' }),
   );
+}
+
+export async function transferOwnershipAction(formData: FormData): Promise<void> {
+  await transferOwnership(null, formData);
+}
+
+/** Promote an ACTIVE collaborator to COMMUNITY_ADMIN without demoting current admins. */
+export async function promoteCollaboratorToAdmin(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canManageCommunity(user, ctx.communityId)) {
+    return { success: false, error: 'Only the organizer can promote collaborators.' };
+  }
+
+  const parsed = promoteSchema.safeParse({ targetUserId: formData.get('targetUserId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const target = await db.communityCollaborator.findUnique({
+        where: {
+          communityId_userId: {
+            communityId: ctx.communityId,
+            userId: parsed.data.targetUserId,
+          },
+        },
+        select: { id: true, status: true, role: true },
+      });
+
+      if (!target || target.status !== 'ACTIVE') {
+        return {
+          success: false,
+          error: 'New admin must be an active collaborator.',
+        } as CollaboratorMutationResult;
+      }
+
+      if (target.role === 'COMMUNITY_ADMIN') {
+        return { success: true } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: target.id },
+          data: { role: 'COMMUNITY_ADMIN' },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: ctx.communityId,
+            action: 'ROLE_GRANTED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: parsed.data.targetUserId,
+              fromRole: target.role,
+              toRole: 'COMMUNITY_ADMIN',
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      await captureServerEvent(user.id, Events.COMMUNITY_ROLE_CHANGED, {
+        community_id: ctx.communityId,
+        target_user_id: parsed.data.targetUserId,
+        from_role: target.role,
+        to_role: 'COMMUNITY_ADMIN',
+      });
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Something went wrong. Please try again.' }),
+  );
+}
+
+export async function promoteCollaboratorToAdminAction(formData: FormData): Promise<void> {
+  await promoteCollaboratorToAdmin(null, formData);
 }
