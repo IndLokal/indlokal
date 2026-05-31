@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
+import { db } from '@/lib/db';
 import { PortalShell } from '@/components/organizer/portal-shell';
 import { getHostProfile } from '@/lib/organizer/host-workspace';
 
@@ -21,6 +22,23 @@ export default async function HostLayout({ children }: { children: React.ReactNo
 
   const profile = getHostProfile(user);
   const hostName = profile.displayName || user.displayName || user.email;
+
+  const [latestPublishedEvent, profileCity] = await Promise.all([
+    db.event.findFirst({
+      where: { createdByUserId: user.id, moderationState: 'PUBLISHED' },
+      select: { slug: true, city: { select: { slug: true } } },
+      orderBy: { startsAt: 'desc' },
+    }),
+    profile.cityId
+      ? db.city.findUnique({ where: { id: profile.cityId }, select: { slug: true } })
+      : Promise.resolve(null),
+  ]);
+
+  const publicViewHref = latestPublishedEvent
+    ? `/${latestPublishedEvent.city.slug}/events/${latestPublishedEvent.slug}`
+    : profileCity
+      ? `/${profileCity.slug}/events`
+      : '/';
 
   const navLinks = [
     { href: '/organizer/host', label: 'Dashboard' },
@@ -52,6 +70,7 @@ export default async function HostLayout({ children }: { children: React.ReactNo
       titleSlot={titleSlot}
       navLinks={navLinks}
       cta={{ href: '/organizer/host/events/new', label: '+ New Event' }}
+      publicViewHref={publicViewHref}
       account={{ label: user.displayName ?? user.email, email: user.email }}
     >
       {children}
