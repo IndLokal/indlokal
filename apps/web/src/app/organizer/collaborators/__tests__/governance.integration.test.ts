@@ -99,7 +99,7 @@ describe('@db inviteCollaborator', () => {
     form.set('email', 'new-collab@example.com');
     const result = await inviteCollaborator(null, form);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toMatchObject({ success: true });
     const invited = await testDb.user.findUnique({ where: { email: 'new-collab@example.com' } });
     expect(invited).not.toBeNull();
     const row = await testDb.communityCollaborator.findUnique({
@@ -133,6 +133,21 @@ describe('@db inviteCollaborator', () => {
       where: { email: 'someone-else@example.com' },
     });
     expect(created).toBeNull();
+  });
+
+  it('stores collaborator name on the invited user when provided', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('name', 'Priya Sharma');
+    form.set('email', 'named-collab@example.com');
+    const result = await inviteCollaborator(null, form);
+
+    expect(result).toMatchObject({ success: true });
+    const invited = await testDb.user.findUnique({ where: { email: 'named-collab@example.com' } });
+    expect(invited?.displayName).toBe('Priya Sharma');
   });
 });
 

@@ -24,11 +24,28 @@ export function CollaboratorInviteCard({
 
       {state?.success ? (
         <p className="mt-3 rounded-[var(--radius-button)] border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-          Invite request submitted.
+          {state.message}
         </p>
       ) : null}
 
       <form action={formAction} className="mt-4 space-y-3">
+        <div>
+          <label htmlFor="invite-name" className="text-foreground block text-sm font-medium">
+            Collaborator name (optional)
+          </label>
+          <input
+            id="invite-name"
+            name="name"
+            type="text"
+            maxLength={120}
+            className="input-base mt-1"
+            placeholder="Priya Sharma"
+          />
+          {state?.success === false && state.errors.name ? (
+            <p className="mt-1 text-sm text-red-600">{state.errors.name[0]}</p>
+          ) : null}
+        </div>
+
         <div>
           <label htmlFor="invite-email" className="text-foreground block text-sm font-medium">
             Collaborator email

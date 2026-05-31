@@ -305,6 +305,33 @@ export async function sendOrganizerCollaboratorApprovedNotificationEmail(
   );
 }
 
+export async function sendCollaboratorInviteRequestedEmail(
+  to: string,
+  communityName: string,
+  inviterName?: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `Collaborator invite request for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">You've been invited as a collaborator</h2>
+  <p>
+    ${inviterName ? `<strong>${inviterName}</strong> invited you` : 'You were invited'} to help manage
+    <strong>${communityName}</strong> on IndLokal.
+  </p>
+  <p>Your access request is now pending admin review. You'll get another email when access is approved.</p>
+  <p style="font-size:13px;color:#666">If this wasn't expected, you can ignore this email.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
 /* ─── Collaborator access rejected ─── */
 
 export async function sendCollaboratorAccessRejectedEmail(

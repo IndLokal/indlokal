@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
 import { getCurrentCommunityId, getSessionUser } from '@/lib/session';
+import { sendCollaboratorInviteRequestedEmail } from '@/lib/email';
 import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 import {
   canManageCommunity,
@@ -15,12 +16,13 @@ import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 
 const inviteCollaboratorSchema = z.object({
+  name: z.string().trim().min(1).max(120).optional().or(z.literal('')),
   email: z.string().email(),
   note: z.string().max(300).optional().or(z.literal('')),
 });
 
 export type InviteCollaboratorResult =
-  | { success: true }
+  | { success: true; message: string }
   | { success: false; errors: Record<string, string[]> }
   | null;
 
@@ -50,6 +52,7 @@ export async function inviteCollaborator(
   }
 
   const raw = {
+    name: ((formData.get('name') as string) || '').trim(),
     email: ((formData.get('email') as string) || '').trim().toLowerCase(),
     note: ((formData.get('note') as string) || '').trim(),
   };
@@ -63,6 +66,7 @@ export async function inviteCollaborator(
   }
 
   const data = parsed.data;
+  const normalizedName = data.name || undefined;
 
   return withAction(
     async () => {
@@ -71,8 +75,14 @@ export async function inviteCollaborator(
         target = await db.user.create({
           data: {
             email: data.email,
+            displayName: normalizedName,
             role: 'USER',
           },
+        });
+      } else if (normalizedName && !target.displayName) {
+        target = await db.user.update({
+          where: { id: target.id },
+          data: { displayName: normalizedName },
         });
       }
 
@@ -93,8 +103,18 @@ export async function inviteCollaborator(
         select: { status: true },
       });
 
-      if (existing?.status === 'ACTIVE' || existing?.status === 'PENDING') {
-        return { success: true } as InviteCollaboratorResult;
+      if (existing?.status === 'ACTIVE') {
+        return {
+          success: true,
+          message: 'This person is already an active collaborator for this community.',
+        } as InviteCollaboratorResult;
+      }
+
+      if (existing?.status === 'PENDING') {
+        return {
+          success: true,
+          message: 'An invite request is already pending admin review for this collaborator.',
+        } as InviteCollaboratorResult;
       }
 
       await db.communityCollaborator.upsert({
@@ -113,6 +133,7 @@ export async function inviteCollaborator(
           reviewedAt: null,
           reviewedByUserId: null,
           metadata: {
+            name: normalizedName,
             note: data.note,
             invitedAt: new Date().toISOString(),
           },
@@ -126,16 +147,28 @@ export async function inviteCollaborator(
           requestedByUserId: user.id,
           requestedEmail: data.email,
           metadata: {
+            name: normalizedName,
             note: data.note,
             invitedAt: new Date().toISOString(),
           },
         },
       });
 
+      let message = 'Invite request submitted and email sent to collaborator.';
+      try {
+        await sendCollaboratorInviteRequestedEmail(
+          data.email,
+          community.name,
+          user.displayName ?? user.email,
+        );
+      } catch {
+        message = 'Invite request submitted. Email delivery failed, but admin can still review it.';
+      }
+
       revalidatePath('/organizer');
       revalidatePath('/organizer/collaborators');
 
-      return { success: true } as InviteCollaboratorResult;
+      return { success: true, message } as InviteCollaboratorResult;
     },
     () => ({ success: false, errors: { _: ['Something went wrong. Please try again.'] } }),
   );
