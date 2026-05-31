@@ -46,6 +46,10 @@ export type Action =
   | 'claims.read'
   | 'claims.approve'
   | 'claims.reject'
+  // Admin - event moderation (ADR-0009)
+  | 'events.review.read'
+  | 'events.review.approve'
+  | 'events.review.reject'
   // Admin - scoring
   | 'scoring.read'
   | 'scoring.run'
@@ -88,6 +92,9 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
     'claims.read',
     'claims.approve',
     'claims.reject',
+    'events.review.read',
+    'events.review.approve',
+    'events.review.reject',
     'reports.read',
     'reports.resolve',
     'team.read',
@@ -105,6 +112,9 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
     'claims.read',
     'claims.approve',
     'claims.reject',
+    'events.review.read',
+    'events.review.approve',
+    'events.review.reject',
     'scoring.read',
     'scoring.run',
     'reports.read',

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
+import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 
 export const metadata = { title: 'Community Events - Organizer' };
 export const dynamic = 'force-dynamic';
@@ -14,8 +15,8 @@ type OrganizerEventRow = {
   slug: string;
   startsAt: Date;
   status: string;
+  moderationState: 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
   city: { name: string; slug: string };
-  trustSignals: { id: string }[];
 };
 
 export default async function OrganizerEventsPage() {
@@ -33,8 +34,8 @@ export default async function OrganizerEventsPage() {
       slug: true,
       startsAt: true,
       status: true,
+      moderationState: true,
       city: { select: { name: true, slug: true } },
-      trustSignals: { select: { id: true }, take: 1 },
     },
     orderBy: { startsAt: 'asc' },
   });
@@ -122,15 +123,10 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
                 {format(new Date(event.startsAt), 'dd MMM yyyy')}
               </td>
               <td className="px-4 py-3">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    event.trustSignals.length > 0
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
-                  {event.trustSignals.length > 0 ? 'Verified' : 'Pending review'}
-                </span>
+                <EventModerationChip
+                  status={event.status}
+                  moderationState={event.moderationState}
+                />
               </td>
             </tr>
           ))}

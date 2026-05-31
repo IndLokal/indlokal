@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
+import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Events - Event Host' };
@@ -13,17 +14,17 @@ export default async function HostEventsPage() {
   if (!user) redirect('/organizer/host/start');
 
   const events = await db.event.findMany({
-    where: { metadata: { path: ['hostUserId'], equals: user.id } },
+    where: { createdByUserId: user.id },
     select: {
       id: true,
       title: true,
       slug: true,
       startsAt: true,
       status: true,
+      moderationState: true,
       isOnline: true,
       venueName: true,
       city: { select: { name: true, slug: true } },
-      trustSignals: { select: { id: true }, take: 1 },
     },
     orderBy: { startsAt: 'asc' },
   });
@@ -79,10 +80,10 @@ type EventRow = {
   slug: string;
   startsAt: Date;
   status: string;
+  moderationState: 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
   isOnline: boolean;
   venueName: string | null;
   city: { name: string; slug: string };
-  trustSignals: { id: string }[];
 };
 
 function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
@@ -114,15 +115,7 @@ function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
                 {format(new Date(ev.startsAt), 'dd MMM yyyy')}
               </td>
               <td className="px-4 py-3">
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                    ev.trustSignals.length > 0
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-yellow-100 text-yellow-700'
-                  }`}
-                >
-                  {ev.trustSignals.length > 0 ? 'Verified' : 'Pending review'}
-                </span>
+                <EventModerationChip status={ev.status} moderationState={ev.moderationState} />
               </td>
             </tr>
           ))}

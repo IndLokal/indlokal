@@ -23,9 +23,8 @@ const addEventSchema = z.object({
     .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid start date' }),
   endsAt: z
     .string()
-    .optional()
-    .or(z.literal(''))
-    .refine((v) => !v || !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
+    .min(1, 'End date is required')
+    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
   venueName: z.string().max(200).optional().or(z.literal('')),
   venueAddress: z.string().max(500).optional().or(z.literal('')),
   isOnline: z.coerce.boolean().default(false),
@@ -125,6 +124,10 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           cost: data.cost,
           status: 'UPCOMING',
           source: 'COMMUNITY_SUBMITTED',
+          // ADR-0009: community-trusted lane publishes immediately and records
+          // the accountable creator.
+          moderationState: 'PUBLISHED',
+          createdByUserId: user.id,
         },
       });
 

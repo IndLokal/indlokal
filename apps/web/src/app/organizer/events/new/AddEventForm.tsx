@@ -17,6 +17,14 @@ export default function AddEventForm({ communityName }: { communityName: string 
     return d.toISOString().slice(0, 16);
   })();
 
+  // Default end: two hours after the default start.
+  const defaultEnd = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    d.setHours(d.getHours() + 2);
+    return d.toISOString().slice(0, 16);
+  })();
+
   return (
     <form action={formAction} className="space-y-6">
       {/* Title */}
@@ -61,14 +69,15 @@ export default function AddEventForm({ communityName }: { communityName: string 
           {errors.startsAt && <p className="mt-1 text-sm text-red-600">{errors.startsAt[0]}</p>}
         </div>
         <div>
-          <label className="text-foreground block text-sm font-medium">
-            End time <span className="text-muted">(optional)</span>
-          </label>
+          <label className="text-foreground block text-sm font-medium">End date & time *</label>
           <input
             name="endsAt"
             type="datetime-local"
+            required
+            defaultValue={defaultEnd}
             className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
           />
+          {errors.endsAt && <p className="mt-1 text-sm text-red-600">{errors.endsAt[0]}</p>}
         </div>
       </div>
 

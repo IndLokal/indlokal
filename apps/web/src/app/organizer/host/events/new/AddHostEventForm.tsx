@@ -75,12 +75,14 @@ export function AddHostEventForm({ cities, defaultCityId }: Props) {
           {errors?.startsAt && <p className="mt-1 text-xs text-red-600">{errors.startsAt[0]}</p>}
         </div>
         <div>
-          <label className="text-muted mb-1 block text-xs font-medium">End (optional)</label>
+          <label className="text-muted mb-1 block text-xs font-medium">End date & time *</label>
           <input
             name="endsAt"
             type="datetime-local"
+            required
             className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
           />
+          {errors?.endsAt && <p className="mt-1 text-xs text-red-600">{errors.endsAt[0]}</p>}
         </div>
       </div>
 

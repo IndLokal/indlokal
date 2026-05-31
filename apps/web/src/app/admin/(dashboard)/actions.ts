@@ -4,6 +4,8 @@ import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import {
   sendCollaboratorAccessApprovedEmail,
   sendCollaboratorAccessRejectedEmail,
@@ -12,6 +14,8 @@ import {
   sendOrganizerCollaboratorApprovedNotificationEmail,
   sendOrganizerCollaboratorRejectedNotificationEmail,
   sendSubmissionApprovedEmail,
+  sendHostEventApprovedEmail,
+  sendHostEventRejectedEmail,
 } from '@/lib/email';
 
 /* --- Submission actions --- */
@@ -470,4 +474,118 @@ export async function resolveReport(formData: FormData) {
   });
 
   revalidatePath('/admin/reports');
+}
+
+/* --- Event moderation actions (ADR-0009) --- */
+
+async function loadReviewableEvent(id: string) {
+  return db.event.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      moderationState: true,
+      createdByUserId: true,
+      city: { select: { slug: true } },
+      createdBy: { select: { email: true, displayName: true } },
+    },
+  });
+}
+
+export async function approveEvent(formData: FormData) {
+  const reviewer = await assertCan('events.review.approve');
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  const event = await loadReviewableEvent(id);
+  if (!event || event.moderationState !== 'PENDING_REVIEW') return;
+
+  await db.$transaction([
+    db.event.update({
+      where: { id },
+      data: {
+        moderationState: 'PUBLISHED',
+        reviewedById: reviewer.id,
+        reviewedAt: new Date(),
+        reviewReason: null,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'event',
+        entityId: id,
+        action: 'UPDATED',
+        changedBy: reviewer.id,
+        metadata: { decision: 'approved', moderationState: 'PUBLISHED' },
+      },
+    }),
+  ]);
+
+  await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
+    eventId: id,
+    decision: 'approved',
+  });
+
+  if (event.createdBy?.email && event.city?.slug) {
+    try {
+      await sendHostEventApprovedEmail(
+        event.createdBy.email,
+        event.title,
+        event.city.slug,
+        event.slug,
+      );
+    } catch {
+      // Email is best-effort
+    }
+  }
+
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/events');
+}
+
+export async function rejectEvent(formData: FormData) {
+  const reviewer = await assertCan('events.review.reject');
+  const id = formData.get('id') as string;
+  const reason = ((formData.get('reason') as string) ?? '').trim() || null;
+  if (!id) return;
+
+  const event = await loadReviewableEvent(id);
+  if (!event || event.moderationState !== 'PENDING_REVIEW') return;
+
+  await db.$transaction([
+    db.event.update({
+      where: { id },
+      data: {
+        moderationState: 'REJECTED',
+        reviewedById: reviewer.id,
+        reviewedAt: new Date(),
+        reviewReason: reason,
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'event',
+        entityId: id,
+        action: 'UPDATED',
+        changedBy: reviewer.id,
+        metadata: { decision: 'rejected', moderationState: 'REJECTED', reason },
+      },
+    }),
+  ]);
+
+  await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
+    eventId: id,
+    decision: 'rejected',
+  });
+
+  if (event.createdBy?.email) {
+    try {
+      await sendHostEventRejectedEmail(event.createdBy.email, event.title, reason);
+    } catch {
+      // Email is best-effort
+    }
+  }
+
+  revalidatePath('/admin/events');
 }
