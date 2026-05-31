@@ -48,7 +48,7 @@ describe('organizer collaborator accept route', () => {
     mocks.createSessionMock.mockReset();
   });
 
-  it('GET renders accept page and includes hidden token/invite fields', async () => {
+  it('GET renders accept page without reflecting token/invite fields', async () => {
     const req = new NextRequest(
       'http://localhost/organizer/collaborators/accept?token=abc123&invite=invite123',
       { method: 'GET' },
@@ -58,8 +58,11 @@ describe('organizer collaborator accept route', () => {
     const html = await res.text();
 
     expect(res.status).toBe(200);
-    expect(html).toContain('name="token" value="abc123"');
-    expect(html).toContain('name="invite" value="invite123"');
+    expect(html).toContain('action="/organizer/collaborators/accept"');
+    expect(html).not.toContain('name="token"');
+    expect(html).not.toContain('name="invite"');
+    expect(html).not.toContain('abc123');
+    expect(html).not.toContain('invite123');
   });
 
   it('POST with missing token/invite redirects to invalid_invite', async () => {

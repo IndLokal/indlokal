@@ -37,8 +37,6 @@ export async function GET(request: NextRequest) {
       <h1>Accept collaborator invite</h1>
       <p>Click below to activate your collaborator access and sign in.</p>
       <form method="POST" action="/organizer/collaborators/accept">
-        <input type="hidden" name="token" value="${rawToken}" />
-        <input type="hidden" name="invite" value="${inviteId}" />
         <button type="submit">Accept invite and continue</button>
       </form>
       <small>This extra step prevents email scanners from auto-accepting your invite.</small>
