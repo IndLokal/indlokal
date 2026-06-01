@@ -13,8 +13,9 @@ import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
 export const metadata: Metadata = {
-  title: `${siteConfig.name} - ${siteConfig.tagline}`,
-  description: siteConfig.description,
+  title: `Indian Communities and Events in Germany | ${siteConfig.name}`,
+  description:
+    'Discover Indian communities in Germany and upcoming Indian events in Germany. Explore by city with trusted local resources.',
   alternates: {
     canonical: '/',
   },
@@ -100,21 +101,10 @@ export default function HomePage() {
               <CitySearch />
             </div>
 
-            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm">
-              <Link
-                href="/indian-communities-in-germany"
-                className="text-brand-100 hover:text-white hover:underline"
-              >
-                Indian communities in Germany
-              </Link>
-              <span className="text-brand-200/70">•</span>
-              <Link
-                href="/indian-events-in-germany"
-                className="text-brand-100 hover:text-white hover:underline"
-              >
-                Indian events in Germany
-              </Link>
-            </div>
+            <p className="text-brand-200/90 mt-5 text-sm">
+              Searching for Indian communities in Germany or Indian events in Germany? Start by
+              choosing your city.
+            </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link

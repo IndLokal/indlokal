@@ -106,8 +106,8 @@ export default async function EventsPage({ params, searchParams }: Props) {
 
   const description =
     events.length > 0
-      ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
-      : 'No upcoming events right now - check back soon.';
+      ? `${events.length} upcoming Indian event${events.length !== 1 ? 's' : ''} in ${cityName}, Germany.`
+      : `No upcoming Indian events right now in ${cityName}, Germany - check back soon.`;
 
   const activeCategoryName = filters.category
     ? (categories.find((cat: CategoryItem) => cat.slug === filters.category)?.name ??

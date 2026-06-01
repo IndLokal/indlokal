@@ -20,8 +20,6 @@ const NAV_COLUMNS = [
   {
     title: 'Explore',
     links: [
-      { label: 'Indian Communities in Germany', href: '/indian-communities-in-germany' },
-      { label: 'Indian Events in Germany', href: '/indian-events-in-germany' },
       { label: 'Suggest Community', href: '/submit' },
       { label: 'Organizer Dashboard', href: '/organizer/login' },
     ],
