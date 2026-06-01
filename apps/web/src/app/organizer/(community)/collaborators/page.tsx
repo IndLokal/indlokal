@@ -141,9 +141,14 @@ export default async function OrganizerCollaboratorsPage() {
                   className="border-border rounded-[var(--radius-card)] border bg-white p-4 text-sm"
                 >
                   <p className="text-foreground font-medium">
-                    {collaborator.user.displayName ?? collaborator.user.email}
+                    {collaborator.user.displayName ||
+                      collaborator.user.email ||
+                      collaborator.requestedEmail ||
+                      'Team member'}
                   </p>
-                  <p className="text-muted mt-0.5 text-xs">{collaborator.user.email}</p>
+                  <p className="text-muted mt-0.5 text-xs">
+                    {collaborator.user.email || collaborator.requestedEmail || 'No email on file'}
+                  </p>
                   <dl className="mt-3 space-y-2">
                     <div className="grid grid-cols-[5.5rem_1fr] gap-2">
                       <dt className="text-muted text-xs uppercase tracking-wide">Role</dt>
@@ -368,7 +373,7 @@ export default async function OrganizerCollaboratorsPage() {
                           </button>
                         </form>
                       ) : (
-                        <span className="text-muted text-sm">No action required</span>
+                        <span className="text-muted">-</span>
                       )}
                     </div>
                   </article>

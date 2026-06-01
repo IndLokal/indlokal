@@ -18,7 +18,7 @@ export function OrganizerWorkspaceBanner({
     <div className="border-border bg-muted-bg/60 rounded-[var(--radius-card)] border px-4 py-2.5">
       <div className="text-sm sm:flex sm:items-center sm:justify-between sm:gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-muted text-xs font-semibold uppercase tracking-wide">
+          <span className="text-muted shrink-0 text-xs font-semibold uppercase tracking-wide">
             Active workspace
           </span>
           <span className="text-foreground min-w-0 truncate font-semibold">{communityName}</span>
