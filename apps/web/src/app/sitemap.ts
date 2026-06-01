@@ -73,6 +73,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   entries.push({ url: `${baseUrl}/privacy`, changeFrequency: 'yearly', priority: 0.3 });
   entries.push({ url: `${baseUrl}/terms`, changeFrequency: 'yearly', priority: 0.3 });
   entries.push({ url: `${baseUrl}/impressum`, changeFrequency: 'yearly', priority: 0.3 });
+  entries.push({
+    url: `${baseUrl}/indian-communities-in-germany`,
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  });
+  entries.push({
+    url: `${baseUrl}/indian-events-in-germany`,
+    changeFrequency: 'weekly',
+    priority: 0.9,
+  });
 
   // Upcoming cities - coming soon pages
   for (const city of UPCOMING_CITIES) {

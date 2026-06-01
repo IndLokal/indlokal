@@ -100,6 +100,22 @@ export default function HomePage() {
               <CitySearch />
             </div>
 
+            <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-sm">
+              <Link
+                href="/indian-communities-in-germany"
+                className="text-brand-100 hover:text-white hover:underline"
+              >
+                Indian communities in Germany
+              </Link>
+              <span className="text-brand-200/70">•</span>
+              <Link
+                href="/indian-events-in-germany"
+                className="text-brand-100 hover:text-white hover:underline"
+              >
+                Indian events in Germany
+              </Link>
+            </div>
+
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link
                 href={`/${ACTIVE_CITIES[0]}`}

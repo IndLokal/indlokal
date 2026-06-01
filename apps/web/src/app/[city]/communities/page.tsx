@@ -95,10 +95,10 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     communities.length > 0
       ? languageName
         ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
-        : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
+        : `${communities.length} active Indian communit${communities.length !== 1 ? 'ies' : 'y'} in ${cityName}, Germany.`
       : languageName
         ? `No ${languageName} communities listed yet.`
-        : 'No communities listed yet.';
+        : `No Indian communities listed yet in ${cityName}, Germany.`;
 
   return (
     <div className="space-y-8">
