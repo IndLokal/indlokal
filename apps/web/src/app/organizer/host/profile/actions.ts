@@ -67,6 +67,8 @@ export async function updateHostProfile(
   });
 
   await captureServerEvent(user.id, Events.HOST_PROFILE_UPDATED, {
+    link_count: links.length,
+    // Backward-compatible alias for existing PostHog dashboards.
     linkCount: links.length,
   });
 

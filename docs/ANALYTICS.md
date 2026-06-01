@@ -28,7 +28,8 @@ Client:
 Server:
 
 - API routes/server actions use captureServerEvent
-- Tracking no-ops when NEXT_PUBLIC_POSTHOG_KEY is unset
+- `/api/v1/track` maps selected mobile events (for example `event.detail.viewed`) into canonical PostHog events
+- Tracking no-ops when no PostHog key is configured
 
 ## Key Files
 
@@ -44,12 +45,14 @@ Server:
 
 ## Environment Variables
 
-| Variable                 | Required   | Description                     |
-| ------------------------ | ---------- | ------------------------------- |
-| NEXT_PUBLIC_POSTHOG_KEY  | Yes (prod) | Project API key                 |
-| NEXT_PUBLIC_POSTHOG_HOST | No         | Host (default eu.i.posthog.com) |
+| Variable                 | Required    | Description                                          |
+| ------------------------ | ----------- | ---------------------------------------------------- |
+| POSTHOG_KEY              | Recommended | Server-side PostHog key (preferred on server)        |
+| POSTHOG_HOST             | No          | Server-side host override (default eu.i.posthog.com) |
+| NEXT_PUBLIC_POSTHOG_KEY  | Yes (prod)  | Browser API key (also used as server fallback)       |
+| NEXT_PUBLIC_POSTHOG_HOST | No          | Browser host (default eu.i.posthog.com)              |
 
-If NEXT_PUBLIC_POSTHOG_KEY is missing, analytics silently no-op.
+If both `POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_KEY` are missing, analytics silently no-op.
 
 ## Canonical Event List
 
@@ -78,6 +81,14 @@ Conversion:
 Ops observability:
 
 - pipeline_shard_completed
+- pipeline_dispatched
+
+Governance / organizer:
+
+- community_role_changed
+- host_event_submitted_for_review
+- event_review_decision
+- host_profile_updated
 
 ## Event Property Guidelines
 
@@ -96,6 +107,11 @@ Examples:
 - Use stable internal user ID as distinctId for authenticated events
 - For unauthenticated flows, use non-PII system IDs (for example anonymous-submitter, system-cron)
 - On logout, client identity should reset to avoid cross-user contamination on shared devices
+
+Lifecycle emission coverage:
+
+- `user_signed_up`: host sign-up (`/organizer/host/start`) and Apple first-time auth (`/api/v1/auth/apple`)
+- `user_logged_in`: organizer/admin magic-link verify and API v1 auth verify flows
 
 ## Dashboards To Keep
 
@@ -128,7 +144,7 @@ Berlin rollout / shard health:
 
 Events missing:
 
-1. Verify NEXT_PUBLIC_POSTHOG_KEY
+1. Verify `NEXT_PUBLIC_POSTHOG_KEY` (client) and/or `POSTHOG_KEY` (server)
 2. Check network requests to /ingest
 3. Check Live Events in PostHog
 

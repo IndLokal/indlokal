@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 
 const ADMIN_VERIFY_TOKEN_COOKIE = 'admin_verify_token';
 
@@ -100,6 +102,10 @@ export async function POST(request: NextRequest) {
     if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
       const sessionToken = generateSessionToken();
       await createSession(existing.user.id, sessionToken);
+      void captureServerEvent(existing.user.id, Events.USER_LOGGED_IN, {
+        login_surface: 'admin_web',
+        auth_method: 'magic_link',
+      });
       return seeOther('/admin');
     }
 
@@ -117,6 +123,10 @@ export async function POST(request: NextRequest) {
 
   const sessionToken = generateSessionToken();
   await createSession(magicLink.user.id, sessionToken);
+  void captureServerEvent(magicLink.user.id, Events.USER_LOGGED_IN, {
+    login_surface: 'admin_web',
+    auth_method: 'magic_link',
+  });
 
   return seeOther('/admin');
 }

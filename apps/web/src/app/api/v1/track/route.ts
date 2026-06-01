@@ -9,6 +9,9 @@ import { z } from 'zod';
 import { optionalAccessToken } from '@/lib/auth/middleware';
 import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
+import type { AnalyticsEvent } from '@/lib/analytics/events';
 
 const INTERACTION_TYPE_MAP: Record<string, string> = {
   'event.detail.viewed': 'VIEW',
@@ -18,6 +21,19 @@ const INTERACTION_TYPE_MAP: Record<string, string> = {
   'event.register_clicked': 'CLICK_ACCESS',
   'discover.feed.viewed': 'VIEW',
   'discover.card.tapped': 'CLICK_ACCESS',
+};
+
+const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
+  // Mobile event detail views should join the canonical event_viewed funnel.
+  'event.detail.viewed': Events.EVENT_VIEWED,
+  // Allow callers that already use canonical names to pass through directly.
+  [Events.COMMUNITY_VIEWED]: Events.COMMUNITY_VIEWED,
+  [Events.EVENT_VIEWED]: Events.EVENT_VIEWED,
+  [Events.COMMUNITY_SAVED]: Events.COMMUNITY_SAVED,
+  [Events.COMMUNITY_UNSAVED]: Events.COMMUNITY_UNSAVED,
+  [Events.SEARCH_PERFORMED]: Events.SEARCH_PERFORMED,
+  [Events.COMMUNITY_ACCESS_CLICKED]: Events.COMMUNITY_ACCESS_CLICKED,
+  [Events.BUSINESS_LENS_VIEWED]: Events.BUSINESS_LENS_VIEWED,
 };
 
 const TrackBody = z.object({
@@ -76,6 +92,17 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     } catch {
       // Tracking is non-critical - always return ok.
     }
+  }
+
+  const posthogEvent = POSTHOG_EVENT_MAP[eventType];
+  if (posthogEvent) {
+    void captureServerEvent(auth?.userId ?? 'anonymous-mobile', posthogEvent, {
+      entity_id: entityId,
+      entity_type: entityType?.toLowerCase(),
+      city: citySlug,
+      source_surface: 'mobile_track_api',
+      original_event: eventType,
+    });
   }
 
   return NextResponse.json({ ok: true });

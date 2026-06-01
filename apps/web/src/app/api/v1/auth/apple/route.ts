@@ -22,6 +22,8 @@ import { issueAccessToken } from '@/lib/auth/jwt';
 import { issueRefreshToken } from '@/lib/auth/refresh';
 import { toMeProfile } from '@/lib/auth/profile';
 import { getAppleJwks } from './jwks';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 
 export const runtime = 'nodejs';
 
@@ -104,6 +106,13 @@ export const POST = apiHandler(async (req: NextRequest) => {
         include: { city: { select: { name: true } } },
       });
 
+  if (!existing) {
+    void captureServerEvent(user.id, Events.USER_SIGNED_UP, {
+      signup_surface: 'api_v1',
+      auth_method: 'apple',
+    });
+  }
+
   const userAgent = req.headers.get('user-agent');
   const ip =
     req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? req.headers.get('x-real-ip');
@@ -123,5 +132,11 @@ export const POST = apiHandler(async (req: NextRequest) => {
     refreshExpiresAt: refresh.expiresAt.toISOString(),
     user: toMeProfile(user),
   };
+
+  void captureServerEvent(user.id, Events.USER_LOGGED_IN, {
+    login_surface: 'api_v1',
+    auth_method: 'apple',
+  });
+
   return NextResponse.json(tokens);
 });
