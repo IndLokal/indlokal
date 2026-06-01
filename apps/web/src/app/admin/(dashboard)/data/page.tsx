@@ -78,7 +78,7 @@ export default async function DataHubPage() {
             href={t.href}
             className="border-border hover:border-border hover:bg-muted-bg block rounded-[var(--radius-card)] border p-5 transition-colors"
           >
-            <div className="text-muted text-xs uppercase tracking-wide">{t.label}</div>
+            <div className="text-muted text-xs tracking-wide uppercase">{t.label}</div>
             <div className="mt-1 text-xl font-semibold">{t.value}</div>
           </Link>
         ))}

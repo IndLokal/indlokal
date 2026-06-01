@@ -349,7 +349,7 @@ Each item below ships behind its own TDD:
 - **Phase 0 - Foundations (done / in place):** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads endpoint, spec templates in `docs/specs/`.
 - **Phase 1 - App v1.0 (Member to parity):** §4.1 scope - finish the Member surface (image-enabled submissions, editable profile, parity public surfaces). Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target).
 - **Phase 2 - App v1.1 (Role-aware shell):** §4.2 - workspace hub driven by `RoleAssignment` scopes + authenticated web hand-off. This is the realignment keystone that ends the Member-only drift.
-- **Phase 3 - App v1.2 (Ambassador field mode):** §4.3 - the highest-leverage *new* build; the app becomes the field tool for City Ambassadors (check-in, photo capture, fast-track submit, scoreboard).
+- **Phase 3 - App v1.2 (Ambassador field mode):** §4.3 - the highest-leverage _new_ build; the app becomes the field tool for City Ambassadors (check-in, photo capture, fast-track submit, scoreboard).
 - **Phase 4 - App v1.3 (Organizer & Host lite):** §4.4 - on-the-go community/event management mirroring the web consoles, with deep features handed off to web.
 - **Phase 5 - Enrichment:** widgets, Live Activities, WhatsApp channel, referrals; then ticketing/RSVP + payments, in-app chat, recommendations from `modules/scoring`, AI agent surface from `docs/AI_PIPELINE_*`.
 

@@ -49,14 +49,14 @@ export default async function HostLayout({ children }: { children: React.ReactNo
   const titleSlot = (
     <Link
       href="/organizer/host/profile"
-      className="border-border hover:bg-muted-bg flex h-10 min-w-0 max-w-[220px] items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
+      className="border-border hover:bg-muted-bg flex h-10 max-w-[220px] min-w-0 items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
       aria-label="Event Host Profile"
     >
       <span className="bg-brand-100 text-brand-700 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
         {hostName.charAt(0).toUpperCase()}
       </span>
       <span className="min-w-0">
-        <span className="text-foreground block truncate text-[13px] font-semibold leading-4">
+        <span className="text-foreground block truncate text-[13px] leading-4 font-semibold">
           {hostName}
         </span>
         <span className="text-muted block truncate text-[11px] leading-3">Event host</span>

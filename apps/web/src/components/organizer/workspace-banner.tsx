@@ -18,7 +18,7 @@ export function OrganizerWorkspaceBanner({
     <div className="border-border bg-muted-bg/60 rounded-[var(--radius-card)] border px-4 py-2.5">
       <div className="text-sm sm:flex sm:items-center sm:justify-between sm:gap-3">
         <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <span className="text-muted shrink-0 text-xs font-semibold uppercase tracking-wide">
+          <span className="text-muted shrink-0 text-xs font-semibold tracking-wide uppercase">
             Active workspace
           </span>
           <span className="text-foreground min-w-0 truncate font-semibold">{communityName}</span>
@@ -26,7 +26,7 @@ export function OrganizerWorkspaceBanner({
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-0 sm:justify-end">
           {role && (
-            <span className="text-muted shrink-0 rounded-full border border-black/5 bg-white px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+            <span className="text-muted shrink-0 rounded-full border border-black/5 bg-white px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
               {role === 'COMMUNITY_ADMIN' ? 'Community admin' : 'Collaborator'}
             </span>
           )}

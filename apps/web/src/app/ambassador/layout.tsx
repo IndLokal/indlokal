@@ -49,7 +49,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
             <span className="rounded-full bg-sky-100 px-2.5 py-0.5 text-xs font-medium text-sky-700">
               {cityLabel}
             </span>
-            <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm sm:flex">
+            <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto text-sm whitespace-nowrap sm:flex">
               {AMBASSADOR_NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -67,7 +67,7 @@ export default async function AmbassadorLayout({ children }: { children: React.R
             )}
             <details className="group relative">
               <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
-                <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
+                <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs leading-none font-semibold">
                   {accountInitial}
                 </span>
                 <span className="text-muted hidden text-xs font-semibold lg:inline">Account</span>

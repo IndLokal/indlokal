@@ -67,7 +67,7 @@ export default async function HostEventSummaryPage({ params }: Props) {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
-            <p className="text-muted text-xs uppercase tracking-wide">Venue</p>
+            <p className="text-muted text-xs tracking-wide uppercase">Venue</p>
             <p className="mt-1 text-sm">
               {event.venueName ?? '—'}
               {event.venueAddress ? (
@@ -78,15 +78,15 @@ export default async function HostEventSummaryPage({ params }: Props) {
             </p>
           </div>
           <div>
-            <p className="text-muted text-xs uppercase tracking-wide">Cost</p>
+            <p className="text-muted text-xs tracking-wide uppercase">Cost</p>
             <p className="mt-1 text-sm">{event.cost ?? '—'}</p>
           </div>
         </div>
 
         {event.description && (
           <div>
-            <p className="text-muted text-xs uppercase tracking-wide">Description</p>
-            <p className="mt-1 whitespace-pre-line text-sm leading-6">{event.description}</p>
+            <p className="text-muted text-xs tracking-wide uppercase">Description</p>
+            <p className="mt-1 text-sm leading-6 whitespace-pre-line">{event.description}</p>
           </div>
         )}
 

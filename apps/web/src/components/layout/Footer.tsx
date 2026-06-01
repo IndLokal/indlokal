@@ -45,7 +45,7 @@ export function Footer() {
   return (
     <footer className="border-border/50 mt-10 border-t bg-gradient-to-b from-white to-slate-50">
       {/* Main footer content */}
-      <div className="mx-auto max-w-7xl px-4 pb-10 pt-14 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pt-14 pb-10 sm:px-6 lg:px-8">
         <div className="grid gap-8 sm:grid-cols-2 md:grid-cols-[1.5fr_repeat(4,1fr)] lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div className="space-y-5 md:pr-8">
@@ -92,7 +92,7 @@ export function Footer() {
           {/* Nav columns */}
           {NAV_COLUMNS.map((col) => (
             <div key={col.title}>
-              <h4 className="text-foreground/70 mb-3 text-xs font-semibold uppercase tracking-wider">
+              <h4 className="text-foreground/70 mb-3 text-xs font-semibold tracking-wider uppercase">
                 {col.title}
               </h4>
               <ul className="space-y-2">

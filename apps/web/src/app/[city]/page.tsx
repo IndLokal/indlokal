@@ -86,10 +86,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
     <div className="space-y-14">
       {/* Hero - dark, bold */}
       <section className="relative -mx-4 -mt-8 overflow-hidden sm:-mx-6 sm:-mt-12 lg:-mx-8">
-        <div className="from-brand-900 via-brand-800 to-brand-700 bg-gradient-to-br px-4 pb-8 pt-10 sm:px-6 lg:px-8">
+        <div className="from-brand-900 via-brand-800 to-brand-700 bg-gradient-to-br px-4 pt-10 pb-8 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0">
-            <div className="bg-brand-500/10 absolute -right-20 -top-20 hidden h-80 w-80 rounded-full blur-3xl sm:block" />
-            <div className="bg-accent-400/5 absolute -left-20 bottom-0 hidden h-60 w-60 rounded-full blur-3xl sm:block" />
+            <div className="bg-brand-500/10 absolute -top-20 -right-20 hidden h-80 w-80 rounded-full blur-3xl sm:block" />
+            <div className="bg-accent-400/5 absolute bottom-0 -left-20 hidden h-60 w-60 rounded-full blur-3xl sm:block" />
           </div>
           <div className="relative">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">

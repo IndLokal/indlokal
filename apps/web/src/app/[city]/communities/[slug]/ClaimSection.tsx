@@ -355,7 +355,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                     className="border-border rounded-[var(--radius-button)] border p-3"
                   >
                     <div className="mb-2 flex items-center justify-between">
-                      <p className="text-muted text-xs font-medium uppercase tracking-wide">
+                      <p className="text-muted text-xs font-medium tracking-wide uppercase">
                         Evidence link {index + 1}
                       </p>
                       {evidenceLinks.length > 1 && (

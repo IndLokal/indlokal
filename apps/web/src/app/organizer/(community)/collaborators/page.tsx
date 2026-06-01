@@ -151,15 +151,15 @@ export default async function OrganizerCollaboratorsPage() {
                   </p>
                   <dl className="mt-3 space-y-2">
                     <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                      <dt className="text-muted text-xs uppercase tracking-wide">Role</dt>
+                      <dt className="text-muted text-xs tracking-wide uppercase">Role</dt>
                       <dd className="text-muted">{roleLabel(collaborator.role)}</dd>
                     </div>
                     <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                      <dt className="text-muted text-xs uppercase tracking-wide">Source</dt>
+                      <dt className="text-muted text-xs tracking-wide uppercase">Source</dt>
                       <dd className="text-muted">{sourceLabel(collaborator.source)}</dd>
                     </div>
                     <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                      <dt className="text-muted text-xs uppercase tracking-wide">Approved</dt>
+                      <dt className="text-muted text-xs tracking-wide uppercase">Approved</dt>
                       <dd className="text-muted">
                         {collaborator.reviewedAt
                           ? formatDistanceToNow(collaborator.reviewedAt, { addSuffix: true })
@@ -204,20 +204,20 @@ export default async function OrganizerCollaboratorsPage() {
               <table className="w-full min-w-[620px] text-sm">
                 <thead className="bg-muted-bg text-left">
                   <tr className="border-border border-b">
-                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                       Member
                     </th>
-                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                       Role
                     </th>
-                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                       Source
                     </th>
-                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                    <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                       Approved
                     </th>
                     {canManageTeam ? (
-                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                         Action
                       </th>
                     ) : null}
@@ -353,11 +353,11 @@ export default async function OrganizerCollaboratorsPage() {
 
                     <dl className="mt-3 space-y-2">
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                        <dt className="text-muted text-xs uppercase tracking-wide">Source</dt>
+                        <dt className="text-muted text-xs tracking-wide uppercase">Source</dt>
                         <dd className="text-muted">{sourceLabel(collaborator.source)}</dd>
                       </div>
                       <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                        <dt className="text-muted text-xs uppercase tracking-wide">Requested</dt>
+                        <dt className="text-muted text-xs tracking-wide uppercase">Requested</dt>
                         <dd className="text-muted">
                           {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
                         </dd>
@@ -384,16 +384,16 @@ export default async function OrganizerCollaboratorsPage() {
                 <table className="w-full min-w-[620px] text-sm">
                   <thead className="bg-muted-bg text-left">
                     <tr className="border-border border-b">
-                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                         Requested access for
                       </th>
-                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                         Source
                       </th>
-                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                         Requested
                       </th>
-                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium uppercase tracking-wide">
+                      <th className="bg-muted-bg text-muted sticky top-0 px-4 py-2.5 text-xs font-medium tracking-wide uppercase">
                         Action
                       </th>
                     </tr>

@@ -184,7 +184,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
           <div className="mt-3 space-y-3">
             {lens !== 'business' && (
               <div className="space-y-2">
-                <p className="text-muted text-xs font-semibold uppercase tracking-wide">Category</p>
+                <p className="text-muted text-xs font-semibold tracking-wide uppercase">Category</p>
                 <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                   <Link
                     href={`/${city}/events`}
@@ -222,7 +222,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             )}
 
             <div className="space-y-2">
-              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Cost</p>
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Cost</p>
               <div className="flex flex-wrap gap-2">
                 {(['free', 'paid'] as const).map((costOption) => {
                   const isActive = costOption === filters.cost;
@@ -253,7 +253,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             </div>
 
             <div className="space-y-2">
-              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Format</p>
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Format</p>
               <div className="flex flex-wrap gap-2">
                 {(['in-person', 'online'] as const).map((typeOption) => {
                   const isActive = typeOption === filters.type;

@@ -91,7 +91,7 @@ export function PortalShell({
             {account ? (
               <details className="group relative hidden sm:block">
                 <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
-                  <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
+                  <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs leading-none font-semibold">
                     {accountInitial}
                   </span>
                   <span className="text-muted hidden text-xs font-semibold lg:inline">Account</span>

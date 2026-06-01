@@ -216,7 +216,7 @@ export function MergeCommunityForm({ communities, cities }: Props) {
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="border-border/70 rounded-[var(--radius-card)] border bg-white p-4">
-          <p className="text-muted text-xs uppercase tracking-wide">Primary summary</p>
+          <p className="text-muted text-xs tracking-wide uppercase">Primary summary</p>
           {selectedPrimary ? (
             <div className="mt-2 text-sm">
               <p className="font-semibold">{selectedPrimary.name}</p>
@@ -231,7 +231,7 @@ export function MergeCommunityForm({ communities, cities }: Props) {
         </div>
 
         <div className="border-border/70 rounded-[var(--radius-card)] border bg-white p-4">
-          <p className="text-muted text-xs uppercase tracking-wide">Secondary summary</p>
+          <p className="text-muted text-xs tracking-wide uppercase">Secondary summary</p>
           {selectedSecondary ? (
             <div className="mt-2 text-sm">
               <p className="font-semibold">{selectedSecondary.name}</p>

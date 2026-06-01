@@ -54,10 +54,10 @@ export default async function OrganizerDashboardPage() {
           href="/organizer/profile"
           className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Page
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">
             Community Profile
           </h2>
           <p className="text-muted mt-1 text-sm leading-6">
@@ -68,10 +68,10 @@ export default async function OrganizerDashboardPage() {
           href="/organizer/links"
           className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Links
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Community links</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">Community links</h2>
           <p className="text-muted mt-1 text-sm leading-6">
             Add or remove WhatsApp, Telegram, website, and other access links.
           </p>
@@ -80,20 +80,20 @@ export default async function OrganizerDashboardPage() {
           href="/organizer/collaborators"
           className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Team
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">{teamCardTitle}</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">{teamCardTitle}</h2>
           <p className="text-muted mt-1 text-sm leading-6">{teamCardBody}</p>
         </Link>
         <Link
           href="/organizer/events/new"
           className="card-base group min-h-[156px] p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Event
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Add event</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">Add event</h2>
           <p className="text-muted mt-1 text-sm leading-6">
             Post an upcoming event so it appears on the community page and city feed.
           </p>

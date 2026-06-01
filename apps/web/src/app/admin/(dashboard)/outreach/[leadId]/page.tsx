@@ -61,7 +61,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
               {lead.city.name} · {lead.source}
             </p>
             {lead.channelHint && (
-              <p className="mt-2 break-all text-sm">
+              <p className="mt-2 text-sm break-all">
                 <span className="text-muted">Channel: </span>
                 {lead.channelHint.startsWith('http') ? (
                   <a
@@ -116,7 +116,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
                         })}
                       </span>
                     </div>
-                    <p className="whitespace-pre-wrap text-sm">{note.body}</p>
+                    <p className="text-sm whitespace-pre-wrap">{note.body}</p>
                   </div>
                 ))}
               </div>
@@ -130,7 +130,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
           <div className="border-border rounded-[var(--radius-card)] border bg-white p-4 text-sm">
             <dl className="space-y-3">
               <div>
-                <dt className="text-muted text-xs font-medium uppercase tracking-wide">Created</dt>
+                <dt className="text-muted text-xs font-medium tracking-wide uppercase">Created</dt>
                 <dd className="mt-0.5">
                   {new Date(lead.createdAt).toLocaleDateString('en-GB', {
                     day: 'numeric',
@@ -140,7 +140,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
                 </dd>
               </div>
               <div>
-                <dt className="text-muted text-xs font-medium uppercase tracking-wide">
+                <dt className="text-muted text-xs font-medium tracking-wide uppercase">
                   Next action
                 </dt>
                 <dd
@@ -156,7 +156,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
                 </dd>
               </div>
               <div>
-                <dt className="text-muted text-xs font-medium uppercase tracking-wide">Source</dt>
+                <dt className="text-muted text-xs font-medium tracking-wide uppercase">Source</dt>
                 <dd className="mt-0.5 capitalize">{lead.source}</dd>
               </div>
             </dl>

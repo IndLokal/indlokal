@@ -97,7 +97,7 @@ export default async function AmbassadorMePage() {
         <div className="border-border mb-8 rounded-[var(--radius-card)] border bg-white p-5">
           <div className="flex items-center gap-3">
             <div>
-              <p className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
+              <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
                 This week
               </p>
               <p className="mt-1 text-3xl font-bold">{totalThisWeek} actions</p>
@@ -117,14 +117,14 @@ export default async function AmbassadorMePage() {
         {/* Stats table */}
         <div className="border-border overflow-hidden rounded-[var(--radius-card)] border bg-white">
           <div className="border-border flex items-center justify-between border-b px-4 py-2.5">
-            <span className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
+            <span className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
               Action
             </span>
             <div className="flex gap-8">
-              <span className="text-muted w-14 text-right text-[11px] font-semibold uppercase tracking-[0.08em]">
+              <span className="text-muted w-14 text-right text-[11px] font-semibold tracking-[0.08em] uppercase">
                 This wk
               </span>
-              <span className="text-muted w-14 text-right text-[11px] font-semibold uppercase tracking-[0.08em]">
+              <span className="text-muted w-14 text-right text-[11px] font-semibold tracking-[0.08em] uppercase">
                 All time
               </span>
             </div>
