@@ -273,6 +273,7 @@ model Event {
   categories   EventCategory[]
   trustSignals TrustSignal[]   @relation("EventTrustSignals")
   savedBy      SavedEvent[]
+  reports      ContentReport[] @relation("EventReports")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -868,6 +869,10 @@ model ContentReport {
   communityId String?    @map("community_id")
   community   Community? @relation("CommunityReports", fields: [communityId], references: [id])
 
+  // For reports: the event being reported (orthogonal to communityId)
+  eventId String? @map("event_id")
+  event   Event?  @relation("EventReports", fields: [eventId], references: [id])
+
   // For suggestions: free-text name + city
   suggestedName String? @map("suggested_name")
   cityId        String? @map("city_id")
@@ -885,6 +890,7 @@ model ContentReport {
 
   @@index([status, createdAt])
   @@index([communityId])
+  @@index([eventId])
   @@index([reporterUserId])
   @@map("content_reports")
 }

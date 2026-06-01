@@ -10,7 +10,7 @@ import { describe, it, expect, beforeEach, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { testDb, cleanDb } from '@/test/db-helpers';
 import { bearerHeaders } from '@/test/auth-helpers';
-import { createCity } from '@/test/fixtures';
+import { createCity, createEvent } from '@/test/fixtures';
 
 // ─── Mocks ─────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,7 @@ import { POST } from '@/app/api/v1/reports/route';
 const USER_ID = 'user-reports-test-01';
 
 let citySlug: string;
+let cityId: string;
 let headers: Record<string, string>;
 
 function makeReq(body: unknown, hdrs: Record<string, string>) {
@@ -45,6 +46,7 @@ beforeEach(async () => {
   await cleanDb();
   const city = await createCity(testDb, { slug: 'reports-city', name: 'ReportsCity' });
   citySlug = city.slug;
+  cityId = city.id;
   // Create the user row so FK from content_reports.reporter_user_id → users.id resolves
   await testDb.user.upsert({
     where: { id: USER_ID },
@@ -99,5 +101,35 @@ describe('POST /api/v1/reports', () => {
   it('returns 401 without auth token (second check)', async () => {
     const res = await POST(makeReq({ reportType: 'STALE_INFO' }, {}));
     expect(res.status).toBe(401);
+  });
+
+  it('persists eventId for an event report', async () => {
+    const event = await createEvent(testDb, { cityId });
+    const res = await POST(
+      makeReq(
+        {
+          reportType: 'INCORRECT_DETAILS',
+          eventId: event.id,
+          details: 'The start time is wrong.',
+        },
+        headers,
+      ),
+    );
+    expect(res.status).toBe(201);
+
+    const body = await res.json();
+    const record = await testDb.contentReport.findUniqueOrThrow({
+      where: { id: body.id },
+      select: { eventId: true, reporterUserId: true },
+    });
+    expect(record.eventId).toBe(event.id);
+    expect(record.reporterUserId).toBe(USER_ID);
+  });
+
+  it('returns 404 for a non-existent eventId', async () => {
+    const res = await POST(
+      makeReq({ reportType: 'STALE_INFO', eventId: 'clnonexistent000000000000' }, headers),
+    );
+    expect(res.status).toBe(404);
   });
 });

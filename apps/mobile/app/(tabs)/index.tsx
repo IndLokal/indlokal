@@ -14,6 +14,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { discovery as d } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
+import { persistentCache } from '@/lib/cache/persistent-cache.expo';
+import { CACHE_KEYS } from '@/lib/cache/persistent-cache';
+import { track } from '@/lib/analytics/track.expo';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 import { LogoMark } from '@/components/Logo';
 
@@ -93,6 +97,16 @@ export default function DiscoverScreen() {
   const loadFeed = useCallback(async (slug: string, force = false, lens: EventLens = 'all') => {
     setFeedLoading(true);
     setFeedError(null);
+
+    // Hydrate instantly from the persistent (cross-cold-start) cache so the
+    // feed renders offline while the network request runs - PRD/TDD-0040.
+    let hydratedFromCache = false;
+    const persisted = await persistentCache.get<FeedState>(CACHE_KEYS.discoverFeed(slug));
+    if (persisted) {
+      setFeed(persisted);
+      hydratedFromCache = true;
+    }
+
     try {
       const eventsParams = new URLSearchParams({ limit: '10' });
       if (lens === 'business') {
@@ -127,13 +141,18 @@ export default function DiscoverScreen() {
           { ttl: 5 * 60 * 1000, force },
         ).catch(() => null),
       ]);
-      setFeed({
+      const nextFeed: FeedState = {
         events: d.EventsPage.parse(eventsRes).items,
         communities: d.CommunitiesPage.parse(communitiesRes).items,
         trending: trendingRes ? d.TrendingResponse.parse(trendingRes) : null,
-      });
+      };
+      setFeed(nextFeed);
+      void persistentCache.set(CACHE_KEYS.discoverFeed(slug), nextFeed);
+      track({ event: ANALYTICS_EVENTS.discoverFeedViewed, citySlug: slug });
     } catch {
-      setFeedError('Could not load this city right now.');
+      // Keep the cached feed visible offline; only surface an error when we
+      // have nothing to show.
+      if (!hydratedFromCache) setFeedError('Could not load this city right now.');
     } finally {
       setFeedLoading(false);
     }
@@ -295,6 +314,15 @@ export default function DiscoverScreen() {
               </View>
             )}
 
+            {tab === 'events' && selectedSlug && (
+              <Link href={'/events/this-week' as never} asChild>
+                <Pressable style={styles.thisWeekCard}>
+                  <Text style={styles.thisWeekTitle}>📅 Indian events this week</Text>
+                  <Text style={styles.thisWeekCta}>See what&apos;s on →</Text>
+                </Pressable>
+              </Link>
+            )}
+
             {feedLoading && !feed && (
               <ActivityIndicator color={palette.brand[600]} style={styles.loading} />
             )}
@@ -440,6 +468,24 @@ const styles = StyleSheet.create({
   lensChipText: { fontSize: typography.small, fontWeight: '600', color: palette.neutral.muted },
   lensChipTextActive: { color: palette.brand[700] },
   lensChipBusinessTextActive: { color: palette.accent[700] },
+  thisWeekCard: {
+    backgroundColor: palette.brand[50],
+    borderColor: palette.brand[200],
+    borderWidth: 1,
+    borderRadius: radius.card,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    marginTop: spacing.sm,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  thisWeekTitle: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: palette.neutral.foreground,
+  },
+  thisWeekCta: { fontSize: typography.small, fontWeight: '700', color: palette.brand[700] },
   communityList: { gap: spacing.sm },
   communityCard: {
     backgroundColor: palette.neutral.surface,
