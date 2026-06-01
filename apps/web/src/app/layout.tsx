@@ -39,8 +39,10 @@ export const metadata: Metadata = {
   },
   keywords: [
     'Indian community Germany',
+    'Indian communities in Germany',
     'Indian diaspora Germany',
     'Indian events Germany',
+    'Indian events in Germany',
     'Anmeldung',
     'EU Blue Card',
     'Kindergeld',

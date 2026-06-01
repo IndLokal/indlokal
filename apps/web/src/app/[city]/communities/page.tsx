@@ -33,6 +33,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const { language, category } = await searchParams;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
+  const title = `Indian Communities in ${cityName}`;
+  const description = `Browse Indian communities, associations, and groups in ${cityName}, Germany.`;
   if (language) {
     const languageName = capitalize(language);
     return {
@@ -54,10 +56,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
     };
   }
   return {
-    title: `Indian Communities in ${cityName}`,
-    description: `Browse Indian communities, associations, and groups in ${cityName}, Germany.`,
+    title,
+    description,
     alternates: {
       canonical: `/${city}/communities`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `/${city}/communities`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
   };
 }
@@ -95,10 +108,10 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     communities.length > 0
       ? languageName
         ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
-        : `${communities.length} active communit${communities.length !== 1 ? 'ies' : 'y'}`
+        : `${communities.length} active Indian communit${communities.length !== 1 ? 'ies' : 'y'} in ${cityName}, Germany.`
       : languageName
         ? `No ${languageName} communities listed yet.`
-        : 'No communities listed yet.';
+        : `No Indian communities listed yet in ${cityName}, Germany.`;
 
   return (
     <div className="space-y-8">
