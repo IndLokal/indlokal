@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { createSession, generateSessionToken, hashToken } from '@/lib/session';
 import { db } from '@/lib/db';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 
 const ORGANIZER_VERIFY_TOKEN_COOKIE = 'organizer_verify_token';
 
@@ -122,6 +124,10 @@ export async function POST(request: NextRequest) {
       if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
         const sessionToken = generateSessionToken();
         await createSession(existing.user.id, sessionToken);
+        void captureServerEvent(existing.user.id, Events.USER_LOGGED_IN, {
+          login_surface: 'organizer_web',
+          auth_method: 'magic_link',
+        });
         const dest = existing.user.role === 'EVENT_HOST' ? '/organizer/host' : '/organizer';
         return seeOther(dest);
       }
@@ -141,6 +147,10 @@ export async function POST(request: NextRequest) {
     // Issue a fresh session token (hashed in DB, raw in cookie)
     const sessionToken = generateSessionToken();
     await createSession(magicLink.user.id, sessionToken);
+    void captureServerEvent(magicLink.user.id, Events.USER_LOGGED_IN, {
+      login_surface: 'organizer_web',
+      auth_method: 'magic_link',
+    });
 
     const dest = magicLink.user.role === 'EVENT_HOST' ? '/organizer/host' : '/organizer';
     return seeOther(dest);

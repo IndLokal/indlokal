@@ -112,7 +112,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-brand-700 text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-brand-700 text-xs font-semibold tracking-[0.18em] uppercase">
               Manual Run Controls
             </p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">Run pipeline by shard</h2>
@@ -141,7 +141,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
             </p>
 
             <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+              <p className="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
                 Regional shards
               </p>
               <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -160,7 +160,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
 
             {cities.length > 0 && (
               <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
                   City shards
                 </p>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -201,7 +201,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
 
           {(result.budgetExceeded || result.circuitBreakerTripped) && (
             <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
-              <p className="font-semibold uppercase tracking-wide">Cost guard tripped</p>
+              <p className="font-semibold tracking-wide uppercase">Cost guard tripped</p>
               <ul className="mt-1 list-disc space-y-0.5 pl-5">
                 {result.budgetExceeded && (
                   <li>
@@ -333,7 +333,7 @@ function MetricCard({
           : 'border-slate-200 bg-white text-slate-900'
       }`}
     >
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-xs tracking-wide text-slate-500 uppercase">{label}</p>
       <p className="mt-1 text-xl font-semibold">{value}</p>
     </div>
   );
@@ -350,7 +350,7 @@ function StatLine({
 }) {
   return (
     <div>
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
+      <p className="text-xs tracking-wide text-slate-500 uppercase">{label}</p>
       <p className={`mt-1 font-medium ${tone === 'warn' ? 'text-amber-700' : 'text-slate-800'}`}>
         {value}
       </p>

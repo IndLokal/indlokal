@@ -81,7 +81,7 @@ export function AuditTable({ logs, operators }: Props) {
                 >
                   <td className="px-4 py-2">
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ACTION_CHIP[log.action] ?? 'bg-gray-100 text-gray-600'}`}
+                      className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${ACTION_CHIP[log.action] ?? 'bg-gray-100 text-gray-600'}`}
                     >
                       {log.action.replace('_', ' ')}
                     </span>
@@ -158,7 +158,7 @@ function AuditDrawer({
         <div className="border-border flex items-center justify-between border-b px-5 py-4">
           <div className="flex items-center gap-3">
             <span
-              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ACTION_CHIP[log.action] ?? 'bg-gray-100 text-gray-600'}`}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${ACTION_CHIP[log.action] ?? 'bg-gray-100 text-gray-600'}`}
             >
               {log.action.replace('_', ' ')}
             </span>
@@ -219,7 +219,7 @@ function AuditDrawer({
               <div className="grid grid-cols-2 gap-3">
                 {metadata.previous !== undefined && (
                   <div>
-                    <p className="text-muted mb-1 text-[10px] font-medium uppercase tracking-wide">
+                    <p className="text-muted mb-1 text-[10px] font-medium tracking-wide uppercase">
                       Before
                     </p>
                     <pre className="overflow-x-auto rounded-lg bg-red-50 p-3 text-[11px] leading-relaxed text-red-800">
@@ -229,7 +229,7 @@ function AuditDrawer({
                 )}
                 {metadata.next !== undefined && (
                   <div>
-                    <p className="text-muted mb-1 text-[10px] font-medium uppercase tracking-wide">
+                    <p className="text-muted mb-1 text-[10px] font-medium tracking-wide uppercase">
                       After
                     </p>
                     <pre className="overflow-x-auto rounded-lg bg-green-50 p-3 text-[11px] leading-relaxed text-green-800">

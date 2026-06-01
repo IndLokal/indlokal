@@ -34,8 +34,8 @@ export function OrganizerNav({
             aria-current={active ? 'page' : undefined}
             className={
               active
-                ? 'text-foreground border-border shrink-0 whitespace-nowrap rounded-[var(--radius-button)] border bg-white px-3 py-1.5 leading-5 shadow-sm transition-colors'
-                : 'text-muted hover:text-foreground shrink-0 whitespace-nowrap rounded-[var(--radius-button)] px-3 py-1.5 leading-5 transition-colors hover:bg-white'
+                ? 'text-foreground border-border shrink-0 rounded-[var(--radius-button)] border bg-white px-3 py-1.5 leading-5 whitespace-nowrap shadow-sm transition-colors'
+                : 'text-muted hover:text-foreground shrink-0 rounded-[var(--radius-button)] px-3 py-1.5 leading-5 whitespace-nowrap transition-colors hover:bg-white'
             }
           >
             {link.label}
@@ -45,7 +45,7 @@ export function OrganizerNav({
       {cta && (
         <Link
           href={cta.href}
-          className="text-brand-600 hover:text-brand-700 ml-auto shrink-0 whitespace-nowrap rounded-[var(--radius-button)] px-3 py-1.5 leading-5 transition-colors hover:bg-white"
+          className="text-brand-600 hover:text-brand-700 ml-auto shrink-0 rounded-[var(--radius-button)] px-3 py-1.5 leading-5 whitespace-nowrap transition-colors hover:bg-white"
         >
           {cta.label}
         </Link>

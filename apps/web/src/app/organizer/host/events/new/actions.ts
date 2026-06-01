@@ -159,6 +159,9 @@ export async function addHostEvent(
       const createdEvent = event;
 
       await captureServerEvent(user.id, Events.HOST_EVENT_SUBMITTED_FOR_REVIEW, {
+        event_id: createdEvent.id,
+        city_id: data.cityId,
+        // Backward-compatible aliases for existing PostHog dashboards.
         eventId: createdEvent.id,
         cityId: data.cityId,
       });

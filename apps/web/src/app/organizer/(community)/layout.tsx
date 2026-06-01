@@ -32,14 +32,14 @@ export default async function CommunityOrganizerLayout({
   const titleSlot = activeCommunity ? (
     <Link
       href={isMultiOrg ? '/organizer/communities' : '/organizer'}
-      className="border-border hover:bg-muted-bg flex h-10 min-w-0 max-w-[220px] items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
+      className="border-border hover:bg-muted-bg flex h-10 max-w-[220px] min-w-0 items-center gap-2 rounded-[var(--radius-button)] border bg-white px-2.5 text-left transition-colors sm:max-w-[340px]"
       aria-label={isMultiOrg ? 'Switch community workspace' : 'Current community workspace'}
     >
       <span className="bg-brand-100 text-brand-700 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold">
         {activeCommunity.name.charAt(0)}
       </span>
       <span className="min-w-0">
-        <span className="text-foreground block truncate text-[13px] font-semibold leading-4">
+        <span className="text-foreground block truncate text-[13px] leading-4 font-semibold">
           {activeCommunity.name}
         </span>
         <span className="text-muted block truncate text-[11px] leading-3">

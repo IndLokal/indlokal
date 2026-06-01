@@ -22,7 +22,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <BrandLink href="/admin" markSize={32} showName={false} />
             <span className="text-foreground text-lg font-bold">Admin</span>
-            <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm sm:flex">
+            <nav className="text-muted hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto text-sm whitespace-nowrap sm:flex">
               {ADMIN_NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
@@ -37,7 +37,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex shrink-0 items-center gap-3">
             <details className="group relative">
               <summary className="border-border hover:bg-muted-bg flex h-10 cursor-pointer list-none items-center gap-2 rounded-full border bg-white px-2 text-sm transition-colors marker:hidden">
-                <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold leading-none">
+                <span className="bg-foreground text-background flex h-7 w-7 items-center justify-center rounded-full text-xs leading-none font-semibold">
                   {accountInitial}
                 </span>
                 <span className="text-muted hidden text-xs font-semibold lg:inline">Account</span>

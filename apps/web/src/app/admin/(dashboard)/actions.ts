@@ -523,8 +523,10 @@ export async function approveEvent(formData: FormData) {
   ]);
 
   await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
-    eventId: id,
+    event_id: id,
     decision: 'approved',
+    // Backward-compatible alias for existing PostHog dashboards.
+    eventId: id,
   });
 
   if (event.createdBy?.email && event.city?.slug) {
@@ -575,8 +577,10 @@ export async function rejectEvent(formData: FormData) {
   ]);
 
   await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
-    eventId: id,
+    event_id: id,
     decision: 'rejected',
+    // Backward-compatible alias for existing PostHog dashboards.
+    eventId: id,
   });
 
   if (event.createdBy?.email) {

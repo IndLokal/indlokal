@@ -5,6 +5,7 @@ import type { ReportType } from '@prisma/client';
 export interface CreateReportInput {
   reportType: ReportType;
   communityId?: string;
+  eventId?: string;
   suggestedName?: string;
   citySlug?: string;
   details?: string;
@@ -44,10 +45,20 @@ export async function createReport(
     if (!community) throw new Error('COMMUNITY_NOT_FOUND');
   }
 
+  // Validate eventId exists when provided
+  if (input.eventId) {
+    const event = await db.event.findUnique({
+      where: { id: input.eventId },
+      select: { id: true },
+    });
+    if (!event) throw new Error('EVENT_NOT_FOUND');
+  }
+
   const report = await db.contentReport.create({
     data: {
       reportType: input.reportType,
       communityId: input.communityId ?? null,
+      eventId: input.eventId ?? null,
       suggestedName: input.suggestedName ?? null,
       cityId: cityId ?? null,
       details: input.details ?? null,
@@ -64,6 +75,7 @@ export async function createReport(
     reportId: report.id,
     reportType: report.reportType,
     communityId: input.communityId,
+    eventId: input.eventId,
     suggestedName: input.suggestedName,
     details: input.details,
     reporterEmail: input.reporterEmail,

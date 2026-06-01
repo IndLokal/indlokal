@@ -8,7 +8,7 @@ export const metadata = { title: 'Ambassador Dashboard' };
 function KpiCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
   return (
     <div className="border-border rounded-[var(--radius-card)] border bg-white p-5">
-      <p className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">{label}</p>
+      <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">{label}</p>
       <p className="mt-1 text-3xl font-bold">{value}</p>
       {sub && <p className="text-muted mt-1 text-xs">{sub}</p>}
     </div>
@@ -173,7 +173,7 @@ export default async function AmbassadorDashboardPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         {/* Recent pipeline items */}
         <section>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <h2 className="mb-3 text-[11px] font-semibold tracking-[0.08em] uppercase">
             Pending in pipeline
           </h2>
           {recentPipelineItems.length === 0 ? (
@@ -209,7 +209,7 @@ export default async function AmbassadorDashboardPage() {
 
         {/* Upcoming events */}
         <section>
-          <h2 className="mb-3 text-[11px] font-semibold uppercase tracking-[0.08em]">
+          <h2 className="mb-3 text-[11px] font-semibold tracking-[0.08em] uppercase">
             Upcoming events to check in to
           </h2>
           {recentEvents.length === 0 ? (

@@ -130,6 +130,17 @@ export default function ResourcesScreen() {
           </Link>
         )}
 
+        <Link href={'/resources/consular' as never} asChild>
+          <Pressable style={styles.consularCard}>
+            <Text style={styles.consularEyebrow}>OFFICIAL & CONSULAR</Text>
+            <Text style={styles.consularTitle}>Consular & official services</Text>
+            <Text style={styles.consularMeta}>
+              Indian missions, visa & passport help, government info
+            </Text>
+            <Text style={styles.consularCta}>View services →</Text>
+          </Pressable>
+        </Link>
+
         {grouped.map(([type, list]) => {
           const cat = rc.RESOURCE_CATEGORIES.find((c) => c.type === type);
           const label = cat?.title ?? TYPE_LABEL[type] ?? type;
@@ -214,6 +225,34 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     fontWeight: '700',
     color: palette.brand[700],
+    marginTop: 6,
+  },
+  consularCard: {
+    backgroundColor: palette.accent[50],
+    borderColor: palette.accent[200],
+    borderWidth: 1,
+    borderRadius: radius.card,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    gap: 4,
+  },
+  consularEyebrow: {
+    fontSize: typography.small,
+    fontWeight: '700',
+    color: palette.accent[700],
+    letterSpacing: 0.5,
+  },
+  consularTitle: {
+    fontSize: typography.h4,
+    fontWeight: '800',
+    color: palette.neutral.foreground,
+    marginTop: 2,
+  },
+  consularMeta: { fontSize: typography.small, color: palette.neutral.muted },
+  consularCta: {
+    fontSize: typography.body,
+    fontWeight: '700',
+    color: palette.accent[700],
     marginTop: 6,
   },
 });

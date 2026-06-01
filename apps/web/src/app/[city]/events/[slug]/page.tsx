@@ -134,7 +134,7 @@ export default async function EventDetailPage({ params }: Props) {
             </div>
           )}
 
-          <h1 className="text-3xl font-bold leading-tight">{event.title}</h1>
+          <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
 
           {/* Recurring badge */}
           {event.isRecurring && (
@@ -198,8 +198,8 @@ export default async function EventDetailPage({ params }: Props) {
               <span
                 className={`badge-base px-3 py-1 text-sm ${
                   event.cost === 'free'
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-inset ring-emerald-600/10'
-                    : 'bg-orange-50 text-orange-700 ring-1 ring-inset ring-orange-600/10'
+                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10 ring-inset'
+                    : 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/10 ring-inset'
                 }`}
               >
                 {event.cost === 'free' ? 'Free entry' : event.cost}
@@ -212,7 +212,7 @@ export default async function EventDetailPage({ params }: Props) {
         {event.description && (
           <div>
             <h2 className="text-lg font-semibold">About this event</h2>
-            <p className="text-muted mt-2 whitespace-pre-line leading-relaxed">
+            <p className="text-muted mt-2 leading-relaxed whitespace-pre-line">
               {event.description}
             </p>
           </div>

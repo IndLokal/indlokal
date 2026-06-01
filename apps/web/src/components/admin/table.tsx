@@ -45,8 +45,8 @@ export function AdminTh({ children, className }: AdminThProps) {
     <th
       className={
         className
-          ? `text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide ${className}`
-          : 'text-muted px-4 py-2 text-left text-xs font-medium uppercase tracking-wide'
+          ? `text-muted px-4 py-2 text-left text-xs font-medium tracking-wide uppercase ${className}`
+          : 'text-muted px-4 py-2 text-left text-xs font-medium tracking-wide uppercase'
       }
     >
       {children}

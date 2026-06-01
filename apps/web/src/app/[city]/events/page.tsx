@@ -29,6 +29,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const filters = await searchParams;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
+  const title = `Indian Events in ${cityName}`;
+  const description = `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`;
 
   const hasFilters = Boolean(filters.category || filters.cost || filters.type);
 
@@ -45,8 +47,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   if (hasFilters) {
     return {
-      title: `Indian Events in ${cityName}`,
-      description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+      title,
+      description,
       alternates: {
         canonical: `/${city}/events`,
       },
@@ -55,10 +57,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   return {
-    title: `Indian Events in ${cityName}`,
-    description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+    title,
+    description,
     alternates: {
       canonical: `/${city}/events`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `/${city}/events`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
   };
 }
@@ -106,8 +119,8 @@ export default async function EventsPage({ params, searchParams }: Props) {
 
   const description =
     events.length > 0
-      ? `${events.length} upcoming event${events.length !== 1 ? 's' : ''}`
-      : 'No upcoming events right now - check back soon.';
+      ? `${events.length} upcoming Indian event${events.length !== 1 ? 's' : ''} in ${cityName}, Germany.`
+      : `No upcoming Indian events right now in ${cityName}, Germany - check back soon.`;
 
   const activeCategoryName = filters.category
     ? (categories.find((cat: CategoryItem) => cat.slug === filters.category)?.name ??
@@ -171,7 +184,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
           <div className="mt-3 space-y-3">
             {lens !== 'business' && (
               <div className="space-y-2">
-                <p className="text-muted text-xs font-semibold uppercase tracking-wide">Category</p>
+                <p className="text-muted text-xs font-semibold tracking-wide uppercase">Category</p>
                 <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
                   <Link
                     href={`/${city}/events`}
@@ -209,7 +222,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             )}
 
             <div className="space-y-2">
-              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Cost</p>
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Cost</p>
               <div className="flex flex-wrap gap-2">
                 {(['free', 'paid'] as const).map((costOption) => {
                   const isActive = costOption === filters.cost;
@@ -240,7 +253,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
             </div>
 
             <div className="space-y-2">
-              <p className="text-muted text-xs font-semibold uppercase tracking-wide">Format</p>
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Format</p>
               <div className="flex flex-wrap gap-2">
                 {(['in-person', 'online'] as const).map((typeOption) => {
                   const isActive = typeOption === filters.type;

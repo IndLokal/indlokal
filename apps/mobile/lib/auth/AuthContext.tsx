@@ -31,6 +31,11 @@ export type AuthContextValue = {
    */
   onSignIn: (user: AuthUser) => void;
   /**
+   * Persist an updated profile (e.g. after editing display name / interests)
+   * into the token store and refresh the in-memory user.
+   */
+  updateUser: (user: AuthUser) => Promise<void>;
+  /**
    * Signs the user out: revokes the refresh token server-side (best
    * effort), clears SecureStore, and resets the in-memory user to null.
    */
@@ -43,6 +48,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   isLoading: true,
   onSignIn: () => {},
+  updateUser: async () => {},
   signOut: async () => {},
 });
 
@@ -102,6 +108,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(newUser);
   }, []);
 
+  // ── updateUser ──────────────────────────────────────────────────────
+  const updateUser = useCallback(async (nextUser: AuthUser) => {
+    const tokens = await authClient.getTokens();
+    if (tokens) {
+      await authClient.setTokens({ ...tokens, user: nextUser });
+    }
+    if (mounted.current) setUser(nextUser);
+  }, []);
+
   // ── signOut ─────────────────────────────────────────────────────────
   const signOut = useCallback(async () => {
     try {
@@ -124,7 +139,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, onSignIn, signOut }}>
+    <AuthContext.Provider value={{ user, isLoading, onSignIn, updateUser, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,6 +4,8 @@ import { headers } from 'next/headers';
 import { db } from '@/lib/db';
 import { createMagicLinkToken } from '@/lib/session';
 import { sendMagicLinkEmail } from '@/lib/email';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import {
   checkRateLimit,
   magicLinkLimiter,
@@ -71,6 +73,7 @@ export async function hostSignUp(
   // Upsert user: if they already have an account, upgrade role to EVENT_HOST if not already an organizer
   const links = [link1, link2].filter(Boolean) as string[];
   const hostProfile = { displayName, cityId, links };
+  let wasCreated = false;
 
   let user = await db.user.findUnique({ where: { email } });
   if (user) {
@@ -100,6 +103,7 @@ export async function hostSignUp(
         metadata: { hostProfile },
       },
     });
+    wasCreated = true;
   }
 
   const rawToken = await createMagicLinkToken(user.id);
@@ -108,6 +112,13 @@ export async function hostSignUp(
     await sendMagicLinkEmail(user.email, rawToken, displayName);
   } catch {
     return { success: false, error: 'Failed to send login email. Please try again.' };
+  }
+
+  if (wasCreated) {
+    void captureServerEvent(user.id, Events.USER_SIGNED_UP, {
+      signup_surface: 'host_start',
+      role: 'event_host',
+    });
   }
 
   return { success: true, email };

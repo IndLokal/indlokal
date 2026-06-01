@@ -68,7 +68,7 @@ function LeadCard({ lead, showCityBadge }: { lead: Lead; showCityBadge?: boolean
       <div className="flex items-start justify-between gap-2">
         <Link
           href={`/admin/outreach/${lead.id}`}
-          className="text-sm font-medium leading-snug hover:underline"
+          className="text-sm leading-snug font-medium hover:underline"
         >
           {name}
         </Link>

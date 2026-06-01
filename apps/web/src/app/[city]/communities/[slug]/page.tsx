@@ -150,7 +150,7 @@ export default async function CommunityDetailPage({ params }: Props) {
         {(community.description || community.descriptionLong) && (
           <div>
             <h2 className="text-lg font-semibold">About</h2>
-            <p className="text-muted mt-2 whitespace-pre-line leading-relaxed">
+            <p className="text-muted mt-2 leading-relaxed whitespace-pre-line">
               {community.descriptionLong ?? community.description}
             </p>
           </div>

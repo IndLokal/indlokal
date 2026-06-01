@@ -484,6 +484,7 @@ export async function sendReportNotificationEmail(
     reportId: string;
     reportType: string;
     communityId?: string;
+    eventId?: string;
     suggestedName?: string;
     details?: string;
     reporterEmail?: string;
@@ -494,6 +495,7 @@ export async function sendReportNotificationEmail(
     reportId,
     reportType,
     communityId,
+    eventId,
     suggestedName,
     details,
     reporterEmail,
@@ -511,6 +513,7 @@ export async function sendReportNotificationEmail(
     <tr><td style="padding:4px 8px;font-weight:600;width:140px">Report ID</td><td style="padding:4px 8px">${reportId}</td></tr>
     <tr><td style="padding:4px 8px;font-weight:600">Type</td><td style="padding:4px 8px">${reportType}</td></tr>
     ${communityId ? `<tr><td style="padding:4px 8px;font-weight:600">Community ID</td><td style="padding:4px 8px">${communityId}</td></tr>` : ''}
+    ${eventId ? `<tr><td style="padding:4px 8px;font-weight:600">Event ID</td><td style="padding:4px 8px">${eventId}</td></tr>` : ''}
     ${suggestedName ? `<tr><td style="padding:4px 8px;font-weight:600">Suggested name</td><td style="padding:4px 8px">${suggestedName}</td></tr>` : ''}
     ${details ? `<tr><td style="padding:4px 8px;font-weight:600">Details</td><td style="padding:4px 8px">${details}</td></tr>` : ''}
     ${reporterEmail ? `<tr><td style="padding:4px 8px;font-weight:600">Reporter email</td><td style="padding:4px 8px">${reporterEmail}</td></tr>` : ''}

@@ -103,10 +103,10 @@ export default async function HostDashboardPage() {
           href="/organizer/host/events/new"
           className={`card-base group min-h-[148px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-md ${atCap ? 'pointer-events-none opacity-40' : ''}`}
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Event
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Post an event</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">Post an event</h2>
           <p className="text-muted mt-1 text-sm leading-6">
             Add an upcoming event to the IndLokal feed for your city. Reviewed before going live.
           </p>
@@ -116,10 +116,10 @@ export default async function HostDashboardPage() {
           href="/organizer/host/events"
           className="card-base group min-h-[148px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Events
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">My events</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">My events</h2>
           <p className="text-muted mt-1 text-sm leading-6">
             {stats.upcoming} upcoming event{stats.upcoming !== 1 ? 's' : ''} — view, edit, and track
             status.
@@ -130,10 +130,10 @@ export default async function HostDashboardPage() {
           href="/organizer/host/profile"
           className="card-base group min-h-[148px] p-5 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide">
+          <span className="bg-brand-50 text-brand-700 border-brand-100 inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold tracking-wide uppercase">
             Profile
           </span>
-          <h2 className="text-foreground mt-3 text-lg font-semibold leading-6">Host Profile</h2>
+          <h2 className="text-foreground mt-3 text-lg leading-6 font-semibold">Host Profile</h2>
           <p className="text-muted mt-1 text-sm leading-6">
             Edit your public name, city, and links — how you appear as the host.
           </p>

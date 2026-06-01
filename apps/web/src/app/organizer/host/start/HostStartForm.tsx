@@ -59,7 +59,7 @@ export function HostStartForm({ cities }: { cities: City[] }) {
               required
               autoComplete="email"
               placeholder="you@example.com"
-              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:outline-none"
             />
           </div>
           <div>
@@ -70,7 +70,7 @@ export function HostStartForm({ cities }: { cities: City[] }) {
               minLength={2}
               maxLength={100}
               placeholder="e.g. Priya Mehta or Nrityalaya Dance School"
-              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:outline-none"
             />
           </div>
           <div>

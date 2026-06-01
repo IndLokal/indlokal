@@ -57,13 +57,13 @@ export default async function AdminEventsReviewPage() {
                     {e.venueName ? ` · ${e.venueName}` : ''} ·{' '}
                     {new Date(e.startsAt).toLocaleString()}
                   </p>
-                  <p className="text-muted mt-1 text-xs uppercase tracking-wide">
+                  <p className="text-muted mt-1 text-xs tracking-wide uppercase">
                     {SOURCE_LABELS[e.source] ?? e.source}
                     {e.createdBy ? ` · ${e.createdBy.displayName ?? e.createdBy.email}` : ''}
                   </p>
 
                   {e.description && (
-                    <p className="text-foreground mt-2 line-clamp-4 whitespace-pre-line text-sm">
+                    <p className="text-foreground mt-2 line-clamp-4 text-sm whitespace-pre-line">
                       {e.description}
                     </p>
                   )}

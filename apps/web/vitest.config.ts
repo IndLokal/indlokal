@@ -24,11 +24,25 @@ export default defineConfig({
   test: {
     globals: true,
 
-    // Default environment - overridden per-file type below
-    environment: 'node',
-
-    // .tsx files (React components) run in jsdom
-    environmentMatchGlobs: [['**/*.test.tsx', 'jsdom']],
+    // Vitest v4 removed environmentMatchGlobs; split environments by project.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: 'node',
+          include: ['**/*.test.ts'],
+          environment: 'node',
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'jsdom',
+          include: ['**/*.test.tsx'],
+          environment: 'jsdom',
+        },
+      },
+    ],
 
     setupFiles: ['src/test/setup.ts'],
 
@@ -45,8 +59,7 @@ export default defineConfig({
     // Run test files sequentially to avoid DB race conditions between
     // integration tests that share the same test database.
     pool: 'forks',
-    poolOptions: {
-      forks: { singleFork: true },
-    },
+    fileParallelism: false,
+    maxWorkers: 1,
   },
 });

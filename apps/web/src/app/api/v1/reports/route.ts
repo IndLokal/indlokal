@@ -50,6 +50,9 @@ export const POST = apiHandler(async (req: NextRequest) => {
     if (err instanceof Error && err.message === 'COMMUNITY_NOT_FOUND') {
       return apiError('NOT_FOUND', 'community not found');
     }
+    if (err instanceof Error && err.message === 'EVENT_NOT_FOUND') {
+      return apiError('NOT_FOUND', 'event not found');
+    }
     throw err;
   }
 });

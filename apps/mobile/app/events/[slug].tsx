@@ -19,12 +19,14 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { events as e } from '@indlokal/shared';
 import { authClient, AuthClientError } from '@/lib/auth/client.expo';
 import { invalidatePrefix, queryCache } from '@/lib/cache/query-cache';
 import { getApiBaseUrl } from '@/lib/config/api-base-url';
 import { cancelEventReminder, hasEventReminder, scheduleEventReminder } from '@/lib/notifications';
+import { track } from '@/lib/analytics/track.expo';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const PUBLIC_BASE_URL = getApiBaseUrl();
@@ -52,6 +54,12 @@ export default function EventDetailScreen() {
       const parsed = e.EventDetail.parse(res);
       setData({ ...parsed, savedByUser: (res as EventDetailWithSaved).savedByUser });
       setReminderOn(await hasEventReminder(parsed.id));
+      track({
+        event: ANALYTICS_EVENTS.eventDetailViewed,
+        entityType: 'EVENT',
+        entityId: parsed.id,
+        citySlug: parsed.city.slug,
+      });
     } catch (err) {
       setError(err instanceof AuthClientError ? err.message : 'Could not load event.');
     }
@@ -79,6 +87,14 @@ export default function EventDetailScreen() {
       }
       setData({ ...data, savedByUser: desired });
       invalidatePrefix('bookmarks:');
+      if (desired) {
+        track({
+          event: ANALYTICS_EVENTS.eventSaved,
+          entityType: 'EVENT',
+          entityId: data.id,
+          citySlug: data.city.slug,
+        });
+      }
       // PRD-0005: schedule a local reminder 1h before start when saving.
       if (desired) {
         const result = await scheduleEventReminder(data.id, data.title, data.startsAt);
@@ -111,6 +127,12 @@ export default function EventDetailScreen() {
     const url = `${PUBLIC_BASE_URL}/${data.city.slug}/events/${data.slug}`;
     try {
       await Share.share({ message: `${data.title}\n${url}`, url });
+      track({
+        event: ANALYTICS_EVENTS.eventShared,
+        entityType: 'EVENT',
+        entityId: data.id,
+        citySlug: data.city.slug,
+      });
     } catch {
       // user cancelled
     }
@@ -119,6 +141,12 @@ export default function EventDetailScreen() {
   async function onRegister() {
     if (!data?.registrationUrl && !data?.onlineUrl) return;
     const url = data.registrationUrl ?? data.onlineUrl ?? '';
+    track({
+      event: ANALYTICS_EVENTS.eventRegisterClicked,
+      entityType: 'EVENT',
+      entityId: data.id,
+      citySlug: data.city.slug,
+    });
     const ok = await Linking.canOpenURL(url);
     if (ok) await Linking.openURL(url);
     else Alert.alert("Couldn't open link", url);
@@ -141,6 +169,12 @@ export default function EventDetailScreen() {
       dates: `${start}/${end}`,
       details: data.description ?? '',
       location: data.venueAddress ?? data.venueName ?? '',
+    });
+    track({
+      event: ANALYTICS_EVENTS.eventCalendarAdded,
+      entityType: 'EVENT',
+      entityId: data.id,
+      citySlug: data.city.slug,
     });
     await Linking.openURL(`https://calendar.google.com/calendar/render?${params}`);
   }
@@ -205,6 +239,18 @@ export default function EventDetailScreen() {
           )}
           <Pressable onPress={onShare} style={styles.actionGhost}>
             <Text style={styles.actionGhostText}>Share</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() =>
+              router.push({
+                pathname: '/report/event/[id]',
+                params: { id: data.id, title: data.title },
+              } as never)
+            }
+            style={styles.actionGhost}
+          >
+            <Text style={styles.reportText}>Report this event</Text>
           </Pressable>
 
           {data.description && (
@@ -295,6 +341,7 @@ const styles = StyleSheet.create({
   actionLinkText: { color: '#fff', fontWeight: '700' },
   actionGhost: { paddingVertical: spacing.sm, alignItems: 'center' },
   actionGhostText: { color: palette.brand[600], fontWeight: '600' },
+  reportText: { color: palette.neutral.muted, fontWeight: '600', fontSize: typography.small },
   reminderHint: {
     fontSize: typography.small,
     color: palette.neutral.muted,

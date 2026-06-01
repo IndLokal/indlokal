@@ -162,7 +162,7 @@ export default async function MePage() {
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="card-base p-4">
-            <p className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
+            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
               Personal
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
@@ -173,7 +173,7 @@ export default async function MePage() {
           </div>
 
           <div className="card-base p-4">
-            <p className="text-muted text-[11px] font-semibold uppercase tracking-[0.08em]">
+            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
               Internal
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
@@ -287,7 +287,7 @@ export default async function MePage() {
           <div className="mt-4 space-y-6">
             {upcomingSavedEvents.length > 0 && (
               <div>
-                <h3 className="text-muted mb-2 text-xs font-semibold uppercase tracking-[0.08em]">
+                <h3 className="text-muted mb-2 text-xs font-semibold tracking-[0.08em] uppercase">
                   Upcoming
                 </h3>
                 <div className="space-y-3">
@@ -318,7 +318,7 @@ export default async function MePage() {
 
             {pastSavedEvents.length > 0 && (
               <div>
-                <h3 className="text-muted mb-2 text-xs font-semibold uppercase tracking-[0.08em]">
+                <h3 className="text-muted mb-2 text-xs font-semibold tracking-[0.08em] uppercase">
                   Past
                 </h3>
                 <div className="space-y-3">

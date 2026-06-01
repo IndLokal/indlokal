@@ -30,7 +30,7 @@ export function CommunityActionGrid({
             key={card.id}
             className="border-border/70 from-brand-50 rounded-[var(--radius-card)] border bg-gradient-to-br to-white p-5 shadow-sm"
           >
-            <p className="text-brand-700 text-xs font-semibold uppercase tracking-[0.18em]">
+            <p className="text-brand-700 text-xs font-semibold tracking-[0.18em] uppercase">
               {card.audience}
             </p>
             <h3 className="text-foreground mt-2 text-lg font-bold">{card.title}</h3>

@@ -41,7 +41,7 @@ export function HostProfileForm({
           maxLength={100}
           defaultValue={defaultDisplayName}
           placeholder="e.g. Priya Mehta or Nrityalaya Dance School"
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm focus:ring-2 focus:ring-gray-900 focus:outline-none"
         />
         <p className="text-muted mt-1 text-xs">Shown as “Hosted by…” on every event you post.</p>
       </div>

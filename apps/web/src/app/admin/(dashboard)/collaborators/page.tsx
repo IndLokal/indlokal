@@ -296,7 +296,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
 
                   <div className="mt-4 grid gap-4 lg:grid-cols-2">
                     <div className="rounded-lg border border-slate-200 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                         Organizer (Owner)
                       </p>
                       {community.claimedBy ? (
@@ -310,7 +310,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                     </div>
 
                     <div className="rounded-lg border border-slate-200 p-3">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-600">
+                      <p className="text-xs font-semibold tracking-wide text-slate-600 uppercase">
                         Collaborators
                       </p>
                       {community.collaborators.length === 0 ? (
