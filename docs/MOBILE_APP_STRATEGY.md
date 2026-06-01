@@ -1,8 +1,21 @@
 # IndLokal Mobile App Strategy & Spec-Driven Development Plan
 
 > Owner: Engineering + Product (acting as Engineer & Product Head)
-> Status: Draft v1 - 22 April 2026
+> Status: v2 - 1 June 2026 (realigned to the cross-surface product). Supersedes Draft v1 (22 April 2026).
 > Scope: Native mobile apps (iOS + Android) for IndLokal. **PWA is explicitly out of scope** as a primary delivery channel.
+
+> **Why v2.** Since v1, the web product grew from a public site into a **multi-console, role-scoped product** (public site + organizer + event host + city-ambassador + admin), and the role model expanded to nine scoped roles (ADR-0005, PRD-0014). The app, built for the Member persona only, drifted from that product. This revision realigns the mobile strategy to **one role-aware product across web + mobile**. The full gap analysis is in [`MOBILE_APP_AUDIT.md`](./MOBILE_APP_AUDIT.md); the cross-surface seams are in [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md).
+
+---
+
+## 0.0 Product thesis: one role-aware product, two surfaces
+
+IndLokal is **one product with two surfaces**, not a website plus a separate app. A person signs in once and the surface reshapes to **who they are** (Member, Community Organizer, Event Host, City Ambassador) and **which device they hold**:
+
+- **Web** is the SEO + back-office + heavy-management surface (public landing pages, admin/ops consoles, deep organizer/host management).
+- **Mobile** is the recall + field + on-the-go surface (push, saved, "this week", and — uniquely — the **field tool for City Ambassadors**).
+
+The same `RoleAssignment` scopes (ADR-0005) drive **both** UIs; the same `/api/v1` contract and JWT identity back both. Mobile already carries the full role set in its token — it must start **using** it. Surfaces that mobile does not implement natively (notably the admin console) are reached by an **authenticated hand-off to web**, never a dead-end. See [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md) for the seam-by-seam contract.
 
 ---
 
@@ -204,9 +217,13 @@ For every feature (mobile or shared backend):
 
 ---
 
-## 4. MVP Scope (App v1.0)
+## 4. Product Scope (role-aware)
 
-Must-have, each with its own PRD/TDD/API/UX:
+The app is organized by **persona surface**. v1.0 finishes the Member surface; the operator surfaces (Organizer, Event Host, Ambassador) are the realignment work that brings the app back to product parity. Each item ships with its own PRD/TDD/API/UX.
+
+### 4.1 Member surface — App v1.0 (finish to parity)
+
+Must-have, each with its own spec:
 
 1. **City picker + Discover feed** - reuses `modules/discovery`.
 2. **Event detail** - RSVP/Save, Add to Calendar, Share.
@@ -214,12 +231,31 @@ Must-have, each with its own PRD/TDD/API/UX:
 4. **Search** - `modules/search` with recent + trending.
 5. **Auth** - Apple, Google, magic link; profile; bookmarks (`me/`).
 6. **Push notifications** - granular per-city / per-community / per-category prefs.
-7. **Submit event/community** - camera + gallery upload; reuses `submit/` flow.
-8. **Universal Links / App Links** - `indlokal.com/[city]/...` opens in app.
-9. **Offline cache** - last feed + saved items.
-10. **Analytics + crash reporting.**
+7. **Submit event/community** - **camera + gallery upload** (via `/api/v1/uploads/presign`); reuses `submit/` flow. _(Gap today: submissions are text-only.)_
+8. **Editable profile & preferences** - city/persona/languages editable anytime, at parity with web `/me`. _(Gap today: profile is read-only.)_
+9. **Universal Links / App Links** - `indlokal.com/[city]/...` opens in app.
+10. **Offline cache** - last feed + saved items.
+11. **Analytics + crash reporting.**
+12. **Parity public surfaces** - consular-services and "this week" surfaces reachable on mobile.
 
-Explicitly out of v1: in-app chat, ticketing/payments, organizer analytics dashboards, social posts.
+### 4.2 Role-aware shell — App v1.1 (the realignment unlock)
+
+13. **Workspace hub in the `Me` tab** - reads `RoleAssignment` scopes and surfaces Organizer / Event Host / Ambassador entries only for entitled users, mirroring web `/me`. This is the keystone that makes every operator surface reachable.
+14. **Authenticated hand-off to web** - for admin/ops and any surface not yet native, open an in-app browser with a short-lived session exchange (no re-login).
+
+### 4.3 City Ambassador field mode — App v1.2 (app-first, highest leverage)
+
+15. **City dashboard** - my submissions, pending pipeline, upcoming events to check in, stale communities (scoped to assigned city).
+16. **Fast-track submit** with **camera** - lands in `pipeline_items` with ambassador attribution.
+17. **Event check-in** with **photo capture + geolocation** - the most mobile-native action in the whole product.
+18. **Personal scoreboard** and **feedback** capture.
+
+### 4.4 Organizer & Event Host lite — App v1.3
+
+19. **Organizer lite** - multi-community switch, edit profile/links, create/edit events, see moderation state, manage collaborators (mirrors `/organizer/(community)` at phone depth; deep features hand off to web).
+20. **Event Host lite** - host home tiles (live/in-review/declined/past), unverified-event cap visibility, post/edit event, edit host profile (mirrors `/organizer/host`).
+
+Explicitly out of mobile scope (stays web-only, reached via hand-off): the **admin/ops console** (submissions, pipeline, scoring, data, merge, reports, team, audit), heavy SEO landing pages, and bulk/CSV editing. Also out of v1: in-app chat, ticketing/payments, organizer analytics dashboards, social posts.
 
 ---
 
@@ -310,10 +346,14 @@ Each item below ships behind its own TDD:
 
 ## 10. Phased Roadmap
 
-- **Phase 0 - Foundations:** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads, spec templates merged into `docs/specs/`.
-- **Phase 1 - App v1.0 MVP:** §4 scope. Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target - informed by existing competitive docs).
-- **Phase 2:** widgets, Live Activities, WhatsApp channel, organizer surface in-app, in-app inbox, referrals.
-- **Phase 3:** ticketing/RSVP + payments (Razorpay/Stripe), in-app chat per community, recommendations from `modules/scoring` + collaborative filtering, AI agent surface from `docs/AI_PIPELINE_*`.
+- **Phase 0 - Foundations (done / in place):** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads endpoint, spec templates in `docs/specs/`.
+- **Phase 1 - App v1.0 (Member to parity):** §4.1 scope - finish the Member surface (image-enabled submissions, editable profile, parity public surfaces). Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target).
+- **Phase 2 - App v1.1 (Role-aware shell):** §4.2 - workspace hub driven by `RoleAssignment` scopes + authenticated web hand-off. This is the realignment keystone that ends the Member-only drift.
+- **Phase 3 - App v1.2 (Ambassador field mode):** §4.3 - the highest-leverage *new* build; the app becomes the field tool for City Ambassadors (check-in, photo capture, fast-track submit, scoreboard).
+- **Phase 4 - App v1.3 (Organizer & Host lite):** §4.4 - on-the-go community/event management mirroring the web consoles, with deep features handed off to web.
+- **Phase 5 - Enrichment:** widgets, Live Activities, WhatsApp channel, referrals; then ticketing/RSVP + payments, in-app chat, recommendations from `modules/scoring`, AI agent surface from `docs/AI_PIPELINE_*`.
+
+Throughout, the admin/ops console stays **web-only**, reached from the app via authenticated hand-off (see [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md) §5).
 
 ---
 
@@ -344,6 +384,8 @@ Run-rate adds should stay minimal: EAS, Resend, object storage, PostHog, and Sen
 
 ## 13. First Specs to Write (immediate next actions)
 
+**Foundations already specced (v1):**
+
 1. `ADR-0001` - Adopt Expo + monorepo; reject PWA.
 2. `ADR-0002` - Zod-as-contract; OpenAPI generated, not hand-written.
 3. `PRD-0001` / `TDD-0001` - `/api/v1` cutover + JWT auth.
@@ -353,6 +395,14 @@ Run-rate adds should stay minimal: EAS, Resend, object storage, PostHog, and Sen
 7. `EVENTS/analytics.md` - initial event catalog (typed).
 8. `EVENTS/notifications.md` - full notification matrix with caps and copy.
 
+**Realignment specs (v2 — to author next; each MUST state both web and mobile behavior per [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md) §10):**
+
+9. `PRD`/`TDD` - **Mobile image uploads** in submissions (camera/gallery via `/api/v1/uploads/presign`).
+10. `PRD`/`TDD` - **Editable mobile profile & preferences** (parity with web `/me`).
+11. `PRD`/`TDD` - **Role-aware workspace hub** in the `Me` tab (drive UI from `RoleAssignment` scopes) + authenticated web hand-off.
+12. `PRD`/`TDD` - **City Ambassador field mode** (dashboard, fast-track submit, check-in + photo, scoreboard).
+13. `PRD`/`TDD` - **Organizer lite** and **Event Host lite** mobile surfaces.
+
 ---
 
-**Bottom line:** Native via Expo, monorepo with a shared contract, and a spec-driven workflow where every feature starts as a PRD + API + TDD before code. Push and the weekly digest are treated as the core retention product - not features. Ship a tight v1.0 in two lighthouse cities, then scale.
+**Bottom line:** Native via Expo, monorepo with a shared contract, and a spec-driven workflow where every feature starts as a PRD + API + TDD before code. The app is **one role-aware surface of one product**: finish Member parity, make the app **role-aware** so Organizers, Hosts, and especially **City Ambassadors** get the slice that fits the phone, and keep admin/SEO on web behind authenticated hand-offs. Push and the weekly digest remain the core retention product - not features. Ship a tight Member v1.0 in two lighthouse cities, then ship the role-aware shell and the Ambassador field experience.
