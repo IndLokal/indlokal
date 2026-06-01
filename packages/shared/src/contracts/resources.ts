@@ -92,6 +92,8 @@ export const ContentReportInput = z.object({
   reportType: ReportType,
   /** ID of the community being reported (for STALE_INFO, BROKEN_LINK, INCORRECT_DETAILS) */
   communityId: Cuid.optional(),
+  /** ID of the event being reported (orthogonal to communityId) */
+  eventId: Cuid.optional(),
   /** Free-text name for SUGGEST_COMMUNITY */
   suggestedName: z.string().max(200).optional(),
   /** City for SUGGEST_COMMUNITY */

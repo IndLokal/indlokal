@@ -23,6 +23,7 @@ export default async function AdminReportsPage() {
     orderBy: { createdAt: 'desc' },
     include: {
       community: { select: { name: true, slug: true, city: { select: { slug: true } } } },
+      event: { select: { title: true, slug: true, city: { select: { slug: true } } } },
       city: { select: { name: true } },
     },
   });
@@ -104,6 +105,15 @@ export default async function AdminReportsPage() {
                     rel="noreferrer"
                   >
                     {report.community.name} ↗
+                  </a>
+                ) : report.event ? (
+                  <a
+                    href={`/${report.event.city?.slug}/events/${report.event.slug}`}
+                    className="text-brand-700 font-medium hover:underline"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    {report.event.title} ↗
                   </a>
                 ) : (
                   <span className="text-muted text-sm">No community linked</span>
