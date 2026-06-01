@@ -1,7 +1,7 @@
 /**
- * Submit event form - PRD-0009.
- * Text-only v1 (no image picker yet - pending expo-image-picker install).
- * Posts to POST /api/v1/submissions/event with EventSubmission shape.
+ * Submit event form - PRD-0009 / PRD-0040.
+ * Posts to POST /api/v1/submissions/event with EventSubmission shape, with an
+ * optional image uploaded via the presign flow (imageKey).
  */
 
 import { useEffect, useMemo, useState } from 'react';
@@ -24,6 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { discovery as d, submit as s } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
+import { ImagePickerField } from '@/components/ImagePickerField';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
@@ -47,6 +48,7 @@ export default function SubmitEventScreen() {
   const [isOnline, setIsOnline] = useState(false);
   const [cost, setCost] = useState('');
   const [contactEmail, setContactEmail] = useState('');
+  const [imageKey, setImageKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -90,6 +92,7 @@ export default function SubmitEventScreen() {
         isOnline,
         cost: cost.trim() || undefined,
         contactEmail: contactEmail.trim() || undefined,
+        imageKey: imageKey ?? undefined,
       };
       const validated = s.EventSubmission.parse(payload);
       const result = await authClient.postAuthed<s.EventSubmission, s.SubmissionResult>(
@@ -211,6 +214,8 @@ export default function SubmitEventScreen() {
             multiline
             numberOfLines={4}
           />
+
+          <ImagePickerField label="Event image" onChange={setImageKey} disabled={busy} />
 
           <Text style={styles.label}>Contact email</Text>
           <TextInput

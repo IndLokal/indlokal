@@ -1,6 +1,7 @@
 /**
- * Submit community form - PRD-0009.
- * Text-only v1. Posts to POST /api/v1/submissions/community.
+ * Submit community form - PRD-0009 / PRD-0040.
+ * Posts to POST /api/v1/submissions/community, with an optional image uploaded
+ * via the presign flow (imageKey).
  */
 
 import { useEffect, useState } from 'react';
@@ -22,6 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { community as c, content, discovery as d, submit as s } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { queryCache } from '@/lib/cache/query-cache';
+import { ImagePickerField } from '@/components/ImagePickerField';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
@@ -51,6 +53,7 @@ export default function SubmitCommunityScreen() {
   const [primaryChannelUrl, setPrimaryChannelUrl] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactName, setContactName] = useState('');
+  const [imageKey, setImageKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -103,6 +106,7 @@ export default function SubmitCommunityScreen() {
         primaryChannelUrl: primaryChannelUrl.trim(),
         contactEmail: contactEmail.trim(),
         contactName: contactName.trim(),
+        imageKey: imageKey ?? undefined,
       };
       const validated = s.CommunitySubmission.parse(payload);
       const result = await authClient.postAuthed<s.CommunitySubmission, s.SubmissionResult>(
@@ -183,6 +187,8 @@ export default function SubmitCommunityScreen() {
             multiline
             numberOfLines={4}
           />
+
+          <ImagePickerField label="Community image" onChange={setImageKey} disabled={busy} />
 
           <Text style={styles.label}>Primary channel *</Text>
           <View style={styles.chipRow}>

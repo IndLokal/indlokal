@@ -62,6 +62,10 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        <Pressable style={styles.editButton} onPress={() => router.push('/me/edit' as never)}>
+          <Text style={styles.editText}>Edit profile</Text>
+        </Pressable>
+
         <Pressable style={styles.signOutButton} onPress={() => void handleSignOut()}>
           <Text style={styles.signOutText}>Sign out</Text>
         </Pressable>
@@ -128,6 +132,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: typography.body,
+  },
+  editButton: {
+    backgroundColor: palette.brand[600],
+    borderRadius: radius.button,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  editText: {
     color: '#fff',
     fontWeight: '700',
     fontSize: typography.body,
