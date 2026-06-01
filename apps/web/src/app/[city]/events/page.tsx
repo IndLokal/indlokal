@@ -29,6 +29,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   const filters = await searchParams;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
   const cityName = cityRow?.name ?? city;
+  const title = `Indian Events in ${cityName}`;
+  const description = `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`;
 
   const hasFilters = Boolean(filters.category || filters.cost || filters.type);
 
@@ -45,8 +47,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
   if (hasFilters) {
     return {
-      title: `Indian Events in ${cityName}`,
-      description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+      title,
+      description,
       alternates: {
         canonical: `/${city}/events`,
       },
@@ -55,10 +57,21 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
   }
 
   return {
-    title: `Indian Events in ${cityName}`,
-    description: `Upcoming Indian community events, festivals, and gatherings in ${cityName}, Germany.`,
+    title,
+    description,
     alternates: {
       canonical: `/${city}/events`,
+    },
+    openGraph: {
+      title,
+      description,
+      url: `/${city}/events`,
+      type: 'website',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
     },
   };
 }

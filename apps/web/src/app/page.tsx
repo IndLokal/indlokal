@@ -13,14 +13,34 @@ import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 
 export const metadata: Metadata = {
-  title: `Indian Communities and Events in Germany | ${siteConfig.name}`,
+  title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
   description:
-    'Discover Indian communities in Germany and upcoming Indian events in Germany. Explore by city with trusted local resources.',
+    'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+  keywords: [
+    'indian communities in germany',
+    'indian events in germany',
+    'indian communities stuttgart',
+    'indian events stuttgart',
+    'indians in germany',
+    'indian diaspora germany',
+  ],
   alternates: {
     canonical: '/',
   },
+  openGraph: {
+    title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
+    description:
+      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+    url: siteConfig.url,
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
+    description:
+      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+  },
 };
-
 export default function HomePage() {
   const websiteSchema = {
     '@context': 'https://schema.org',

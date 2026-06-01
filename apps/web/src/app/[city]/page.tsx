@@ -22,7 +22,18 @@ export async function generateMetadata({ params }: CityFeedPageProps): Promise<M
   const cityName = getConfiguredCityName(city) ?? city.charAt(0).toUpperCase() + city.slice(1);
   return {
     title: `Indian Communities & Events in ${cityName}`,
-    description: `What's happening for Indians in ${cityName} this week? Discover communities, events, and activities.`,
+    description: `Discover Indian communities and upcoming Indian events in ${cityName}, Germany on IndLokal. Explore this week's listings, local groups, and city resources in one place.`,
+    alternates: {
+      canonical: `/${city}`,
+    },
+    openGraph: {
+      title: `Indian Communities & Events in ${cityName}`,
+      description: `Discover Indian communities and upcoming Indian events in ${cityName}, Germany on IndLokal. Explore this week's listings, local groups, and city resources in one place.`,
+    },
+    twitter: {
+      title: `Indian Communities & Events in ${cityName}`,
+      description: `Discover Indian communities and upcoming Indian events in ${cityName}, Germany on IndLokal. Explore this week's listings, local groups, and city resources in one place.`,
+    },
   };
 }
 
@@ -84,6 +95,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
               What&apos;s happening for Indians in {cityName}
             </h1>
+            <p className="mt-2 max-w-2xl text-sm text-white/85 sm:text-base">
+              Indian communities and upcoming Indian events in {cityName}, Germany, curated weekly
+              by IndLokal.
+            </p>
             <div className="mt-3 flex items-center gap-4 text-sm">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 font-medium text-white/90 backdrop-blur-sm">
                 <span className="flex h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
