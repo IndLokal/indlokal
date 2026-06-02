@@ -2,10 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
-import { getEventBySlug } from '@/modules/event';
+import { getEventBySlug, isEventSaved } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/session';
+import { EventSaveButton } from '@/components/EventSaveButton';
 
 /**
  * Event Detail Page
@@ -31,6 +33,7 @@ export default async function EventDetailPage({ params }: Props) {
   const { city, slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
+  const user = await getSessionUser();
 
   // City is the discovery partition key: an event only exists under its own
   // city path. If the slug is reached via a different (or stale) city segment,
@@ -42,6 +45,7 @@ export default async function EventDetailPage({ params }: Props) {
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
   const isPast = startsAt < new Date();
+  const savedByUser = user ? await isEventSaved(user.id, event.id) : false;
 
   // Host attribution for host-posted events (no community)
   const hostUserId =
@@ -159,6 +163,20 @@ export default async function EventDetailPage({ params }: Props) {
               This event has passed
             </span>
           )}
+
+          <div className="mt-5 flex flex-wrap items-center gap-3">
+            <EventSaveButton eventId={event.id} saved={savedByUser} />
+            {event.registrationUrl && (
+              <a
+                href={event.registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="btn-secondary px-4 py-2 text-sm"
+              >
+                Register
+              </a>
+            )}
+          </div>
         </div>
 
         {/* Key details card */}
