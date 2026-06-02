@@ -147,7 +147,7 @@ export default function SignInScreen() {
           </View>
         ) : null}
 
-        {authFlags.google.enabled ? (
+        {authFlags.google.enabled && googleFlow.enabled ? (
           <Pressable
             onPress={onGooglePress}
             style={styles.secondaryButton}
