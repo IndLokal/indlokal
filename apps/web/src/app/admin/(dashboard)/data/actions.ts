@@ -224,10 +224,16 @@ export async function setCommunityStatusAction(formData: FormData) {
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
   if (!id || !['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(status)) return;
-  await db.community.update({
+  const updated = await db.community.update({
     where: { id },
     data: { status: status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED' },
+    select: { city: { select: { slug: true } } },
   });
+
+  revalidateTag('city-feed', 'max');
+  if (updated.city?.slug) {
+    revalidatePath(`/${updated.city.slug}/communities`);
+  }
   revalidatePath('/admin/data/communities');
 }
 
@@ -266,10 +272,17 @@ export async function setEventStatusAction(formData: FormData) {
   const id = String(formData.get('id') || '');
   const status = String(formData.get('status') || '');
   if (!id || !['UPCOMING', 'ONGOING', 'PAST', 'CANCELLED'].includes(status)) return;
-  await db.event.update({
+  const updated = await db.event.update({
     where: { id },
     data: { status: status as 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED' },
+    select: { cityId: true, city: { select: { slug: true } } },
   });
+
+  revalidateTag('city-feed', 'max');
+  revalidateTag(`city-events-${updated.cityId}`, 'max');
+  if (updated.city?.slug) {
+    revalidatePath(`/${updated.city.slug}/events`);
+  }
   revalidatePath('/admin/data/events');
 }
 
@@ -278,7 +291,16 @@ export async function deleteEventAction(formData: FormData) {
   await assertCan('admin.data.delete');
   const id = String(formData.get('id') || '');
   if (!id) return;
-  await db.event.delete({ where: { id } });
+  const deleted = await db.event.delete({
+    where: { id },
+    select: { cityId: true, city: { select: { slug: true } } },
+  });
+
+  revalidateTag('city-feed', 'max');
+  revalidateTag(`city-events-${deleted.cityId}`, 'max');
+  if (deleted.city?.slug) {
+    revalidatePath(`/${deleted.city.slug}/events`);
+  }
   revalidatePath('/admin/data/events');
 }
 

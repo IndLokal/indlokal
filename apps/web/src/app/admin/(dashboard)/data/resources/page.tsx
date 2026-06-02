@@ -1,3 +1,4 @@
+import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteResourceAction } from '../actions';
@@ -22,23 +23,34 @@ export default async function AdminResourcesPage({
 }) {
   const sp = await searchParams;
   const pagination = parseOffsetPagination(sp);
-  const where: {
-    city?: { slug: string };
-    resourceType?: string;
-    title?: { contains: string; mode: 'insensitive' };
-  } = {};
+  const types = [
+    'CONSULAR_SERVICE',
+    'OFFICIAL_EVENT',
+    'GOVERNMENT_INFO',
+    'VISA_SERVICE',
+    'CITY_REGISTRATION',
+    'DRIVING',
+    'HOUSING',
+    'HEALTH_DOCTORS',
+    'FAMILY_CHILDREN',
+    'JOBS_CAREERS',
+    'TAX_FINANCE',
+    'BUSINESS_SETUP',
+    'GROCERY_FOOD',
+    'COMMUNITY_RESOURCE',
+  ] as const;
+
+  const where: Prisma.ResourceWhereInput = {};
   if (sp.city) where.city = { slug: sp.city };
-  if (sp.type) where.resourceType = sp.type;
+  if (sp.type && types.includes(sp.type as (typeof types)[number])) {
+    where.resourceType = sp.type as (typeof types)[number];
+  }
   if (sp.q) where.title = { contains: sp.q, mode: 'insensitive' };
 
   const [totalCount, resources, cities] = await Promise.all([
-    db.resource.count({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      where: where as any,
-    }),
+    db.resource.count({ where }),
     db.resource.findMany({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      where: where as any,
+      where,
       orderBy: [{ updatedAt: 'desc' }, { id: 'desc' }],
       skip: pagination.skip,
       take: pagination.take,
@@ -56,23 +68,6 @@ export default async function AdminResourcesPage({
     totalCount,
     itemCount: resources.length,
   });
-
-  const types = [
-    'CONSULAR_SERVICE',
-    'OFFICIAL_EVENT',
-    'GOVERNMENT_INFO',
-    'VISA_SERVICE',
-    'CITY_REGISTRATION',
-    'DRIVING',
-    'HOUSING',
-    'HEALTH_DOCTORS',
-    'FAMILY_CHILDREN',
-    'JOBS_CAREERS',
-    'TAX_FINANCE',
-    'BUSINESS_SETUP',
-    'GROCERY_FOOD',
-    'COMMUNITY_RESOURCE',
-  ];
 
   return (
     <AdminPage>
