@@ -25,14 +25,15 @@ export const runtime = 'nodejs';
 
 function buildMagicLinkVerifyUrl(token: string, redirectTo?: string): string {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://indlokal.com';
-  const fallback = new URL('/auth/magic', appUrl);
+  const appBase = new URL(appUrl);
+  const fallback = new URL('/auth/magic', appBase);
   fallback.searchParams.set('token', token);
 
   if (!redirectTo) return fallback.toString();
 
   try {
     const target = new URL(redirectTo);
-    const appHost = new URL(appUrl).hostname.toLowerCase();
+    const appHost = appBase.hostname.toLowerCase();
     const host = target.hostname.toLowerCase();
     const isTrustedHttps =
       target.protocol === 'https:' &&
@@ -41,6 +42,12 @@ function buildMagicLinkVerifyUrl(token: string, redirectTo?: string): string {
 
     if (!isTrustedHttps && !isTrustedAppScheme) {
       return fallback.toString();
+    }
+
+    // Canonicalize trusted https redirects to the configured app host so
+    // older app builds (or stale links) cannot point users at a non-served host.
+    if (isTrustedHttps) {
+      target.host = appBase.host;
     }
 
     target.searchParams.set('token', token);
