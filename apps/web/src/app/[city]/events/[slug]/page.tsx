@@ -130,48 +130,50 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
         </nav>
 
         {/* Header */}
-        <div>
-          {/* Category tags */}
-          {event.categories.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {event.categories.map(({ category }) => (
-                <span
-                  key={category.slug}
-                  className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
-                >
-                  {category.icon} {category.name}
-                </span>
-              ))}
-            </div>
-          )}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            {/* Category tags */}
+            {event.categories.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {event.categories.map(({ category }) => (
+                  <span
+                    key={category.slug}
+                    className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
+                  >
+                    {category.icon} {category.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
-          <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
+            <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
 
-          {/* Recurring badge */}
-          {event.isRecurring && (
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              🔄 Recurring event
-              {event.recurrenceRule && (
-                <span className="text-blue-500">
-                  {' · '}
-                  {event.recurrenceRule.includes('WEEKLY')
-                    ? 'Weekly'
-                    : event.recurrenceRule.includes('MONTHLY')
-                      ? 'Monthly'
-                      : 'Repeats'}
-                </span>
-              )}
-            </span>
-          )}
+            {/* Recurring badge */}
+            {event.isRecurring && (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                🔄 Recurring event
+                {event.recurrenceRule && (
+                  <span className="text-blue-500">
+                    {' · '}
+                    {event.recurrenceRule.includes('WEEKLY')
+                      ? 'Weekly'
+                      : event.recurrenceRule.includes('MONTHLY')
+                        ? 'Monthly'
+                        : 'Repeats'}
+                  </span>
+                )}
+              </span>
+            )}
 
-          {/* Status badge */}
-          {isPast && (
-            <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
-              This event has passed
-            </span>
-          )}
+            {/* Status badge */}
+            {isPast && (
+              <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
+                This event has passed
+              </span>
+            )}
+          </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
             <EventSaveButton
               eventId={event.id}
               saved={savedByUser}

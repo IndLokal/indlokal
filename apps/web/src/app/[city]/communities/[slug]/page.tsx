@@ -111,35 +111,38 @@ export default async function CommunityDetailPage({ params }: Props) {
         </nav>
 
         {/* Header */}
-        <div className="flex items-start gap-4">
-          <div className="bg-brand-100 text-brand-700 flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-panel)] text-2xl font-bold">
-            {community.logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={community.logoUrl}
-                alt={community.name}
-                className="h-16 w-16 rounded-[var(--radius-panel)] object-cover"
-              />
-            ) : (
-              community.name.charAt(0)
-            )}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div className="bg-brand-100 text-brand-700 flex h-16 w-16 shrink-0 items-center justify-center rounded-[var(--radius-panel)] text-2xl font-bold">
+              {community.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={community.logoUrl}
+                  alt={community.name}
+                  className="h-16 w-16 rounded-[var(--radius-panel)] object-cover"
+                />
+              ) : (
+                community.name.charAt(0)
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-3xl font-bold">{community.name}</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <ActivityBadge score={community.activityScore ?? 0} />
+                {community.foundedYear && (
+                  <span className="text-muted text-sm">Est. {community.foundedYear}</span>
+                )}
+                {community.memberCountApprox && (
+                  <span className="text-muted text-sm">
+                    ~{community.memberCountApprox.toLocaleString()} members
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold">{community.name}</h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <ActivityBadge score={community.activityScore ?? 0} />
-              {community.foundedYear && (
-                <span className="text-muted text-sm">Est. {community.foundedYear}</span>
-              )}
-              {community.memberCountApprox && (
-                <span className="text-muted text-sm">
-                  ~{community.memberCountApprox.toLocaleString()} members
-                </span>
-              )}
-            </div>
-            <div className="mt-4">
-              <CommunityFollowButton communityId={community.id} following={followedByUser} />
-            </div>
+
+          <div className="shrink-0 sm:pt-1">
+            <CommunityFollowButton communityId={community.id} following={followedByUser} />
           </div>
         </div>
 
