@@ -134,9 +134,7 @@ export default async function CommunityDetailPage({ params }: Props) {
                       (community.completenessScore ?? 0) * 0.3 +
                       (community.trustScore ?? 0) * 0.2,
                   )}
-                  isRecentlyAdded={
-                    Date.now() - new Date(community.createdAt).getTime() < 14 * 24 * 60 * 60 * 1000
-                  }
+                  isRecentlyAdded={community.isRecentlyAdded ?? false}
                 />
                 {community.foundedYear && (
                   <span className="text-muted text-sm">Est. {community.foundedYear}</span>

@@ -1,4 +1,5 @@
 import { db, resolveCityIds } from '@/lib/db';
+import { subDays } from 'date-fns';
 import type {
   CommunityWithRelations,
   CommunityListItem,
@@ -6,12 +7,23 @@ import type {
   CommunitySummaryRow,
 } from './types';
 
+const RECENTLY_ADDED_WINDOW_DAYS = 14;
+
+function addIsRecentlyAdded<T extends { createdAt: Date }>(
+  row: T,
+): T & { isRecentlyAdded: boolean } {
+  return {
+    ...row,
+    isRecentlyAdded: row.createdAt >= subDays(new Date(), RECENTLY_ADDED_WINDOW_DAYS),
+  };
+}
+
 /**
  * Get a single community with all relations for the detail page.
  * Includes past events for credibility (event history).
  */
 export async function getCommunityBySlug(slug: string): Promise<CommunityWithRelations | null> {
-  return db.community.findFirst({
+  const community = await db.community.findFirst({
     where: { slug, status: { not: 'INACTIVE' }, mergedIntoId: null },
     include: {
       city: true,
@@ -23,6 +35,8 @@ export async function getCommunityBySlug(slug: string): Promise<CommunityWithRel
       },
     },
   });
+
+  return community ? addIsRecentlyAdded(community) : null;
 }
 
 export async function getCommunityRedirectTarget(
@@ -67,7 +81,7 @@ export async function getCommunitiesByCity(
   const cityIds = await resolveCityIds(citySlug);
   if (cityIds.length === 0) return [];
 
-  return db.community.findMany({
+  const rows = await db.community.findMany({
     where: {
       cityId: { in: cityIds },
       status: { not: 'INACTIVE' },
@@ -100,6 +114,8 @@ export async function getCommunitiesByCity(
     take: options?.limit ?? 20,
     skip: options?.offset ?? 0,
   });
+
+  return rows.map(addIsRecentlyAdded);
 }
 
 /**
@@ -151,7 +167,10 @@ export async function getCommunitiesPage(
   });
 
   const hasMore = rows.length > opts.limit;
-  return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
+  return {
+    items: (hasMore ? rows.slice(0, opts.limit) : rows).map(addIsRecentlyAdded),
+    hasMore,
+  };
 }
 
 const communityDetailSelect = {
