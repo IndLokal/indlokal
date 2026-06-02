@@ -166,6 +166,7 @@ export default function ReportEventScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: palette.neutral.background },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
   container: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
   title: { fontSize: typography.h3, fontWeight: '800', color: palette.neutral.foreground },
   sub: { fontSize: typography.body, color: palette.neutral.muted, marginBottom: spacing.md },
