@@ -114,6 +114,30 @@ const REMINDER_OFFSETS = [
   { label: 'T-2h', ms: 2 * 60 * 60 * 1000 },
 ] as const;
 
+async function reactivateSuppressedSavedEventReminder(args: {
+  userId: string;
+  idempotencyKey: string;
+  notBefore: Date;
+  payload: Record<string, unknown>;
+}): Promise<boolean> {
+  const result = await db.notificationOutbox.updateMany({
+    where: {
+      userId: args.userId,
+      topic: 'SAVED_EVENT_REMINDER',
+      status: 'SUPPRESSED',
+      idempotencyKey: args.idempotencyKey,
+    },
+    data: {
+      status: 'PENDING',
+      notBefore: args.notBefore,
+      payload: args.payload as Prisma.InputJsonValue,
+      lastError: null,
+      sentAt: null,
+    },
+  });
+  return result.count > 0;
+}
+
 export async function scheduleSavedEventReminders(
   userId: string,
   eventId: string,
@@ -127,19 +151,34 @@ export async function scheduleSavedEventReminders(
     const notBefore = new Date(event.startsAt.getTime() - offset.ms);
     if (notBefore <= now) continue;
 
+    const idempotencyKey = `user:${userId}:event:${event.id}:reminder:${offset.label}`;
+    const payload = {
+      title: event.title,
+      body: `${event.title} starts soon.`,
+      deepLink: `/${event.city.slug}/events/${event.slug}`,
+      eventId: event.id,
+      reminderOffset: offset.label,
+    };
+
+    const reactivated = await reactivateSuppressedSavedEventReminder({
+      userId,
+      idempotencyKey,
+      notBefore,
+      payload,
+    });
+
+    if (reactivated) {
+      scheduled += 1;
+      continue;
+    }
+
     await enqueueNotification({
       userId,
       topic: 'SAVED_EVENT_REMINDER',
       channel: 'PUSH',
       notBefore,
-      idempotencyKey: `user:${userId}:event:${event.id}:reminder:${offset.label}`,
-      payload: {
-        title: event.title,
-        body: `${event.title} starts soon.`,
-        deepLink: `/${event.city.slug}/events/${event.slug}`,
-        eventId: event.id,
-        reminderOffset: offset.label,
-      },
+      idempotencyKey,
+      payload,
     });
     scheduled += 1;
   }

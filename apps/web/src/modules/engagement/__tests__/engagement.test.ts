@@ -44,7 +44,7 @@ describe('engagement helpers', () => {
       communityId: 'community-1',
       community: { id: 'community-1', name: 'Kannada Stuttgart', slug: 'kannada-stuttgart' },
     });
-    mockDb.notificationOutbox.updateMany.mockResolvedValue({ count: 2 });
+    mockDb.notificationOutbox.updateMany.mockResolvedValue({ count: 0 });
   });
 
   it('follows a community and records follow semantics', async () => {
@@ -88,6 +88,8 @@ describe('engagement helpers', () => {
   });
 
   it('unsaving suppresses pending reminders', async () => {
+    mockDb.notificationOutbox.updateMany.mockResolvedValue({ count: 2 });
+
     const result = await unsaveEventForUser('user-1', 'event-1');
 
     expect(result).toEqual({ saved: false, remindersSuppressed: 2 });
@@ -103,5 +105,27 @@ describe('engagement helpers', () => {
       },
       data: { status: 'SUPPRESSED' },
     });
+  });
+
+  it('re-saving reactivates previously suppressed reminders', async () => {
+    mockDb.notificationOutbox.updateMany.mockResolvedValue({ count: 1 });
+
+    const result = await saveEventForUser('user-1', 'event-1');
+
+    expect(result).toEqual({ saved: true, remindersScheduled: 2 });
+    expect(mockDb.notificationOutbox.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          userId: 'user-1',
+          topic: 'SAVED_EVENT_REMINDER',
+          status: 'SUPPRESSED',
+          idempotencyKey: 'user:user-1:event:event-1:reminder:T-24h',
+        }),
+        data: expect.objectContaining({
+          status: 'PENDING',
+        }),
+      }),
+    );
+    expect(mockEnqueueNotification).not.toHaveBeenCalled();
   });
 });
