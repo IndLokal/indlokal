@@ -2,6 +2,7 @@ export type AdminQueueKey =
   | 'pipeline'
   | 'submissions'
   | 'claims'
+  | 'cityChanges'
   | 'events'
   | 'collaboratorRequests'
   | 'reports';
@@ -11,6 +12,7 @@ export const ADMIN_NAV_LINKS: Array<{ href: string; label: string; queueKey?: Ad
   { href: '/admin/pipeline', label: 'Pipeline', queueKey: 'pipeline' },
   { href: '/admin/submissions', label: 'Submissions', queueKey: 'submissions' },
   { href: '/admin/claims', label: 'Claims', queueKey: 'claims' },
+  { href: '/admin/city-changes', label: 'City Changes', queueKey: 'cityChanges' },
   { href: '/admin/events', label: 'Events', queueKey: 'events' },
   { href: '/admin/analytics', label: 'Analytics' },
   {

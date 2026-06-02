@@ -9,9 +9,12 @@ type Community = {
   name: string;
   description: string | null;
   descriptionLong: string | null;
+  logoUrl: string | null;
+  personaSegments: string[];
   languages: string[];
   foundedYear: number | null;
   memberCountApprox: number | null;
+  accessChannels: { id: string }[];
 };
 
 export default function EditProfileForm({ community }: { community: Community }) {
@@ -21,9 +24,51 @@ export default function EditProfileForm({ community }: { community: Community })
   );
 
   const errors = state?.success === false ? state.errors : {};
+  const profileChecks = [
+    { label: 'Name', done: !!community.name },
+    { label: 'Short description', done: !!community.description },
+    { label: 'Long description', done: !!community.descriptionLong },
+    { label: 'Logo', done: !!community.logoUrl },
+    { label: 'Audience segments', done: community.personaSegments.length > 0 },
+    { label: 'Languages', done: community.languages.length > 0 },
+    { label: 'Access links', done: community.accessChannels.length > 0 },
+  ];
+  const doneCount = profileChecks.filter((item) => item.done).length;
+  const pct = Math.round((doneCount / profileChecks.length) * 100);
 
   return (
     <form action={formAction} className="space-y-6">
+      <div className="card-base p-4">
+        <div className="flex items-center justify-between">
+          <p className="text-foreground text-sm font-semibold">Public profile readiness</p>
+          <span className="text-brand-600 text-sm font-semibold">{pct}%</span>
+        </div>
+        <div className="bg-muted-bg mt-2 h-2 overflow-hidden rounded-full">
+          <div className="bg-brand-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
+          {profileChecks.map((item) => (
+            <div key={item.label} className="flex items-center gap-2">
+              <span className={item.done ? 'text-success' : 'text-border'}>
+                {item.done ? '✓' : '○'}
+              </span>
+              <span className={item.done ? 'text-foreground' : 'text-muted'}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+        <p className="text-muted mt-3 text-xs">
+          Tip: after saving this page, update join links in{' '}
+          <Link href="/organizer/links" className="text-brand-600 hover:underline">
+            Community links
+          </Link>{' '}
+          and publish upcoming activities via{' '}
+          <Link href="/organizer/events/new" className="text-brand-600 hover:underline">
+            Add event
+          </Link>
+          .
+        </p>
+      </div>
+
       {state?.success && (
         <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
           ✓ Profile updated successfully.{' '}
@@ -73,6 +118,24 @@ export default function EditProfileForm({ community }: { community: Community })
         />
       </div>
 
+      {/* Logo URL */}
+      <div>
+        <label className="text-foreground block text-sm font-medium">
+          Logo image URL <span className="text-muted">(optional)</span>
+        </label>
+        <input
+          name="logoUrl"
+          type="url"
+          defaultValue={community.logoUrl ?? ''}
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+          placeholder="https://..."
+        />
+        <p className="text-muted mt-1 text-xs">
+          Use a public square image URL for the best card appearance.
+        </p>
+        {errors.logoUrl && <p className="mt-1 text-sm text-red-600">{errors.logoUrl[0]}</p>}
+      </div>
+
       {/* Languages */}
       <div>
         <p className="text-foreground block text-sm font-medium">Languages</p>
@@ -87,6 +150,27 @@ export default function EditProfileForm({ community }: { community: Community })
                 className="rounded"
               />
               <span className="text-foreground text-sm">{lang}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* Persona Segments */}
+      <div>
+        <p className="text-foreground block text-sm font-medium">Who this community is for</p>
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {communityOptions.PERSONA_SEGMENT_VALUES.map((segment) => (
+            <label key={segment} className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                name="personaSegments"
+                value={segment}
+                defaultChecked={community.personaSegments.includes(segment)}
+                className="rounded"
+              />
+              <span className="text-foreground text-sm">
+                {communityOptions.PERSONA_SEGMENT_LABELS[segment]}
+              </span>
             </label>
           ))}
         </div>
