@@ -98,6 +98,28 @@ describe('POST /api/v1/auth/magic-link/request redirect handling', () => {
     expect(parsed.searchParams.get('token')).toBe('token_123');
   });
 
+  it('canonicalizes trusted https redirect to localhost using http protocol', async () => {
+    process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3001';
+
+    const res = await POST(
+      makeRequest({
+        email: 'member@example.com',
+        redirectTo: 'https://indlokal.com/auth/magic?from=email',
+      }) as never,
+    );
+
+    expect(res.status).toBe(200);
+    expect(mocked.sendMagicLinkEmail).toHaveBeenCalledTimes(1);
+
+    const verifyUrl = mocked.sendMagicLinkEmail.mock.calls[0]?.[3] as string;
+    const parsed = new URL(verifyUrl);
+
+    expect(parsed.origin).toBe('http://localhost:3001');
+    expect(parsed.pathname).toBe('/auth/magic');
+    expect(parsed.searchParams.get('from')).toBe('email');
+    expect(parsed.searchParams.get('token')).toBe('token_123');
+  });
+
   it('allows indlokal:// redirectTo and appends token', async () => {
     const res = await POST(
       makeRequest({

@@ -47,6 +47,7 @@ function buildMagicLinkVerifyUrl(token: string, redirectTo?: string): string {
     // Canonicalize trusted https redirects to the configured app host so
     // older app builds (or stale links) cannot point users at a non-served host.
     if (isTrustedHttps) {
+      target.protocol = appBase.protocol;
       target.host = appBase.host;
     }
 
