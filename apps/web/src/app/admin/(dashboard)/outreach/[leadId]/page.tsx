@@ -16,7 +16,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
   const lead = await db.outreachLead.findUnique({
     where: { id: leadId },
     include: {
-      city: { select: { name: true } },
+      city: { select: { name: true, slug: true } },
       community: { select: { id: true, name: true, slug: true } },
       notes: {
         orderBy: { createdAt: 'desc' },
@@ -80,7 +80,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ lea
             {lead.community && (
               <div className="mt-3">
                 <Link
-                  href={`/communities/${lead.community.slug}`}
+                  href={`/${lead.city.slug}/communities/${lead.community.slug}`}
                   className="text-sm text-sky-600 hover:underline"
                 >
                   View community →
