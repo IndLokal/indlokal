@@ -84,14 +84,14 @@ The engagement layer will **not** implement:
 
 ## 5. Target users and jobs-to-be-done
 
-| Persona | Job-to-be-done | Engagement need |
-| --- | --- | --- |
-| Newcomer | Find real communities and know what to join | Follow city/category and suggested communities |
-| Settled explorer | Discover events they are missing | Weekly digest and followed-community alerts |
-| Family user | Plan weekend/community activities | Saved event reminders and family-relevant feed |
-| Student/professional | Find relevant groups/events without noise | Category/language preference-based ranking |
-| Community organizer | Get visibility and understand interest | Follower count, channel clicks, event saves |
-| City ambassador / operator | Improve data quality and supply freshness | Interaction signals and engagement diagnostics |
+| Persona                    | Job-to-be-done                              | Engagement need                                |
+| -------------------------- | ------------------------------------------- | ---------------------------------------------- |
+| Newcomer                   | Find real communities and know what to join | Follow city/category and suggested communities |
+| Settled explorer           | Discover events they are missing            | Weekly digest and followed-community alerts    |
+| Family user                | Plan weekend/community activities           | Saved event reminders and family-relevant feed |
+| Student/professional       | Find relevant groups/events without noise   | Category/language preference-based ranking     |
+| Community organizer        | Get visibility and understand interest      | Follower count, channel clicks, event saves    |
+| City ambassador / operator | Improve data quality and supply freshness   | Interaction signals and engagement diagnostics |
 
 ## 6. Scope
 
@@ -289,15 +289,15 @@ For MVP, personalization should be deterministic and explainable. Use simple wei
 
 Recommended starting weights:
 
-| Signal | Suggested weight |
-| --- | ---: |
-| Followed community event | +40 |
-| Saved related event/category | +20 |
-| User city / metro match | +20 |
-| Persona/category match | +15 |
-| Preferred language match | +10 |
-| Trending community/event | +10 |
-| High trust/activity score | +10 |
+| Signal                           |   Suggested weight |
+| -------------------------------- | -----------------: |
+| Followed community event         |                +40 |
+| Saved related event/category     |                +20 |
+| User city / metro match          |                +20 |
+| Persona/category match           |                +15 |
+| Preferred language match         |                +10 |
+| Trending community/event         |                +10 |
+| High trust/activity score        |                +10 |
 | Stale/cancelled/low-trust signal | negative / exclude |
 
 Weights are product defaults and should remain configurable in code/constants, not database-driven, until experimentation justifies admin configuration.
@@ -306,28 +306,28 @@ Weights are product defaults and should remain configurable in code/constants, n
 
 ### 10.1 Activation
 
-| Metric | Target |
-| --- | ---: |
-| Community follow rate from detail views | >= 15% |
-| Event save rate from detail views | >= 12% |
+| Metric                                         | Target |
+| ---------------------------------------------- | -----: |
+| Community follow rate from detail views        | >= 15% |
+| Event save rate from detail views              | >= 12% |
 | Push permission opt-in after engagement prompt | >= 50% |
 | Account users with at least one follow or save | >= 35% |
 
 ### 10.2 Retention
 
-| Metric | Target |
-| --- | ---: |
-| Weekly digest open / click-through | establish baseline first 4 weeks |
-| Return session within 7 days after follow/save | >= 20% |
-| D30 retained users with follow/save | 2x users without follow/save |
+| Metric                                         |                           Target |
+| ---------------------------------------------- | -------------------------------: |
+| Weekly digest open / click-through             | establish baseline first 4 weeks |
+| Return session within 7 days after follow/save |                           >= 20% |
+| D30 retained users with follow/save            |     2x users without follow/save |
 
 ### 10.3 Supply-side value
 
-| Metric | Target |
-| --- | ---: |
+| Metric                                                   |                                   Target |
+| -------------------------------------------------------- | ---------------------------------------: |
 | Organizer sees at least one measurable engagement signal | yes for claimed communities with traffic |
-| Access channel tap-through from community detail | >= 30% |
-| Share rate on event detail | >= 5% |
+| Access channel tap-through from community detail         |                                   >= 30% |
+| Share rate on event detail                               |                                    >= 5% |
 
 ## 11. Analytics and reporting requirements
 
@@ -335,20 +335,20 @@ Track via existing analytics/event catalog and `UserInteraction` where server-si
 
 Minimum events:
 
-| Event | Purpose |
-| --- | --- |
-| `community.detail.viewed` | denominator for follow rate |
-| `community.followed` | core conversion |
-| `community.unfollowed` | churn / notification fatigue |
-| `community.channel.tapped` | handoff to WhatsApp/Telegram/website |
-| `event.detail.viewed` | denominator for save/register/share |
-| `event.saved` | intent signal |
-| `event.unsaved` | cancellation signal |
-| `event.registration.tapped` | high-intent conversion |
-| `event.calendar.tapped` | planning intent |
-| `event.share.tapped` | growth loop |
+| Event                              | Purpose                                    |
+| ---------------------------------- | ------------------------------------------ |
+| `community.detail.viewed`          | denominator for follow rate                |
+| `community.followed`               | core conversion                            |
+| `community.unfollowed`             | churn / notification fatigue               |
+| `community.channel.tapped`         | handoff to WhatsApp/Telegram/website       |
+| `event.detail.viewed`              | denominator for save/register/share        |
+| `event.saved`                      | intent signal                              |
+| `event.unsaved`                    | cancellation signal                        |
+| `event.registration.tapped`        | high-intent conversion                     |
+| `event.calendar.tapped`            | planning intent                            |
+| `event.share.tapped`               | growth loop                                |
 | `digest.opened` / `digest.clicked` | recall loop health, if channel supports it |
-| `notification.suppressed` | preference/cap/quality debugging |
+| `notification.suppressed`          | preference/cap/quality debugging           |
 
 ## 12. Compliance and privacy requirements
 
@@ -372,15 +372,15 @@ Minimum events:
 
 ## 14. Risks and mitigations
 
-| Risk | Mitigation |
-| --- | --- |
-| Notification fatigue | Use caps, quiet hours, digest-first fallback, and simple notification controls |
-| Over-engineering follow models too early | Reuse `SavedCommunity`; add dedicated `CommunityFollow` only when notification levels need it |
-| Under-engineering future personalization | Persist interaction signals now; keep deterministic scoring extensible |
-| Organizer misinterprets follows as members | UX copy: `Followers on IndLokal`, not `Members` |
-| Low content density creates weak digest | Suppress low-quality digests or fallback to city-level top content |
-| Duplicate notification sends | Enforce idempotency keys in outbox |
-| Confusing save/follow language | Standardize: communities are followed, events are saved |
+| Risk                                       | Mitigation                                                                                    |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Notification fatigue                       | Use caps, quiet hours, digest-first fallback, and simple notification controls                |
+| Over-engineering follow models too early   | Reuse `SavedCommunity`; add dedicated `CommunityFollow` only when notification levels need it |
+| Under-engineering future personalization   | Persist interaction signals now; keep deterministic scoring extensible                        |
+| Organizer misinterprets follows as members | UX copy: `Followers on IndLokal`, not `Members`                                               |
+| Low content density creates weak digest    | Suppress low-quality digests or fallback to city-level top content                            |
+| Duplicate notification sends               | Enforce idempotency keys in outbox                                                            |
+| Confusing save/follow language             | Standardize: communities are followed, events are saved                                       |
 
 ## 15. Rollout approach
 
