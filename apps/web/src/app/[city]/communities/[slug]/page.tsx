@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { communityOptions } from '@indlokal/shared';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 import {
   getCommunityBySlug,
   getCommunityRedirectTarget,
@@ -50,10 +51,11 @@ export default async function CommunityDetailPage({ params }: Props) {
     notFound();
   }
 
-  // City is the discovery partition key: a community only exists under its own
-  // city path. Canonicalize if reached via a different (or stale) city segment.
-  if (community.city.slug !== city) {
-    redirect(`/${community.city.slug}/communities/${slug}`);
+  // Satellite city slugs are not publicly routable (they redirect to metro roots).
+  // Canonicalize community detail URLs to a metro-safe city slug.
+  const canonicalCity = SATELLITE_TO_METRO[community.city.slug] ?? community.city.slug;
+  if (canonicalCity !== city) {
+    redirect(`/${canonicalCity}/communities/${slug}`);
   }
 
   const now = new Date();
