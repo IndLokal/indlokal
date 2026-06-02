@@ -33,9 +33,16 @@ export function Badge({ variant = 'muted', children, className = '' }: BadgeProp
 /**
  * Pulse badge driven by composite pulseScore = activityScore×0.5 + completenessScore×0.3 + trustScore×0.2
  */
-export function PulseBadge({ pulseScore }: { pulseScore: number }) {
+export function PulseBadge({
+  pulseScore,
+  isRecentlyAdded = false,
+}: {
+  pulseScore: number;
+  isRecentlyAdded?: boolean;
+}) {
   if (pulseScore >= 80) return <Badge variant="success">Very Active</Badge>;
   if (pulseScore >= 60) return <Badge variant="info">Active</Badge>;
   if (pulseScore >= 40) return <Badge variant="warning">Moderate</Badge>;
+  if (isRecentlyAdded) return <Badge variant="primary">Recently added</Badge>;
   return <Badge variant="muted">Low activity</Badge>;
 }
