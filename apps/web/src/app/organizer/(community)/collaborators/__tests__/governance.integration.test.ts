@@ -6,7 +6,7 @@
  *
  * Verifies the authoritative-membership invariants:
  *  - inviting always creates a COLLABORATOR (never an elevated role) and
- *    requires OWNER (organizer) authority;
+ *    requires COMMUNITY_ADMIN authority;
  *  - the OWNER row cannot be removed;
  *  - ownership transfer promotes the target to OWNER, demotes the prior owner
  *    to COLLABORATOR, and keeps Community.claimedByUserId in sync.
@@ -46,6 +46,7 @@ vi.mock('@/lib/analytics/server', () => ({ captureServerEvent: vi.fn() }));
 
 import {
   inviteCollaborator,
+  demoteAdminToCollaborator,
   promoteCollaboratorToAdmin,
   resendCollaboratorInvite,
   removeCollaborator,
@@ -154,6 +155,31 @@ describe('@db inviteCollaborator', () => {
     expect(result).toMatchObject({ success: true });
     const invited = await testDb.user.findUnique({ where: { email: 'named-collab@example.com' } });
     expect(invited?.displayName).toBe('Priya Sharma');
+  });
+
+  it('allows delegated community admin invites', async () => {
+    const { community } = await seedOwnedCommunity();
+    const delegatedAdmin = await createUser(testDb, { email: 'delegated-admin@example.com' });
+    await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: delegatedAdmin.id,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+      },
+    });
+
+    currentSession = sessionFor(delegatedAdmin.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('email', 'admin-invitee@example.com');
+    const result = await inviteCollaborator(null, form);
+
+    expect(result).toMatchObject({ success: true });
+    const invited = await testDb.user.findUnique({ where: { email: 'admin-invitee@example.com' } });
+    expect(invited).not.toBeNull();
   });
 });
 
@@ -327,10 +353,10 @@ describe('@db promoteCollaboratorToAdmin', () => {
     const result = await promoteCollaboratorToAdmin(null, form);
     expect(result).toEqual({ success: true });
 
-    const admins = await testDb.communityCollaborator.findMany({
+    const admins = (await testDb.communityCollaborator.findMany({
       where: { communityId: community.id, role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
       select: { userId: true },
-    });
+    })) as Array<{ userId: string }>;
 
     expect(admins).toHaveLength(2);
     expect(admins.map((row) => row.userId)).toContain(owner.id);
@@ -338,6 +364,37 @@ describe('@db promoteCollaboratorToAdmin', () => {
 
     const refreshed = await testDb.community.findUnique({ where: { id: community.id } });
     expect(refreshed?.claimedByUserId).toBe(owner.id);
+  });
+});
+
+describe('@db demoteAdminToCollaborator', () => {
+  it('demotes a delegated admin to collaborator and records the change', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const delegatedAdmin = await createUser(testDb, { email: 'delegated-admin@example.com' });
+    const adminRow = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: delegatedAdmin.id,
+        role: 'COMMUNITY_ADMIN',
+        status: 'ACTIVE',
+        source: 'ADMIN_ADD',
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('targetUserId', delegatedAdmin.id);
+    const result = await demoteAdminToCollaborator(null, form);
+
+    expect(result).toEqual({ success: true });
+
+    const updated = await testDb.communityCollaborator.findUnique({
+      where: { id: adminRow.id },
+      select: { role: true },
+    });
+    expect(updated?.role).toBe('COLLABORATOR');
   });
 });
 

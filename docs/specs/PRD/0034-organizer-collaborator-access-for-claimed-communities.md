@@ -31,6 +31,9 @@ Ship a lightweight collaborator model in v1:
    - public "Request organizer access" on already-claimed community pages
 4. Admin can approve/reject pending collaborator requests.
 
+Only the primary owner manages team access on the organizer surface; delegated admins can help
+with content, but they do not get the membership-management controls.
+
 Do **not** add granular permission sets, organizations, billing seats, or invite expiry in v1.
 
 ## 4. Success metrics

@@ -9,15 +9,13 @@
 ## Problem
 
 A claimed community needs a clear answer to "who is allowed to run this?" Today the answer is split
-between a account-wide profile role (`User.role = COMMUNITY_ADMIN`) and the community's
-`claimedByUserId`, with a unused four-tier collaborator model layered on top. This lets a profile
-role act as power over communities the person does not run, and adds complexity with no product
-behavior behind it. We want community authority to be simple, explicit, and scoped to the
-community.
+between the primary-owner pointer (`claimedByUserId`) and the community membership table. This
+lets ownership and delegated team access blur together in the UI. We want community authority to
+be simple, explicit, and scoped to the community.
 
 ## Users & JTBD
 
-- **Organizer** (one per community): "I run this community and decide who else ca help."
+- **Primary owner** (one per community): "I run this community and decide who else ca help."
 - **Collaborator:** "I help operate a community I was invited to or approved for."
 - **Platform admin:** "I approve claims/submissions and ca step in on any community."
 - **Submitter (not necessarily a organizer):** "I want to add a community I know about, and tell
@@ -27,17 +25,17 @@ community.
 
 - 100% of community write actions authorize against the community membership record (zero reads of
   `User.role` for community permission).
-- Exactly one organizer per claimed community (DB-enforced).
+- Exactly one primary owner per claimed community (DB-enforced through `claimedByUserId`).
 - Every grant/revoke/transfer produces a `ContentLog` audit row.
 
 ## Scope
 
-- Two community roles only: **Organizer** (`COMMUNITY_ADMIN`) and **Collaborator** (`COLLABORATOR`).
-- Organizer access is granted by creating a `COMMUNITY_ADMIN` membership row (claim approval, submission
-  approval when the submitter runs the community, or transfer) — never by setting a global role.
-- Collaborators are invited by email or request access; admin reviews. No role picker.
-- Ownership transfer: the outgoing organizer becomes a `COLLABORATOR`; the incoming user becomes
-  `COMMUNITY_ADMIN`.
+- Two community roles only: **Community admin** (`COMMUNITY_ADMIN`) and **Collaborator** (`COLLABORATOR`).
+- `COMMUNITY_ADMIN` means delegated admin access, not primary ownership.
+- Primary ownership stays on `claimedByUserId`; a claim/submission approval or transfer updates that
+  pointer and can also create or update a `COMMUNITY_ADMIN` membership row.
+- Collaborators are invited by email or request access; the primary owner reviews team changes.
+- Ownership transfer updates the primary owner pointer and demotes the outgoing owner to `COLLABORATOR`.
 - Submission form asks the submitter to **declare their relationship** to the community instead of
   a bare "I want ownership" checkbox.
 - Authorization is enforced uniformly (no feature flag).
@@ -47,7 +45,7 @@ community.
 - Additional collaborator tiers (admin/viewer) or per-action permission grids.
 - `EVENT_HOST` / `PARTNER_ORG_ADMIN` flows (future platform roles, ADR-0005).
 - New collaborator-management UI beyond what already exists (invite + list); remove/transfer remain
-  server actions for admin/owner use.
+  server actions for primary-owner use.
 
 ## User Stories & Acceptance Criteria
 
@@ -73,7 +71,7 @@ And on approval, organizer access is only granted when the submitter helps run i
 And granting it creates a COMMUNITY_ADMIN membership row (not a global role)
 ```
 
-### Story 3 — Exactly one organizer
+### Story 3 — Exactly one primary owner
 
 ```gherkin
 Given a community already has a organizer
@@ -108,8 +106,8 @@ And a platform admin is always allowed
   the "help run" option.
 - **Admin submissions:** show the declared relationship; the "grant organizer access on approve"
   control defaults on when the submitter declared they help run it.
-- **Organizer team page:** unchanged — primary community-admin card + collaborator list + email invite. No
-  role dropdown.
+- **Organizer team page:** primary owner card + active admins/collaborators list + email invite.
+  Only the primary owner sees promote/demote/remove/transfer controls.
 
 ## Risks
 

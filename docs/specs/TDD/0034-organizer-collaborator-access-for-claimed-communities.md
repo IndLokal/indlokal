@@ -57,7 +57,7 @@ File touchpoints:
 
 Behavior:
 
-- Primary owner (or existing active collaborator) submits collaborator email.
+- Primary owner (or platform admin) submits collaborator email.
 - Upsert user if needed.
 - Create pending collaborator request with `source=COMMUNITY_ADMIN_INVITE`.
 - Invitee receives an email link and becomes `ACTIVE` on acceptance.
@@ -82,7 +82,8 @@ Update organizer auth/session resolution so organizer portal community list incl
 - primary owner communities (`claimedByUserId=user.id`)
 - active collaborator communities (`CommunityCollaborator.status=ACTIVE`)
 
-Primary owner remains source of truth for ownership-specific actions (future restriction hooks).
+Primary owner remains source of truth for ownership-specific actions and organizer-surface
+member-management controls.
 
 ## 5. UI surfaces
 

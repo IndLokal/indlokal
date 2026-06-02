@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import type { CollaboratorRole } from '@prisma/client';
 import { db } from '@/lib/db';
 
+export type { CollaboratorRole };
+
 const COOKIE_NAME = 'lp_session';
 
 // One-time login links sent by email. Short-lived; single-use.

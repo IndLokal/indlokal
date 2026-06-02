@@ -7,12 +7,13 @@
 
 ## Architecture
 
-Community authority is read from a single role-bearing table, `CommunityCollaborator`, through
+Community authority is split between the primary-owner pointer (`Community.claimedByUserId`) and a
+single role-bearing table, `CommunityCollaborator`, through
 [apps/web/src/lib/auth/community-permissions.ts](../../../apps/web/src/lib/auth/community-permissions.ts).
 The helper returns the caller's role for a community (`COMMUNITY_ADMIN` | `COLLABORATOR` | `null`), with a
-`claimedByUserId → COMMUNITY_ADMIN` fallback and a `PLATFORM_ADMIN` fast-path. Every community write
-(`organizer/edit`, `organizer/channels`, `organizer/events/new`, collaborator management) calls it
-unconditionally — there is no feature flag.
+`claimedByUserId` ownership fallback and a `PLATFORM_ADMIN` fast-path. Every community write
+(`organizer/edit`, `organizer/channels`, `organizer/events/new`) calls it unconditionally; the
+member-management actions additionally require the primary owner.
 
 ## Data model changes
 
@@ -21,13 +22,11 @@ unconditionally — there is no feature flag.
 - `enum CollaboratorRole` collapses from `COMMUNITY_ADMIN | ADMIN | COLLABORATOR | VIEWER` to **`COMMUNITY_ADMIN |
 COLLABORATOR`**.
 - `CommunityCollaborator.role` keeps `@default(COLLABORATOR)`.
-- **One organizer per community** is enforced at the application layer (claim/submission approval
-  and transfer). A DB partial unique index (`UNIQUE (community_id) WHERE role = 'COMMUNITY_ADMIN'`) is
-  deferred: Prisma cannot represent partial indexes in `schema.prisma`, so a raw one would be
-  flagged as drift by `prisma migrate dev`.
+- **One primary owner per community** is enforced by `Community.claimedByUserId`. Multiple
+  `COMMUNITY_ADMIN` rows may exist for delegated admins.
 - `enum CommunityStatus` keeps its value `CLAIMED` physically (removing a Postgres enum value
   mid-history is a heavyweight swap with no behavioral payoff), but it is **deprecated and never
-  written** — ownership state lives in `claimState` + the `COMMUNITY_ADMIN` row. Documented with a schema
+  written** — ownership state lives in `claimState` + `claimedByUserId`. Documented with a schema
   comment.
 
 ## Migration
@@ -50,13 +49,13 @@ Dev backout: `git revert` the code change and `pnpm prisma migrate reset`.
 
 `apps/web/src/app/organizer/collaborators/actions.ts`:
 
-- `inviteCollaborator` — role-less (always creates a `COLLABORATOR` request); remove the
-  `role`/`ASSIGNABLE_ROLES` input; enforce `canManageCommunity` unconditionally.
+- `inviteCollaborator` — role-less (always creates a `COLLABORATOR` request); enforce
+  `canManageCommunity` on the primary owner.
 - `resendCollaboratorInvite` — OWNER-only resend for `COMMUNITY_ADMIN_INVITE` + `PENDING`, with
   server cooldown and metadata timestamp (`inviteEmailLastSentAt`) to avoid accidental duplicate sends.
-- `setCollaboratorRole` — **deleted** (no tiers to set).
-- `removeCollaborator` — kept; refuses to remove the `COMMUNITY_ADMIN`; enforces `canManageCommunity`.
-- `transferOwnership` — kept; demotes outgoing `COMMUNITY_ADMIN → COLLABORATOR` (was `ADMIN`); promotes target
+- `demoteAdminToCollaborator` — demotes a delegated admin from `COMMUNITY_ADMIN` to `COLLABORATOR`.
+- `removeCollaborator` — kept; refuses to remove the primary owner; enforces `canManageCommunity`.
+- `transferOwnership` — kept; demotes outgoing `COMMUNITY_ADMIN → COLLABORATOR`; promotes target
   to `COMMUNITY_ADMIN`; syncs `claimedByUserId`; logs.
 
 `apps/web/src/app/organizer/collaborators/accept/route.ts`:
@@ -67,12 +66,11 @@ Dev backout: `git revert` the code change and `pnpm prisma migrate reset`.
 
 `apps/web/src/app/admin/(dashboard)/actions.ts`:
 
-- `approveClaim` — single membership-row path: upsert `COMMUNITY_ADMIN` row + `ContentLog ROLE_GRANTED` + set
-  `claimState=CLAIMED`/`claimedByUserId`. Remove the legacy `User.role = COMMUNITY_ADMIN` branch and
-  the flag check.
-- `approveSubmission` — when granting organizer access, mirror `approveClaim` (create `COMMUNITY_ADMIN` row +
-  log, set claim fields); **do not** set `User.role = COMMUNITY_ADMIN`. The admin's "grant" control
-  defaults from the submitter's declared relationship.
+- `approveClaim` — primary-owner path: set `claimState=CLAIMED`/`claimedByUserId` and upsert a
+  `COMMUNITY_ADMIN` row for organizer-level access; write `ContentLog ROLE_GRANTED`.
+- `approveSubmission` — when granting organizer access, mirror `approveClaim` (create or upsert a
+  `COMMUNITY_ADMIN` row + log, set claim fields); **do not** set `User.role = COMMUNITY_ADMIN`. The
+  admin's "grant" control defaults from the submitter's declared relationship.
 
 `apps/web/src/app/organizer/login/actions.ts`:
 
@@ -104,22 +102,22 @@ only path. All `if (FLAGS.communityRbacV2 && ...)` guards are replaced with the 
 
 - **Org without a backfilled COMMUNITY_ADMIN row:** `getCommunityRole` `claimedByUserId → COMMUNITY_ADMIN` fallback keeps
   them working until the row exists.
-- **Duplicate organizer:** the grant/transfer paths demote or upsert so a second `COMMUNITY_ADMIN` is not
-  created; the `(community_id, user_id)` unique key prevents duplicate rows for the same user.
+- **Duplicate primary owner:** the grant/transfer paths keep `claimedByUserId` in sync so a second
+  primary owner is not created; the `(community_id, user_id)` unique key prevents duplicate rows for the same user.
 - **DB unreachable on login/session:** existing graceful "no session"/vague-error handling is kept.
 
 ## Test plan
 
 `apps/web/src/lib/auth/__tests__/community-permissions.test.ts`:
 
-- Rewrite the role matrix to two roles: `COMMUNITY_ADMIN` → view/edit/manage/own; `COLLABORATOR` →
-  view/edit only; no membership → all false; `PLATFORM_ADMIN` → all true; `claimedByUserId`
-  fallback → owner.
+- Rewrite the role matrix so `COMMUNITY_ADMIN` is delegated admin access (view/edit only unless the
+  user is the primary owner); `COLLABORATOR` → view/edit only; no membership → all false;
+  `PLATFORM_ADMIN` → all true; `claimedByUserId` fallback → owner/manage.
 
 New governance tests (server actions, with mocked `db`):
 
-- Invite creates a `COLLABORATOR` request and requires manage rights.
-- `removeCollaborator` refuses the `COMMUNITY_ADMIN`.
+- Invite creates a `COLLABORATOR` request and requires the primary owner.
+- `removeCollaborator` refuses the primary owner.
 - `transferOwnership` promotes target to `COMMUNITY_ADMIN` and demotes the prior owner to `COLLABORATOR`.
 - `approveClaim` / `approveSubmission` (grant) create a `COMMUNITY_ADMIN` row and do not change `User.role`.
 

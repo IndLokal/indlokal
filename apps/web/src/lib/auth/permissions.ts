@@ -187,7 +187,7 @@ export function can(
     if (action === 'organizer.edit' || action === 'organizer.events.write') {
       return canEditCommunity(user, scope.communityId);
     }
-    // Member-management actions require OWNER/ADMIN.
+    // Member-management actions require the primary owner.
     return canManageCommunity(user, scope.communityId);
   }
 
