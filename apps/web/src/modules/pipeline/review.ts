@@ -602,6 +602,22 @@ export async function approvePipelineItemRecord(
     await refreshCommunityScore(createdEntityId);
   }
 
+  // TDD-0045: when a NEW event is approved (not merged as duplicate), bump lastActivityAt
+  // on the linked community so DB-level recency queries stay current without waiting for cron.
+  if (item.entityType === 'EVENT' && nextPipelineStatus === 'APPROVED') {
+    const approvedEvent = await db.event.findUnique({
+      where: { id: createdEntityId },
+      select: { communityId: true, moderationState: true },
+    });
+    if (approvedEvent?.communityId && approvedEvent.moderationState === 'PUBLISHED') {
+      await db.community.update({
+        where: { id: approvedEvent.communityId },
+        data: { lastActivityAt: new Date() },
+      });
+      await refreshCommunityScore(approvedEvent.communityId);
+    }
+  }
+
   await db.contentLog.create({
     data: {
       entityType: item.entityType.toLowerCase(),

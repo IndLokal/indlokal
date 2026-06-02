@@ -149,6 +149,12 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
         },
       });
 
+      // Write lastActivityAt so DB-level freshness queries are current (TDD-0045)
+      await db.community.update({
+        where: { id: community.id },
+        data: { lastActivityAt: new Date() },
+      });
+
       // Refresh scores so new events immediately affect rankings
       await refreshCommunityScore(community.id);
 

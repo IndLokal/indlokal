@@ -7,9 +7,11 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeActivityScore,
+  computeActivityBreakdown,
   computeCompletenessScore,
   computeTrustScore,
   computeFinalScore,
+  computeFreshnessState,
   detectTrending,
 } from '../scoring';
 
@@ -80,6 +82,83 @@ describe('computeActivityScore', () => {
       lastActivityAt: older,
     });
     expect(recent).toBeGreaterThan(stale);
+  });
+});
+
+// ─── computeActivityBreakdown (TDD-0045 enhancements) ───────────────────────
+
+describe('computeActivityBreakdown – TDD-0045', () => {
+  it('uses latestPublishedEventAt over null lastActivityAt', () => {
+    const recentEvent = new Date();
+    const breakdown = computeActivityBreakdown({
+      eventsLast90Days: 1,
+      lastActivityAt: null,
+      latestPublishedEventAt: recentEvent,
+    });
+    // recency should be near 40 (community just had an event)
+    expect(breakdown.recency).toBeCloseTo(40, 0);
+  });
+
+  it('picks the more recent of lastActivityAt vs latestPublishedEventAt', () => {
+    const oldActivity = new Date();
+    oldActivity.setDate(oldActivity.getDate() - 60);
+    const recentEvent = new Date(); // today
+    const breakdown = computeActivityBreakdown({
+      eventsLast90Days: 0,
+      lastActivityAt: oldActivity,
+      latestPublishedEventAt: recentEvent,
+    });
+    // should use the recent event date → high recency
+    expect(breakdown.recency).toBeGreaterThan(30);
+  });
+
+  it('cold-start: new community with no events gets 0 recency (no grace)', () => {
+    const breakdown = computeActivityBreakdown({
+      eventsLast90Days: 0,
+      lastActivityAt: null,
+    });
+    expect(breakdown.recency).toBe(0);
+  });
+
+  it('recency is capped at 40 even for future-dated events', () => {
+    const futureEvent = new Date();
+    futureEvent.setDate(futureEvent.getDate() + 30); // event 30 days from now
+    const breakdown = computeActivityBreakdown({
+      eventsLast90Days: 1,
+      lastActivityAt: null,
+      latestPublishedEventAt: futureEvent,
+    });
+    expect(breakdown.recency).toBeLessThanOrEqual(40);
+  });
+
+  it('still returns 0 with no events and no signal (baseline)', () => {
+    expect(computeActivityScore({ eventsLast90Days: 0, lastActivityAt: null })).toBe(0);
+  });
+});
+
+// ─── computeFreshnessState (TDD-0045 enhancements) ──────────────────────────
+
+describe('computeFreshnessState – TDD-0045', () => {
+  it('returns FRESH when latestPublishedEventAt is recent even if lastActivityAt is null', () => {
+    const recentEvent = new Date();
+    expect(computeFreshnessState(null, recentEvent)).toBe('FRESH');
+  });
+
+  it('returns FRESH when future event is scheduled', () => {
+    const futureEvent = new Date();
+    futureEvent.setDate(futureEvent.getDate() + 14);
+    expect(computeFreshnessState(null, futureEvent)).toBe('FRESH');
+  });
+
+  it('picks the more recent anchor between lastActivityAt and event date', () => {
+    const staleActivity = new Date();
+    staleActivity.setDate(staleActivity.getDate() - 100); // AGING/STALE
+    const recentEvent = new Date(); // FRESH
+    expect(computeFreshnessState(staleActivity, recentEvent)).toBe('FRESH');
+  });
+
+  it('still returns DORMANT when both anchors are null', () => {
+    expect(computeFreshnessState(null, null)).toBe('DORMANT');
   });
 });
 

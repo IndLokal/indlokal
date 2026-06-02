@@ -241,6 +241,7 @@ const trendingCommunitySelect = {
   memberCountApprox: true,
   logoUrl: true,
   lastActivityAt: true,
+  createdAt: true,
   languages: true,
   claimState: true,
   city: { select: { name: true, slug: true } },

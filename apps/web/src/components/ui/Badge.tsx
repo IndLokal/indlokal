@@ -30,10 +30,12 @@ export function Badge({ variant = 'muted', children, className = '' }: BadgeProp
   );
 }
 
-/** Activity score → badge mapping used by CommunityCard + detail page. */
-export function ActivityBadge({ score }: { score: number }) {
-  if (score >= 80) return <Badge variant="success">Very Active</Badge>;
-  if (score >= 60) return <Badge variant="info">Active</Badge>;
-  if (score >= 40) return <Badge variant="warning">Moderate</Badge>;
+/**
+ * Pulse badge driven by composite pulseScore = activityScore×0.5 + completenessScore×0.3 + trustScore×0.2
+ */
+export function PulseBadge({ pulseScore }: { pulseScore: number }) {
+  if (pulseScore >= 80) return <Badge variant="success">Very Active</Badge>;
+  if (pulseScore >= 60) return <Badge variant="info">Active</Badge>;
+  if (pulseScore >= 40) return <Badge variant="warning">Moderate</Badge>;
   return <Badge variant="muted">Low activity</Badge>;
 }

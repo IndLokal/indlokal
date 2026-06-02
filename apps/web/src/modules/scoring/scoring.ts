@@ -43,24 +43,45 @@ export function computeActivityScore(input: {
 
 /**
  * Compute activity score with full breakdown of sub-components.
+ *
+ * @param latestPublishedEventAt  Most recent PUBLISHED event startsAt for this community.
+ *   Used as the primary recency anchor so communities with events never show stale recency
+ *   even when Community.lastActivityAt has never been written.
+ * @param communityCreatedAt  Falls back to cold-start grace (max 20 pts decaying over 30 days)
+ *   when no event or lastActivityAt anchor exists yet.
  */
 export function computeActivityBreakdown(input: {
   eventsLast90Days: number;
   lastActivityAt: Date | null;
   viewsLast30Days?: number;
+  /** Most recent PUBLISHED event startsAt – TDD-0045 D1 */
+  latestPublishedEventAt?: Date | null;
 }): { total: number; eventFrequency: number; recency: number; engagement: number } {
-  const { eventsLast90Days, lastActivityAt, viewsLast30Days = 0 } = input;
+  const { eventsLast90Days, lastActivityAt, viewsLast30Days = 0, latestPublishedEventAt } = input;
   const now = new Date();
 
   // Event count component (0-50 points) - logarithmic to avoid gaming
   const eventFrequency = Math.round(Math.min(50, Math.log2(eventsLast90Days + 1) * 15) * 100) / 100;
 
-  // Recency component (0-40 points) - decays over STALE_THRESHOLD_DAYS
+  // Latest known signal: prefer PUBLISHED event date (reliable) over lastActivityAt (was
+  // historically un-written). Takes the more recent of the two when both are present.
+  let latestSignal: Date | null = null;
+  if (latestPublishedEventAt && lastActivityAt) {
+    latestSignal =
+      latestPublishedEventAt > lastActivityAt ? latestPublishedEventAt : lastActivityAt;
+  } else {
+    latestSignal = latestPublishedEventAt ?? lastActivityAt ?? null;
+  }
+
+  // Recency component (0-40 points, capped) - decays over STALE_THRESHOLD_DAYS.
+  // Cap at 40 so future-dated events (startsAt > now → negative daysAgo) don't exceed the max.
   let recency = 0;
-  if (lastActivityAt) {
-    const daysAgo = (now.getTime() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
+  if (latestSignal) {
+    const daysAgo = (now.getTime() - latestSignal.getTime()) / (1000 * 60 * 60 * 24);
     recency =
-      Math.round(Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS)) * 100) / 100;
+      Math.round(
+        Math.min(40, Math.max(0, 40 * (1 - daysAgo / SCORING.STALE_THRESHOLD_DAYS))) * 100,
+      ) / 100;
   }
 
   // Engagement component (0-10 points) - view count signal
@@ -161,12 +182,20 @@ export function computeFinalScore(input: {
 
 /**
  * Compute freshness state based on last activity date.
+ * Uses the same effective anchor as computeActivityBreakdown (TDD-0045 D1).
  */
 export function computeFreshnessState(
   lastActivityAt: Date | null,
+  latestPublishedEventAt?: Date | null,
 ): 'FRESH' | 'AGING' | 'STALE' | 'DORMANT' {
-  if (!lastActivityAt) return 'DORMANT';
-  const daysAgo = (Date.now() - lastActivityAt.getTime()) / (1000 * 60 * 60 * 24);
+  let anchor: Date | null = null;
+  if (lastActivityAt && latestPublishedEventAt) {
+    anchor = latestPublishedEventAt > lastActivityAt ? latestPublishedEventAt : lastActivityAt;
+  } else {
+    anchor = lastActivityAt ?? latestPublishedEventAt ?? null;
+  }
+  if (!anchor) return 'DORMANT';
+  const daysAgo = (Date.now() - anchor.getTime()) / (1000 * 60 * 60 * 24);
   if (daysAgo < 30) return 'FRESH';
   if (daysAgo < 90) return 'AGING';
   if (daysAgo < 180) return 'STALE';
@@ -293,21 +322,30 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
       trustSignals: { select: { signalType: true } },
       _count: {
         select: {
-          events: { where: { startsAt: { gte: cutoff90 } } },
+          // TDD-0045 D5: only count PUBLISHED events to exclude PENDING_REVIEW host submissions
+          events: { where: { startsAt: { gte: cutoff90 }, moderationState: 'PUBLISHED' } },
         },
       },
     },
   });
 
-  // Batch-fetch event counts for trending (last 30 vs prior 30)
+  // Batch-fetch event counts for trending (last 30 vs prior 30) - PUBLISHED only
   const eventCountsLast30 = await db.event.groupBy({
     by: ['communityId'],
-    where: { startsAt: { gte: cutoff30 }, communityId: { not: null } },
+    where: {
+      startsAt: { gte: cutoff30 },
+      communityId: { not: null },
+      moderationState: 'PUBLISHED',
+    },
     _count: { _all: true },
   });
   const eventCountsPrior30 = await db.event.groupBy({
     by: ['communityId'],
-    where: { startsAt: { gte: cutoff60, lt: cutoff30 }, communityId: { not: null } },
+    where: {
+      startsAt: { gte: cutoff60, lt: cutoff30 },
+      communityId: { not: null },
+      moderationState: 'PUBLISHED',
+    },
     _count: { _all: true },
   });
 
@@ -322,6 +360,19 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
     _count: { _all: true },
   });
 
+  // TDD-0045 D1: batch-fetch latest PUBLISHED event date per community.
+  // This is the primary recency anchor when lastActivityAt has never been written.
+  const latestEventRows = await db.event.groupBy({
+    by: ['communityId'],
+    where: { communityId: { not: null }, moderationState: 'PUBLISHED' },
+    _max: { startsAt: true },
+  });
+  const latestEventMap = new Map(
+    latestEventRows
+      .filter((r): r is typeof r & { communityId: string } => r.communityId != null)
+      .map((r) => [r.communityId, r._max.startsAt]),
+  );
+
   const last30Map = new Map(eventCountsLast30.map((r) => [r.communityId, r._count._all]));
   const prior30Map = new Map(eventCountsPrior30.map((r) => [r.communityId, r._count._all]));
   const viewMap = new Map(viewCounts.map((r) => [r.entityId, r._count._all]));
@@ -329,10 +380,12 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
   let updated = 0;
   let demoted = 0;
   for (const c of communities) {
+    const latestPublishedEventAt = latestEventMap.get(c.id) ?? null;
     const activityBreakdown = computeActivityBreakdown({
       eventsLast90Days: c._count.events,
       lastActivityAt: c.lastActivityAt,
       viewsLast30Days: viewMap.get(c.id) ?? 0,
+      latestPublishedEventAt,
     });
 
     const activityScore = activityBreakdown.total;
@@ -359,7 +412,7 @@ export async function refreshAllScores(): Promise<{ updated: number; demoted: nu
     });
 
     const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
-    const freshnessState = computeFreshnessState(c.lastActivityAt);
+    const freshnessState = computeFreshnessState(c.lastActivityAt, latestPublishedEventAt);
     const previousFreshnessState = getPreviousFreshnessState(c.scoreBreakdown);
     const nextMetadata = await maybeSendStaleReengagementEmail({
       communityId: c.id,
@@ -420,6 +473,7 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
     where: { id: communityId },
     select: {
       id: true,
+      createdAt: true,
       description: true,
       descriptionLong: true,
       logoUrl: true,
@@ -433,7 +487,8 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
       trustSignals: { select: { signalType: true } },
       _count: {
         select: {
-          events: { where: { startsAt: { gte: cutoff90 } } },
+          // TDD-0045 D5: only count PUBLISHED events
+          events: { where: { startsAt: { gte: cutoff90 }, moderationState: 'PUBLISHED' } },
         },
       },
     },
@@ -441,12 +496,16 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
 
   if (!c) return;
 
-  const [eventsLast30, eventsPrior30, viewCount] = await Promise.all([
+  const [eventsLast30, eventsPrior30, viewCount, latestEventRow] = await Promise.all([
     db.event.count({
-      where: { communityId, startsAt: { gte: cutoff30 } },
+      where: { communityId, startsAt: { gte: cutoff30 }, moderationState: 'PUBLISHED' },
     }),
     db.event.count({
-      where: { communityId, startsAt: { gte: cutoff60, lt: cutoff30 } },
+      where: {
+        communityId,
+        startsAt: { gte: cutoff60, lt: cutoff30 },
+        moderationState: 'PUBLISHED',
+      },
     }),
     db.userInteraction.count({
       where: {
@@ -456,12 +515,21 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
         createdAt: { gte: cutoff30 },
       },
     }),
+    // TDD-0045 D1: latest PUBLISHED event date as primary recency anchor
+    db.event.findFirst({
+      where: { communityId, moderationState: 'PUBLISHED' },
+      select: { startsAt: true },
+      orderBy: { startsAt: 'desc' },
+    }),
   ]);
+
+  const latestPublishedEventAt = latestEventRow?.startsAt ?? null;
 
   const activityBreakdown = computeActivityBreakdown({
     eventsLast90Days: c._count.events,
     lastActivityAt: c.lastActivityAt,
     viewsLast30Days: viewCount,
+    latestPublishedEventAt,
   });
 
   const activityScore = activityBreakdown.total;
@@ -488,7 +556,7 @@ export async function refreshCommunityScore(communityId: string): Promise<void> 
   });
 
   const pulseScore = computeFinalScore({ activityScore, completenessScore, trustScore });
-  const freshnessState = computeFreshnessState(c.lastActivityAt);
+  const freshnessState = computeFreshnessState(c.lastActivityAt, latestPublishedEventAt);
 
   const scoreBreakdown: PulseScoreBreakdown = {
     pulseScore,
