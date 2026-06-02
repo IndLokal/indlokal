@@ -14,6 +14,9 @@ import { Events } from '@/lib/analytics/events';
 import type { AnalyticsEvent } from '@/lib/analytics/events';
 
 const INTERACTION_TYPE_MAP: Record<string, string> = {
+  'community.detail.viewed': 'VIEW',
+  'community.followed': 'SAVE',
+  'community.channel.tapped': 'CLICK_ACCESS',
   'event.detail.viewed': 'VIEW',
   'event.saved': 'SAVE',
   'event.calendar_added': 'CLICK_ACCESS',
@@ -26,11 +29,20 @@ const INTERACTION_TYPE_MAP: Record<string, string> = {
 const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
   // Mobile event detail views should join the canonical event_viewed funnel.
   'event.detail.viewed': Events.EVENT_VIEWED,
+  'event.saved': Events.EVENT_SAVED,
+  'community.detail.viewed': Events.COMMUNITY_VIEWED,
+  'community.followed': Events.COMMUNITY_FOLLOWED,
+  'community.unfollowed': Events.COMMUNITY_UNFOLLOWED,
+  'community.channel.tapped': Events.COMMUNITY_ACCESS_CLICKED,
   // Allow callers that already use canonical names to pass through directly.
   [Events.COMMUNITY_VIEWED]: Events.COMMUNITY_VIEWED,
   [Events.EVENT_VIEWED]: Events.EVENT_VIEWED,
+  [Events.COMMUNITY_FOLLOWED]: Events.COMMUNITY_FOLLOWED,
+  [Events.COMMUNITY_UNFOLLOWED]: Events.COMMUNITY_UNFOLLOWED,
   [Events.COMMUNITY_SAVED]: Events.COMMUNITY_SAVED,
   [Events.COMMUNITY_UNSAVED]: Events.COMMUNITY_UNSAVED,
+  [Events.EVENT_SAVED]: Events.EVENT_SAVED,
+  [Events.EVENT_UNSAVED]: Events.EVENT_UNSAVED,
   [Events.SEARCH_PERFORMED]: Events.SEARCH_PERFORMED,
   [Events.COMMUNITY_ACCESS_CLICKED]: Events.COMMUNITY_ACCESS_CLICKED,
   [Events.BUSINESS_LENS_VIEWED]: Events.BUSINESS_LENS_VIEWED,

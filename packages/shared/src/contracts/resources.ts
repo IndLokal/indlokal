@@ -149,3 +149,15 @@ export type SavedCommunityItem = z.infer<typeof SavedCommunityItem>;
 
 export const SavedCommunitiesPage = Page(SavedCommunityItem);
 export type SavedCommunitiesPage = z.infer<typeof SavedCommunitiesPage>;
+
+export const FollowingCommunityItem = SavedCommunityItem.omit({ savedAt: true }).extend({
+  followedAt: IsoDateTime,
+});
+export type FollowingCommunityItem = z.infer<typeof FollowingCommunityItem>;
+
+export const EngagementSummary = z.object({
+  followingCommunities: z.array(FollowingCommunityItem),
+  savedEvents: z.array(SavedEventItem),
+  notificationPreferences: z.unknown().optional(),
+});
+export type EngagementSummary = z.infer<typeof EngagementSummary>;
