@@ -45,6 +45,7 @@ vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/analytics/server', () => ({ captureServerEvent: vi.fn() }));
 
 import {
+  withdrawCollaboratorInvite,
   inviteCollaborator,
   demoteAdminToCollaborator,
   promoteCollaboratorToAdmin,
@@ -252,6 +253,79 @@ describe('@db resendCollaboratorInvite', () => {
   });
 });
 
+describe('@db withdrawCollaboratorInvite', () => {
+  it('withdraws a pending organizer invite by marking status REMOVED', async () => {
+    const { owner, community } = await seedOwnedCommunity();
+    const invited = await createUser(testDb, { email: 'pending-withdraw@example.com' });
+    const invite = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: invited.id,
+        role: 'COLLABORATOR',
+        status: 'PENDING',
+        source: 'COMMUNITY_ADMIN_INVITE',
+        requestedByUserId: owner.id,
+        requestedEmail: invited.email,
+      },
+    });
+
+    currentSession = sessionFor(owner.id, community, 'COMMUNITY_ADMIN');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('collaboratorId', invite.id);
+    const result = await withdrawCollaboratorInvite(null, form);
+
+    expect(result).toEqual({ success: true });
+    const updated = await testDb.communityCollaborator.findUnique({
+      where: { id: invite.id },
+      select: { status: true, reviewedByUserId: true },
+    });
+    expect(updated?.status).toBe('REMOVED');
+    expect(updated?.reviewedByUserId).toBe(owner.id);
+  });
+
+  it('refuses to withdraw pending invite for non-admin collaborator', async () => {
+    const { community } = await seedOwnedCommunity();
+    const collaborator = await createUser(testDb, { email: 'member-withdraw@example.com' });
+    await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: collaborator.id,
+        role: 'COLLABORATOR',
+        status: 'ACTIVE',
+        source: 'COMMUNITY_ADMIN_INVITE',
+      },
+    });
+    const invited = await createUser(testDb, { email: 'pending-no-access@example.com' });
+    const invite = await testDb.communityCollaborator.create({
+      data: {
+        communityId: community.id,
+        userId: invited.id,
+        role: 'COLLABORATOR',
+        status: 'PENDING',
+        source: 'COMMUNITY_ADMIN_INVITE',
+        requestedByUserId: collaborator.id,
+        requestedEmail: invited.email,
+      },
+    });
+
+    currentSession = sessionFor(collaborator.id, community, 'COLLABORATOR');
+    activeCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('collaboratorId', invite.id);
+    const result = await withdrawCollaboratorInvite(null, form);
+
+    expect(result).toMatchObject({ success: false });
+    const untouched = await testDb.communityCollaborator.findUnique({
+      where: { id: invite.id },
+      select: { status: true },
+    });
+    expect(untouched?.status).toBe('PENDING');
+  });
+});
+
 describe('@db removeCollaborator', () => {
   it('refuses to remove the OWNER row', async () => {
     const { owner, community } = await seedOwnedCommunity();
@@ -357,10 +431,11 @@ describe('@db promoteCollaboratorToAdmin', () => {
       where: { communityId: community.id, role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
       select: { userId: true },
     })) as Array<{ userId: string }>;
+    const adminIds = admins.map((row: { userId: string }) => row.userId);
 
     expect(admins).toHaveLength(2);
-    expect(admins.map((row) => row.userId)).toContain(owner.id);
-    expect(admins.map((row) => row.userId)).toContain(promoted.id);
+    expect(adminIds).toContain(owner.id);
+    expect(adminIds).toContain(promoted.id);
 
     const refreshed = await testDb.community.findUnique({ where: { id: community.id } });
     expect(refreshed?.claimedByUserId).toBe(owner.id);

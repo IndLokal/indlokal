@@ -237,6 +237,10 @@ const resendInviteSchema = z.object({
   collaboratorId: z.string().min(1),
 });
 
+const withdrawInviteSchema = z.object({
+  collaboratorId: z.string().min(1),
+});
+
 const RESEND_INVITE_COOLDOWN_MS = 30 * 1000;
 
 function parseLastInviteEmailSentAt(metadata: unknown): Date | null {
@@ -443,6 +447,85 @@ export async function resendCollaboratorInvite(
 
 export async function resendCollaboratorInviteAction(formData: FormData): Promise<void> {
   await resendCollaboratorInvite(null, formData);
+}
+
+/** Withdraw a pending organizer invite. COMMUNITY_ADMIN only. */
+export async function withdrawCollaboratorInvite(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canInviteCommunityCollaborators(user, ctx.communityId)) {
+    return { success: false, error: 'Only community admins can withdraw collaborator invites.' };
+  }
+
+  const parsed = withdrawInviteSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const invite = await db.communityCollaborator.findUnique({
+        where: { id: parsed.data.collaboratorId },
+        select: {
+          id: true,
+          communityId: true,
+          userId: true,
+          role: true,
+          status: true,
+          source: true,
+        },
+      });
+
+      if (!invite || invite.communityId !== ctx.communityId) {
+        return { success: false, error: 'Invite not found.' } as CollaboratorMutationResult;
+      }
+
+      if (invite.source !== 'COMMUNITY_ADMIN_INVITE' || invite.status !== 'PENDING') {
+        return {
+          success: false,
+          error: 'Only pending organizer invites can be withdrawn.',
+        } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: invite.id },
+          data: {
+            status: 'REMOVED',
+            reviewedAt: new Date(),
+            reviewedByUserId: user.id,
+          },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: ctx.communityId,
+            action: 'ROLE_REVOKED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: invite.userId,
+              fromRole: invite.role,
+              toRole: null,
+              inviteWithdrawn: true,
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Could not withdraw invite. Please try again.' }),
+  );
+}
+
+export async function withdrawCollaboratorInviteAction(formData: FormData): Promise<void> {
+  await withdrawCollaboratorInvite(null, formData);
 }
 
 /**

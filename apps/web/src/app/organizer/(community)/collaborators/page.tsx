@@ -12,6 +12,7 @@ import {
   removeCollaboratorAction,
   resendCollaboratorInviteAction,
   transferOwnershipAction,
+  withdrawCollaboratorInviteAction,
 } from './actions';
 
 export const metadata = { title: 'Collaborators - Organizer' };
@@ -305,12 +306,25 @@ export default async function OrganizerCollaboratorsPage() {
 
                   <div className="mt-3">
                     {collaborator.source === 'COMMUNITY_ADMIN_INVITE' ? (
-                      <form action={resendCollaboratorInviteAction}>
-                        <input type="hidden" name="collaboratorId" value={collaborator.id} />
-                        <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-                          Resend invite
-                        </button>
-                      </form>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <form action={resendCollaboratorInviteAction}>
+                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                          <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                            Resend invite
+                          </button>
+                        </form>
+                        <form action={withdrawCollaboratorInviteAction}>
+                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                          <ConfirmSubmitButton
+                            triggerLabel="Withdraw invite"
+                            title="Withdraw pending invite?"
+                            description="This pending invite will be removed from the queue and the person will need a new invite later."
+                            confirmLabel="Withdraw"
+                            tone="danger"
+                            triggerClassName="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                          />
+                        </form>
+                      </div>
                     ) : (
                       <span className="text-muted">-</span>
                     )}
