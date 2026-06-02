@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { content, communityOptions } from '@indlokal/shared';
 import {
   claimCommunity,
-  requestOrganizerAccess,
+  requestCollaboratorAccess,
   type AccessRequestResult,
   type ClaimResult,
 } from './actions';
@@ -49,7 +49,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
   const [accessState, accessFormAction, accessPending] = useActionState<
     AccessRequestResult,
     FormData
-  >(requestOrganizerAccess, null);
+  >(requestCollaboratorAccess, null);
 
   const updateEvidence = (id: number, patch: Partial<EvidenceRow>) => {
     setEvidenceLinks((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
@@ -75,10 +75,10 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
         <div className="rounded-xl border border-green-200 bg-green-50 p-5">
           <div className="flex items-center gap-2">
             <span className="text-lg">✓</span>
-            <h3 className="font-semibold text-green-800">Access request submitted</h3>
+            <h3 className="font-semibold text-green-800">Collaborator access request submitted</h3>
           </div>
           <p className="mt-2 text-sm text-green-700">
-            Thanks. Our team will review your organizer access request and get back to you soon.
+            Thanks. Our team will review your collaborator access request and get back to you soon.
           </p>
         </div>
       );
@@ -92,7 +92,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
           <span>✓</span>
           <span className="font-medium">Claimed</span>
           <span className="text-green-600">
-            - This listing is already managed by an organizer team
+            - This listing is already managed by an owner/collaborator team
           </span>
         </div>
 
@@ -102,7 +102,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
             onClick={() => setRequestExpanded(true)}
             className="btn-secondary border-green-300 bg-white px-4 py-2 text-sm"
           >
-            Request organizer access
+            Request collaborator access
           </button>
         ) : (
           <form
@@ -193,7 +193,7 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
                 disabled={accessPending}
                 className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
               >
-                {accessPending ? 'Submitting...' : 'Submit access request'}
+                {accessPending ? 'Submitting...' : 'Submit collaborator request'}
               </button>
               <button
                 type="button"

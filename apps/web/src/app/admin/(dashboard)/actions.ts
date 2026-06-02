@@ -6,6 +6,7 @@ import { assertCan } from '@/lib/auth/permissions';
 import { refreshCommunityScore } from '@/modules/scoring';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
+import { enqueueCommunityUpdateForFollowers } from '@/modules/engagement';
 import {
   sendCollaboratorAccessApprovedEmail,
   sendCollaboratorAccessRejectedEmail,
@@ -485,6 +486,7 @@ async function loadReviewableEvent(id: string) {
       id: true,
       title: true,
       slug: true,
+      communityId: true,
       moderationState: true,
       createdByUserId: true,
       city: { select: { slug: true } },
@@ -528,6 +530,18 @@ export async function approveEvent(formData: FormData) {
     // Backward-compatible alias for existing PostHog dashboards.
     eventId: id,
   });
+
+  if (event.communityId) {
+    try {
+      await enqueueCommunityUpdateForFollowers({
+        communityId: event.communityId,
+        eventId: event.id,
+        updateId: `event:${event.id}:published`,
+      });
+    } catch {
+      // Notification fan-out is best-effort and must not block moderation.
+    }
+  }
 
   if (event.createdBy?.email && event.city?.slug) {
     try {

@@ -223,12 +223,12 @@ export default async function MePage() {
         </div>
       </section>
 
-      {/* Saved Communities */}
+      {/* Following */}
       <section>
-        <h2 className="text-xl font-semibold">Saved Communities</h2>
+        <h2 className="text-xl font-semibold">Following</h2>
         {savedCommunities.length === 0 ? (
           <p className="text-muted mt-3 text-sm">
-            No saved communities yet.{' '}
+            You are not following any communities yet.{' '}
             <Link
               href="/"
               className="text-brand-600 hover:text-brand-700 font-medium hover:underline"

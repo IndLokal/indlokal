@@ -162,7 +162,7 @@ export async function claimCommunity(_prev: ClaimResult, formData: FormData): Pr
   );
 }
 
-export async function requestOrganizerAccess(
+export async function requestCollaboratorAccess(
   _prev: AccessRequestResult,
   formData: FormData,
 ): Promise<AccessRequestResult> {

@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import { refreshCommunityScore } from '@/modules/scoring';
+import { enqueueCommunityUpdateForFollowers } from '@/modules/engagement';
 import slugify from 'slugify';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
 import {
@@ -106,7 +107,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
         slug = `${slug}-${Date.now()}`;
       }
 
-      await db.event.create({
+      const event = await db.event.create({
         data: {
           title: data.title,
           slug,
@@ -130,6 +131,16 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           createdByUserId: user.id,
         },
       });
+
+      try {
+        await enqueueCommunityUpdateForFollowers({
+          communityId: community.id,
+          eventId: event.id,
+          updateId: `event:${event.id}:published`,
+        });
+      } catch {
+        // Notification fan-out is best-effort; the event itself is already published.
+      }
 
       await db.activitySignal.create({
         data: {

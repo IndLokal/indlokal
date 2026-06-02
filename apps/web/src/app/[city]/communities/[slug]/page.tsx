@@ -3,13 +3,19 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { communityOptions } from '@indlokal/shared';
-import { getCommunityBySlug, getCommunityRedirectTarget } from '@/modules/community';
+import {
+  getCommunityBySlug,
+  getCommunityRedirectTarget,
+  isCommunityFollowed,
+} from '@/modules/community';
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from './ReportIssueForm';
 import { ViewTracker } from '@/components/analytics';
 import { ActivityBadge } from '@/components/ui';
 import { AccessChannelLink } from './AccessChannelLink';
 import { escapeJsonForHtmlScript } from '@/lib/html';
+import { getSessionUser } from '@/lib/session';
+import { CommunityFollowButton } from '@/components/CommunityFollowButton';
 
 /**
  * Community Detail Page
@@ -35,6 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function CommunityDetailPage({ params }: Props) {
   const { city, slug } = await params;
   const community = await getCommunityBySlug(slug);
+  const user = await getSessionUser();
   if (!community) {
     const redirectTarget = await getCommunityRedirectTarget(slug);
     if (redirectTarget) {
@@ -52,6 +59,7 @@ export default async function CommunityDetailPage({ params }: Props) {
   const now = new Date();
   const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= now);
   const pastEvents = community.events.filter((e) => new Date(e.startsAt) < now);
+  const followedByUser = user ? await isCommunityFollowed(user.id, community.id) : false;
 
   // JSON-LD Organization schema
   const jsonLd = {
@@ -128,6 +136,9 @@ export default async function CommunityDetailPage({ params }: Props) {
                   ~{community.memberCountApprox.toLocaleString()} members
                 </span>
               )}
+            </div>
+            <div className="mt-4">
+              <CommunityFollowButton communityId={community.id} following={followedByUser} />
             </div>
           </div>
         </div>

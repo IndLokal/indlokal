@@ -20,8 +20,12 @@ export const Events = {
   COMMUNITY_VIEWED: 'community_viewed',
   EVENT_VIEWED: 'event_viewed',
   COMMUNITY_ACCESS_CLICKED: 'community_access_clicked',
+  COMMUNITY_FOLLOWED: 'community_followed',
+  COMMUNITY_UNFOLLOWED: 'community_unfollowed',
   COMMUNITY_SAVED: 'community_saved',
   COMMUNITY_UNSAVED: 'community_unsaved',
+  EVENT_SAVED: 'event_saved',
+  EVENT_UNSAVED: 'event_unsaved',
   BUSINESS_LENS_VIEWED: 'business_lens_viewed',
 
   // Conversion - high-value business outcomes

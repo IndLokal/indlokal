@@ -12,8 +12,13 @@
 export const ANALYTICS_EVENTS = {
   discoverFeedViewed: 'discover.feed.viewed',
   discoverCardTapped: 'discover.card.tapped',
+  communityDetailViewed: 'community.detail.viewed',
+  communityFollowed: 'community.followed',
+  communityUnfollowed: 'community.unfollowed',
+  communityChannelTapped: 'community.channel.tapped',
   eventDetailViewed: 'event.detail.viewed',
   eventSaved: 'event.saved',
+  eventUnsaved: 'event.unsaved',
   eventCalendarAdded: 'event.calendar_added',
   eventShared: 'event.shared',
   eventRegisterClicked: 'event.register_clicked',
