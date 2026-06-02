@@ -11,7 +11,7 @@ import {
 import { ClaimSection } from './ClaimSection';
 import { ReportIssueForm } from './ReportIssueForm';
 import { ViewTracker } from '@/components/analytics';
-import { ActivityBadge } from '@/components/ui';
+import { PulseBadge } from '@/components/ui';
 import { AccessChannelLink } from './AccessChannelLink';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { getSessionUser } from '@/lib/session';
@@ -128,7 +128,14 @@ export default async function CommunityDetailPage({ params }: Props) {
             <div className="min-w-0 flex-1">
               <h1 className="text-3xl font-bold">{community.name}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                <ActivityBadge score={community.activityScore ?? 0} />
+                <PulseBadge
+                  pulseScore={Math.round(
+                    (community.activityScore ?? 0) * 0.5 +
+                      (community.completenessScore ?? 0) * 0.3 +
+                      (community.trustScore ?? 0) * 0.2,
+                  )}
+                  isRecentlyAdded={community.isRecentlyAdded ?? false}
+                />
                 {community.foundedYear && (
                   <span className="text-muted text-sm">Est. {community.foundedYear}</span>
                 )}

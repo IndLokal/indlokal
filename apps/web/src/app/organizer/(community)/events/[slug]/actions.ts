@@ -12,6 +12,7 @@ import {
 } from '@/lib/organizer/workspace';
 
 export async function archiveEvent(eventSlug: string, _formData: FormData): Promise<void> {
+  void _formData;
   const user = await getSessionUser();
   if (!user || user.claimedCommunities.length === 0) {
     return;

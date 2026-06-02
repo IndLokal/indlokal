@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { CommunityListItem } from '@/modules/community/types';
 import { BookmarkButton } from './BookmarkButton';
-import { ActivityBadge } from '@/components/ui';
+import { PulseBadge } from '@/components/ui';
 
 type Props = {
   community: CommunityListItem;
@@ -30,6 +30,13 @@ function getAvatarColor(name: string) {
 export function CommunityCard({ community, city, savedByUser }: Props) {
   const href = `/${city}/communities/${community.slug}`;
   const avatarGradient = getAvatarColor(community.name);
+  const isRecentlyAdded = community.isRecentlyAdded ?? false;
+
+  const pulseScore = Math.round(
+    (community.activityScore ?? 0) * 0.5 +
+      (community.completenessScore ?? 0) * 0.3 +
+      (community.trustScore ?? 0) * 0.2,
+  );
 
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/[0.06]">
@@ -70,7 +77,7 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
                 Claimed by organizer
               </span>
             )}
-            <ActivityBadge score={community.activityScore ?? 0} />
+            <PulseBadge pulseScore={pulseScore} isRecentlyAdded={isRecentlyAdded} />
           </div>
         </div>
 

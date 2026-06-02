@@ -236,7 +236,9 @@ export default function CommunityDetailScreen() {
             <View style={styles.pulseHeader}>
               <Text style={styles.sectionTitle}>Pulse Score</Text>
               <Text style={styles.pulseTotal}>
-                {Math.round((data.activityScore + data.completenessScore + data.trustScore) / 3)}
+                {Math.round(
+                  data.activityScore * 0.5 + data.completenessScore * 0.3 + data.trustScore * 0.2,
+                )}
                 <Text style={styles.pulseTotalUnit}> / 100</Text>
               </Text>
             </View>

@@ -15,6 +15,7 @@ export type CommunityWithRelations = Community & {
   accessChannels: AccessChannel[];
   events: Event[];
   scoreBreakdown: Prisma.JsonValue;
+  isRecentlyAdded?: boolean;
 };
 
 /** Lightweight community shape for list/card views */
@@ -33,8 +34,10 @@ export type CommunityListItem = Pick<
   | 'memberCountApprox'
   | 'logoUrl'
   | 'lastActivityAt'
+  | 'createdAt'
   | 'languages'
 > & {
+  isRecentlyAdded?: boolean;
   city: Pick<City, 'name' | 'slug'>;
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
   _count: { events: number };

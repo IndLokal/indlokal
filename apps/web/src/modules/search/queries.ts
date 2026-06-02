@@ -1,8 +1,20 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import { subDays } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 import type { CommunityListItem } from '@/modules/community/types';
 import type { EventListItem } from '@/modules/event/types';
+
+const RECENTLY_ADDED_WINDOW_DAYS = 14;
+
+function addIsRecentlyAdded<T extends { createdAt: Date }>(
+  row: T,
+): T & { isRecentlyAdded: boolean } {
+  return {
+    ...row,
+    isRecentlyAdded: row.createdAt >= subDays(new Date(), RECENTLY_ADDED_WINDOW_DAYS),
+  };
+}
 
 export type SearchResultRow =
   | { type: 'COMMUNITY'; item: CommunityListItem & { _count: { events: number } } }
@@ -93,6 +105,7 @@ export async function searchCommunities(
       memberCountApprox: true,
       logoUrl: true,
       lastActivityAt: true,
+      createdAt: true,
       languages: true,
       city: { select: { name: true, slug: true } },
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
@@ -102,7 +115,9 @@ export async function searchCommunities(
 
   // Preserve rank order from full-text search
   const idOrder = new Map(ids.map((id, i) => [id, i]));
-  return results.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+  return results
+    .sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
+    .map(addIsRecentlyAdded);
 }
 
 /**
