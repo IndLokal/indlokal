@@ -470,6 +470,35 @@ const STUTTGART: DirectoryEntry[] = [
     ],
   },
   {
+    slug: 'stuttgart-tamil-sangam',
+    name: 'Stuttgart Tamil Sangam e.V.',
+    description:
+      'Tamil cultural association in Stuttgart organizing language, festival and family-community activities for the Tamil diaspora.',
+    citySlug: 'stuttgart',
+    categorySlugs: ['language-regional', 'cultural', 'family-kids'],
+    personaSegments: ['family', 'working-professional'],
+    languages: ['Tamil', 'English', 'German'],
+    sourceUrl: 'https://stuttgarttamilsangam.com/STSangam/home',
+    channels: [
+      {
+        channelType: 'WEBSITE',
+        url: 'https://stuttgarttamilsangam.com/STSangam/home',
+        isPrimary: true,
+        label: 'Website',
+      },
+      {
+        channelType: 'FACEBOOK',
+        url: 'https://www.facebook.com/StuttgartTamilSangam/',
+        label: 'Facebook',
+      },
+      {
+        channelType: 'INSTAGRAM',
+        url: 'https://www.instagram.com/stuttgarttamilsangam/',
+        label: 'Instagram',
+      },
+    ],
+  },
+  {
     slug: 'maharashtra-mandal-stuttgart',
     name: 'Maharashtra Mandal Stuttgart e.V.',
     description:
