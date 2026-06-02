@@ -102,11 +102,19 @@ export default function SearchScreen() {
   const onSelectSuggestion = useCallback(
     async (item: s.Suggestion) => {
       await persistRecent(item.text);
-      // The /suggest endpoint returns the entity slug as `text`.
+      // Communities and events now carry a slug; keywords stay text-only.
       if (item.type === 'COMMUNITY') {
-        router.push({ pathname: '/communities/[slug]', params: { slug: item.text } });
+        if (item.slug) {
+          router.push({ pathname: '/communities/[slug]', params: { slug: item.slug } });
+        } else {
+          setQuery(item.text);
+        }
       } else if (item.type === 'EVENT') {
-        router.push({ pathname: '/events/[slug]', params: { slug: item.text } });
+        if (item.slug) {
+          router.push({ pathname: '/events/[slug]', params: { slug: item.slug } });
+        } else {
+          setQuery(item.text);
+        }
       } else {
         setQuery(item.text);
       }

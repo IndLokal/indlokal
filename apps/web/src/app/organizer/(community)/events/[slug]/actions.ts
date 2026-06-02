@@ -11,7 +11,7 @@ import {
   type OrganizerSessionCommunity,
 } from '@/lib/organizer/workspace';
 
-export async function archiveEvent(formData: FormData): Promise<void> {
+export async function archiveEvent(eventSlug: string, formData: FormData): Promise<void> {
   const user = await getSessionUser();
   if (!user || user.claimedCommunities.length === 0) {
     return;
@@ -31,9 +31,8 @@ export async function archiveEvent(formData: FormData): Promise<void> {
     return;
   }
 
-  const slug = formData.get('slug') as string;
   const event = await db.event.findFirst({
-    where: { slug, communityId: community.id },
+    where: { slug: eventSlug, communityId: community.id },
     select: { id: true, cityId: true },
   });
 

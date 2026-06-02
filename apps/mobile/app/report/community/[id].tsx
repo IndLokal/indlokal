@@ -21,6 +21,7 @@ import {
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { resources as r } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const REPORT_TYPES: Array<{ value: r.ReportType; label: string; help: string }> = [
@@ -40,6 +41,33 @@ export default function ReportCommunityScreen() {
   const [details, setDetails] = useState('');
   const [reporterEmail, setReporterEmail] = useState('');
   const [busy, setBusy] = useState(false);
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <Stack.Screen options={{ title: 'Report' }} />
+        <View style={styles.center}>
+          <ActivityIndicator color={palette.brand[600]} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <Stack.Screen options={{ title: 'Report' }} />
+        <View style={styles.center}>
+          <Text style={styles.title}>Sign in to report communities</Text>
+          <Text style={styles.sub}>Reports are tied to your account so we can follow up.</Text>
+          <Pressable onPress={() => router.push('/auth/sign-in')} style={styles.primary}>
+            <Text style={styles.primaryText}>Go to sign in</Text>
+          </Pressable>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   async function onSubmit() {
     if (!id) return;

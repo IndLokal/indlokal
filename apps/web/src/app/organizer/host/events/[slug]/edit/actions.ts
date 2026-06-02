@@ -33,6 +33,7 @@ export type EditHostEventResult =
   | null;
 
 export async function editHostEvent(
+  eventSlug: string,
   _prev: EditHostEventResult,
   formData: FormData,
 ): Promise<EditHostEventResult> {
@@ -41,9 +42,8 @@ export async function editHostEvent(
     return { success: false, errors: { _: ['Not authenticated as event host'] } };
   }
 
-  const slug = formData.get('slug') as string;
   const event = await db.event.findFirst({
-    where: { slug, createdByUserId: user.id },
+    where: { slug: eventSlug, createdByUserId: user.id },
     select: { id: true, cityId: true },
   });
 

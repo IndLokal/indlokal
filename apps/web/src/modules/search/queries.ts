@@ -192,7 +192,7 @@ export async function getSuggestions(
   q: string,
   citySlug?: string,
   limit = 8,
-): Promise<Array<{ text: string; type: 'COMMUNITY' | 'EVENT' | 'ALL' }>> {
+): Promise<Array<{ text: string; type: 'COMMUNITY' | 'EVENT' | 'ALL'; slug?: string }>> {
   const trimmed = q.trim();
   if (!trimmed || trimmed.length < 1) return [];
 
@@ -209,9 +209,8 @@ export async function getSuggestions(
     select: { keyword: true },
   });
 
-  const results: Array<{ text: string; type: 'COMMUNITY' | 'EVENT' | 'ALL' }> = keywords.map(
-    (k) => ({ text: k.keyword, type: 'ALL' }),
-  );
+  const results: Array<{ text: string; type: 'COMMUNITY' | 'EVENT' | 'ALL'; slug?: string }> =
+    keywords.map((k) => ({ text: k.keyword, type: 'ALL' }));
 
   if (results.length >= limit) return results.slice(0, limit);
   const remaining = limit - results.length;
@@ -231,7 +230,7 @@ export async function getSuggestions(
   });
   for (const c of communities) {
     if (!keywordSet.has(c.name.toLowerCase())) {
-      results.push({ text: c.name, type: 'COMMUNITY' });
+      results.push({ text: c.name, type: 'COMMUNITY', slug: c.slug });
       keywordSet.add(c.name.toLowerCase());
     }
   }
@@ -254,7 +253,7 @@ export async function getSuggestions(
   });
   for (const e of events) {
     if (!keywordSet.has(e.title.toLowerCase())) {
-      results.push({ text: e.title, type: 'EVENT' });
+      results.push({ text: e.title, type: 'EVENT', slug: e.slug });
     }
   }
 

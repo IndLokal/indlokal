@@ -23,7 +23,7 @@ type EventDefaults = {
 
 export default function EditHostEventForm({ event, city }: { event: EventDefaults; city: City }) {
   const [state, formAction, isPending] = useActionState<EditHostEventResult, FormData>(
-    editHostEvent,
+    editHostEvent.bind(null, event.slug),
     null,
   );
 
@@ -35,10 +35,13 @@ export default function EditHostEventForm({ event, city }: { event: EventDefault
       isPending={isPending}
       errors={errors}
       values={{
-        ...event,
+        title: event.title,
         description: event.description ?? '',
+        startsAt: event.startsAt,
+        endsAt: event.endsAt,
         venueName: event.venueName ?? '',
         venueAddress: event.venueAddress ?? '',
+        isOnline: event.isOnline,
         onlineLink: event.onlineLink ?? '',
         registrationUrl: event.registrationUrl ?? '',
         cost: (event.cost ?? 'free') as 'free' | 'paid' | 'unclear',

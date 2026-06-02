@@ -38,6 +38,7 @@ export type EditEventResult =
   | null;
 
 export async function editEvent(
+  eventSlug: string,
   _prev: EditEventResult,
   formData: FormData,
 ): Promise<EditEventResult> {
@@ -63,9 +64,8 @@ export async function editEvent(
     };
   }
 
-  const slug = formData.get('slug') as string;
   const existing = await db.event.findFirst({
-    where: { slug, communityId: community.id },
+    where: { slug: eventSlug, communityId: community.id },
     select: { id: true },
   });
 

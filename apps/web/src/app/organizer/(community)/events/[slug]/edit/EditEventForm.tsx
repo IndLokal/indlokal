@@ -26,7 +26,10 @@ export default function EditEventForm({
   event: EventDefaults;
   communityName: string;
 }) {
-  const [state, formAction, isPending] = useActionState<EditEventResult, FormData>(editEvent, null);
+  const [state, formAction, isPending] = useActionState<EditEventResult, FormData>(
+    editEvent.bind(null, event.slug),
+    null,
+  );
 
   const errors = state?.success === false ? state.errors : {};
 
@@ -36,10 +39,13 @@ export default function EditEventForm({
       isPending={isPending}
       errors={errors}
       values={{
-        ...event,
+        title: event.title,
         description: event.description ?? '',
+        startsAt: event.startsAt,
+        endsAt: event.endsAt,
         venueName: event.venueName ?? '',
         venueAddress: event.venueAddress ?? '',
+        isOnline: event.isOnline,
         onlineLink: event.onlineLink ?? '',
         imageUrl: event.imageUrl ?? '',
         registrationUrl: event.registrationUrl ?? '',
