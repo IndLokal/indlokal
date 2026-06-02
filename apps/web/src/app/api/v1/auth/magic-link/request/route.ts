@@ -23,6 +23,33 @@ import {
 
 export const runtime = 'nodejs';
 
+function buildMagicLinkVerifyUrl(token: string, redirectTo?: string): string {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://indlokal.com';
+  const fallback = new URL('/auth/magic', appUrl);
+  fallback.searchParams.set('token', token);
+
+  if (!redirectTo) return fallback.toString();
+
+  try {
+    const target = new URL(redirectTo);
+    const appHost = new URL(appUrl).hostname.toLowerCase();
+    const host = target.hostname.toLowerCase();
+    const isTrustedHttps =
+      target.protocol === 'https:' &&
+      (host === appHost || host === 'indlokal.com' || host === 'www.indlokal.com');
+    const isTrustedAppScheme = target.protocol === 'indlokal:';
+
+    if (!isTrustedHttps && !isTrustedAppScheme) {
+      return fallback.toString();
+    }
+
+    target.searchParams.set('token', token);
+    return target.toString();
+  } catch {
+    return fallback.toString();
+  }
+}
+
 export async function POST(req: NextRequest) {
   let body: unknown;
   try {
@@ -69,9 +96,10 @@ export async function POST(req: NextRequest) {
     const user = await db.user.findUnique({ where: { email }, select: { id: true } });
     if (user) {
       const token = await createMagicLinkToken(user.id);
+      const verifyUrl = buildMagicLinkVerifyUrl(token, parsed.data.redirectTo?.trim() || undefined);
       // displayName at this stage is "your account" - the existing template
       // takes a community name; we pass the email so the email isn't blank.
-      await sendMagicLinkEmail(email, token, email).catch((err) => {
+      await sendMagicLinkEmail(email, token, email, verifyUrl).catch((err) => {
         console.error('[auth/magic-link/request] email send failed', err);
       });
     }

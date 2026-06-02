@@ -47,8 +47,10 @@ export async function sendMagicLinkEmail(
   to: string,
   token: string,
   communityName: string,
+  verifyUrlOverride?: string,
 ): Promise<void> {
-  const verifyUrl = `${APP_URL}/organizer/verify?token=${token}`;
+  const verifyUrl =
+    verifyUrlOverride ?? `${APP_URL}/organizer/verify?token=${encodeURIComponent(token)}`;
 
   await sendEmail(
     to,
