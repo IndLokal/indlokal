@@ -165,6 +165,7 @@ export async function suppressSavedEventReminders(
 export async function saveEventForUser(
   userId: string,
   eventId: string,
+  metadata?: Record<string, unknown>,
 ): Promise<{ saved: true; remindersScheduled: number }> {
   const event = await getEventForEngagement(eventId);
   await db.savedEvent.upsert({
@@ -181,11 +182,13 @@ export async function saveEventForUser(
       entityId: eventId,
       interactionType: 'SAVE',
       cityId: event?.cityId,
+      metadata,
     }),
     captureServerEvent(userId, Events.EVENT_SAVED, {
       event_id: eventId,
       city: event?.city.slug,
       community_id: event?.communityId,
+      ...(metadata ?? {}),
     }),
   ]);
 
@@ -195,6 +198,7 @@ export async function saveEventForUser(
 export async function unsaveEventForUser(
   userId: string,
   eventId: string,
+  metadata?: Record<string, unknown>,
 ): Promise<{ saved: false; remindersSuppressed: number }> {
   const event = await getEventForEngagement(eventId);
   await db.savedEvent.deleteMany({ where: { userId, eventId } });
@@ -203,6 +207,7 @@ export async function unsaveEventForUser(
     event_id: eventId,
     city: event?.city.slug,
     community_id: event?.communityId,
+    ...(metadata ?? {}),
   });
   return { saved: false, remindersSuppressed };
 }
@@ -210,12 +215,15 @@ export async function unsaveEventForUser(
 export async function toggleSaveEventForUser(
   userId: string,
   eventId: string,
+  metadata?: Record<string, unknown>,
 ): Promise<{ saved: boolean; remindersScheduled?: number; remindersSuppressed?: number }> {
   const existing = await db.savedEvent.findUnique({
     where: { userId_eventId: { userId, eventId } },
     select: { userId: true },
   });
-  return existing ? unsaveEventForUser(userId, eventId) : saveEventForUser(userId, eventId);
+  return existing
+    ? unsaveEventForUser(userId, eventId, metadata)
+    : saveEventForUser(userId, eventId, metadata);
 }
 
 export async function enqueueCommunityUpdateForFollowers(args: {

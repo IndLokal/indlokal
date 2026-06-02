@@ -8,9 +8,11 @@ import { toggleSaveEvent } from '@/app/actions/saves';
 type Props = {
   eventId: string;
   saved: boolean;
+  city?: string;
+  lensContext?: 'business_careers';
 };
 
-export function EventSaveButton({ eventId, saved }: Props) {
+export function EventSaveButton({ eventId, saved, city, lensContext }: Props) {
   const router = useRouter();
   const track = useTrackEvent();
   const [isPending, startTransition] = useTransition();
@@ -19,13 +21,18 @@ export function EventSaveButton({ eventId, saved }: Props) {
   function handleClick() {
     startTransition(async () => {
       setOptimisticSaved(!optimisticSaved);
-      const result = await toggleSaveEvent(eventId);
+      const result = await toggleSaveEvent(eventId, lensContext ? { lensContext } : undefined);
       if ('requiresAuth' in result) {
         router.push('/me/login');
         return;
       }
       if ('saved' in result) {
-        track(result.saved ? Events.EVENT_SAVED : Events.EVENT_UNSAVED, { event_id: eventId });
+        const metadata = lensContext ? { lens_context: lensContext } : undefined;
+        track(result.saved ? Events.EVENT_SAVED : Events.EVENT_UNSAVED, {
+          event_id: eventId,
+          city,
+          ...metadata,
+        });
       }
     });
   }

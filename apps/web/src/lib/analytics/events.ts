@@ -17,6 +17,7 @@ export const Events = {
 
   // Engagement - meaningful user interactions
   SEARCH_PERFORMED: 'search_performed',
+  DISCOVER_FEED_VIEWED: 'discover_feed_viewed',
   COMMUNITY_VIEWED: 'community_viewed',
   EVENT_VIEWED: 'event_viewed',
   COMMUNITY_ACCESS_CLICKED: 'community_access_clicked',
@@ -26,6 +27,13 @@ export const Events = {
   COMMUNITY_UNSAVED: 'community_unsaved',
   EVENT_SAVED: 'event_saved',
   EVENT_UNSAVED: 'event_unsaved',
+  EVENT_CALENDAR_ADDED: 'event_calendar_added',
+  EVENT_SHARED: 'event_shared',
+  EVENT_REGISTER_CLICKED: 'event_register_clicked',
+  PROFILE_UPDATED: 'profile_updated',
+  CONSULAR_VIEWED: 'consular_viewed',
+  THIS_WEEK_VIEWED: 'this_week_viewed',
+  SUBMISSION_IMAGE_ADDED: 'submission_image_added',
   BUSINESS_LENS_VIEWED: 'business_lens_viewed',
 
   // Conversion - high-value business outcomes

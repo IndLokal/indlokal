@@ -32,7 +32,10 @@ export const toggleFollowCommunity = toggleSaveCommunity;
 
 // ─── Event saves ──────────────────────────────────────────────────────────────
 
-export async function toggleSaveEvent(eventId: string): Promise<SaveResult> {
+export async function toggleSaveEvent(
+  eventId: string,
+  options?: { lensContext?: 'business_careers' },
+): Promise<SaveResult> {
   const user = await getSessionUser();
   if (!user) return { requiresAuth: true };
 
@@ -41,7 +44,8 @@ export async function toggleSaveEvent(eventId: string): Promise<SaveResult> {
   }
 
   try {
-    const result = await toggleSaveEventForUser(user.id, eventId);
+    const metadata = options?.lensContext ? { lens_context: options.lensContext } : undefined;
+    const result = await toggleSaveEventForUser(user.id, eventId, metadata);
     revalidatePath('/me');
     return result;
   } catch {

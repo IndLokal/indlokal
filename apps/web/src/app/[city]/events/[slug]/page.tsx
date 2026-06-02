@@ -8,6 +8,7 @@ import { escapeJsonForHtmlScript } from '@/lib/html';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { EventSaveButton } from '@/components/EventSaveButton';
+import { EventRegistrationLink } from '@/components/EventRegistrationLink';
 
 /**
  * Event Detail Page
@@ -16,7 +17,10 @@ import { EventSaveButton } from '@/components/EventSaveButton';
  * Example: /stuttgart/events/holi-stuttgart-2026/
  */
 
-type Props = { params: Promise<{ city: string; slug: string }> };
+type Props = {
+  params: Promise<{ city: string; slug: string }>;
+  searchParams?: Promise<{ lens?: string }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -29,8 +33,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function EventDetailPage({ params }: Props) {
+export default async function EventDetailPage({ params, searchParams }: Props) {
   const { city, slug } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const lensContext = sp.lens === 'business' ? 'business_careers' : undefined;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
   const user = await getSessionUser();
@@ -39,7 +45,7 @@ export default async function EventDetailPage({ params }: Props) {
   // city path. If the slug is reached via a different (or stale) city segment,
   // canonicalize to the event's actual city instead of rendering a duplicate.
   if (event.city.slug !== city) {
-    redirect(`/${event.city.slug}/events/${slug}`);
+    redirect(`/${event.city.slug}/events/${slug}${lensContext ? '?lens=business' : ''}`);
   }
 
   const startsAt = new Date(event.startsAt);
@@ -100,6 +106,7 @@ export default async function EventDetailPage({ params }: Props) {
         cityId={event.city.id}
         entitySlug={event.slug}
         city={city}
+        metadata={lensContext ? { lens_context: lensContext } : undefined}
       />
 
       <div className="mx-auto max-w-2xl space-y-8">
@@ -165,16 +172,19 @@ export default async function EventDetailPage({ params }: Props) {
           )}
 
           <div className="mt-5 flex flex-wrap items-center gap-3">
-            <EventSaveButton eventId={event.id} saved={savedByUser} />
+            <EventSaveButton
+              eventId={event.id}
+              saved={savedByUser}
+              city={city}
+              lensContext={lensContext}
+            />
             {event.registrationUrl && (
-              <a
+              <EventRegistrationLink
                 href={event.registrationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary px-4 py-2 text-sm"
-              >
-                Register
-              </a>
+                eventId={event.id}
+                city={city}
+                lensContext={lensContext}
+              />
             )}
           </div>
         </div>

@@ -10,6 +10,7 @@ type Props = {
   /** Slug for richer PostHog event properties */
   entitySlug?: string;
   city?: string;
+  metadata?: Record<string, unknown>;
 };
 
 const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
@@ -21,7 +22,7 @@ const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
  * Fires a non-blocking VIEW interaction when a community or event page is visited.
  * Records to both the database (for engagement scoring) and PostHog (for product analytics).
  */
-export function ViewTracker({ entityType, entityId, cityId, entitySlug, city }: Props) {
+export function ViewTracker({ entityType, entityId, cityId, entitySlug, city, metadata }: Props) {
   const track = useTrackEvent();
 
   useEffect(() => {
@@ -29,7 +30,7 @@ export function ViewTracker({ entityType, entityId, cityId, entitySlug, city }: 
     fetch('/api/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entityType, entityId, cityId }),
+      body: JSON.stringify({ entityType, entityId, cityId, metadata }),
     }).catch(() => {}); // fire-and-forget
 
     // PostHog event for product analytics
@@ -39,9 +40,10 @@ export function ViewTracker({ entityType, entityId, cityId, entitySlug, city }: 
         entity_id: entityId,
         entity_slug: entitySlug,
         city,
+        ...metadata,
       });
     }
-  }, [entityType, entityId, cityId, entitySlug, city, track]);
+  }, [entityType, entityId, cityId, entitySlug, city, metadata, track]);
 
   return null;
 }

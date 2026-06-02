@@ -47,7 +47,7 @@ export default async function BusinessEventsPage({ params }: Props) {
 
   return (
     <div className="space-y-8">
-      <BusinessLensTracker city={city} surface="business_events_page" />
+      <BusinessLensTracker city={city} surface="business_events_page" resultCount={events.length} />
 
       <CitySubpageHeader
         city={city}
@@ -60,7 +60,7 @@ export default async function BusinessEventsPage({ params }: Props) {
       {events.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {events.map((event) => (
-            <EventCard key={event.id} event={event} city={city} />
+            <EventCard key={event.id} event={event} city={city} lens="business" />
           ))}
         </div>
       ) : (

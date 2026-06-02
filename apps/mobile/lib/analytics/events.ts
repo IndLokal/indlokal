@@ -10,23 +10,24 @@
  */
 
 export const ANALYTICS_EVENTS = {
-  discoverFeedViewed: 'discover.feed.viewed',
-  discoverCardTapped: 'discover.card.tapped',
-  communityDetailViewed: 'community.detail.viewed',
-  communityFollowed: 'community.followed',
-  communityUnfollowed: 'community.unfollowed',
-  communityChannelTapped: 'community.channel.tapped',
-  eventDetailViewed: 'event.detail.viewed',
-  eventSaved: 'event.saved',
-  eventUnsaved: 'event.unsaved',
-  eventCalendarAdded: 'event.calendar_added',
-  eventShared: 'event.shared',
-  eventRegisterClicked: 'event.register_clicked',
+  discoverFeedViewed: 'discover_feed_viewed',
+  discoverCardTapped: 'discover_card_tapped',
+  communityDetailViewed: 'community_viewed',
+  communityFollowed: 'community_followed',
+  communityUnfollowed: 'community_unfollowed',
+  communityChannelTapped: 'community_access_clicked',
+  eventDetailViewed: 'event_viewed',
+  eventSaved: 'event_saved',
+  eventUnsaved: 'event_unsaved',
+  eventCalendarAdded: 'event_calendar_added',
+  eventShared: 'event_shared',
+  eventRegisterClicked: 'event_register_clicked',
+  businessLensViewed: 'business_lens_viewed',
   // Client-only pings (server records them only when entity-bound; otherwise ignored).
-  profileUpdated: 'profile.updated',
-  consularViewed: 'consular.viewed',
-  thisWeekViewed: 'this_week.viewed',
-  submissionImageAdded: 'submission.image_added',
+  profileUpdated: 'profile_updated',
+  consularViewed: 'consular_viewed',
+  thisWeekViewed: 'this_week_viewed',
+  submissionImageAdded: 'submission_image_added',
 } as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];

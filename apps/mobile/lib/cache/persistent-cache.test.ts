@@ -68,7 +68,8 @@ describe('cache/persistent-cache', () => {
   });
 
   it('builds stable cache keys', () => {
-    assert.equal(CACHE_KEYS.discoverFeed('stuttgart'), 'discover:stuttgart');
+    assert.equal(CACHE_KEYS.discoverFeed('stuttgart'), 'discover:stuttgart:all');
+    assert.equal(CACHE_KEYS.discoverFeed('stuttgart', 'business'), 'discover:stuttgart:business');
     assert.equal(CACHE_KEYS.savedItems, 'saved:items');
   });
 });

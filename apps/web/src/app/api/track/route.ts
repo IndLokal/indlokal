@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { db } from '@/lib/db';
 import { hashToken } from '@/lib/session';
 import { checkRateLimit, trackLimiter } from '@/lib/rate-limit';
+import type { Prisma } from '@prisma/client';
 import type { InteractionEntityType } from '@prisma/client';
 
 const VALID_ENTITY_TYPES = new Set<string>(['COMMUNITY', 'EVENT', 'RESOURCE']);
@@ -22,10 +23,11 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { entityType, entityId, cityId } = body as {
+    const { entityType, entityId, cityId, metadata } = body as {
       entityType: string;
       entityId: string;
       cityId: string;
+      metadata?: Record<string, unknown>;
     };
 
     // Basic input validation
@@ -66,6 +68,9 @@ export async function POST(req: NextRequest) {
         interactionType: 'VIEW',
         ...(userId && { userId }),
         ...(resolvedCityId && { cityId: resolvedCityId }),
+        ...(metadata && Object.keys(metadata).length > 0
+          ? { metadata: metadata as Prisma.InputJsonObject }
+          : {}),
       },
     });
   } catch (err) {

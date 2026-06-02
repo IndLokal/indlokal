@@ -4,6 +4,7 @@ export const ADMIN_NAV_LINKS = [
   { href: '/admin/submissions', label: 'Submissions' },
   { href: '/admin/claims', label: 'Claims' },
   { href: '/admin/events', label: 'Events' },
+  { href: '/admin/analytics', label: 'Analytics' },
   { href: '/admin/collaborators', label: 'Organizer Access' },
   { href: '/admin/reports', label: 'Reports' },
   { href: '/admin/outreach', label: 'Outreach' },
