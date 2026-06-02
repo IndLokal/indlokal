@@ -128,7 +128,7 @@ export default function HomePage() {
 
             <div className="mt-6 flex flex-wrap justify-center gap-4">
               <Link
-                href={`/${ACTIVE_CITIES[0]}`}
+                href="/stuttgart"
                 className="text-brand-700 hover:bg-brand-50 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold shadow-2xl shadow-black/20 transition-all hover:-translate-y-0.5 hover:shadow-xl active:scale-[0.98]"
               >
                 Explore Stuttgart →
