@@ -4,6 +4,22 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 
+function getAuthorizedCityId(
+  user: Awaited<ReturnType<typeof assertCan>>,
+  cityId: string | null,
+): string | null {
+  const allowedCityIds = user.roleAssignments
+    .filter(
+      (assignment) =>
+        assignment.role === 'CITY_AMBASSADOR' && assignment.cityId && !assignment.revokedAt,
+    )
+    .map((assignment) => assignment.cityId as string);
+
+  if (allowedCityIds.length === 0) return null;
+  if (cityId) return allowedCityIds.includes(cityId) ? cityId : null;
+  return allowedCityIds.length === 1 ? allowedCityIds[0] : null;
+}
+
 // ─────────────────────────────────────────────────
 // Submit community (fast-track to pipeline)
 // Creates a PipelineItem with submittedByRole=CITY_AMBASSADOR
@@ -25,12 +41,17 @@ export async function submitAmbassadorCommunity(
   const channelType = (formData.get('channelType') as string | null)?.trim() || 'WHATSAPP';
   const notes = (formData.get('notes') as string | null)?.trim();
 
-  if (!name || !cityId) {
+  const authorizedCityId = getAuthorizedCityId(user, cityId || null);
+  if (!authorizedCityId) {
+    return { success: false, error: 'Please select one of your assigned cities.' };
+  }
+
+  if (!name || !authorizedCityId) {
     return { success: false, error: 'Name and city are required.' };
   }
 
   // Resolve city
-  const city = await db.city.findUnique({ where: { id: cityId }, select: { id: true } });
+  const city = await db.city.findUnique({ where: { id: authorizedCityId }, select: { id: true } });
   if (!city) return { success: false, error: 'Invalid city.' };
 
   await db.pipelineItem.create({
@@ -78,11 +99,16 @@ export async function submitAmbassadorEvent(
   const sourceUrl = (formData.get('sourceUrl') as string | null)?.trim();
   const notes = (formData.get('notes') as string | null)?.trim();
 
-  if (!title || !cityId) {
+  const authorizedCityId = getAuthorizedCityId(user, cityId || null);
+  if (!authorizedCityId) {
+    return { success: false, error: 'Please select one of your assigned cities.' };
+  }
+
+  if (!title || !authorizedCityId) {
     return { success: false, error: 'Title and city are required.' };
   }
 
-  const city = await db.city.findUnique({ where: { id: cityId }, select: { id: true } });
+  const city = await db.city.findUnique({ where: { id: authorizedCityId }, select: { id: true } });
   if (!city) return { success: false, error: 'Invalid city.' };
 
   await db.pipelineItem.create({
