@@ -19,6 +19,25 @@ import {
   sendHostEventRejectedEmail,
 } from '@/lib/email';
 
+type CityChangeRequestPayload = {
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  requestedBy?: string;
+  requestedAt?: string;
+  fromCityId?: string;
+  toCityId?: string;
+  reason?: string;
+  evidenceUrl?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNote?: string;
+};
+
+function asObject(metadata: unknown): Record<string, unknown> {
+  return metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+}
+
 /* --- Submission actions --- */
 
 export async function approveSubmission(formData: FormData) {
@@ -606,4 +625,130 @@ export async function rejectEvent(formData: FormData) {
   }
 
   revalidatePath('/admin/events');
+}
+
+/* --- City-change governance actions --- */
+
+export async function approveCityChangeRequest(formData: FormData) {
+  const reviewer = await assertCan('claims.approve');
+  const id = formData.get('id') as string;
+  if (!id) return;
+
+  const community = await db.community.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      slug: true,
+      cityId: true,
+      city: { select: { slug: true } },
+      metadata: true,
+    },
+  });
+  if (!community) return;
+
+  const metadata = asObject(community.metadata);
+  const request = asObject(metadata.cityChangeRequest) as CityChangeRequestPayload;
+  if (request.status !== 'PENDING' || !request.toCityId) return;
+
+  const toCity = await db.city.findUnique({
+    where: { id: request.toCityId },
+    select: { id: true, slug: true },
+  });
+  if (!toCity) return;
+
+  if (toCity.id === community.cityId) {
+    await db.community.update({
+      where: { id },
+      data: {
+        metadata: {
+          ...metadata,
+          cityChangeRequest: {
+            ...request,
+            status: 'APPROVED',
+            reviewedBy: reviewer.id,
+            reviewedAt: new Date().toISOString(),
+            reviewNote: 'No-op: already in target city.',
+          },
+        },
+      },
+    });
+    revalidatePath('/admin/claims');
+    revalidatePath('/organizer/profile');
+    return;
+  }
+
+  await db.$transaction([
+    db.community.update({
+      where: { id },
+      data: {
+        cityId: toCity.id,
+        metadata: {
+          ...metadata,
+          cityChangeRequest: {
+            ...request,
+            status: 'APPROVED',
+            reviewedBy: reviewer.id,
+            reviewedAt: new Date().toISOString(),
+          },
+        },
+      },
+    }),
+    db.contentLog.create({
+      data: {
+        entityType: 'community',
+        entityId: id,
+        action: 'UPDATED',
+        changedBy: reviewer.id,
+        metadata: {
+          via: 'city_change_request_approval',
+          fromCityId: community.cityId,
+          toCityId: toCity.id,
+        },
+      },
+    }),
+  ]);
+
+  revalidateTag('city-feed', 'max');
+  revalidatePath(`/${community.city.slug}/communities/${community.slug}`);
+  revalidatePath(`/${community.city.slug}/communities`);
+  revalidatePath(`/${toCity.slug}/communities/${community.slug}`);
+  revalidatePath(`/${toCity.slug}/communities`);
+  revalidatePath('/admin/claims');
+  revalidatePath('/organizer/profile');
+}
+
+export async function rejectCityChangeRequest(formData: FormData) {
+  const reviewer = await assertCan('claims.reject');
+  const id = formData.get('id') as string;
+  const reason = ((formData.get('reason') as string) ?? '').trim() || undefined;
+  if (!id) return;
+
+  const community = await db.community.findUnique({
+    where: { id },
+    select: { id: true, city: { select: { slug: true } }, slug: true, metadata: true },
+  });
+  if (!community) return;
+
+  const metadata = asObject(community.metadata);
+  const request = asObject(metadata.cityChangeRequest) as CityChangeRequestPayload;
+  if (request.status !== 'PENDING') return;
+
+  await db.community.update({
+    where: { id },
+    data: {
+      metadata: {
+        ...metadata,
+        cityChangeRequest: {
+          ...request,
+          status: 'REJECTED',
+          reviewedBy: reviewer.id,
+          reviewedAt: new Date().toISOString(),
+          ...(reason ? { reviewNote: reason } : {}),
+        },
+      },
+    },
+  });
+
+  revalidatePath('/admin/claims');
+  revalidatePath('/organizer/profile');
 }

@@ -84,6 +84,12 @@ export default async function AdminDashboardPage() {
             pendingCount: pendingCounts.claims,
           },
           {
+            title: 'City Changes',
+            description: 'Approve or reject cross-region city-move requests from organizers',
+            href: '/admin/city-changes',
+            pendingCount: pendingCounts.cityChanges,
+          },
+          {
             title: 'Events',
             description: 'Review host/public event submissions before publishing',
             href: '/admin/events',

@@ -17,6 +17,7 @@ import { AccessChannelLink } from './AccessChannelLink';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { getSessionUser } from '@/lib/session';
 import { CommunityFollowButton } from '@/components/CommunityFollowButton';
+import { canEditCommunity } from '@/lib/auth/community-permissions';
 
 /**
  * Community Detail Page
@@ -59,9 +60,26 @@ export default async function CommunityDetailPage({ params }: Props) {
   }
 
   const now = new Date();
-  const upcomingEvents = community.events.filter((e) => new Date(e.startsAt) >= now);
-  const pastEvents = community.events.filter((e) => new Date(e.startsAt) < now);
+  type CommunityEvent = (typeof community.events)[number];
+  type CommunityCategory = (typeof community.categories)[number];
+  type CommunityLanguage = (typeof community.languages)[number];
+  type CommunityChannel = (typeof community.accessChannels)[number];
+
+  const upcomingEvents = community.events.filter(
+    (event: CommunityEvent) => new Date(event.startsAt) >= now,
+  );
+  const pastEvents = community.events.filter(
+    (event: CommunityEvent) => new Date(event.startsAt) < now,
+  );
   const followedByUser = user ? await isCommunityFollowed(user.id, community.id) : false;
+  const canManageProfile = user ? canEditCommunity(user, community.id) : false;
+  const personaLabels: string[] = [];
+  const personaSegments = (community.personaSegments ?? []) as string[];
+  for (const segment of personaSegments) {
+    const key = segment as communityOptions.PersonaSegment;
+    const label = communityOptions.PERSONA_SEGMENT_LABELS[key];
+    if (label) personaLabels.push(label);
+  }
 
   // JSON-LD Organization schema
   const jsonLd = {
@@ -70,7 +88,9 @@ export default async function CommunityDetailPage({ params }: Props) {
     name: community.name,
     description: community.description ?? undefined,
     foundingDate: community.foundedYear?.toString(),
-    url: community.accessChannels.find((c) => c.channelType === 'WEBSITE')?.url,
+    url: community.accessChannels.find(
+      (channel: CommunityChannel) => channel.channelType === 'WEBSITE',
+    )?.url,
     location: {
       '@type': 'Place',
       addressLocality: community.city.name,
@@ -150,7 +170,15 @@ export default async function CommunityDetailPage({ params }: Props) {
             </div>
           </div>
 
-          <div className="shrink-0 sm:pt-1">
+          <div className="shrink-0 space-y-2 sm:pt-1">
+            {canManageProfile && (
+              <Link
+                href="/organizer/profile"
+                className="btn-secondary block w-full text-center text-sm"
+              >
+                Edit public profile
+              </Link>
+            )}
             <CommunityFollowButton communityId={community.id} following={followedByUser} />
           </div>
         </div>
@@ -158,7 +186,7 @@ export default async function CommunityDetailPage({ params }: Props) {
         {/* Categories */}
         {community.categories.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            {community.categories.map(({ category }) => (
+            {community.categories.map(({ category }: CommunityCategory) => (
               <span
                 key={category.slug}
                 className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-sm ring-1 ring-inset"
@@ -184,7 +212,7 @@ export default async function CommunityDetailPage({ params }: Props) {
           <div>
             <h2 className="text-lg font-semibold">Languages</h2>
             <div className="mt-2 flex flex-wrap gap-2">
-              {community.languages.map((lang) => (
+              {community.languages.map((lang: CommunityLanguage) => (
                 <span
                   key={lang}
                   className="badge-base bg-muted-bg text-foreground px-3 py-1 text-sm"
@@ -196,12 +224,29 @@ export default async function CommunityDetailPage({ params }: Props) {
           </div>
         )}
 
+        {/* Persona */}
+        {personaLabels.length > 0 && (
+          <div>
+            <h2 className="text-lg font-semibold">Who this is for</h2>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {personaLabels.map((label) => (
+                <span
+                  key={label}
+                  className="badge-base bg-muted-bg text-foreground px-3 py-1 text-sm"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Access Channels */}
         {community.accessChannels.length > 0 && (
           <div>
             <h2 className="text-lg font-semibold">Join this community</h2>
             <div className="mt-3 flex flex-wrap gap-3">
-              {community.accessChannels.map((ch) => (
+              {community.accessChannels.map((ch: CommunityChannel) => (
                 <AccessChannelLink
                   key={ch.id}
                   href={ch.url}
@@ -233,7 +278,7 @@ export default async function CommunityDetailPage({ params }: Props) {
           <div>
             <h2 className="text-lg font-semibold">Upcoming Events</h2>
             <div className="mt-3 space-y-3">
-              {upcomingEvents.map((event) => (
+              {upcomingEvents.map((event: CommunityEvent) => (
                 <Link
                   key={event.id}
                   href={`/${city}/events/${event.slug}`}
@@ -261,7 +306,7 @@ export default async function CommunityDetailPage({ params }: Props) {
               Track record: {pastEvents.length} event{pastEvents.length !== 1 ? 's' : ''} hosted
             </p>
             <div className="mt-3 space-y-2">
-              {pastEvents.slice(0, 5).map((event) => (
+              {pastEvents.slice(0, 5).map((event: CommunityEvent) => (
                 <Link
                   key={event.id}
                   href={`/${city}/events/${event.slug}`}

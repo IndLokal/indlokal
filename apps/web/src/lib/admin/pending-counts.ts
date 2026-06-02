@@ -4,6 +4,7 @@ export type AdminPendingCounts = {
   pipeline: number;
   submissions: number;
   claims: number;
+  cityChanges: number;
   events: number;
   collaboratorRequests: number;
   reports: number;
@@ -15,6 +16,7 @@ export async function getAdminPendingCounts(): Promise<AdminPendingCounts> {
     pendingKeywordSuggestions,
     submissions,
     claims,
+    cityChanges,
     events,
     collaboratorRequests,
     reports,
@@ -23,6 +25,9 @@ export async function getAdminPendingCounts(): Promise<AdminPendingCounts> {
     db.keywordSuggestion.count({ where: { status: 'PENDING' } }),
     db.community.count({ where: { status: 'UNVERIFIED', source: 'COMMUNITY_SUBMITTED' } }),
     db.community.count({ where: { claimState: 'CLAIM_PENDING' } }),
+    db.community.count({
+      where: { metadata: { path: ['cityChangeRequest', 'status'], equals: 'PENDING' } },
+    }),
     db.event.count({ where: { moderationState: 'PENDING_REVIEW' } }),
     db.communityCollaborator.count({ where: { status: 'PENDING', source: 'PUBLIC_REQUEST' } }),
     db.contentReport.count({ where: { status: { not: 'RESOLVED' } } }),
@@ -30,5 +35,5 @@ export async function getAdminPendingCounts(): Promise<AdminPendingCounts> {
 
   const pipeline = pendingPipelineItems + pendingKeywordSuggestions;
 
-  return { pipeline, submissions, claims, events, collaboratorRequests, reports };
+  return { pipeline, submissions, claims, cityChanges, events, collaboratorRequests, reports };
 }
