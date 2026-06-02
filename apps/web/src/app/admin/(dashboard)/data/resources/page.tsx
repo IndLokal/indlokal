@@ -6,6 +6,7 @@ import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Resources - Admin' };
@@ -157,13 +158,14 @@ export default async function AdminResourcesPage({
                 <td className="px-3 py-2 text-right">
                   <form action={deleteResourceAction} className="inline-block">
                     <input type="hidden" name="id" value={r.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-red-600 hover:underline"
-                      title="Permanently delete this resource"
-                    >
-                      delete
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="delete"
+                      title="Delete this resource permanently?"
+                      description="This action permanently removes the resource record."
+                      confirmLabel="Delete resource"
+                      tone="danger"
+                      triggerClassName="text-xs text-red-600 hover:underline"
+                    />
                   </form>
                 </td>
               </tr>

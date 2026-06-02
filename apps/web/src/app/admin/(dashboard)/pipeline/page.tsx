@@ -16,6 +16,7 @@ import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
 import { PaginationControls } from '@/components/ui/PaginationControls';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Content Pipeline - Admin' };
 
@@ -174,12 +175,16 @@ export default async function AdminPipelinePage({
               name="ids"
               value={autoApprovedItems.map((item: AutoApprovedItem) => item.id).join(',')}
             />
-            <button
-              type="submit"
-              className="mt-4 w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              Revert Recent Auto-Approvals
-            </button>
+            <div className="mt-4">
+              <ConfirmSubmitButton
+                triggerLabel="Revert Recent Auto-Approvals"
+                title="Revert recent auto-approvals?"
+                description="The selected auto-approved items will be moved back to pending review."
+                confirmLabel="Revert approvals"
+                tone="danger"
+                triggerClassName="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+              />
+            </div>
           </form>
         )}
       </section>

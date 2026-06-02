@@ -4,6 +4,7 @@ import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from 
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { PaginationControls } from '@/components/ui/PaginationControls';
+import { ConfirmSubmitButton } from '@/components/ui';
 import { approveCollaboratorRequest, rejectCollaboratorRequest } from '../actions';
 
 export const metadata = { title: 'Collaborator Requests - Admin' };
@@ -406,21 +407,25 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
                     <div className="flex shrink-0 gap-2">
                       <form action={approveCollaboratorRequest}>
                         <input type="hidden" name="id" value={request.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                        >
-                          Approve
-                        </button>
+                        <ConfirmSubmitButton
+                          triggerLabel="Approve"
+                          title="Approve this collaborator request?"
+                          description="This requester will get active collaborator access for this community."
+                          confirmLabel="Approve request"
+                          tone="primary"
+                          triggerClassName="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                        />
                       </form>
                       <form action={rejectCollaboratorRequest}>
                         <input type="hidden" name="id" value={request.id} />
-                        <button
-                          type="submit"
-                          className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                        >
-                          Reject
-                        </button>
+                        <ConfirmSubmitButton
+                          triggerLabel="Reject"
+                          title="Reject this collaborator request?"
+                          description="This requester will not receive collaborator access."
+                          confirmLabel="Reject request"
+                          tone="danger"
+                          triggerClassName="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                        />
                       </form>
                     </div>
                   </div>

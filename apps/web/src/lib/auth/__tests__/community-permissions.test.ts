@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   assertCommunity,
   canEditCommunity,
+  canInviteCommunityCollaborators,
   canManageCommunity,
   getCommunityRole,
   isCommunityOwner,
@@ -53,20 +54,51 @@ describe('getCommunityRole', () => {
 
 describe('authority matrices', () => {
   const cases: Array<{
-    role: 'COMMUNITY_ADMIN' | 'COLLABORATOR';
+    name: string;
+    userConfig: Parameters<typeof user>[0];
     owner: boolean;
     manage: boolean;
+    invite: boolean;
     edit: boolean;
   }> = [
-    { role: 'COMMUNITY_ADMIN', owner: true, manage: true, edit: true },
-    { role: 'COLLABORATOR', owner: false, manage: false, edit: true },
+    {
+      name: 'claimed owner',
+      userConfig: {
+        claimedCommunities: [{ id: COMMUNITY, claimedByUserId: 'user-1' }],
+      },
+      owner: true,
+      manage: true,
+      invite: true,
+      edit: true,
+    },
+    {
+      name: 'delegated admin',
+      userConfig: {
+        communityMemberships: [{ communityId: COMMUNITY, role: 'COMMUNITY_ADMIN' }],
+      },
+      owner: false,
+      manage: false,
+      invite: true,
+      edit: true,
+    },
+    {
+      name: 'collaborator',
+      userConfig: {
+        communityMemberships: [{ communityId: COMMUNITY, role: 'COLLABORATOR' }],
+      },
+      owner: false,
+      manage: false,
+      invite: false,
+      edit: true,
+    },
   ];
 
   for (const c of cases) {
-    it(`${c.role}: owner=${c.owner} manage=${c.manage} edit=${c.edit}`, () => {
-      const u = user({ communityMemberships: [{ communityId: COMMUNITY, role: c.role }] });
+    it(`${c.name}: owner=${c.owner} manage=${c.manage} invite=${c.invite} edit=${c.edit}`, () => {
+      const u = user(c.userConfig);
       expect(isCommunityOwner(u, COMMUNITY)).toBe(c.owner);
       expect(canManageCommunity(u, COMMUNITY)).toBe(c.manage);
+      expect(canInviteCommunityCollaborators(u, COMMUNITY)).toBe(c.invite);
       expect(canEditCommunity(u, COMMUNITY)).toBe(c.edit);
     });
   }
@@ -75,6 +107,7 @@ describe('authority matrices', () => {
     const u = user();
     expect(isCommunityOwner(u, COMMUNITY)).toBe(false);
     expect(canManageCommunity(u, COMMUNITY)).toBe(false);
+    expect(canInviteCommunityCollaborators(u, COMMUNITY)).toBe(false);
     expect(canEditCommunity(u, COMMUNITY)).toBe(false);
   });
 });
@@ -84,6 +117,7 @@ describe('PLATFORM_ADMIN fast-path', () => {
     const u = user({ role: 'PLATFORM_ADMIN' });
     expect(isCommunityOwner(u, COMMUNITY)).toBe(true);
     expect(canManageCommunity(u, COMMUNITY)).toBe(true);
+    expect(canInviteCommunityCollaborators(u, COMMUNITY)).toBe(true);
     expect(canEditCommunity(u, COMMUNITY)).toBe(true);
   });
 });
@@ -95,7 +129,10 @@ describe('assertCommunity', () => {
   });
 
   it('does not throw when the user meets the level', () => {
-    const u = user({ communityMemberships: [{ communityId: COMMUNITY, role: 'COMMUNITY_ADMIN' }] });
+    const u = user({
+      claimedCommunities: [{ id: COMMUNITY, claimedByUserId: 'user-1' }],
+      communityMemberships: [{ communityId: COMMUNITY, role: 'COMMUNITY_ADMIN' }],
+    });
     expect(() => assertCommunity(u, COMMUNITY, 'manage')).not.toThrow();
   });
 });

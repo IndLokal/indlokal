@@ -6,6 +6,7 @@ import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Communities - Admin' };
@@ -183,13 +184,14 @@ export default async function AdminCommunitiesPage({
                   )}
                   <form action={deleteCommunityAction} className="ml-3 inline-block">
                     <input type="hidden" name="id" value={c.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-red-600 hover:underline"
-                      title="Permanently delete this community (use for true duplicates / spam only)"
-                    >
-                      delete
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="delete"
+                      title="Delete this community permanently?"
+                      description="This action permanently removes the community and related records. Use only for duplicates or spam."
+                      confirmLabel="Delete community"
+                      tone="danger"
+                      triggerClassName="text-xs text-red-600 hover:underline"
+                    />
                   </form>
                 </td>
               </tr>

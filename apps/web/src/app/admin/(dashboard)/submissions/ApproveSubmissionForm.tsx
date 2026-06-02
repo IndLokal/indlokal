@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 type Props = {
   submissionId: string;
@@ -31,12 +32,18 @@ export function ApproveSubmissionForm({ submissionId, defaultGrantOwnership, act
         />
         Grant organizer ownership to submitter email
       </label>
-      <button
-        type="submit"
-        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-      >
-        Approve
-      </button>
+      <ConfirmSubmitButton
+        triggerLabel="Approve"
+        title="Approve this community submission?"
+        description={
+          grantOwnership
+            ? 'This will publish the community and grant organizer ownership to the submitter email.'
+            : 'This will publish the community without granting organizer ownership.'
+        }
+        confirmLabel="Approve submission"
+        tone="primary"
+        triggerClassName="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+      />
     </form>
   );
 }

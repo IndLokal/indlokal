@@ -6,6 +6,7 @@ import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
+import { ConfirmSubmitButton } from '@/components/ui';
 import { archiveEvent } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -110,12 +111,14 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
             View public page
           </Link>
           <form action={archiveCurrentEvent}>
-            <button
-              type="submit"
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              Archive event
-            </button>
+            <ConfirmSubmitButton
+              triggerLabel="Archive event"
+              title="Archive this event?"
+              description="The event status will change to cancelled and no longer appear as active."
+              confirmLabel="Archive event"
+              tone="danger"
+              triggerClassName="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            />
           </form>
         </div>
 

@@ -5,6 +5,7 @@ import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events - Admin' };
@@ -138,13 +139,14 @@ export default async function AdminEventsPage({
                 <td className="px-3 py-2 text-right">
                   <form action={deleteEventAction} className="inline-block">
                     <input type="hidden" name="id" value={e.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-red-600 hover:underline"
-                      title="Permanently delete this event"
-                    >
-                      delete
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="delete"
+                      title="Delete this event permanently?"
+                      description="This action permanently removes the event record."
+                      confirmLabel="Delete event"
+                      tone="danger"
+                      triggerClassName="text-xs text-red-600 hover:underline"
+                    />
                   </form>
                 </td>
               </tr>

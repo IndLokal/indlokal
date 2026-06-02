@@ -8,9 +8,10 @@
 ## Context
 
 The product blueprint ([RBAC_AND_AUTHORIZATION.md](../../RBAC_AND_AUTHORIZATION.md)) defines
-**community authority** with exactly two roles: a **Organizer** (one per claimed community)
-and **Collaborators** (people who help run it). Platform authority is a separate, scoped layer
-already covered by ADR-0005 (`RoleAssignment`).
+**community authority** as a primary-owner pointer plus delegated team access. The primary
+owner is tracked by `Community.claimedByUserId`; additional team access is expressed through
+`CommunityCollaborator`. Platform authority is a separate, scoped layer already covered by
+ADR-0005 (`RoleAssignment`).
 
 The audit ([RBAC_AUDIT.md](../../RBAC_AUDIT.md)) found two problems with how community authority
 was implemented:
@@ -23,39 +24,33 @@ was implemented:
    (`COMMUNITY_ADMIN / ADMIN / COLLABORATOR / VIEWER`) and a four-level capability ladder, far beyond the
    two roles the blueprint asks for.
 
-We need a single, role-bearing record for community membership that the backend reads for every
-community write, and we must keep it **as small as the blueprint** — two roles, no more.
+We need a single, role-bearing record for team access that the backend reads for every
+community write, while keeping primary ownership separate and explicit.
 
 ## Decision
 
-1. **`CommunityCollaborator` is the authoritative, role-bearing membership table.** Every person
-   with authority over a community — including the organizer — has a row. The organizer is the
-   single `COMMUNITY_ADMIN` row; everyone else is a `COLLABORATOR`.
-2. **`CollaboratorRole` has exactly two values: `COMMUNITY_ADMIN` and `COLLABORATOR`.** "Organizer" in the
-   product maps to `COMMUNITY_ADMIN`. No `ADMIN`/`VIEWER` tiers.
-3. **One organizer per community.** `Community.claimedByUserId` mirrors the single `COMMUNITY_ADMIN` row, and
-   the write paths (claim/submission approval, transfer) guarantee at most one `COMMUNITY_ADMIN`. A DB-level
-   partial unique index is deferred because Prisma cannot express partial indexes in the schema
-   (a raw one would be reported as drift by `migrate dev`).
-4. **`User.role` is never a community permission.** Community writes authorize against
-   `CommunityCollaborator` via `lib/auth/community-permissions.ts`. `User.role` remains for
-   display and for the **platform** layer (ADR-0005) only. Granting a organizer creates an
-   `COMMUNITY_ADMIN` row — never a global `COMMUNITY_ADMIN`.
-5. **Every authority change is recorded** in `ContentLog` (`ROLE_GRANTED` / `ROLE_REVOKED`).
-6. **Enforcement is unconditional.** There is no `COMMUNITY_RBAC_V2` flag; the community-authority
+1. **`Community.claimedByUserId` is the primary-owner pointer.** Ownership-only actions use this
+   field, and the page surface should call it out separately from team membership.
+2. **`CommunityCollaborator` is the authoritative, role-bearing team-access table.** Every person
+   with organizer-level or collaborator-level access has a row. `COMMUNITY_ADMIN` means delegated
+   admin access; `COLLABORATOR` means content-only access. Multiple `COMMUNITY_ADMIN` rows may exist.
+3. **`User.role` is never a community permission.** Community writes authorize against
+   `CommunityCollaborator` plus the primary-owner pointer via `lib/auth/community-permissions.ts`.
+   `User.role` remains for display and for the **platform** layer (ADR-0005) only.
+4. **Every authority change is recorded** in `ContentLog` (`ROLE_GRANTED` / `ROLE_REVOKED`).
+5. **Enforcement is unconditional.** There is no `COMMUNITY_RBAC_V2` flag; the community-authority
    helpers are the only path. A `claimedByUserId` fallback in the helpers keeps any not-yet
    backfilled owner working, and the migration backfills `COMMUNITY_ADMIN` rows for all claimed communities.
 
 ## Consequences
 
 - **Positive**
-  - One place answers "who ca manage this community?" — the membership table, with the organizer
-    in it.
-  - The model matches the blueprint exactly (two roles); less surface to maintain, test, and reason
-    about.
+  - One place answers "who can edit or manage this community?" — `claimedByUserId` for
+    primary ownership and `CommunityCollaborator` for team access.
+  - The model keeps ownership and membership separate, which makes the organizer UI easier to
+    explain and test.
   - Profile role is fully decoupled from community permission, closing the cross-community
     escalation gap.
-  - "Exactly one organizer" is upheld by the grant/transfer paths and the `ON CONFLICT` backfill.
 - **Negative**
   - Removing the four-tier enum and the flag is a one-time migration + code change touching the
     organizer/admin write paths.

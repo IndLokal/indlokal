@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { mergeCommunities } from './actions';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 type CommunityRow = {
   id: string;
@@ -252,9 +253,15 @@ export function MergeCommunityForm({ communities, cities }: Props) {
         </p>
       )}
 
-      <button type="submit" className="btn-primary" disabled={!canSubmit}>
-        Merge Communities
-      </button>
+      <ConfirmSubmitButton
+        triggerLabel="Merge Communities"
+        title="Merge selected communities?"
+        description="The secondary community will be merged into the primary record. This operation is intended for duplicate cleanup."
+        confirmLabel="Merge now"
+        tone="danger"
+        disabled={!canSubmit}
+        triggerClassName="btn-primary"
+      />
     </form>
   );
 }

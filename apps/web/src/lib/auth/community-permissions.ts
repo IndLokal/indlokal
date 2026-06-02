@@ -1,3 +1,5 @@
+import type { CollaboratorRole } from '@/lib/session';
+
 /**
  * Community authority - ADR-0008 / TDD-0036.
  *
@@ -5,14 +7,13 @@
  * membership from `CommunityCollaborator` (exposed on the session user as
  * `communityMemberships`), NOT `User.role` and NOT the workspace cookie.
  *
- * Authority levels (from CollaboratorRole):
- *   OWNER        - the organizer; full control incl. ownership transfer & member management
- *   COLLABORATOR - edit content only
+ * Authority levels (from community roles):
+ *   COMMUNITY_ADMIN - delegated admin access; may edit content
+ *   COLLABORATOR    - edit content only
  *
+ * Primary ownership is tracked separately via `claimedByUserId`.
  * PLATFORM_ADMIN always passes (platform-role fast-path, mirrors can()).
  */
-
-import type { CollaboratorRole, UserRole } from '@prisma/client';
 
 export type CommunityMembership = {
   communityId: string;
@@ -22,7 +23,7 @@ export type CommunityMembership = {
 /** Minimal session shape this module needs. */
 export type CommunityAuthorityUser = {
   id: string;
-  role: UserRole;
+  role: string;
   communityMemberships?: CommunityMembership[];
   /**
    * Safety net so a claimed organizer never loses access if their OWNER
@@ -33,9 +34,8 @@ export type CommunityAuthorityUser = {
 
 export type CommunityLevel = 'view' | 'edit' | 'manage' | 'own';
 
-// OWNER (organizer) + COLLABORATOR may edit; only OWNER may manage members.
+// OWNER (organizer) + COLLABORATOR may edit; only the primary owner may manage members.
 const EDIT_ROLES: CollaboratorRole[] = ['COMMUNITY_ADMIN', 'COLLABORATOR'];
-const MANAGE_ROLES: CollaboratorRole[] = ['COMMUNITY_ADMIN'];
 
 /**
  * Resolve the user's active role for a community, or null if they have none.
@@ -65,7 +65,11 @@ export function isCommunityOwner(
   communityId: string,
 ): boolean {
   if (user && user.role === 'PLATFORM_ADMIN') return true;
-  return getCommunityRole(user, communityId) === 'COMMUNITY_ADMIN';
+  return Boolean(
+    user?.claimedCommunities?.some(
+      (community) => community.id === communityId && community.claimedByUserId === user.id,
+    ),
+  );
 }
 
 /** OWNER (organizer) - may manage members and edit content. */
@@ -73,9 +77,16 @@ export function canManageCommunity(
   user: CommunityAuthorityUser | null | undefined,
   communityId: string,
 ): boolean {
+  return isCommunityOwner(user, communityId);
+}
+
+/** COMMUNITY_ADMIN (including primary owner) - may invite collaborators. */
+export function canInviteCommunityCollaborators(
+  user: CommunityAuthorityUser | null | undefined,
+  communityId: string,
+): boolean {
   if (user && user.role === 'PLATFORM_ADMIN') return true;
-  const role = getCommunityRole(user, communityId);
-  return role !== null && MANAGE_ROLES.includes(role);
+  return getCommunityRole(user, communityId) === 'COMMUNITY_ADMIN';
 }
 
 /** OWNER | COLLABORATOR - may edit content. */

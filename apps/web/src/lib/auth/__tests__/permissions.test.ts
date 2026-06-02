@@ -59,6 +59,7 @@ describe('can() - communityId scope delegation (ADR-0008)', () => {
 
   it('routes non-edit actions to community management authority (OWNER only)', () => {
     const owner = sessionUser({
+      claimedCommunities: [{ id: 'c1', claimedByUserId: 'user-1' }],
       communityMemberships: [{ communityId: 'c1', role: 'COMMUNITY_ADMIN' }],
     });
     const collaborator = sessionUser({

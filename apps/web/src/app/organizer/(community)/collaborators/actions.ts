@@ -1,5 +1,4 @@
 'use server';
-
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { db } from '@/lib/db';
@@ -8,6 +7,7 @@ import { createMagicLinkToken, getCurrentCommunityId, getSessionUser } from '@/l
 import { sendCollaboratorInviteRequestedEmail } from '@/lib/email';
 import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 import {
+  canInviteCommunityCollaborators,
   canManageCommunity,
   getCommunityRole,
   isCommunityOwner,
@@ -43,14 +43,20 @@ export async function inviteCollaborator(
   }
 
   const inviterLabel = user.displayName ?? user.email;
-  const communityName = community.name;
+  const communityRecord = await db.community.findUnique({
+    where: { id: community.id },
+    select: { name: true },
+  });
+  if (!communityRecord) {
+    return { success: false, errors: { _: ['No active community found.'] } };
+  }
+  const communityName = communityRecord.name;
 
-  // ADR-0008: inviting requires OWNER (organizer) authority, checked on the
-  // backend against CommunityCollaborator (not the workspace cookie).
-  if (!canManageCommunity(user, community.id)) {
+  // Inviting is allowed for delegated admins and the primary owner.
+  if (!canInviteCommunityCollaborators(user, community.id)) {
     return {
       success: false,
-      errors: { _: ['Only the community organizer can invite collaborators.'] },
+      errors: { _: ['Only community admins can invite collaborators.'] },
     };
   }
 
@@ -200,10 +206,10 @@ export async function inviteCollaborator(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Governance actions (ADR-0008 / TDD-0036): collaborator removal and ownership
-// transfer. Authority is checked on the backend against CommunityCollaborator
-// (never User.role or the workspace cookie) and every change is audited via
-// ContentLog(ROLE_GRANTED | ROLE_REVOKED).
+// Governance actions (ADR-0008 / TDD-0036): collaborator removal, role changes,
+// and ownership transfer. Authority is checked on the backend against
+// CommunityCollaborator (never User.role or the workspace cookie) and every
+// change is audited via ContentLog(ROLE_GRANTED | ROLE_REVOKED).
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type CollaboratorMutationResult =
@@ -223,7 +229,15 @@ const promoteSchema = z.object({
   targetUserId: z.string().min(1),
 });
 
+const demoteSchema = z.object({
+  targetUserId: z.string().min(1),
+});
+
 const resendInviteSchema = z.object({
+  collaboratorId: z.string().min(1),
+});
+
+const withdrawInviteSchema = z.object({
   collaboratorId: z.string().min(1),
 });
 
@@ -337,7 +351,7 @@ export async function removeCollaboratorAction(formData: FormData): Promise<void
   await removeCollaborator(null, formData);
 }
 
-/** Re-send acceptance email for a pending organizer invite. OWNER only. */
+/** Re-send acceptance email for a pending organizer invite. COMMUNITY_ADMIN only. */
 export async function resendCollaboratorInvite(
   _prev: CollaboratorMutationResult,
   formData: FormData,
@@ -346,8 +360,8 @@ export async function resendCollaboratorInvite(
   const ctx = await resolveActiveCommunityId();
   if (!user || !ctx) return { success: false, error: 'Not authenticated' };
 
-  if (!canManageCommunity(user, ctx.communityId)) {
-    return { success: false, error: 'Only the organizer can resend collaborator invites.' };
+  if (!canInviteCommunityCollaborators(user, ctx.communityId)) {
+    return { success: false, error: 'Only community admins can resend collaborator invites.' };
   }
 
   const parsed = resendInviteSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
@@ -435,6 +449,85 @@ export async function resendCollaboratorInviteAction(formData: FormData): Promis
   await resendCollaboratorInvite(null, formData);
 }
 
+/** Withdraw a pending organizer invite. COMMUNITY_ADMIN only. */
+export async function withdrawCollaboratorInvite(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canInviteCommunityCollaborators(user, ctx.communityId)) {
+    return { success: false, error: 'Only community admins can withdraw collaborator invites.' };
+  }
+
+  const parsed = withdrawInviteSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const invite = await db.communityCollaborator.findUnique({
+        where: { id: parsed.data.collaboratorId },
+        select: {
+          id: true,
+          communityId: true,
+          userId: true,
+          role: true,
+          status: true,
+          source: true,
+        },
+      });
+
+      if (!invite || invite.communityId !== ctx.communityId) {
+        return { success: false, error: 'Invite not found.' } as CollaboratorMutationResult;
+      }
+
+      if (invite.source !== 'COMMUNITY_ADMIN_INVITE' || invite.status !== 'PENDING') {
+        return {
+          success: false,
+          error: 'Only pending organizer invites can be withdrawn.',
+        } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: invite.id },
+          data: {
+            status: 'REMOVED',
+            reviewedAt: new Date(),
+            reviewedByUserId: user.id,
+          },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: ctx.communityId,
+            action: 'ROLE_REVOKED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: invite.userId,
+              fromRole: invite.role,
+              toRole: null,
+              inviteWithdrawn: true,
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Could not withdraw invite. Please try again.' }),
+  );
+}
+
+export async function withdrawCollaboratorInviteAction(formData: FormData): Promise<void> {
+  await withdrawCollaboratorInvite(null, formData);
+}
+
 /**
  * Transfer ownership to an existing ACTIVE member. OWNER only. Atomically
  * demotes the current owner to COLLABORATOR, promotes the target to OWNER, and
@@ -460,39 +553,36 @@ export async function transferOwnership(
 
   return withAction(
     async () => {
-      const result = await db.$transaction(async (tx) => {
-        const target = await tx.communityCollaborator.findUnique({
-          where: {
-            communityId_userId: {
-              communityId: ctx.communityId,
-              userId: parsed.data.targetUserId,
-            },
+      const target = await db.communityCollaborator.findUnique({
+        where: {
+          communityId_userId: {
+            communityId: ctx.communityId,
+            userId: parsed.data.targetUserId,
           },
-          select: { id: true, status: true, role: true },
-        });
-        if (!target || target.status !== 'ACTIVE') {
-          return { ok: false as const, error: 'New owner must be an active member.' };
-        }
+        },
+        select: { id: true, status: true, role: true },
+      });
+      if (!target || target.status !== 'ACTIVE') {
+        return {
+          success: false,
+          error: 'New owner must be an active member.',
+        } as CollaboratorMutationResult;
+      }
 
-        // Demote every current OWNER row to COLLABORATOR (there should be exactly one).
-        await tx.communityCollaborator.updateMany({
+      await db.$transaction([
+        db.communityCollaborator.updateMany({
           where: { communityId: ctx.communityId, role: 'COMMUNITY_ADMIN' },
           data: { role: 'COLLABORATOR' },
-        });
-
-        // Promote the target to OWNER.
-        await tx.communityCollaborator.update({
+        }),
+        db.communityCollaborator.update({
           where: { id: target.id },
           data: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
-        });
-
-        // Keep the denormalized pointer in sync (ADR-0008 invariant).
-        await tx.community.update({
+        }),
+        db.community.update({
           where: { id: ctx.communityId },
           data: { claimedByUserId: parsed.data.targetUserId },
-        });
-
-        await tx.contentLog.create({
+        }),
+        db.contentLog.create({
           data: {
             entityType: 'community',
             entityId: ctx.communityId,
@@ -504,8 +594,8 @@ export async function transferOwnership(
               toRole: 'COLLABORATOR',
             },
           },
-        });
-        await tx.contentLog.create({
+        }),
+        db.contentLog.create({
           data: {
             entityType: 'community',
             entityId: ctx.communityId,
@@ -517,19 +607,13 @@ export async function transferOwnership(
               toRole: 'COMMUNITY_ADMIN',
             },
           },
-        });
-
-        return { ok: true as const, previousRole: target.role };
-      });
-
-      if (!result.ok) {
-        return { success: false, error: result.error } as CollaboratorMutationResult;
-      }
+        }),
+      ]);
 
       await captureServerEvent(user.id, Events.COMMUNITY_ROLE_CHANGED, {
         community_id: ctx.communityId,
         target_user_id: parsed.data.targetUserId,
-        from_role: result.previousRole,
+        from_role: target.role,
         to_role: 'COMMUNITY_ADMIN',
       });
 
@@ -622,4 +706,83 @@ export async function promoteCollaboratorToAdmin(
 
 export async function promoteCollaboratorToAdminAction(formData: FormData): Promise<void> {
   await promoteCollaboratorToAdmin(null, formData);
+}
+
+/** Demote an ACTIVE admin back to COLLABORATOR. OWNER only. */
+export async function demoteAdminToCollaborator(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canManageCommunity(user, ctx.communityId)) {
+    return { success: false, error: 'Only the primary owner can change collaborator roles.' };
+  }
+
+  const parsed = demoteSchema.safeParse({ targetUserId: formData.get('targetUserId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const target = await db.communityCollaborator.findUnique({
+        where: {
+          communityId_userId: {
+            communityId: ctx.communityId,
+            userId: parsed.data.targetUserId,
+          },
+        },
+        select: { id: true, status: true, role: true },
+      });
+
+      if (!target || target.status !== 'ACTIVE') {
+        return {
+          success: false,
+          error: 'Target must be an active collaborator admin.',
+        } as CollaboratorMutationResult;
+      }
+
+      if (target.role === 'COLLABORATOR') {
+        return { success: true } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: target.id },
+          data: { role: 'COLLABORATOR' },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: ctx.communityId,
+            action: 'ROLE_REVOKED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: parsed.data.targetUserId,
+              fromRole: target.role,
+              toRole: 'COLLABORATOR',
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      await captureServerEvent(user.id, Events.COMMUNITY_ROLE_CHANGED, {
+        community_id: ctx.communityId,
+        target_user_id: parsed.data.targetUserId,
+        from_role: target.role,
+        to_role: 'COLLABORATOR',
+      });
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Something went wrong. Please try again.' }),
+  );
+}
+
+export async function demoteAdminToCollaboratorAction(formData: FormData): Promise<void> {
+  await demoteAdminToCollaborator(null, formData);
 }

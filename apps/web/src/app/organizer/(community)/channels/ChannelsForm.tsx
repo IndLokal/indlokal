@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react';
 import { communityOptions } from '@indlokal/shared';
+import { ConfirmSubmitButton } from '@/components/ui';
 import { addChannel, deleteChannel, type ChannelResult } from './actions';
 
 type Channel = {
@@ -58,12 +59,14 @@ export default function ChannelsForm({ channels }: Props) {
                 </div>
                 <form action={deleteChannel}>
                   <input type="hidden" name="channelId" value={ch.id} />
-                  <button
-                    type="submit"
-                    className="shrink-0 text-sm text-red-500 hover:text-red-700"
-                  >
-                    Remove
-                  </button>
+                  <ConfirmSubmitButton
+                    triggerLabel="Remove"
+                    title="Remove this access channel?"
+                    description="Members will no longer see this channel on the community page."
+                    confirmLabel="Remove channel"
+                    tone="danger"
+                    triggerClassName="shrink-0 text-sm text-red-500 hover:text-red-700"
+                  />
                 </form>
               </li>
             ))}

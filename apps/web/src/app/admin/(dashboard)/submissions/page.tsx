@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { approveSubmission, rejectSubmission } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { ApproveSubmissionForm } from './ApproveSubmissionForm';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Review Submissions - Admin' };
 
@@ -80,12 +81,14 @@ export default async function AdminSubmissionsPage() {
                     />
                     <form action={rejectSubmission}>
                       <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        Reject
-                      </button>
+                      <ConfirmSubmitButton
+                        triggerLabel="Reject"
+                        title="Reject this community submission?"
+                        description="This submission will be marked inactive and removed from the review queue."
+                        confirmLabel="Reject submission"
+                        tone="danger"
+                        triggerClassName="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                      />
                     </form>
                   </div>
                 </div>

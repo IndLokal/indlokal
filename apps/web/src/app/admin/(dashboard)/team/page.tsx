@@ -3,6 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { grantRole, revokeRole } from './actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Team - Admin' };
 
@@ -108,12 +109,14 @@ export default async function AdminTeamPage() {
               </select>
             </div>
             <div className="flex items-end">
-              <button
-                type="submit"
-                className="bg-brand-600 hover:bg-brand-700 w-full rounded px-4 py-2 text-sm font-medium text-white transition-colors"
-              >
-                Grant
-              </button>
+              <ConfirmSubmitButton
+                triggerLabel="Grant"
+                title="Grant this role assignment?"
+                description="This will create an active role assignment for the entered user and scope."
+                confirmLabel="Grant role"
+                tone="primary"
+                triggerClassName="bg-brand-600 hover:bg-brand-700 w-full rounded px-4 py-2 text-sm font-medium text-white transition-colors"
+              />
             </div>
           </form>
         </section>
@@ -164,12 +167,14 @@ export default async function AdminTeamPage() {
                       <td className="px-4 py-2">
                         <form action={revokeRole}>
                           <input type="hidden" name="id" value={a.id} />
-                          <button
-                            type="submit"
-                            className="text-xs text-red-600 hover:text-red-700 hover:underline"
-                          >
-                            Revoke
-                          </button>
+                          <ConfirmSubmitButton
+                            triggerLabel="Revoke"
+                            title="Revoke this role assignment?"
+                            description="The user will lose this scoped permission immediately."
+                            confirmLabel="Revoke role"
+                            tone="danger"
+                            triggerClassName="text-xs text-red-600 hover:text-red-700 hover:underline"
+                          />
                         </form>
                       </td>
                     )}
