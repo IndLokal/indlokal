@@ -226,7 +226,7 @@ export async function getSuggestions(
     where: communityWhere,
     orderBy: { activityScore: 'desc' },
     take: remaining,
-    select: { name: true },
+    select: { name: true, slug: true },
   });
   for (const c of communities) {
     if (!keywordSet.has(c.name.toLowerCase())) {
@@ -249,7 +249,7 @@ export async function getSuggestions(
     where: eventWhere,
     orderBy: { startsAt: 'asc' },
     take: remaining2,
-    select: { title: true },
+    select: { title: true, slug: true },
   });
   for (const e of events) {
     if (!keywordSet.has(e.title.toLowerCase())) {
