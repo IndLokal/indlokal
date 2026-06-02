@@ -9,12 +9,17 @@ export default function AddEventForm({ communityName }: { communityName: string 
 
   const errors = state?.success === false ? state.errors : {};
 
+  function toLocalInputValue(date: Date): string {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 16);
+  }
+
   // Local datetime value for "now + 1 week" as default
   const defaultStart = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 7);
     // Format: YYYY-MM-DDTHH:MM (local, no seconds)
-    return d.toISOString().slice(0, 16);
+    return toLocalInputValue(d);
   })();
 
   // Default end: two hours after the default start.
@@ -22,7 +27,7 @@ export default function AddEventForm({ communityName }: { communityName: string 
     const d = new Date();
     d.setDate(d.getDate() + 7);
     d.setHours(d.getHours() + 2);
-    return d.toISOString().slice(0, 16);
+    return toLocalInputValue(d);
   })();
 
   return (

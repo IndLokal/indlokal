@@ -8,7 +8,7 @@ import { withAction } from '@/lib/api/handlers';
 
 export async function archiveHostEvent(formData: FormData): Promise<void> {
   const user = await getSessionUser();
-  if (!user || user.role !== 'EVENT_HOST') {
+  if (!user || (user.role !== 'EVENT_HOST' && user.role !== 'PLATFORM_ADMIN')) {
     return;
   }
 
