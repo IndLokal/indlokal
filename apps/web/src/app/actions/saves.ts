@@ -1,10 +1,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { toggleFollowCommunityForUser, toggleSaveEventForUser } from '@/modules/engagement';
 
-export type SaveResult = { saved: boolean } | { requiresAuth: true } | { error: string };
+export type SaveResult =
+  | { saved: boolean; remindersScheduled?: number; remindersSuppressed?: number }
+  | { requiresAuth: true }
+  | { error: string };
 
 // ─── Community saves ──────────────────────────────────────────────────────────
 
@@ -17,25 +20,15 @@ export async function toggleSaveCommunity(communityId: string): Promise<SaveResu
   }
 
   try {
-    const existing = await db.savedCommunity.findUnique({
-      where: { userId_communityId: { userId: user.id, communityId } },
-    });
-
-    if (existing) {
-      await db.savedCommunity.delete({
-        where: { userId_communityId: { userId: user.id, communityId } },
-      });
-      revalidatePath('/me');
-      return { saved: false };
-    }
-
-    await db.savedCommunity.create({ data: { userId: user.id, communityId } });
+    const result = await toggleFollowCommunityForUser(user.id, communityId);
     revalidatePath('/me');
-    return { saved: true };
+    return { saved: result.followed };
   } catch {
-    return { error: 'Failed to update save. Please try again.' };
+    return { error: 'Failed to update follow. Please try again.' };
   }
 }
+
+export const toggleFollowCommunity = toggleSaveCommunity;
 
 // ─── Event saves ──────────────────────────────────────────────────────────────
 
@@ -48,21 +41,9 @@ export async function toggleSaveEvent(eventId: string): Promise<SaveResult> {
   }
 
   try {
-    const existing = await db.savedEvent.findUnique({
-      where: { userId_eventId: { userId: user.id, eventId } },
-    });
-
-    if (existing) {
-      await db.savedEvent.delete({
-        where: { userId_eventId: { userId: user.id, eventId } },
-      });
-      revalidatePath('/me');
-      return { saved: false };
-    }
-
-    await db.savedEvent.create({ data: { userId: user.id, eventId } });
+    const result = await toggleSaveEventForUser(user.id, eventId);
     revalidatePath('/me');
-    return { saved: true };
+    return result;
   } catch {
     return { error: 'Failed to update save. Please try again.' };
   }
