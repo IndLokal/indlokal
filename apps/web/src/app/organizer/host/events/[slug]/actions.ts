@@ -6,7 +6,7 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 
-export async function archiveHostEvent(eventSlug: string, formData: FormData): Promise<void> {
+export async function archiveHostEvent(eventSlug: string, _formData: FormData): Promise<void> {
   const user = await getSessionUser();
   if (!user || (user.role !== 'EVENT_HOST' && user.role !== 'PLATFORM_ADMIN')) {
     return;
