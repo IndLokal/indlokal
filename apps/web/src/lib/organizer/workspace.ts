@@ -9,9 +9,15 @@ type OrganizerCommunityLike = {
   claimedByUserId: string | null;
 };
 
+type OrganizerMembershipLike = {
+  communityId: string;
+  role: OrganizerWorkspaceRole;
+};
+
 type OrganizerUserLike<TCommunity extends OrganizerCommunityLike> = {
   id: string;
   claimedCommunities: readonly TCommunity[];
+  communityMemberships?: readonly OrganizerMembershipLike[];
 };
 
 export function resolveActiveOrganizerCommunity<TCommunity extends OrganizerCommunityLike>(
@@ -28,11 +34,16 @@ export function resolveActiveOrganizerCommunity<TCommunity extends OrganizerComm
   return communities[0] ?? null;
 }
 
-export function getOrganizerWorkspaceRole<TCommunity extends OrganizerCommunityLike>(
-  userId: string,
-  community: TCommunity,
-): OrganizerWorkspaceRole {
-  return community.claimedByUserId === userId ? 'COMMUNITY_ADMIN' : 'COLLABORATOR';
+export function getOrganizerWorkspaceRole<
+  TCommunity extends OrganizerCommunityLike,
+  TUser extends OrganizerUserLike<TCommunity>,
+>(user: TUser, community: TCommunity): OrganizerWorkspaceRole {
+  const membershipRole = user.communityMemberships?.find(
+    (membership) => membership.communityId === community.id,
+  )?.role;
+
+  if (membershipRole) return membershipRole;
+  return community.claimedByUserId === user.id ? 'COMMUNITY_ADMIN' : 'COLLABORATOR';
 }
 
 export function buildOrganizerWorkspace<TCommunity extends OrganizerCommunityLike>(
@@ -47,7 +58,7 @@ export function buildOrganizerWorkspace<TCommunity extends OrganizerCommunityLik
 
   return {
     community,
-    role: community ? getOrganizerWorkspaceRole(user.id, community) : null,
+    role: community ? getOrganizerWorkspaceRole(user, community) : null,
     isMultiCommunity: user.claimedCommunities.length > 1,
   };
 }
