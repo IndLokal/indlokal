@@ -22,6 +22,8 @@ import { community as c, discovery as d } from '@indlokal/shared';
 import { authClient, AuthClientError } from '@/lib/auth/client.expo';
 import { invalidatePrefix, queryCache } from '@/lib/cache/query-cache';
 import { getApiBaseUrl } from '@/lib/config/api-base-url';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { track } from '@/lib/analytics/track.expo';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const PUBLIC_BASE_URL = getApiBaseUrl();
@@ -80,6 +82,12 @@ export default function CommunityDetailScreen() {
         ...parsed,
         followedByUser: (detail as CommunityDetailWithFollowed).followedByUser,
       });
+      track({
+        event: ANALYTICS_EVENTS.communityDetailViewed,
+        entityType: 'COMMUNITY',
+        entityId: parsed.id,
+        citySlug: parsed.city.slug,
+      });
 
       const [eventsRes, relatedRes] = await Promise.all([
         queryCache(
@@ -128,6 +136,12 @@ export default function CommunityDetailScreen() {
       }
       setData({ ...data, followedByUser: desired });
       invalidatePrefix('bookmarks:');
+      track({
+        event: desired ? ANALYTICS_EVENTS.communityFollowed : ANALYTICS_EVENTS.communityUnfollowed,
+        entityType: 'COMMUNITY',
+        entityId: data.id,
+        citySlug: data.city.slug,
+      });
     } catch {
       Alert.alert('Could not update follow', 'Please try again.');
     } finally {
@@ -146,6 +160,15 @@ export default function CommunityDetailScreen() {
   }
 
   async function openChannel(channel: c.AccessChannel) {
+    if (data) {
+      track({
+        event: ANALYTICS_EVENTS.communityChannelTapped,
+        entityType: 'COMMUNITY',
+        entityId: data.id,
+        citySlug: data.city.slug,
+        metadata: { channelType: channel.channelType },
+      });
+    }
     const ok = await Linking.canOpenURL(channel.url);
     if (ok) await Linking.openURL(channel.url);
     else Alert.alert("Couldn't open link", channel.url);

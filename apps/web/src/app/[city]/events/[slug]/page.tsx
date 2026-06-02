@@ -2,10 +2,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
-import { getEventBySlug } from '@/modules/event';
+import { getEventBySlug, isEventSaved } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/session';
+import { EventSaveButton } from '@/components/EventSaveButton';
+import { EventRegistrationLink } from '@/components/EventRegistrationLink';
 
 /**
  * Event Detail Page
@@ -14,7 +17,10 @@ import { db } from '@/lib/db';
  * Example: /stuttgart/events/holi-stuttgart-2026/
  */
 
-type Props = { params: Promise<{ city: string; slug: string }> };
+type Props = {
+  params: Promise<{ city: string; slug: string }>;
+  searchParams?: Promise<{ lens?: string }>;
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -27,21 +33,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function EventDetailPage({ params }: Props) {
+export default async function EventDetailPage({ params, searchParams }: Props) {
   const { city, slug } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const lensContext = sp.lens === 'business' ? 'business_careers' : undefined;
   const event = await getEventBySlug(slug);
   if (!event) notFound();
+  const user = await getSessionUser();
 
   // City is the discovery partition key: an event only exists under its own
   // city path. If the slug is reached via a different (or stale) city segment,
   // canonicalize to the event's actual city instead of rendering a duplicate.
   if (event.city.slug !== city) {
-    redirect(`/${event.city.slug}/events/${slug}`);
+    redirect(`/${event.city.slug}/events/${slug}${lensContext ? '?lens=business' : ''}`);
   }
 
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
   const isPast = startsAt < new Date();
+  const savedByUser = user ? await isEventSaved(user.id, event.id) : false;
 
   // Host attribution for host-posted events (no community)
   const hostUserId =
@@ -96,6 +106,7 @@ export default async function EventDetailPage({ params }: Props) {
         cityId={event.city.id}
         entitySlug={event.slug}
         city={city}
+        metadata={lensContext ? { lens_context: lensContext } : undefined}
       />
 
       <div className="mx-auto max-w-2xl space-y-8">
@@ -119,46 +130,65 @@ export default async function EventDetailPage({ params }: Props) {
         </nav>
 
         {/* Header */}
-        <div>
-          {/* Category tags */}
-          {event.categories.length > 0 && (
-            <div className="mb-3 flex flex-wrap gap-2">
-              {event.categories.map(({ category }) => (
-                <span
-                  key={category.slug}
-                  className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
-                >
-                  {category.icon} {category.name}
-                </span>
-              ))}
-            </div>
-          )}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 flex-1">
+            {/* Category tags */}
+            {event.categories.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-2">
+                {event.categories.map(({ category }) => (
+                  <span
+                    key={category.slug}
+                    className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
+                  >
+                    {category.icon} {category.name}
+                  </span>
+                ))}
+              </div>
+            )}
 
-          <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
+            <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
 
-          {/* Recurring badge */}
-          {event.isRecurring && (
-            <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              🔄 Recurring event
-              {event.recurrenceRule && (
-                <span className="text-blue-500">
-                  {' · '}
-                  {event.recurrenceRule.includes('WEEKLY')
-                    ? 'Weekly'
-                    : event.recurrenceRule.includes('MONTHLY')
-                      ? 'Monthly'
-                      : 'Repeats'}
-                </span>
-              )}
-            </span>
-          )}
+            {/* Recurring badge */}
+            {event.isRecurring && (
+              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+                🔄 Recurring event
+                {event.recurrenceRule && (
+                  <span className="text-blue-500">
+                    {' · '}
+                    {event.recurrenceRule.includes('WEEKLY')
+                      ? 'Weekly'
+                      : event.recurrenceRule.includes('MONTHLY')
+                        ? 'Monthly'
+                        : 'Repeats'}
+                  </span>
+                )}
+              </span>
+            )}
 
-          {/* Status badge */}
-          {isPast && (
-            <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
-              This event has passed
-            </span>
-          )}
+            {/* Status badge */}
+            {isPast && (
+              <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
+                This event has passed
+              </span>
+            )}
+          </div>
+
+          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
+            <EventSaveButton
+              eventId={event.id}
+              saved={savedByUser}
+              city={city}
+              lensContext={lensContext}
+            />
+            {event.registrationUrl && (
+              <EventRegistrationLink
+                href={event.registrationUrl}
+                eventId={event.id}
+                city={city}
+                lensContext={lensContext}
+              />
+            )}
+          </div>
         </div>
 
         {/* Key details card */}

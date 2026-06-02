@@ -1,107 +1,83 @@
 # Analytics Event Catalog
 
-All client-emitted analytics events. Every event MUST be defined here before being emitted in code. Names are `snake_case.dot.namespaced`. Properties listed are required unless marked optional.
+Central catalog for analytics-bearing events. PRD/TDD-0042 is the parent strategy. Web and mobile code should use the canonical events below.
 
-Sink: PostHog (mobile + web). Server-side critical events also mirrored to internal logs.
+## Source Of Truth
+
+1. `docs/specs/EVENTS/analytics.md` - canonical catalog and property contracts.
+2. `apps/web/src/lib/analytics/events.ts` - canonical code constants.
+3. `apps/mobile/lib/analytics/events.ts` - legacy wire names that may be mapped at the API boundary.
+
+## Sink Ownership
+
+- PostHog: product funnels and lightweight operational telemetry.
+- UserInteraction: entity-bound engagement signals used for scoring and local readouts.
+- Domain tables and logs: pipeline reliability, cost, and review forensics.
 
 ## Conventions
 
-Common properties auto-attached by client:
+- Use snake_case event names and snake_case property keys.
+- Do not send PII, free-form contact details, raw tokens, or names when a stable ID or slug is enough.
+- Prefer primitive property values: strings, numbers, booleans, enums.
+- Use `entity_id`, `entity_type`, `city`, `city_slug`, `lens_context`, `source_surface`, and `original_event` for cross-surface attribution.
 
-- `app=mobile|web`, `appVersion`, `platform`, `osVersion`, `locale`, `timezone`
-- `userId?` (omit if anonymous), `sessionId`, `citySlug?`
+## Canonical Events
 
-## Catalog
+### Lifecycle
 
-### App lifecycle
+| Event            | Required properties | Sink    | Notes                                                                |
+| ---------------- | ------------------- | ------- | -------------------------------------------------------------------- |
+| `user_signed_up` | none                | PostHog | New account creation or first successful auth that counts as signup. |
+| `user_logged_in` | none                | PostHog | Successful verify/auth flows.                                        |
 
-| Event               | Properties                     | Notes               |
-| ------------------- | ------------------------------ | ------------------- |
-| `app.opened`        | `coldStart:boolean`            | first frame painted |
-| `app.session.start` | -                              | new session window  |
-| `app.session.end`   | `durationMs`                   | client-derived      |
-| `app.error`         | `code, message, fatal:boolean` | mirrors Sentry      |
+### Engagement
 
-### Auth (PRD-0008)
+| Event                      | Required properties                     | Sink                      | Notes                                                               |
+| -------------------------- | --------------------------------------- | ------------------------- | ------------------------------------------------------------------- |
+| `search_performed`         | `query`, `has_results`, `results_count` | PostHog                   | Search funnel entry.                                                |
+| `community_viewed`         | `entity_id`                             | PostHog + UserInteraction | Community detail view. Add `entity_slug` and `city` when available. |
+| `event_viewed`             | `entity_id`                             | PostHog + UserInteraction | Event detail view. Add `entity_slug` and `city` when available.     |
+| `community_access_clicked` | `community_id`                          | PostHog + UserInteraction | Access-channel click from community surfaces.                       |
+| `community_followed`       | `community_id`                          | PostHog + UserInteraction | Follow/save community.                                              |
+| `community_unfollowed`     | `community_id`                          | PostHog + UserInteraction | Unfollow/unsave community.                                          |
+| `community_saved`          | `community_id`                          | PostHog + UserInteraction | Saved community funnel event.                                       |
+| `community_unsaved`        | `community_id`                          | PostHog + UserInteraction | Unsaved community funnel event.                                     |
+| `event_saved`              | `event_id`                              | PostHog + UserInteraction | Saved event funnel event.                                           |
+| `event_unsaved`            | `event_id`                              | PostHog + UserInteraction | Unsaved event funnel event.                                         |
+| `business_lens_viewed`     | `city`, `surface`, `lens_context`       | PostHog + UserInteraction | Business-discovery lens entry.                                      |
 
-| Event                  | Properties                  |
-| ---------------------- | --------------------------- | ------ | ------ |
-| `auth.signin.started`  | `method:apple               | google | magic` |
-| `auth.signin.success`  | `method, isNewUser:boolean` |
-| `auth.signin.failed`   | `method, reason`            |
-| `auth.signout`         | -                           |
-| `auth.account.deleted` | -                           |
+### Conversion
 
-### Discover (PRD-0003)
+| Event                 | Required properties | Sink    | Notes                  |
+| --------------------- | ------------------- | ------- | ---------------------- |
+| `community_submitted` | `type`              | PostHog | Submission conversion. |
+| `claim_submitted`     | none                | PostHog | Claim conversion.      |
 
-| Event                   | Properties  |
-| ----------------------- | ----------- | ----------- | ------------------- |
-| `discover.feed.viewed`  | `tab:events | communities | resources`          |
-| `discover.city.changed` | `from, to`  |
-| `discover.card.tapped`  | `type:event | community   | resource, rank, id` |
-| `discover.refresh`      | `mode:pull  | background` |
+### Governance
 
-### Event detail (PRD-0005)
+| Event                             | Required properties                                      | Sink           | Notes                             |
+| --------------------------------- | -------------------------------------------------------- | -------------- | --------------------------------- |
+| `community_role_changed`          | `community_id`, `target_user_id`, `from_role`, `to_role` | PostHog + logs | Organizer authority changes.      |
+| `host_event_submitted_for_review` | `event_id`, `city`                                       | PostHog + logs | Host workspace review submission. |
+| `event_review_decision`           | `event_id`, `decision`, `reviewer_id`                    | PostHog + logs | Admin approval or rejection.      |
+| `host_profile_updated`            | `city`, `has_links`                                      | PostHog + logs | Host profile edit path.           |
 
-| Event                    | Properties            |
-| ------------------------ | --------------------- | ------ | --------- | --------- |
-| `event.detail.viewed`    | `eventId, source:feed | search | community | deeplink` |
-| `event.saved`            | `eventId`             |
-| `event.unsaved`          | `eventId`             |
-| `event.calendar_added`   | `eventId`             |
-| `event.shared`           | `eventId, channel?`   |
-| `event.register_clicked` | `eventId`             |
+### Ops
 
-### Community detail (PRD-0006)
+| Event                      | Required properties                                                                        | Sink           | Notes                         |
+| -------------------------- | ------------------------------------------------------------------------------------------ | -------------- | ----------------------------- |
+| `pipeline_shard_completed` | `region_ids`, `city_slugs`, `items_fetched`, `items_queued`, `errors_count`, `duration_ms` | PostHog + logs | Cron shard observability.     |
+| `pipeline_dispatched`      | `regions_total`, `regions_dispatched`, `regions_failed`, `concurrency`                     | PostHog + logs | Dispatcher fan-out telemetry. |
 
-| Event                      | Properties                 |
-| -------------------------- | -------------------------- |
-| `community.detail.viewed`  | `communityId, source`      |
-| `community.followed`       | `communityId`              |
-| `community.unfollowed`     | `communityId`              |
-| `community.channel.tapped` | `communityId, channelType` |
+## Property Examples
 
-### Search (PRD-0007)
+- `community_viewed`: `entity_id`, `entity_slug`, `city`, `source_surface`
+- `event_viewed`: `entity_id`, `entity_slug`, `city`, `source_surface`
+- `business_lens_viewed`: `city`, `surface`, `lens_context`
+- `pipeline_shard_completed`: `region_ids`, `city_slugs`, `items_fetched`, `items_queued`, `errors_count`, `duration_ms`
 
-| Event                  | Properties                           |
-| ---------------------- | ------------------------------------ |
-| `search.query`         | `q, hasResults:boolean, resultCount` |
-| `search.result.tapped` | `q, rank, type, id`                  |
-| `search.zero_result`   | `q`                                  |
+## Admin Workspace
 
-### Submit (PRD-0009)
+`/admin/analytics` is the general operational analytics workspace. It should read local database signals and domain tables, not replace PostHog dashboards.
 
-| Event                             | Properties             |
-| --------------------------------- | ---------------------- | --------- | -------- |
-| `submit.started`                  | `type:event            | community | suggest` |
-| `submit.completed`                | `type, pipelineItemId` |
-| `submit.failed`                   | `type, reason`         |
-| `submit.image_upload.duration_ms` | `bytes`                |
-
-### Notifications (PRD-0002, PRD-0004)
-
-| Event                       | Properties                     |
-| --------------------------- | ------------------------------ | ------ | ------------ |
-| `push.preprompt.shown`      | `trigger`                      |
-| `push.preprompt.accepted`   | `trigger`                      |
-| `push.preprompt.declined`   | `trigger`                      |
-| `push.permission.os_result` | `result:granted                | denied | provisional` |
-| `notif.prefs.changed`       | `topic, channel, enabled`      |
-| `notif.received`            | `topic, channel` (server-side) |
-| `notif.opened`              | `topic, channel, deepLink`     |
-
-### Resources / Bookmarks / Report (PRD-0010)
-
-| Event              | Properties         |
-| ------------------ | ------------------ | ------------ |
-| `resources.viewed` | `type`             |
-| `resources.tapped` | `resourceId`       |
-| `bookmarks.opened` | `tab:events        | communities` |
-| `report.submitted` | `entityType, type` |
-
-### Performance
-
-| Event              | Properties                       |
-| ------------------ | -------------------------------- |
-| `perf.ttfc_ms`     | `screen` (time-to-first-content) |
-| `perf.api.latency` | `path, status, durationMs`       |
+Default sections should start with business-intent readouts and then expand into other decision areas as new PRDs add them.

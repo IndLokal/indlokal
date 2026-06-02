@@ -27,8 +27,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   const access = ['ALL', 'CLAIMED', 'COLLABORATORS'].includes(sp.access ?? '')
     ? (sp.access as 'ALL' | 'CLAIMED' | 'COLLABORATORS')
     : 'ALL';
-  const source = ['ALL', 'PUBLIC_REQUEST', 'COMMUNITY_ADMIN_INVITE'].includes(sp.source ?? '')
-    ? (sp.source as 'ALL' | 'PUBLIC_REQUEST' | 'COMMUNITY_ADMIN_INVITE')
+  const source = ['ALL', 'PUBLIC_REQUEST'].includes(sp.source ?? '')
+    ? (sp.source as 'ALL' | 'PUBLIC_REQUEST')
     : 'ALL';
 
   const communityWhere: Prisma.CommunityWhereInput = {
@@ -236,9 +236,8 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
               defaultValue={source}
               className="border-border w-full rounded border px-3 py-2 text-sm"
             >
-              <option value="ALL">Public requests (default)</option>
+              <option value="ALL">All public requests</option>
               <option value="PUBLIC_REQUEST">Public request</option>
-              <option value="COMMUNITY_ADMIN_INVITE">Organizer invite (self-accept)</option>
             </select>
           </AdminFilterItem>
           <AdminFilterActions resetHref="/admin/collaborators" />

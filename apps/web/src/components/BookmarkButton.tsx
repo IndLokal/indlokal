@@ -27,7 +27,7 @@ export function BookmarkButton({ communityId, saved }: Props) {
         return;
       }
       if ('saved' in result) {
-        track(result.saved ? Events.COMMUNITY_SAVED : Events.COMMUNITY_UNSAVED, {
+        track(result.saved ? Events.COMMUNITY_FOLLOWED : Events.COMMUNITY_UNFOLLOWED, {
           community_id: communityId,
         });
       }
@@ -38,7 +38,8 @@ export function BookmarkButton({ communityId, saved }: Props) {
     <button
       onClick={handleClick}
       disabled={isPending}
-      aria-label={optimisticSaved ? 'Remove from saves' : 'Save community'}
+      aria-label={optimisticSaved ? 'Unfollow community' : 'Follow community'}
+      title={optimisticSaved ? 'Following' : 'Follow'}
       className={`flex h-11 w-11 items-center justify-center rounded-full transition-colors active:scale-95 ${
         optimisticSaved
           ? 'bg-brand-100 text-brand-600'

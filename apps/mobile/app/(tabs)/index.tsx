@@ -101,7 +101,7 @@ export default function DiscoverScreen() {
     // Hydrate instantly from the persistent (cross-cold-start) cache so the
     // feed renders offline while the network request runs - PRD/TDD-0040.
     let hydratedFromCache = false;
-    const persisted = await persistentCache.get<FeedState>(CACHE_KEYS.discoverFeed(slug));
+    const persisted = await persistentCache.get<FeedState>(CACHE_KEYS.discoverFeed(slug, lens));
     if (persisted) {
       setFeed(persisted);
       hydratedFromCache = true;
@@ -147,8 +147,17 @@ export default function DiscoverScreen() {
         trending: trendingRes ? d.TrendingResponse.parse(trendingRes) : null,
       };
       setFeed(nextFeed);
-      void persistentCache.set(CACHE_KEYS.discoverFeed(slug), nextFeed);
+      void persistentCache.set(CACHE_KEYS.discoverFeed(slug, lens), nextFeed);
       track({ event: ANALYTICS_EVENTS.discoverFeedViewed, citySlug: slug });
+      if (lens === 'business') {
+        track({
+          event: ANALYTICS_EVENTS.businessLensViewed,
+          entityType: 'RESOURCE',
+          entityId: 'business_lens',
+          citySlug: slug,
+          metadata: { lens_context: 'business_careers', result_count: nextFeed.events.length },
+        });
+      }
     } catch {
       // Keep the cached feed visible offline; only surface an error when we
       // have nothing to show.
@@ -331,7 +340,16 @@ export default function DiscoverScreen() {
         }
         renderItem={({ item }) =>
           item.kind === 'event' ? (
-            <Link href={{ pathname: '/events/[slug]', params: { slug: item.item.slug } }} asChild>
+            <Link
+              href={{
+                pathname: '/events/[slug]',
+                params: {
+                  slug: item.item.slug,
+                  ...(tab === 'events' && eventLens === 'business' ? { lens: 'business' } : {}),
+                },
+              }}
+              asChild
+            >
               <Pressable style={styles.eventCard}>
                 <Text style={styles.eventTitle}>{item.item.title}</Text>
                 <Text style={styles.eventMeta}>

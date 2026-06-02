@@ -59,8 +59,13 @@ export type SaveState = z.infer<typeof SaveState>;
 // ─── Client-side event tracking ──────────────────────────────────────────
 
 export const TrackEventType = z.enum([
+  'community.detail.viewed',
+  'community.followed',
+  'community.unfollowed',
+  'community.channel.tapped',
   'event.detail.viewed',
   'event.saved',
+  'event.unsaved',
   'event.calendar_added',
   'event.shared',
   'event.register_clicked',

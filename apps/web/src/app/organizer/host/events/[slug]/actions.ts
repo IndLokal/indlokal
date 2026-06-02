@@ -6,15 +6,14 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 
-export async function archiveHostEvent(formData: FormData): Promise<void> {
+export async function archiveHostEvent(eventSlug: string, _formData: FormData): Promise<void> {
   const user = await getSessionUser();
-  if (!user || user.role !== 'EVENT_HOST') {
+  if (!user || (user.role !== 'EVENT_HOST' && user.role !== 'PLATFORM_ADMIN')) {
     return;
   }
 
-  const slug = formData.get('slug') as string;
   const event = await db.event.findFirst({
-    where: { slug, createdByUserId: user.id },
+    where: { slug: eventSlug, createdByUserId: user.id },
     select: { id: true, cityId: true },
   });
 

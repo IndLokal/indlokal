@@ -1,26 +1,36 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Events, useTrackEvent } from '@/lib/analytics';
+import { Events } from '@/lib/analytics';
 
 type Props = {
   city: string;
   surface: 'events_page' | 'business_events_page';
+  resultCount?: number;
 };
 
 /**
  * Tracks entry into the business-and-careers discovery lens.
  */
-export function BusinessLensTracker({ city, surface }: Props) {
-  const track = useTrackEvent();
-
+export function BusinessLensTracker({ city, surface, resultCount }: Props) {
   useEffect(() => {
-    track(Events.BUSINESS_LENS_VIEWED, {
-      city,
-      surface,
+    const metadata = {
       lens_context: 'business_careers',
-    });
-  }, [city, surface, track]);
+      result_count: resultCount,
+    };
+
+    fetch('/api/v1/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        event: Events.BUSINESS_LENS_VIEWED,
+        entityType: 'RESOURCE',
+        entityId: 'business_lens',
+        citySlug: city,
+        metadata: { surface, ...metadata },
+      }),
+    }).catch(() => {});
+  }, [city, surface, resultCount]);
 
   return null;
 }

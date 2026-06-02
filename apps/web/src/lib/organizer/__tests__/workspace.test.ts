@@ -28,11 +28,28 @@ describe('resolveActiveOrganizerCommunity', () => {
 
 describe('getOrganizerWorkspaceRole', () => {
   it('marks the owner of record as OWNER', () => {
-    expect(getOrganizerWorkspaceRole('user-1', communities[0])).toBe('COMMUNITY_ADMIN');
+    expect(
+      getOrganizerWorkspaceRole({ id: 'user-1', claimedCommunities: communities }, communities[0]),
+    ).toBe('COMMUNITY_ADMIN');
   });
 
   it('marks non-owner access as COLLABORATOR', () => {
-    expect(getOrganizerWorkspaceRole('user-1', communities[1])).toBe('COLLABORATOR');
+    expect(
+      getOrganizerWorkspaceRole({ id: 'user-1', claimedCommunities: communities }, communities[1]),
+    ).toBe('COLLABORATOR');
+  });
+
+  it('uses community membership role when available', () => {
+    expect(
+      getOrganizerWorkspaceRole(
+        {
+          id: 'user-1',
+          claimedCommunities: communities,
+          communityMemberships: [{ communityId: 'community-b', role: 'COMMUNITY_ADMIN' }],
+        },
+        communities[1],
+      ),
+    ).toBe('COMMUNITY_ADMIN');
   });
 });
 

@@ -43,6 +43,7 @@ export default async function HostEventSummaryPage({ params }: Props) {
 
   const publicHref = `/${event.city.slug}/events/${event.slug}`;
   const canViewPublic = event.moderationState === 'PUBLISHED';
+  const archiveCurrentEvent = archiveHostEvent.bind(null, event.slug);
 
   return (
     <div className="space-y-8">
@@ -107,8 +108,7 @@ export default async function HostEventSummaryPage({ params }: Props) {
               View public page
             </Link>
           )}
-          <form action={archiveHostEvent}>
-            <input type="hidden" name="slug" value={event.slug} />
+          <form action={archiveCurrentEvent}>
             <button
               type="submit"
               className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"

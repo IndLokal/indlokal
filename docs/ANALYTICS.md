@@ -4,6 +4,11 @@
 > Stage: MVP+  
 > Owner: Engineering team
 
+> **Strategy source:** PRD/TDD-0042 is the central analytics strategy. This file
+> is the implementation guide for the current PostHog + local interaction
+> setup. Feature-specific analytics specs should depend on PRD/TDD-0042 rather
+> than defining their own analytics architecture.
+
 ## Purpose
 
 PostHog is used for product analytics and lightweight operational telemetry.
@@ -28,8 +33,9 @@ Client:
 Server:
 
 - API routes/server actions use captureServerEvent
-- `/api/v1/track` maps selected mobile events (for example `event.detail.viewed`) into canonical PostHog events
+- `/api/v1/track` records canonical snake_case events for both PostHog and entity-bound local interactions
 - Tracking no-ops when no PostHog key is configured
+- `/admin/analytics` reads local database signals and domain tables for lightweight operational slices
 
 ## Key Files
 
@@ -66,11 +72,23 @@ Lifecycle:
 Engagement:
 
 - search_performed
+- discover_feed_viewed
 - community_viewed
 - event_viewed
 - community_access_clicked
+- community_followed
+- community_unfollowed
 - community_saved
 - community_unsaved
+- event_saved
+- event_unsaved
+- event_calendar_added
+- event_shared
+- event_register_clicked
+- profile_updated
+- consular_viewed
+- this_week_viewed
+- submission_image_added
 - business_lens_viewed
 
 Conversion:
@@ -78,17 +96,17 @@ Conversion:
 - community_submitted
 - claim_submitted
 
-Ops observability:
-
-- pipeline_shard_completed
-- pipeline_dispatched
-
-Governance / organizer:
+Governance:
 
 - community_role_changed
 - host_event_submitted_for_review
 - event_review_decision
 - host_profile_updated
+
+Ops observability:
+
+- pipeline_shard_completed
+- pipeline_dispatched
 
 ## Event Property Guidelines
 
@@ -129,10 +147,12 @@ Berlin rollout / shard health:
 
 ## Adding New Events
 
-1. Add name to apps/web/src/lib/analytics/events.ts
-2. Emit via useTrackEvent (client) or captureServerEvent (server)
-3. Document properties in this file
-4. Validate in PostHog Live Events
+1. Add the event and properties to `docs/specs/EVENTS/analytics.md`.
+2. Add canonical code constants to `apps/web/src/lib/analytics/events.ts`.
+3. Ensure emitters send canonical snake_case event names and properties.
+4. Emit via `useTrackEvent` (client), `captureServerEvent` (server), or the
+   tracking API as defined by PRD/TDD-0042 sink ownership.
+5. Validate in PostHog Live Events and, when relevant, in `/admin/analytics`.
 
 ## Privacy Rules
 

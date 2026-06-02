@@ -6,6 +6,7 @@ type Props = {
   event: EventListItem;
   city: string;
   past?: boolean;
+  lens?: 'business';
 };
 
 function formatEventDate(date: Date): string {
@@ -15,8 +16,8 @@ function formatEventDate(date: Date): string {
   return format(date, 'EEE, MMM d · h:mm a');
 }
 
-export function EventCard({ event, city, past = false }: Props) {
-  const href = `/${city}/events/${event.slug}`;
+export function EventCard({ event, city, past = false, lens }: Props) {
+  const href = `/${city}/events/${event.slug}${lens === 'business' ? '?lens=business' : ''}`;
   const dateLabel = formatEventDate(new Date(event.startsAt));
 
   return (

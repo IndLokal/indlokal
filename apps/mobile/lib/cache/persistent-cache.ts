@@ -102,6 +102,6 @@ export class PersistentCache {
 }
 
 export const CACHE_KEYS = {
-  discoverFeed: (citySlug: string) => `discover:${citySlug}`,
+  discoverFeed: (citySlug: string, lens = 'all') => `discover:${citySlug}:${lens}`,
   savedItems: 'saved:items',
 } as const;

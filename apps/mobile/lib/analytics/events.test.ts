@@ -6,7 +6,7 @@ import { ANALYTICS_EVENTS, buildTrackPayload } from './events';
 describe('analytics/events', () => {
   it('builds a minimal payload from just an event name', () => {
     const payload = buildTrackPayload({ event: ANALYTICS_EVENTS.discoverFeedViewed });
-    assert.deepEqual(payload, { event: 'discover.feed.viewed' });
+    assert.deepEqual(payload, { event: 'discover_feed_viewed' });
   });
 
   it('includes optional entity + city fields when present', () => {
@@ -18,7 +18,7 @@ describe('analytics/events', () => {
       metadata: { source: 'card' },
     });
     assert.deepEqual(payload, {
-      event: 'event.saved',
+      event: 'event_saved',
       entityType: 'EVENT',
       entityId: 'evt_1',
       citySlug: 'stuttgart',
@@ -33,6 +33,6 @@ describe('analytics/events', () => {
       citySlug: '',
       metadata: {},
     });
-    assert.deepEqual(payload, { event: 'event.shared' });
+    assert.deepEqual(payload, { event: 'event_shared' });
   });
 });

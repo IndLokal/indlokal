@@ -37,6 +37,14 @@ export async function reportIssue(_prev: ReportResult, formData: FormData): Prom
 
   const { communityId, reportType, details, reporterEmail } = parsed.data;
 
+  const community = await db.community.findUnique({
+    where: { id: communityId },
+    select: { id: true },
+  });
+  if (!community) {
+    return { success: false, error: 'Community not found. Please refresh and try again.' };
+  }
+
   try {
     await db.contentReport.create({
       data: {

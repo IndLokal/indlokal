@@ -3,7 +3,7 @@
  * Renders the full event with save / share / register / add-to-calendar actions.
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -34,7 +34,11 @@ const PUBLIC_BASE_URL = getApiBaseUrl();
 type EventDetailWithSaved = e.EventDetail & { savedByUser?: boolean };
 
 export default function EventDetailScreen() {
-  const { slug } = useLocalSearchParams<{ slug: string }>();
+  const { slug, lens } = useLocalSearchParams<{ slug: string; lens?: string }>();
+  const analyticsMetadata = useMemo(
+    () => (lens === 'business' ? { lens_context: 'business_careers' } : undefined),
+    [lens],
+  );
   const [data, setData] = useState<EventDetailWithSaved | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,11 +63,12 @@ export default function EventDetailScreen() {
         entityType: 'EVENT',
         entityId: parsed.id,
         citySlug: parsed.city.slug,
+        metadata: analyticsMetadata,
       });
     } catch (err) {
       setError(err instanceof AuthClientError ? err.message : 'Could not load event.');
     }
-  }, [slug]);
+  }, [slug, analyticsMetadata]);
 
   useEffect(() => {
     void load();
@@ -93,6 +98,15 @@ export default function EventDetailScreen() {
           entityType: 'EVENT',
           entityId: data.id,
           citySlug: data.city.slug,
+          metadata: analyticsMetadata,
+        });
+      } else {
+        track({
+          event: ANALYTICS_EVENTS.eventUnsaved,
+          entityType: 'EVENT',
+          entityId: data.id,
+          citySlug: data.city.slug,
+          metadata: analyticsMetadata,
         });
       }
       // PRD-0005: schedule a local reminder 1h before start when saving.
@@ -132,6 +146,7 @@ export default function EventDetailScreen() {
         entityType: 'EVENT',
         entityId: data.id,
         citySlug: data.city.slug,
+        metadata: analyticsMetadata,
       });
     } catch {
       // user cancelled
@@ -146,6 +161,7 @@ export default function EventDetailScreen() {
       entityType: 'EVENT',
       entityId: data.id,
       citySlug: data.city.slug,
+      metadata: analyticsMetadata,
     });
     const ok = await Linking.canOpenURL(url);
     if (ok) await Linking.openURL(url);
@@ -175,6 +191,7 @@ export default function EventDetailScreen() {
       entityType: 'EVENT',
       entityId: data.id,
       citySlug: data.city.slug,
+      metadata: analyticsMetadata,
     });
     await Linking.openURL(`https://calendar.google.com/calendar/render?${params}`);
   }

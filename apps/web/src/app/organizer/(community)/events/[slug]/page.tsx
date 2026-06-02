@@ -46,6 +46,7 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
   if (!event) notFound();
 
   const publicHref = `/${event.city.slug}/events/${event.slug}`;
+  const archiveCurrentEvent = archiveEvent.bind(null, event.slug);
 
   return (
     <div className="space-y-8">
@@ -108,8 +109,7 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
           >
             View public page
           </Link>
-          <form action={archiveEvent}>
-            <input type="hidden" name="slug" value={event.slug} />
+          <form action={archiveCurrentEvent}>
             <button
               type="submit"
               className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"

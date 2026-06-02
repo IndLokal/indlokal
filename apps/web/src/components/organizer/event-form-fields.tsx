@@ -5,6 +5,7 @@ import Link from 'next/link';
 type City = { id: string; name: string };
 
 export type EventFormValues = {
+  slug?: string;
   title: string;
   description: string;
   startsAt: string;
@@ -61,6 +62,8 @@ export function EventFormFields({
 }: Props) {
   return (
     <form action={action} className="space-y-6">
+      {values.slug ? <input type="hidden" name="slug" value={values.slug} /> : null}
+
       {bannerText && <p className="text-muted text-sm">{bannerText}</p>}
 
       {/* Title */}

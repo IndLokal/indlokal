@@ -13,6 +13,7 @@ export type SearchType = z.infer<typeof SearchType>;
 export const Suggestion = z.object({
   text: z.string(),
   type: SearchType,
+  slug: z.string().optional(),
 });
 export type Suggestion = z.infer<typeof Suggestion>;
 

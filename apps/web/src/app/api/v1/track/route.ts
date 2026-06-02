@@ -14,23 +14,39 @@ import { Events } from '@/lib/analytics/events';
 import type { AnalyticsEvent } from '@/lib/analytics/events';
 
 const INTERACTION_TYPE_MAP: Record<string, string> = {
-  'event.detail.viewed': 'VIEW',
-  'event.saved': 'SAVE',
-  'event.calendar_added': 'CLICK_ACCESS',
-  'event.shared': 'SHARE',
-  'event.register_clicked': 'CLICK_ACCESS',
-  'discover.feed.viewed': 'VIEW',
-  'discover.card.tapped': 'CLICK_ACCESS',
+  discover_feed_viewed: 'VIEW',
+  discover_card_tapped: 'CLICK_ACCESS',
+  community_viewed: 'VIEW',
+  community_followed: 'SAVE',
+  community_unfollowed: 'SAVE',
+  community_access_clicked: 'CLICK_ACCESS',
+  event_viewed: 'VIEW',
+  event_saved: 'SAVE',
+  event_unsaved: 'SAVE',
+  event_calendar_added: 'CLICK_ACCESS',
+  event_shared: 'SHARE',
+  event_register_clicked: 'CLICK_ACCESS',
+  [Events.BUSINESS_LENS_VIEWED]: 'VIEW',
 };
 
 const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
-  // Mobile event detail views should join the canonical event_viewed funnel.
-  'event.detail.viewed': Events.EVENT_VIEWED,
   // Allow callers that already use canonical names to pass through directly.
+  [Events.DISCOVER_FEED_VIEWED]: Events.DISCOVER_FEED_VIEWED,
   [Events.COMMUNITY_VIEWED]: Events.COMMUNITY_VIEWED,
   [Events.EVENT_VIEWED]: Events.EVENT_VIEWED,
+  [Events.COMMUNITY_FOLLOWED]: Events.COMMUNITY_FOLLOWED,
+  [Events.COMMUNITY_UNFOLLOWED]: Events.COMMUNITY_UNFOLLOWED,
   [Events.COMMUNITY_SAVED]: Events.COMMUNITY_SAVED,
   [Events.COMMUNITY_UNSAVED]: Events.COMMUNITY_UNSAVED,
+  [Events.EVENT_SAVED]: Events.EVENT_SAVED,
+  [Events.EVENT_UNSAVED]: Events.EVENT_UNSAVED,
+  [Events.EVENT_CALENDAR_ADDED]: Events.EVENT_CALENDAR_ADDED,
+  [Events.EVENT_SHARED]: Events.EVENT_SHARED,
+  [Events.EVENT_REGISTER_CLICKED]: Events.EVENT_REGISTER_CLICKED,
+  [Events.PROFILE_UPDATED]: Events.PROFILE_UPDATED,
+  [Events.CONSULAR_VIEWED]: Events.CONSULAR_VIEWED,
+  [Events.THIS_WEEK_VIEWED]: Events.THIS_WEEK_VIEWED,
+  [Events.SUBMISSION_IMAGE_ADDED]: Events.SUBMISSION_IMAGE_ADDED,
   [Events.SEARCH_PERFORMED]: Events.SEARCH_PERFORMED,
   [Events.COMMUNITY_ACCESS_CLICKED]: Events.COMMUNITY_ACCESS_CLICKED,
   [Events.BUSINESS_LENS_VIEWED]: Events.BUSINESS_LENS_VIEWED,
@@ -100,8 +116,9 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       entity_id: entityId,
       entity_type: entityType?.toLowerCase(),
       city: citySlug,
-      source_surface: 'mobile_track_api',
+      source_surface: metadata?.source_surface ?? 'track_api',
       original_event: eventType,
+      ...(metadata ?? {}),
     });
   }
 

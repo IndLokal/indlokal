@@ -25,7 +25,7 @@ export default async function AdminOutreachPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  await requireCan('outreach.read');
+  const viewer = await requireCan('outreach.read');
 
   const sp = await searchParams;
   const filterCity = sp.city || '';
@@ -170,7 +170,7 @@ export default async function AdminOutreachPage({
           + Add lead
         </summary>
         <div className="border-border mt-4 max-w-lg rounded-[var(--radius-card)] border p-6">
-          <CreateLeadForm cities={cities} operators={operators} currentUserId={''} />
+          <CreateLeadForm cities={cities} operators={operators} currentUserId={viewer.id} />
         </div>
       </details>
     </AdminPage>

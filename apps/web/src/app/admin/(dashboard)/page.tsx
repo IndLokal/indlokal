@@ -77,6 +77,11 @@ export default function AdminDashboardPage() {
             href: '/admin/outreach',
           },
           {
+            title: 'Analytics',
+            description: 'Product signal readouts, starting with business intent',
+            href: '/admin/analytics',
+          },
+          {
             title: 'People & Roles',
             description: 'Team permissions and ambassador performance in one place',
             href: '/admin/team',

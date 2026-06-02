@@ -5,7 +5,8 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { requireAccessToken } from '@/lib/auth/middleware';
-import { getEventDetail, saveEvent, unsaveEvent } from '@/modules/event';
+import { getEventDetail } from '@/modules/event';
+import { saveEventForUser, unsaveEventForUser } from '@/modules/engagement';
 import { apiError } from '@/lib/api/error';
 import { apiHandler } from '@/lib/api/handlers';
 
@@ -18,8 +19,8 @@ export const POST = apiHandler(
     const row = await getEventDetail(slug);
     if (!row) return apiError('NOT_FOUND', 'event not found');
 
-    await saveEvent(auth.user.userId, row.id);
-    return NextResponse.json({ saved: true });
+    const result = await saveEventForUser(auth.user.userId, row.id);
+    return NextResponse.json(result);
   },
 );
 
@@ -32,7 +33,7 @@ export const DELETE = apiHandler(
     const row = await getEventDetail(slug);
     if (!row) return apiError('NOT_FOUND', 'event not found');
 
-    await unsaveEvent(auth.user.userId, row.id);
-    return NextResponse.json({ saved: false });
+    const result = await unsaveEventForUser(auth.user.userId, row.id);
+    return NextResponse.json(result);
   },
 );

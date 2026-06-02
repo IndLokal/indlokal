@@ -27,7 +27,7 @@ type CardItem = {
 
 /**
  * Mobile bookmarks shell - TDD-0010 / PRD-0019.
- * Lists the signed-in user's saved events and communities.
+ * Lists the signed-in user's saved events and followed communities.
  * Anonymous users see a sign-in CTA.
  */
 export default function BookmarksScreen() {
@@ -75,7 +75,7 @@ export default function BookmarksScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           <Text style={styles.title}>Saved</Text>
-          <Text style={styles.anonBody}>Sign in to save events and communities.</Text>
+          <Text style={styles.anonBody}>Sign in to save events and follow communities.</Text>
           <Link href="/auth/sign-in" asChild>
             <Pressable style={styles.signInButton}>
               <Text style={styles.signInButtonText}>Sign in</Text>
@@ -117,7 +117,9 @@ export default function BookmarksScreen() {
                 onPress={() => setTab(value)}
                 style={[styles.tab, active && styles.tabActive]}
               >
-                <Text style={[styles.tabText, active && styles.tabTextActive]}>{value}</Text>
+                <Text style={[styles.tabText, active && styles.tabTextActive]}>
+                  {value === 'communities' ? 'Following' : 'Saved Events'}
+                </Text>
               </Pressable>
             );
           })}
@@ -145,7 +147,11 @@ export default function BookmarksScreen() {
             </Link>
           )}
           ListEmptyComponent={
-            !loading && !error ? <Text style={styles.empty}>Nothing saved yet.</Text> : null
+            !loading && !error ? (
+              <Text style={styles.empty}>
+                {tab === 'communities' ? 'No followed communities yet.' : 'No saved events yet.'}
+              </Text>
+            ) : null
           }
         />
       </View>
