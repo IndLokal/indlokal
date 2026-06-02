@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
+import { ConfirmSubmitButton } from '@/components/ui';
 import { CollaboratorInviteCard } from '../CollaboratorInviteCard';
 import {
   demoteAdminToCollaboratorAction,
@@ -50,33 +51,50 @@ function renderCollaboratorActions(
         <>
           <form action={promoteCollaboratorToAdminAction}>
             <input type="hidden" name="targetUserId" value={collaborator.userId} />
-            <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-              Promote to admin
-            </button>
+            <ConfirmSubmitButton
+              triggerLabel="Promote to admin"
+              title="Promote collaborator to admin?"
+              description="Admins can invite collaborators and help operate the workspace. Ownership still remains with the primary owner."
+              confirmLabel="Promote"
+              tone="primary"
+              triggerClassName="btn-secondary px-3 py-1.5 text-xs"
+            />
           </form>
           <form action={transferOwnershipAction}>
             <input type="hidden" name="targetUserId" value={collaborator.userId} />
-            <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-              Make primary owner
-            </button>
+            <ConfirmSubmitButton
+              triggerLabel="Make primary owner"
+              title="Transfer primary ownership?"
+              description="This will make this person the primary owner and demote the current owner to collaborator."
+              confirmLabel="Transfer"
+              tone="danger"
+              triggerClassName="btn-secondary px-3 py-1.5 text-xs"
+            />
           </form>
         </>
       ) : (
         <form action={demoteAdminToCollaboratorAction}>
           <input type="hidden" name="targetUserId" value={collaborator.userId} />
-          <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-            Demote to collaborator
-          </button>
+          <ConfirmSubmitButton
+            triggerLabel="Demote to collaborator"
+            title="Demote admin to collaborator?"
+            description="They will lose admin-level capabilities and keep collaborator access only."
+            confirmLabel="Demote"
+            tone="danger"
+            triggerClassName="btn-secondary px-3 py-1.5 text-xs"
+          />
         </form>
       )}
       <form action={removeCollaboratorAction}>
         <input type="hidden" name="collaboratorId" value={collaborator.id} />
-        <button
-          type="submit"
-          className="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-        >
-          Remove
-        </button>
+        <ConfirmSubmitButton
+          triggerLabel="Remove"
+          title="Remove collaborator from team?"
+          description="This person will lose workspace access for this community."
+          confirmLabel="Remove"
+          tone="danger"
+          triggerClassName="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+        />
       </form>
     </div>
   );

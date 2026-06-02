@@ -3,6 +3,7 @@ import { db } from '@/lib/db';
 import { createCityAction, deleteCityAction, toggleCityActiveAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Cities - Admin' };
@@ -100,13 +101,14 @@ export default async function AdminCitiesPage() {
                   </Link>
                   <form action={deleteCityAction} className="ml-3 inline-block">
                     <input type="hidden" name="id" value={c.id} />
-                    <button
-                      type="submit"
-                      className="text-xs text-red-600 hover:underline"
-                      title="Permanently delete this city (only allowed when nothing references it)"
-                    >
-                      delete
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="delete"
+                      title="Delete this city permanently?"
+                      description="This is only allowed when no records reference the city."
+                      confirmLabel="Delete city"
+                      tone="danger"
+                      triggerClassName="text-xs text-red-600 hover:underline"
+                    />
                   </form>
                 </td>
               </tr>

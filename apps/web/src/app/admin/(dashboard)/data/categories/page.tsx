@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Categories - Admin' };
@@ -134,9 +135,14 @@ function Section({ title, rows }: { title: string; rows: Row[] }) {
                   {r._count.communities + r._count.events === 0 && (
                     <form action={deleteCategoryAction}>
                       <input type="hidden" name="id" value={r.id} />
-                      <button type="submit" className="text-xs text-red-600 hover:underline">
-                        delete
-                      </button>
+                      <ConfirmSubmitButton
+                        triggerLabel="delete"
+                        title={`Delete this ${r.type === 'PERSONA' ? 'persona' : 'category'}?`}
+                        description="This taxonomy entry will be permanently removed."
+                        confirmLabel={`Delete ${r.type === 'PERSONA' ? 'persona' : 'category'}`}
+                        tone="danger"
+                        triggerClassName="text-xs text-red-600 hover:underline"
+                      />
                     </form>
                   )}
                 </td>

@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { approveEvent, rejectEvent } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Review Events - Admin' };
@@ -83,12 +84,14 @@ export default async function AdminEventsReviewPage() {
                 <div className="flex shrink-0 flex-col gap-2">
                   <form action={approveEvent}>
                     <input type="hidden" name="id" value={e.id} />
-                    <button
-                      type="submit"
-                      className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                    >
-                      Approve
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="Approve"
+                      title="Approve this event?"
+                      description="The event will become visible in published listings."
+                      confirmLabel="Approve event"
+                      tone="primary"
+                      triggerClassName="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                    />
                   </form>
                   <form action={rejectEvent} className="space-y-2">
                     <input type="hidden" name="id" value={e.id} />
@@ -98,12 +101,14 @@ export default async function AdminEventsReviewPage() {
                       placeholder="Reason (optional)"
                       className="border-border w-48 rounded-lg border px-3 py-2 text-sm"
                     />
-                    <button
-                      type="submit"
-                      className="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                    >
-                      Reject
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="Reject"
+                      title="Reject this event?"
+                      description="This will keep the event out of published listings."
+                      confirmLabel="Reject event"
+                      tone="danger"
+                      triggerClassName="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                    />
                   </form>
                 </div>
               </div>

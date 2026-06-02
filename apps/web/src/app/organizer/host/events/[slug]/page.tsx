@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
+import { ConfirmSubmitButton } from '@/components/ui';
 import { archiveHostEvent } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -109,12 +110,14 @@ export default async function HostEventSummaryPage({ params }: Props) {
             </Link>
           )}
           <form action={archiveCurrentEvent}>
-            <button
-              type="submit"
-              className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-            >
-              Cancel / archive event
-            </button>
+            <ConfirmSubmitButton
+              triggerLabel="Cancel / archive event"
+              title="Cancel and archive this event?"
+              description="The event will be cancelled and removed from active host listings."
+              confirmLabel="Archive event"
+              tone="danger"
+              triggerClassName="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+            />
           </form>
         </div>
 

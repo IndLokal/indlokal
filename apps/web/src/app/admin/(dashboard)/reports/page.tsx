@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { format } from 'date-fns';
 import { reviewReport, resolveReport } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 const REPORT_TYPE_LABELS: Record<string, string> = {
   STALE_INFO: 'Stale info',
@@ -66,22 +67,26 @@ export default async function AdminReportsPage() {
                   {report.status === 'PENDING' && (
                     <form action={reviewReport}>
                       <input type="hidden" name="id" value={report.id} />
-                      <button
-                        type="submit"
-                        className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-1.5 text-xs font-medium"
-                      >
-                        Mark reviewed
-                      </button>
+                      <ConfirmSubmitButton
+                        triggerLabel="Mark reviewed"
+                        title="Mark this report as reviewed?"
+                        description="The report will move from pending to reviewed status."
+                        confirmLabel="Mark reviewed"
+                        tone="neutral"
+                        triggerClassName="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-1.5 text-xs font-medium"
+                      />
                     </form>
                   )}
                   <form action={resolveReport}>
                     <input type="hidden" name="id" value={report.id} />
-                    <button
-                      type="submit"
-                      className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
-                    >
-                      Resolve
-                    </button>
+                    <ConfirmSubmitButton
+                      triggerLabel="Resolve"
+                      title="Resolve this report?"
+                      description="This report will be removed from the active review queue."
+                      confirmLabel="Resolve report"
+                      tone="primary"
+                      triggerClassName="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700"
+                    />
                   </form>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { communityOptions } from '@indlokal/shared';
 import { approveClaim, rejectClaim } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Review Claims - Admin' };
 
@@ -142,21 +143,25 @@ export default async function AdminClaimsPage() {
                   <div className="flex shrink-0 gap-2">
                     <form action={approveClaim}>
                       <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                      >
-                        Approve
-                      </button>
+                      <ConfirmSubmitButton
+                        triggerLabel="Approve"
+                        title="Approve this claim request?"
+                        description="This will assign organizer access for this community to the claimant."
+                        confirmLabel="Approve claim"
+                        tone="primary"
+                        triggerClassName="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+                      />
                     </form>
                     <form action={rejectClaim}>
                       <input type="hidden" name="id" value={c.id} />
-                      <button
-                        type="submit"
-                        className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
-                      >
-                        Reject
-                      </button>
+                      <ConfirmSubmitButton
+                        triggerLabel="Reject"
+                        title="Reject this claim request?"
+                        description="The claimant will not receive organizer access for this community."
+                        confirmLabel="Reject claim"
+                        tone="danger"
+                        triggerClassName="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+                      />
                     </form>
                   </div>
                 </div>
