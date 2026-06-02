@@ -94,6 +94,13 @@ export default function EventDetailScreen() {
           entityId: data.id,
           citySlug: data.city.slug,
         });
+      } else {
+        track({
+          event: ANALYTICS_EVENTS.eventUnsaved,
+          entityType: 'EVENT',
+          entityId: data.id,
+          citySlug: data.city.slug,
+        });
       }
       // PRD-0005: schedule a local reminder 1h before start when saving.
       if (desired) {
