@@ -31,7 +31,7 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
   const href = `/${city}/communities/${community.slug}`;
   const avatarGradient = getAvatarColor(community.name);
   const isRecentlyAdded =
-    Date.now() - new Date(community.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000;
+    Date.now() - new Date(community.createdAt).getTime() < 14 * 24 * 60 * 60 * 1000;
 
   const pulseScore = Math.round(
     (community.activityScore ?? 0) * 0.5 +

@@ -135,7 +135,7 @@ export default async function CommunityDetailPage({ params }: Props) {
                       (community.trustScore ?? 0) * 0.2,
                   )}
                   isRecentlyAdded={
-                    Date.now() - new Date(community.createdAt).getTime() < 30 * 24 * 60 * 60 * 1000
+                    Date.now() - new Date(community.createdAt).getTime() < 14 * 24 * 60 * 60 * 1000
                   }
                 />
                 {community.foundedYear && (

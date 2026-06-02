@@ -43,6 +43,6 @@ export function PulseBadge({
   if (pulseScore >= 80) return <Badge variant="success">Very Active</Badge>;
   if (pulseScore >= 60) return <Badge variant="info">Active</Badge>;
   if (pulseScore >= 40) return <Badge variant="warning">Moderate</Badge>;
-  if (isRecentlyAdded) return <Badge variant="primary">Recently added</Badge>;
+  if (isRecentlyAdded) return <Badge variant="primary">New on IndLokal</Badge>;
   return <Badge variant="muted">Low activity</Badge>;
 }
