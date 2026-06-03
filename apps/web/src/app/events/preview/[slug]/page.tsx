@@ -6,6 +6,7 @@ import { canEditCommunity } from '@/lib/auth/community-permissions';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import { verifyPreviewToken } from '@/lib/preview-tokens';
 import EventDetailServer from '@/components/EventDetailServer';
+import type { EventWithRelations } from '@/modules/event/types';
 
 type Props = { params: Promise<{ slug: string }>; searchParams?: { token?: string } };
 
@@ -64,13 +65,14 @@ export default async function EventPreviewPage({ params, searchParams }: Props) 
 
   if (!event) notFound();
 
-  const canonicalCity = event.city?.slug
-    ? (SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug)
+  const eventRow = event as EventWithRelations;
+  const canonicalCity = eventRow.city?.slug
+    ? (SATELLITE_TO_METRO[eventRow.city.slug] ?? eventRow.city.slug)
     : 'stuttgart';
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 px-4 py-8">
-      <EventDetailServer event={event} city={canonicalCity} />
+      <EventDetailServer event={eventRow} city={canonicalCity} />
     </div>
   );
 }

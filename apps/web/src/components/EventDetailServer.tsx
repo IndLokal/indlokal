@@ -1,16 +1,10 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
-import type { Event as PrismaEvent } from '@prisma/client';
+import type { EventWithRelations } from '@/modules/event/types';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { EventSaveButton } from '@/components/EventSaveButton';
 import { EventRegistrationLink } from '@/components/EventRegistrationLink';
-
-type EventWithRelations = PrismaEvent & {
-  city: { id: string; name: string; slug?: string };
-  community?: { id: string; name: string; slug?: string } | null;
-  categories: { category: { slug: string; icon?: string; name: string } }[];
-};
 
 export default function EventDetailServer({
   event,
