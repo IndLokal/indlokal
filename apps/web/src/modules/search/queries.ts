@@ -254,12 +254,59 @@ export async function searchResources(
     cityIds = await resolveCityIds(citySlug);
   }
 
-  // Include national/global resources (city_id IS NULL) plus city-scoped rows
-  // for the requested city, if any.
-  const cityFilter =
-    cityIds.length > 0
-      ? Prisma.sql`(city_id IS NULL OR city_id IN (${Prisma.join(cityIds)})) AND`
-      : Prisma.empty;
+  // Include national/global resources plus rows that match the city's
+  // resolved scope (city, metro, state). When `cityIds` is empty we skip
+  // the filter to preserve previous behavior.
+  let cityFilter: Prisma.Sql = Prisma.empty;
+  let cityMeta: {
+    slug: string;
+    state: string;
+    metroSlug?: string | null;
+    satelliteSlugs: string[];
+  } | null = null;
+  if (cityIds.length > 0) {
+    const city = await db.city.findUnique({
+      where: { slug: citySlug! },
+      select: {
+        slug: true,
+        state: true,
+        metroRegion: { select: { slug: true } },
+        satelliteCities: { select: { slug: true } },
+      },
+    });
+    if (city) {
+      cityMeta = {
+        slug: city.slug,
+        state: city.state,
+        metroSlug: city.metroRegion?.slug ?? null,
+        satelliteSlugs: city.satelliteCities.map((s) => s.slug),
+      };
+
+      const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
+      const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
+
+      const globalClause = Prisma.sql`(scope IN ('GLOBAL','COUNTRY'))`;
+      const stateClause = Prisma.sql`(scope = 'STATE' AND scope_region = ${cityMeta.state})`;
+      const metroClause = metroCandidates.length
+        ? Prisma.sql`(scope = 'METRO' AND scope_region IN (${Prisma.join(metroCandidates)}))`
+        : Prisma.empty;
+      const cityClause = Prisma.sql`(scope = 'CITY' AND scope_region IN (${Prisma.join(cityScopeSlugs)}))`;
+
+      cityFilter = Prisma.sql`
+        (
+          city_id IN (${Prisma.join(cityIds)})
+          OR (
+            city_id IS NULL
+            AND (
+              ${globalClause}
+              OR ${stateClause}
+              OR ${metroClause}
+              OR ${cityClause}
+            )
+          )
+        ) AND`;
+    }
+  }
   const now = new Date();
 
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
@@ -280,15 +327,48 @@ export async function searchResources(
 
   // Fallback to ILIKE for partial matches
   if (ids.length === 0) {
+    const where: any = {
+      isHidden: false,
+      OR: [
+        { title: { contains: trimmed, mode: 'insensitive' } },
+        { description: { contains: trimmed, mode: 'insensitive' } },
+      ],
+    };
+
+    if (cityIds.length > 0 && cityMeta) {
+      const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
+      const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
+
+      where.AND = [
+        {
+          OR: [
+            { cityId: { in: cityIds } },
+            {
+              AND: [
+                { cityId: null },
+                {
+                  OR: [
+                    { scope: 'GLOBAL' },
+                    { scope: 'COUNTRY' },
+                    { AND: [{ scope: 'STATE' }, { scopeRegion: cityMeta.state }] },
+                    ...(metroCandidates.length
+                      ? [{ AND: [{ scope: 'METRO' }, { scopeRegion: { in: metroCandidates } }] }]
+                      : []),
+                    { AND: [{ scope: 'CITY' }, { scopeRegion: { in: cityScopeSlugs } }] },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    } else if (cityIds.length > 0) {
+      // No city metadata found — fall back to previous behavior
+      where.OR = [{ cityId: null }, { cityId: { in: cityIds } }];
+    }
+
     const fallback = await db.resource.findMany({
-      where: {
-        ...(cityIds.length > 0 ? { OR: [{ cityId: null }, { cityId: { in: cityIds } }] } : {}),
-        isHidden: false,
-        OR: [
-          { title: { contains: trimmed, mode: 'insensitive' } },
-          { description: { contains: trimmed, mode: 'insensitive' } },
-        ],
-      },
+      where,
       select: { id: true },
       orderBy: [{ isEssential: 'desc' }, { priority: 'desc' }],
       take: limit,
