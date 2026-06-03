@@ -1,4 +1,4 @@
-import { db, resolveCityIds } from '@/lib/db';
+import { db, resolveCityIds, resolveCityScopeParams } from '@/lib/db';
 import { Prisma } from '@prisma/client';
 import { subDays } from 'date-fns';
 import { unstable_cache } from 'next/cache';
@@ -249,63 +249,58 @@ export async function searchResources(
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
+  // Prefer the consolidated scope helper which returns ids + metadata.
   let cityIds: string[] = [];
-  if (citySlug) {
-    cityIds = await resolveCityIds(citySlug);
-  }
-
-  // Include national/global resources plus rows that match the city's
-  // resolved scope (city, metro, state). When `cityIds` is empty we skip
-  // the filter to preserve previous behavior.
-  let cityFilter: Prisma.Sql = Prisma.empty;
   let cityMeta: {
     slug: string;
     state: string;
     metroSlug?: string | null;
     satelliteSlugs: string[];
   } | null = null;
-  if (cityIds.length > 0) {
-    const city = await db.city.findUnique({
-      where: { slug: citySlug! },
-      select: {
-        slug: true,
-        state: true,
-        metroRegion: { select: { slug: true } },
-        satelliteCities: { select: { slug: true } },
-      },
-    });
-    if (city) {
+  if (citySlug) {
+    const scope = await resolveCityScopeParams(citySlug);
+    if (scope) {
+      cityIds = scope.cityIds;
       cityMeta = {
-        slug: city.slug,
-        state: city.state,
-        metroSlug: city.metroRegion?.slug ?? null,
-        satelliteSlugs: city.satelliteCities.map((s) => s.slug),
+        slug: scope.slug,
+        state: scope.state,
+        metroSlug: scope.metroSlug,
+        satelliteSlugs: scope.satelliteSlugs,
       };
-
-      const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
-      const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
-
-      const globalClause = Prisma.sql`(scope IN ('GLOBAL','COUNTRY'))`;
-      const stateClause = Prisma.sql`(scope = 'STATE' AND scope_region = ${cityMeta.state})`;
-      const metroClause = metroCandidates.length
-        ? Prisma.sql`(scope = 'METRO' AND scope_region IN (${Prisma.join(metroCandidates)}))`
-        : Prisma.empty;
-      const cityClause = Prisma.sql`(scope = 'CITY' AND scope_region IN (${Prisma.join(cityScopeSlugs)}))`;
-
-      cityFilter = Prisma.sql`
-        (
-          city_id IN (${Prisma.join(cityIds)})
-          OR (
-            city_id IS NULL
-            AND (
-              ${globalClause}
-              OR ${stateClause}
-              OR ${metroClause}
-              OR ${cityClause}
-            )
-          )
-        ) AND`;
     }
+  }
+
+  // Include national/global resources plus rows that match the city's
+  // resolved scope (city, metro, state). When `cityIds` is empty we skip
+  // the filter to preserve previous behavior.
+  let cityFilter: Prisma.Sql = Prisma.empty;
+  if (cityIds.length > 0 && cityMeta) {
+    const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
+    const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
+
+    const globalClause = Prisma.sql`(scope IN ('GLOBAL','COUNTRY'))`;
+    const stateClause = Prisma.sql`(scope = 'STATE' AND scope_region = ${cityMeta.state})`;
+    const metroClause = metroCandidates.length
+      ? Prisma.sql`(scope = 'METRO' AND scope_region IN (${Prisma.join(metroCandidates)}))`
+      : Prisma.empty;
+    const cityClause = Prisma.sql`(scope = 'CITY' AND scope_region IN (${Prisma.join(cityScopeSlugs)}))`;
+
+    cityFilter = Prisma.sql`
+      (
+        city_id IN (${Prisma.join(cityIds)})
+        OR (
+          city_id IS NULL
+          AND (
+            ${globalClause}
+            OR ${stateClause}
+            OR ${metroClause}
+            OR ${cityClause}
+          )
+        )
+      ) AND`;
+  } else if (cityIds.length > 0) {
+    // Fallback when we couldn't load city metadata: preserve previous behavior
+    cityFilter = Prisma.sql`(city_id IS NULL OR city_id IN (${Prisma.join(cityIds)})) AND`;
   }
   const now = new Date();
 
@@ -327,7 +322,7 @@ export async function searchResources(
 
   // Fallback to ILIKE for partial matches
   if (ids.length === 0) {
-    const where: any = {
+    const where: Prisma.ResourceWhereInput = {
       isHidden: false,
       OR: [
         { title: { contains: trimmed, mode: 'insensitive' } },
