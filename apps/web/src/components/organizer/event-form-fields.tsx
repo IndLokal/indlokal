@@ -1,15 +1,23 @@
 'use client';
 
 import Link from 'next/link';
+import {
+  type RecurrencePreset,
+  RECURRENCE_PRESET_LABELS,
+  RECURRENCE_PRESETS_CREATE,
+} from '@/lib/events/recurrence';
 
 type City = { id: string; name: string };
+type Category = { slug: string; name: string; icon: string | null };
 
 export type EventFormValues = {
   slug?: string;
   title: string;
   description: string;
+  categorySlugs: string[];
   startsAt: string;
   endsAt: string;
+  recurrencePreset: RecurrencePreset;
   venueName: string;
   venueAddress: string;
   isOnline: boolean;
@@ -35,6 +43,7 @@ type Props = {
   cities?: City[];
   selectedCityId?: string;
   cityName?: string;
+  categories?: Category[];
   showImageUrl?: boolean;
   titleHelper?: string;
   descriptionHelper?: string;
@@ -55,6 +64,7 @@ export function EventFormFields({
   cities = [],
   selectedCityId,
   cityName,
+  categories = [],
   showImageUrl = false,
   titleHelper,
   descriptionHelper,
@@ -132,6 +142,40 @@ export function EventFormFields({
         />
       </div>
 
+      {/* Categories */}
+      <div>
+        <label className="text-foreground block text-sm font-medium">Categories *</label>
+        <p className="text-muted mt-1 text-xs">
+          Pick at least one category so this event appears in the right discovery filters.
+        </p>
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
+          {categories.map((category) => {
+            const defaultChecked = values.categorySlugs.includes(category.slug);
+            return (
+              <label
+                key={category.slug}
+                className="border-border hover:bg-muted-bg flex items-center gap-2 rounded-[var(--radius-button)] border px-3 py-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  name="categorySlugs"
+                  value={category.slug}
+                  defaultChecked={defaultChecked}
+                  className="rounded"
+                />
+                <span>
+                  {category.icon ? `${category.icon} ` : ''}
+                  {category.name}
+                </span>
+              </label>
+            );
+          })}
+        </div>
+        {errors.categorySlugs && (
+          <p className="mt-1 text-sm text-red-600">{errors.categorySlugs[0]}</p>
+        )}
+      </div>
+
       {/* Dates */}
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
@@ -158,6 +202,25 @@ export function EventFormFields({
         </div>
       </div>
 
+      {/* Recurrence */}
+      <div>
+        <label className="text-foreground block text-sm font-medium">Recurrence</label>
+        <select
+          name="recurrencePreset"
+          defaultValue={values.recurrencePreset}
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+        >
+          {RECURRENCE_PRESETS_CREATE.map((preset) => (
+            <option key={preset} value={preset}>
+              {RECURRENCE_PRESET_LABELS[preset]}
+            </option>
+          ))}
+          {values.recurrencePreset === 'custom' ? (
+            <option value="custom">{RECURRENCE_PRESET_LABELS.custom}</option>
+          ) : null}
+        </select>
+      </div>
+
       {/* Location */}
       <div className="space-y-3">
         <label className="text-foreground flex items-center gap-2 text-sm">
@@ -170,6 +233,9 @@ export function EventFormFields({
           />
           This is an online event
         </label>
+        <p className="text-muted text-xs">
+          Online events require an online link. Offline events require venue name and address.
+        </p>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>

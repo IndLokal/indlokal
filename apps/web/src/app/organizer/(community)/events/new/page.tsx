@@ -2,11 +2,17 @@ import AddEventForm from './AddEventForm';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
+import { db } from '@/lib/db';
 
 export const metadata = { title: 'Share Event - Organizer' };
 
 export default async function AddEventPage() {
   const { community, role, isMultiCommunity } = await requireOrganizerWorkspace();
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY' },
+    select: { slug: true, name: true, icon: true },
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  });
 
   if (!community) {
     return <p className="text-muted">No community found.</p>;
@@ -27,7 +33,7 @@ export default async function AddEventPage() {
         showSwitchLink={isMultiCommunity}
       />
       <div className="mt-8">
-        <AddEventForm communityName={community.name} />
+        <AddEventForm communityName={community.name} categories={categories} />
       </div>
     </div>
   );

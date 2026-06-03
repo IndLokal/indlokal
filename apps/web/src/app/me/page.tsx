@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 import { db } from '@/lib/db';
 import { signOut } from '@/app/actions/auth';
 import { can, type SessionUser } from '@/lib/auth/permissions';
@@ -35,7 +36,7 @@ export default async function MePage() {
       },
     }),
     db.savedEvent.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, event: { moderationState: 'PUBLISHED' } },
       orderBy: { savedAt: 'desc' },
       include: {
         event: {
@@ -294,7 +295,7 @@ export default async function MePage() {
                   {upcomingSavedEvents.map(({ event }) => (
                     <Link
                       key={event.id}
-                      href={`/${event.city.slug}/events/${event.slug}`}
+                      href={`/${SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug}/events/${event.slug}`}
                       className="card-base flex items-center justify-between p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
                     >
                       <div>
@@ -325,7 +326,7 @@ export default async function MePage() {
                   {pastSavedEvents.map(({ event }) => (
                     <Link
                       key={event.id}
-                      href={`/${event.city.slug}/events/${event.slug}`}
+                      href={`/${SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug}/events/${event.slug}`}
                       className="card-base flex items-center justify-between p-4 opacity-80 transition-all hover:-translate-y-0.5 hover:opacity-100 hover:shadow-md"
                     >
                       <div>

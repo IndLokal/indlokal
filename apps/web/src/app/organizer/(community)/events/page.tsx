@@ -3,6 +3,7 @@ import { format } from 'date-fns';
 import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 
@@ -131,13 +132,23 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/${event.city.slug}/events/${event.slug}`}
+                    href={`/events/preview/${event.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-brand-600 hover:text-brand-700 text-xs font-medium hover:underline"
+                    className="text-xs font-medium text-emerald-700 hover:underline"
                   >
-                    View public
+                    Preview
                   </Link>
+                  {event.moderationState === 'PUBLISHED' ? (
+                    <Link
+                      href={`/${SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug}/events/${event.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-600 hover:text-brand-700 text-xs font-medium hover:underline"
+                    >
+                      View public
+                    </Link>
+                  ) : null}
                   <Link
                     href={`/organizer/events/${event.slug}/edit`}
                     className="text-xs font-medium text-emerald-700 hover:underline"

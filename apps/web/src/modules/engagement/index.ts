@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { Events } from '@/lib/analytics/events';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { enqueueNotification } from '@/modules/notifications';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 
 type InteractionInput = {
   userId: string | null;
@@ -152,10 +153,14 @@ export async function scheduleSavedEventReminders(
     if (notBefore <= now) continue;
 
     const idempotencyKey = `user:${userId}:event:${event.id}:reminder:${offset.label}`;
+    const eventCitySlug = event.city?.slug ?? null;
+    const canonicalCity = eventCitySlug
+      ? (SATELLITE_TO_METRO[eventCitySlug] ?? eventCitySlug)
+      : null;
     const payload = {
       title: event.title,
       body: `${event.title} starts soon.`,
-      deepLink: `/${event.city.slug}/events/${event.slug}`,
+      deepLink: canonicalCity ? `/${canonicalCity}/events/${event.slug}` : `/${event.slug}`,
       eventId: event.id,
       reminderOffset: offset.label,
     };
@@ -225,7 +230,9 @@ export async function saveEventForUser(
     }),
     captureServerEvent(userId, Events.EVENT_SAVED, {
       event_id: eventId,
-      city: event?.city.slug,
+      city: event?.city?.slug
+        ? (SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug)
+        : undefined,
       community_id: event?.communityId,
       ...(metadata ?? {}),
     }),
@@ -244,7 +251,7 @@ export async function unsaveEventForUser(
   const remindersSuppressed = await suppressSavedEventReminders(userId, eventId);
   await captureServerEvent(userId, Events.EVENT_UNSAVED, {
     event_id: eventId,
-    city: event?.city.slug,
+    city: event?.city?.slug ? (SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug) : undefined,
     community_id: event?.communityId,
     ...(metadata ?? {}),
   });
@@ -280,6 +287,8 @@ export async function enqueueCommunityUpdateForFollowers(args: {
 
   let enqueued = 0;
   for (const follower of followers) {
+    const eventCity = event.city?.slug ?? null;
+    const canonical = eventCity ? (SATELLITE_TO_METRO[eventCity] ?? eventCity) : event.city?.slug;
     await enqueueNotification({
       userId: follower.userId,
       topic: 'COMMUNITY_UPDATE',
@@ -288,7 +297,7 @@ export async function enqueueCommunityUpdateForFollowers(args: {
       payload: {
         title: event.title,
         body: `New event from ${event.community?.name ?? 'a community you follow'}.`,
-        deepLink: `/${event.city.slug}/events/${event.slug}`,
+        deepLink: `/${canonical}/events/${event.slug}`,
         communityId: args.communityId,
         eventId: event.id,
       },

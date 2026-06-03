@@ -1,6 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { db } from '@/lib/db';
-import { siteConfig, UPCOMING_CITIES, RESOURCE_CATEGORIES } from '@/lib/config';
+import { siteConfig, UPCOMING_CITIES, RESOURCE_CATEGORIES, SATELLITE_TO_METRO } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -159,8 +159,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Community detail pages
   for (const community of communities) {
+    const canonicalCity = SATELLITE_TO_METRO[community.city.slug] ?? community.city.slug;
     entries.push({
-      url: `${baseUrl}/${community.city.slug}/communities/${community.slug}`,
+      url: `${baseUrl}/${canonicalCity}/communities/${community.slug}`,
       lastModified: community.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.6,
@@ -169,8 +170,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Event detail pages
   for (const event of events) {
+    const canonicalCity = SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug;
     entries.push({
-      url: `${baseUrl}/${event.city.slug}/events/${event.slug}`,
+      url: `${baseUrl}/${canonicalCity}/events/${event.slug}`,
       lastModified: event.updatedAt,
       changeFrequency: 'weekly',
       priority: 0.6,

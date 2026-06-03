@@ -10,6 +10,12 @@ import { refreshCommunityScore } from '@/modules/scoring';
 import { enqueueCommunityUpdateForFollowers } from '@/modules/engagement';
 import slugify from 'slugify';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
+import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  createRecurrencePresetSchema,
+  DEFAULT_RECURRENCE_PRESET,
+  recurrencePresetToRule,
+} from '@/lib/events/recurrence';
 import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
@@ -18,6 +24,7 @@ import {
 const addEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
+  categorySlugs: z.array(z.string().min(1)).min(1, 'Select at least one category.'),
   startsAt: z
     .string()
     .min(1, 'Start date is required')
@@ -33,6 +40,7 @@ const addEventSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   registrationUrl: z.string().url().optional().or(z.literal('')),
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
+  recurrencePreset: createRecurrencePresetSchema.default(DEFAULT_RECURRENCE_PRESET),
 });
 
 export type AddEventResult =
@@ -66,6 +74,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   const raw = {
     title: formData.get('title') as string,
     description: (formData.get('description') as string) || '',
+    categorySlugs: formData.getAll('categorySlugs').map((value) => String(value)),
     startsAt: formData.get('startsAt') as string,
     endsAt: (formData.get('endsAt') as string) || '',
     venueName: (formData.get('venueName') as string) || '',
@@ -75,6 +84,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     imageUrl: (formData.get('imageUrl') as string) || '',
     registrationUrl: (formData.get('registrationUrl') as string) || '',
     cost: (formData.get('cost') as string) || 'free',
+    recurrencePreset: String(formData.get('recurrencePreset') ?? DEFAULT_RECURRENCE_PRESET),
   };
 
   const parsed = addEventSchema.safeParse(raw);
@@ -86,14 +96,62 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   }
 
   const data = parsed.data;
+  if (data.isOnline && !data.onlineLink) {
+    return {
+      success: false,
+      errors: { onlineLink: ['Online events require an online link.'] },
+    };
+  }
 
-  // Validate ordering: endsAt must be after startsAt
-  if (data.endsAt && data.endsAt !== '' && new Date(data.endsAt) <= new Date(data.startsAt)) {
+  if (!data.isOnline && (!data.venueName || !data.venueAddress)) {
+    return {
+      success: false,
+      errors: {
+        ...(data.venueName ? {} : { venueName: ['Venue name is required for offline events.'] }),
+        ...(data.venueAddress
+          ? {}
+          : { venueAddress: ['Venue address is required for offline events.'] }),
+      },
+    };
+  }
+
+  const timezoneRow = await db.community.findUnique({
+    where: { id: community.id },
+    select: { city: { select: { timezone: true } } },
+  });
+  const timeZone = timezoneRow?.city.timezone || 'Europe/Berlin';
+
+  const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, timeZone);
+  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, timeZone);
+  if (!startsAt) {
+    return { success: false, errors: { startsAt: ['Invalid start date'] } };
+  }
+  if (!endsAt) {
+    return { success: false, errors: { endsAt: ['Invalid end date'] } };
+  }
+  if (endsAt <= startsAt) {
     return {
       success: false,
       errors: { endsAt: ['End time must be after start time'] },
     };
   }
+
+  const categorySlugs = Array.from(new Set(data.categorySlugs.map((slug) => slug.trim()))).filter(
+    Boolean,
+  );
+
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY', slug: { in: categorySlugs } },
+    select: { slug: true },
+  });
+  if (categories.length !== categorySlugs.length) {
+    return {
+      success: false,
+      errors: { categorySlugs: ['Please select valid categories.'] },
+    };
+  }
+
+  const recurrenceRule = recurrencePresetToRule(data.recurrencePreset);
 
   // Generate slug
   const baseSlug = slugify(data.title, { lower: true, strict: true });
@@ -116,13 +174,20 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           cityId: community.city.id,
           venueName: data.venueName || null,
           venueAddress: data.venueAddress || null,
-          startsAt: new Date(data.startsAt),
-          endsAt: data.endsAt ? new Date(data.endsAt) : null,
+          startsAt,
+          endsAt,
           isOnline: data.isOnline,
           onlineLink: data.onlineLink || null,
           imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
+          isRecurring: recurrenceRule !== null,
+          recurrenceRule,
+          categories: {
+            create: categories.map((category) => ({
+              category: { connect: { slug: category.slug } },
+            })),
+          },
           status: 'UPCOMING',
           source: 'COMMUNITY_SUBMITTED',
           // ADR-0009: community-trusted lane publishes immediately and records

@@ -78,7 +78,8 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
             <h3 className="font-semibold text-green-800">Collaborator access request submitted</h3>
           </div>
           <p className="mt-2 text-sm text-green-700">
-            Thanks. Our team will review your collaborator access request and get back to you soon.
+            Thanks. The community owner has been notified and will review your request. You&apos;ll
+            receive an email once a decision is made.
           </p>
         </div>
       );
@@ -156,13 +157,22 @@ export function ClaimSection({ communityId, communityName, claimState }: Props) 
               >
                 Your relationship to {communityName} *
               </label>
-              <input
+              <select
                 id="access-relationship"
                 name="relationship"
                 required
-                placeholder="e.g. Co-organizer, events lead"
+                defaultValue=""
                 className="border-border mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm"
-              />
+              >
+                <option value="" disabled>
+                  Select your role…
+                </option>
+                {RELATIONSHIPS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
               {accessErrors.relationship && (
                 <p className="mt-1 text-xs text-red-600">{accessErrors.relationship[0]}</p>
               )}

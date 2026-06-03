@@ -7,6 +7,7 @@ import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 import { headers } from 'next/headers';
 import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
+import { sendCollaboratorRequestReceivedEmail } from '@/lib/email';
 import { z } from 'zod';
 
 export type ClaimResult =
@@ -198,7 +199,12 @@ export async function requestCollaboratorAccess(
     async () => {
       const community = await db.community.findUnique({
         where: { id: data.communityId },
-        select: { id: true, claimState: true },
+        select: {
+          id: true,
+          claimState: true,
+          name: true,
+          claimedBy: { select: { email: true } },
+        },
       });
 
       if (!community) {
@@ -281,6 +287,25 @@ export async function requestCollaboratorAccess(
           },
         },
       });
+
+      // Notify the primary community owner so they can approve or reject
+      // the request directly from their organizer workspace.
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001';
+      const reviewUrl = `${appUrl}/organizer/collaborators`;
+      if (community.claimedBy?.email) {
+        try {
+          await sendCollaboratorRequestReceivedEmail(
+            community.claimedBy.email,
+            community.name,
+            data.name,
+            data.email,
+            data.relationship,
+            reviewUrl,
+          );
+        } catch {
+          // Email is best-effort; do not block the request submission
+        }
+      }
 
       return { success: true } as AccessRequestResult;
     },

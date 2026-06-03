@@ -5,6 +5,7 @@ import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Events - Event Host' };
@@ -120,13 +121,23 @@ function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/${ev.city.slug}/events/${ev.slug}`}
+                    href={`/events/preview/${ev.slug}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-brand-600 hover:text-brand-700 text-xs font-medium hover:underline"
+                    className="text-xs font-medium text-emerald-700 hover:underline"
                   >
-                    View public
+                    Preview
                   </Link>
+                  {ev.moderationState === 'PUBLISHED' ? (
+                    <Link
+                      href={`/${SATELLITE_TO_METRO[ev.city.slug] ?? ev.city.slug}/events/${ev.slug}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-brand-600 hover:text-brand-700 text-xs font-medium hover:underline"
+                    >
+                      View public
+                    </Link>
+                  ) : null}
                   <Link
                     href={`/organizer/host/events/${ev.slug}/edit`}
                     className="text-xs font-medium text-emerald-700 hover:underline"

@@ -278,22 +278,27 @@ export default async function CommunityDetailPage({ params }: Props) {
           <div>
             <h2 className="text-lg font-semibold">Upcoming Events</h2>
             <div className="mt-3 space-y-3">
-              {upcomingEvents.map((event: CommunityEvent) => (
-                <Link
-                  key={event.id}
-                  href={`/${city}/events/${event.slug}`}
-                  className="card-base flex items-center justify-between p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
-                >
-                  <div>
-                    <p className="text-foreground font-medium">{event.title}</p>
-                    <p className="text-muted mt-0.5 text-sm">
-                      {format(new Date(event.startsAt), 'EEE, MMM d · h:mm a')}
-                      {event.venueName && ` · ${event.venueName}`}
-                    </p>
-                  </div>
-                  <span className="text-muted ml-4 shrink-0">→</span>
-                </Link>
-              ))}
+              {upcomingEvents.map((event: CommunityEvent) => {
+                const eventCity =
+                  (event as CommunityEvent & { city?: { slug?: string } }).city?.slug ?? city;
+                const canonicalCity = SATELLITE_TO_METRO[eventCity] ?? eventCity;
+                return (
+                  <Link
+                    key={event.id}
+                    href={`/${canonicalCity}/events/${event.slug}`}
+                    className="card-base flex items-center justify-between p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div>
+                      <p className="text-foreground font-medium">{event.title}</p>
+                      <p className="text-muted mt-0.5 text-sm">
+                        {format(new Date(event.startsAt), 'EEE, MMM d · h:mm a')}
+                        {event.venueName && ` · ${event.venueName}`}
+                      </p>
+                    </div>
+                    <span className="text-muted ml-4 shrink-0">→</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
@@ -306,22 +311,27 @@ export default async function CommunityDetailPage({ params }: Props) {
               Track record: {pastEvents.length} event{pastEvents.length !== 1 ? 's' : ''} hosted
             </p>
             <div className="mt-3 space-y-2">
-              {pastEvents.slice(0, 5).map((event: CommunityEvent) => (
-                <Link
-                  key={event.id}
-                  href={`/${city}/events/${event.slug}`}
-                  className="border-border/50 bg-muted-bg flex items-center justify-between rounded-[var(--radius-card)] border p-3 text-sm transition-colors hover:bg-slate-200"
-                >
-                  <div>
-                    <p className="text-foreground font-medium">{event.title}</p>
-                    <p className="text-muted mt-0.5 text-xs">
-                      {format(new Date(event.startsAt), 'MMM d, yyyy')}
-                      {event.venueName && ` · ${event.venueName}`}
-                    </p>
-                  </div>
-                  <span className="text-muted ml-4 shrink-0">→</span>
-                </Link>
-              ))}
+              {pastEvents.slice(0, 5).map((event: CommunityEvent) => {
+                const eventCity =
+                  (event as CommunityEvent & { city?: { slug?: string } }).city?.slug ?? city;
+                const canonicalCity = SATELLITE_TO_METRO[eventCity] ?? eventCity;
+                return (
+                  <Link
+                    key={event.id}
+                    href={`/${canonicalCity}/events/${event.slug}`}
+                    className="border-border/50 bg-muted-bg flex items-center justify-between rounded-[var(--radius-card)] border p-3 text-sm transition-colors hover:bg-slate-200"
+                  >
+                    <div>
+                      <p className="text-foreground font-medium">{event.title}</p>
+                      <p className="text-muted mt-0.5 text-xs">
+                        {format(new Date(event.startsAt), 'MMM d, yyyy')}
+                        {event.venueName && ` · ${event.venueName}`}
+                      </p>
+                    </div>
+                    <span className="text-muted ml-4 shrink-0">→</span>
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}

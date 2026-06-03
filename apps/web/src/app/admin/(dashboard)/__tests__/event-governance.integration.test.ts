@@ -64,6 +64,17 @@ import { approveEvent, rejectEvent } from '../actions';
 import { addEvent } from '@/app/organizer/(community)/events/new/actions';
 import { addHostEvent } from '@/app/organizer/host/events/new/actions';
 
+async function createCategory() {
+  return testDb.category.create({
+    data: {
+      name: 'Professional',
+      slug: 'professional',
+      type: 'CATEGORY',
+      sortOrder: 1,
+    },
+  });
+}
+
 beforeEach(async () => {
   await cleanDb();
   currentSession = null;
@@ -77,15 +88,19 @@ afterAll(async () => {
 describe('@db host lane', () => {
   it('creates a PENDING_REVIEW event attributed to the host', async () => {
     const city = await createCity(testDb);
+    const category = await createCategory();
     const host = await createUser(testDb, { email: 'host@example.com', role: 'EVENT_HOST' });
     currentSession = { id: host.id, role: 'EVENT_HOST' };
 
     const form = new FormData();
     form.set('title', 'Host Meetup');
     form.set('cityId', city.id);
-    form.set('startsAt', new Date(Date.now() + 86_400_000).toISOString());
-    form.set('endsAt', new Date(Date.now() + 90_000_000).toISOString());
+    form.append('categorySlugs', category.slug);
+    form.set('startsAt', '2026-06-15T18:30');
+    form.set('endsAt', '2026-06-15T20:30');
     form.set('cost', 'free');
+    form.set('isOnline', 'true');
+    form.set('onlineLink', 'https://meet.example.com/host-meetup');
 
     await expect(addHostEvent(null, form)).rejects.toThrow(
       /NEXT_REDIRECT:\/organizer\/host\/events/,
@@ -94,10 +109,14 @@ describe('@db host lane', () => {
     const event = await testDb.event.findFirst({ where: { createdByUserId: host.id } });
     expect(event?.moderationState).toBe('PENDING_REVIEW');
     expect(event?.createdByUserId).toBe(host.id);
+
+    const eventCategory = await testDb.eventCategory.findFirst({ where: { eventId: event?.id } });
+    expect(eventCategory?.categoryId).toBeTruthy();
   });
 
   it('enforces the unverified cap counting PENDING_REVIEW events', async () => {
     const city = await createCity(testDb);
+    const category = await createCategory();
     const host = await createUser(testDb, { email: 'host@example.com', role: 'EVENT_HOST' });
     currentSession = { id: host.id, role: 'EVENT_HOST' };
 
@@ -114,17 +133,44 @@ describe('@db host lane', () => {
     const form = new FormData();
     form.set('title', 'One Too Many');
     form.set('cityId', city.id);
-    form.set('startsAt', new Date(Date.now() + 86_400_000).toISOString());
+    form.append('categorySlugs', category.slug);
+    form.set('startsAt', '2026-06-15T18:30');
+    form.set('endsAt', '2026-06-15T20:30');
     form.set('cost', 'free');
+    form.set('isOnline', 'true');
+    form.set('onlineLink', 'https://meet.example.com/cap-test');
 
     const result = await addHostEvent(null, form);
     expect(result).toMatchObject({ success: false });
+  });
+
+  it('rejects online host events without online link', async () => {
+    const city = await createCity(testDb);
+    const category = await createCategory();
+    const host = await createUser(testDb, { email: 'host@example.com', role: 'EVENT_HOST' });
+    currentSession = { id: host.id, role: 'EVENT_HOST' };
+
+    const form = new FormData();
+    form.set('title', 'Host Meetup Missing Link');
+    form.set('cityId', city.id);
+    form.append('categorySlugs', category.slug);
+    form.set('startsAt', '2026-06-15T18:30');
+    form.set('endsAt', '2026-06-15T20:30');
+    form.set('cost', 'free');
+    form.set('isOnline', 'true');
+
+    const result = await addHostEvent(null, form);
+    expect(result).toMatchObject({ success: false });
+    expect(result && 'errors' in result ? result.errors.onlineLink?.[0] : undefined).toBe(
+      'Online events require an online link.',
+    );
   });
 });
 
 describe('@db community lane', () => {
   it('creates a published community event and requires endsAt', async () => {
     const city = await createCity(testDb);
+    const category = await createCategory();
     const community = await createCommunity(testDb, { cityId: city.id });
     const organizer = await createUser(testDb, { email: 'organizer@example.com', role: 'USER' });
     currentSession = {
@@ -142,8 +188,12 @@ describe('@db community lane', () => {
 
     const validForm = new FormData();
     validForm.set('title', 'Community Meetup');
-    validForm.set('startsAt', new Date(Date.now() + 86_400_000).toISOString());
-    validForm.set('endsAt', new Date(Date.now() + 90_000_000).toISOString());
+    validForm.append('categorySlugs', category.slug);
+    validForm.set('startsAt', '2026-06-15T18:30');
+    validForm.set('endsAt', '2026-06-15T20:30');
+    validForm.set('venueName', 'Community Hall');
+    validForm.set('venueAddress', 'Street 1, Stuttgart');
+    validForm.set('recurrencePreset', 'weekly');
     validForm.set('cost', 'free');
 
     await expect(addEvent(null, validForm)).rejects.toThrow(/NEXT_REDIRECT:\/organizer\/events/);
@@ -151,16 +201,61 @@ describe('@db community lane', () => {
     const created = await testDb.event.findFirst({ where: { communityId: community.id } });
     expect(created?.moderationState).toBe('PUBLISHED');
     expect(created?.createdByUserId).toBe(organizer.id);
+    expect(created?.isRecurring).toBe(true);
+    expect(created?.recurrenceRule).toBe('FREQ=WEEKLY');
+
+    const createdCategories = await testDb.eventCategory.findMany({
+      where: { eventId: created?.id },
+    });
+    expect(createdCategories.length).toBe(1);
 
     const invalidForm = new FormData();
     invalidForm.set('title', 'Missing End Time');
-    invalidForm.set('startsAt', new Date(Date.now() + 86_400_000).toISOString());
+    invalidForm.append('categorySlugs', category.slug);
+    invalidForm.set('startsAt', '2026-06-15T18:30');
+    invalidForm.set('venueName', 'Community Hall');
+    invalidForm.set('venueAddress', 'Street 1, Stuttgart');
     invalidForm.set('cost', 'free');
 
     const result = await addEvent(null, invalidForm);
     expect(result).toMatchObject({ success: false });
     expect(result && 'errors' in result ? result.errors.endsAt?.[0] : undefined).toBe(
       'End date is required',
+    );
+  });
+
+  it('rejects offline community events without venue details', async () => {
+    const city = await createCity(testDb);
+    const category = await createCategory();
+    const community = await createCommunity(testDb, { cityId: city.id });
+    const organizer = await createUser(testDb, { email: 'organizer@example.com', role: 'USER' });
+    currentSession = {
+      id: organizer.id,
+      role: 'USER',
+      claimedCommunities: [
+        {
+          id: community.id,
+          claimedByUserId: organizer.id,
+          city: { id: city.id, slug: city.slug, name: city.name },
+        },
+      ],
+    };
+    currentCommunityId = community.id;
+
+    const form = new FormData();
+    form.set('title', 'Offline Missing Venue');
+    form.append('categorySlugs', category.slug);
+    form.set('startsAt', '2026-06-15T18:30');
+    form.set('endsAt', '2026-06-15T20:30');
+    form.set('cost', 'free');
+
+    const result = await addEvent(null, form);
+    expect(result).toMatchObject({ success: false });
+    expect(result && 'errors' in result ? result.errors.venueName?.[0] : undefined).toBe(
+      'Venue name is required for offline events.',
+    );
+    expect(result && 'errors' in result ? result.errors.venueAddress?.[0] : undefined).toBe(
+      'Venue address is required for offline events.',
     );
   });
 });

@@ -411,14 +411,14 @@ export async function sendCollaboratorAccessRejectedEmail(
 ): Promise<void> {
   await sendEmail(
     to,
-    `Update on your organizer access request for "${communityName}"`,
+    `Update on your collaborator access request for "${communityName}"`,
     `
 <!DOCTYPE html>
 <html>
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
-  <h2 style="margin-top:0">Access request update</h2>
-  <p>We reviewed your organizer collaborator request for <strong>${communityName}</strong> and were unable to approve it at this time.</p>
-  <p style="font-size:13px;color:#555">If this seems incorrect, you can submit a new request with additional context.</p>
+  <h2 style="margin-top:0">Your access request was not approved</h2>
+  <p>The organizer of <strong>${communityName}</strong> has reviewed your collaborator access request and has decided not to approve it at this time.</p>
+  <p style="font-size:13px;color:#555">If you believe this is a mistake, you can reach out to the community directly or submit a new request with more context about your role.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>
@@ -441,6 +441,52 @@ export async function sendOrganizerCollaboratorRejectedNotificationEmail(
 <body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
   <h2 style="margin-top:0">Collaborator request rejected</h2>
   <p>The collaborator access request from <strong>${collaboratorEmail}</strong> for <strong>${communityName}</strong> was rejected.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── New collaborator access request – notify community owner ─── */
+
+export async function sendCollaboratorRequestReceivedEmail(
+  to: string,
+  communityName: string,
+  requesterName: string,
+  requesterEmail: string,
+  relationship: string,
+  reviewUrl: string,
+): Promise<void> {
+  await sendEmail(
+    to,
+    `New collaborator access request for "${communityName}"`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <h2 style="margin-top:0">Someone wants to co-manage your community</h2>
+  <p>
+    <strong>${requesterName}</strong> (${requesterEmail}) has requested collaborator access
+    to <strong>${communityName}</strong> on IndLokal.
+  </p>
+  <table style="border-collapse:collapse;margin:16px 0;width:100%">
+    <tr>
+      <td style="padding:6px 12px 6px 0;color:#555;font-size:13px;white-space:nowrap;vertical-align:top">Role claimed</td>
+      <td style="padding:6px 0;font-size:13px">${relationship}</td>
+    </tr>
+  </table>
+  <p style="margin:24px 0">
+    <a href="${reviewUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Review request in your workspace →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">
+    You can approve or reject this request directly from your organizer workspace.
+    If you do not recognise this person, you can safely reject the request.
+  </p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
 </body>

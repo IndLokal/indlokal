@@ -13,6 +13,8 @@ import {
   resendCollaboratorInviteAction,
   transferOwnershipAction,
   withdrawCollaboratorInviteAction,
+  approvePublicCollaboratorRequestAction,
+  rejectPublicCollaboratorRequestAction,
 } from './actions';
 
 export const metadata = { title: 'Collaborators - Organizer' };
@@ -36,6 +38,7 @@ type CollaboratorRow = {
   requestedEmail: string | null;
   createdAt: Date;
   reviewedAt: Date | null;
+  metadata: Record<string, unknown> | null;
   user: { email: string; displayName: string | null };
   requestedByUser: { email: string; displayName: string | null } | null;
 };
@@ -123,6 +126,7 @@ export default async function OrganizerCollaboratorsPage() {
           requestedEmail: true,
           createdAt: true,
           reviewedAt: true,
+          metadata: true,
           user: { select: { email: true, displayName: true } },
           requestedByUser: { select: { email: true, displayName: true } },
         },
@@ -131,7 +135,10 @@ export default async function OrganizerCollaboratorsPage() {
     },
   });
 
-  const collaborators: CollaboratorRow[] = collaboratorData?.collaborators ?? [];
+  const collaborators: CollaboratorRow[] = (collaboratorData?.collaborators ?? []).map((c) => ({
+    ...c,
+    metadata: (c.metadata as Record<string, unknown> | null) ?? null,
+  }));
   const primaryOwnerUserId = collaboratorData?.claimedBy?.id ?? null;
   const canManageRoles = user.role === 'PLATFORM_ADMIN' || community.claimedByUserId === user.id;
   const canInviteCollaborators = user.role === 'PLATFORM_ADMIN' || role === 'COMMUNITY_ADMIN';
@@ -139,11 +146,15 @@ export default async function OrganizerCollaboratorsPage() {
     (collaborator) =>
       collaborator.status === 'ACTIVE' && collaborator.userId !== primaryOwnerUserId,
   );
-  const pendingCollaborators = collaborators.filter(
-    (collaborator) => collaborator.status === 'PENDING',
+  const pendingInvites = collaborators.filter(
+    (collaborator) =>
+      collaborator.status === 'PENDING' && collaborator.source === 'COMMUNITY_ADMIN_INVITE',
+  );
+  const pendingRequests = collaborators.filter(
+    (collaborator) => collaborator.status === 'PENDING' && collaborator.source === 'PUBLIC_REQUEST',
   );
   const pageDescription = canManageRoles
-    ? 'Primary owner can manage team roles and ownership transfer. Community admins can invite collaborators.'
+    ? 'Primary owner can approve collaborator requests, manage team roles, and transfer ownership. Community admins can invite collaborators.'
     : canInviteCollaborators
       ? 'Community admins can invite collaborators. Role and ownership changes remain owner-only.'
       : 'View who can help operate this community.';
@@ -245,22 +256,21 @@ export default async function OrganizerCollaboratorsPage() {
         <section className="card-base p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-foreground text-lg font-semibold">Pending requests</h2>
+              <h2 className="text-foreground text-lg font-semibold">Pending invites</h2>
               <p className="text-muted mt-1 text-sm">
-                Pending organizer invites need acceptance. Public help requests are reviewed on the
-                admin collaborators page.
+                Organizer invites waiting for the recipient to accept via the emailed link.
               </p>
             </div>
             <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
-              {pendingCollaborators.length}
+              {pendingInvites.length}
             </span>
           </div>
 
-          {pendingCollaborators.length === 0 ? (
-            <p className="text-muted mt-4 text-sm">No pending organizer invites.</p>
+          {pendingInvites.length === 0 ? (
+            <p className="text-muted mt-4 text-sm">No pending invites.</p>
           ) : (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {pendingCollaborators.map((collaborator) => (
+              {pendingInvites.map((collaborator) => (
                 <article
                   key={collaborator.id}
                   className="border-border rounded-[var(--radius-card)] border bg-white p-4 text-sm"
@@ -276,61 +286,143 @@ export default async function OrganizerCollaboratorsPage() {
                       <p className="text-muted mt-0.5 text-xs">
                         {collaborator.user.email ?? collaborator.requestedEmail ?? 'Awaiting email'}
                       </p>
-                      {collaborator.requestedByUser?.email && (
-                        <p className="text-muted mt-1 text-xs">
-                          Requested by{' '}
-                          {collaborator.requestedByUser.displayName ??
-                            collaborator.requestedByUser.email}
-                        </p>
-                      )}
                     </div>
                     <span className="bg-muted-bg text-muted rounded-full px-2 py-1 text-[11px] font-medium">
-                      {collaborator.source === 'COMMUNITY_ADMIN_INVITE'
-                        ? 'Awaiting invite acceptance'
-                        : 'Awaiting review'}
+                      Awaiting acceptance
                     </span>
                   </div>
 
                   <dl className="mt-3 space-y-2">
                     <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                      <dt className="text-muted text-xs tracking-wide uppercase">Source</dt>
-                      <dd className="text-muted">{sourceLabel(collaborator.source)}</dd>
-                    </div>
-                    <div className="grid grid-cols-[5.5rem_1fr] gap-2">
-                      <dt className="text-muted text-xs tracking-wide uppercase">Requested</dt>
+                      <dt className="text-muted text-xs tracking-wide uppercase">Invited</dt>
                       <dd className="text-muted">
                         {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
                       </dd>
                     </div>
                   </dl>
 
-                  <div className="mt-3">
-                    {collaborator.source === 'COMMUNITY_ADMIN_INVITE' ? (
-                      <div className="flex flex-wrap items-center gap-2">
-                        <form action={resendCollaboratorInviteAction}>
-                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
-                          <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
-                            Resend invite
-                          </button>
-                        </form>
-                        <form action={withdrawCollaboratorInviteAction}>
-                          <input type="hidden" name="collaboratorId" value={collaborator.id} />
-                          <ConfirmSubmitButton
-                            triggerLabel="Withdraw invite"
-                            title="Withdraw pending invite?"
-                            description="This pending invite will be removed from the queue and the person will need a new invite later."
-                            confirmLabel="Withdraw"
-                            tone="danger"
-                            triggerClassName="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
-                          />
-                        </form>
-                      </div>
-                    ) : (
-                      <span className="text-muted">-</span>
-                    )}
+                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                    <form action={resendCollaboratorInviteAction}>
+                      <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                      <button type="submit" className="btn-secondary px-3 py-1.5 text-xs">
+                        Resend invite
+                      </button>
+                    </form>
+                    <form action={withdrawCollaboratorInviteAction}>
+                      <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                      <ConfirmSubmitButton
+                        triggerLabel="Withdraw invite"
+                        title="Withdraw pending invite?"
+                        description="This pending invite will be removed. The person will need a new invite later."
+                        confirmLabel="Withdraw"
+                        tone="danger"
+                        triggerClassName="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                      />
+                    </form>
                   </div>
                 </article>
               ))}
+            </div>
+          )}
+        </section>
+      ) : null}
+
+      {canManageRoles ? (
+        <section className="card-base p-6">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-foreground text-lg font-semibold">Access requests</h2>
+              <p className="text-muted mt-1 text-sm">
+                People who found your community page and asked to help run it. Review and approve or
+                reject each request — the requester will be notified either way.
+              </p>
+            </div>
+            <span className="bg-muted-bg text-muted rounded-full px-2.5 py-1 text-xs font-medium">
+              {pendingRequests.length}
+            </span>
+          </div>
+
+          {pendingRequests.length === 0 ? (
+            <p className="text-muted mt-4 text-sm">No pending access requests.</p>
+          ) : (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {pendingRequests.map((collaborator) => {
+                const meta = collaborator.metadata;
+                const relationship =
+                  typeof meta?.relationship === 'string' ? meta.relationship : null;
+                const message = typeof meta?.message === 'string' ? meta.message : null;
+                return (
+                  <article
+                    key={collaborator.id}
+                    className="border-border rounded-[var(--radius-card)] border bg-white p-4 text-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-foreground font-medium">
+                          {collaborator.user.displayName ??
+                            collaborator.user.email ??
+                            collaborator.requestedEmail ??
+                            'Requester'}
+                        </p>
+                        <p className="text-muted mt-0.5 text-xs">
+                          {collaborator.user.email ??
+                            collaborator.requestedEmail ??
+                            'No email on file'}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-yellow-50 px-2 py-1 text-[11px] font-medium text-yellow-700">
+                        Needs review
+                      </span>
+                    </div>
+
+                    <dl className="mt-3 space-y-2">
+                      {relationship ? (
+                        <div className="grid grid-cols-[5.5rem_1fr] gap-2">
+                          <dt className="text-muted text-xs tracking-wide uppercase">Role</dt>
+                          <dd className="text-muted">{relationship}</dd>
+                        </div>
+                      ) : null}
+                      {message ? (
+                        <div className="grid grid-cols-[5.5rem_1fr] gap-2">
+                          <dt className="text-muted text-xs tracking-wide uppercase">Note</dt>
+                          <dd className="text-muted italic">&quot;{message}&quot;</dd>
+                        </div>
+                      ) : null}
+                      <div className="grid grid-cols-[5.5rem_1fr] gap-2">
+                        <dt className="text-muted text-xs tracking-wide uppercase">Requested</dt>
+                        <dd className="text-muted">
+                          {formatDistanceToNow(collaborator.createdAt, { addSuffix: true })}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <form action={approvePublicCollaboratorRequestAction}>
+                        <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                        <ConfirmSubmitButton
+                          triggerLabel="Approve"
+                          title="Approve collaborator request?"
+                          description="This person will be added as a collaborator and notified by email. They will be able to log into the organizer workspace for this community."
+                          confirmLabel="Approve"
+                          tone="primary"
+                          triggerClassName="btn-secondary border-green-400 px-3 py-1.5 text-xs text-green-800 hover:bg-green-50"
+                        />
+                      </form>
+                      <form action={rejectPublicCollaboratorRequestAction}>
+                        <input type="hidden" name="collaboratorId" value={collaborator.id} />
+                        <ConfirmSubmitButton
+                          triggerLabel="Reject"
+                          title="Reject collaborator request?"
+                          description="The requester will be notified that their request was not approved."
+                          confirmLabel="Reject"
+                          tone="danger"
+                          triggerClassName="rounded-[var(--radius-button)] border border-red-300 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                        />
+                      </form>
+                    </div>
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

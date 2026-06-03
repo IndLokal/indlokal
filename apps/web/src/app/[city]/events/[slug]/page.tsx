@@ -1,21 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
+import { SATELLITE_TO_METRO } from '@/lib/config';
+import EventDetailServer from '@/components/EventDetailServer';
 import { getEventBySlug, isEventSaved } from '@/modules/event';
-import { ViewTracker } from '@/components/analytics';
-import { escapeJsonForHtmlScript } from '@/lib/html';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
-import { EventSaveButton } from '@/components/EventSaveButton';
-import { EventRegistrationLink } from '@/components/EventRegistrationLink';
-
-/**
- * Event Detail Page
- *
- * Route: /[city]/events/[slug]/
- * Example: /stuttgart/events/holi-stuttgart-2026/
- */
 
 type Props = {
   params: Promise<{ city: string; slug: string }>;
@@ -36,21 +26,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function EventDetailPage({ params, searchParams }: Props) {
   const { city, slug } = await params;
   const sp = searchParams ? await searchParams : {};
-  const lensContext = sp.lens === 'business' ? 'business_careers' : undefined;
+  const lensContext: 'business_careers' | undefined =
+    sp.lens === 'business' ? 'business_careers' : undefined;
+
   const event = await getEventBySlug(slug);
   if (!event) notFound();
-  const user = await getSessionUser();
 
-  // City is the discovery partition key: an event only exists under its own
-  // city path. If the slug is reached via a different (or stale) city segment,
-  // canonicalize to the event's actual city instead of rendering a duplicate.
-  if (event.city.slug !== city) {
-    redirect(`/${event.city.slug}/events/${slug}${lensContext ? '?lens=business' : ''}`);
+  const canonicalCity = SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug;
+  if (canonicalCity !== city) {
+    redirect(`/${canonicalCity}/events/${slug}${lensContext ? '?lens=business' : ''}`);
   }
 
-  const startsAt = new Date(event.startsAt);
-  const endsAt = event.endsAt ? new Date(event.endsAt) : null;
-  const isPast = startsAt < new Date();
+  const user = await getSessionUser();
   const savedByUser = user ? await isEventSaved(user.id, event.id) : false;
 
   // Host attribution for host-posted events (no community)
@@ -70,217 +57,15 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
     }
   }
 
-  // JSON-LD Event schema
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'Event',
-    name: event.title,
-    startDate: event.startsAt,
-    endDate: event.endsAt ?? undefined,
-    description: event.description ?? undefined,
-    eventStatus: isPast ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
-    eventAttendanceMode: event.isOnline
-      ? 'https://schema.org/OnlineEventAttendanceMode'
-      : 'https://schema.org/OfflineEventAttendanceMode',
-    location: event.isOnline
-      ? { '@type': 'VirtualLocation', url: '' }
-      : {
-          '@type': 'Place',
-          name: event.venueName ?? undefined,
-          address: event.venueAddress ?? undefined,
-        },
-    organizer: event.community
-      ? { '@type': 'Organization', name: event.community.name }
-      : undefined,
-  };
-
   return (
     <>
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: escapeJsonForHtmlScript(jsonLd) }}
+      <EventDetailServer
+        event={event}
+        city={canonicalCity}
+        savedByUser={savedByUser}
+        hostDisplayName={hostDisplayName}
+        lensContext={lensContext}
       />
-      <ViewTracker
-        entityType="EVENT"
-        entityId={event.id}
-        cityId={event.city.id}
-        entitySlug={event.slug}
-        city={city}
-        metadata={lensContext ? { lens_context: lensContext } : undefined}
-      />
-
-      <div className="mx-auto max-w-2xl space-y-8">
-        {/* Breadcrumb */}
-        <nav className="text-muted text-sm">
-          <Link
-            href={`/${city}`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            {event.city.name}
-          </Link>
-          {' / '}
-          <Link
-            href={`/${city}/events`}
-            className="hover:text-foreground transition-colors hover:underline"
-          >
-            Events
-          </Link>
-          {' / '}
-          <span className="text-foreground">{event.title}</span>
-        </nav>
-
-        {/* Header */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1">
-            {/* Category tags */}
-            {event.categories.length > 0 && (
-              <div className="mb-3 flex flex-wrap gap-2">
-                {event.categories.map(({ category }) => (
-                  <span
-                    key={category.slug}
-                    className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"
-                  >
-                    {category.icon} {category.name}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <h1 className="text-3xl leading-tight font-bold">{event.title}</h1>
-
-            {/* Recurring badge */}
-            {event.isRecurring && (
-              <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-                🔄 Recurring event
-                {event.recurrenceRule && (
-                  <span className="text-blue-500">
-                    {' · '}
-                    {event.recurrenceRule.includes('WEEKLY')
-                      ? 'Weekly'
-                      : event.recurrenceRule.includes('MONTHLY')
-                        ? 'Monthly'
-                        : 'Repeats'}
-                  </span>
-                )}
-              </span>
-            )}
-
-            {/* Status badge */}
-            {isPast && (
-              <span className="badge-base bg-muted-bg text-muted mt-2 inline-block px-3 py-1 text-sm">
-                This event has passed
-              </span>
-            )}
-          </div>
-
-          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:justify-end">
-            <EventSaveButton
-              eventId={event.id}
-              saved={savedByUser}
-              city={city}
-              lensContext={lensContext}
-            />
-            {event.registrationUrl && (
-              <EventRegistrationLink
-                href={event.registrationUrl}
-                eventId={event.id}
-                city={city}
-                lensContext={lensContext}
-              />
-            )}
-          </div>
-        </div>
-
-        {/* Key details card */}
-        <div className="card-base space-y-4 p-6">
-          {/* Date & Time */}
-          <div className="flex items-start gap-3">
-            <span className="mt-0.5 text-xl">📅</span>
-            <div>
-              <p className="font-medium">{format(startsAt, 'EEEE, MMMM d, yyyy')}</p>
-              <p className="text-muted text-sm">
-                {format(startsAt, 'h:mm a')}
-                {endsAt && ` - ${format(endsAt, 'h:mm a')}`}
-              </p>
-            </div>
-          </div>
-
-          {/* Location */}
-          {event.isOnline ? (
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 text-xl">🌐</span>
-              <p className="font-medium">Online Event</p>
-            </div>
-          ) : event.venueName ? (
-            <div className="flex items-start gap-3">
-              <span className="mt-0.5 text-xl">📍</span>
-              <div>
-                <p className="font-medium">{event.venueName}</p>
-                {event.venueAddress && <p className="text-muted text-sm">{event.venueAddress}</p>}
-              </div>
-            </div>
-          ) : null}
-
-          {/* Cost */}
-          {event.cost && (
-            <div className="flex items-center gap-3">
-              <span className="text-xl">🎟️</span>
-              <span
-                className={`badge-base px-3 py-1 text-sm ${
-                  event.cost === 'free'
-                    ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-600/10 ring-inset'
-                    : 'bg-orange-50 text-orange-700 ring-1 ring-orange-600/10 ring-inset'
-                }`}
-              >
-                {event.cost === 'free' ? 'Free entry' : event.cost}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Description */}
-        {event.description && (
-          <div>
-            <h2 className="text-lg font-semibold">About this event</h2>
-            <p className="text-muted mt-2 leading-relaxed whitespace-pre-line">
-              {event.description}
-            </p>
-          </div>
-        )}
-
-        {/* Organiser - community */}
-        {event.community && (
-          <div>
-            <h2 className="text-lg font-semibold">Organised by</h2>
-            <a
-              href={`/${city}/communities/${event.community.slug}`}
-              className="card-base text-foreground mt-2 inline-flex items-center gap-2 px-4 py-3 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <span className="bg-brand-100 text-brand-700 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold">
-                {event.community.name.charAt(0)}
-              </span>
-              {event.community.name}
-              <span className="text-muted ml-auto">→</span>
-            </a>
-            <p className="text-muted mt-2 text-sm">
-              View the community page to join their WhatsApp, Facebook, or other channels.
-            </p>
-          </div>
-        )}
-
-        {/* Hosted by - independent event host */}
-        {!event.community && hostDisplayName && (
-          <div>
-            <h2 className="text-lg font-semibold">Hosted by</h2>
-            <div className="card-base mt-2 inline-flex items-center gap-2 px-4 py-3 text-sm font-medium">
-              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-gray-700">
-                {hostDisplayName.charAt(0).toUpperCase()}
-              </span>
-              {hostDisplayName}
-            </div>
-          </div>
-        )}
-      </div>
     </>
   );
 }

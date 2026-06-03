@@ -130,7 +130,7 @@ export async function getEventsPage(
     opts.cost === 'free'
       ? { cost: 'free' }
       : opts.cost === 'paid'
-        ? { NOT: [{ cost: null }, { cost: 'free' }] }
+        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
         : {};
 
   const typeWhere =
@@ -194,7 +194,7 @@ export async function getUpcomingEvents(
     options?.cost === 'free'
       ? { cost: 'free' }
       : options?.cost === 'paid'
-        ? { NOT: [{ cost: null }, { cost: 'free' }] }
+        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
         : {};
 
   const typeWhere =

@@ -4,7 +4,11 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
 import { createMagicLinkToken, getCurrentCommunityId, getSessionUser } from '@/lib/session';
-import { sendCollaboratorInviteRequestedEmail } from '@/lib/email';
+import {
+  sendCollaboratorInviteRequestedEmail,
+  sendCollaboratorAccessApprovedEmail,
+  sendCollaboratorAccessRejectedEmail,
+} from '@/lib/email';
 import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 import {
   canInviteCommunityCollaborators,
@@ -785,4 +789,205 @@ export async function demoteAdminToCollaborator(
 
 export async function demoteAdminToCollaboratorAction(formData: FormData): Promise<void> {
   await demoteAdminToCollaborator(null, formData);
+}
+
+const publicRequestSchema = z.object({
+  collaboratorId: z.string().min(1),
+});
+
+/**
+ * Approve a PUBLIC_REQUEST collaborator access request.
+ * Only the community OWNER (or PLATFORM_ADMIN) can do this.
+ */
+export async function approvePublicCollaboratorRequest(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canManageCommunity(user, ctx.communityId)) {
+    return { success: false, error: 'Only the community owner can approve collaborator requests.' };
+  }
+
+  const parsed = publicRequestSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const request = await db.communityCollaborator.findUnique({
+        where: { id: parsed.data.collaboratorId },
+        select: {
+          id: true,
+          communityId: true,
+          userId: true,
+          status: true,
+          source: true,
+          user: { select: { email: true } },
+          community: {
+            select: {
+              name: true,
+              slug: true,
+              city: { select: { slug: true } },
+            },
+          },
+        },
+      });
+
+      if (!request || request.communityId !== ctx.communityId) {
+        return { success: false, error: 'Request not found.' } as CollaboratorMutationResult;
+      }
+      if (request.source !== 'PUBLIC_REQUEST' || request.status !== 'PENDING') {
+        return {
+          success: false,
+          error: 'Only pending public requests can be approved here.',
+        } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: request.id },
+          data: {
+            status: 'ACTIVE',
+            reviewedAt: new Date(),
+            reviewedByUserId: user.id,
+          },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: request.communityId,
+            action: 'ROLE_GRANTED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: request.userId,
+              via: 'owner_approved_public_request',
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      // Notify the requestor that they now have access
+      if (request.user.email && request.community.city?.slug && request.community.slug) {
+        try {
+          await sendCollaboratorAccessApprovedEmail(
+            request.user.email,
+            request.community.name,
+            request.community.city.slug,
+            request.community.slug,
+          );
+        } catch {
+          // Best-effort
+        }
+      }
+
+      await captureServerEvent(user.id, Events.COMMUNITY_ROLE_CHANGED, {
+        community_id: ctx.communityId,
+        target_user_id: request.userId,
+        from_role: null,
+        to_role: 'COLLABORATOR',
+        via: 'owner_approved_public_request',
+      });
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Could not approve request. Please try again.' }),
+  );
+}
+
+export async function approvePublicCollaboratorRequestAction(formData: FormData): Promise<void> {
+  await approvePublicCollaboratorRequest(null, formData);
+}
+
+/**
+ * Reject a PUBLIC_REQUEST collaborator access request.
+ * Only the community OWNER (or PLATFORM_ADMIN) can do this.
+ */
+export async function rejectPublicCollaboratorRequest(
+  _prev: CollaboratorMutationResult,
+  formData: FormData,
+): Promise<CollaboratorMutationResult> {
+  const user = await getSessionUser();
+  const ctx = await resolveActiveCommunityId();
+  if (!user || !ctx) return { success: false, error: 'Not authenticated' };
+
+  if (!canManageCommunity(user, ctx.communityId)) {
+    return { success: false, error: 'Only the community owner can reject collaborator requests.' };
+  }
+
+  const parsed = publicRequestSchema.safeParse({ collaboratorId: formData.get('collaboratorId') });
+  if (!parsed.success) return { success: false, error: 'Invalid input.' };
+
+  return withAction(
+    async () => {
+      const request = await db.communityCollaborator.findUnique({
+        where: { id: parsed.data.collaboratorId },
+        select: {
+          id: true,
+          communityId: true,
+          userId: true,
+          status: true,
+          source: true,
+          user: { select: { email: true } },
+          community: { select: { name: true } },
+        },
+      });
+
+      if (!request || request.communityId !== ctx.communityId) {
+        return { success: false, error: 'Request not found.' } as CollaboratorMutationResult;
+      }
+      if (request.source !== 'PUBLIC_REQUEST' || request.status !== 'PENDING') {
+        return {
+          success: false,
+          error: 'Only pending public requests can be rejected here.',
+        } as CollaboratorMutationResult;
+      }
+
+      await db.$transaction([
+        db.communityCollaborator.update({
+          where: { id: request.id },
+          data: {
+            status: 'REJECTED',
+            reviewedAt: new Date(),
+            reviewedByUserId: user.id,
+          },
+        }),
+        db.contentLog.create({
+          data: {
+            entityType: 'community',
+            entityId: request.communityId,
+            action: 'ROLE_REVOKED',
+            changedBy: user.id,
+            metadata: {
+              targetUserId: request.userId,
+              via: 'owner_rejected_public_request',
+              actorRole: getCommunityRole(user, ctx.communityId),
+            },
+          },
+        }),
+      ]);
+
+      // Notify the requestor that the request was not approved
+      if (request.user.email) {
+        try {
+          await sendCollaboratorAccessRejectedEmail(request.user.email, request.community.name);
+        } catch {
+          // Best-effort
+        }
+      }
+
+      revalidatePath('/organizer');
+      revalidatePath('/organizer/collaborators');
+      return { success: true } as CollaboratorMutationResult;
+    },
+    () => ({ success: false, error: 'Could not reject request. Please try again.' }),
+  );
+}
+
+export async function rejectPublicCollaboratorRequestAction(formData: FormData): Promise<void> {
+  await rejectPublicCollaboratorRequest(null, formData);
 }
