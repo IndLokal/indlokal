@@ -127,6 +127,22 @@ enum ContentSource {
   USER_SUGGESTED
 }
 
+// ADR-0010 / PRD-0051: classifies what kind of entity a Community node
+// represents. Additive + nullable; keep in sync with
+// @indlokal/shared ORGANIZATION_TYPE_VALUES. BUSINESS is reserved (no business
+// product is built around it yet).
+enum OrganizationType {
+  ASSOCIATION
+  STUDENT_GROUP
+  TEMPLE_RELIGIOUS
+  CULTURAL_ORG
+  PROFESSIONAL_NETWORK
+  INSTITUTIONAL
+  INFORMAL_GROUP
+  BUSINESS
+  OTHER
+}
+
 model Community {
   id              String  @id @default(cuid())
   name            String
@@ -141,6 +157,9 @@ model Community {
   languages         String[] // Hindi, Telugu, Tamil, etc.
   foundedYear       Int?     @map("founded_year")
   memberCountApprox Int?     @map("member_count_approx")
+
+  // ADR-0010 / PRD-0051: what kind of organization this node represents.
+  organizationType  OrganizationType? @map("organization_type")
 
   status            CommunityStatus @default(UNVERIFIED)
   claimState        ClaimState      @default(UNCLAIMED) @map("claim_state")
@@ -194,6 +213,7 @@ model Community {
   @@index([createdByUserId])
   @@index([mergedIntoId])
   @@index([redirectSlug])
+  @@index([organizationType])
   @@map("communities")
 }
 

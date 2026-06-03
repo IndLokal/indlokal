@@ -80,3 +80,35 @@ export const PERSONA_SEGMENT_LABELS: Record<PersonaSegment, string> = {
   sports: 'Sports & Fitness',
   food: 'Food & Cooking',
 };
+
+/**
+ * Organization type — classifies what kind of entity a Community node represents.
+ * Additive taxonomy (ADR-0010 / PRD-0051). Keep in sync with the Prisma
+ * `OrganizationType` enum. `BUSINESS` is reserved for future use; no business
+ * product is built around it yet.
+ */
+export const ORGANIZATION_TYPE_VALUES = [
+  'ASSOCIATION',
+  'STUDENT_GROUP',
+  'TEMPLE_RELIGIOUS',
+  'CULTURAL_ORG',
+  'PROFESSIONAL_NETWORK',
+  'INSTITUTIONAL',
+  'INFORMAL_GROUP',
+  'BUSINESS',
+  'OTHER',
+] as const;
+
+export type OrganizationType = (typeof ORGANIZATION_TYPE_VALUES)[number];
+
+export const ORGANIZATION_TYPE_LABELS: Record<OrganizationType, string> = {
+  ASSOCIATION: 'Registered association (e.V.)',
+  STUDENT_GROUP: 'Student group',
+  TEMPLE_RELIGIOUS: 'Temple / Religious organization',
+  CULTURAL_ORG: 'Cultural organization',
+  PROFESSIONAL_NETWORK: 'Professional network',
+  INSTITUTIONAL: 'Institutional / Official',
+  INFORMAL_GROUP: 'Informal group',
+  BUSINESS: 'Business',
+  OTHER: 'Other',
+};
