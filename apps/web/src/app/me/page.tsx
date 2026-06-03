@@ -35,7 +35,7 @@ export default async function MePage() {
       },
     }),
     db.savedEvent.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, event: { moderationState: 'PUBLISHED' } },
       orderBy: { savedAt: 'desc' },
       include: {
         event: {

@@ -10,11 +10,18 @@ import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 import slugify from 'slugify';
 import { Prisma } from '@prisma/client';
+import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  createRecurrencePresetSchema,
+  DEFAULT_RECURRENCE_PRESET,
+  recurrencePresetToRule,
+} from '@/lib/events/recurrence';
 
 const addHostEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
   cityId: z.string().min(1),
+  categorySlugs: z.array(z.string().min(1)).min(1, 'Select at least one category.'),
   startsAt: z
     .string()
     .min(1, 'Start date is required')
@@ -29,6 +36,7 @@ const addHostEventSchema = z.object({
   onlineLink: z.string().url().optional().or(z.literal('')),
   registrationUrl: z.string().url().optional().or(z.literal('')),
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
+  recurrencePreset: createRecurrencePresetSchema.default(DEFAULT_RECURRENCE_PRESET),
 });
 
 export type AddHostEventResult =
@@ -72,6 +80,7 @@ export async function addHostEvent(
     title: formData.get('title') as string,
     description: (formData.get('description') as string) || '',
     cityId: formData.get('cityId') as string,
+    categorySlugs: formData.getAll('categorySlugs').map((value) => String(value)),
     startsAt: formData.get('startsAt') as string,
     endsAt: (formData.get('endsAt') as string) || '',
     venueName: (formData.get('venueName') as string) || '',
@@ -80,6 +89,7 @@ export async function addHostEvent(
     onlineLink: (formData.get('onlineLink') as string) || '',
     registrationUrl: (formData.get('registrationUrl') as string) || '',
     cost: (formData.get('cost') as string) || 'free',
+    recurrencePreset: String(formData.get('recurrencePreset') ?? DEFAULT_RECURRENCE_PRESET),
   };
 
   const parsed = addHostEventSchema.safeParse(raw);
@@ -91,24 +101,66 @@ export async function addHostEvent(
   }
 
   const data = parsed.data;
+  if (data.isOnline && !data.onlineLink) {
+    return {
+      success: false,
+      errors: { onlineLink: ['Online events require an online link.'] },
+    };
+  }
 
-  // Validate ordering: endsAt must be after startsAt
-  if (new Date(data.endsAt) <= new Date(data.startsAt)) {
+  if (!data.isOnline && (!data.venueName || !data.venueAddress)) {
+    return {
+      success: false,
+      errors: {
+        ...(data.venueName ? {} : { venueName: ['Venue name is required for offline events.'] }),
+        ...(data.venueAddress
+          ? {}
+          : { venueAddress: ['Venue address is required for offline events.'] }),
+      },
+    };
+  }
+
+  const categorySlugs = Array.from(new Set(data.categorySlugs.map((slug) => slug.trim()))).filter(
+    Boolean,
+  );
+
+  // City is the discovery partition key — never trust a client-supplied id.
+  // Verify it resolves to a real, active city before creating the event.
+  const city = await db.city.findFirst({
+    where: { id: data.cityId, isActive: true },
+    select: { id: true, timezone: true },
+  });
+  if (!city) {
+    return { success: false, errors: { cityId: ['Please select a valid city.'] } };
+  }
+
+  const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, city.timezone || 'Europe/Berlin');
+  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, city.timezone || 'Europe/Berlin');
+  if (!startsAt) {
+    return { success: false, errors: { startsAt: ['Invalid start date'] } };
+  }
+  if (!endsAt) {
+    return { success: false, errors: { endsAt: ['Invalid end date'] } };
+  }
+  if (endsAt <= startsAt) {
     return {
       success: false,
       errors: { endsAt: ['End time must be after start time'] },
     };
   }
 
-  // City is the discovery partition key — never trust a client-supplied id.
-  // Verify it resolves to a real, active city before creating the event.
-  const city = await db.city.findFirst({
-    where: { id: data.cityId, isActive: true },
-    select: { id: true },
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY', slug: { in: categorySlugs } },
+    select: { slug: true },
   });
-  if (!city) {
-    return { success: false, errors: { cityId: ['Please select a valid city.'] } };
+  if (categories.length !== categorySlugs.length) {
+    return {
+      success: false,
+      errors: { categorySlugs: ['Please select valid categories.'] },
+    };
   }
+
+  const recurrenceRule = recurrencePresetToRule(data.recurrencePreset);
 
   return withAction(
     async () => {
@@ -128,14 +180,21 @@ export async function addHostEvent(
               description: data.description || null,
               communityId: null, // host events have no community
               cityId: data.cityId,
-              startsAt: new Date(data.startsAt),
-              endsAt: data.endsAt ? new Date(data.endsAt) : null,
+              startsAt,
+              endsAt,
               venueName: data.venueName || null,
               venueAddress: data.venueAddress || null,
               isOnline: data.isOnline,
               onlineLink: data.onlineLink || null,
               registrationUrl: data.registrationUrl || null,
               cost: data.cost,
+              isRecurring: recurrenceRule !== null,
+              recurrenceRule,
+              categories: {
+                create: categories.map((category) => ({
+                  category: { connect: { slug: category.slug } },
+                })),
+              },
               source: 'USER_SUGGESTED', // unverified host submission
               // ADR-0009: host lane is vetted before public visibility.
               moderationState: 'PENDING_REVIEW',

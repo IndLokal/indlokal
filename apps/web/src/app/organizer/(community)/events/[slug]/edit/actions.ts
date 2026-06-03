@@ -7,6 +7,12 @@ import { db } from '@/lib/db';
 import { getCurrentCommunityId, getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
+import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  DEFAULT_RECURRENCE_PRESET,
+  recurrencePresetSchema,
+  recurrencePresetToRule,
+} from '@/lib/events/recurrence';
 import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
@@ -15,6 +21,7 @@ import {
 const editEventSchema = z.object({
   title: z.string().min(3).max(200),
   description: z.string().max(5000).optional().or(z.literal('')),
+  categorySlugs: z.array(z.string().min(1)).min(1, 'Select at least one category.'),
   startsAt: z
     .string()
     .min(1, 'Start date is required')
@@ -30,6 +37,7 @@ const editEventSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   registrationUrl: z.string().url().optional().or(z.literal('')),
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
+  recurrencePreset: recurrencePresetSchema.default(DEFAULT_RECURRENCE_PRESET),
 });
 
 export type EditEventResult =
@@ -66,7 +74,7 @@ export async function editEvent(
 
   const existing = await db.event.findFirst({
     where: { slug: eventSlug, communityId: community.id },
-    select: { id: true },
+    select: { id: true, recurrenceRule: true, city: { select: { timezone: true } } },
   });
 
   if (!existing) {
@@ -76,6 +84,7 @@ export async function editEvent(
   const raw = {
     title: formData.get('title') as string,
     description: (formData.get('description') as string) || '',
+    categorySlugs: formData.getAll('categorySlugs').map((value) => String(value)),
     startsAt: formData.get('startsAt') as string,
     endsAt: (formData.get('endsAt') as string) || '',
     venueName: (formData.get('venueName') as string) || '',
@@ -85,6 +94,7 @@ export async function editEvent(
     imageUrl: (formData.get('imageUrl') as string) || '',
     registrationUrl: (formData.get('registrationUrl') as string) || '',
     cost: (formData.get('cost') as string) || 'free',
+    recurrencePreset: String(formData.get('recurrencePreset') ?? DEFAULT_RECURRENCE_PRESET),
   };
 
   const parsed = editEventSchema.safeParse(raw);
@@ -96,12 +106,59 @@ export async function editEvent(
   }
 
   const data = parsed.data;
-  if (new Date(data.endsAt) <= new Date(data.startsAt)) {
+  if (data.isOnline && !data.onlineLink) {
+    return {
+      success: false,
+      errors: { onlineLink: ['Online events require an online link.'] },
+    };
+  }
+
+  if (!data.isOnline && (!data.venueName || !data.venueAddress)) {
+    return {
+      success: false,
+      errors: {
+        ...(data.venueName ? {} : { venueName: ['Venue name is required for offline events.'] }),
+        ...(data.venueAddress
+          ? {}
+          : { venueAddress: ['Venue address is required for offline events.'] }),
+      },
+    };
+  }
+
+  const timeZone = existing.city.timezone || 'Europe/Berlin';
+  const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, timeZone);
+  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, timeZone);
+  if (!startsAt) {
+    return { success: false, errors: { startsAt: ['Invalid start date'] } };
+  }
+  if (!endsAt) {
+    return { success: false, errors: { endsAt: ['Invalid end date'] } };
+  }
+  if (endsAt <= startsAt) {
     return {
       success: false,
       errors: { endsAt: ['End time must be after start time'] },
     };
   }
+
+  const categorySlugs = Array.from(new Set(data.categorySlugs.map((slug) => slug.trim()))).filter(
+    Boolean,
+  );
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY', slug: { in: categorySlugs } },
+    select: { slug: true },
+  });
+  if (categories.length !== categorySlugs.length) {
+    return {
+      success: false,
+      errors: { categorySlugs: ['Please select valid categories.'] },
+    };
+  }
+
+  const recurrenceRule =
+    data.recurrencePreset === 'custom'
+      ? existing.recurrenceRule
+      : recurrencePresetToRule(data.recurrencePreset);
 
   return withAction(
     async () => {
@@ -110,8 +167,8 @@ export async function editEvent(
         data: {
           title: data.title,
           description: data.description || null,
-          startsAt: new Date(data.startsAt),
-          endsAt: new Date(data.endsAt),
+          startsAt,
+          endsAt,
           venueName: data.venueName || null,
           venueAddress: data.venueAddress || null,
           isOnline: data.isOnline,
@@ -119,6 +176,14 @@ export async function editEvent(
           imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
+          isRecurring: recurrenceRule !== null,
+          recurrenceRule,
+          categories: {
+            deleteMany: {},
+            create: categories.map((category) => ({
+              category: { connect: { slug: category.slug } },
+            })),
+          },
           moderationState: 'PUBLISHED',
         },
       });

@@ -3,8 +3,17 @@
 import { useActionState } from 'react';
 import { addEvent, type AddEventResult } from './actions';
 import { EventFormFields } from '@/components/organizer/event-form-fields';
+import { DEFAULT_RECURRENCE_PRESET } from '@/lib/events/recurrence';
 
-export default function AddEventForm({ communityName }: { communityName: string }) {
+type Category = { slug: string; name: string; icon: string | null };
+
+export default function AddEventForm({
+  communityName,
+  categories,
+}: {
+  communityName: string;
+  categories: Category[];
+}) {
   const [state, formAction, isPending] = useActionState<AddEventResult, FormData>(addEvent, null);
 
   const errors = state?.success === false ? state.errors : {};
@@ -38,8 +47,10 @@ export default function AddEventForm({ communityName }: { communityName: string 
       values={{
         title: '',
         description: '',
+        categorySlugs: [],
         startsAt: defaultStart,
         endsAt: defaultEnd,
+        recurrencePreset: DEFAULT_RECURRENCE_PRESET,
         venueName: '',
         venueAddress: '',
         isOnline: false,
@@ -52,6 +63,7 @@ export default function AddEventForm({ communityName }: { communityName: string 
       submitLabel="Publish event"
       pendingLabel="Publishing..."
       cancelHref="/organizer"
+      categories={categories}
       showImageUrl
       bannerText="Publish directly to your community summary page."
     />

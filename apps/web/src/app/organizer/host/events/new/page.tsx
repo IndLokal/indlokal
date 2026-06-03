@@ -15,6 +15,11 @@ export default async function HostNewEventPage() {
     select: { id: true, name: true },
     orderBy: { name: 'asc' },
   });
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY' },
+    select: { slug: true, name: true, icon: true },
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  });
 
   const defaultCityId = user.cityId ?? undefined;
 
@@ -26,7 +31,7 @@ export default async function HostNewEventPage() {
       />
 
       <div className="card-base p-6">
-        <AddHostEventForm cities={cities} defaultCityId={defaultCityId} />
+        <AddHostEventForm cities={cities} categories={categories} defaultCityId={defaultCityId} />
       </div>
     </div>
   );

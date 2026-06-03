@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
+import { formatDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import { recurrenceRuleToPreset, RECURRENCE_PRESET_LABELS } from '@/lib/events/recurrence';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 import { getEventBySlug, isEventSaved } from '@/modules/event';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
@@ -41,15 +44,18 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
   if (!event) notFound();
   const user = await getSessionUser();
 
-  // City is the discovery partition key: an event only exists under its own
-  // city path. If the slug is reached via a different (or stale) city segment,
-  // canonicalize to the event's actual city instead of rendering a duplicate.
-  if (event.city.slug !== city) {
-    redirect(`/${event.city.slug}/events/${slug}${lensContext ? '?lens=business' : ''}`);
+  // City is the discovery partition key. Events may belong to satellite
+  // towns which redirect to their metro on the site (e.g. 'fellbach' ->
+  // 'stuttgart'). To avoid redirect loops and to canonicalize URLs to the
+  // public-facing city, map satellite slugs to their metro before redirect.
+  const canonicalCity = SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug;
+  if (canonicalCity !== city) {
+    redirect(`/${canonicalCity}/events/${slug}${lensContext ? '?lens=business' : ''}`);
   }
 
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
+  const timeZone = event.city?.timezone ?? 'Europe/Berlin';
   const isPast = startsAt < new Date();
   const virtualLocationUrl = event.onlineLink || event.registrationUrl || null;
   const savedByUser = user ? await isEventSaved(user.id, event.id) : false;
@@ -76,8 +82,8 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
     '@context': 'https://schema.org',
     '@type': 'Event',
     name: event.title,
-    startDate: event.startsAt,
-    endDate: event.endsAt ?? undefined,
+    startDate: new Date(event.startsAt).toISOString(),
+    endDate: event.endsAt ? new Date(event.endsAt).toISOString() : undefined,
     description: event.description ?? undefined,
     eventStatus: isPast ? 'https://schema.org/EventCompleted' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: event.isOnline
@@ -158,11 +164,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
                 {event.recurrenceRule && (
                   <span className="text-blue-500">
                     {' · '}
-                    {event.recurrenceRule.includes('WEEKLY')
-                      ? 'Weekly'
-                      : event.recurrenceRule.includes('MONTHLY')
-                        ? 'Monthly'
-                        : 'Repeats'}
+                    {RECURRENCE_PRESET_LABELS[recurrenceRuleToPreset(event.recurrenceRule)]}
                   </span>
                 )}
               </span>
@@ -200,10 +202,29 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
           <div className="flex items-start gap-3">
             <span className="mt-0.5 text-xl">📅</span>
             <div>
-              <p className="font-medium">{format(startsAt, 'EEEE, MMMM d, yyyy')}</p>
+              <p className="font-medium">
+                {new Intl.DateTimeFormat('en-US', {
+                  timeZone,
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric',
+                }).format(startsAt)}
+              </p>
               <p className="text-muted text-sm">
-                {format(startsAt, 'h:mm a')}
-                {endsAt && ` - ${format(endsAt, 'h:mm a')}`}
+                {new Intl.DateTimeFormat('en-US', {
+                  timeZone,
+                  hour: 'numeric',
+                  minute: '2-digit',
+                  hour12: true,
+                }).format(startsAt)}
+                {endsAt &&
+                  ` - ${new Intl.DateTimeFormat('en-US', {
+                    timeZone,
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true,
+                  }).format(endsAt)}`}
               </p>
             </div>
           </div>

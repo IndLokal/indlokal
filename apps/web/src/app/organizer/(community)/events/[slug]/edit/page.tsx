@@ -4,20 +4,13 @@ import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import EditEventForm from './EditEventForm';
+import { formatDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import { recurrenceRuleToPreset } from '@/lib/events/recurrence';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Edit Event - Organizer' };
 
 type Props = { params: Promise<{ slug: string }> };
-
-function toLocalInputValue(date: Date): string {
-  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
-function toFallbackEndInputValue(start: Date, end: Date | null): string {
-  return toLocalInputValue(end ?? new Date(start.getTime() + 2 * 60 * 60 * 1000));
-}
 
 export default async function EditCommunityEventPage({ params }: Props) {
   const { slug } = await params;
@@ -27,6 +20,12 @@ export default async function EditCommunityEventPage({ params }: Props) {
     notFound();
   }
 
+  const categories = await db.category.findMany({
+    where: { type: 'CATEGORY' },
+    select: { slug: true, name: true, icon: true },
+    orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
+  });
+
   const event = await db.event.findFirst({
     where: { slug, communityId: community.id },
     select: {
@@ -35,6 +34,8 @@ export default async function EditCommunityEventPage({ params }: Props) {
       description: true,
       startsAt: true,
       endsAt: true,
+      isRecurring: true,
+      recurrenceRule: true,
       venueName: true,
       venueAddress: true,
       isOnline: true,
@@ -42,10 +43,17 @@ export default async function EditCommunityEventPage({ params }: Props) {
       imageUrl: true,
       registrationUrl: true,
       cost: true,
+      city: { select: { timezone: true } },
+      categories: { select: { category: { select: { slug: true } } } },
     },
   });
 
   if (!event) notFound();
+
+  const timeZone = event.city.timezone || 'Europe/Berlin';
+  const startsAt = formatDateTimeLocalInTimeZone(event.startsAt, timeZone);
+  const fallbackEnd = event.endsAt ?? new Date(event.startsAt.getTime() + 2 * 60 * 60 * 1000);
+  const endsAt = formatDateTimeLocalInTimeZone(fallbackEnd, timeZone);
 
   return (
     <div className="space-y-8">
@@ -57,12 +65,15 @@ export default async function EditCommunityEventPage({ params }: Props) {
 
       <EditEventForm
         communityName={community.name}
+        categories={categories}
         event={{
           slug: event.slug,
           title: event.title,
           description: event.description,
-          startsAt: toLocalInputValue(event.startsAt),
-          endsAt: toFallbackEndInputValue(event.startsAt, event.endsAt),
+          categorySlugs: event.categories.map((item) => item.category.slug),
+          startsAt,
+          endsAt,
+          recurrencePreset: recurrenceRuleToPreset(event.recurrenceRule),
           venueName: event.venueName,
           venueAddress: event.venueAddress,
           isOnline: event.isOnline,
