@@ -157,8 +157,8 @@ Full findings are in the gap matrix (§7). Headlines:
 - Profile + links management, claim workflow, collaborator governance (ADR-0008 v2: OWNER/COLLABORATOR,
   transfer/last-owner guards), dual-lane events, host dashboard with completeness meter. Solid coverage.
 - **Biggest gap: zero analytics for organizers/hosts.** The platform records `UserInteraction`
-  (VIEW/CLICK_ACCESS/SAVE/SHARE) but never shows organizers how their community/events perform. This is
-  the #1 missing organizer-retention hook — organizers return for _numbers_.
+  (VIEW/CLICK*ACCESS/SAVE/SHARE) but never shows organizers how their community/events perform. This is
+  the #1 missing organizer-retention hook — organizers return for \_numbers*.
 - No profile preview, no event drafts, no create-time dedup, no rejected-event "fix & resubmit" loop.
 
 **Platform Admin**

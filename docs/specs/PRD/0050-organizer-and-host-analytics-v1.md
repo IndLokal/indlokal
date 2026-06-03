@@ -7,8 +7,8 @@
 
 ## 1. Problem
 
-The platform records `UserInteraction` (VIEW / CLICK_ACCESS / SAVE / SHARE) but never shows organizers
-or hosts how their community or events perform. Organizers return for _numbers_; today there is no
+The platform records `UserInteraction` (VIEW / CLICK*ACCESS / SAVE / SHARE) but never shows organizers
+or hosts how their community or events perform. Organizers return for \_numbers*; today there is no
 reason for them to come back. This is the #1 missing organizer-retention hook.
 
 ## 2. Users & JTBD
