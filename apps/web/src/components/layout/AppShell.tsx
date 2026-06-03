@@ -100,7 +100,7 @@ export function AppShell({
               </nav>
             )}
 
-            <div className="border-border hidden h-6 items-center border-l pl-4 sm:flex">
+            <div className="border-border hidden h-6 shrink-0 items-center border-l pl-4 sm:flex">
               <NavAuthWidget />
             </div>
 
