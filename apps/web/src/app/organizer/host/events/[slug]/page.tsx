@@ -7,6 +7,7 @@ import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 import { ConfirmSubmitButton } from '@/components/ui';
 import { archiveHostEvent } from './actions';
+import { SATELLITE_TO_METRO } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Event Summary - Event Host' };
@@ -42,7 +43,10 @@ export default async function HostEventSummaryPage({ params }: Props) {
 
   if (!event) notFound();
 
-  const publicHref = `/${event.city.slug}/events/${event.slug}`;
+  const canonicalCity = event.city?.slug
+    ? (SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug)
+    : null;
+  const publicHref = canonicalCity ? `/${canonicalCity}/events/${event.slug}` : `/${event.slug}`;
   const canViewPublic = event.moderationState === 'PUBLISHED';
   const archiveCurrentEvent = archiveHostEvent.bind(null, event.slug);
 
