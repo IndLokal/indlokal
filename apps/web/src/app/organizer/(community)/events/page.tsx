@@ -131,6 +131,14 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={`/events/preview/${event.slug}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-xs font-medium text-emerald-700 hover:underline"
+                  >
+                    Preview
+                  </Link>
                   {event.moderationState === 'PUBLISHED' ? (
                     <Link
                       href={`/${SATELLITE_TO_METRO[event.city.slug] ?? event.city.slug}/events/${event.slug}`}
@@ -140,14 +148,7 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
                     >
                       View public
                     </Link>
-                  ) : (
-                    <Link
-                      href={`/organizer/events/${event.slug}/edit`}
-                      className="text-xs font-medium text-emerald-700 hover:underline"
-                    >
-                      Preview (not published)
-                    </Link>
-                  )}
+                  ) : null}
                   <Link
                     href={`/organizer/events/${event.slug}/edit`}
                     className="text-xs font-medium text-emerald-700 hover:underline"

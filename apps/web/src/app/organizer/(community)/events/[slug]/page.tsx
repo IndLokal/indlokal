@@ -101,6 +101,14 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
 
         <div className="flex flex-wrap gap-3 pt-2">
           <Link
+            href={`/events/preview/${event.slug}`}
+            target="_blank"
+            rel="noreferrer"
+            className="border-border rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
+          >
+            Preview
+          </Link>
+          <Link
             href={`/organizer/events/${event.slug}/edit`}
             className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors"
           >
@@ -115,14 +123,7 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
             >
               View public page
             </Link>
-          ) : (
-            <Link
-              href={`/organizer/events/${event.slug}/edit`}
-              className="border-border rounded-lg border px-4 py-2 text-sm font-medium transition-colors hover:bg-gray-50"
-            >
-              Preview (not published)
-            </Link>
-          )}
+          ) : null}
           <form action={archiveCurrentEvent}>
             <ConfirmSubmitButton
               triggerLabel="Archive event"
