@@ -4,12 +4,15 @@ import { generatePreviewToken } from '@/lib/preview-tokens';
 import { getSessionUser } from '@/lib/session';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
 
-export async function POST(request: Request, context: any) {
+export async function POST(
+  request: Request,
+  context: { params: Promise<{ slug: string }> | { slug: string } },
+) {
   // context.params may be a plain object or a Promise depending on runtime
   const resolvedParams = await (context.params instanceof Promise
     ? context.params
     : Promise.resolve(context.params));
-  const { slug } = resolvedParams as { slug: string };
+  const { slug } = resolvedParams;
   const user = await getSessionUser();
   if (!user) return NextResponse.redirect(new URL('/organizer/login', request.url));
 

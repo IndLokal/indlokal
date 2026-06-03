@@ -31,7 +31,7 @@ export function verifyPreviewToken(token: string): string | null {
     if (provided.length !== expected.length) return null;
     if (!crypto.timingSafeEqual(provided, expected)) return null;
     return eventId;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

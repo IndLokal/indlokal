@@ -1,9 +1,16 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
+import type { Event as PrismaEvent } from '@prisma/client';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { EventSaveButton } from '@/components/EventSaveButton';
 import { EventRegistrationLink } from '@/components/EventRegistrationLink';
+
+type EventWithRelations = PrismaEvent & {
+  city: { id: string; name: string; slug?: string };
+  community?: { id: string; name: string; slug?: string } | null;
+  categories: { category: { slug: string; icon?: string; name: string } }[];
+};
 
 export default function EventDetailServer({
   event,
@@ -12,7 +19,7 @@ export default function EventDetailServer({
   hostDisplayName,
   lensContext,
 }: {
-  event: any;
+  event: EventWithRelations;
   city: string;
   savedByUser?: boolean;
   hostDisplayName?: string | null;
@@ -88,7 +95,7 @@ export default function EventDetailServer({
           <div className="min-w-0 flex-1">
             {event.categories.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
-                {event.categories.map(({ category }: any) => (
+                {event.categories.map(({ category }: EventWithRelations['categories'][number]) => (
                   <span
                     key={category.slug}
                     className="badge-base bg-brand-50 text-brand-700 ring-brand-600/10 px-3 py-1 text-xs ring-1 ring-inset"

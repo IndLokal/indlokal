@@ -279,7 +279,8 @@ export default async function CommunityDetailPage({ params }: Props) {
             <h2 className="text-lg font-semibold">Upcoming Events</h2>
             <div className="mt-3 space-y-3">
               {upcomingEvents.map((event: CommunityEvent) => {
-                const eventCity = (event as any).city?.slug ?? city;
+                const eventCity =
+                  (event as CommunityEvent & { city?: { slug?: string } }).city?.slug ?? city;
                 const canonicalCity = SATELLITE_TO_METRO[eventCity] ?? eventCity;
                 return (
                   <Link
@@ -311,7 +312,8 @@ export default async function CommunityDetailPage({ params }: Props) {
             </p>
             <div className="mt-3 space-y-2">
               {pastEvents.slice(0, 5).map((event: CommunityEvent) => {
-                const eventCity = (event as any).city?.slug ?? city;
+                const eventCity =
+                  (event as CommunityEvent & { city?: { slug?: string } }).city?.slug ?? city;
                 const canonicalCity = SATELLITE_TO_METRO[eventCity] ?? eventCity;
                 return (
                   <Link

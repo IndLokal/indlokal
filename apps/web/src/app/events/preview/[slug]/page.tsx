@@ -1,7 +1,5 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { format } from 'date-fns';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
@@ -24,7 +22,7 @@ export default async function EventPreviewPage({ params, searchParams }: Props) 
 
   // If a token is provided, consume it (one-time). If consumed successfully
   // we will load the event by id. Otherwise, fall back to editor-based access.
-  let event = null as any;
+  let event: Awaited<ReturnType<typeof db.event.findUnique>> | null = null;
   if (sp?.token) {
     const eventId = verifyPreviewToken(sp.token);
     if (eventId) {

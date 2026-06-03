@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { EventCard } from '../EventCard';
+import type { EventListItem } from '@/modules/event/types';
 
 describe('Event link canonicalization', () => {
   it('uses the metro canonical slug for satellite city links', () => {
@@ -18,7 +19,7 @@ describe('Event link canonicalization', () => {
       city: { name: 'Fellbach', slug: 'fellbach' },
     };
 
-    render(<EventCard event={event as any} city="fellbach" />);
+    render(<EventCard event={event as unknown as EventListItem} city="fellbach" />);
 
     const link = screen.getByRole('link');
     // Expect metro canonicalization: fellbach -> stuttgart

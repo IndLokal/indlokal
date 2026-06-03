@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { format } from 'date-fns';
 import { SATELLITE_TO_METRO } from '@/lib/config';
