@@ -188,16 +188,27 @@ export default async function EventsPage({ params, searchParams }: Props) {
               <div className="space-y-2">
                 <p className="text-muted text-xs font-semibold tracking-wide uppercase">Category</p>
                 <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-                  <Link
-                    href={`/${city}/events`}
-                    className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
-                      !filters.category
-                        ? 'border-brand-600 bg-brand-50 text-brand-700'
-                        : 'border-border text-muted hover:border-border hover:text-foreground'
-                    }`}
-                  >
-                    All
-                  </Link>
+                  {(() => {
+                    const allCategoryParams = new URLSearchParams();
+                    if (lens === 'business') allCategoryParams.set('lens', 'business');
+                    if (cost) allCategoryParams.set('cost', cost);
+                    if (type) allCategoryParams.set('type', type);
+                    const allCategoryHref = allCategoryParams.toString()
+                      ? `/${city}/events?${allCategoryParams.toString()}`
+                      : `/${city}/events`;
+                    return (
+                      <Link
+                        href={allCategoryHref}
+                        className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                          !filters.category
+                            ? 'border-brand-600 bg-brand-50 text-brand-700'
+                            : 'border-border text-muted hover:border-border hover:text-foreground'
+                        }`}
+                      >
+                        All
+                      </Link>
+                    );
+                  })()}
                   {categories.map((cat: CategoryItem) => {
                     const isActive = filters.category === cat.slug;
                     const categoryParams = new URLSearchParams();
@@ -318,16 +329,27 @@ export default async function EventsPage({ params, searchParams }: Props) {
         {/* Category filter (not shown in business lens because category is ignored there) */}
         {lens !== 'business' && (
           <>
-            <Link
-              href={`/${city}/events`}
-              className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
-                !filters.category
-                  ? 'border-brand-600 bg-brand-50 text-brand-700'
-                  : 'border-border text-muted hover:border-border hover:text-foreground'
-              }`}
-            >
-              All
-            </Link>
+            {(() => {
+              const allCategoryParams = new URLSearchParams();
+              if (lens === 'business') allCategoryParams.set('lens', 'business');
+              if (cost) allCategoryParams.set('cost', cost);
+              if (type) allCategoryParams.set('type', type);
+              const allCategoryHref = allCategoryParams.toString()
+                ? `/${city}/events?${allCategoryParams.toString()}`
+                : `/${city}/events`;
+              return (
+                <Link
+                  href={allCategoryHref}
+                  className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+                    !filters.category
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-border text-muted hover:border-border hover:text-foreground'
+                  }`}
+                >
+                  All
+                </Link>
+              );
+            })()}
             {categories.map((cat: CategoryItem) => {
               const isActive = filters.category === cat.slug;
               const categoryParams = new URLSearchParams();

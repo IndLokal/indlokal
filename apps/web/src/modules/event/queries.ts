@@ -127,11 +127,7 @@ export async function getEventsPage(
         : {};
 
   const costWhere =
-    opts.cost === 'free'
-      ? { cost: 'free' }
-      : opts.cost === 'paid'
-        ? { NOT: [{ cost: null }, { cost: 'free' }] }
-        : {};
+    opts.cost === 'free' ? { cost: 'free' } : opts.cost === 'paid' ? { cost: 'paid' } : {};
 
   const typeWhere =
     opts.type === 'online'
@@ -191,11 +187,7 @@ export async function getUpcomingEvents(
         : {};
 
   const costWhere =
-    options?.cost === 'free'
-      ? { cost: 'free' }
-      : options?.cost === 'paid'
-        ? { NOT: [{ cost: null }, { cost: 'free' }] }
-        : {};
+    options?.cost === 'free' ? { cost: 'free' } : options?.cost === 'paid' ? { cost: 'paid' } : {};
 
   const typeWhere =
     options?.type === 'online'

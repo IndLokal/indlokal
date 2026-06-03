@@ -51,6 +51,7 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
   const startsAt = new Date(event.startsAt);
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
   const isPast = startsAt < new Date();
+  const virtualLocationUrl = event.onlineLink || event.registrationUrl || null;
   const savedByUser = user ? await isEventSaved(user.id, event.id) : false;
 
   // Host attribution for host-posted events (no community)
@@ -78,12 +79,14 @@ export default async function EventDetailPage({ params, searchParams }: Props) {
     startDate: event.startsAt,
     endDate: event.endsAt ?? undefined,
     description: event.description ?? undefined,
-    eventStatus: isPast ? 'https://schema.org/EventScheduled' : 'https://schema.org/EventScheduled',
+    eventStatus: isPast ? 'https://schema.org/EventCompleted' : 'https://schema.org/EventScheduled',
     eventAttendanceMode: event.isOnline
       ? 'https://schema.org/OnlineEventAttendanceMode'
       : 'https://schema.org/OfflineEventAttendanceMode',
     location: event.isOnline
-      ? { '@type': 'VirtualLocation', url: '' }
+      ? virtualLocationUrl
+        ? { '@type': 'VirtualLocation', url: virtualLocationUrl }
+        : undefined
       : {
           '@type': 'Place',
           name: event.venueName ?? undefined,
