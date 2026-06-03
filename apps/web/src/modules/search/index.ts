@@ -15,8 +15,16 @@
 export {
   searchCommunities,
   searchEvents,
+  searchResources,
   getSuggestions,
   getTrendingKeywords,
   searchAll,
 } from './queries';
-export type { SearchResultRow, SearchAllOptions, SearchAllResult } from './queries';
+export type {
+  SearchResultRow,
+  SearchAllOptions,
+  SearchAllResult,
+  ResourceSearchItem,
+} from './queries';
+export { recordSearchInteraction } from './telemetry';
+export type { SearchScope, SearchEntityFilter, SearchTelemetryInput } from './telemetry';

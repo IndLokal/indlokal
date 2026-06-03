@@ -24,7 +24,12 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const to = url.searchParams.get('to') ? new Date(url.searchParams.get('to')!) : undefined;
   const typeParam = url.searchParams.get('type');
   const type =
-    typeParam === 'COMMUNITY' || typeParam === 'EVENT' || typeParam === 'ALL' ? typeParam : 'ALL';
+    typeParam === 'COMMUNITY' ||
+    typeParam === 'EVENT' ||
+    typeParam === 'RESOURCE' ||
+    typeParam === 'ALL'
+      ? typeParam
+      : 'ALL';
   const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit') ?? '20', 10)));
   const cursor = url.searchParams.get('cursor') ?? undefined;
 
@@ -42,6 +47,9 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const items = result.items.map((row) => {
     if (row.type === 'COMMUNITY') {
       return { type: 'COMMUNITY' as const, item: toCommunityCard(row.item) };
+    }
+    if (row.type === 'RESOURCE') {
+      return { type: 'RESOURCE' as const, item: row.item };
     }
     return { type: 'EVENT' as const, item: toEventCard(row.item) };
   });
