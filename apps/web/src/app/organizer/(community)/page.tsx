@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { content, communityOptions } from '@indlokal/shared';
 import { ContentCallout } from '@/components/content/community-actions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
+import { ReachPanel } from '@/components/organizer/reach-panel';
+import { getCommunityReach } from '@/modules/analytics-readout';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 
 export default async function OrganizerDashboardPage() {
@@ -39,6 +41,8 @@ export default async function OrganizerDashboardPage() {
     ? 'Manage collaborator access, pending approvals, and ownership context for this community.'
     : 'See who helps operate this community. Team management actions are available to the community organizer.';
 
+  const reach = await getCommunityReach(community.id);
+
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <OrganizerPageHeader
@@ -47,6 +51,8 @@ export default async function OrganizerDashboardPage() {
       />
 
       <ContentCallout title="What can I do here?" body={dashboardBody} />
+
+      <ReachPanel reach={reach} variant="community" />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {/* Quick actions */}

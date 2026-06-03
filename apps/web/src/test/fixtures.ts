@@ -70,6 +70,23 @@ export async function createEvent(
     },
   });
 }
+// ─── Resource ────────────────────────────────────────────────────────────────
+
+export async function createResource(db: PrismaClient, overrides: Record<string, unknown> = {}) {
+  return db.resource.create({
+    data: {
+      title: 'How to register your address (Anmeldung)',
+      slug: `resource-${Math.random().toString(36).slice(2, 10)}`,
+      resourceType: 'CITY_REGISTRATION',
+      scope: 'COUNTRY',
+      scopeRegion: 'DE',
+      description: 'Step-by-step guide to the Anmeldung process in Germany.',
+      isHidden: false,
+      ...overrides,
+    },
+  });
+}
+
 // ─── User ──────────────────────────────────────────────────────────────────
 
 export async function createUser(db: PrismaClient, overrides: Record<string, unknown> = {}) {

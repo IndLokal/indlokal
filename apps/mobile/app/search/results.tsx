@@ -10,6 +10,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
+  Linking,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -23,7 +24,7 @@ import { queryCache } from '@/lib/cache/query-cache';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 type RangeKey = 'any' | 'today' | 'week' | 'month';
-type TypeKey = 'ALL' | 'EVENT' | 'COMMUNITY';
+type TypeKey = 'ALL' | 'EVENT' | 'COMMUNITY' | 'RESOURCE';
 
 const RANGE_LABEL: Record<RangeKey, string> = {
   any: 'Any time',
@@ -36,6 +37,7 @@ const TYPE_LABEL: Record<TypeKey, string> = {
   ALL: 'All',
   EVENT: 'Events',
   COMMUNITY: 'Communities',
+  RESOURCE: 'Resources',
 };
 
 function rangeToBounds(range: RangeKey): { from?: string; to?: string } {
@@ -116,28 +118,35 @@ export default function SearchResultsScreen() {
   const communities = items.filter(
     (it): it is Extract<s.SearchResultItem, { type: 'COMMUNITY' }> => it.type === 'COMMUNITY',
   );
+  const resources = items.filter(
+    (it): it is Extract<s.SearchResultItem, { type: 'RESOURCE' }> => it.type === 'RESOURCE',
+  );
 
   const sections = useMemo(() => {
     const out: Array<
       { kind: 'header'; label: string } | { kind: 'item'; item: s.SearchResultItem }
     > = [];
-    if (type !== 'COMMUNITY' && events.length > 0) {
+    if ((type === 'ALL' || type === 'EVENT') && events.length > 0) {
       out.push({ kind: 'header', label: `Events · ${events.length}` });
       events.forEach((item) => out.push({ kind: 'item', item }));
     }
-    if (type !== 'EVENT' && communities.length > 0) {
+    if ((type === 'ALL' || type === 'COMMUNITY') && communities.length > 0) {
       out.push({ kind: 'header', label: `Communities · ${communities.length}` });
       communities.forEach((item) => out.push({ kind: 'item', item }));
     }
+    if ((type === 'ALL' || type === 'RESOURCE') && resources.length > 0) {
+      out.push({ kind: 'header', label: `Resources · ${resources.length}` });
+      resources.forEach((item) => out.push({ kind: 'item', item }));
+    }
     return out;
-  }, [events, communities, type]);
+  }, [events, communities, resources, type]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ title: q ? `“${q}”` : 'Results' }} />
       <View style={styles.filters}>
         <View style={styles.chipRow}>
-          {(['ALL', 'EVENT', 'COMMUNITY'] as TypeKey[]).map((value) => {
+          {(['ALL', 'EVENT', 'COMMUNITY', 'RESOURCE'] as TypeKey[]).map((value) => {
             const active = type === value;
             return (
               <Pressable
@@ -201,6 +210,24 @@ export default function SearchResultsScreen() {
                   </Text>
                 </Pressable>
               </Link>
+            );
+          }
+          if (row.item.type === 'RESOURCE') {
+            const rsc = row.item.item;
+            return (
+              <Pressable
+                key={rsc.id}
+                style={styles.row}
+                onPress={() => {
+                  if (rsc.url) void Linking.openURL(rsc.url);
+                }}
+              >
+                <Text style={styles.rowKind}>RESOURCE</Text>
+                <Text style={styles.rowTitle}>{rsc.title}</Text>
+                <Text style={styles.rowMeta} numberOfLines={2}>
+                  {rsc.description ?? rsc.city?.name ?? 'All Germany'}
+                </Text>
+              </Pressable>
             );
           }
           const c = row.item.item;

@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
+import { ReachPanel } from '@/components/organizer/reach-panel';
+import { getHostReach } from '@/modules/analytics-readout';
 import {
   getHostProfile,
   getHostEventStats,
@@ -31,6 +33,8 @@ export default async function HostDashboardPage() {
     profile,
     stats.live + stats.past + stats.inReview > 0,
   );
+
+  const reach = await getHostReach(user.id);
 
   const atCap = stats.unverifiedUpcomingCount >= HOST_UNVERIFIED_CAP;
 
@@ -75,6 +79,8 @@ export default async function HostDashboardPage() {
           </div>
         ))}
       </div>
+
+      <ReachPanel reach={reach} variant="host" />
 
       {/* Review standing / cap */}
       {atCap ? (

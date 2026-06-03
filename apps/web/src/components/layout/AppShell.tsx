@@ -19,6 +19,10 @@ type AppShellProps = {
   navLinks?: NavLink[];
   /** Max-width of the main content area. Defaults to "max-w-7xl". */
   maxWidth?: string;
+  /** If set, renders a single persistent search affordance pointing here. */
+  searchHref?: string;
+  /** Placeholder/label for the search affordance (e.g. "Search Stuttgart"). */
+  searchLabel?: string;
 };
 
 /**
@@ -27,7 +31,14 @@ type AppShellProps = {
  * Provides: sticky header, responsive nav (desktop + MobileNav), main content area, footer.
  * Uses the new Design System (Brand Colors, Typography).
  */
-export function AppShell({ children, subtitle, navLinks, maxWidth = 'max-w-7xl' }: AppShellProps) {
+export function AppShell({
+  children,
+  subtitle,
+  navLinks,
+  maxWidth = 'max-w-7xl',
+  searchHref,
+  searchLabel = 'Search',
+}: AppShellProps) {
   return (
     <div className="bg-background flex min-h-screen flex-col">
       <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-md sm:backdrop-blur-xl">
@@ -44,6 +55,26 @@ export function AppShell({ children, subtitle, navLinks, maxWidth = 'max-w-7xl' 
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Single, persistent search affordance — looks like a search box,
+                routes to the dedicated search page so every sub-page shares the
+                same entry point (no per-page duplication). */}
+            {searchHref && (
+              <Link
+                href={searchHref}
+                className="text-muted hover:text-foreground border-border hover:border-brand-200 hover:bg-muted-bg/60 hidden items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors lg:flex"
+              >
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
+                </svg>
+                <span>{searchLabel}</span>
+              </Link>
+            )}
+
             {/* Desktop nav */}
             {navLinks && navLinks.length > 0 && (
               <nav className="mr-4 hidden items-center gap-1 sm:flex">
@@ -75,6 +106,22 @@ export function AppShell({ children, subtitle, navLinks, maxWidth = 'max-w-7xl' 
 
             {/* Mobile nav / hamburger */}
             <div className="flex items-center gap-3 sm:hidden">
+              {searchHref && (
+                <Link
+                  href={searchHref}
+                  aria-label={searchLabel}
+                  className="text-muted hover:text-foreground hover:bg-muted-bg flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+                >
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </Link>
+              )}
               <NavAuthWidget />
               {navLinks && navLinks.length > 0 && <MobileNav links={navLinks} />}
             </div>

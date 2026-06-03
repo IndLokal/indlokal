@@ -10,6 +10,7 @@ type Community = {
   description: string | null;
   descriptionLong: string | null;
   logoUrl: string | null;
+  organizationType: string | null;
   personaSegments: string[];
   languages: string[];
   foundedYear: number | null;
@@ -134,6 +135,28 @@ export default function EditProfileForm({ community }: { community: Community })
           Use a public square image URL for the best card appearance.
         </p>
         {errors.logoUrl && <p className="mt-1 text-sm text-red-600">{errors.logoUrl[0]}</p>}
+      </div>
+
+      {/* Organization type */}
+      <div>
+        <label className="text-foreground block text-sm font-medium">
+          Organization type <span className="text-muted">(optional)</span>
+        </label>
+        <select
+          name="organizationType"
+          defaultValue={community.organizationType ?? ''}
+          className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+        >
+          <option value="">Not specified</option>
+          {communityOptions.ORGANIZATION_TYPE_VALUES.map((value) => (
+            <option key={value} value={value}>
+              {communityOptions.ORGANIZATION_TYPE_LABELS[value]}
+            </option>
+          ))}
+        </select>
+        <p className="text-muted mt-1 text-xs">
+          Helps people find the right kind of group (association, student group, temple, etc.).
+        </p>
       </div>
 
       {/* Languages */}

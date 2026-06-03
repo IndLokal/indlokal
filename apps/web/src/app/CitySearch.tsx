@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   ACTIVE_CITIES,
   UPCOMING_CITIES,
@@ -86,7 +85,15 @@ export function CitySearch() {
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const results = buildResults(query);
+  const cityResults = buildResults(query);
+  const trimmed = query.trim();
+  const showNationalRow = trimmed.length >= 2;
+
+  // The national-search row is appended after city matches so the unified box
+  // always offers "search everything across Germany" as the last option.
+  const nationalHref = `/search?q=${encodeURIComponent(trimmed)}`;
+  const optionCount = cityResults.length + (showNationalRow ? 1 : 0);
+  const isNationalActive = showNationalRow && activeIdx === cityResults.length;
 
   // Close on outside click
   useEffect(() => {
@@ -99,16 +106,28 @@ export function CitySearch() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  function goNational() {
+    if (trimmed.length < 1) return;
+    router.push(nationalHref);
+    setOpen(false);
+  }
+
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, results.length - 1));
+      setActiveIdx((i) => Math.min(i + 1, optionCount - 1));
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
-    } else if (e.key === 'Enter' && activeIdx >= 0 && results[activeIdx]) {
-      router.push(results[activeIdx].href);
-      setOpen(false);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (activeIdx >= 0 && activeIdx < cityResults.length) {
+        router.push(cityResults[activeIdx].href);
+        setOpen(false);
+      } else {
+        // No city highlighted (or national row highlighted) → search Germany.
+        goNational();
+      }
     } else if (e.key === 'Escape') {
       setOpen(false);
     }
@@ -116,7 +135,8 @@ export function CitySearch() {
 
   return (
     <div ref={ref} className="relative">
-      <div className="relative">
+      {/* Non-JS fallback: Enter submits a national search. */}
+      <form method="GET" action="/search" role="search" className="relative">
         <svg
           className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-white/40"
           fill="none"
@@ -131,8 +151,10 @@ export function CitySearch() {
           />
         </svg>
         <input
-          type="text"
+          type="search"
+          name="q"
           value={query}
+          autoComplete="off"
           onChange={(e) => {
             setQuery(e.target.value);
             setOpen(true);
@@ -140,14 +162,15 @@ export function CitySearch() {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search your city or town…"
+          placeholder="Search a city, community, event or topic…"
+          aria-label="Search a city, or communities, events and resources across Germany"
           className="w-full rounded-xl border border-white/20 bg-white/10 py-3.5 pr-4 pl-12 text-sm text-white placeholder-white/50 backdrop-blur-sm transition-all outline-none focus:border-white/30 focus:bg-white/15 focus:ring-2 focus:ring-white/20"
         />
-      </div>
+      </form>
 
-      {open && results.length > 0 && (
+      {open && (cityResults.length > 0 || showNationalRow) && (
         <ul className="absolute top-full right-0 left-0 z-50 mt-2 overflow-hidden rounded-xl bg-white shadow-2xl ring-1 ring-black/[0.08]">
-          {results.map((r, i) => (
+          {cityResults.map((r, i) => (
             <li key={r.href + r.label}>
               <button
                 type="button"
@@ -165,20 +188,39 @@ export function CitySearch() {
               </button>
             </li>
           ))}
-        </ul>
-      )}
 
-      {open && query.length > 1 && results.length === 0 && (
-        <div className="absolute top-full right-0 left-0 z-50 mt-2 rounded-xl bg-white px-4 py-4 text-center shadow-2xl ring-1 ring-black/[0.08]">
-          <p className="text-sm text-gray-500">No city found for &ldquo;{query}&rdquo;</p>
-          <p className="mt-1 text-xs text-gray-400">
-            We&apos;re expanding!{' '}
-            <Link href="/contact" className="text-brand-600 underline">
-              Let us know
-            </Link>{' '}
-            which city you&apos;d like to see.
-          </p>
-        </div>
+          {showNationalRow && (
+            <li className={cityResults.length > 0 ? 'border-t border-gray-100' : undefined}>
+              <button
+                type="button"
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${
+                  isNationalActive ? 'bg-brand-50' : 'hover:bg-gray-50'
+                }`}
+                onMouseEnter={() => setActiveIdx(cityResults.length)}
+                onClick={goNational}
+              >
+                <span className="bg-brand-100 text-brand-700 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
+                  </svg>
+                </span>
+                <span className="flex flex-col">
+                  <span className="text-sm font-semibold text-gray-900">
+                    Search all of Germany for &ldquo;{trimmed}&rdquo;
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Communities, events &amp; resources nationwide
+                  </span>
+                </span>
+              </button>
+            </li>
+          )}
+        </ul>
       )}
     </div>
   );

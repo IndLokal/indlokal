@@ -1,5 +1,6 @@
-import { db, resolveCityIds } from '@/lib/db';
+import { db, resolveCityIds, resolveCityScopeParams } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import type { ResourceScope } from '@prisma/client';
 import { subDays } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 import type { CommunityListItem } from '@/modules/community/types';
@@ -18,15 +19,30 @@ function addIsRecentlyAdded<T extends { createdAt: Date }>(
 
 export type SearchResultRow =
   | { type: 'COMMUNITY'; item: CommunityListItem & { _count: { events: number } } }
-  | { type: 'EVENT'; item: EventListItem };
+  | { type: 'EVENT'; item: EventListItem }
+  | { type: 'RESOURCE'; item: ResourceSearchItem };
+
+/** Lightweight resource shape for unified search results (PRD/TDD-0048). */
+export interface ResourceSearchItem {
+  id: string;
+  title: string;
+  slug: string;
+  resourceType: string;
+  url: string | null;
+  description: string | null;
+  isEssential: boolean;
+  createdAt: Date;
+  city: { name: string; slug: string } | null;
+}
 
 export interface SearchAllOptions {
   q: string;
+  /** Optional city slug. When omitted/empty, search runs across all of Germany. */
   citySlug?: string;
   categorySlug?: string;
   from?: Date;
   to?: Date;
-  type?: 'COMMUNITY' | 'EVENT' | 'ALL';
+  type?: 'COMMUNITY' | 'EVENT' | 'RESOURCE' | 'ALL';
   limit?: number;
   /** Opaque offset cursor - base64-encoded integer offset. */
   cursor?: string;
@@ -38,32 +54,42 @@ export interface SearchAllResult {
 }
 
 /**
- * Search communities by text query within a city.
- * Uses PostgreSQL full-text search (tsvector/tsquery) with ranking.
- * Falls back to ILIKE substring match if FTS returns no results.
+ * Search communities by text query.
+ *
+ * When `citySlug` is provided, results are scoped to that city (+ satellites);
+ * when omitted/empty, the search spans all of Germany (ADR-0010). Uses
+ * PostgreSQL full-text search with a blended ranking that boosts higher-trust
+ * and more-active communities, falling back to ILIKE for partial matches.
  */
 export async function searchCommunities(
-  citySlug: string,
+  citySlug: string | undefined,
   query: string,
   limit = 10,
 ): Promise<CommunityListItem[]> {
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
-  const cityIds = await resolveCityIds(citySlug);
-  if (cityIds.length === 0) return [];
+  let cityIds: string[] = [];
+  if (citySlug) {
+    cityIds = await resolveCityIds(citySlug);
+    if (cityIds.length === 0) return [];
+  }
 
-  // PostgreSQL full-text search with ranking
+  const cityFilter =
+    cityIds.length > 0 ? Prisma.sql`city_id IN (${Prisma.join(cityIds)}) AND` : Prisma.empty;
+
+  // PostgreSQL full-text search with blended ranking: text relevance boosted by
+  // trust + activity so quality supply surfaces above bare keyword matches.
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
     SELECT id FROM communities
-    WHERE city_id IN (${Prisma.join(cityIds)})
-      AND status != 'INACTIVE'
+    WHERE ${cityFilter}
+      status != 'INACTIVE'
       AND to_tsvector('english', name || ' ' || COALESCE(description, ''))
           @@ plainto_tsquery('english', ${trimmed})
     ORDER BY ts_rank(
       to_tsvector('english', name || ' ' || COALESCE(description, '')),
       plainto_tsquery('english', ${trimmed})
-    ) DESC
+    ) * (1 + (COALESCE(trust_score, 0) / 100.0) + (COALESCE(activity_score, 0) / 200.0)) DESC
     LIMIT ${limit}
   `;
 
@@ -73,7 +99,7 @@ export async function searchCommunities(
   if (ids.length === 0) {
     const fallback = await db.community.findMany({
       where: {
-        cityId: { in: cityIds },
+        ...(cityIds.length > 0 && { cityId: { in: cityIds } }),
         status: { not: 'INACTIVE' },
         OR: [
           { name: { contains: trimmed, mode: 'insensitive' } },
@@ -121,34 +147,43 @@ export async function searchCommunities(
 }
 
 /**
- * Search events by text query within a city.
- * Uses PostgreSQL full-text search with fallback to ILIKE.
+ * Search events by text query.
+ *
+ * Scoped to a city when `citySlug` is given, national otherwise (ADR-0010).
+ * Uses PostgreSQL full-text search with a recency-aware blend (sooner events
+ * rank higher) and falls back to ILIKE.
  */
 export async function searchEvents(
-  citySlug: string,
+  citySlug: string | undefined,
   query: string,
   limit = 10,
 ): Promise<EventListItem[]> {
   const trimmed = query.trim();
   if (!trimmed || trimmed.length < 2) return [];
 
-  const cityIds = await resolveCityIds(citySlug);
-  if (cityIds.length === 0) return [];
+  let cityIds: string[] = [];
+  if (citySlug) {
+    cityIds = await resolveCityIds(citySlug);
+    if (cityIds.length === 0) return [];
+  }
 
   const now = new Date();
+  const cityFilter =
+    cityIds.length > 0 ? Prisma.sql`city_id IN (${Prisma.join(cityIds)}) AND` : Prisma.empty;
 
-  // PostgreSQL full-text search with ranking
+  // PostgreSQL full-text search with a recency boost: among similarly relevant
+  // matches, events happening sooner rank higher.
   const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
     SELECT id FROM events
-    WHERE city_id IN (${Prisma.join(cityIds)})
-      AND starts_at >= ${now}
+    WHERE ${cityFilter}
+      starts_at >= ${now}
       AND status != 'CANCELLED'
       AND to_tsvector('english', title || ' ' || COALESCE(description, ''))
           @@ plainto_tsquery('english', ${trimmed})
     ORDER BY ts_rank(
       to_tsvector('english', title || ' ' || COALESCE(description, '')),
       plainto_tsquery('english', ${trimmed})
-    ) DESC
+    ) * (1 + 1.0 / (1 + GREATEST(EXTRACT(EPOCH FROM (starts_at - ${now})) / 86400.0, 0))) DESC
     LIMIT ${limit}
   `;
 
@@ -158,7 +193,7 @@ export async function searchEvents(
   if (ids.length === 0) {
     const fallback = await db.event.findMany({
       where: {
-        cityId: { in: cityIds },
+        ...(cityIds.length > 0 && { cityId: { in: cityIds } }),
         startsAt: { gte: now },
         status: { not: 'CANCELLED' },
         OR: [
@@ -197,6 +232,179 @@ export async function searchEvents(
   // Preserve rank order
   const idOrder = new Map(ids.map((id, i) => [id, i]));
   return results.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+}
+
+/**
+ * Search resources (evergreen guides / official links) by text query.
+ *
+ * Resources are mostly scope-based (national/state guides), so search always
+ * spans national + global rows; when a `citySlug` is provided, city-scoped
+ * rows for that city are also included. Essential resources get a ranking
+ * boost (ADR-0010 blended ranking). Hidden/expired rows are excluded.
+ */
+export async function searchResources(
+  citySlug: string | undefined,
+  query: string,
+  limit = 10,
+): Promise<ResourceSearchItem[]> {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.length < 2) return [];
+
+  // Prefer the consolidated scope helper which returns ids + metadata.
+  let cityIds: string[] = [];
+  let cityMeta: {
+    slug: string;
+    state: string;
+    metroSlug?: string | null;
+    satelliteSlugs: string[];
+  } | null = null;
+  if (citySlug) {
+    const scope = await resolveCityScopeParams(citySlug);
+    if (scope) {
+      cityIds = scope.cityIds;
+      cityMeta = {
+        slug: scope.slug,
+        state: scope.state,
+        metroSlug: scope.metroSlug,
+        satelliteSlugs: scope.satelliteSlugs,
+      };
+    }
+  }
+
+  // Include national/global resources plus rows that match the city's
+  // resolved scope (city, metro, state). When `cityIds` is empty we skip
+  // the filter to preserve previous behavior.
+  let cityFilter: Prisma.Sql = Prisma.empty;
+  if (cityIds.length > 0 && cityMeta) {
+    const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
+    const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
+
+    const globalClause = Prisma.sql`(scope IN ('GLOBAL','COUNTRY'))`;
+    const stateClause = Prisma.sql`(scope = 'STATE' AND scope_region = ${cityMeta.state})`;
+    const metroClause = metroCandidates.length
+      ? Prisma.sql`(scope = 'METRO' AND scope_region IN (${Prisma.join(metroCandidates)}))`
+      : Prisma.empty;
+    const cityClause = Prisma.sql`(scope = 'CITY' AND scope_region IN (${Prisma.join(cityScopeSlugs)}))`;
+
+    cityFilter = Prisma.sql`
+      (
+        city_id IN (${Prisma.join(cityIds)})
+        OR (
+          city_id IS NULL
+          AND (
+            ${globalClause}
+            OR ${stateClause}
+            OR ${metroClause}
+            OR ${cityClause}
+          )
+        )
+      ) AND`;
+  } else if (cityIds.length > 0) {
+    // Fallback when we couldn't load city metadata: preserve previous behavior
+    cityFilter = Prisma.sql`(city_id IS NULL OR city_id IN (${Prisma.join(cityIds)})) AND`;
+  }
+  const now = new Date();
+
+  const rankedIds = await db.$queryRaw<Array<{ id: string }>>`
+    SELECT id FROM resources
+    WHERE ${cityFilter}
+      is_hidden = false
+      AND (valid_until IS NULL OR valid_until >= ${now})
+      AND to_tsvector('english', title || ' ' || COALESCE(description, ''))
+          @@ plainto_tsquery('english', ${trimmed})
+    ORDER BY ts_rank(
+      to_tsvector('english', title || ' ' || COALESCE(description, '')),
+      plainto_tsquery('english', ${trimmed})
+    ) * (CASE WHEN is_essential THEN 1.5 ELSE 1 END) DESC
+    LIMIT ${limit}
+  `;
+
+  let ids = rankedIds.map((r) => r.id);
+
+  // Fallback to ILIKE for partial matches
+  if (ids.length === 0) {
+    const where: Prisma.ResourceWhereInput = {
+      isHidden: false,
+      OR: [
+        { title: { contains: trimmed, mode: 'insensitive' } },
+        { description: { contains: trimmed, mode: 'insensitive' } },
+      ],
+    };
+
+    if (cityIds.length > 0 && cityMeta) {
+      const metroCandidates = [cityMeta.metroSlug, cityMeta.slug].filter(Boolean) as string[];
+      const cityScopeSlugs = [cityMeta.slug, ...cityMeta.satelliteSlugs];
+
+      where.AND = [
+        {
+          OR: [
+            { cityId: { in: cityIds } },
+            {
+              AND: [
+                { cityId: null },
+                {
+                  OR: [
+                    { scope: 'GLOBAL' as ResourceScope },
+                    { scope: 'COUNTRY' as ResourceScope },
+                    { AND: [{ scope: 'STATE' as ResourceScope }, { scopeRegion: cityMeta.state }] },
+                    ...(metroCandidates.length
+                      ? [
+                          {
+                            AND: [
+                              { scope: 'METRO' as ResourceScope },
+                              { scopeRegion: { in: metroCandidates } },
+                            ],
+                          },
+                        ]
+                      : []),
+                    {
+                      AND: [
+                        { scope: 'CITY' as ResourceScope },
+                        { scopeRegion: { in: cityScopeSlugs } },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ];
+    } else if (cityIds.length > 0) {
+      // No city metadata found — fall back to previous behavior
+      where.OR = [{ cityId: null }, { cityId: { in: cityIds } }];
+    }
+
+    const fallback = await db.resource.findMany({
+      where,
+      select: { id: true },
+      orderBy: [{ isEssential: 'desc' }, { priority: 'desc' }],
+      take: limit,
+    });
+    ids = fallback.map((r) => r.id);
+  }
+
+  if (ids.length === 0) return [];
+
+  const results = await db.resource.findMany({
+    where: { id: { in: ids } },
+    select: {
+      id: true,
+      title: true,
+      slug: true,
+      resourceType: true,
+      url: true,
+      description: true,
+      isEssential: true,
+      createdAt: true,
+      city: { select: { name: true, slug: true } },
+    },
+  });
+
+  const idOrder = new Map(ids.map((id, i) => [id, i]));
+  return results
+    .sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0))
+    .map((r) => ({ ...r, resourceType: String(r.resourceType) }));
 }
 
 /**
@@ -317,8 +525,9 @@ async function _getTrendingKeywords(citySlug?: string, limit = 10): Promise<stri
 }
 
 /**
- * Combined full-text search across communities and/or events.
- * Results are interleaved in relevance order (communities first, then events).
+ * Combined full-text search across communities, events and resources.
+ * When `citySlug` is omitted/empty the search spans all of Germany (ADR-0010).
+ * Results are grouped: communities first, then events, then resources.
  * Cursor is a base64-encoded offset integer for simple pagination.
  */
 export async function searchAll(opts: SearchAllOptions): Promise<SearchAllResult> {
@@ -329,9 +538,10 @@ export async function searchAll(opts: SearchAllOptions): Promise<SearchAllResult
 
   const communityItems: SearchResultRow[] = [];
   const eventItems: SearchResultRow[] = [];
+  const resourceItems: SearchResultRow[] = [];
 
   if (type === 'COMMUNITY' || type === 'ALL') {
-    const communities = await searchCommunities(citySlug ?? '', q, fetchLimit + offset);
+    const communities = await searchCommunities(citySlug, q, fetchLimit + offset);
     let filtered = communities;
     if (categorySlug) {
       filtered = filtered.filter((c) =>
@@ -348,7 +558,7 @@ export async function searchAll(opts: SearchAllOptions): Promise<SearchAllResult
   }
 
   if (type === 'EVENT' || type === 'ALL') {
-    const events = await searchEvents(citySlug ?? '', q, fetchLimit + offset);
+    const events = await searchEvents(citySlug, q, fetchLimit + offset);
     let filtered = events;
     if (categorySlug) {
       filtered = filtered.filter((e) =>
@@ -367,8 +577,18 @@ export async function searchAll(opts: SearchAllOptions): Promise<SearchAllResult
     }
   }
 
-  // Interleave: communities first, then events
-  const merged: SearchResultRow[] = [...communityItems, ...eventItems];
+  // Resources are not category-filtered (they use audiences/lifecycle, not
+  // community categories) and are skipped when a category facet is active.
+  if ((type === 'RESOURCE' || type === 'ALL') && !categorySlug) {
+    const resources = await searchResources(citySlug, q, fetchLimit + offset);
+    const sliced = resources.slice(offset);
+    for (const r of sliced) {
+      resourceItems.push({ type: 'RESOURCE', item: r });
+    }
+  }
+
+  // Group: communities first, then events, then resources
+  const merged: SearchResultRow[] = [...communityItems, ...eventItems, ...resourceItems];
   const hasMore = merged.length > limit;
   const items = merged.slice(0, limit);
 

@@ -55,12 +55,16 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
     { href: `/${city}/business-events`, label: 'Business' },
     { href: `/${city}/communities`, label: 'Communities' },
     { href: `/${city}/resources`, label: 'Resources' },
-    { href: `/${city}/search`, label: 'Search' },
     { href: '/submit', label: '+ Submit', highlight: true },
   ];
 
   return (
-    <AppShell subtitle={cityName} navLinks={navLinks}>
+    <AppShell
+      subtitle={cityName}
+      navLinks={navLinks}
+      searchHref={`/${city}/search`}
+      searchLabel={`Search ${cityName}`}
+    >
       {children}
     </AppShell>
   );
