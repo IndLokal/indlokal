@@ -52,7 +52,7 @@ export default function HomePage() {
     inLanguage: 'en',
     potentialAction: {
       '@type': 'SearchAction',
-      target: `${siteConfig.url}/{city}/search?q={search_term_string}`,
+      target: `${siteConfig.url}/search?q={search_term_string}`,
       'query-input': 'required name=search_term_string',
     },
   };
@@ -122,8 +122,8 @@ export default function HomePage() {
             </div>
 
             <p className="text-brand-200/90 mt-5 text-sm">
-              Searching for Indian communities in Germany or Indian events in Germany? Start by
-              choosing your city.
+              Jump straight to your city, or search communities, events and resources across all of
+              Germany.
             </p>
 
             <div className="mt-6 flex flex-wrap justify-center gap-4">
