@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
+import { communityOptions } from '@indlokal/shared';
 import { refreshCommunityScore } from '@/modules/scoring';
 import { canEditCommunity, canManageCommunity } from '@/lib/auth/community-permissions';
 import {
@@ -17,6 +18,7 @@ const editProfileSchema = z.object({
   description: z.string().min(10).max(2000),
   descriptionLong: z.string().max(10000).optional().or(z.literal('')),
   logoUrl: z.string().trim().url().optional().or(z.literal('')),
+  organizationType: z.enum(communityOptions.ORGANIZATION_TYPE_VALUES).optional().or(z.literal('')),
   personaSegments: z.array(z.string()).default([]),
   languages: z.array(z.string()).default([]),
   foundedYear: z.coerce
@@ -93,6 +95,7 @@ export async function editCommunityProfile(
     description: formData.get('description') as string,
     descriptionLong: (formData.get('descriptionLong') as string) || undefined,
     logoUrl: (formData.get('logoUrl') as string) || undefined,
+    organizationType: (formData.get('organizationType') as string) || undefined,
     personaSegments: personaSegmentsRaw,
     languages: languagesRaw,
     foundedYear: formData.get('foundedYear') ? Number(formData.get('foundedYear')) : undefined,
@@ -120,6 +123,7 @@ export async function editCommunityProfile(
           description: data.description,
           descriptionLong: data.descriptionLong || null,
           logoUrl: data.logoUrl || null,
+          organizationType: data.organizationType ? data.organizationType : null,
           personaSegments: data.personaSegments,
           languages: data.languages,
           foundedYear: data.foundedYear && !isNaN(data.foundedYear) ? data.foundedYear : null,
