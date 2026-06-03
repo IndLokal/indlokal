@@ -8,7 +8,7 @@ import { verifyPreviewToken } from '@/lib/preview-tokens';
 import EventDetailServer from '@/components/EventDetailServer';
 import type { EventWithRelations } from '@/modules/event/types';
 
-type Props = { params: Promise<{ slug: string }>; searchParams?: { token?: string } };
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<{ token?: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
@@ -19,7 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function EventPreviewPage({ params, searchParams }: Props) {
   const { slug } = await params;
-  const sp = searchParams ?? {};
+  const sp = searchParams ? await searchParams : {};
 
   // If a token is provided, consume it (one-time). If consumed successfully
   // we will load the event by id. Otherwise, fall back to editor-based access.
