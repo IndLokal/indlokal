@@ -5,6 +5,7 @@ import {
   processNotificationOutbox,
   defaultTransports,
 } from '@/modules/notifications';
+import type { NotificationChannel } from '@prisma/client';
 
 export const maxDuration = 120;
 
@@ -29,7 +30,16 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const digest = await enqueueWeeklyDigest(now);
     const reminders = await enqueueSavedEventReminders(now);
-    const processed = await processNotificationOutbox({ transports: defaultTransports, now });
+    // Only process channels for which we have transports configured
+    // (e.g. INBOX). This prevents the cron from claiming PUSH/EMAIL rows
+    // that would otherwise be marked FAILED because transports aren't
+    // yet available in this environment.
+    const channels = Object.keys(defaultTransports) as NotificationChannel[];
+    const processed = await processNotificationOutbox({
+      transports: defaultTransports,
+      now,
+      channels,
+    });
 
     return NextResponse.json({ ok: true, digest, reminders, processed });
   } catch (err) {

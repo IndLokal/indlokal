@@ -95,6 +95,11 @@ export type ProcessOptions = {
   now?: Date;
   /** Per-channel transport; if absent for a channel, that row is FAILED. */
   transports: Partial<Record<NotificationChannel, Transport>>;
+  /** Optional: only claim rows whose channel is in this list. When set,
+   *  the processor will ignore other channels (useful for cron jobs that
+   *  only want to drain INBOX rows and avoid failing PUSH/EMAIL rows).
+   */
+  channels?: NotificationChannel[];
 };
 
 type ProcessResult = {
@@ -121,15 +126,31 @@ export async function processNotificationOutbox(opts: ProcessOptions): Promise<P
   // dispatching, the row stays PENDING and will be re-claimed on the next
   // tick (at-least-once delivery).
   const claimed = await db.$transaction(async (tx) => {
-    const candidates = await tx.$queryRaw<Array<{ id: string }>>`
+    // Build an optional channel filter to avoid claiming rows for
+    // channels the caller doesn't intend to process (e.g. cron
+    // draining only INBOX). We construct a literal list because
+    // NotificationChannel values are internal enums and safe.
+    const channelClause =
+      opts.channels && opts.channels.length > 0
+        ? ` AND channel IN (${opts.channels.map((c) => `'${c}'`).join(',')})`
+        : '';
+
+    // Construct the SQL and use $queryRawUnsafe because Prisma's Sql
+    // builder doesn't support easy concatenation with dynamic IN
+    // clauses. Inputs are internal enum values or parameters below.
+    const sql = `
       SELECT id FROM notification_outbox
       WHERE status = 'PENDING'
-        AND (not_before IS NULL OR not_before <= ${now})
-        AND scheduled_at <= ${now}
+        AND (not_before IS NULL OR not_before <= $1)
+        AND scheduled_at <= $1
+      ${channelClause}
       ORDER BY scheduled_at ASC
-      LIMIT ${batchSize}
+      LIMIT $2
       FOR UPDATE SKIP LOCKED
     `;
+    // $queryRawUnsafe is acceptable here because `channelClause` is
+    // derived from internal enums; `now` and `batchSize` are parameters.
+    const candidates = await tx.$queryRawUnsafe<Array<{ id: string }>>(sql, now, batchSize);
     if (candidates.length === 0) return [];
     const ids = candidates.map((c) => c.id);
     await tx.notificationOutbox.updateMany({
