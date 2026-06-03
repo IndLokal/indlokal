@@ -1,5 +1,6 @@
 import { db, resolveCityIds, resolveCityScopeParams } from '@/lib/db';
 import { Prisma } from '@prisma/client';
+import type { ResourceScope } from '@prisma/client';
 import { subDays } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 import type { CommunityListItem } from '@/modules/community/types';
@@ -343,13 +344,25 @@ export async function searchResources(
                 { cityId: null },
                 {
                   OR: [
-                    { scope: 'GLOBAL' },
-                    { scope: 'COUNTRY' },
-                    { AND: [{ scope: 'STATE' }, { scopeRegion: cityMeta.state }] },
+                    { scope: 'GLOBAL' as ResourceScope },
+                    { scope: 'COUNTRY' as ResourceScope },
+                    { AND: [{ scope: 'STATE' as ResourceScope }, { scopeRegion: cityMeta.state }] },
                     ...(metroCandidates.length
-                      ? [{ AND: [{ scope: 'METRO' }, { scopeRegion: { in: metroCandidates } }] }]
+                      ? [
+                          {
+                            AND: [
+                              { scope: 'METRO' as ResourceScope },
+                              { scopeRegion: { in: metroCandidates } },
+                            ],
+                          },
+                        ]
                       : []),
-                    { AND: [{ scope: 'CITY' }, { scopeRegion: { in: cityScopeSlugs } }] },
+                    {
+                      AND: [
+                        { scope: 'CITY' as ResourceScope },
+                        { scopeRegion: { in: cityScopeSlugs } },
+                      ],
+                    },
                   ],
                 },
               ],
