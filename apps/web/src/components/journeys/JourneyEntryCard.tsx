@@ -59,7 +59,7 @@ export function JourneyEntryCard({
         <p className="text-muted mt-1 text-sm">{tagline}</p>
       </div>
       <span className="text-brand-700 mt-auto text-sm font-medium group-hover:underline">
-        Start the journey →
+        See the guide →
       </span>
     </Link>
   );

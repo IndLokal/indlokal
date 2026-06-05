@@ -23,9 +23,10 @@ export function JourneyFeedStrip({ citySlug, cityName }: Props) {
     <section className="space-y-4">
       <div className="flex items-baseline justify-between">
         <div>
-          <h2 className="text-xl font-semibold">Start your journey in {cityName}</h2>
+          <h2 className="text-xl font-semibold">Find your path in {cityName}</h2>
           <p className="text-muted text-sm">
-            Guided paths through the official steps, communities and events that matter for you.
+            Whether you&apos;re moving here or already settled, follow the steps, communities and
+            events that fit your situation.
           </p>
         </div>
       </div>
