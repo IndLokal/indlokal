@@ -12,6 +12,8 @@ type Props = {
 
 const KEY = 'journey:last';
 const STORE_EVENT = 'journey:last-changed';
+let cachedRaw: string | null = null;
+let cachedSnapshot: { citySlug: string; personaSlug: string } | null = null;
 
 /**
  * Record the persona a visitor last opened, so a returning user can continue
@@ -39,13 +41,21 @@ function subscribe(callback: () => void) {
 function readLast(): { citySlug: string; personaSlug: string } | null {
   try {
     const raw = localStorage.getItem(KEY);
+    if (raw === cachedRaw) return cachedSnapshot;
+
+    cachedRaw = raw;
     if (!raw) return null;
+
     const parsed = JSON.parse(raw) as { citySlug?: unknown; personaSlug?: unknown };
     if (typeof parsed?.citySlug === 'string' && typeof parsed?.personaSlug === 'string') {
-      return { citySlug: parsed.citySlug, personaSlug: parsed.personaSlug };
+      cachedSnapshot = { citySlug: parsed.citySlug, personaSlug: parsed.personaSlug };
+      return cachedSnapshot;
     }
+    cachedSnapshot = null;
     return null;
   } catch {
+    cachedRaw = null;
+    cachedSnapshot = null;
     return null;
   }
 }
