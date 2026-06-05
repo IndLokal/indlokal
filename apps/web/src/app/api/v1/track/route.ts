@@ -27,6 +27,11 @@ const INTERACTION_TYPE_MAP: Record<string, string> = {
   event_shared: 'SHARE',
   event_register_clicked: 'CLICK_ACCESS',
   [Events.BUSINESS_LENS_VIEWED]: 'VIEW',
+  [Events.JOURNEY_VIEW]: 'VIEW',
+  [Events.JOURNEY_STAGE_VIEW]: 'VIEW',
+  [Events.JOURNEY_BLOCK_ACTION]: 'CLICK_ACCESS',
+  [Events.JOURNEY_SAVE]: 'SAVE',
+  [Events.JOURNEY_ENTRY_CLICK]: 'CLICK_ACCESS',
 };
 
 const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
@@ -50,6 +55,12 @@ const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
   [Events.SEARCH_PERFORMED]: Events.SEARCH_PERFORMED,
   [Events.COMMUNITY_ACCESS_CLICKED]: Events.COMMUNITY_ACCESS_CLICKED,
   [Events.BUSINESS_LENS_VIEWED]: Events.BUSINESS_LENS_VIEWED,
+  [Events.JOURNEY_ENTRY_CLICK]: Events.JOURNEY_ENTRY_CLICK,
+  [Events.JOURNEY_VIEW]: Events.JOURNEY_VIEW,
+  [Events.JOURNEY_STAGE_VIEW]: Events.JOURNEY_STAGE_VIEW,
+  [Events.JOURNEY_BLOCK_ACTION]: Events.JOURNEY_BLOCK_ACTION,
+  [Events.JOURNEY_SAVE]: Events.JOURNEY_SAVE,
+  [Events.JOURNEY_PERSONA_SWITCH]: Events.JOURNEY_PERSONA_SWITCH,
 };
 
 const TrackBody = z.object({

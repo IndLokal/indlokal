@@ -46,6 +46,17 @@ Central catalog for analytics-bearing events. PRD/TDD-0042 is the parent strateg
 | `event_unsaved`            | `event_id`                              | PostHog + UserInteraction | Unsaved event funnel event.                                         |
 | `business_lens_viewed`     | `city`, `surface`, `lens_context`       | PostHog + UserInteraction | Business-discovery lens entry.                                      |
 
+### Journeys (PRD/TDD-0052)
+
+| Event                    | Required properties                                | Sink                      | Notes                                                             |
+| ------------------------ | -------------------------------------------------- | ------------------------- | ----------------------------------------------------------------- |
+| `journey_entry_click`    | `city`, `persona_slug`, `surface`                  | PostHog + UserInteraction | Click on a journey entry point (home strip, hub, landing promo).  |
+| `journey_view`           | `city`, `persona`, `persona_slug`                  | PostHog + UserInteraction | A composed journey page was viewed (fired on mount).              |
+| `journey_stage_view`     | `city`, `persona_slug`, `stage`                    | PostHog + UserInteraction | A lifecycle stage scrolled into view (IntersectionObserver).      |
+| `journey_block_action`   | `city`, `persona_slug`, `entity_kind`, `entity_id` | PostHog + UserInteraction | Click on a block's action (the action-or-drop next step).         |
+| `journey_save`           | `city`, `persona`, `persona_slug`                  | PostHog + UserInteraction | "Save this journey" bookmark (localStorage, no account required). |
+| `journey_persona_switch` | `city`, `from_persona_slug`, `to_persona_slug`     | PostHog + UserInteraction | Persona switcher change on a journey page.                        |
+
 ### Conversion
 
 | Event                 | Required properties | Sink    | Notes                  |

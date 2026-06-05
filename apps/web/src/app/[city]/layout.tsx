@@ -6,6 +6,7 @@ import {
   UPCOMING_CITIES,
   SATELLITE_TO_METRO,
   getConfiguredCityName,
+  FLAGS,
 } from '@/lib/config';
 import { AppShell } from '@/components/layout';
 
@@ -55,6 +56,7 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
     { href: `/${city}/business-events`, label: 'Business' },
     { href: `/${city}/communities`, label: 'Communities' },
     { href: `/${city}/resources`, label: 'Resources' },
+    ...(FLAGS.journeyLayerEnabled ? [{ href: `/${city}/journeys`, label: 'Journeys' }] : []),
     { href: '/submit', label: '+ Submit', highlight: true },
   ];
 

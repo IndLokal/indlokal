@@ -36,6 +36,14 @@ export const Events = {
   SUBMISSION_IMAGE_ADDED: 'submission_image_added',
   BUSINESS_LENS_VIEWED: 'business_lens_viewed',
 
+  // Journey Layer (PRD/TDD-0052)
+  JOURNEY_ENTRY_CLICK: 'journey_entry_click',
+  JOURNEY_VIEW: 'journey_view',
+  JOURNEY_STAGE_VIEW: 'journey_stage_view',
+  JOURNEY_BLOCK_ACTION: 'journey_block_action',
+  JOURNEY_SAVE: 'journey_save',
+  JOURNEY_PERSONA_SWITCH: 'journey_persona_switch',
+
   // Conversion - high-value business outcomes
   COMMUNITY_SUBMITTED: 'community_submitted',
   CLAIM_SUBMITTED: 'claim_submitted',

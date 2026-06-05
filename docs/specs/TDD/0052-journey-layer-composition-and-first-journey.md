@@ -1,6 +1,6 @@
 # TDD-0052: Journey Layer v1 - composition engine, generalized API, first journey surface
 
-- **Status:** Draft
+- **Status:** Implemented (flag-gated, `JOURNEY_LAYER_ENABLED`)
 - **Linked PRD:** PRD-0052
 - **Linked ADR:** ADR-0011 (composition model), ADR-0007 (resource scope), ADR-0010 (discovery graph)
 - **Owner:** Engineering (Phase 2)

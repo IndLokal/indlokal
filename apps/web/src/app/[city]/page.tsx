@@ -7,6 +7,7 @@ import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';
 import { SectionHeader } from '@/components/ui';
 import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
+import { JourneyFeedStrip } from '@/components/journeys/JourneyFeedStrip';
 
 /**
  * City Feed - the primary discovery surface.
@@ -111,6 +112,9 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Journey Layer entry strip (PRD/TDD-0052) — inert until flag-enabled */}
+      <JourneyFeedStrip citySlug={city} cityName={cityName} />
 
       {/* This Week / Month */}
       <section className="space-y-5">

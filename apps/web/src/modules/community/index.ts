@@ -22,6 +22,7 @@ export {
   unfollowCommunity,
   isCommunityFollowed,
   getSavedCommunities,
+  getCommunitiesForPersona,
 } from './queries';
 export type {
   CommunityWithRelations,
@@ -29,4 +30,4 @@ export type {
   CommunityDetailRow,
   CommunitySummaryRow,
 } from './types';
-export type { SavedCommunityRow } from './queries';
+export type { SavedCommunityRow, JourneyCommunityRow } from './queries';

@@ -1,6 +1,6 @@
 # PRD-0052: Journey Layer v1 - composition engine + first journey (city x persona)
 
-- **Status:** Draft
+- **Status:** Implemented (flag-gated, `JOURNEY_LAYER_ENABLED`)
 - **Owner:** Product (Phase 2)
 - **Reviewers:** PM, Eng Lead, Design
 - **Linked:** TDD-0052, ADR-0011, PRD/TDD-0053 (tagging ops, hard dependency),
