@@ -8,8 +8,8 @@ import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 import { checkRateLimit, businessConnectLimiter } from '@/lib/rate-limit';
 import { sendBusinessConnectConfirmEmail } from '@/lib/email';
-import { businessConnectSubmissionSchema } from '../schema';
-import { ACTIVE_BUSINESS_CONNECT_PILOT, getBusinessConnectPilot } from '../pilot';
+import { buildBusinessConnectSubmissionSchema } from '../schema';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM, getBusinessConnectProgram } from '../pilot';
 import { isInviteUsable } from '../invite';
 import {
   generateConfirmationToken,
@@ -79,7 +79,7 @@ export async function submitBusinessConnect(
     };
   }
 
-  const pilot = getBusinessConnectPilot(invite.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PILOT;
+  const pilot = getBusinessConnectProgram(invite.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
   const raw = {
     participantType: (formData.get('participantType') as string) ?? '',
@@ -109,7 +109,7 @@ export async function submitBusinessConnect(
     consentToShareSelectedInfo: formData.get('consentToShareSelectedInfo') === 'on',
   };
 
-  const parsed = businessConnectSubmissionSchema.safeParse(raw);
+  const parsed = buildBusinessConnectSubmissionSchema(pilot).safeParse(raw);
   if (!parsed.success) {
     await captureServerEvent(ip, Events.BUSINESS_CONNECT_SUBMIT_ERROR, {
       pilotSlug: pilot.slug,
@@ -236,7 +236,7 @@ export async function submitBusinessConnect(
  */
 export async function resendBusinessConnectConfirmation(formData: FormData): Promise<void> {
   const inviteToken = (formData.get('inviteToken') as string | null)?.trim();
-  const fallbackRoute = ACTIVE_BUSINESS_CONNECT_PILOT.routePath;
+  const fallbackRoute = ACTIVE_BUSINESS_CONNECT_PROGRAM.routePath;
 
   if (!inviteToken) {
     redirect(`${fallbackRoute}/submit?resent=invalid`);
@@ -261,8 +261,8 @@ export async function resendBusinessConnectConfirmation(formData: FormData): Pro
   });
 
   const pilot = invite
-    ? (getBusinessConnectPilot(invite.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PILOT)
-    : ACTIVE_BUSINESS_CONNECT_PILOT;
+    ? (getBusinessConnectProgram(invite.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PROGRAM)
+    : ACTIVE_BUSINESS_CONNECT_PROGRAM;
   const returnHref = `${pilot.routePath}/submit?invite=${encodeURIComponent(inviteToken)}`;
 
   if (!invite || !invite.submission) {

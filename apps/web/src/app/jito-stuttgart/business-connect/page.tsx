@@ -4,10 +4,10 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { can } from '@/lib/auth/permissions';
 import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from './pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from './pilot';
 import { BusinessConnectPageView } from './BusinessConnectPageView';
 
-const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
 export const metadata: Metadata = {
   title: `${pilot.partnerName} Business Connect | IndLokal`,

@@ -2,11 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { hashToken } from '@/lib/session';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from '../pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '../pilot';
 import { isConfirmationFresh } from '../submit/confirmation';
 import { confirmBusinessConnectEnquiry } from './actions';
 
-const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
 export const metadata: Metadata = {
   title: `Confirm your enquiry | ${pilot.partnerName} Business Connect Pilot | IndLokal`,

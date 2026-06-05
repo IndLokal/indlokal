@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { useActionState, useEffect, useRef, useState } from 'react';
 import { Events, useTrackEvent } from '@/lib/analytics';
 import {
-  LOOKING_FOR_OPTIONS,
-  OFFERING_OPTIONS,
-  PARTICIPANT_TYPES,
   YES_NO_NOT_SURE,
+  programLookingForOptions,
+  programOfferingOptions,
+  programParticipantTypes,
 } from '../options';
-import type { BusinessConnectPilot } from '../pilot';
+import type { BusinessConnectProgram } from '../pilot';
 import { submitBusinessConnect, type BusinessConnectResult } from './actions';
 
 function FieldError({ errors }: { errors?: string[] }) {
@@ -207,13 +207,16 @@ export function SubmitBusinessConnectForm({
   previewMode = false,
   dashboardHref,
 }: {
-  pilot: BusinessConnectPilot;
+  pilot: BusinessConnectProgram;
   inviteToken: string;
   inviteEmail: string;
   previewMode?: boolean;
   dashboardHref?: string | null;
 }) {
   const track = useTrackEvent();
+  const participantTypeOptions = programParticipantTypes(pilot);
+  const lookingForOptions = programLookingForOptions(pilot);
+  const offeringOptions = programOfferingOptions(pilot);
   const [state, formAction, isPending] = useActionState<BusinessConnectResult, FormData>(
     submitBusinessConnect,
     null,
@@ -353,7 +356,7 @@ export function SubmitBusinessConnectForm({
             selectionMode="single"
           />
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {PARTICIPANT_TYPES.map((option) => (
+            {participantTypeOptions.map((option) => (
               <label key={option.value} className="relative block">
                 <input
                   type="radio"
@@ -380,7 +383,7 @@ export function SubmitBusinessConnectForm({
           />
           <CheckboxGroup
             name="lookingFor"
-            options={LOOKING_FOR_OPTIONS}
+            options={lookingForOptions}
             errors={errors?.lookingFor}
             initialVisibleCount={8}
             showMoreLabel="Show more partner/match intents"
@@ -414,7 +417,7 @@ export function SubmitBusinessConnectForm({
           />
           <CheckboxGroup
             name="offering"
-            options={OFFERING_OPTIONS}
+            options={offeringOptions}
             errors={errors?.offering}
             initialVisibleCount={8}
             showMoreLabel="Show more capability options"

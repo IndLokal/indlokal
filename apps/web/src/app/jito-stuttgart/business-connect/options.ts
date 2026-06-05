@@ -1,28 +1,35 @@
 /**
  * Business Connect — shared option constants (taxonomy + status lifecycle).
  *
- * These are Business-Connect-scoped *shared defaults* reused across pilots; they
+ * These are Business-Connect-scoped *shared defaults* reused across programs; they
  * are intentionally NOT promoted to the platform-wide taxonomy in `@indlokal/shared`
- * (this is curated pilot territory, not a generic Business/Connect product). A
- * future pilot that needs different options can override per-pilot without touching
- * the engine. Per-pilot identity (slug, labels, consent version) lives in `./pilot`.
+ * (this is curated program territory, not a generic Business/Connect product). A
+ * program that needs different options can override them per-program in `./pilot`
+ * (`participantTypes` / `lookingForOptions` / `offeringOptions`); the resolver
+ * helpers below fall back to these defaults so the engine never forks. Per-program
+ * identity (slug, labels, consent version) lives in `./pilot`.
  */
 
-import { ACTIVE_BUSINESS_CONNECT_PILOT, type BusinessConnectPilot } from './pilot';
-
-export type { BusinessConnectPilot };
-export {
-  ACTIVE_BUSINESS_CONNECT_PILOT,
-  BUSINESS_CONNECT_PILOTS,
-  getBusinessConnectPilot,
-  businessConnectPilotLabel,
+import {
+  ACTIVE_BUSINESS_CONNECT_PROGRAM,
+  type BusinessConnectOption,
+  type BusinessConnectProgram,
 } from './pilot';
 
-/** Convenience re-exports bound to the currently active pilot (single source: `./pilot`). */
-export const BUSINESS_CONNECT_PILOT_SLUG = ACTIVE_BUSINESS_CONNECT_PILOT.slug;
-export const BUSINESS_CONNECT_EVENT_LABEL = ACTIVE_BUSINESS_CONNECT_PILOT.eventLabel;
+export type { BusinessConnectProgram, BusinessConnectOption };
+export {
+  ACTIVE_BUSINESS_CONNECT_PROGRAM,
+  BUSINESS_CONNECT_PROGRAMS,
+  getBusinessConnectProgram,
+  getBusinessConnectProgramByPartnerSlug,
+  businessConnectProgramLabel,
+} from './pilot';
+
+/** Convenience re-exports bound to the currently active program (single source: `./pilot`). */
+export const BUSINESS_CONNECT_PROGRAM_SLUG = ACTIVE_BUSINESS_CONNECT_PROGRAM.slug;
+export const BUSINESS_CONNECT_EVENT_LABEL = ACTIVE_BUSINESS_CONNECT_PROGRAM.eventLabel;
 export const BUSINESS_CONNECT_CONSENT_POLICY_VERSION =
-  ACTIVE_BUSINESS_CONNECT_PILOT.consentPolicyVersion;
+  ACTIVE_BUSINESS_CONNECT_PROGRAM.consentPolicyVersion;
 
 type Option = { value: string; label: string };
 
@@ -101,6 +108,24 @@ export const PARTICIPANT_TYPE_LABELS = BUILD_LABEL_MAP(PARTICIPANT_TYPES);
 export const LOOKING_FOR_LABELS = BUILD_LABEL_MAP(LOOKING_FOR_OPTIONS);
 export const OFFERING_LABELS = BUILD_LABEL_MAP(OFFERING_OPTIONS);
 export const YES_NO_NOT_SURE_LABELS = BUILD_LABEL_MAP(YES_NO_NOT_SURE);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Per-program taxonomy resolvers
+//
+// A program may override the three select taxonomies in its registry entry; when
+// it doesn't, these return the shared defaults above. The form renders from these
+// and the Zod schema derives its enums from the resolved values, so overrides stay
+// in sync with validation automatically.
+// ─────────────────────────────────────────────────────────────────────────────
+
+export const programParticipantTypes = (program: BusinessConnectProgram): readonly Option[] =>
+  program.participantTypes ?? PARTICIPANT_TYPES;
+
+export const programLookingForOptions = (program: BusinessConnectProgram): readonly Option[] =>
+  program.lookingForOptions ?? LOOKING_FOR_OPTIONS;
+
+export const programOfferingOptions = (program: BusinessConnectProgram): readonly Option[] =>
+  program.offeringOptions ?? OFFERING_OPTIONS;
 
 export const BUSINESS_CONNECT_STATUSES = [
   'NEW',

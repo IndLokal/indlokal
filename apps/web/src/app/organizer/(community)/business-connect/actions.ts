@@ -9,7 +9,7 @@ import { getCurrentCommunityId } from '@/lib/session';
 import { resolveActiveOrganizerCommunity } from '@/lib/organizer/workspace';
 import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
 import { sendBusinessConnectInviteEmail } from '@/lib/email';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from '@/app/jito-stuttgart/business-connect/pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '@/app/jito-stuttgart/business-connect/pilot';
 import { BUSINESS_CONNECT_STATUSES } from '@/app/jito-stuttgart/business-connect/options';
 import {
   buildInviteUrl,
@@ -17,7 +17,7 @@ import {
   inviteExpiresAt,
 } from '@/app/jito-stuttgart/business-connect/invite';
 
-const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
 export type InviteBusinessConnectResult =
   | { success: true; message: string }

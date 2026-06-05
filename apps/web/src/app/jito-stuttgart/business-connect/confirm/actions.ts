@@ -11,7 +11,7 @@ import {
   sendBusinessConnectAdminNotificationEmail,
 } from '@/lib/email';
 import { LOOKING_FOR_LABELS, OFFERING_LABELS, PARTICIPANT_TYPE_LABELS } from '../options';
-import { ACTIVE_BUSINESS_CONNECT_PILOT, getBusinessConnectPilot } from '../pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM, getBusinessConnectProgram } from '../pilot';
 import { isConfirmationFresh } from '../submit/confirmation';
 
 const labelList = (
@@ -33,7 +33,7 @@ const labelList = (
  */
 export async function confirmBusinessConnectEnquiry(formData: FormData): Promise<void> {
   const token = (formData.get('token') as string | null)?.trim();
-  const fallbackRoute = ACTIVE_BUSINESS_CONNECT_PILOT.routePath;
+  const fallbackRoute = ACTIVE_BUSINESS_CONNECT_PROGRAM.routePath;
 
   if (!token) redirect(`${fallbackRoute}/confirm?state=invalid`);
 
@@ -54,7 +54,7 @@ export async function confirmBusinessConnectEnquiry(formData: FormData): Promise
     redirect(`${fallbackRoute}/confirm?state=invalid`);
   }
 
-  const pilot = getBusinessConnectPilot(submission.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PILOT;
+  const pilot = getBusinessConnectProgram(submission.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
   // Idempotent: a second click on an already-confirmed link is a no-op.
   if (submission.emailConfirmedAt) {

@@ -8,7 +8,7 @@ import {
   OFFERING_LABELS,
   PARTICIPANT_TYPE_LABELS,
   YES_NO_NOT_SURE_LABELS,
-  businessConnectPilotLabel,
+  businessConnectProgramLabel,
 } from '@/app/jito-stuttgart/business-connect/options';
 
 export const dynamic = 'force-dynamic';
@@ -76,7 +76,7 @@ export default async function AdminBusinessConnectPage() {
                       {s.status}
                     </span>
                     <span className="bg-brand-50 text-brand-700 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold">
-                      {businessConnectPilotLabel(s.pilotSlug)}
+                      {businessConnectProgramLabel(s.pilotSlug)}
                     </span>
                     <span className="bg-muted-bg text-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium">
                       {PARTICIPANT_TYPE_LABELS[s.participantType] ?? s.participantType}

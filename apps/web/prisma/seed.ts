@@ -14,7 +14,7 @@ import { subDays, addDays, setHours, setMinutes } from 'date-fns';
 import { refreshAllScores } from '../src/modules/scoring/scoring';
 import { runBootstrap } from './bootstrap';
 import { runDirectorySeed } from './directory';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from '../src/app/jito-stuttgart/business-connect/pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '../src/app/jito-stuttgart/business-connect/pilot';
 
 const prisma = new PrismaClient();
 const shouldSeedDemoEvents = process.env.SEED_DEMO_EVENTS === '1';
@@ -700,7 +700,7 @@ async function main() {
   // carry its consent-notice version. Demo-only (SEED_DEMO_EVENTS=1), create-only
   // idempotent, obviously-fake data — never seed real enquiry PII.
   if (shouldSeedDemoEvents) {
-    const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+    const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
     // Business Connect is invite-only and organizer-curated. Make the pilot's
     // community organizer-owned and seed demo invites so the organizer invite

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { PortalShell } from '@/components/organizer/portal-shell';
 import { buildOrganizerWorkspace, type OrganizerSessionCommunity } from '@/lib/organizer/workspace';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from '@/app/jito-stuttgart/business-connect/pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '@/app/jito-stuttgart/business-connect/pilot';
 
 export default async function CommunityOrganizerLayout({
   children,
@@ -32,7 +32,7 @@ export default async function CommunityOrganizerLayout({
 
   // Business Connect is invite-only and scoped to its pilot's community, so only
   // that community's organizer workspace surfaces the invite tools.
-  if (activeCommunity?.slug === ACTIVE_BUSINESS_CONNECT_PILOT.communitySlug) {
+  if (activeCommunity?.slug === ACTIVE_BUSINESS_CONNECT_PROGRAM.communitySlug) {
     navLinks.push({ href: '/organizer/business-connect', label: 'Business Connect' });
   }
 

@@ -6,12 +6,12 @@ import { hashToken } from '@/lib/session';
 import { getSessionUser } from '@/lib/session';
 import { can } from '@/lib/auth/permissions';
 import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
-import { ACTIVE_BUSINESS_CONNECT_PILOT, getBusinessConnectPilot } from '../pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM, getBusinessConnectProgram } from '../pilot';
 import { isInviteUsable } from '../invite';
 import { resendBusinessConnectConfirmation } from './actions';
 import { SubmitBusinessConnectForm } from './SubmitBusinessConnectForm';
 
-const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
 // Invite-only and private: never index the enquiry form.
 export const metadata: Metadata = {
@@ -235,7 +235,7 @@ export default async function BusinessConnectSubmitPage({
       return <InviteOnlyNotice dashboardHref={dashboardHref} />;
     }
 
-    selectedPilot = getBusinessConnectPilot(invite.pilotSlug) ?? pilot;
+    selectedPilot = getBusinessConnectProgram(invite.pilotSlug) ?? pilot;
     formInviteEmail = invite.email;
     breadcrumbHref = `/jito-stuttgart/business-connect?invite=${encodeURIComponent(inviteToken as string)}`;
   }

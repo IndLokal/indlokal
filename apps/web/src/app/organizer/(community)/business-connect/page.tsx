@@ -5,7 +5,7 @@ import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
-import { ACTIVE_BUSINESS_CONNECT_PILOT } from '@/app/jito-stuttgart/business-connect/pilot';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '@/app/jito-stuttgart/business-connect/pilot';
 import {
   BUSINESS_CONNECT_STATUSES,
   LOOKING_FOR_LABELS,
@@ -18,7 +18,7 @@ import { updateBusinessConnectNotes, updateBusinessConnectStatus } from './actio
 
 export const metadata = { title: 'Business Connect - Organizer' };
 
-const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
+const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
 
 type InviteStatus = { label: string; tone: 'pending' | 'used' | 'expired' };
 
