@@ -46,6 +46,8 @@ import { withLlmContext } from './llm-context';
 import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
+import { suggestCommunityPersonaSegments } from './journey-tags';
+import { FLAGS } from '@/lib/config/flags';
 import {
   COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD,
   DEDUP_ACTIVE_STATUSES,
@@ -820,6 +822,17 @@ async function resolveAndQueue(
                 },
               }
             : {}),
+          ...(() => {
+            // PRD/TDD-0053: suggest persona segments for communities (suggest-only;
+            // applied on human approval). Inert unless JOURNEY_TAG_SUGGESTIONS_ENABLED.
+            if (!FLAGS.journeyTagSuggestionsEnabled || queuedItem.type !== 'COMMUNITY') return {};
+            const personaSegments = suggestCommunityPersonaSegments({
+              name: queuedItem.name,
+              description: queuedItem.description,
+              categories: queuedItem.categories,
+            });
+            return personaSegments.length > 0 ? { suggestedTags: { personaSegments } } : {};
+          })(),
         } as Prisma.InputJsonValue,
       },
       select: { id: true },

@@ -21,6 +21,14 @@ export {
 export { STAGE_ORDER, STAGE_INDEX, STAGE_META } from './stages';
 export { meetsDensityGate, MIN_BLOCKS_PER_STAGE, MIN_TOTAL_BLOCKS } from './density';
 export { resolveResourceAction, resolveCommunityAction, resolveEventAction } from './actions';
+export {
+  computeCityCoverage,
+  buildCoverageRow,
+  type CoverageVerdict,
+  type CoverageCell,
+  type CoverageRow,
+  type CityCoverageReport,
+} from './coverage';
 export type {
   JourneyPersona,
   JourneyView,

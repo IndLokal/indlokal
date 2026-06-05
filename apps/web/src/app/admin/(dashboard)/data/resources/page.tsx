@@ -7,6 +7,7 @@ import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/component
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
 import { ConfirmSubmitButton } from '@/components/ui';
+import { ResourceJourneyTagEditor } from '@/components/admin/JourneyTagEditor';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Resources - Admin' };
@@ -18,6 +19,7 @@ export default async function AdminResourcesPage({
     city?: string;
     type?: string;
     q?: string;
+    gap?: string;
     page?: string;
     pageSize?: string;
   }>;
@@ -47,6 +49,14 @@ export default async function AdminResourcesPage({
     where.resourceType = sp.type as (typeof types)[number];
   }
   if (sp.q) where.title = { contains: sp.q, mode: 'insensitive' };
+  // Journey-coverage backfill worklists (PRD/TDD-0053).
+  if (sp.gap === 'untagged') {
+    where.OR = [{ audiences: { isEmpty: true } }, { lifecycleStage: { isEmpty: true } }];
+  } else if (sp.gap === 'audience') {
+    where.audiences = { isEmpty: true };
+  } else if (sp.gap === 'stage') {
+    where.lifecycleStage = { isEmpty: true };
+  }
 
   const [totalCount, resources, cities] = await Promise.all([
     db.resource.count({ where }),
@@ -113,6 +123,18 @@ export default async function AdminResourcesPage({
               ))}
             </select>
           </AdminFilterItem>
+          <AdminFilterItem label="Journey gap">
+            <select
+              name="gap"
+              defaultValue={sp.gap ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All resources</option>
+              <option value="untagged">Untagged (no audience or stage)</option>
+              <option value="audience">Missing audience</option>
+              <option value="stage">Missing lifecycle stage</option>
+            </select>
+          </AdminFilterItem>
           <AdminFilterActions resetHref="/admin/data/resources" />
         </AdminFilterBar>
       </form>
@@ -130,6 +152,7 @@ export default async function AdminResourcesPage({
               <AdminTh>Title</AdminTh>
               <AdminTh>Type</AdminTh>
               <AdminTh>City</AdminTh>
+              <AdminTh>Journey tags</AdminTh>
               <AdminTh>URL</AdminTh>
               <AdminTh>Actions</AdminTh>
             </tr>
@@ -143,6 +166,13 @@ export default async function AdminResourcesPage({
                 </td>
                 <td className="px-3 py-2 text-xs">{r.resourceType}</td>
                 <td className="px-3 py-2 text-xs">{r.city?.name ?? '-'}</td>
+                <td className="px-3 py-2 align-top">
+                  <ResourceJourneyTagEditor
+                    id={r.id}
+                    audiences={r.audiences}
+                    lifecycleStage={r.lifecycleStage}
+                  />
+                </td>
                 <td className="px-3 py-2 text-xs">
                   {r.url && (
                     <a

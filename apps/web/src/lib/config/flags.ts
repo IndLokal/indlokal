@@ -12,6 +12,15 @@ export const FLAGS = {
    * routes/pages return 404 and entry points are not rendered.
    */
   journeyLayerEnabled: process.env.JOURNEY_LAYER_ENABLED === 'true',
+
+  /**
+   * Journey tag suggestions in the AI pipeline (PRD/TDD-0053). When ON, the
+   * pipeline SUGGESTS persona/audience/stage tags into PipelineItem.metadata;
+   * tags are only ever written to live content when a human approves the item
+   * (ADR-0006 L0 gate). Defaults to OFF — pipeline behaviour is unchanged when
+   * disabled. Enable explicitly with JOURNEY_TAG_SUGGESTIONS_ENABLED=true.
+   */
+  journeyTagSuggestionsEnabled: process.env.JOURNEY_TAG_SUGGESTIONS_ENABLED === 'true',
 } as const;
 
 /**

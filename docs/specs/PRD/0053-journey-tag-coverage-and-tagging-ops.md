@@ -1,6 +1,6 @@
 # PRD-0053: Journey tag coverage - audit, backfill & tagging-at-ingestion
 
-- **Status:** Draft
+- **Status:** Implemented (coverage report + admin backfill GA; pipeline tag suggestions flag-gated, `JOURNEY_TAG_SUGGESTIONS_ENABLED`)
 - **Owner:** Product + Content Ops (Phase 2)
 - **Reviewers:** PM, Eng Lead, Content/Ambassador lead
 - **Linked:** TDD-0053, ADR-0011 (composition model), PRD/TDD-0052 (journey engine - **blocks on this**),

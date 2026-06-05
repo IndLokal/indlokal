@@ -1,6 +1,6 @@
 # TDD-0053: Journey tag coverage - audit report, backfill, pipeline tag suggestions
 
-- **Status:** Draft
+- **Status:** Implemented (coverage report + admin backfill GA; pipeline tag suggestions flag-gated, `JOURNEY_TAG_SUGGESTIONS_ENABLED`)
 - **Linked PRD:** PRD-0053
 - **Linked ADR:** ADR-0011 (composition model), ADR-0007 (resource scope), ADR-0006 (pipeline is ETL)
 - **Owner:** Engineering + Content Ops (Phase 2)
