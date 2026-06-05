@@ -125,3 +125,13 @@ export const reportLimiter: RateLimitConfig = {
   maxRequests: 10,
   windowMs: 60 * 60 * 1000, // 10 reports per hour per IP
 };
+
+export const businessConnectLimiter: RateLimitConfig = {
+  name: 'business-connect',
+  maxRequests: 20,
+  // Per-IP cap on enquiry submissions. Kept reasonably loose because attendees at
+  // a shared-WiFi event sit behind one NAT IP; abuse is bounded further by the
+  // double opt-in email confirmation (an enquiry only becomes reviewable once the
+  // contact email confirms it) and by manual admin review.
+  windowMs: 60 * 60 * 1000, // 20 submissions per hour per IP
+};

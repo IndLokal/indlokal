@@ -199,6 +199,7 @@ model Community {
   targetEdges   RelationshipEdge[]      @relation("TargetEdges")
   outreachLeads OutreachLead[]
   collaborators CommunityCollaborator[]
+  businessConnectInvites BusinessConnectInvite[]
 
   createdAt      DateTime  @default(now()) @map("created_at")
   updatedAt      DateTime  @updatedAt @map("updated_at")
@@ -635,6 +636,7 @@ model User {
   quietHours              QuietHours?
   notificationOutbox      NotificationOutbox[]
   inboxItems              InboxItem[]
+  businessConnectInvites  BusinessConnectInvite[]  @relation("BusinessConnectInviteInvitedBy")
 
   metadata Json? // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
 
@@ -1229,4 +1231,134 @@ model OutreachNote {
 
   @@index([leadId, createdAt])
   @@map("outreach_notes")
+}
+
+// ─────────────────────────────────────────────────
+// Business Connect — curated pilot enquiry intake
+//
+// A narrow, trust-first engine (NOT a public marketplace, directory, or
+// automated matching system). Structured business enquiries are reviewed
+// MANUALLY before any curated introduction is made. Submissions are private:
+// there are no public read APIs and no auto-publish.
+//
+// The engine is pilot-agnostic: every row is scoped to a pilot via `pilotSlug`,
+// and per-pilot identity (labels, membership question, consent-notice version)
+// lives in app config, not the schema. JITO Stuttgart is the first pilot;
+// launching another is additive (new rows), never a schema change.
+// ─────────────────────────────────────────────────
+
+enum BusinessConnectStatus {
+  // System state: enquiry saved but the contact email has not yet confirmed it
+  // (double opt-in). It only becomes a reviewable enquiry (NEW) after the
+  // submitter clicks the confirmation link. Not an operator-settable status.
+  PENDING_CONFIRMATION
+  NEW
+  REVIEWED
+  SHORTLISTED
+  MATCHED
+  REJECTED
+  ARCHIVED
+}
+
+model BusinessConnectSubmission {
+  id        String @id @default(cuid())
+  pilotSlug String @map("pilot_slug") // e.g. "jito-stuttgart-2026-06-23"
+
+  // Section 1 - participant type (single select, stored as string)
+  participantType String @map("participant_type")
+
+  // Section 2 - what are you looking for (multi-select)
+  lookingFor      String[] @map("looking_for")
+  lookingForOther String?  @map("looking_for_other")
+
+  // Section 3 - what can you offer (multi-select)
+  offering      String[]
+  offeringOther String?   @map("offering_other")
+
+  // Section 4 - business details
+  companyName         String  @map("company_name")
+  country             String
+  city                String
+  industry            String
+  businessDescription String  @map("business_description")
+  specificAsk         String  @map("specific_ask")
+  contactName         String  @map("contact_name")
+  contactEmail        String  @map("contact_email")
+  website             String? @map("website")
+  linkedinUrl         String? @map("linkedin_url")
+  phone               String?
+  preferredGeography  String? @map("preferred_geography")
+
+  // Section 5 - trust / event context (stored as string: YES | NO | NOT_SURE)
+  attendingEvent         String  @map("attending_event")
+  isPartnerMember        String  @map("is_partner_member")
+  referredBy             String? @map("referred_by")
+  associatedChapterOrOrg String? @map("associated_chapter_or_org")
+
+  // Section 6 - consent (explicit, never pre-checked)
+  consentToReview                 Boolean @map("consent_to_review")
+  consentManualIntroUnderstanding Boolean @map("consent_manual_intro_understanding")
+  consentToShareSelectedInfo      Boolean @default(false) @map("consent_to_share_selected_info")
+  // Privacy-notice version shown at collection time (GDPR auditability, PRD-0033).
+  // Always supplied per-pilot by the application from the pilot registry config.
+  consentPolicyVersion            String  @map("consent_policy_version")
+
+  // Email ownership proof (double opt-in). Submitters are anonymous (no account),
+  // so the enquiry is saved as PENDING_CONFIRMATION and a one-time link is emailed
+  // to the contact address; clicking it sets `emailConfirmedAt` and promotes the
+  // row to NEW. Only the SHA-256 hash of the token is stored.
+  emailConfirmationTokenHash String?   @unique @map("email_confirmation_token_hash")
+  emailConfirmedAt           DateTime? @map("email_confirmed_at")
+
+  // Invite that admitted this enquiry. Business Connect is invite-only: the form
+  // is only reachable with a valid per-email invite issued by the pilot's
+  // community organizer. Recorded for traceability; the invite is marked used
+  // when this row is created.
+  inviteId String?                @unique @map("invite_id")
+  invite   BusinessConnectInvite? @relation(fields: [inviteId], references: [id], onDelete: SetNull)
+
+  // Review lifecycle (curated, manual)
+  status     BusinessConnectStatus @default(PENDING_CONFIRMATION)
+  adminNotes String?               @map("admin_notes")
+  matchNotes String?               @map("match_notes")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([pilotSlug, status, createdAt])
+  @@index([status, createdAt])
+  @@map("business_connect_submissions")
+}
+
+// Invite-only access gate. Business Connect is NOT a public form: the pilot's
+// community organizer (COMMUNITY_ADMIN of the linked community) issues a
+// per-email invite, and only a valid, unexpired, unused invite token unlocks the
+// submit form — with the contact email locked to the invited address. This keeps
+// the pilot off the open web and ties every enquiry to a curated guest. Only the
+// SHA-256 hash of the token is stored.
+model BusinessConnectInvite {
+  id        String @id @default(cuid())
+  pilotSlug String @map("pilot_slug") // e.g. "jito-stuttgart-2026-06-23"
+
+  // The address this invite is bound to (lowercased). The submit form locks the
+  // contact email to this value, so an invite cannot be used for a different one.
+  email     String
+  tokenHash String @unique @map("token_hash")
+
+  // Issuing organizer + their community (scopes who can create/see the invite).
+  communityId     String    @map("community_id")
+  community       Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  invitedByUserId String    @map("invited_by_user_id")
+  invitedBy       User      @relation("BusinessConnectInviteInvitedBy", fields: [invitedByUserId], references: [id], onDelete: Cascade)
+  note            String?
+
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at") // set when a submission is created from it
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  submission BusinessConnectSubmission?
+
+  @@index([communityId, createdAt])
+  @@index([pilotSlug, email])
+  @@map("business_connect_invites")
 }

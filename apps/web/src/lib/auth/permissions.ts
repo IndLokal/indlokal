@@ -68,6 +68,9 @@ export type Action =
   // Outreach CRM
   | 'outreach.read'
   | 'outreach.write'
+  // JITO Stuttgart Business Connect pilot (curated, private review queue)
+  | 'business_connect.read'
+  | 'business_connect.write'
   // Ambassador console (always city-scoped - pass cityId as scope)
   | 'ambassador.read'
   | 'ambassador.submit'
@@ -101,6 +104,8 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
     'audit.read',
     'outreach.read',
     'outreach.write',
+    'business_connect.read',
+    'business_connect.write',
   ],
   OPS_LEAD: [
     'admin.data.read',
@@ -124,6 +129,8 @@ const ROLE_ACTIONS: Record<UserRole, Action[]> = {
     'audit.read',
     'outreach.read',
     'outreach.write',
+    'business_connect.read',
+    'business_connect.write',
     'content.write',
   ],
   CITY_AMBASSADOR: [
