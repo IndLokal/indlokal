@@ -99,7 +99,39 @@ column and is the single source of truth for what is shipped.
 | PRD-0019 / TDD-0019     | Auth completion - onboarding, session restore, profile & account management                                               | Implemented | Implemented                                                                                                                                                       |
 | PRD/TDD-0019            | Admin Auth v2 minimal hardening (gate-first, no new auth)                                                                 | Draft       | In progress (spec-first)                                                                                                                                          |
 | PRD/TDD-0013            | Pipeline review & submissions queue scoping                                                                               | Draft       | Done - queue scoped to user submissions; admin-approved → ACTIVE                                                                                                  |
+| ADR-0011                | Journeys are a composition layer over existing data, not a new content type                                               | Accepted    | Spec-first (Phase 2)                                                                                                                                              |
+| PRD/TDD-0052            | Journey Layer v1 - composition engine + first journey (city × persona)                                                    | Draft       | Not started (spec-first; blocks on 0053 coverage)                                                                                                                 |
+| PRD/TDD-0053            | Journey tag coverage - audit, backfill & tagging-at-ingestion                                                             | Draft       | Not started (spec-first; P0 blocking for 0052)                                                                                                                    |
 | EVENTS/analytics.md     | Analytics event catalog                                                                                                   | Draft       | In progress (canonical catalog synced with web code and mobile compatibility map)                                                                                 |
 | EVENTS/notifications.md | Notification matrix                                                                                                       | Draft       | -                                                                                                                                                                 |
 
 The spec set above defines the **mobile MVP at functional parity with the current web**, plus the foundations (auth, devices, outbox, OpenAPI) needed to support it.
+
+## Roadmap phase index
+
+Specs stay **numbered by type and creation order** (ADR / PRD / TDD), never renumbered or moved -
+numbering is immutable (see [Numbering](#numbering)). This index is the **logical grouping by product
+roadmap phase** ([`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) §14), so you can read the specs that
+belong to a phase without reorganizing files on disk. Phase docs:
+[Phase 1](../PHASE_1_DISCOVERY_FOUNDATION.md) · [Phase 2](../PHASE_2_JOURNEY_LAYER.md).
+
+| Phase       | Theme                                                                                                                         | Status                            | Specs                                                                                                                      |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| **Phase 1** | **Discovery Foundation** (city-first, content-type discovery; trust/data layer; operator network; AI pipeline; mobile parity) | Shipped                           | ADR-0001…0010; PRD/TDD-0001…0051 (all spec IDs above this section). The entire first spec set is Phase 1.                  |
+| **Phase 2** | **Journey Layer** (journey-led discovery composed over existing data)                                                         | Spec-first                        | **ADR-0011** (composition model); **PRD/TDD-0052** (engine + first journey); **PRD/TDD-0053** (tag coverage & tagging ops) |
+| **Phase 3** | **Personalization** (inference, recommendations, retrieval-grounded concierge)                                                | Not started                       | _none yet_                                                                                                                 |
+| **Phase 4** | **Ecosystem** (partner/ecosystem orgs as journey blocks; relationship graph)                                                  | Not started                       | _none yet_                                                                                                                 |
+| **Phase 5** | **Business** (gated business product)                                                                                         | Not started (gated, strategy §12) | _none yet_                                                                                                                 |
+| **Phase 6** | **Connect** (gated introductions/relationships)                                                                               | Not started (gated, strategy §12) | _none yet_                                                                                                                 |
+| **Phase 7** | **Intelligence** (reporting over journey/relationship data)                                                                   | Not started                       | _none yet_                                                                                                                 |
+
+Notes:
+
+- **Phase boundaries are logical, not physical.** A spec's phase is recorded here; its file stays in
+  `ADR/` · `PRD/` · `TDD/` by number. New phase specs are appended at the next free number and added to
+  both the status table above and this index.
+- **Phase 1 is the baseline.** Specs 0001–0051 collectively built the shipped Discovery Foundation; they
+  are not re-tagged individually here to avoid churn. Treat "≤ 0051" as Phase 1 unless a later index row
+  says otherwise.
+- **Cross-phase dependencies** are stated in each spec's front-matter `Linked:` line (e.g. PRD-0052
+  builds on the PRD-0030 `resources/journey` seam and depends on PRD-0053 coverage).
