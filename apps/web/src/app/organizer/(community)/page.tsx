@@ -44,7 +44,7 @@ export default async function OrganizerDashboardPage() {
   const reach = await getCommunityReach(community.id);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader
         title={community.name}
         description={`${community.city.name} · ${isAdmin ? 'Community admin workspace' : 'Collaborator workspace'}`}
@@ -54,7 +54,7 @@ export default async function OrganizerDashboardPage() {
 
       <ReachPanel reach={reach} variant="community" />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Quick actions */}
         <Link
           href="/organizer/profile"

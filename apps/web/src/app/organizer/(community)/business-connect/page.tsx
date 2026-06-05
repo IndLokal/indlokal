@@ -65,7 +65,7 @@ export default async function OrganizerBusinessConnectPage() {
   // Invite-only Business Connect is scoped to the pilot's own community.
   if (!community || community.slug !== pilot.communitySlug) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto w-full max-w-4xl space-y-6">
         <OrganizerPageHeader
           title="Business Connect"
           description="Invite-only enquiry intake for the Business Connect pilot."
@@ -112,7 +112,7 @@ export default async function OrganizerBusinessConnectPage() {
   type SubmissionRow = (typeof submissions)[number];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader
         title="Business Connect"
         description={`Invite-only enquiry intake for the ${pilot.eventLabel}. You choose who can submit; IndLokal reviews every enquiry manually.`}
@@ -138,9 +138,7 @@ export default async function OrganizerBusinessConnectPage() {
       <section className="card-base p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-foreground text-xl font-semibold tracking-tight">
-              Outstanding invites
-            </h2>
+            <h2 className="text-foreground text-lg font-semibold">Outstanding invites</h2>
             <p className="text-muted mt-1 text-[15px] leading-relaxed">
               Guests who have not submitted yet (including expired invites).
             </p>
@@ -153,13 +151,13 @@ export default async function OrganizerBusinessConnectPage() {
         {outstandingInvites.length === 0 ? (
           <p className="text-muted mt-4 text-sm">No outstanding invites.</p>
         ) : (
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 grid gap-3 md:grid-cols-2">
             {outstandingInvites.map((invite) => {
               const status = inviteStatus(invite);
               return (
                 <li
                   key={invite.id}
-                  className="border-border flex flex-wrap items-start justify-between gap-3 rounded-[var(--radius-card)] border bg-white p-4"
+                  className="border-border flex h-full flex-wrap items-start justify-between gap-3 rounded-[var(--radius-card)] border bg-white p-4"
                 >
                   <div className="min-w-0">
                     <p className="text-foreground text-lg font-semibold break-all">
@@ -195,10 +193,8 @@ export default async function OrganizerBusinessConnectPage() {
       <section className="card-base p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-foreground text-xl font-semibold tracking-tight">
-              Submitted enquiries
-            </h2>
-            <p className="text-muted mt-1 text-[15px] leading-relaxed">
+            <h2 className="text-foreground text-lg font-semibold">Submitted enquiries</h2>
+            <p className="text-muted mt-1 text-sm leading-relaxed">
               The JITO organizer team reviews these submissions and decides what gets shortlisted.
             </p>
           </div>
@@ -210,32 +206,32 @@ export default async function OrganizerBusinessConnectPage() {
         {submissions.length === 0 ? (
           <p className="text-muted mt-4 text-sm">No confirmed enquiries yet.</p>
         ) : (
-          <div className="mt-4 space-y-4">
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
             {submissions.map((submission: SubmissionRow) => (
               <div
                 key={submission.id}
-                className="border-border rounded-[var(--radius-card)] border bg-white p-4"
+                className="border-border h-full rounded-[var(--radius-card)] border bg-white p-4"
               >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span
-                        className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide ${STATUS_COLORS[submission.status] ?? 'bg-gray-100 text-gray-600'}`}
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide ${STATUS_COLORS[submission.status] ?? 'bg-gray-100 text-gray-600'}`}
                       >
                         {submission.status}
                       </span>
-                      <span className="bg-muted-bg text-foreground inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium">
+                      <span className="bg-muted-bg text-foreground inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium">
                         {PARTICIPANT_TYPE_LABELS[submission.participantType] ??
                           submission.participantType}
                       </span>
-                      <span className="text-muted text-xs">
+                      <span className="text-muted text-[11px]">
                         {formatDistanceToNow(submission.createdAt, { addSuffix: true })}
                       </span>
                     </div>
-                    <p className="text-foreground mt-2 text-lg font-semibold">
+                    <p className="text-foreground mt-2 text-sm font-semibold">
                       {submission.companyName}
                     </p>
-                    <p className="text-muted text-sm">
+                    <p className="text-muted text-xs">
                       {submission.city}, {submission.country} · {submission.industry}
                     </p>
                   </div>
@@ -246,7 +242,7 @@ export default async function OrganizerBusinessConnectPage() {
                       <select
                         name="status"
                         defaultValue={submission.status}
-                        className="border-border rounded-[var(--radius-button)] border bg-white px-2.5 py-1.5 text-sm"
+                        className="border-border rounded-[var(--radius-button)] border bg-white px-2 py-1 text-xs"
                       >
                         {BUSINESS_CONNECT_STATUSES.map((status) => (
                           <option key={status} value={status}>
@@ -256,7 +252,7 @@ export default async function OrganizerBusinessConnectPage() {
                       </select>
                       <button
                         type="submit"
-                        className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3.5 py-1.5 text-sm font-medium"
+                        className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-1 text-xs font-medium"
                       >
                         Update
                       </button>
@@ -264,7 +260,7 @@ export default async function OrganizerBusinessConnectPage() {
                   ) : null}
                 </div>
 
-                <div className="text-muted mt-3 grid grid-cols-1 gap-2 text-[15px] leading-relaxed sm:grid-cols-2">
+                <div className="text-muted mt-3 grid grid-cols-1 gap-2 text-xs leading-relaxed sm:grid-cols-2">
                   <p>
                     <span className="text-foreground font-medium">Looking for:</span>{' '}
                     {labelList(submission.lookingFor, LOOKING_FOR_LABELS)}
@@ -297,10 +293,10 @@ export default async function OrganizerBusinessConnectPage() {
                 </div>
 
                 <details className="mt-3">
-                  <summary className="text-brand-700 cursor-pointer text-[15px] font-semibold">
+                  <summary className="text-brand-700 cursor-pointer text-xs font-semibold">
                     View full enquiry
                   </summary>
-                  <div className="text-muted mt-3 space-y-2 text-sm">
+                  <div className="text-muted mt-3 space-y-2 text-xs">
                     <p>
                       <span className="text-foreground font-medium">Business description:</span>{' '}
                       {submission.businessDescription}
@@ -364,7 +360,7 @@ export default async function OrganizerBusinessConnectPage() {
                           name="adminNotes"
                           rows={2}
                           defaultValue={submission.adminNotes ?? ''}
-                          className="border-border mt-1 w-full rounded-[var(--radius-button)] border bg-white px-3 py-2 text-sm"
+                          className="border-border mt-1 w-full rounded-[var(--radius-button)] border bg-white px-3 py-2 text-xs"
                         />
                       </div>
                       <div>
@@ -375,7 +371,7 @@ export default async function OrganizerBusinessConnectPage() {
                           name="matchNotes"
                           rows={2}
                           defaultValue={submission.matchNotes ?? ''}
-                          className="border-border mt-1 w-full rounded-[var(--radius-button)] border bg-white px-3 py-2 text-sm"
+                          className="border-border mt-1 w-full rounded-[var(--radius-button)] border bg-white px-3 py-2 text-xs"
                         />
                       </div>
                       <button

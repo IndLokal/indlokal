@@ -39,7 +39,7 @@ export default async function OrganizerProfilePage() {
     user.role === 'PLATFORM_ADMIN' || community.claimedByUserId === user.id;
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader
         title="Community Profile"
         description="Edit the public community listing visitors see on IndLokal."
@@ -50,7 +50,7 @@ export default async function OrganizerProfilePage() {
         role={role}
         showSwitchLink={isMultiCommunity}
       />
-      <div className="mt-8">
+      <div>
         <EditProfileForm community={community} />
       </div>
       {canRequestCityChange && (
