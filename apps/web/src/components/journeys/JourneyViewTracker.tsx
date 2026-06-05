@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Events } from '@/lib/analytics';
+import { recordLastJourney } from './ContinueJourneyChip';
 
 type Props = {
   citySlug: string;
@@ -29,6 +30,7 @@ export function JourneyViewTracker({
   const seenStages = useRef<Set<string>>(new Set());
 
   useEffect(() => {
+    recordLastJourney(citySlug, personaSlug);
     fetch('/api/v1/track', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

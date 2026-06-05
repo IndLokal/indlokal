@@ -1,6 +1,7 @@
 import { FLAGS, isJourneyAllowed } from '@/lib/config';
 import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 import { JourneyEntryCard } from './JourneyEntryCard';
+import { ContinueJourneyChip } from './ContinueJourneyChip';
 
 type Props = {
   citySlug: string;
@@ -21,7 +22,7 @@ export function JourneyFeedStrip({ citySlug, cityName }: Props) {
 
   return (
     <section className="space-y-4">
-      <div className="flex items-baseline justify-between">
+      <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">Find your path in {cityName}</h2>
           <p className="text-muted text-sm">
@@ -29,6 +30,10 @@ export function JourneyFeedStrip({ citySlug, cityName }: Props) {
             events that fit your situation.
           </p>
         </div>
+        <ContinueJourneyChip
+          citySlug={citySlug}
+          options={personas.map((p) => ({ slug: p.slug, label: p.label, icon: p.icon }))}
+        />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {personas.map((p) => (
