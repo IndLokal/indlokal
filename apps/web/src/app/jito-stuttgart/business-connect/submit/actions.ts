@@ -1,6 +1,7 @@
 'use server';
 
 import { headers } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { hashToken } from '@/lib/session';
 import { captureServerEvent } from '@/lib/analytics/server';
@@ -10,7 +11,11 @@ import { sendBusinessConnectConfirmEmail } from '@/lib/email';
 import { businessConnectSubmissionSchema } from '../schema';
 import { ACTIVE_BUSINESS_CONNECT_PILOT, getBusinessConnectPilot } from '../pilot';
 import { isInviteUsable } from '../invite';
-import { generateConfirmationToken, buildConfirmationUrl } from './confirmation';
+import {
+  generateConfirmationToken,
+  buildConfirmationUrl,
+  isConfirmationFresh,
+} from './confirmation';
 
 export type BusinessConnectResult =
   // Enquiry saved (PENDING_CONFIRMATION); a confirmation link was emailed and must
@@ -223,4 +228,72 @@ export async function submitBusinessConnect(
   });
 
   return { status: 'success' };
+}
+
+/**
+ * Resend the double-opt-in confirmation email for an already-submitted (but not
+ * yet confirmed) enquiry. Requires the original invite token from the URL.
+ */
+export async function resendBusinessConnectConfirmation(formData: FormData): Promise<void> {
+  const inviteToken = (formData.get('inviteToken') as string | null)?.trim();
+  const fallbackRoute = ACTIVE_BUSINESS_CONNECT_PILOT.routePath;
+
+  if (!inviteToken) {
+    redirect(`${fallbackRoute}/submit?resent=invalid`);
+  }
+
+  const inviteTokenHash = await hashToken(inviteToken);
+  const invite = await db.businessConnectInvite.findUnique({
+    where: { tokenHash: inviteTokenHash },
+    select: {
+      email: true,
+      pilotSlug: true,
+      submission: {
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          emailConfirmedAt: true,
+          companyName: true,
+        },
+      },
+    },
+  });
+
+  const pilot = invite
+    ? (getBusinessConnectPilot(invite.pilotSlug) ?? ACTIVE_BUSINESS_CONNECT_PILOT)
+    : ACTIVE_BUSINESS_CONNECT_PILOT;
+  const returnHref = `${pilot.routePath}/submit?invite=${encodeURIComponent(inviteToken)}`;
+
+  if (!invite || !invite.submission) {
+    redirect(`${returnHref}&resent=invalid`);
+  }
+
+  const submission = invite.submission;
+  if (submission.emailConfirmedAt || submission.status !== 'PENDING_CONFIRMATION') {
+    redirect(`${returnHref}&resent=already`);
+  }
+
+  if (!isConfirmationFresh(submission.createdAt)) {
+    redirect(`${returnHref}&resent=expired`);
+  }
+
+  const token = generateConfirmationToken();
+  const tokenHash = await hashToken(token);
+
+  await db.businessConnectSubmission.update({
+    where: { id: submission.id },
+    data: { emailConfirmationTokenHash: tokenHash },
+  });
+
+  void sendBusinessConnectConfirmEmail(invite.email.toLowerCase(), {
+    confirmUrl: buildConfirmationUrl(pilot.routePath, token),
+    eventLabel: pilot.eventLabel,
+    partnerName: pilot.partnerName,
+    companyName: submission.companyName,
+  }).catch(() => {
+    // Non-critical transport failure.
+  });
+
+  redirect(`${returnHref}&resent=ok`);
 }

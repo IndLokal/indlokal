@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import Link from 'next/link';
 import { db } from '@/lib/db';
 import { requireCan } from '@/lib/auth/permissions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
@@ -49,6 +50,14 @@ export default async function AdminBusinessConnectPage() {
         description={`${submissions.length} enquir${submissions.length === 1 ? 'y' : 'ies'} · private · organizer-reviewed with admin oversight`}
         backHref="/admin"
       />
+      <div className="flex justify-end">
+        <Link
+          href="/jito-stuttgart/business-connect/submit?preview=1"
+          className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-2 text-xs font-medium"
+        >
+          Preview enquiry form
+        </Link>
+      </div>
 
       {submissions.length === 0 ? (
         <p className="border-border text-muted rounded-[var(--radius-card)] border p-8 text-center">

@@ -92,15 +92,16 @@ export default async function BusinessConnectConfirmPage({
           This confirmation link is invalid or has expired
         </h1>
         <p className="text-muted mt-4 leading-relaxed">
-          The link may have already been used, or it may have expired. You can submit your enquiry
-          again to receive a fresh confirmation link.
+          The link may have already been used, or it may have expired. If you have already submitted
+          your enquiry, no further action is needed. If you still need to submit, ask your{' '}
+          {pilot.partnerName} contact for a fresh invite link.
         </p>
         <div className="mt-6">
           <Link
-            href={`${pilot.routePath}/submit`}
+            href="/"
             className="bg-brand-600 hover:bg-brand-700 rounded-[var(--radius-button)] px-4 py-2 text-sm font-semibold text-white transition-colors"
           >
-            Submit an enquiry
+            Explore IndLokal
           </Link>
         </div>
       </Shell>
@@ -123,16 +124,10 @@ export default async function BusinessConnectConfirmPage({
       </p>
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
-          href={pilot.cityPath}
+          href="/"
           className="bg-brand-600 hover:bg-brand-700 rounded-[var(--radius-button)] px-4 py-2 text-sm font-semibold text-white transition-colors"
         >
-          Explore {pilot.cityLabel}
-        </Link>
-        <Link
-          href="/"
-          className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-4 py-2 text-sm font-semibold transition-colors"
-        >
-          Back to home
+          Explore IndLokal
         </Link>
       </div>
     </Shell>

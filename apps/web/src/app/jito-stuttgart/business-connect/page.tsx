@@ -1,13 +1,17 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { db } from '@/lib/db';
+import { getSessionUser } from '@/lib/session';
+import { can } from '@/lib/auth/permissions';
+import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
 import { ACTIVE_BUSINESS_CONNECT_PILOT } from './pilot';
 import { BusinessConnectPageView } from './BusinessConnectPageView';
 
 const pilot = ACTIVE_BUSINESS_CONNECT_PILOT;
 
 export const metadata: Metadata = {
-  title: `${pilot.partnerName} Business Connect Pilot | IndLokal`,
-  description: `A trust-first, invite-only pilot by ${pilot.partnerName} and IndLokal. Invited guests submit a structured business enquiry; every submission is reviewed manually before any curated India–Germany introduction.`,
+  title: `${pilot.partnerName} Business Connect | IndLokal`,
+  description: `An invite-based India-Germany business introduction desk by ${pilot.partnerName} and IndLokal. Enquiries are reviewed manually before any introduction.`,
   robots: { index: false, follow: false },
 };
 
@@ -19,20 +23,60 @@ const FOR_WHOM = [
 
 const HOW_IT_WORKS = [
   {
-    title: 'Submit a structured enquiry',
-    body: 'Tell us about your business, what you are looking for, and what you can offer.',
+    title: 'Share your business need',
+    body: 'Complete a short structured enquiry with your business context and introduction request.',
   },
   {
-    title: 'We review manually',
-    body: `IndLokal and ${pilot.partnerName} review submissions after the event. Trust and relevance matter more than volume.`,
+    title: 'Joint review by organizers',
+    body: `IndLokal and ${pilot.partnerName} review each enquiry for fit, relevance, and readiness.`,
   },
   {
-    title: 'Curated introductions only',
-    body: 'If there is a relevant potential match, the team may contact you for a curated introduction. Submitting does not guarantee one.',
+    title: 'Relevant introductions only',
+    body: 'If there is a suitable match, the team reaches out. Submission does not guarantee an introduction.',
   },
 ];
 
-export default function BusinessConnectLandingPage() {
+async function getDashboardHref(): Promise<string | null> {
+  const user = await getSessionUser();
+  if (!user) return null;
+
+  if (can(user, 'business_connect.read')) return '/admin/business-connect';
+
+  const community = await db.community.findUnique({
+    where: { slug: pilot.communitySlug },
+    select: { id: true },
+  });
+  if (!community) return null;
+
+  return canInviteCommunityCollaborators(user, community.id) ? '/organizer/business-connect' : null;
+}
+
+export default async function BusinessConnectLandingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ invite?: string; preview?: string }>;
+}) {
+  const dashboardHref = await getDashboardHref();
+  const { invite, preview } = await searchParams;
+  const inviteToken = invite?.trim() || null;
+  const previewRequested = preview === '1' || preview === 'true';
+  const canPreview = Boolean(dashboardHref);
+  // Only staff in preview context should see dashboard navigation. A person
+  // opening the form from an invite link must never see internal links.
+  const showDashboardLink = previewRequested && canPreview;
+
+  const continueHref = inviteToken
+    ? `/jito-stuttgart/business-connect/submit?invite=${encodeURIComponent(inviteToken)}`
+    : previewRequested && canPreview
+      ? '/jito-stuttgart/business-connect/submit?preview=1'
+      : null;
+
+  const continueLabel = inviteToken
+    ? 'Continue to enquiry form'
+    : previewRequested && canPreview
+      ? 'Continue to enquiry form'
+      : null;
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
       <BusinessConnectPageView />
@@ -42,35 +86,52 @@ export default function BusinessConnectLandingPage() {
         {pilot.partnerName} × IndLokal Business Connect
       </h1>
       <p className="text-muted mt-4 text-lg leading-relaxed">
-        A trust-first, invite-only pilot for India–Germany business collaboration.{' '}
-        {pilot.partnerName} invites guests directly; if you have an invite, open the personal link
-        in your email to submit your enquiry. Every submission is reviewed manually by IndLokal and{' '}
+        A curated India-Germany business introduction desk. If you received an invite, use your
+        personal link to submit an enquiry. Every enquiry is reviewed manually by IndLokal and{' '}
         {pilot.partnerName} before any introduction is made.
       </p>
 
       <div className="border-brand-200 bg-brand-50 mt-6 rounded-[var(--radius-card)] border p-4">
-        <p className="text-foreground text-sm font-medium">This pilot is invite-only.</p>
+        <p className="text-foreground text-sm font-medium">Invitation required</p>
         <p className="text-muted mt-1 text-sm leading-relaxed">
-          The enquiry form opens only from a personal invite link tied to your email. If you
-          expected access, check your inbox or ask your {pilot.partnerName} contact to invite you.
+          The enquiry form opens only from a personal invite link tied to your email. If you are
+          expecting access, check your inbox or ask your {pilot.partnerName} contact for an invite.
         </p>
+        {continueHref && continueLabel ? (
+          <div className="mt-3">
+            <Link
+              href={continueHref}
+              className="bg-brand-600 hover:bg-brand-700 inline-flex rounded-[var(--radius-button)] px-4 py-2 text-sm font-semibold text-white transition-colors"
+            >
+              {continueLabel}
+            </Link>
+          </div>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         <Link
-          href={pilot.cityPath}
-          className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-5 py-3 text-sm font-semibold transition-colors"
+          href="/"
+          className="bg-brand-600 hover:bg-brand-700 rounded-[var(--radius-button)] px-5 py-3 text-sm font-semibold text-white transition-colors"
         >
-          Explore {pilot.cityLabel}
+          Explore IndLokal
         </Link>
+        {showDashboardLink && dashboardHref ? (
+          <Link
+            href={dashboardHref}
+            className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-5 py-3 text-sm font-semibold transition-colors"
+          >
+            Back to dashboard
+          </Link>
+        ) : null}
       </div>
 
       {/* Trust note */}
       <div className="border-brand-200 bg-brand-50 mt-10 rounded-[var(--radius-card)] border p-5">
-        <h2 className="text-foreground text-base font-semibold">Why this is trust-first</h2>
+        <h2 className="text-foreground text-base font-semibold">How introductions are handled</h2>
         <ul className="text-muted mt-3 space-y-2 text-sm leading-relaxed">
-          <li>• Submissions are reviewed manually — there is no automated matching.</li>
-          <li>• Your enquiry is private and will never be publicly listed.</li>
+          <li>• Every enquiry is reviewed manually. There is no automated matching.</li>
+          <li>• Your enquiry remains private and is never publicly listed.</li>
           <li>• Submitting does not guarantee an introduction.</li>
           <li>
             • Selected information may be shared only with a relevant matched party, and only after
@@ -110,16 +171,14 @@ export default function BusinessConnectLandingPage() {
 
       <section className="mt-10">
         <p className="text-muted text-sm leading-relaxed">
-          This pilot helps validate future India–Germany business connection features for IndLokal.
-          It is intentionally curated and private — not a marketplace, not a public directory, and
-          not an automated matching system.
+          This is a curated introduction flow, not a marketplace or public directory.
         </p>
       </section>
 
       <div className="border-border mt-10 border-t pt-6">
         <p className="text-muted text-sm leading-relaxed">
-          Invite-only — the enquiry form opens from your personal invite link. Ask your{' '}
-          {pilot.partnerName} contact if you need an invite.
+          The enquiry form opens from your personal invite link. Ask your {pilot.partnerName}{' '}
+          contact if you need one.
         </p>
       </div>
     </div>

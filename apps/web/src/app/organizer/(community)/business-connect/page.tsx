@@ -1,4 +1,5 @@
 import { formatDistanceToNow } from 'date-fns';
+import Link from 'next/link';
 import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { canInviteCommunityCollaborators } from '@/lib/auth/community-permissions';
@@ -117,6 +118,14 @@ export default async function OrganizerBusinessConnectPage() {
         title="Business Connect"
         description={`Invite-only enquiry intake for the ${pilot.eventLabel}. You choose who can submit; IndLokal reviews every enquiry manually.`}
       />
+      <div className="flex justify-end">
+        <Link
+          href="/jito-stuttgart/business-connect/submit?preview=1"
+          className="border-border hover:bg-muted-bg rounded-[var(--radius-button)] border px-3 py-2 text-xs font-medium"
+        >
+          Preview enquiry form
+        </Link>
+      </div>
       <OrganizerWorkspaceBanner
         communityName={community.name}
         cityName={community.city.name}
