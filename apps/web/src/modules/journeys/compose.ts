@@ -120,7 +120,13 @@ export async function composeJourney(input: ComposeJourneyInput): Promise<Journe
   // ── 1+2. Gather candidate data ──────────────────────────────────────────
   const resourceResults = await Promise.all(
     def.audiences.map((audience) =>
-      getResourcesForCity(citySlug, { audience, ...(input.stage && { stage: input.stage }) }),
+      // For ANYTIME, don't pass stage filter to getResourcesForCity so untagged
+      // resources (which resourceStage() treats as ANYTIME) are included.
+      // For other stages, pass the stage filter to get only explicitly tagged resources.
+      getResourcesForCity(citySlug, {
+        audience,
+        ...(input.stage && input.stage !== 'ANYTIME' && { stage: input.stage }),
+      }),
     ),
   );
   const dedupResources = new Map<string, ResolvedResource>();

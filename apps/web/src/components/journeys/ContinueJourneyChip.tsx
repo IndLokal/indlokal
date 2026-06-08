@@ -38,19 +38,34 @@ function subscribe(callback: () => void) {
   };
 }
 
+// Cache for the last parsed snapshot to avoid allocating new objects on every read
+let cachedSnapshot: { citySlug: string; personaSlug: string } | null = null;
+let cachedRaw: string | null = null;
+
 function readLast(): { citySlug: string; personaSlug: string } | null {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw === cachedRaw) return cachedSnapshot;
 
-    cachedRaw = raw;
-    if (!raw) return null;
+    // Return cached snapshot if raw value hasn't changed
+    if (raw === cachedRaw && cachedSnapshot !== null) {
+      return cachedSnapshot;
+    }
+
+    if (!raw) {
+      cachedRaw = null;
+      cachedSnapshot = null;
+      return null;
+    }
 
     const parsed = JSON.parse(raw) as { citySlug?: unknown; personaSlug?: unknown };
     if (typeof parsed?.citySlug === 'string' && typeof parsed?.personaSlug === 'string') {
+      // Cache the snapshot and raw value for next read
+      cachedRaw = raw;
       cachedSnapshot = { citySlug: parsed.citySlug, personaSlug: parsed.personaSlug };
       return cachedSnapshot;
     }
+
+    cachedRaw = null;
     cachedSnapshot = null;
     return null;
   } catch {
