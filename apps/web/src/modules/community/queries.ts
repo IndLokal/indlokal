@@ -365,3 +365,65 @@ export async function getSavedCommunities(
   const hasMore = rows.length > opts.limit;
   return { items: hasMore ? rows.slice(0, opts.limit) : rows, hasMore };
 }
+
+/** Lightweight community shape for the Journey Layer (PRD/TDD-0052). Carries
+ *  the access channels needed for action-or-drop resolution. */
+export interface JourneyCommunityRow {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  personaSegments: string[];
+  languages: string[];
+  claimState: string;
+  status: string;
+  trustScore: number;
+  activityScore: number;
+  city: { name: string; slug: string };
+  accessChannels: { channelType: string; url: string; label: string | null; isPrimary: boolean }[];
+}
+
+/**
+ * Communities for a journey: filtered to a persona's segment(s), ordered so the
+ * most trustworthy/active lead. Includes access channels so the composer can
+ * apply the action-or-drop rule (a community with no joinable channel is
+ * dropped). Includes metro-region satellites via `resolveCityIds`.
+ */
+export async function getCommunitiesForPersona(
+  citySlug: string,
+  personaSegments: string[],
+  options?: { limit?: number },
+): Promise<JourneyCommunityRow[]> {
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return [];
+
+  const rows = await db.community.findMany({
+    where: {
+      cityId: { in: cityIds },
+      status: { not: 'INACTIVE' },
+      mergedIntoId: null,
+      ...(personaSegments.length > 0 && { personaSegments: { hasSome: personaSegments } }),
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      description: true,
+      personaSegments: true,
+      languages: true,
+      claimState: true,
+      status: true,
+      trustScore: true,
+      activityScore: true,
+      city: { select: { name: true, slug: true } },
+      accessChannels: {
+        select: { channelType: true, url: true, label: true, isPrimary: true },
+        orderBy: { isPrimary: 'desc' },
+      },
+    },
+    orderBy: [{ trustScore: 'desc' }, { activityScore: 'desc' }],
+    take: options?.limit ?? 12,
+  });
+
+  return rows as JourneyCommunityRow[];
+}

@@ -7,6 +7,7 @@ import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/component
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
 import { ConfirmSubmitButton } from '@/components/ui';
+import { CommunityPersonaTagEditor } from '@/components/admin/JourneyTagEditor';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Communities - Admin' };
@@ -18,6 +19,7 @@ export default async function AdminCommunitiesPage({
     city?: string;
     status?: string;
     claimState?: string;
+    gap?: string;
     q?: string;
     page?: string;
     pageSize?: string;
@@ -30,6 +32,7 @@ export default async function AdminCommunitiesPage({
     status?: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
     claimState?: 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
     name?: { contains: string; mode: 'insensitive' };
+    personaSegments?: { isEmpty: boolean };
   } = {};
   if (sp.city) where.city = { slug: sp.city };
   if (sp.status && ['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(sp.status)) {
@@ -39,6 +42,9 @@ export default async function AdminCommunitiesPage({
     where.claimState = sp.claimState as 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
   }
   if (sp.q) where.name = { contains: sp.q, mode: 'insensitive' };
+  // Journey-coverage backfill worklist: communities with no persona segments
+  // never surface in journey "find your people" blocks (PRD/TDD-0053).
+  if (sp.gap === 'persona') where.personaSegments = { isEmpty: true };
 
   const [totalCount, communities, cities] = await Promise.all([
     db.community.count({ where }),
@@ -118,6 +124,16 @@ export default async function AdminCommunitiesPage({
               <option value="CLAIMED">Claimed</option>
             </select>
           </AdminFilterItem>
+          <AdminFilterItem label="Journey gap">
+            <select
+              name="gap"
+              defaultValue={sp.gap ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">All communities</option>
+              <option value="persona">Missing persona segments</option>
+            </select>
+          </AdminFilterItem>
           <AdminFilterActions resetHref="/admin/data/communities" />
         </AdminFilterBar>
       </form>
@@ -136,6 +152,7 @@ export default async function AdminCommunitiesPage({
               <AdminTh>City</AdminTh>
               <AdminTh>Lifecycle Status</AdminTh>
               <AdminTh>Claim Status</AdminTh>
+              <AdminTh>Persona tags</AdminTh>
               <AdminTh>Events</AdminTh>
               <AdminTh>Channels</AdminTh>
               <AdminTh>Actions</AdminTh>
@@ -170,6 +187,13 @@ export default async function AdminCommunitiesPage({
                   </form>
                 </td>
                 <td className="px-3 py-2 text-xs font-medium">{c.claimState}</td>
+                <td className="px-3 py-2 align-top">
+                  <CommunityPersonaTagEditor
+                    id={c.id}
+                    personaSegments={c.personaSegments}
+                    languages={c.languages}
+                  />
+                </td>
                 <td className="px-3 py-2 text-xs">{c._count.events}</td>
                 <td className="px-3 py-2 text-xs">{c._count.accessChannels}</td>
                 <td className="px-3 py-2 text-right">

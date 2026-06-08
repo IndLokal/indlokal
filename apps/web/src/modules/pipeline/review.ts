@@ -401,6 +401,7 @@ async function createCommunityFromExtraction(
   community: ExtractedCommunity,
   cityId: string,
   status: 'ACTIVE' | 'UNVERIFIED' = 'UNVERIFIED',
+  suggestedPersonaSegments: string[] = [],
 ): Promise<string> {
   const categoryRecords = await db.category.findMany({
     where: { slug: { in: community.categories } },
@@ -416,6 +417,9 @@ async function createCommunityFromExtraction(
       description: community.description,
       cityId,
       languages: community.languages,
+      // PRD/TDD-0053: pipeline-suggested persona tags are applied here, at the
+      // moment a human approves the item — never auto-written at extraction.
+      personaSegments: suggestedPersonaSegments,
       source: 'IMPORTED',
       status,
       metadata: {
@@ -527,6 +531,16 @@ export async function approvePipelineItemRecord(
     sourceHints && typeof sourceHints.communityId === 'string'
       ? sourceHints.communityId.trim() || undefined
       : undefined;
+  // PRD/TDD-0053: persona tags the pipeline suggested at extraction time are
+  // applied now, on human approval (suggest-only; ADR-0006 L0 gate).
+  const suggestedTags =
+    metadata && typeof metadata.suggestedTags === 'object' && metadata.suggestedTags
+      ? (metadata.suggestedTags as Record<string, unknown>)
+      : null;
+  const suggestedPersonaSegments =
+    suggestedTags && Array.isArray(suggestedTags.personaSegments)
+      ? suggestedTags.personaSegments.filter((v): v is string => typeof v === 'string')
+      : [];
 
   if (item.reviewKind === 'ENRICHMENT' && item.entityType === 'COMMUNITY' && item.targetEntityId) {
     createdEntityId = await applyCommunityEnrichmentSuggestion(
@@ -578,6 +592,7 @@ export async function approvePipelineItemRecord(
       data as ExtractedCommunity,
       item.cityId,
       newStatus,
+      suggestedPersonaSegments,
     );
   }
 

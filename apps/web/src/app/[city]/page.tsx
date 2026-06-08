@@ -7,6 +7,7 @@ import { EventCard } from '@/components/EventCard';
 import { getSessionUser } from '@/lib/session';
 import { SectionHeader } from '@/components/ui';
 import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
+import { JourneyFeedStrip } from '@/components/journeys/JourneyFeedStrip';
 
 /**
  * City Feed - the primary discovery surface.
@@ -111,6 +112,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           </div>
         </div>
       </section>
+
+      {/* Journey Layer entry strip (PRD/TDD-0052) — placed below fresh events
+          so the universally-relevant feed leads and the persona guides act as a
+          secondary entry. Inert until flag-enabled. */}
 
       {/* This Week / Month */}
       <section className="space-y-5">
@@ -241,6 +246,9 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
           </div>
         )}
       </section>
+
+      {/* Guided paths (PRD/TDD-0052) — secondary to fresh events. */}
+      <JourneyFeedStrip citySlug={city} cityName={cityName} />
 
       {/* Recently Happened */}
       {recentPastEvents.length > 0 && (

@@ -6,11 +6,13 @@ import {
   UPCOMING_CITIES,
   METRO_REGIONS,
   CITY_COMMUNITY_PROFILES,
+  FLAGS,
 } from '@/lib/config';
 import { NavAuthWidget } from '@/components/NavAuthWidget';
 import { BrandLink } from '@/components/BrandLink';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
+import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 
 export const metadata: Metadata = {
   title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
@@ -252,6 +254,46 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Journeys promo (PRD/TDD-0052) — inert until flag-enabled */}
+        {FLAGS.journeyLayerEnabled && (
+          <section className="bg-brand-50/50 px-4 py-20">
+            <div className="mx-auto max-w-5xl">
+              <div className="text-center">
+                <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
+                  New: Journeys
+                </span>
+                <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
+                  A guided path for your move
+                </h2>
+                <p className="text-muted mx-auto mt-3 max-w-xl">
+                  Tell us where you are in life and we&apos;ll line up the official steps, trusted
+                  communities and upcoming events that matter — in the order you need them.
+                </p>
+              </div>
+              <div className="mt-10 flex flex-wrap justify-center gap-3">
+                {PERSONA_DEFINITIONS.map((p) => (
+                  <Link
+                    key={p.slug}
+                    href="/journeys"
+                    className="text-foreground hover:border-brand-300 inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-sm"
+                  >
+                    <span aria-hidden>{p.icon}</span>
+                    {p.label}
+                  </Link>
+                ))}
+              </div>
+              <div className="mt-8 text-center">
+                <Link
+                  href="/journeys"
+                  className="btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm"
+                >
+                  Explore journeys →
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* CTA */}
         <section className="relative overflow-hidden px-4 py-16 text-center sm:py-20">
