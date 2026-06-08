@@ -64,7 +64,9 @@ async function assertSubmissionInOrganizerCommunity(
     select: { id: true },
   });
   if (!submission) {
-    throw new Error('Business Connect enquiry not found for this organizer workspace.');
+    throw new Error(
+      'Business Connect enquiry not found for this organizer workspace.',
+    );
   }
 }
 
@@ -101,7 +103,10 @@ export async function inviteBusinessConnectGuest(
   const emails = parseEmails((formData.get('emails') as string) || '');
 
   if (emails.length === 0) {
-    return { success: false, errors: { emails: ['Enter at least one email address.'] } };
+    return {
+      success: false,
+      errors: { emails: ['Enter at least one email address.'] },
+    };
   }
   if (emails.length > 50) {
     return {
@@ -115,9 +120,7 @@ export async function inviteBusinessConnectGuest(
     return {
       success: false,
       errors: {
-        emails: [
-          `These don't look like valid emails: ${invalid.join(', ')}`,
-        ],
+        emails: [`These don't look like valid emails: ${invalid.join(', ')}`],
       },
     };
   }
@@ -172,9 +175,9 @@ export async function inviteBusinessConnectGuest(
     } catch (error) {
       // Email delivery failed. Delete the invite row so the organizer can retry,
       // and the next attempt will generate a fresh token.
-      await db.businessConnectInvite.delete({ where: { id: inviteId } }).catch(
-        () => {},
-      );
+      await db.businessConnectInvite
+        .delete({ where: { id: inviteId } })
+        .catch(() => {});
       failedEmails.push(email);
     }
   }
