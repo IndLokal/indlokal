@@ -315,6 +315,94 @@ export async function deleteResourceAction(formData: FormData) {
   revalidatePath('/admin/data/resources');
 }
 
+/* ───────────────────────────── Journey tags (PRD/TDD-0053) ──────────── */
+
+const RESOURCE_AUDIENCE_VALUES = [
+  'NEWCOMER',
+  'FAMILY',
+  'FOUNDER',
+  'EMPLOYEE',
+  'STUDENT',
+  'STUDENT_VISA',
+  'SENIOR',
+  'RETURNEE',
+] as const;
+
+const RESOURCE_STAGE_VALUES = [
+  'PRE_ARRIVAL',
+  'FIRST_30_DAYS',
+  'FIRST_90_DAYS',
+  'SETTLED',
+  'ANYTIME',
+] as const;
+
+/**
+ * Backfill journey tags on a resource (audiences × lifecycle stage). This is
+ * the human-curated tagging path the coverage report grades against. Clearing
+ * the resolver cache is required so newly-tagged resources surface in journeys
+ * immediately (the resolver caches by city × audience × stage).
+ */
+export async function updateResourceJourneyTagsAction(formData: FormData) {
+  await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const audiences = formData
+    .getAll('audiences')
+    .map(String)
+    .filter((v): v is (typeof RESOURCE_AUDIENCE_VALUES)[number] =>
+      (RESOURCE_AUDIENCE_VALUES as readonly string[]).includes(v),
+    );
+  const lifecycleStage = formData
+    .getAll('lifecycleStage')
+    .map(String)
+    .filter((v): v is (typeof RESOURCE_STAGE_VALUES)[number] =>
+      (RESOURCE_STAGE_VALUES as readonly string[]).includes(v),
+    );
+
+  await db.resource.update({
+    where: { id },
+    data: { audiences, lifecycleStage },
+  });
+
+  const { invalidateResolver } = await import('@/modules/resources/resolver');
+  invalidateResolver();
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/data/resources');
+}
+
+/**
+ * Backfill persona/language tags on a community. These drive the journey
+ * "find your people" blocks (Community.personaSegments). Suggest-only pipeline
+ * tags also land here once a human approves them.
+ */
+export async function updateCommunityPersonaTagsAction(formData: FormData) {
+  await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const personaSegments = formData
+    .getAll('personaSegments')
+    .map(String)
+    .filter((v) => (communityOptions.PERSONA_SEGMENT_VALUES as readonly string[]).includes(v));
+  const languages = formData
+    .getAll('languages')
+    .map(String)
+    .filter((v) => (communityOptions.COMMUNITY_LANGUAGE_VALUES as readonly string[]).includes(v));
+
+  const updated = await db.community.update({
+    where: { id },
+    data: { personaSegments, languages },
+    select: { city: { select: { slug: true } } },
+  });
+
+  revalidateTag('city-feed', 'max');
+  if (updated.city?.slug) {
+    revalidatePath(`/${updated.city.slug}/communities`);
+  }
+  revalidatePath('/admin/data/communities');
+}
+
 /* ───────────────────────────── Bulk import ──────────────────────────── */
 
 const ImportCity = z.object({
