@@ -122,11 +122,15 @@ export async function inviteBusinessConnectGuest(
   const toInvite = emails.filter((email) => !alreadyInvited.has(email));
 
   let sent = 0;
+  const failedEmails: string[] = [];
+
   for (const email of toInvite) {
     const token = generateInviteToken();
     const tokenHash = await hashToken(token);
+    let inviteId: string;
+
     try {
-      await db.businessConnectInvite.create({
+      const invite = await db.businessConnectInvite.create({
         data: {
           pilotSlug: pilot.slug,
           email,
@@ -137,28 +141,47 @@ export async function inviteBusinessConnectGuest(
           expiresAt: inviteExpiresAt(),
         },
       });
+      inviteId = invite.id;
     } catch {
       continue;
     }
 
-    void sendBusinessConnectInviteEmail(email, {
-      inviteUrl: buildInviteUrl(pilot.routePath, token),
-      eventLabel: pilot.eventLabel,
-      partnerName: pilot.partnerName,
-      inviterLabel: user.displayName ?? user.email,
-    }).catch(() => {});
-    sent += 1;
+    // Await email delivery before counting as sent. If delivery fails, delete the
+    // invite row so a future retry will work with a fresh token.
+    try {
+      await sendBusinessConnectInviteEmail(email, {
+        inviteUrl: buildInviteUrl(pilot.routePath, token),
+        eventLabel: pilot.eventLabel,
+        partnerName: pilot.partnerName,
+        inviterLabel: user.displayName ?? user.email,
+      });
+      sent += 1;
+    } catch (error) {
+      // Email delivery failed. Delete the invite row so the organizer can retry,
+      // and the next attempt will generate a fresh token.
+      await db.businessConnectInvite.delete({ where: { id: inviteId } }).catch(() => {});
+      failedEmails.push(email);
+    }
   }
 
   revalidatePath('/organizer/business-connect');
 
   const skipped = alreadyInvited.size;
   const parts = [`Invited ${sent} ${sent === 1 ? 'guest' : 'guests'}.`];
+
   if (skipped > 0) {
     parts.push(
       `${skipped} already had a pending invite and ${skipped === 1 ? 'was' : 'were'} skipped.`,
     );
   }
+
+  if (failedEmails.length > 0) {
+    parts.push(
+      `Failed to send email to: ${failedEmails.join(', ')}. Please try again later.`,
+    );
+    return { success: false, errors: { _: [parts.join(' ')] } };
+  }
+
   return { success: true, message: parts.join(' ') };
 }
 
