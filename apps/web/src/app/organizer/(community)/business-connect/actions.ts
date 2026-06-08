@@ -50,7 +50,10 @@ async function requireBusinessConnectOrganizerContext() {
   return { user, community };
 }
 
-async function assertSubmissionInOrganizerCommunity(submissionId: string, communityId: string) {
+async function assertSubmissionInOrganizerCommunity(
+  submissionId: string,
+  communityId: string,
+) {
   const submission = await db.businessConnectSubmission.findFirst({
     where: {
       id: submissionId,
@@ -86,7 +89,11 @@ export async function inviteBusinessConnectGuest(
   } catch (error) {
     return {
       success: false,
-      errors: { _: [error instanceof Error ? error.message : 'Unable to invite guests.'] },
+      errors: {
+        _: [
+          error instanceof Error ? error.message : 'Unable to invite guests.',
+        ],
+      },
     };
   }
 
@@ -97,14 +104,21 @@ export async function inviteBusinessConnectGuest(
     return { success: false, errors: { emails: ['Enter at least one email address.'] } };
   }
   if (emails.length > 50) {
-    return { success: false, errors: { emails: ['Please invite at most 50 people at a time.'] } };
+    return {
+      success: false,
+      errors: { emails: ['Please invite at most 50 people at a time.'] },
+    };
   }
 
   const invalid = emails.filter((email) => !emailSchema.safeParse(email).success);
   if (invalid.length > 0) {
     return {
       success: false,
-      errors: { emails: [`These don't look like valid emails: ${invalid.join(', ')}`] },
+      errors: {
+        emails: [
+          `These don't look like valid emails: ${invalid.join(', ')}`,
+        ],
+      },
     };
   }
 
@@ -158,7 +172,9 @@ export async function inviteBusinessConnectGuest(
     } catch (error) {
       // Email delivery failed. Delete the invite row so the organizer can retry,
       // and the next attempt will generate a fresh token.
-      await db.businessConnectInvite.delete({ where: { id: inviteId } }).catch(() => {});
+      await db.businessConnectInvite.delete({ where: { id: inviteId } }).catch(
+        () => {},
+      );
       failedEmails.push(email);
     }
   }
