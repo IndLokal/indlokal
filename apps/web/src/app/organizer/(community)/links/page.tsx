@@ -13,7 +13,7 @@ export default async function OrganizerLinksPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader
         title="Community links"
         description="Choose how people can join and follow your community."

@@ -19,7 +19,7 @@ export default async function AddEventPage() {
   }
 
   return (
-    <div className="max-w-2xl">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader
         title="Share an event"
         description="Share your upcoming event with your active community workspace."
@@ -32,7 +32,7 @@ export default async function AddEventPage() {
         role={role}
         showSwitchLink={isMultiCommunity}
       />
-      <div className="mt-8">
+      <div>
         <AddEventForm communityName={community.name} categories={categories} />
       </div>
     </div>

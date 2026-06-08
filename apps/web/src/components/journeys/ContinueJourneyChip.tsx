@@ -13,6 +13,10 @@ type Props = {
 const KEY = 'journey:last';
 const STORE_EVENT = 'journey:last-changed';
 
+// Cache for the last parsed snapshot to avoid allocating new objects on every read
+let cachedSnapshot: { citySlug: string; personaSlug: string } | null = null;
+let cachedRaw: string | null = null;
+
 /**
  * Record the persona a visitor last opened, so a returning user can continue
  * where they left off. Client-only, no account, no server state — mirrors the
@@ -35,10 +39,6 @@ function subscribe(callback: () => void) {
     window.removeEventListener(STORE_EVENT, callback);
   };
 }
-
-// Cache for the last parsed snapshot to avoid allocating new objects on every read
-let cachedSnapshot: { citySlug: string; personaSlug: string } | null = null;
-let cachedRaw: string | null = null;
 
 function readLast(): { citySlug: string; personaSlug: string } | null {
   try {

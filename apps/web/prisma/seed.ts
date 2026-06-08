@@ -14,6 +14,7 @@ import { subDays, addDays, setHours, setMinutes } from 'date-fns';
 import { refreshAllScores } from '../src/modules/scoring/scoring';
 import { runBootstrap } from './bootstrap';
 import { runDirectorySeed } from './directory';
+import { ACTIVE_BUSINESS_CONNECT_PROGRAM } from '../src/app/jito-stuttgart/business-connect/pilot';
 
 const prisma = new PrismaClient();
 const shouldSeedDemoEvents = process.env.SEED_DEMO_EVENTS === '1';
@@ -691,6 +692,164 @@ async function main() {
       },
     });
     console.log('✅ Event governance seed: 1 published community + 1 pending host event');
+  }
+  // ────────────────────────────────────────────────────────────────────────
+
+  // ─── Demo Business Connect enquiries (review queue, gated) ──────────────
+  // Pilot-agnostic engine: rows are scoped to the active pilot via pilotSlug and
+  // carry its consent-notice version. Demo-only (SEED_DEMO_EVENTS=1), create-only
+  // idempotent, obviously-fake data — never seed real enquiry PII.
+  if (shouldSeedDemoEvents) {
+    const pilot = ACTIVE_BUSINESS_CONNECT_PROGRAM;
+
+    // Business Connect is invite-only and organizer-curated. Make the pilot's
+    // community organizer-owned and seed demo invites so the organizer invite
+    // surface and the admin review queue are both exercisable out of the box.
+    const bcCommunity = await prisma.community.findUnique({
+      where: { slug: pilot.communitySlug },
+      select: { id: true },
+    });
+    const bcOrganizer = await prisma.user.findUnique({
+      where: { email: 'organizer@indlokal.com' },
+      select: { id: true },
+    });
+    if (bcCommunity && bcOrganizer) {
+      await prisma.community.update({
+        where: { id: bcCommunity.id },
+        data: { claimState: 'CLAIMED', claimedByUserId: bcOrganizer.id },
+      });
+      await prisma.communityCollaborator.upsert({
+        where: {
+          communityId_userId: { communityId: bcCommunity.id, userId: bcOrganizer.id },
+        },
+        update: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+        create: {
+          communityId: bcCommunity.id,
+          userId: bcOrganizer.id,
+          role: 'COMMUNITY_ADMIN',
+          status: 'ACTIVE',
+          source: 'ADMIN_ADD',
+        },
+      });
+
+      if (adminUser) {
+        await prisma.communityCollaborator.upsert({
+          where: {
+            communityId_userId: { communityId: bcCommunity.id, userId: adminUser.id },
+          },
+          update: { role: 'COMMUNITY_ADMIN', status: 'ACTIVE' },
+          create: {
+            communityId: bcCommunity.id,
+            userId: adminUser.id,
+            role: 'COMMUNITY_ADMIN',
+            status: 'ACTIVE',
+            source: 'ADMIN_ADD',
+          },
+        });
+      }
+
+      // One outstanding (unused) demo invite, so the organizer list shows a
+      // guest who hasn't submitted yet. Token hash is fake (no real link).
+      const pendingInviteEmail = 'demo-invited@example.com';
+      const existingPending = await prisma.businessConnectInvite.findFirst({
+        where: { pilotSlug: pilot.slug, email: pendingInviteEmail },
+        select: { id: true },
+      });
+      if (!existingPending) {
+        await prisma.businessConnectInvite.create({
+          data: {
+            pilotSlug: pilot.slug,
+            email: pendingInviteEmail,
+            tokenHash: `seed-pending-${pilot.slug}`,
+            communityId: bcCommunity.id,
+            invitedByUserId: bcOrganizer.id,
+            note: 'Demo: invited but not yet submitted',
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          },
+        });
+      }
+    }
+
+    const demoEnquiries = [
+      {
+        contactEmail: 'demo-new@example.com',
+        status: 'NEW' as const,
+        participantType: 'INDIAN_BUSINESS',
+        lookingFor: ['DISTRIBUTOR', 'LOCAL_PARTNER'],
+        offering: ['PRODUCT'],
+        companyName: 'Demo Spices Pvt Ltd',
+        country: 'India',
+        city: 'Mumbai',
+        industry: 'Food & Beverage',
+        businessDescription:
+          'Demo enquiry: exporter of packaged spices seeking German distribution.',
+        specificAsk: 'A distribution partner for the DACH region.',
+        contactName: 'Demo Applicant One',
+        attendingEvent: 'YES',
+        isPartnerMember: 'NO',
+      },
+      {
+        contactEmail: 'demo-shortlisted@example.com',
+        status: 'SHORTLISTED' as const,
+        participantType: 'GERMAN_BUSINESS',
+        lookingFor: ['SUPPLIER'],
+        offering: ['DISTRIBUTION', 'LOCAL_REPRESENTATION'],
+        companyName: 'Demo Handels GmbH',
+        country: 'Germany',
+        city: 'Stuttgart',
+        industry: 'Retail',
+        businessDescription: 'Demo enquiry: German importer looking for verified Indian suppliers.',
+        specificAsk: 'Reliable suppliers of organic foods with EU certification.',
+        contactName: 'Demo Applicant Two',
+        attendingEvent: 'NOT_SURE',
+        isPartnerMember: 'YES',
+      },
+    ];
+
+    let bcSeeded = 0;
+    for (const enquiry of demoEnquiries) {
+      const existing = await prisma.businessConnectSubmission.findFirst({
+        where: { pilotSlug: pilot.slug, contactEmail: enquiry.contactEmail },
+        select: { id: true },
+      });
+      if (!existing) {
+        // Every enquiry comes from an invite. Seed a matching used invite so the
+        // demo rows reflect the real invite-only flow and show in the organizer list.
+        let inviteId: string | undefined;
+        if (bcCommunity && bcOrganizer) {
+          const seededInvite = await prisma.businessConnectInvite.create({
+            data: {
+              pilotSlug: pilot.slug,
+              email: enquiry.contactEmail,
+              tokenHash: `seed-used-${enquiry.contactEmail}`,
+              communityId: bcCommunity.id,
+              invitedByUserId: bcOrganizer.id,
+              note: 'Demo: invited and submitted',
+              expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+              usedAt: new Date(),
+            },
+          });
+          inviteId = seededInvite.id;
+        }
+
+        await prisma.businessConnectSubmission.create({
+          data: {
+            pilotSlug: pilot.slug,
+            ...enquiry,
+            consentToReview: true,
+            consentManualIntroUnderstanding: true,
+            consentToShareSelectedInfo: false,
+            consentPolicyVersion: pilot.consentPolicyVersion,
+            // Demo rows are pre-confirmed so they appear in the admin review queue.
+            status: enquiry.status,
+            emailConfirmedAt: new Date(),
+            inviteId,
+          },
+        });
+        bcSeeded++;
+      }
+    }
+    console.log(`✅ Business Connect seed: ${bcSeeded} demo enquiries (pilot ${pilot.slug})`);
   }
   // ────────────────────────────────────────────────────────────────────────
 

@@ -46,7 +46,7 @@ export default async function OrganizerEventsPage() {
   const past = events.filter((event: OrganizerEventRow) => new Date(event.startsAt) < now);
 
   return (
-    <div className="space-y-8">
+    <div className="mx-auto w-full max-w-4xl space-y-8">
       <OrganizerPageHeader
         title="Events"
         description="Manage upcoming and past events for your active community."

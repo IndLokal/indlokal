@@ -111,6 +111,19 @@ export default async function AdminDashboardPage() {
       />
 
       <DashboardSection
+        title="Program Oversight"
+        description="Cross-functional visibility where organizers own the primary decision"
+        cards={[
+          {
+            title: 'Business Connect Oversight',
+            description: 'Monitor organizer-reviewed business enquiries and notes',
+            href: '/admin/business-connect',
+            pendingCount: pendingCounts.businessConnect,
+          },
+        ]}
+      />
+
+      <DashboardSection
         title="Growth Operations"
         description="City ecosystem expansion and local operator health"
         cards={[

@@ -159,44 +159,47 @@ export default function EditProfileForm({ community }: { community: Community })
         </p>
       </div>
 
-      {/* Languages */}
-      <div>
-        <p className="text-foreground block text-sm font-medium">Languages</p>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
-            <label key={lang} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="languages"
-                value={lang}
-                defaultChecked={community.languages.includes(lang)}
-                className="rounded"
-              />
-              <span className="text-foreground text-sm">{lang}</span>
-            </label>
-          ))}
-        </div>
-      </div>
+      {/* Languages + audience */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <fieldset className="border-border rounded-[var(--radius-card)] border bg-white p-4">
+          <legend className="text-foreground px-1 text-sm font-medium">Languages</legend>
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2">
+            {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => (
+              <label key={lang} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="languages"
+                  value={lang}
+                  defaultChecked={community.languages.includes(lang)}
+                  className="rounded"
+                />
+                <span className="text-foreground text-sm">{lang}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
 
-      {/* Persona Segments */}
-      <div>
-        <p className="text-foreground block text-sm font-medium">Who this community is for</p>
-        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
-          {communityOptions.PERSONA_SEGMENT_VALUES.map((segment) => (
-            <label key={segment} className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                name="personaSegments"
-                value={segment}
-                defaultChecked={community.personaSegments.includes(segment)}
-                className="rounded"
-              />
-              <span className="text-foreground text-sm">
-                {communityOptions.PERSONA_SEGMENT_LABELS[segment]}
-              </span>
-            </label>
-          ))}
-        </div>
+        <fieldset className="border-border rounded-[var(--radius-card)] border bg-white p-4">
+          <legend className="text-foreground px-1 text-sm font-medium">
+            Who this community is for
+          </legend>
+          <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {communityOptions.PERSONA_SEGMENT_VALUES.map((segment) => (
+              <label key={segment} className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="personaSegments"
+                  value={segment}
+                  defaultChecked={community.personaSegments.includes(segment)}
+                  className="rounded"
+                />
+                <span className="text-foreground text-sm">
+                  {communityOptions.PERSONA_SEGMENT_LABELS[segment]}
+                </span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
       </div>
 
       {/* Founded year + member count */}

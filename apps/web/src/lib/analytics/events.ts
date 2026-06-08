@@ -58,6 +58,12 @@ export const Events = {
   // Event host workspace (PRD-0038)
   HOST_PROFILE_UPDATED: 'host_profile_updated',
 
+  // JITO Stuttgart Business Connect pilot (curated India-Germany enquiries)
+  BUSINESS_CONNECT_PAGE_VIEW: 'business_connect_page_view',
+  BUSINESS_CONNECT_SUBMIT_STARTED: 'business_connect_submit_started',
+  BUSINESS_CONNECT_SUBMIT_SUCCESS: 'business_connect_submit_success',
+  BUSINESS_CONNECT_SUBMIT_ERROR: 'business_connect_submit_error',
+
   // Ops observability - scheduled pipeline health
   PIPELINE_SHARD_COMPLETED: 'pipeline_shard_completed',
   PIPELINE_DISPATCHED: 'pipeline_dispatched',
