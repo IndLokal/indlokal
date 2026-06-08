@@ -33,7 +33,8 @@ describe('businessConnectSubmissionSchema', () => {
   });
 
   it('defaults consentToShareSelectedInfo to false when omitted', () => {
-    const { consentToShareSelectedInfo: _omit, ...rest } = validInput();
+    const { consentToShareSelectedInfo, ...rest } = validInput();
+    void consentToShareSelectedInfo;
     const result = businessConnectSubmissionSchema.safeParse(rest);
     expect(result.success).toBe(true);
     if (result.success) {

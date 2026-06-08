@@ -50,10 +50,7 @@ async function requireBusinessConnectOrganizerContext() {
   return { user, community };
 }
 
-async function assertSubmissionInOrganizerCommunity(
-  submissionId: string,
-  communityId: string,
-) {
+async function assertSubmissionInOrganizerCommunity(submissionId: string, communityId: string) {
   const submission = await db.businessConnectSubmission.findFirst({
     where: {
       id: submissionId,
@@ -64,9 +61,7 @@ async function assertSubmissionInOrganizerCommunity(
     select: { id: true },
   });
   if (!submission) {
-    throw new Error(
-      'Business Connect enquiry not found for this organizer workspace.',
-    );
+    throw new Error('Business Connect enquiry not found for this organizer workspace.');
   }
 }
 
@@ -92,9 +87,7 @@ export async function inviteBusinessConnectGuest(
     return {
       success: false,
       errors: {
-        _: [
-          error instanceof Error ? error.message : 'Unable to invite guests.',
-        ],
+        _: [error instanceof Error ? error.message : 'Unable to invite guests.'],
       },
     };
   }
@@ -120,9 +113,7 @@ export async function inviteBusinessConnectGuest(
     return {
       success: false,
       errors: {
-        emails: [
-          `These don't look like valid emails: ${invalid.join(', ')}`,
-        ],
+        emails: [`These don't look like valid emails: ${invalid.join(', ')}`],
       },
     };
   }
@@ -174,12 +165,10 @@ export async function inviteBusinessConnectGuest(
         inviterLabel: user.displayName ?? user.email,
       });
       sent += 1;
-    } catch (error) {
+    } catch {
       // Email delivery failed. Delete the invite row so the organizer can retry,
       // and the next attempt will generate a fresh token.
-      await db.businessConnectInvite
-        .delete({ where: { id: inviteId } })
-        .catch(() => {});
+      await db.businessConnectInvite.delete({ where: { id: inviteId } }).catch(() => {});
       failedEmails.push(email);
     }
   }
@@ -194,9 +183,7 @@ export async function inviteBusinessConnectGuest(
     );
   }
   if (failedEmails.length > 0) {
-    parts.push(
-      `Failed to send to: ${failedEmails.join(', ')}. Retry later.`,
-    );
+    parts.push(`Failed to send to: ${failedEmails.join(', ')}. Retry later.`);
     return { success: false, errors: { _: [parts.join(' ')] } };
   }
 
