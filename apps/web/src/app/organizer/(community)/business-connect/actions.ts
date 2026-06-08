@@ -123,7 +123,6 @@ export async function inviteBusinessConnectGuest(
 
   let sent = 0;
   const failedEmails: string[] = [];
-
   for (const email of toInvite) {
     const token = generateInviteToken();
     const tokenHash = await hashToken(token);
@@ -168,13 +167,11 @@ export async function inviteBusinessConnectGuest(
 
   const skipped = alreadyInvited.size;
   const parts = [`Invited ${sent} ${sent === 1 ? 'guest' : 'guests'}.`];
-
   if (skipped > 0) {
     parts.push(
       `${skipped} already had a pending invite and ${skipped === 1 ? 'was' : 'were'} skipped.`,
     );
   }
-
   if (failedEmails.length > 0) {
     parts.push(
       `Failed to send email to: ${failedEmails.join(', ')}. Please try again later.`,
