@@ -120,7 +120,9 @@ export async function inviteBusinessConnectGuest(
     return {
       success: false,
       errors: {
-        emails: [`These don't look like valid emails: ${invalid.join(', ')}`],
+        emails: [
+          `These don't look like valid emails: ${invalid.join(', ')}`,
+        ],
       },
     };
   }
@@ -188,12 +190,12 @@ export async function inviteBusinessConnectGuest(
   const parts = [`Invited ${sent} ${sent === 1 ? 'guest' : 'guests'}.`];
   if (skipped > 0) {
     parts.push(
-      `${skipped} already had a pending invite and ${skipped === 1 ? 'was' : 'were'} skipped.`,
+      `${skipped} already had a pending invite and was${skipped === 1 ? '' : ' both'} skipped.`,
     );
   }
   if (failedEmails.length > 0) {
     parts.push(
-      `Failed to send email to: ${failedEmails.join(', ')}. Please try again later.`,
+      `Failed to send to: ${failedEmails.join(', ')}. Retry later.`,
     );
     return { success: false, errors: { _: [parts.join(' ')] } };
   }
