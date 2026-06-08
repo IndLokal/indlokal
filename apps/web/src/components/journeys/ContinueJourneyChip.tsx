@@ -12,6 +12,8 @@ type Props = {
 
 const KEY = 'journey:last';
 const STORE_EVENT = 'journey:last-changed';
+let cachedRaw: string | null = null;
+let cachedSnapshot: { citySlug: string; personaSlug: string } | null = null;
 
 /**
  * Record the persona a visitor last opened, so a returning user can continue

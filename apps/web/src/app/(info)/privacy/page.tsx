@@ -67,6 +67,13 @@ export default function PrivacyPolicyPage() {
                 other information you submit about communities.
               </li>
               <li>
+                <strong>Business Connect enquiries (JITO Stuttgart pilot):</strong> If you submit a
+                business enquiry, we process the company and contact details you provide (including
+                business description, what you are looking for and offering, contact name, email,
+                and any optional website, LinkedIn, phone/WhatsApp, or referral details) to review
+                your enquiry and, with your consent, to make a curated introduction.
+              </li>
+              <li>
                 <strong>Contact forms:</strong> Any information you provide when contacting us.
               </li>
             </ul>
@@ -139,6 +146,13 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <strong>Legal authorities:</strong> If required by law or to protect our rights.
+              </li>
+              <li>
+                <strong>Curated Business Connect introductions (JITO Stuttgart pilot):</strong>{' '}
+                Selected information from a business enquiry is shared with a relevant matched party
+                only after manual review, and only where you have given the separate optional
+                consent for sharing. Enquiries are never publicly listed, sold, or used for
+                automated matching.
               </li>
             </ul>
           </section>

@@ -160,7 +160,7 @@ export default async function OrganizerCollaboratorsPage() {
       : 'View who can help operate this community.';
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto w-full max-w-4xl space-y-6">
       <OrganizerPageHeader title="Team" description={pageDescription} />
       <OrganizerWorkspaceBanner
         communityName={community.name}

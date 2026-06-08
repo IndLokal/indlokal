@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
+import { escapeHtmlAttribute } from '@/lib/html';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -567,6 +568,173 @@ export async function sendReportNotificationEmail(
     ${reporterEmail ? `<tr><td style="padding:4px 8px;font-weight:600">Reporter email</td><td style="padding:4px 8px">${reporterEmail}</td></tr>` : ''}
     <tr><td style="padding:4px 8px;font-weight:600">User ID</td><td style="padding:4px 8px">${submittedByUserId}</td></tr>
   </table>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal admin notification</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Business Connect: double opt-in confirmation link ─── */
+
+export async function sendBusinessConnectInviteEmail(
+  to: string,
+  opts: { inviteUrl: string; eventLabel: string; partnerName: string; inviterLabel: string },
+): Promise<void> {
+  const eventLabel = escapeHtmlAttribute(opts.eventLabel);
+  const partnerName = escapeHtmlAttribute(opts.partnerName);
+  const inviterLabel = escapeHtmlAttribute(opts.inviterLabel);
+  // Used in an href; encodeURI guards against attribute-breaking characters.
+  const inviteUrl = encodeURI(opts.inviteUrl);
+
+  await sendEmail(
+    to,
+    `You're invited to ${opts.partnerName} Business Connect`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
+  <h2 style="margin-top:0">You're invited to Business Connect</h2>
+  <p>${inviterLabel} from ${partnerName} has invited you to submit a business enquiry through
+  IndLokal's curated Business Connect pilot. It's invite-only — this link is tied to your email
+  address and is the only way to open the enquiry form.</p>
+  <p style="margin:24px 0">
+    <a href="${inviteUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Open my enquiry form →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">Enquiries are reviewed manually by IndLokal and ${partnerName};
+  submitting does not guarantee an introduction. If this wasn't expected, you can ignore this email.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Business Connect: double opt-in confirmation link ─── */
+
+export async function sendBusinessConnectConfirmEmail(
+  to: string,
+  opts: { confirmUrl: string; eventLabel: string; partnerName: string; companyName: string },
+): Promise<void> {
+  const eventLabel = escapeHtmlAttribute(opts.eventLabel);
+  const partnerName = escapeHtmlAttribute(opts.partnerName);
+  const companyName = escapeHtmlAttribute(opts.companyName);
+  // Used in an href; encodeURI guards against attribute-breaking characters.
+  const confirmUrl = encodeURI(opts.confirmUrl);
+
+  await sendEmail(
+    to,
+    `Confirm your Business Connect enquiry`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
+  <h2 style="margin-top:0">Confirm your enquiry</h2>
+  <p>Thanks for submitting a Business Connect enquiry for <strong>${companyName}</strong>. To keep
+  enquiries trustworthy, please confirm this email address — your enquiry is only sent to the
+  ${partnerName} review team once you do.</p>
+  <p style="margin:24px 0">
+    <a href="${confirmUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Confirm my enquiry →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">If you didn't submit this enquiry, you can safely ignore this
+  email — nothing will be sent to the review team.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Business Connect: confirmation to submitter ─── */
+
+export async function sendBusinessConnectConfirmationEmail(
+  to: string,
+  opts: { contactName: string; partnerName: string; eventLabel: string; companyName: string },
+): Promise<void> {
+  const contactName = escapeHtmlAttribute(opts.contactName);
+  const partnerName = escapeHtmlAttribute(opts.partnerName);
+  const eventLabel = escapeHtmlAttribute(opts.eventLabel);
+  const companyName = escapeHtmlAttribute(opts.companyName);
+
+  await sendEmail(
+    to,
+    `We received your Business Connect enquiry`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+  <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
+  <h2 style="margin-top:0">Thank you, ${contactName}.</h2>
+  <p>We've received the Business Connect enquiry for <strong>${companyName}</strong>.</p>
+  <p>IndLokal and ${partnerName} review every submission manually. If there is a relevant
+  potential match, the team may contact you for a curated introduction.</p>
+  <p style="font-size:13px;color:#666">Submitting an enquiry does not guarantee an introduction,
+  and your enquiry will never be publicly listed.</p>
+  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
+  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
+</body>
+</html>
+`,
+  );
+}
+
+/* ─── Business Connect: notify the partnerships team of a new enquiry ─── */
+
+export async function sendBusinessConnectAdminNotificationEmail(
+  to: string,
+  opts: {
+    partnerName: string;
+    eventLabel: string;
+    companyName: string;
+    participantType: string;
+    country: string;
+    city: string;
+    industry: string;
+    contactName: string;
+    contactEmail: string;
+    lookingFor: string;
+    offering: string;
+    specificAsk: string;
+  },
+): Promise<void> {
+  const e = escapeHtmlAttribute;
+  const reviewUrl = `${APP_URL}/organizer/business-connect`;
+  await sendEmail(
+    to,
+    `[IndLokal] New Business Connect enquiry: ${opts.companyName}`,
+    `
+<!DOCTYPE html>
+<html>
+<body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
+  <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${e(opts.eventLabel)}</p>
+  <h2 style="margin-top:0">New Business Connect enquiry</h2>
+  <table style="border-collapse:collapse;width:100%;font-size:14px">
+    <tr><td style="padding:4px 8px;font-weight:600;width:150px">Company</td><td style="padding:4px 8px">${e(opts.companyName)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Participant</td><td style="padding:4px 8px">${e(opts.participantType)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Location</td><td style="padding:4px 8px">${e(opts.city)}, ${e(opts.country)} · ${e(opts.industry)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Contact</td><td style="padding:4px 8px">${e(opts.contactName)} · ${e(opts.contactEmail)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Looking for</td><td style="padding:4px 8px">${e(opts.lookingFor)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Offering</td><td style="padding:4px 8px">${e(opts.offering)}</td></tr>
+    <tr><td style="padding:4px 8px;font-weight:600">Specific ask</td><td style="padding:4px 8px">${e(opts.specificAsk)}</td></tr>
+  </table>
+  <p style="margin:24px 0">
+    <a href="${reviewUrl}"
+       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
+      Review in organizer queue →
+    </a>
+  </p>
+  <p style="font-size:13px;color:#666">Reviewed manually with ${e(opts.partnerName)} before any introduction.</p>
   <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
   <p style="font-size:12px;color:#999">IndLokal admin notification</p>
 </body>

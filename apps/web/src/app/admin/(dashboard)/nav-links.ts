@@ -22,6 +22,7 @@ export const ADMIN_NAV_LINKS: Array<{ href: string; label: string; queueKey?: Ad
   },
   { href: '/admin/reports', label: 'Reports', queueKey: 'reports' },
   { href: '/admin/outreach', label: 'Outreach' },
+  { href: '/admin/business-connect', label: 'Business Connect Oversight' },
   { href: '/admin/team', label: 'People' },
   { href: '/admin/audit', label: 'Audit' },
 ];
