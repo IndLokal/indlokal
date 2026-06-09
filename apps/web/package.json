@@ -20,7 +20,6 @@
     "db:directory": "tsx prisma/directory.ts",
     "db:resources": "tsx prisma/resources.ts",
     "journey:coverage": "tsx scripts/journey-coverage.ts",
-    "db:seed-cleanup": "tsx prisma/seed-cleanup.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "test": "vitest run",

@@ -49,7 +49,7 @@
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
  * 5. Idempotent and create-only. Existing rows are NEVER updated or retired by
  *    this script - admin/organiser edits must survive every redeploy. Live-data
- *    cleanup must happen via the explicit seed-cleanup script, never as an
+ *    cleanup must happen via the admin console (deactivate/edit), never as an
  *    implicit side effect of editing this file.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
  *    derives those from real signals.
