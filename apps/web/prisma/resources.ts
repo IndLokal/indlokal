@@ -19,7 +19,7 @@
  *    copyrighted prose without attribution.
  * 3. Idempotent and create-only. Existing rows are NEVER updated or hidden by
  *    this script - admin edits must survive every redeploy. Live-data cleanup
- *    belongs in the explicit seed-cleanup script, not in this seed runner.
+ *    belongs in the admin console (hide/edit), not in this seed runner.
  * 4. No personal data. No event dates that go stale.
  * 5. When facts change (fees, deadlines, addresses), update via the admin
  *    UI in prod or fix here and bump the slug - do NOT silently rewrite
@@ -38,7 +38,6 @@ import {
   type Prisma,
 } from '@prisma/client';
 import { assessEvidenceUrl, getQualifyingEvidence } from '../src/lib/source-policy';
-import { DUPLICATE_SLUG_SET } from './resource-classification';
 
 const prisma = new PrismaClient();
 
@@ -65,6 +64,74 @@ const RESOURCE_TYPE_EVIDENCE_URLS: Partial<Record<ResourceType, string[]>> = {
   JOBS_CAREERS: ['https://www.arbeitsagentur.de/', 'https://www.make-it-in-germany.com/en/'],
   TAX_FINANCE: ['https://www.elster.de', 'https://www.bundesfinanzministerium.de/'],
   BUSINESS_SETUP: ['https://www.service-bw.de/', 'https://www.verwaltung.bund.de/'],
+};
+
+/**
+ * Baseline journey tags applied to every resource by `resourceType` so that
+ * journeys have working coverage in all cities without per-row hand-tagging.
+ * An entry may override either field inline (e.g. an essential Anmeldung guide
+ * pinning `lifecycleStage: ['FIRST_30_DAYS']`); the inline value always wins.
+ */
+const RESOURCE_TYPE_JOURNEY_DEFAULTS: Record<
+  ResourceType,
+  { audiences: ResourceAudience[]; lifecycleStage: ResourceStage[] }
+> = {
+  CONSULAR_SERVICE: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT', 'STUDENT_VISA'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS'],
+  },
+  OFFICIAL_EVENT: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['FIRST_30_DAYS', 'ANYTIME'],
+  },
+  GOVERNMENT_INFO: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT', 'STUDENT_VISA'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS', 'ANYTIME'],
+  },
+  VISA_SERVICE: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT_VISA'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS'],
+  },
+  CITY_REGISTRATION: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT', 'STUDENT_VISA'],
+    lifecycleStage: ['FIRST_30_DAYS'],
+  },
+  DRIVING: {
+    audiences: ['FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['FIRST_30_DAYS', 'FIRST_90_DAYS'],
+  },
+  HOUSING: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS'],
+  },
+  HEALTH_DOCTORS: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['FIRST_30_DAYS', 'FIRST_90_DAYS'],
+  },
+  FAMILY_CHILDREN: {
+    audiences: ['FAMILY'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS', 'FIRST_90_DAYS'],
+  },
+  JOBS_CAREERS: {
+    audiences: ['NEWCOMER', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['PRE_ARRIVAL', 'FIRST_30_DAYS', 'FIRST_90_DAYS'],
+  },
+  TAX_FINANCE: {
+    audiences: ['NEWCOMER', 'EMPLOYEE', 'FOUNDER'],
+    lifecycleStage: ['FIRST_30_DAYS', 'SETTLED', 'ANYTIME'],
+  },
+  BUSINESS_SETUP: {
+    audiences: ['FOUNDER', 'EMPLOYEE'],
+    lifecycleStage: ['FIRST_30_DAYS', 'SETTLED'],
+  },
+  GROCERY_FOOD: {
+    audiences: ['FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['FIRST_30_DAYS', 'ANYTIME'],
+  },
+  COMMUNITY_RESOURCE: {
+    audiences: ['NEWCOMER', 'FAMILY', 'EMPLOYEE', 'STUDENT'],
+    lifecycleStage: ['FIRST_30_DAYS', 'ANYTIME'],
+  },
 };
 
 export type ResourceEntry = {
@@ -113,17 +180,8 @@ export type ResourceEntry = {
 export const RESOURCE_DEFS: ResourceEntry[] = [
   // ── Consular & Indian Government ──
   {
-    title: 'CGI Munich - Consular Camp Stuttgart',
-    slug: 'cgi-munich-consular-camp-stuttgart-2026',
-    resourceType: 'CONSULAR_SERVICE',
-    url: 'https://www.cgimunich.gov.in',
-    description:
-      'The Consulate General of India, Munich conducts periodic consular camps in Stuttgart for passport renewal, OCI card services, Police Clearance Certificates (PCC), and document attestation. Check the CGI Munich website for upcoming camp dates.',
-  },
-  {
     title: 'Passport Seva Portal - Renewal & New Applications',
     slug: 'passport-seva-renewal-india',
-    // folded from resource-classification
     scope: 'COUNTRY',
     resourceType: 'GOVERNMENT_INFO',
     url: 'https://passportindia.gov.in',
@@ -133,7 +191,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'VFS Global - Indian Visa & Passport Services Germany',
     slug: 'vfs-global-india-germany',
-    // folded from resource-classification
     scope: 'COUNTRY',
     resourceType: 'VISA_SERVICE',
     url: 'https://www.vfsglobal.com/India/Germany',
@@ -143,7 +200,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'OCI Card - Application & Renewal',
     slug: 'oci-card-application-germany',
-    // folded from resource-classification
     scope: 'COUNTRY',
     resourceType: 'GOVERNMENT_INFO',
     url: 'https://ociservices.gov.in',
@@ -153,20 +209,11 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Police Clearance Certificate (PCC) - Germany',
     slug: 'pcc-india-germany',
-    // folded from resource-classification
     scope: 'COUNTRY',
     resourceType: 'CONSULAR_SERVICE',
     url: 'https://www.cgimunich.gov.in/pages/pcc',
     description:
       'Police Clearance Certificates (PCC) for Indians in Germany are issued by CGI Munich. Required for long-term visa applications, employment checks, and immigration. Applications can be submitted by post or at consular camps.',
-  },
-  {
-    title: 'India House Stuttgart - Honorary Consulate',
-    slug: 'india-house-stuttgart-honorary-consulate',
-    resourceType: 'CONSULAR_SERVICE',
-    url: 'https://www.cgimunich.gov.in',
-    description:
-      'Baden-Württemberg falls under the jurisdiction of the Consulate General of India, Munich. There is no full consulate in Stuttgart. For urgent assistance, contact CGI Munich directly.',
   },
   {
     title: 'Frankfurt Welcome & Information Center',
@@ -683,7 +730,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'CGI Munich - Consulate General of India',
     slug: 'cgi-munich-consular-services',
-    // folded from resource-classification
     scope: 'COUNTRY',
     consulate: 'munich',
     resourceType: 'CONSULAR_SERVICE',
@@ -695,7 +741,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Bürgerbüro München - Anmeldung & City Registration',
     slug: 'buergerbuero-munich',
-    // folded from resource-classification
     isEssential: true,
     priority: 80,
     lifecycleStage: ['FIRST_30_DAYS'],
@@ -744,21 +789,11 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: '116117 - Doctor-on-duty service (Germany-wide)',
     slug: 'guide-116117-doctor-on-duty-munich',
-    // folded from resource-classification
     scope: 'COUNTRY',
     resourceType: 'HEALTH_DOCTORS',
     url: 'https://www.116117.de/',
     description:
       'Call 116117 anywhere in Germany for non-emergency medical care, including evenings, weekends and public holidays. For life-threatening emergencies always call 112.',
-  },
-  {
-    title: 'ELSTER - Online Tax Filing',
-    slug: 'elster-munich',
-    resourceType: 'TAX_FINANCE',
-    url: 'https://www.elster.de/',
-    description:
-      "ELSTER is Germany's official online tax portal. Register early - activation requires a postal code sent to your registered address (can take 2 weeks). Once registered you can file Einkommensteuererklärung and Umsatzsteuer returns yourself or grant access to your Steuerberater.",
-    citySlug: 'munich',
   },
 
   /* ──────────────────────────────────────────────────────────────────────
@@ -767,7 +802,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'CGI Frankfurt - Consulate General of India',
     slug: 'cgi-frankfurt-consular-services',
-    // folded from resource-classification
     scope: 'COUNTRY',
     consulate: 'frankfurt',
     resourceType: 'CONSULAR_SERVICE',
@@ -779,7 +813,6 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
   {
     title: 'Frankfurt am Main - City Portal & Bürgerservice',
     slug: 'frankfurt-buergerservice',
-    // folded from resource-classification
     isEssential: true,
     priority: 80,
     lifecycleStage: ['FIRST_30_DAYS'],
@@ -807,28 +840,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
       'Frankfurt Business is the official economic development arm of the city. The portal lists employer directories, sector reports and integration resources for international skilled workers moving to the Rhein-Main metro.',
     citySlug: 'frankfurt',
   },
-  {
-    title: '116117 - Doctor on Duty (Hesse-wide)',
-    slug: 'guide-116117-doctor-on-duty-frankfurt',
-    resourceType: 'HEALTH_DOCTORS',
-    url: 'https://www.116117.de/',
-    description:
-      'Call 116117 for non-emergency medical care across Hesse and the rest of Germany - including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies call 112.',
-    citySlug: 'frankfurt',
-  },
 
   /* ──────────────────────────────────────────────────────────────────────
    *  KARLSRUHE
    * ────────────────────────────────────────────────────────────────────── */
-  {
-    title: 'CGI Munich - Consular Services for Baden-Württemberg',
-    slug: 'cgi-munich-consular-karlsruhe',
-    resourceType: 'CONSULAR_SERVICE',
-    url: 'https://www.cgimunich.gov.in',
-    description:
-      'The Consulate General of India in Munich is the responsible consular post for Karlsruhe and all of Baden-Württemberg. Periodic consular camps are held in Stuttgart and occasionally elsewhere in BW; check the CGI Munich website for upcoming dates.',
-    citySlug: 'karlsruhe',
-  },
   {
     title: 'Karlsruhe - City Portal & Bürgerservice',
     slug: 'karlsruhe-buergerservice',
@@ -851,46 +866,10 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
       'IHK Karlsruhe supports founders and freelancers in TechnologieRegion Karlsruhe with free start-up consultations, Gewerbeanmeldung guidance and qualification recognition.',
     citySlug: 'karlsruhe',
   },
-  {
-    title: 'Bundesagentur für Arbeit - Karlsruhe Jobs & Counselling',
-    slug: 'arbeitsagentur-karlsruhe',
-    resourceType: 'JOBS_CAREERS',
-    url: 'https://www.arbeitsagentur.de/',
-    description:
-      'The Federal Employment Agency offers free job listings, career counselling and skilled-worker integration support. The Karlsruhe office covers the wider TechnologieRegion including Bruchsal and Bretten.',
-    citySlug: 'karlsruhe',
-  },
-  {
-    title: 'ELSTER - Online Tax Filing (Karlsruhe)',
-    slug: 'elster-karlsruhe',
-    resourceType: 'TAX_FINANCE',
-    url: 'https://www.elster.de/',
-    description:
-      "ELSTER is Germany's official online tax portal. Register early - activation requires a postal code sent to your registered Karlsruhe address (can take 2 weeks). Once registered you can file your Einkommensteuererklärung yourself or grant access to your Steuerberater.",
-    citySlug: 'karlsruhe',
-  },
-  {
-    title: '116117 - Doctor on Duty (Karlsruhe & BW)',
-    slug: 'guide-116117-doctor-on-duty-karlsruhe',
-    resourceType: 'HEALTH_DOCTORS',
-    url: 'https://www.116117.de/',
-    description:
-      'Call 116117 for non-emergency medical care in Karlsruhe and across Baden-Württemberg, including evenings, weekends and holidays. The site lists nearby Bereitschaftspraxen and on-duty doctors. For life-threatening emergencies call 112.',
-    citySlug: 'karlsruhe',
-  },
 
   /* ──────────────────────────────────────────────────────────────────────
    *  MANNHEIM
    * ────────────────────────────────────────────────────────────────────── */
-  {
-    title: 'CGI Munich - Consular Services for Rhein-Neckar',
-    slug: 'cgi-munich-consular-mannheim',
-    resourceType: 'CONSULAR_SERVICE',
-    url: 'https://www.cgimunich.gov.in',
-    description:
-      'The Consulate General of India in Munich is the responsible consular post for Mannheim and the Rhein-Neckar region in Baden-Württemberg. CGI Frankfurt is closer but only covers Hesse and surrounding states; for Mannheim residents, Munich is the right consulate.',
-    citySlug: 'mannheim',
-  },
   {
     title: 'Mannheim Bürgerdienste - Anmeldung & City Services',
     slug: 'mannheim-buergerdienste',
@@ -923,22 +902,22 @@ export const RESOURCE_DEFS: ResourceEntry[] = [
     citySlug: 'mannheim',
   },
   {
-    title: 'Bundesagentur für Arbeit - Mannheim Jobs & Counselling',
-    slug: 'arbeitsagentur-mannheim',
+    title: 'Bundesagentur für Arbeit - Jobs & Career Counselling',
+    slug: 'guide-agentur-fuer-arbeit',
+    scope: 'COUNTRY',
     resourceType: 'JOBS_CAREERS',
     url: 'https://www.arbeitsagentur.de/',
     description:
-      'The Federal Employment Agency Mannheim branch covers the Rhein-Neckar metro and offers free job listings, career counselling and integration support for international skilled workers.',
-    citySlug: 'mannheim',
+      'The Federal Employment Agency offers free job listings, career counselling and skilled-worker integration support across Germany. Use the official portal to find local branches, English-language guidance and the shared national job database.',
   },
   {
-    title: '116117 - Doctor on Duty (Mannheim & Rhein-Neckar)',
-    slug: 'guide-116117-doctor-on-duty-mannheim',
-    resourceType: 'HEALTH_DOCTORS',
-    url: 'https://www.116117.de/',
+    title: 'ELSTER - Online Tax Filing',
+    slug: 'guide-elster-tax-portal',
+    scope: 'COUNTRY',
+    resourceType: 'TAX_FINANCE',
+    url: 'https://www.elster.de/',
     description:
-      'Call 116117 for non-emergency medical care in Mannheim, Heidelberg and across the Rhein-Neckar region, including evenings, weekends and holidays. For life-threatening emergencies call 112.',
-    citySlug: 'mannheim',
+      "ELSTER is Germany's official online tax portal. Register early because activation codes are mailed to your registered address. Once activated, you can file Einkommensteuererklärung and other tax returns yourself or grant access to your Steuerberater.",
   },
 ];
 
@@ -951,7 +930,6 @@ export type ResourcesResult = {
   skippedExisting: number;
   skippedMissingCity: number;
   skippedInvalid: number;
-  skippedDuplicate: number;
 };
 
 function evidenceUrlsFor(entry: ResourceEntry): string[] {
@@ -968,21 +946,12 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
     skippedExisting: 0,
     skippedMissingCity: 0,
     skippedInvalid: 0,
-    skippedDuplicate: 0,
   };
 
   const cities = await prisma.city.findMany({ select: { id: true, slug: true } });
   const cityIdBySlug = new Map(cities.map((c) => [c.slug, c.id]));
 
   for (const entry of RESOURCE_DEFS) {
-    // PRD/TDD-0030 - duplicates are pruned at the source. The canonical
-    // COUNTRY-scoped row supersedes each city-fanout copy; see
-    // `prisma/resource-classification.ts`.
-    if (DUPLICATE_SLUG_SET.has(entry.slug)) {
-      result.skippedDuplicate++;
-      continue;
-    }
-
     const evidenceUrls = evidenceUrlsFor(entry);
     const qualifyingEvidence = getQualifyingEvidence(evidenceUrls);
     if (qualifyingEvidence.length === 0) {
@@ -1069,8 +1038,11 @@ export async function runResourcesSeed(): Promise<ResourcesResult> {
           cityId: cityIdForRow,
           scope,
           scopeRegion,
-          audiences: entry.audiences ?? [],
-          lifecycleStage: entry.lifecycleStage ?? [],
+          audiences:
+            entry.audiences ?? RESOURCE_TYPE_JOURNEY_DEFAULTS[entry.resourceType].audiences,
+          lifecycleStage:
+            entry.lifecycleStage ??
+            RESOURCE_TYPE_JOURNEY_DEFAULTS[entry.resourceType].lifecycleStage,
           priority,
           isEssential,
           source: 'ADMIN_SEED',
@@ -1093,9 +1065,6 @@ async function main() {
   const ms = Date.now() - started;
   console.log(`\n✅ Resources seed complete in ${ms}ms`);
   console.log(`   created ${r.created}, skipped ${r.skippedExisting} (already present)`);
-  if (r.skippedDuplicate > 0) {
-    console.log(`   ⊘ ${r.skippedDuplicate} skipped as known duplicates (PRD/TDD-0030)`);
-  }
   if (r.skippedMissingCity > 0) {
     console.log(`   ⚠ ${r.skippedMissingCity} skipped because city was missing`);
   }
