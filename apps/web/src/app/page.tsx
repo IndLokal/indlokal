@@ -17,7 +17,7 @@ import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 export const metadata: Metadata = {
   title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
   description:
-    'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+    'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
   keywords: [
     'indian communities in germany',
     'indian events in germany',
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
     description:
-      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+      'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
     url: siteConfig.url,
     type: 'website',
   },
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
     description:
-      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+      'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
   },
 };
 export default function HomePage() {
@@ -212,14 +212,15 @@ export default function HomePage() {
           <div className="mx-auto max-w-5xl">
             <div className="text-center">
               <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
-                Three pillars, one place
+                What you&apos;ll find in your city
               </span>
               <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
                 Communities. Events. Resources.
               </h2>
               <p className="text-muted mx-auto mt-3 max-w-xl">
-                Everything in {siteConfig.name} ladders up to one of three pillars. Equal weight,
-                ranked by what&apos;s actually alive - not who paid for a listing.
+                Three ways into the life of your city — the people, what&apos;s happening, and the
+                practical know-how to settle in. Ranked by what&apos;s actually alive, not by who
+                paid for a listing.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-3">

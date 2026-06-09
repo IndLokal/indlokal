@@ -29,7 +29,8 @@ export default function ImpressumPage() {
             <p>
               {siteConfig.name}
               <br />
-              Digital information platform for Indian communities and events in Germany.
+              Digital platform helping Indians in Germany navigate life in their city — communities,
+              events and expat-life resources.
             </p>
           </section>
 

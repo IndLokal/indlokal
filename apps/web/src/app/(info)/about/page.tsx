@@ -8,7 +8,7 @@ import { InfoPageHero } from '@/components/info/InfoPageHero';
 export const metadata: Metadata = {
   title: `About - ${siteConfig.name}`,
   description:
-    'Learn about IndLokal - the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
+    'Learn about IndLokal — how we help Indians in Germany navigate life in their city: trusted local communities, the events worth knowing about this week, and the practical expat-life resources you actually need.',
   alternates: {
     canonical: '/about',
   },
@@ -23,7 +23,7 @@ export default function AboutPage() {
       <InfoPageHero
         badge="Built for Indians in Germany"
         title={`About ${siteConfig.name}`}
-        description="The city-first discovery platform for the Indian diaspora in Germany - communities, events and expat-life resources, active near you."
+        description="Helping Indians in Germany navigate life in their city — trusted local communities, the events worth knowing about this week, and the practical expat-life resources you actually need."
         meta={`Last reviewed: ${lastReviewed}`}
       />
 
@@ -57,10 +57,13 @@ export default function AboutPage() {
       {/* Three pillars */}
       <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
+          <h2 className="text-foreground text-2xl font-extrabold">
+            What you&apos;ll find in your city
+          </h2>
           <p className="text-muted mt-3 leading-relaxed">
-            For every German city we cover, {siteConfig.name} brings together three things in one
-            place - with equal weight.
+            For every German city we cover, {siteConfig.name} brings together three ways into local
+            Indian life — the people, what&apos;s happening, and the practical know-how to settle
+            in.
           </p>
           <div className="mt-8 grid gap-5 sm:grid-cols-3">
             {[

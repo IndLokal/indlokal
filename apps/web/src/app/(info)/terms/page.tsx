@@ -39,8 +39,9 @@ export default function TermsPage() {
           <section>
             <h2>2. Description of Service</h2>
             <p>
-              {siteConfig.name} is a community discovery platform that aggregates information about
-              Indian communities, events, and resources in German cities. The Service provides:
+              {siteConfig.name} is a platform that helps Indians in Germany navigate life in their
+              city. It aggregates information about Indian communities, events, and resources in
+              German cities. The Service provides:
             </p>
             <ul>
               <li>A directory of Indian communities and cultural groups</li>

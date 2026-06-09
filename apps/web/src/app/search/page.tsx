@@ -30,7 +30,9 @@ type Props = {
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { q } = await searchParams;
   return {
-    title: q ? `"${q}" - Search across Germany` : 'Search Indian communities across Germany',
+    title: q
+      ? `"${q}" - Search across Germany`
+      : 'Search Indian communities, events & resources across Germany',
     robots: { index: false },
   };
 }
