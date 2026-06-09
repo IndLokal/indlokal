@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
+import { resources as resourceContract } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteResourceAction } from '../actions';
@@ -26,22 +28,7 @@ export default async function AdminResourcesPage({
 }) {
   const sp = await searchParams;
   const pagination = parseOffsetPagination(sp);
-  const types = [
-    'CONSULAR_SERVICE',
-    'OFFICIAL_EVENT',
-    'GOVERNMENT_INFO',
-    'VISA_SERVICE',
-    'CITY_REGISTRATION',
-    'DRIVING',
-    'HOUSING',
-    'HEALTH_DOCTORS',
-    'FAMILY_CHILDREN',
-    'JOBS_CAREERS',
-    'TAX_FINANCE',
-    'BUSINESS_SETUP',
-    'GROCERY_FOOD',
-    'COMMUNITY_RESOURCE',
-  ] as const;
+  const types = resourceContract.ResourceType.options;
 
   const where: Prisma.ResourceWhereInput = {};
   if (sp.city) where.city = { slug: sp.city };
@@ -82,7 +69,19 @@ export default async function AdminResourcesPage({
 
   return (
     <AdminPage>
-      <AdminPageHeader title="Resources" backHref="/admin/data" backLabel="Data" />
+      <AdminPageHeader
+        title="Resources"
+        backHref="/admin/data"
+        backLabel="Data"
+        actions={
+          <Link
+            href="/admin/data/resources/new"
+            className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white"
+          >
+            New resource
+          </Link>
+        }
+      />
 
       <form className="mt-6" method="get">
         <input type="hidden" name="pageSize" value={String(pagination.pageSize)} />
@@ -186,7 +185,13 @@ export default async function AdminResourcesPage({
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <form action={deleteResourceAction} className="inline-block">
+                  <Link
+                    href={`/admin/data/resources/${r.id}`}
+                    className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
+                  >
+                    edit
+                  </Link>
+                  <form action={deleteResourceAction} className="ml-3 inline-block">
                     <input type="hidden" name="id" value={r.id} />
                     <ConfirmSubmitButton
                       triggerLabel="delete"

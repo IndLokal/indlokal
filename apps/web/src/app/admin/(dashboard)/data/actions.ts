@@ -2,7 +2,7 @@
 
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { redirect } from 'next/navigation';
-import { communityOptions } from '@indlokal/shared';
+import { communityOptions, resources } from '@indlokal/shared';
 import { z } from 'zod';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
@@ -317,25 +317,6 @@ export async function deleteResourceAction(formData: FormData) {
 
 /* ───────────────────────────── Journey tags (PRD/TDD-0053) ──────────── */
 
-const RESOURCE_AUDIENCE_VALUES = [
-  'NEWCOMER',
-  'FAMILY',
-  'FOUNDER',
-  'EMPLOYEE',
-  'STUDENT',
-  'STUDENT_VISA',
-  'SENIOR',
-  'RETURNEE',
-] as const;
-
-const RESOURCE_STAGE_VALUES = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-] as const;
-
 /**
  * Backfill journey tags on a resource (audiences × lifecycle stage). This is
  * the human-curated tagging path the coverage report grades against. Clearing
@@ -347,18 +328,7 @@ export async function updateResourceJourneyTagsAction(formData: FormData) {
   const id = String(formData.get('id') || '');
   if (!id) return;
 
-  const audiences = formData
-    .getAll('audiences')
-    .map(String)
-    .filter((v): v is (typeof RESOURCE_AUDIENCE_VALUES)[number] =>
-      (RESOURCE_AUDIENCE_VALUES as readonly string[]).includes(v),
-    );
-  const lifecycleStage = formData
-    .getAll('lifecycleStage')
-    .map(String)
-    .filter((v): v is (typeof RESOURCE_STAGE_VALUES)[number] =>
-      (RESOURCE_STAGE_VALUES as readonly string[]).includes(v),
-    );
+  const { audiences, lifecycleStage } = fdToResourceTags(formData);
 
   await db.resource.update({
     where: { id },
@@ -369,6 +339,188 @@ export async function updateResourceJourneyTagsAction(formData: FormData) {
   invalidateResolver();
   revalidateTag('city-feed', 'max');
   revalidatePath('/admin/data/resources');
+}
+
+/* ─────────────────────── Resource create / edit (PRD/TDD-0030) ────────────
+ *
+ * The DB is the source of truth for resources; the seed file is a one-time
+ * baseline. These actions let admins author the full resource record in-app,
+ * mirroring the `ResourceEntry` shape used by the seed (scope, scopeRegion,
+ * journey tags, validity window, review cadence) so no code edit is ever
+ * needed to add or correct a resource.
+ */
+
+const ResourceInput = z.object({
+  title: z.string().min(2).max(160),
+  slug: z.string().min(2).max(120).regex(slugRe, 'lowercase letters, digits, hyphens'),
+  resourceType: resources.ResourceType,
+  scope: resources.ResourceScope.default('CITY'),
+  citySlug: z.string().optional(),
+  scopeRegion: z.string().optional(),
+  url: z.string().trim().url().optional(),
+  description: z.string().max(6000).optional(),
+  priority: z.coerce.number().int().min(0).max(100).optional(),
+  isEssential: z.coerce.boolean().default(false),
+  reviewCadenceDays: z.coerce.number().int().min(1).max(3650).default(180),
+  validFrom: z.coerce.date().optional(),
+  validUntil: z.coerce.date().optional(),
+});
+
+/** Mirror the seeder's scopeRegion derivation when the admin leaves it blank. */
+function deriveScopeRegion(
+  scope: resources.ResourceScope,
+  citySlug: string | undefined,
+  scopeRegion: string | undefined,
+): string | null {
+  if (scopeRegion) return scopeRegion;
+  switch (scope) {
+    case 'COUNTRY':
+      return 'DE';
+    case 'METRO':
+    case 'CITY':
+      return citySlug ?? null;
+    default:
+      // GLOBAL → null; STATE/DISTRICT require an explicit region.
+      return null;
+  }
+}
+
+function fdToResourceInput(fd: FormData) {
+  return ResourceInput.parse({
+    title: fd.get('title'),
+    slug: fd.get('slug'),
+    resourceType: fd.get('resourceType'),
+    scope: fd.get('scope') || 'CITY',
+    citySlug: (fd.get('citySlug') as string) || undefined,
+    scopeRegion: (fd.get('scopeRegion') as string) || undefined,
+    url: (fd.get('url') as string)?.trim() || undefined,
+    description: (fd.get('description') as string) || undefined,
+    priority: fd.get('priority') || undefined,
+    isEssential: parseFlagBool(fd, 'isEssential'),
+    reviewCadenceDays: fd.get('reviewCadenceDays') || 180,
+    validFrom: fd.get('validFrom') || undefined,
+    validUntil: fd.get('validUntil') || undefined,
+  });
+}
+
+function fdToResourceTags(fd: FormData) {
+  const audiences = fd
+    .getAll('audiences')
+    .map(String)
+    .filter((v): v is resources.ResourceAudience =>
+      (resources.ResourceAudience.options as readonly string[]).includes(v),
+    );
+  const lifecycleStage = fd
+    .getAll('lifecycleStage')
+    .map(String)
+    .filter((v): v is resources.ResourceStage =>
+      (resources.ResourceStage.options as readonly string[]).includes(v),
+    );
+  return { audiences, lifecycleStage };
+}
+
+/** Resolve cityId (CITY scope only) + scopeRegion for a resource write. */
+async function resolveResourceLocation(input: z.infer<typeof ResourceInput>) {
+  let cityId: string | null = null;
+  if (input.scope === 'CITY') {
+    if (!input.citySlug) throw new Error('CITY-scoped resources require a city.');
+    const city = await db.city.findUnique({
+      where: { slug: input.citySlug },
+      select: { id: true },
+    });
+    if (!city) throw new Error(`City "${input.citySlug}" not found.`);
+    cityId = city.id;
+  }
+  const scopeRegion = deriveScopeRegion(input.scope, input.citySlug, input.scopeRegion);
+  return { cityId, scopeRegion };
+}
+
+async function invalidateResourceCaches() {
+  const { invalidateResolver } = await import('@/modules/resources/resolver');
+  invalidateResolver();
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/data/resources');
+}
+
+export async function createResourceAction(formData: FormData) {
+  await assertCan('admin.data.write');
+  const input = fdToResourceInput(formData);
+  const { audiences, lifecycleStage } = fdToResourceTags(formData);
+
+  const existing = await db.resource.findUnique({
+    where: { slug: input.slug },
+    select: { id: true },
+  });
+  if (existing) throw new Error(`A resource with slug "${input.slug}" already exists.`);
+
+  const { cityId, scopeRegion } = await resolveResourceLocation(input);
+
+  await db.resource.create({
+    data: {
+      title: input.title,
+      slug: input.slug,
+      resourceType: input.resourceType,
+      scope: input.scope,
+      scopeRegion,
+      cityId,
+      url: input.url ?? null,
+      description: input.description ?? null,
+      audiences,
+      lifecycleStage,
+      priority: input.priority ?? (input.isEssential ? 80 : 50),
+      isEssential: input.isEssential,
+      reviewCadenceDays: input.reviewCadenceDays,
+      validFrom: input.validFrom ?? null,
+      validUntil: input.validUntil ?? null,
+      lastReviewedAt: new Date(),
+      source: 'ADMIN_SEED',
+      metadata: { editorialSource: 'admin-ui' },
+    },
+  });
+
+  await invalidateResourceCaches();
+  redirect('/admin/data/resources');
+}
+
+export async function updateResourceAction(formData: FormData) {
+  await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) throw new Error('Missing resource id');
+  const input = fdToResourceInput(formData);
+  const { audiences, lifecycleStage } = fdToResourceTags(formData);
+
+  const dupe = await db.resource.findFirst({
+    where: { slug: input.slug, NOT: { id } },
+    select: { id: true },
+  });
+  if (dupe) throw new Error(`A resource with slug "${input.slug}" already exists.`);
+
+  const { cityId, scopeRegion } = await resolveResourceLocation(input);
+
+  await db.resource.update({
+    where: { id },
+    data: {
+      title: input.title,
+      slug: input.slug,
+      resourceType: input.resourceType,
+      scope: input.scope,
+      scopeRegion,
+      cityId,
+      url: input.url ?? null,
+      description: input.description ?? null,
+      audiences,
+      lifecycleStage,
+      priority: input.priority ?? (input.isEssential ? 80 : 50),
+      isEssential: input.isEssential,
+      reviewCadenceDays: input.reviewCadenceDays,
+      validFrom: input.validFrom ?? null,
+      validUntil: input.validUntil ?? null,
+      lastReviewedAt: new Date(),
+    },
+  });
+
+  await invalidateResourceCaches();
+  redirect('/admin/data/resources');
 }
 
 /**
