@@ -1,27 +1,11 @@
-import { communityOptions } from '@indlokal/shared';
+import { communityOptions, resources } from '@indlokal/shared';
 import {
   updateCommunityPersonaTagsAction,
   updateResourceJourneyTagsAction,
 } from '@/app/admin/(dashboard)/data/actions';
 
-const RESOURCE_AUDIENCES = [
-  'NEWCOMER',
-  'FAMILY',
-  'FOUNDER',
-  'EMPLOYEE',
-  'STUDENT',
-  'STUDENT_VISA',
-  'SENIOR',
-  'RETURNEE',
-] as const;
-
-const RESOURCE_STAGES = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-] as const;
+const RESOURCE_AUDIENCES = resources.ResourceAudience.options;
+const RESOURCE_STAGES = resources.ResourceStage.options;
 
 function CheckGroup({
   legend,
