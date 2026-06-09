@@ -81,15 +81,17 @@ export async function getCommunitiesByCity(
   const cityIds = await resolveCityIds(citySlug);
   if (cityIds.length === 0) return [];
 
+  const where = {
+    cityId: { in: cityIds },
+    status: { not: 'INACTIVE' as const },
+    mergedIntoId: null,
+    ...(options?.categorySlug && {
+      categories: { some: { category: { slug: options.categorySlug } } },
+    }),
+  };
+
   const rows = await db.community.findMany({
-    where: {
-      cityId: { in: cityIds },
-      status: { not: 'INACTIVE' },
-      mergedIntoId: null,
-      ...(options?.categorySlug && {
-        categories: { some: { category: { slug: options.categorySlug } } },
-      }),
-    },
+    where,
     select: {
       id: true,
       name: true,
@@ -118,6 +120,25 @@ export async function getCommunitiesByCity(
   return rows.map(addIsRecentlyAdded);
 }
 
+export async function countCommunitiesByCity(
+  citySlug: string,
+  options?: { categorySlug?: string },
+): Promise<number> {
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return 0;
+
+  return db.community.count({
+    where: {
+      cityId: { in: cityIds },
+      status: { not: 'INACTIVE' },
+      mergedIntoId: null,
+      ...(options?.categorySlug && {
+        categories: { some: { category: { slug: options.categorySlug } } },
+      }),
+    },
+  });
+}
+
 /**
  * Cursor-paginated community list - powers GET /api/v1/discovery/:citySlug/communities.
  */
@@ -132,15 +153,17 @@ export async function getCommunitiesPage(
   const cityIds = await resolveCityIds(citySlug);
   if (!cityIds.length) return { items: [], hasMore: false };
 
+  const where = {
+    cityId: { in: cityIds },
+    status: { not: 'INACTIVE' as const },
+    mergedIntoId: null,
+    ...(opts.categorySlug && {
+      categories: { some: { category: { slug: opts.categorySlug } } },
+    }),
+  };
+
   const rows = await db.community.findMany({
-    where: {
-      cityId: { in: cityIds },
-      status: { not: 'INACTIVE' },
-      mergedIntoId: null,
-      ...(opts.categorySlug && {
-        categories: { some: { category: { slug: opts.categorySlug } } },
-      }),
-    },
+    where,
     select: {
       id: true,
       name: true,

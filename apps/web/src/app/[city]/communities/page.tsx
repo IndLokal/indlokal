@@ -1,12 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
-import { getCommunitiesByCity } from '@/modules/community';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
+import { countCommunitiesByCity, getCommunitiesByCity } from '@/modules/community';
 import { CommunityCard } from '@/components/CommunityCard';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySubpageCrossLinks } from '@/components/city/CitySubpageCrossLinks';
 import { CitySubpageEmptyState } from '@/components/city/CitySubpageEmptyState';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
+import { PaginationControls } from '@/components/ui/PaginationControls';
 import { getSessionUser } from '@/lib/session';
 
 /**
@@ -21,7 +23,7 @@ import { getSessionUser } from '@/lib/session';
 
 type Props = {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ language?: string; category?: string }>;
+  searchParams: Promise<{ language?: string; category?: string; page?: string; pageSize?: string }>;
 };
 
 function capitalize(s: string) {
@@ -77,7 +79,9 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
 export default async function CommunitiesPage({ params, searchParams }: Props) {
   const { city } = await params;
-  const { language, category } = await searchParams;
+  const sp = await searchParams;
+  const { language, category } = sp;
+  const pagination = parseOffsetPagination(sp, { defaultPageSize: 24, maxPageSize: 48 });
 
   const cityRow = await db.city.findUnique({
     where: { slug: city },
@@ -85,30 +89,46 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const [allCommunities, user] = await Promise.all([
-    getCommunitiesByCity(city, { categorySlug: category, limit: 24 }),
+  const [allCommunities, totalCountWithoutLanguage, pagedCommunities, user] = await Promise.all([
+    language ? getCommunitiesByCity(city, { categorySlug: category }) : Promise.resolve([]),
+    countCommunitiesByCity(city, { categorySlug: category }),
+    language
+      ? Promise.resolve([])
+      : getCommunitiesByCity(city, {
+          categorySlug: category,
+          limit: pagination.take,
+          offset: pagination.skip,
+        }),
     getSessionUser(),
   ]);
   const cityName = cityRow.name;
   const savedCommunityIds = new Set(
     user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
   );
-  type CommunityItem = (typeof allCommunities)[number];
 
   // Optional language filter (for SEO pages like /telugu-communities)
   const languageName = language ? capitalize(language) : null;
-  const communities = languageName
+  const communitiesByLanguage = languageName
     ? allCommunities.filter(
-        (c: CommunityItem) =>
-          c.languages?.some((l: string) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
+        (c) => c.languages?.some((l) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
       )
-    : allCommunities;
+    : [];
+  const totalCount = languageName ? communitiesByLanguage.length : totalCountWithoutLanguage;
+  const communities = languageName
+    ? communitiesByLanguage.slice(pagination.skip, pagination.skip + pagination.take)
+    : pagedCommunities;
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount,
+    itemCount: communities.length,
+  });
 
   const description =
-    communities.length > 0
+    totalCount > 0
       ? languageName
-        ? `${communities.length} ${languageName}-speaking communit${communities.length !== 1 ? 'ies' : 'y'}`
-        : `${communities.length} active Indian communit${communities.length !== 1 ? 'ies' : 'y'} in ${cityName}, Germany.`
+        ? `${totalCount} ${languageName}-speaking communit${totalCount !== 1 ? 'ies' : 'y'}`
+        : `${totalCount} active Indian communit${totalCount !== 1 ? 'ies' : 'y'} in ${cityName}, Germany.`
       : languageName
         ? `No ${languageName} communities listed yet.`
         : `No Indian communities listed yet in ${cityName}, Germany.`;
@@ -129,16 +149,22 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
 
       {/* Community grid */}
       {communities.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {communities.map((community: CommunityItem) => (
-            <CommunityCard
-              key={community.id}
-              community={community}
-              city={city}
-              savedByUser={savedCommunityIds.has(community.id)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {communities.map((community) => (
+              <CommunityCard
+                key={community.id}
+                community={community}
+                city={city}
+                savedByUser={savedCommunityIds.has(community.id)}
+              />
+            ))}
+          </div>
+          <PaginationControls
+            meta={paginationMeta}
+            getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+          />
+        </>
       )}
 
       {/* Empty state for language filter */}

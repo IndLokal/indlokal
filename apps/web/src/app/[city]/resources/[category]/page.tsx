@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE } from '@/lib/config';
+import { PaginationControls } from '@/components/ui/PaginationControls';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { getResourcesForCity } from '@/modules/resources';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 
@@ -14,7 +16,10 @@ import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection'
  * Example: /stuttgart/resources/tax-finance/
  */
 
-type Props = { params: Promise<{ city: string; category: string }> };
+type Props = {
+  params: Promise<{ city: string; category: string }>;
+  searchParams: Promise<{ page?: string; pageSize?: string }>;
+};
 type ResolverType = NonNullable<Parameters<typeof getResourcesForCity>[1]>['type'];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -32,8 +37,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function ResourceCategoryPage({ params }: Props) {
+export default async function ResourceCategoryPage({ params, searchParams }: Props) {
   const { city, category } = await params;
+  const sp = await searchParams;
+  const pagination = parseOffsetPagination(sp, { defaultPageSize: 20, maxPageSize: 40 });
 
   const cat = RESOURCE_CATEGORIES.find((c) => c.slug === category);
   const resourceType = RESOURCE_SLUG_TO_TYPE[category];
@@ -52,6 +59,13 @@ export default async function ResourceCategoryPage({ params }: Props) {
     type: resourceType as ResolverType,
   });
   resources.sort((a, b) => a.title.localeCompare(b.title));
+  const pagedResources = resources.slice(pagination.skip, pagination.skip + pagination.take);
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount: resources.length,
+    itemCount: pagedResources.length,
+  });
 
   // Related categories (exclude current)
   const related = RESOURCE_CATEGORIES.filter((c) => c.slug !== category).slice(0, 3);
@@ -106,7 +120,7 @@ export default async function ResourceCategoryPage({ params }: Props) {
       {/* Guide cards */}
       {resources.length > 0 && (
         <div className="space-y-4">
-          {resources.map((r) => (
+          {pagedResources.map((r) => (
             <article
               key={r.id}
               id={r.slug}
@@ -132,6 +146,10 @@ export default async function ResourceCategoryPage({ params }: Props) {
               </div>
             </article>
           ))}
+          <PaginationControls
+            meta={paginationMeta}
+            getPageHref={(page) => buildPageHref({ searchParams: sp, page })}
+          />
         </div>
       )}
 

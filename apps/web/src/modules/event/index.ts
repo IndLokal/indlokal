@@ -12,6 +12,7 @@
  */
 export {
   getUpcomingEvents,
+  countUpcomingEvents,
   getEventBySlug,
   getEventsThisWeek,
   getEventsPage,
