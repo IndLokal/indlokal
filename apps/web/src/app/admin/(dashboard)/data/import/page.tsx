@@ -39,7 +39,7 @@ Senior Adults,senior,PERSONA,🧓,6,
       "description": "Tamil cultural association in Berlin",
       "citySlug": "berlin",
       "languages": ["Tamil","English"],
-      "personaSegments": ["family","working-professional"],
+      "personaSegments": ["family","professional"],
       "categorySlugs": ["cultural","language-regional"],
       "status": "ACTIVE",
       "channels": [
