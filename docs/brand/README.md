@@ -17,8 +17,8 @@ This folder is the home of IndLokal’s brand and marketing system. If you’re 
 - **Name:** **IndLokal** _(always capital `I` and capital `L`; never `Indlokal`, `Ind Lokal`, or `Ind-Lokal`)_
 - **Domains:** `indlokal.de` (primary) · `indlokal.com` _(URLs and handles are always lowercase)_
 - **Tagline:** _Your Indian community, locally._
-- **One-liner:** _IndLokal is the city-first discovery platform for the Indian diaspora in Germany - the active communities, the events worth knowing about this week, and the practical resources Indians actually need._
-- **Three pillars:** Communities · Events · Resources (consular + expat essentials).
+- **One-liner:** _IndLokal helps Indians in Germany navigate life in their city — the active communities, the events worth knowing about this week, and the practical resources Indians actually need._
+- **What you'll find in a city:** Communities · Events · Resources (consular + expat essentials) — the live discovery foundation. The longer arc is the operating system Indians navigate their India–Europe relationship on, with guided **journeys** composed on top (see [`/docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md)).
 - **Primary colour:** Indigo `#4F46E5`
 - **Accent colour:** Saffron `#F59E0B`
 - **Type:** Inter (UI + marketing) · Fraunces (editorial headlines, optional)
@@ -38,7 +38,7 @@ Export instructions live in [`assets/README.md`](./assets/README.md).
 
 ## Versioning
 
-This is **v2.0** - the Pulse-mark, three-pillar release. Bump the version in each doc’s header when you change the system, not when you fix a typo.
+This is **v2.0** - the Pulse-mark, discovery-foundation release. Bump the version in each doc’s header when you change the system, not when you fix a typo.
 
 ## Owner
 

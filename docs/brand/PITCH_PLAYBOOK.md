@@ -1,11 +1,19 @@
 # IndLokal - Pitch Playbook
 
-_Version 1.0 - The spoken-word companion to the brand system._
+_Version 2.0 - The spoken-word companion to the brand system._
 _Owner: Founder & Brand. Companion to [`BRAND_GUIDELINES.md`](./BRAND_GUIDELINES.md), [`MARKETING_KIT.md`](./MARKETING_KIT.md)._
+
+## Strategic guardrails
+
+This playbook follows [docs/PRODUCT_DOCUMENT.md](../PRODUCT_DOCUMENT.md) and keeps spoken positioning consistent.
+
+- Consumer pitch stays anchored in the live discovery foundation: Communities + Events + Resources.
+- Strategic pitch can include the longer company arc (Discovery → Journeys → Personalization → Ecosystem → Business → Connect → Intelligence).
+- Business and Connect are still gated and must never be spoken about as shipped.
 
 **What this is for.** What you **say out loud** - handshakes, panel intros, podcast interviews, founder coffees, partner meetings, LinkedIn voice notes - and the answers you give when someone pushes back.
 
-**Why it exists.** When you meet a Consul General, a student, and a fellow founder in the same week, you should sound like the same company. The Marketing Kit handles the written surfaces; this playbook handles the spoken ones. **Same spine, same vocabulary, same three pillars.** They're separated because writing and speaking are different crafts.
+**Why it exists.** When you meet a Consul General, a student, and a fellow founder in the same week, you should sound like the same company. The Marketing Kit handles the written surfaces; this playbook handles the spoken ones. **Same spine, same vocabulary, same discovery foundation** (communities · events · resources), and — for strategic audiences — the same journey-led company arc. They're separated because writing and speaking are different crafts.
 
 **The discipline.** Memorise §1. Practise §2 out loud until the words come the same way every time. When in doubt, fall back to §1. If you find yourself improvising outside this playbook, stop and update _this file_ - consistency comes from repetition, not from filing.
 
@@ -17,13 +25,13 @@ _Owner: Founder & Brand. Companion to [`BRAND_GUIDELINES.md`](./BRAND_GUIDELINES
 
 That's the spine. Every pitch in §2 is a remix of this line. If you're ever stuck mid-conversation, fall back to it.
 
-The three things this sentence carries - and that **every** version of the pitch must carry:
+The three things this sentence carries - and that **every** version of the consumer pitch must carry:
 
 1. **City-first** - "in your German city", not "in Germany"
-2. **Three pillars** - communities · events · resources (never drop one)
+2. **The discovery foundation** - communities · events · resources, shown as one connected experience (never reduce IndLokal to a single one of them)
 3. **All in one place, per city** - the consolidation promise
 
-If a version drops any of these, it's wrong. Stop and rewind.
+If a version drops any of these, it's wrong. Stop and rewind. (Investor/strategic pitches add a fourth beat: where this goes — the journey-led platform the wedge is building toward; see §2.4.)
 
 ---
 
@@ -67,7 +75,7 @@ A script outline, not a script. Same beats as the 60s - just slow down on each o
 
 **5. Where we are and where this goes (30s).**
 
-> "We've shipped the web product, the admin and organiser console, and the mobile MVP. Launching in the Stuttgart metro first. Funding plan is grants for the public-good layer - BAMF, EU AMIF, city integration funds - then B2B revenue from cities, universities and corporate HR who want a real channel into the diaspora, then a seed round for multi-city. Long term, this is the connective tissue between diaspora communities and the institutions that want to reach them. Indian-in-Germany first; the model is portable."
+> "We've shipped the web product, the admin and organiser console, and the mobile MVP. Launching in the Stuttgart metro first. Funding plan is grants for the public-good layer - BAMF, EU AMIF, city integration funds - then B2B revenue from cities, universities and corporate HR who want a real channel into the diaspora, then a seed round for multi-city. Discovery is just the wedge: on top of the same trusted, structured data we're building guided **journeys** for each life stage (student, family, professional, founder), and from there the ecosystem and business layers. Long term, IndLokal is the operating system Indians navigate their India–Europe relationship on - the connective tissue between diaspora communities and the institutions that want to reach them. Indian-in-Germany first; the model is portable."
 
 **6. The ask (15s).** Always end with one specific thing. Pick from §4.
 

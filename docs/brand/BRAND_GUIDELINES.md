@@ -3,6 +3,15 @@
 _Version 2.0 - Product-grounded brand release_
 _Owner: Brand & Marketing_
 
+## Strategic guardrails
+
+This document follows [docs/PRODUCT_DOCUMENT.md](../PRODUCT_DOCUMENT.md) and defines the durable brand rules for what is live now.
+
+- Lead with the user job: helping Indians navigate life in Germany, city by city.
+- Keep the live product framed as one connected discovery foundation: Communities + Events + Resources.
+- Treat Journey Layer language as an extension of that foundation, not a replacement for it.
+- Business and Connect are still gated and must never be presented as live features.
+
 ---
 
 ## 1. Brand at a glance
@@ -14,8 +23,8 @@ _Owner: Brand & Marketing_
 | **Pronunciation**   | _“ind-lo-kahl”_ (the German _lokal_, not English _local_).                                                                                                                                                                                                                   |
 | **Domains**         | `indlokal.de` (primary, German market) · `indlokal.com` (global / English-speaking diaspora). Both must always 200; `.com` may canonicalise to `.de` for SEO.                                                                                                                |
 | **Handles**         | `@indlokal` everywhere it’s available (LinkedIn, Instagram, X, YouTube, Threads). Fallback: `@indlokal.de`.                                                                                                                                                                  |
-| **Category**        | City-first, activity-led discovery for the Indian diaspora in Germany.                                                                                                                                                                                                       |
-| **What we are**     | A discovery layer. A trusted city-first guide. A community graph with a resources layer on top.                                                                                                                                                                              |
+| **Category**        | Helping Indians in Germany navigate life in their city — city-first, activity-led discovery today, evolving into a journey-led platform for the India–Germany relationship.                                                                                                  |
+| **What we are**     | The layer Indians navigate their life in Germany on. Today: a trusted, city-first discovery layer — a community graph with an events and resources layer on top. Next: guided journeys composed over that same trusted data.                                                 |
 | **What we are not** | A messaging app, a social network, a directory, a ticketing platform, an events-only platform.                                                                                                                                                                               |
 
 ---
@@ -35,9 +44,9 @@ The capitalisation `IndLokal` is intentional and load-bearing: the capital `L` m
 
 ## 3. Mission, vision, promise
 
-**Mission.** Make Indian community life in Germany visible, fresh, and easy to join - and put the practical resources around it within reach.
+**Mission.** Make Indian community life in Germany visible, fresh, and easy to join - and put the practical resources around it within reach - so every transition into life in Germany is legible, trustworthy, and actionable.
 
-**Vision.** Every Indian in Germany - newcomer, student, family, professional - knows where their people are, what’s happening this week, and where to find the help they need.
+**Vision.** Become the operating system Indians navigate their India–Europe relationship on — across Life → Community → Professional Growth → Business → Cross-Border Opportunity — starting with every Indian in Germany (newcomer, student, family, professional, founder) knowing where their people are, what's happening this week, and where to find the help they need.
 
 **Brand promise.** _Real communities. Real events. Real resources. Right now._
 
@@ -45,11 +54,11 @@ The capitalisation `IndLokal` is intentional and load-bearing: the capital `L` m
 
 ## 4. Positioning statement
 
-> For Indians living in Germany who want to discover and participate in community life, **IndLokal** is the activity-led platform that shows you what’s happening, who’s active, how to get involved, and where to find the consular and expat-life resources you actually need - powered by a trusted community graph that ensures freshness, relevance, and quality.
+> For Indians living in Germany who want to discover and participate in community life, **IndLokal** is the city-first, activity-led guide that shows what’s happening, who’s active, how to get involved, and where to find the consular and expat-life resources you actually need - powered by a trusted community graph that ensures freshness, relevance, and quality.
 
-### The three pillars (the product is built on these - the brand must reflect them equally)
+### The three pillars (the live discovery foundation — the brand reflects them as one experience)
 
-Everything in the product, and everything we say about it, ladders up to one of three pillars. Copy, design, and creative that only serve one pillar are off-brief.
+The live product surfaces three things, and most of what we say about IndLokal today ladders up to one of them. They are the **discovery foundation** — the supporting layers a journey is composed from (PRODUCT_DOCUMENT.md §6–8), not three separate verticals. Copy and creative that serve only one pillar in isolation are off-brief; the value is in how they connect (a community hosts the event; the resource is the next step).
 
 | Pillar                | What it is in the product                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       | What the brand says about it                               |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
@@ -65,14 +74,14 @@ When you’re writing copy or designing a layout, ask: _which pillar is this ser
 
 These principles come straight from [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) and [`docs/SOLUTION_ARCHITECTURE.md`](../SOLUTION_ARCHITECTURE.md). Brand work that contradicts them is wrong on its face.
 
-| Product principle                                                                                                                                   | Brand consequence                                                                                                                           |
-| --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Activity drives everything.** The product is an activity-led discovery layer, not a directory. Stale content is downranked; the feed feels alive. | We talk in the present tense. _“What’s alive in {city} this week.”_ Never _“the biggest directory.”_ The Pulse mark literally encodes this. |
-| **City-first.** Every URL begins with `/[city]/`. The product has no value without local density.                                                   | Every headline names a city when it can. _“What’s happening for Indians in Stuttgart”_, not _“in your city”_.                               |
-| **Discovery, not engagement.** Every successful interaction ends with a click out (WhatsApp, Telegram, event registration, official form).          | We never claim to be a community itself. We’re the layer that helps you find one.                                                           |
-| **Three pillars, equal weight.** Communities, Events, Resources.                                                                                    | No copy that mentions only one pillar in headline position.                                                                                 |
-| **Trust through freshness, not volume.** Activity scores, freshness badges, claimed/verified badges, the future Pulse Score.                        | We brag about freshness signals, not totals. _“12 communities posted something this week”_ beats _“47 communities listed.”_                 |
-| **Communities are the durable unit; events are temporal.** Events belong to communities.                                                            | When we feature an event, we always credit and link the hosting community. The brand reinforces the community graph.                        |
+| Product principle                                                                                                                                                                  | Brand consequence                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Activity drives everything.** The product is an activity-led discovery layer, not a directory. Stale content is downranked; the feed feels alive.                                | We talk in the present tense. _“What’s alive in {city} this week.”_ Never _“the biggest directory.”_ The Pulse mark literally encodes this. |
+| **City-first.** Every URL begins with `/[city]/`. The product has no value without local density.                                                                                  | Every headline names a city when it can. _“What’s happening for Indians in Stuttgart”_, not _“in your city”_.                               |
+| **Discovery, not engagement.** Every successful interaction ends with a click out (WhatsApp, Telegram, event registration, official form).                                         | We never claim to be a community itself. We’re the layer that helps you find one.                                                           |
+| **Three pillars are one experience.** Communities, Events, Resources are the live discovery foundation, composed together (and, next, into journeys) — not three siloed verticals. | No copy that treats a single pillar in isolation as the whole product. Show how they connect.                                               |
+| **Trust through freshness, not volume.** Activity scores, freshness badges, claimed/verified badges, the future Pulse Score.                                                       | We brag about freshness signals, not totals. _“12 communities posted something this week”_ beats _“47 communities listed.”_                 |
+| **Communities are the durable unit; events are temporal.** Events belong to communities.                                                                                           | When we feature an event, we always credit and link the hosting community. The brand reinforces the community graph.                        |
 
 ---
 
