@@ -5,7 +5,21 @@ _Companion to [`BRAND_GUIDELINES.md`](./BRAND_GUIDELINES.md) and [`DESIGN_GUIDEL
 
 Everything here is approved copy. Lift, paste, ship. If you change a line, run it past the brand checklist (`BRAND_GUIDELINES.md` §11).
 
-> **What this kit is built around.** IndLokal is **not an events platform**. It is a city-first discovery layer with **three equally-important pillars**: the **Communities** active in your city, the **Events** they run this week, and the **Resources** every Indian in Germany ends up needing - Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung, apartment search, English-friendly doctors, Indian grocers. Copy that talks only about events sells the product short.
+> **Strategic alignment (June 2026).** Per [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md),
+> IndLokal's job is to help Indians **navigate life in Germany**. City-first discovery (communities ·
+> events · resources) is the live foundation and the basis of the consumer copy in this kit — it
+> stays correct. As surfaces ship, prefer framing that leads with the user's life ("navigate life in
+> your city") over describing IndLokal as a "discovery platform" in the abstract, and treat the three
+> pillars as **one connected experience / the discovery foundation**, not three equal verticals. The
+> guided **Journey Layer** composes on top of this foundation; **Business and Connect are deferred
+> behind gates** (PRODUCT_DOCUMENT.md §12) and must not appear in copy as live features.
+
+> **What this kit is built around.** IndLokal helps Indians in Germany **navigate life in their
+> city**. It is **not an events platform**: the live foundation is a city-first discovery layer
+> bringing together the **Communities** active in your city, the **Events** they run this week, and
+> the **Resources** every Indian in Germany ends up needing - Anmeldung, Kindergeld, EU Blue Card,
+> GKV vs PKV, Steuererklärung, apartment search, English-friendly doctors, Indian grocers. Treat
+> these three as one connected experience; copy that talks only about events sells the product short.
 
 ---
 
@@ -13,13 +27,13 @@ Everything here is approved copy. Lift, paste, ship. If you change a line, run i
 
 Pick the version that fits the audience.
 
-| Audience                   | One-liner                                                                                                                                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Default / press / web**  | IndLokal is the city-first discovery platform for the Indian diaspora in Germany - the active communities, the events worth knowing about this week, and the practical resources Indians actually need. |
-| **A newcomer**             | Land in a German city, find your people, your festivals, and the answer to "what is Anmeldung?" - all in one place.                                                                                     |
-| **A settled resident**     | Stop missing what's happening for Indians in your city.                                                                                                                                                 |
-| **An organiser**           | Get found by the newcomers in your city who are already searching for you.                                                                                                                              |
-| **A partner / journalist** | The trusted, activity-led guide to Indian community life and expat-life resources in Germany.                                                                                                           |
+| Audience                   | One-liner                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Default / press / web**  | IndLokal helps Indians in Germany navigate life in their city - the active communities, the events worth knowing about this week, and the practical resources Indians actually need, all in one place. |
+| **A newcomer**             | Land in a German city, find your people, your festivals, and the answer to "what is Anmeldung?" - all in one place.                                                                                    |
+| **A settled resident**     | Stop missing what's happening for Indians in your city.                                                                                                                                                |
+| **An organiser**           | Get found by the newcomers in your city who are already searching for you.                                                                                                                             |
+| **A partner / journalist** | The trusted, activity-led guide to Indian community life and expat-life resources in Germany.                                                                                                          |
 
 ---
 

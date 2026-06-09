@@ -1,8 +1,10 @@
 # IndLokal
 
-**Your Indian community, locally - the city-first discovery platform for the Indian diaspora in Germany.**
+**Your Indian community, locally — helping Indians in Germany navigate life in their city.**
 
-IndLokal helps Indians in Germany discover the **communities** active in their city, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing - from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
+IndLokal helps Indians in Germany navigate life in their new city: discover the **communities** active around them, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing - from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
+
+City-first discovery (communities, events, resources) is the live foundation today. The longer arc — set out in [`docs/PRODUCT_DOCUMENT.md`](docs/PRODUCT_DOCUMENT.md) — is to become the operating system Indians navigate their India–Europe relationship on, with guided **journeys** composed on top of that foundation (Discovery → Journeys → Personalization → Ecosystem → Business → Connect).
 
 Brand source of truth: [`docs/brand/`](docs/brand/). Marketing copy: [`docs/brand/MARKETING_KIT.md`](docs/brand/MARKETING_KIT.md).
 
