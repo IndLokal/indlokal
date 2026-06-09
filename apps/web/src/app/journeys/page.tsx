@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { FLAGS, isJourneyAllowed } from '@/lib/config';
 import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 import { JourneyEntryCard } from '@/components/journeys/JourneyEntryCard';
+import { JOURNEYS_PUBLIC_COPY } from '@/lib/public-site-content';
 
 /**
  * National Journeys hub (PRD/TDD-0052).
@@ -14,9 +15,8 @@ import { JourneyEntryCard } from '@/components/journeys/JourneyEntryCard';
  * 404s when the Journey Layer is disabled.
  */
 export const metadata: Metadata = {
-  title: 'Journeys for moving to Germany',
-  description:
-    'Step-by-step journeys for Indians moving to Germany — the resources, communities and events that matter for your situation, in the order you need them.',
+  title: JOURNEYS_PUBLIC_COPY.title,
+  description: JOURNEYS_PUBLIC_COPY.description,
   alternates: { canonical: '/journeys' },
 };
 
@@ -41,10 +41,7 @@ export default async function NationalJourneysHubPage() {
       <header className="space-y-2">
         <p className="text-brand-700 text-sm font-medium">Journeys</p>
         <h1 className="text-3xl font-bold">Find your path through Germany</h1>
-        <p className="text-muted max-w-2xl">
-          A journey is a guided path — the official steps, trusted communities and upcoming events
-          that matter for your situation, in the order you need them.
-        </p>
+        <p className="text-muted max-w-2xl">{JOURNEYS_PUBLIC_COPY.intro}</p>
       </header>
 
       {cityJourneys.length === 0 ? (

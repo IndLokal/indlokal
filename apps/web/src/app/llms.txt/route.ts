@@ -18,8 +18,8 @@ export function GET() {
   const body = [
     '# IndLokal',
     '',
-    'IndLokal is a city-first discovery platform for the Indian diaspora in Germany.',
-    'It helps users discover active communities, current events, and practical expat resources.',
+    'IndLokal helps Indians in Germany navigate life in their city.',
+    'It brings together active local communities, current events, and practical expat-life resources, city by city.',
     '',
     '## Canonical',
     toAbsolute('/'),

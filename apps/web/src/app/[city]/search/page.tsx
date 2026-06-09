@@ -8,13 +8,13 @@ import {
   searchResources,
   recordSearchInteraction,
 } from '@/modules/search';
-import { CommunityCard } from '@/components/CommunityCard';
-import { EventCard } from '@/components/EventCard';
 import { SearchTracker } from '@/components/analytics';
 import { getSessionUser } from '@/lib/session';
 import type { CommunityListItem } from '@/modules/community';
 import type { EventListItem } from '@/modules/event';
 import type { ResourceSearchItem } from '@/modules/search';
+import { SearchQueryForm } from '@/components/search/SearchQueryForm';
+import { SearchResultsSections } from '@/components/search/SearchResultsSections';
 
 /**
  * Search Results Page
@@ -100,23 +100,11 @@ export default async function SearchPage({ params, searchParams }: Props) {
         <h1 className="text-3xl font-bold">Search {cityName}</h1>
       </div>
 
-      {/* Search form - server action redirects to same page with ?q= */}
-      <form method="GET" action={`/${city}/search`} className="flex gap-2">
-        <input
-          type="search"
-          name="q"
-          defaultValue={query}
-          placeholder="Search communities, events…"
-          autoFocus
-          className="border-border text-foreground focus:border-brand-500 focus:ring-brand-100 flex-1 rounded-[var(--radius-card)] border px-4 py-3 text-base transition-colors outline-none focus:ring-2"
-        />
-        <button
-          type="submit"
-          className="btn-primary rounded-[var(--radius-card)] px-6 py-3 text-sm"
-        >
-          Search
-        </button>
-      </form>
+      <SearchQueryForm
+        action={`/${city}/search`}
+        defaultValue={query}
+        placeholder="Search communities, events…"
+      />
 
       {/* Results */}
       {query.length >= 2 && (
@@ -139,69 +127,14 @@ export default async function SearchPage({ params, searchParams }: Props) {
             </div>
           )}
 
-          {communities.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold">
-                Communities
-                <span className="text-muted ml-2 text-sm font-normal">({communities.length})</span>
-              </h2>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {communities.map((c) => (
-                  <CommunityCard
-                    key={c.id}
-                    community={c}
-                    city={city}
-                    savedByUser={savedCommunityIds.has(c.id)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {events.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold">
-                Events
-                <span className="text-muted ml-2 text-sm font-normal">({events.length})</span>
-              </h2>
-              <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {events.map((e) => (
-                  <EventCard key={e.id} event={e} city={city} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {resources.length > 0 && (
-            <section>
-              <h2 className="text-lg font-semibold">
-                Resources & guides
-                <span className="text-muted ml-2 text-sm font-normal">({resources.length})</span>
-              </h2>
-              <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                {resources.map((r) => (
-                  <a
-                    key={r.id}
-                    href={r.url ?? `/${city}/resources`}
-                    {...(r.url ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                    className="card-base hover:border-brand-300 block p-4 transition-colors"
-                  >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-foreground text-sm font-semibold">{r.title}</h3>
-                      {r.isEssential && (
-                        <span className="badge-base border-brand-200 text-brand-700 bg-brand-50 shrink-0 px-2 py-0.5 text-xs">
-                          Essential
-                        </span>
-                      )}
-                    </div>
-                    {r.description && (
-                      <p className="text-muted mt-1 line-clamp-2 text-sm">{r.description}</p>
-                    )}
-                  </a>
-                ))}
-              </div>
-            </section>
-          )}
+          <SearchResultsSections
+            citySlugForCards={city}
+            savedCommunityIds={savedCommunityIds}
+            communities={communities}
+            events={events}
+            resources={resources}
+            resourceFallbackHref={`/${city}/resources`}
+          />
         </>
       )}
 

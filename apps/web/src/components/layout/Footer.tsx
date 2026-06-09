@@ -59,8 +59,8 @@ export function Footer() {
               </span>
             </Link>
             <p className="text-muted max-w-xs text-sm leading-relaxed">
-              The city-first discovery platform for Indians in Germany. Communities, events &
-              expat-life resources, active near you.
+              Helping Indians in Germany navigate life in their city — communities, events &
+              expat-life resources, near you.
             </p>
             {/* Social links */}
             <div className="flex items-center gap-3 pt-1">
