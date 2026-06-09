@@ -109,8 +109,6 @@ export default async function EventsPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const cityName = cityRow.name;
-
   const [totalEventCount, events, categories] = await Promise.all([
     countUpcomingEvents(city, {
       categorySlug: lens === 'business' ? undefined : filters.category,
@@ -132,6 +130,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
       orderBy: { sortOrder: 'asc' },
     }),
   ]);
+  const cityName = cityRow.name;
   type CategoryItem = (typeof categories)[number];
   const paginationMeta = buildOffsetPaginationMeta({
     page: pagination.page,

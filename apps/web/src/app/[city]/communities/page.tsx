@@ -105,14 +105,12 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   const savedCommunityIds = new Set(
     user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
   );
-  type CommunityItem = Awaited<ReturnType<typeof getCommunitiesByCity>>[number];
 
   // Optional language filter (for SEO pages like /telugu-communities)
   const languageName = language ? capitalize(language) : null;
   const communitiesByLanguage = languageName
     ? allCommunities.filter(
-        (c: CommunityItem) =>
-          c.languages?.some((l: string) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
+        (c) => c.languages?.some((l) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
       )
     : [];
   const totalCount = languageName ? communitiesByLanguage.length : totalCountWithoutLanguage;
@@ -153,7 +151,7 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
       {communities.length > 0 && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {communities.map((community: CommunityItem) => (
+            {communities.map((community) => (
               <CommunityCard
                 key={community.id}
                 community={community}
