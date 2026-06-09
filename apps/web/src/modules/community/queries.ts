@@ -111,7 +111,7 @@ export async function getCommunitiesByCity(
       _count: { select: { events: { where: { startsAt: { gte: new Date() } } } } },
     },
     orderBy: { activityScore: 'desc' },
-    take: options?.limit ?? 20,
+    ...(options?.limit !== undefined && { take: options.limit }),
     skip: options?.offset ?? 0,
   });
 

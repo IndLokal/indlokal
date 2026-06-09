@@ -216,7 +216,7 @@ export async function getUpcomingEvents(
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
-    take: options?.limit ?? 20,
+    ...(options?.limit !== undefined && { take: options.limit }),
     skip: options?.offset ?? 0,
   });
 }

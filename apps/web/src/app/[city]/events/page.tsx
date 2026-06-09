@@ -104,7 +104,6 @@ export default async function EventsPage({ params, searchParams }: Props) {
     categorySlugs: lens === 'business' ? [...d.BUSINESS_EVENT_CATEGORY_SLUGS] : undefined,
     cost,
     type,
-    limit: 16,
   });
 
   const cityName = cityRow.name;

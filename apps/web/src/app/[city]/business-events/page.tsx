@@ -36,7 +36,6 @@ export default async function BusinessEventsPage({ params }: Props) {
 
   const events = await getUpcomingEvents(city, {
     categorySlugs: [...d.BUSINESS_EVENT_CATEGORY_SLUGS],
-    limit: 24,
   });
 
   const cityName = cityRow.name;
