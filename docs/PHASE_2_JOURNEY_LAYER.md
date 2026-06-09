@@ -1,10 +1,10 @@
 # IndLokal — Phase 2: Journey Layer (Product Document)
 
-**Status: Designed / Not yet built.** This is the forward-looking product document for Phase 2 of the [IndLokal product strategy](PRODUCT_DOCUMENT.md). Where the [Phase 1 document](PHASE_1_DISCOVERY_FOUNDATION.md) describes what was _built_, this describes what we _intend to build_ and — critically — _why it is cheap and non-disruptive given what already exists_.
+**Status: Implemented / Shipped (behind a feature flag).** This is the product document for Phase 2 of the [IndLokal product strategy](PRODUCT_DOCUMENT.md). Where the [Phase 1 document](PHASE_1_DISCOVERY_FOUNDATION.md) describes the shipped foundation, this describes the Journey Layer **as designed _and_ as built** — the composition engine, web surfaces, gating, analytics, and tag-coverage operations are live in `apps/web`, gated by the `JOURNEY_LAYER_ENABLED` flag plus a city×persona allowlist (default: Stuttgart × Young Family). Rollout to additional cities/personas is a content-density decision (flip the allowlist), not new engineering.
 
 > **The one-sentence thesis:** Phase 2 turns IndLokal from **content discovery** ("here are the communities/events/resources in your city") into **journey discovery** ("here's how to navigate _your_ transition — student, family, professional, founder — in this city"), by **composing data the platform already collects**, without re-architecting Phase 1 and without disrupting the live product.
 
-> **This is a strategy/PRD-precursor document, not an implementation spec.** Concrete capabilities are specified as PRD/TDD pairs (and an ADR for the journey-composition model) under [docs/specs/](specs/README.md): [ADR-0011](specs/ADR/0011-journey-composition-model.md) (composition model), [PRD-0052](specs/PRD/0052-journey-layer-composition-and-first-journey.md)/[TDD-0052](specs/TDD/0052-journey-layer-composition-and-first-journey.md) (engine + first journey), and [PRD-0053](specs/PRD/0053-journey-tag-coverage-and-tagging-ops.md)/[TDD-0053](specs/TDD/0053-journey-tag-coverage-and-tagging-ops.md) (tag coverage & tagging ops, the P0 blocking dependency). This document defines the product intent, scope, gates, and sequencing those specs honor.
+> **Built to spec.** The capabilities below shipped as PRD/TDD pairs (plus an ADR for the journey-composition model) under [docs/specs/](specs/README.md): [ADR-0011](specs/ADR/0011-journey-composition-model.md) (composition model), [PRD-0052](specs/PRD/0052-journey-layer-composition-and-first-journey.md)/[TDD-0052](specs/TDD/0052-journey-layer-composition-and-first-journey.md) (engine + first journey), and [PRD-0053](specs/PRD/0053-journey-tag-coverage-and-tagging-ops.md)/[TDD-0053](specs/TDD/0053-journey-tag-coverage-and-tagging-ops.md) (tag coverage & tagging ops). This document records the product intent the specs delivered; **"As built" call-outs mark where the shipped implementation differs from the original design.**
 
 ---
 
@@ -108,7 +108,7 @@ Because the tags, the resolver, scope stacking, the metro rollup, the trust/mode
 
 ### 4.1 In scope (Phase 2)
 
-1. **Journey entry points** — a persona/stage selector ("I'm a student / family / professional / founder / skilled worker / business") on the landing and city surfaces.
+1. **Journey entry points** — a persona selector ("I'm a student / family / professional / founder / skilled worker / business") on the national + city journeys hubs and a strip on the city feed.
 2. **The six launch journeys** (§5), composed dynamically from existing tags.
 3. **The journey composition engine** (§6) — a `modules/journeys` module that assembles resources + communities + events (+ ecosystem orgs when available) for `(persona, stage, city, language)`.
 4. **Journey surfaces** (§7) — web journey hub + city×persona journey pages; mobile journey entry; member "save this journey."
@@ -129,18 +129,18 @@ Because the tags, the resolver, scope stacking, the metro rollup, the trust/mode
 
 ## 5. The Six Launch Journeys
 
-Each maps directly onto existing `ResourceAudience` values, so **no new audience enum is required for v1**.
+The shipped persona registry ([modules/journeys/personas.ts](../apps/web/src/modules/journeys/personas.ts)) defines **six personas**, each a `JourneyPersona` enum value with a URL slug and a deterministic mapping onto existing `ResourceAudience` values + community `personaSegments[]` — so **no new audience enum was required**.
 
-| Journey                               | Maps to audience(s)       | Core questions it answers                                                                   | Components assembled                                                                                      |
-| ------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Student**                           | `STUDENT`, `STUDENT_VISA` | Which city? Accommodation? Student communities? Student events? Working-student/visa rules? | University-linked communities, student events, `CITY_REGISTRATION` + `HOUSING` + `JOBS_CAREERS` resources |
-| **Early-Career Professional**         | `EMPLOYEE`                | Salary norms? Housing? Career growth? Networking?                                           | `PROFESSIONAL_NETWORK` communities, networking events, `HOUSING` + `TAX_FINANCE` + `JOBS_CAREERS`         |
-| **Young Family**                      | `FAMILY`                  | Cost of living? Kita/Kindergarten? Schools? Family communities? Family events?              | Family communities, family events, `FAMILY_CHILDREN` + `HOUSING` + `HEALTH_DOCTORS` + `CITY_REGISTRATION` |
-| **Skilled Worker**                    | `NEWCOMER`, `EMPLOYEE`    | Relocation? Certification/recognition? Community support? First-90-days checklist?          | Stage-ordered settling-in resources, regional communities, consular services                              |
-| **Entrepreneur / Founder**            | `FOUNDER`                 | Startup ecosystem? Co-founders/partners? Networking? Business setup?                        | `BUSINESS_SETUP` + `TAX_FINANCE`, founder/professional communities, ecosystem orgs (when Phase 4 lands)   |
-| **Business Expansion (India→Europe)** | `FOUNDER` (org-level)     | Market entry? Local representation? Business communities? Partners?                         | Institutional orgs, chambers, `BUSINESS_SETUP`, relationship graph, Connect (Phase 6)                     |
+| Journey (persona)  | Enum / slug                         | Maps to audience(s)       | Core questions it answers                                                                   | Components assembled                                                                                      |
+| ------------------ | ----------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Young Family**   | `FAMILY` / `young-family`           | `FAMILY`                  | Cost of living? Kita/Kindergarten? Schools? Family communities? Family events?              | Family communities, family events, `FAMILY_CHILDREN` + `HOUSING` + `HEALTH_DOCTORS` + `CITY_REGISTRATION` |
+| **Student**        | `STUDENT` / `student`               | `STUDENT`, `STUDENT_VISA` | Which city? Accommodation? Student communities? Student events? Working-student/visa rules? | University-linked communities, student events, `CITY_REGISTRATION` + `HOUSING` + `JOBS_CAREERS` resources |
+| **Professional**   | `PROFESSIONAL` / `professional`     | `EMPLOYEE`                | Salary norms? Housing? Career growth? Networking?                                           | `PROFESSIONAL_NETWORK` communities, networking events, `HOUSING` + `TAX_FINANCE` + `JOBS_CAREERS`         |
+| **Skilled Worker** | `SKILLED_WORKER` / `skilled-worker` | `NEWCOMER`, `EMPLOYEE`    | Relocation? Certification/recognition? Community support? First-90-days checklist?          | Stage-ordered settling-in resources, regional communities, consular services                              |
+| **Founder**        | `FOUNDER` / `founder`               | `FOUNDER`                 | Startup ecosystem? Co-founders/partners? Networking? Business setup?                        | `BUSINESS_SETUP` + `TAX_FINANCE`, founder/professional communities, ecosystem orgs (when Phase 4 lands)   |
+| **Business**       | `BUSINESS` / `business`             | `FOUNDER` (org-level)     | Market entry? Local representation? Business communities? Partners?                         | Institutional orgs, chambers, `BUSINESS_SETUP`, relationship graph, Connect (Phase 6)                     |
 
-**Launch priority:** start with **Young Family**, **Student**, and **Early-Career Professional** — the densest data and the clearest Stuttgart demand. Skilled Worker, Entrepreneur, and Business Expansion follow as tag coverage and ecosystem data fill in.
+**As built — launch gating.** All six personas are implemented and selectable in code, but **which** city×persona journeys are _live_ is controlled by the `JOURNEY_CITY_PERSONA_ALLOWLIST` env (comma-separated `city:persona` pairs, default `stuttgart:young-family`, `*` = all), checked by `isJourneyAllowed()`. Promoting a journey to a new city/persona is a content-density + allowlist decision, not a code change. The original "start with Young Family, Student, Professional" priority holds: **Stuttgart × Young Family is the default-live flagship**, with the rest enabled per-pair as tag coverage clears the density gate (§13).
 
 ---
 
@@ -148,63 +148,73 @@ Each maps directly onto existing `ResourceAudience` values, so **no new audience
 
 ### 6.1 The function
 
-A new `modules/journeys` module composes a journey for a given `(persona, stage?, citySlug, language?)`:
+The shipped `modules/journeys` module ([compose.ts](../apps/web/src/modules/journeys/compose.ts)) composes a journey deterministically for a given `(persona, citySlug, cityName, stage?, language?)`:
 
 ```
-composeJourney({ persona, citySlug, stage?, language? }) → JourneyView
+composeJourney({ persona, citySlug, cityName, stage?, language? }) → Promise<JourneyView>
 ```
 
 It reuses existing query layers rather than introducing parallel data access:
 
-- **Resources** → extend the resolver (`getResourcesForCity`) to filter by `audiences` (persona) in addition to scope + `lifecycleStage`. The `resources/journey` route is the seam to generalize.
-- **Communities** → `modules/community` filtered by `personaSegments` (+ optional `languages`, `organizationType`).
-- **Events** → `modules/event` filtered by persona-relevant categories, `PUBLISHED` only (moderation gate inherited).
-- **Ecosystem orgs** → optional block, empty until Phase 4 populates partner orgs / relationship edges.
+- **Resources** → the resolver (`getResourcesForCity`) filtered by `audiences` (persona) in addition to scope + `lifecycleStage`; capped at 24.
+- **Communities** → `modules/community` filtered by `personaSegments`; capped at 8. Only communities with ≥1 verified join channel survive (action-or-drop, §6.3.5).
+- **Events** → `modules/event`, `PUBLISHED` only (moderation gate inherited); capped at 6.
+- **Ecosystem orgs** → reserved in the type contract (`JourneyEntityKind = 'ecosystem'`) but **not composed yet** — the block stays empty until Phase 4 populates partner orgs / relationship edges.
 
-### 6.2 The output shape (conceptual)
+### 6.2 The output shape (as built)
+
+The shared contract ([packages/shared/src/contracts/journeys.ts](../packages/shared/src/contracts/journeys.ts)) defines `JourneyView`:
 
 ```
 JourneyView {
-  persona, city, language?
+  persona, personaSlug, citySlug, cityName, language
+  promoted: boolean        // cleared the density gate?
+  blockCount: number
   stages: [
-    { stage: PRE_ARRIVAL,   blocks: [ ResourceBlock, ChecklistBlock, ... ] },
-    { stage: FIRST_30_DAYS, blocks: [ ResourceBlock, CommunityBlock, EventBlock, ... ] },
-    { stage: FIRST_90_DAYS, blocks: [ ... ] },
-    { stage: SETTLED,       blocks: [ ... ] },
+    { stage, stageIndex, blocks: [ JourneyBlock, ... ] },  // canonical order; empty stages collapsed
+    ...
   ]
-  // every block resolves to an ACTION: join channel / save / open official link / checklist step
+}
+
+JourneyBlock {
+  entityKind: 'resource' | 'community' | 'event'   // 'checklist' | 'ecosystem' reserved, not yet composed
+  entityId, title, summary, badge, resolvedScope
+  action: { kind, label, href, external }          // ALWAYS present (action-or-drop invariant)
 }
 ```
 
 ### 6.3 Composition rules
 
-1. **Stage ordering is canonical** — `PRE_ARRIVAL → FIRST_30_DAYS → FIRST_90_DAYS → SETTLED → ANYTIME` (already the convention in the existing route).
+1. **Stage ordering is canonical** — `PRE_ARRIVAL → FIRST_30_DAYS → FIRST_90_DAYS → SETTLED → ANYTIME` (`STAGE_ORDER` in [stages.ts](../apps/web/src/modules/journeys/stages.ts)).
 2. **Scope stacking is inherited** — city → metro → state → country → global, most-specific first (resolver behavior, unchanged).
 3. **Trust gating is inherited** — only `PUBLISHED` events, non-hidden valid resources, and (for prominence) verified/claimed communities. Journeys never expose un-moderated content.
-4. **Essentials lead** — `isEssential` + `priority` order within a stage (matches the existing journey route).
-5. **Every block ends in an action** — composition attaches the action (access channel / save / link / checklist) or the block is dropped. No inert blocks.
-6. **Deterministic, explainable** — Phase-2 composition is rule-based and reproducible. No ML ranking yet (that's Phase 3). This keeps journeys debuggable and trustworthy.
+4. **Essentials lead** — `isEssential` + `priority` order within a stage.
+5. **Every block ends in an action** — `actions.ts` resolves an action (join channel / open link / save / calendar) or the block is **dropped**. Communities with no verified join channel are dropped; resources and events are always actionable. No inert blocks.
+6. **Deterministic, explainable** — composition is rule-based and reproducible. No ML ranking yet (that's Phase 3). This keeps journeys debuggable and trustworthy.
+7. **Density-gated promotion** — `meetsDensityGate()` ([density.ts](../apps/web/src/modules/journeys/density.ts)) sets `promoted`: a journey is advertised only when every non-empty stage has ≥2 blocks, the journey has ≥6 total blocks, and both `PRE_ARRIVAL` and `FIRST_30_DAYS` are present (§13). Sparse journeys still render if reached directly, but are never promoted as entry points.
 
 ---
 
 ## 7. User Experience & Surfaces
 
-### 7.1 Entry points
+### 7.1 Entry points (as built)
 
-- **Landing (`/`)** — alongside the city picker, a "What brings you here?" persona selector (Student / Family / Professional / Skilled Worker / Founder / Business). Choosing one + a city routes into a journey.
-- **City surfaces** — a journey strip on `/[city]/` ("Navigate your move: Family · Student · Professional…").
-- **Resources** — the current `/[city]/resources/` becomes the "browse all" fallback; the journey is the hero path.
-- **Mobile** — a journey entry on Discover; the existing `resources/journey` API generalizes to back it.
+- **National journeys hub** — [`/journeys`](../apps/web/src/app/journeys/page.tsx) lists every live city×persona journey via `JourneyEntryCard`s.
+- **City journeys hub** — [`/[city]/journeys`](../apps/web/src/app/[city]/journeys/page.tsx) shows the personas allowlisted for that city.
+- **City feed strip** — `JourneyFeedStrip` on `/[city]/` renders the allowlisted persona entry cards + a `ContinueJourneyChip` ("continue where you left off"). It is inert (renders null) when the flag is off or no personas are live for the city.
+- **Resources** — `/[city]/resources/` remains the "browse all" fallback; the journey is the hero path.
+- **Mobile** — _Not yet on the Phase-2 layer._ The mobile app still ships the Phase-1 essentials-only "Newcomer Journey" ([apps/mobile/app/resources/journey.tsx](../apps/mobile/app/resources/journey.tsx)) backed by the older `resources/journey` API; porting the persona journey layer to mobile is deferred (§15).
 
-### 7.2 The journey page
+### 7.2 The journey page (as built)
 
-A city × persona page that presents the composed `JourneyView`: a stage-ordered, scannable guide where each stage shows a few high-value, action-ending blocks (a resource that opens an official page, a verified community with a Join CTA, the next family-friendly event with a Save CTA, a checklist item to tick). It links into canonical community/event/resource detail pages for depth.
+The city × persona page [`/[city]/journeys/[persona]`](../apps/web/src/app/[city]/journeys/[persona]/page.tsx) renders the composed `JourneyView` as stage-ordered sections of action-ending blocks. Each block's CTA is a `JourneyBlockLink` (internal route or external new-tab) that fires `journey_block_action` before navigating. The page also carries a `PersonaSwitcher` pill row, a `JourneySaveButton`, per-block `JourneyBlockDone` checkboxes, and a `JourneyViewTracker`. It links into canonical community/event/resource detail pages for depth.
 
-### 7.3 Member integration (reuses Phase 1)
+### 7.3 Member integration (as built)
 
-- **Save a journey** — reuse the saved-items rails; a saved journey is a member's "home base" for their transition.
-- **Persona prefilled** — if a signed-in member has `personaSegments`/`preferredLanguages`, the journey selector is pre-selected (still user-overridable — selection, not inference).
-- **Retention hook** — the existing weekly-digest/reminder producers can later target a member's saved journey city/persona (mechanics exist; INBOX channel).
+- **Save a journey** — `JourneySaveButton`, persisted in **localStorage** (`journey:saved:{city}:{persona}`); no account required. Server-side saved-journey storage is deferred (§9).
+- **Per-block progress** — `JourneyBlockDone` checkboxes, localStorage (`journey:done:{city}:{persona}`), mirroring the Phase-1 resource-checklist pattern.
+- **Resume** — `recordLastJourney()` writes `journey:last`; `ContinueJourneyChip` surfaces it on the feed.
+- **Persona prefill / digest targeting** — _designed, not yet wired._ Signed-in persona prefill and digest/reminder targeting by saved journey remain a Phase-3 retention hook (the rails exist; the binding does not).
 
 ---
 
@@ -217,56 +227,57 @@ Existing (unchanged, canonical)
   /[city]/                          City feed
   /[city]/communities/[slug]/       Community detail
   /[city]/events/[slug]/            Event detail
-  /[city]/resources/                Resources directory (becomes "browse all" fallback)
+  /[city]/resources/                Resources directory ("browse all" fallback)
 
-New (overlay, composition layer)
-  /journeys/                        Journey hub (persona/stage selector)
+New (overlay, composition layer — as built, flag + allowlist gated)
+  /journeys/                        National journeys hub
+  /[city]/journeys/                 City journeys hub (allowlisted personas)
   /[city]/journeys/[persona]/       Composed journey for a city × persona
      e.g. /stuttgart/journeys/young-family/
-  /api/v1/cities/[slug]/journey     Generalized journey API (extends the existing
-                                    resources/journey seam to multi-entity + persona)
+  /api/v1/cities/[slug]/journey     Journey composition API (?persona=&stage=&lang=)
+  /admin/data/journeys              Coverage-audit dashboard (ops, §10)
 ```
 
-(Exact route names are fixed in the Phase-2 PRD; the principle — overlay, link-into, no Phase-1 disruption — is fixed here.)
+All journey routes 404 when `JOURNEY_LAYER_ENABLED` is off, and a city×persona pair renders only if `isJourneyAllowed()` passes — so the overlay is provably inert until switched on. The legacy `resources/journey` API still exists and is unchanged; the new `journey` API is the persona-aware, multi-entity generalization of that seam.
 
 ---
 
 ## 9. Data & Schema Plan
 
-**Guiding constraint:** prefer composition over new storage. v1 should require **no new content tables**.
+**Guiding constraint:** prefer composition over new storage. **As built, Phase 2 added _no_ new content or journey tables** — it composes entirely over existing models.
 
 ### 9.1 What needs no schema change
 
-Personas, lifecycle stages, languages, organization types, scope resolution, relationship edges, and member prefs all exist. v1 journeys compose over them.
+Personas, lifecycle stages, languages, organization types, scope resolution, relationship edges, and member prefs all exist. Journeys compose over `Resource` (`audiences[]`, `lifecycleStage[]`, `priority`, `isEssential`), `Community` (`personaSegments[]`, `AccessChannel[]`), and `Event` — no additions.
 
-### 9.2 Possible additive changes (only if measured need)
+### 9.2 Additive changes (status)
 
-| Candidate                                                           | When                                                            | Notes                                                                                             |
-| ------------------------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| Persona filter on the resources resolver/API                        | Phase 2 P0                                                      | Likely a query-layer change, not schema — filter `audiences` alongside existing scope/stage logic |
-| `Checklist` / `JourneyStep` light model                             | Phase 2 P1, only if action-checklists need persistence per user | Keep minimal; reuse saved-items patterns first                                                    |
-| Thin materialized `Journey` record (pinned order + editorial intro) | Phase 2 P2, only for proven-dense cities (§11)                  | Additive, nullable, optional — an optimization, not a prerequisite                                |
+| Candidate                                                           | Status (as built)                                                                                            |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Persona filter on the resources resolver/API                        | **Shipped** — a query-layer filter (`audiences`) alongside existing scope/stage logic; no schema change      |
+| `Checklist` / `JourneyStep` light model                             | **Not built** — progress + saves persist client-side in `localStorage` (`journey:saved/done/last:*` keys)    |
+| Thin materialized `Journey` record (pinned order + editorial intro) | **Not built** — journeys are 100% dynamic/cached today (§11); materialization remains an optional future opt |
 
-**Anti-goal:** do not introduce a heavyweight journey/playbook CMS, a parallel content store, or a new ingestion path. If a change isn't additive and composition-first, it belongs in a later phase or not at all.
+**Anti-goal (held):** no heavyweight journey/playbook CMS, no parallel content store, no new ingestion path. Save/progress/resume state is deliberately client-side for now; server-side journey persistence is a Phase-3 personalization candidate, not a Phase-2 requirement.
 
 ---
 
 ## 10. Content & Tagging Operations
 
-Journeys are only as good as the tag coverage underneath them. **The first Phase-2 task is a coverage audit**, not feature code.
+Journeys are only as good as the tag coverage underneath them, so coverage tooling shipped alongside the engine (PRD/TDD-0053).
 
-1. **Coverage audit (P0, blocking).** Measure `audiences[]`, `lifecycleStage[]` coverage on resources and `personaSegments[]` on communities, per launch city. Identify the journeys that are too thin to ship.
-2. **Backfill (P0).** Backfill tags on existing rows — admin-assisted for high-value entries, pipeline-assisted (the AI extraction can suggest audience/stage tags into the review queue) for scale. Humans approve, per the L0 trust gate.
-3. **Tagging at ingestion (P1).** Extend organizer edit forms and the AI pipeline so new communities/resources are tagged with audience/persona/stage at creation, keeping coverage from decaying.
-4. **Journey-aware supply prioritization (P1).** Use zero-result + journey-gap analytics to direct supply work at the blocks that break the most-trafficked journeys (not just raw listing count — strategy §11/§17).
+1. **Coverage audit (shipped).** `computeCityCoverage()` ([coverage.ts](../apps/web/src/modules/journeys/coverage.ts)) runs the _same composition path_ as the engine — so "READY" means "promotable". Surfaced two ways: the **admin dashboard** at [`/admin/data/journeys`](<../apps/web/src/app/admin/(dashboard)/data/journeys/page.tsx>) (per-city persona×stage counts, READY/THIN verdict, gap detail, quick-links to tag resources/communities) and a **CLI** (`pnpm --filter web journey:coverage --city=<slug> [--persona=<PERSONA>] [--json]`, [scripts/journey-coverage.ts](../apps/web/scripts/journey-coverage.ts)).
+2. **Backfill (ops, ongoing).** Backfill tags on existing rows — admin-assisted for high-value entries; humans approve, per the L0 trust gate.
+3. **AI tag suggestions (flagged, not yet wired).** `JOURNEY_TAG_SUGGESTIONS_ENABLED` exists as a flag; the intent is to have the AI pipeline suggest audience/stage tags into the review queue, but the pipeline binding is **not built yet**. Today coverage is grown by admin tagging.
+4. **Journey-aware supply prioritization (ongoing).** Use the coverage gaps + zero-result analytics to direct supply work at the blocks that break the most-trafficked journeys (not raw listing count — strategy §11/§17).
 
 ---
 
 ## 11. Dynamic vs Materialized Journeys
 
-**Default: dynamic.** v1 journeys are composed live from tags on every request (cached). This keeps them fresh automatically — a journey can't rot, because its components are the live, moderated, freshness-scored entities.
+**As built: 100% dynamic.** Journeys are composed live from tags on every request (cached). This keeps them fresh automatically — a journey can't rot, because its components are the live, moderated, freshness-scored entities. No journey is materialized today.
 
-**Materialize later, selectively.** Once a city's dynamic journeys are demonstrably good (measured by progression + qualitative review), optionally pin a curated order and add an editorial intro for the flagship journeys (e.g. "Moving to Stuttgart as a Young Family"). Materialization is a **quality optimization for dense cities**, never a prerequisite, and never a CMS. Sparse cities always stay dynamic.
+**Materialize later, selectively.** Once a city's dynamic journeys are demonstrably good (measured by progression + qualitative review), optionally pin a curated order and add an editorial intro for the flagship journeys (e.g. "Moving to Stuttgart as a Young Family"). Materialization is a **quality optimization for dense cities**, never a prerequisite, and never a CMS — it remains deferred (§9.2). Sparse cities always stay dynamic.
 
 This mirrors the Phase-1 discipline: ship the honest dynamic version first; invest in curation only where density justifies it.
 
@@ -288,9 +299,9 @@ Journeys are an SEO upgrade, not a thin-content risk:
 A journey must never feel broken. Inherited and extended from Phase 1's sparse-content discipline:
 
 1. **Graceful degradation** — in a thin city, a journey shows the strongest available components plus national/state-scope resources (scope stacking already does this). It shows "what we have, honestly," never an empty stage.
-2. **Minimum-density gate** — a journey only appears as a promoted entry point for a city once it clears a minimum component count per stage; below that it stays discoverable but unadvertised.
+2. **Minimum-density gate (as built)** — `meetsDensityGate()` sets `promoted`: a journey is advertised as an entry point only when **every non-empty stage has ≥2 blocks, the journey has ≥6 total blocks, and both `PRE_ARRIVAL` and `FIRST_30_DAYS` are present**. Below the bar it still renders if reached directly, but is never promoted.
 3. **Stage skipping** — empty stages collapse rather than render blank.
-4. **Action-or-drop** — a block with no resolvable action is dropped (§6.3 rule 5).
+4. **Action-or-drop** — a block with no resolvable action is dropped (§6.3 rule 5); communities without a verified join channel never appear.
 5. **Trust-first** — verified/claimed communities and essential resources lead; un-moderated content never appears.
 
 ---
@@ -311,33 +322,35 @@ A journey must never feel broken. Inherited and extended from Phase 1's sparse-c
 
 These compose with the Phase-1 funnel — a journey progression is a richer form of a discovery session, and a journey access-channel click is the same conversion event Phase 1 optimizes.
 
+**Instrumentation (as built).** Six PostHog events are wired ([lib/analytics/events.ts](../apps/web/src/lib/analytics/events.ts), fired via `/api/v1/track`): `journey_entry_click`, `journey_view`, `journey_stage_view` (IntersectionObserver, the progression signal), `journey_block_action` (the access-channel conversion), `journey_save`, and `journey_persona_switch`. Save/progress state is client-side (localStorage), so save-rate is measured from the `journey_save` event rather than a server record.
+
 ---
 
 ## 15. Sequenced Build Plan
 
-| Step                                     | Work                                                                                                                                                                                                                                                                           | Gate to next                                                   |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| **0. Tag-coverage audit** (P0, blocking) | Measure audience/stage/persona coverage per launch city; pick the 1–2 journeys with sufficient density                                                                                                                                                                         | A journey is only built where data can make it good            |
-| **1. ADR + PRD/TDD**                     | [ADR-0011](specs/ADR/0011-journey-composition-model.md) (composition model); [PRD/TDD-0052](specs/PRD/0052-journey-layer-composition-and-first-journey.md) (engine + first journey); [PRD/TDD-0053](specs/PRD/0053-journey-tag-coverage-and-tagging-ops.md) (tag coverage ops) | Spec-first discipline (repo convention)                        |
-| **2. Composition engine**                | `modules/journeys.composeJourney()`; generalize the `resources/journey` seam to persona-aware + multi-entity                                                                                                                                                                   | Engine returns a good `JourneyView` for Stuttgart × Family     |
-| **3. First journey surface**             | `/[city]/journeys/young-family/` + entry point; dynamic, action-ending                                                                                                                                                                                                         | Internal quality review passes (every block has an action)     |
-| **4. Backfill + tagging-at-ingestion**   | Admin/pipeline-assisted tag backfill; organizer-form + pipeline tagging                                                                                                                                                                                                        | Coverage clears the minimum-density gate for the next journeys |
-| **5. Roll out remaining journeys**       | Student, Professional, then Skilled Worker/Founder/Business as data allows                                                                                                                                                                                                     | Per-journey density gate                                       |
-| **6. Mobile + member integration**       | Journey entry on mobile; save-a-journey; persona prefill                                                                                                                                                                                                                       | Parity with web journey UX                                     |
-| **7. (Optional) Materialize flagships**  | Pin order + editorial intro for proven-dense cities                                                                                                                                                                                                                            | Only if dynamic quality + progression justify it               |
+| Step                                    | Work                                                                                                                                                                                                                                                       | Status                                                         |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| **0. Tag-coverage audit**               | Coverage tooling: `computeCityCoverage()` + admin dashboard + CLI (§10)                                                                                                                                                                                    | **Done**                                                       |
+| **1. ADR + PRD/TDD**                    | [ADR-0011](specs/ADR/0011-journey-composition-model.md); [PRD/TDD-0052](specs/PRD/0052-journey-layer-composition-and-first-journey.md) (engine + first journey); [PRD/TDD-0053](specs/PRD/0053-journey-tag-coverage-and-tagging-ops.md) (tag coverage ops) | **Done**                                                       |
+| **2. Composition engine**               | `modules/journeys.composeJourney()` over resources + communities + events; action-or-drop; density gate; journey API                                                                                                                                       | **Done** (unit + integration tests)                            |
+| **3. First journey surface**            | `/[city]/journeys/[persona]` + hubs + city-feed strip; dynamic, action-ending; Stuttgart × Young Family live                                                                                                                                               | **Done**                                                       |
+| **4. Backfill + tagging-at-ingestion**  | Admin-assisted tag backfill (ongoing); AI-pipeline tag suggestion behind `JOURNEY_TAG_SUGGESTIONS_ENABLED`                                                                                                                                                 | **Partial** — flag exists; pipeline binding not yet wired      |
+| **5. Roll out remaining journeys**      | Student, Professional, then Skilled Worker/Founder/Business as data clears the density gate                                                                                                                                                                | **Gated by allowlist** — flip `JOURNEY_CITY_PERSONA_ALLOWLIST` |
+| **6. Mobile + member integration**      | Persona journey entry on mobile; server-side save-a-journey; signed-in persona prefill                                                                                                                                                                     | **Deferred** — web-only; client-side save today                |
+| **7. (Optional) Materialize flagships** | Pin order + editorial intro for proven-dense cities                                                                                                                                                                                                        | **Deferred** — not built; optional future opt                  |
 
 ---
 
 ## 16. Risks & Mitigations
 
-| Risk                                               | Likelihood | Impact | Mitigation                                                                                                                      |
-| -------------------------------------------------- | ---------- | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| **Thin tag coverage → weak journeys**              | High       | High   | Coverage audit is the _first, blocking_ task (§10); build journeys only where density supports them; pipeline-assisted backfill |
-| **Journeys become a blog (inform without action)** | Medium     | High   | Hard "action-or-drop" rule (§6.3); journey→access-channel conversion is a North-Star metric                                     |
-| **Disrupting Phase-1 SEO/IA**                      | Low        | High   | Overlay-only IA (§8); canonical discipline (§12); zero changes to canonical content-type URLs                                   |
-| **Over-engineering (building a CMS)**              | Medium     | Medium | Composition-first, no new content tables in v1 (§9); materialization is optional and gated (§11)                                |
-| **Persona mismatch (user picks wrong journey)**    | Medium     | Low    | Selection (not inference) in Phase 2; easy switching; cross-links between journeys; inference deferred to Phase 3               |
-| **Sparse-city emptiness**                          | Medium     | Medium | Graceful degradation + minimum-density gate (§13); scope stacking fills with national/state resources                           |
+| Risk                                               | Likelihood | Impact | Mitigation                                                                                                                                                                  |
+| -------------------------------------------------- | ---------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Thin tag coverage → weak journeys**              | High       | High   | Coverage tooling shipped (dashboard + CLI, §10); density gate keeps thin journeys un-promoted (§13); admin-assisted backfill ongoing (AI suggestion flagged, not yet wired) |
+| **Journeys become a blog (inform without action)** | Medium     | High   | Hard "action-or-drop" rule (§6.3); journey→access-channel conversion is a North-Star metric                                                                                 |
+| **Disrupting Phase-1 SEO/IA**                      | Low        | High   | Overlay-only IA (§8); canonical discipline (§12); zero changes to canonical content-type URLs                                                                               |
+| **Over-engineering (building a CMS)**              | Medium     | Medium | Composition-first, no new content tables in v1 (§9); materialization is optional and gated (§11)                                                                            |
+| **Persona mismatch (user picks wrong journey)**    | Medium     | Low    | Selection (not inference) in Phase 2; easy switching; cross-links between journeys; inference deferred to Phase 3                                                           |
+| **Sparse-city emptiness**                          | Medium     | Medium | Graceful degradation + minimum-density gate (§13); scope stacking fills with national/state resources                                                                       |
 
 ---
 
@@ -354,15 +367,15 @@ These compose with the Phase-1 funnel — a journey progression is a richer form
 
 ## 18. Exit Criteria → Phase 3
 
-Phase 2 is "done enough" to unlock Phase 3 (Personalization) when:
+The Journey Layer is **built**; the remaining gate to fully unlocking Phase 3 (Personalization) is _density + evidence_, not engineering:
 
-1. **≥1 launch city has ≥3 healthy journeys** clearing the minimum-density gate, each with measurable progression and journey→access-channel conversion above an agreed floor.
-2. **Tag coverage** on resources/communities in that city is high enough that dynamic composition is consistently good (no manual rescue needed).
-3. **Behavioral + journey data density** is sufficient to train/justify ranking and a retrieval-grounded concierge — i.e., we have enough signal about _what users in each persona × stage actually do_.
-4. **No Phase-1 regression** — discovery North Star and SEO health are stable or improved.
+1. **≥1 launch city has ≥3 healthy journeys** clearing the density gate (promoted), each with measurable progression and journey→access-channel conversion above an agreed floor. _As of now, Stuttgart × Young Family is the default-live flagship; remaining personas are allowlist-gated pending coverage._
+2. **Tag coverage** on resources/communities in that city is high enough that dynamic composition is consistently good (no manual rescue needed) — tracked via the coverage dashboard/CLI (§10).
+3. **Behavioral + journey data density** is sufficient to justify ranking and a retrieval-grounded concierge — i.e., enough signal (the six journey events, §14) about _what users in each persona × stage actually do_.
+4. **No Phase-1 regression** — discovery North Star and SEO health are stable or improved; the flag/allowlist keep the overlay provably inert where not enabled.
 
-Meeting these means we have the journey spine and the data density that Phase 3 personalization and the constrained concierge require.
+Meeting these means we have the journey spine _and_ the data density that Phase 3 personalization and the constrained concierge require — see [Phase 3 — Personalization Layer](PHASE_3_PERSONALIZATION_LAYER.md) (designed, not yet built).
 
 ---
 
-_This document defines Phase 2 intent. For the company-level thesis, the moat hierarchy, the AI line, the Business/Connect decision gates, and the full 7-phase roadmap, see the [IndLokal Product Strategy & Product Document](PRODUCT_DOCUMENT.md). For the shipped foundation Phase 2 builds on, see [Phase 1 — Discovery Foundation](PHASE_1_DISCOVERY_FOUNDATION.md)._
+_This document records the Phase 2 Journey Layer as built. For the company-level thesis, the moat hierarchy, the AI line, the Business/Connect decision gates, and the full 7-phase roadmap, see the [IndLokal Product Strategy & Product Document](PRODUCT_DOCUMENT.md). For the shipped foundation Phase 2 builds on, see [Phase 1 — Discovery Foundation](PHASE_1_DISCOVERY_FOUNDATION.md); for what comes next, see [Phase 3 — Personalization Layer](PHASE_3_PERSONALIZATION_LAYER.md)._

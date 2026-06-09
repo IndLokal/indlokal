@@ -4,18 +4,18 @@ import { content } from '@indlokal/shared';
 import { siteConfig, ACTIVE_CITIES } from '@/lib/config';
 import { CommunityActionGrid } from '@/components/content/community-actions';
 import { InfoPageHero } from '@/components/info/InfoPageHero';
+import { DISCOVERY_FOUNDATION_CARDS, PUBLIC_SITE_LAST_REVIEWED } from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `About - ${siteConfig.name}`,
   description:
-    'Learn about IndLokal - the city-first discovery platform for the Indian diaspora in Germany. Communities, events & expat-life resources, active near you.',
+    'Learn about IndLokal — how we help Indians in Germany navigate life in their city: trusted local communities, the events worth knowing about this week, and the practical expat-life resources you actually need.',
   alternates: {
     canonical: '/about',
   },
 };
 
 export default function AboutPage() {
-  const lastReviewed = '27 May 2026';
   const actionCards = content.ACTION_GRID_ORDER.map((id) => content.COMMUNITY_ACTIONS[id]);
 
   return (
@@ -23,8 +23,8 @@ export default function AboutPage() {
       <InfoPageHero
         badge="Built for Indians in Germany"
         title={`About ${siteConfig.name}`}
-        description="The city-first discovery platform for the Indian diaspora in Germany - communities, events and expat-life resources, active near you."
-        meta={`Last reviewed: ${lastReviewed}`}
+        description="Helping Indians in Germany navigate life in their city — trusted local communities, the events worth knowing about this week, and the practical expat-life resources you actually need."
+        meta={`Last reviewed: ${PUBLIC_SITE_LAST_REVIEWED}`}
       />
 
       {/* Mission */}
@@ -54,32 +54,19 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Three pillars */}
+      {/* Discovery foundation: communities, events, resources */}
       <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-3xl">
-          <h2 className="text-foreground text-2xl font-extrabold">Three pillars, one place</h2>
+          <h2 className="text-foreground text-2xl font-extrabold">
+            What you&apos;ll find in your city
+          </h2>
           <p className="text-muted mt-3 leading-relaxed">
-            For every German city we cover, {siteConfig.name} brings together three things in one
-            place - with equal weight.
+            For every German city we cover, {siteConfig.name} brings together three ways into local
+            Indian life — the people, what&apos;s happening, and the practical know-how to settle
+            in.
           </p>
           <div className="mt-8 grid gap-5 sm:grid-cols-3">
-            {[
-              {
-                icon: '🪷',
-                title: 'Communities',
-                desc: 'Cultural associations, language groups, religious organisations, student bodies, sports clubs, professional networks - ranked by activity.',
-              },
-              {
-                icon: '📅',
-                title: 'Events',
-                desc: "What's happening this week - from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
-              },
-              {
-                icon: '🧭',
-                title: 'Resources',
-                desc: 'Plain-English guides for Anmeldung, EU Blue Card, Kindergeld, GKV vs PKV, Steuererklärung - plus Indian grocers, English-friendly doctors, CGI consular dates.',
-              },
-            ].map((item) => (
+            {DISCOVERY_FOUNDATION_CARDS.map((item) => (
               <div
                 key={item.title}
                 className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-6 ring-1"

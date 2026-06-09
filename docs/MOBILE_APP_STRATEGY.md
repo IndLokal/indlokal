@@ -52,6 +52,13 @@ Primary jobs-to-be-done on mobile:
 3. **Save & share** with family/friends via WhatsApp/Telegram.
 4. **Contribute** as organizer/community admin on the go.
 
+> **Roadmap note.** These are the Phase-1 (Discovery) jobs and remain the core of the app. As the
+> Journey Layer ships ([`PHASE_2_JOURNEY_LAYER.md`](./PHASE_2_JOURNEY_LAYER.md),
+> [`PRODUCT_DOCUMENT.md`](./PRODUCT_DOCUMENT.md) §6–7), mobile gains **stage-aware, journey jobs** —
+> "show me what to do next for my situation (student / family / professional / founder), in order"
+> — composed over the same data, not a separate content system. The "For you" surface is where this
+> lands first.
+
 ---
 
 ## 2. Technology Choice
@@ -68,13 +75,13 @@ Primary jobs-to-be-done on mobile:
 Supporting choices:
 
 - **Navigation:** Expo Router (file-based, mirrors Next.js mental model).
-- **Data:** TanStack Query + Zod-validated API client generated from OpenAPI.
-- **State:** Zustand for UI state; server state lives in TanStack Query.
-- **Storage:** Expo SecureStore (tokens), MMKV (cache), React Query persist (offline feed).
+- **Data:** Typed `/api/v1` client from `@indlokal/shared` + lightweight in-app query cache.
+- **State:** React state + small Zustand stores where needed.
+- **Storage:** Expo SecureStore (tokens) + AsyncStorage (session cache/reminders).
 - **Auth:** Sign in with Apple (mandatory if Google is offered), Google Sign-In, Email magic link (reuses the web backend email flow).
-- **Push:** Expo Push Service → APNs + FCM.
-- **Crash & analytics:** Vercel logs first for MVP, PostHog when funnel data is needed, Sentry when external users justify dedicated error tracking.
-- **Forms:** React Hook Form + Zod (shared schemas).
+- **Push:** Expo push-token registration is live; push transport rollout remains staged behind backend channel wiring.
+- **Crash & analytics:** First-party tracking via `/api/v1/track` + platform logs; PostHog/Sentry are optional upgrades when usage justifies them.
+- **Forms:** Controlled RN forms with shared contract validation; standardize further as surfaces grow.
 - **CI/CD:** EAS Build/Submit for mobile releases; keep custom mobile CI/CD light until app-store traction justifies automation.
 
 **Repository layout (monorepo via pnpm workspaces or Turborepo):**
@@ -85,7 +92,7 @@ apps/
   mobile/     # Expo app
 packages/
   shared/     # Zod schemas, generated OpenAPI, API client, analytics events
-  ui-tokens/  # design tokens from docs/brand/DESIGN_GUIDELINES.md
+  ui-tokens/  # target: shared design tokens once extracted from web/mobile theme sources
 ```
 
 ---
@@ -231,8 +238,8 @@ Must-have, each with its own spec:
 4. **Search** - `modules/search` with recent + trending.
 5. **Auth** - Apple, Google, magic link; profile; bookmarks (`me/`).
 6. **Push notifications** - granular per-city / per-community / per-category prefs.
-7. **Submit event/community** - **camera + gallery upload** (via `/api/v1/uploads/presign`); reuses `submit/` flow. _(Gap today: submissions are text-only.)_
-8. **Editable profile & preferences** - city/persona/languages editable anytime, at parity with web `/me`. _(Gap today: profile is read-only.)_
+7. **Submit event/community** - **camera + gallery upload** (via `/api/v1/uploads/presign`); reuses `submit/` flow.
+8. **Editable profile & preferences** - city/persona/languages editable anytime, at parity with web `/me`.
 9. **Universal Links / App Links** - `indlokal.com/[city]/...` opens in app.
 10. **Offline cache** - last feed + saved items.
 11. **Analytics + crash reporting.**
@@ -261,7 +268,7 @@ Explicitly out of mobile scope (stays web-only, reached via hand-off): the **adm
 
 ## 5. Notification Strategy (the retention engine)
 
-Channels in priority order:
+Channels in priority order (target-state):
 
 1. **Push** (Expo Push → APNs/FCM)
 2. **Email newsletter** (extend `src/lib/email.ts`; React Email + Resend/Postmark)
@@ -288,6 +295,12 @@ Rules (specced in `EVENTS/notifications.md`):
 - Use `modules/scoring` to gate sends; suppress low-score items.
 - Idempotency keys on the outbox to prevent duplicates.
 
+Current status note:
+
+- In-app inbox is the active production channel.
+- Device registration + push permission flows are live in mobile.
+- Server push/email transports remain staged and should be enabled deliberately with credentials + rollout safeguards.
+
 Newsletter:
 
 - Personalized weekly "This weekend in {city}".
@@ -298,12 +311,12 @@ Newsletter:
 
 ## 6. Backend & Data Changes
 
-Each item below ships behind its own TDD:
+Each item below should ship behind its own TDD. Some are already in place; others remain roadmap work:
 
 - Promote `/api/*` to versioned `/api/v1/*`; OpenAPI generated from Zod.
 - `Device` table - userId, expoPushToken, platform, locale, timezone, appVersion, lastSeen.
 - `NotificationPreference` table - per-user × per-topic × per-channel.
-- `NotificationOutbox` table + worker (BullMQ or pg-boss on existing Postgres - no new infra).
+- `NotificationOutbox` table + processor path (module + scheduled drain model; no extra queue infra required for MVP).
 - Extend `modules/scoring` with `notificationScore`.
 - Event-bus hooks in `community`, `event`, `pipeline` modules to enqueue notifications.
 - Image upload pipeline (S3/R2 + signed URLs) for camera submissions.
@@ -346,7 +359,7 @@ Each item below ships behind its own TDD:
 
 ## 10. Phased Roadmap
 
-- **Phase 0 - Foundations (done / in place):** monorepo split, `/api/v1`, JWT auth, OpenAPI, push infra, outbox worker, Device/Pref tables, image uploads endpoint, spec templates in `docs/specs/`.
+- **Phase 0 - Foundations (in place):** monorepo split, `/api/v1`, JWT auth, OpenAPI contracts, Device/Preference tables, notification outbox baseline, image uploads endpoint, spec templates in `docs/specs/`.
 - **Phase 1 - App v1.0 (Member to parity):** §4.1 scope - finish the Member surface (image-enabled submissions, editable profile, parity public surfaces). Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target).
 - **Phase 2 - App v1.1 (Role-aware shell):** §4.2 - workspace hub driven by `RoleAssignment` scopes + authenticated web hand-off. This is the realignment keystone that ends the Member-only drift.
 - **Phase 3 - App v1.2 (Ambassador field mode):** §4.3 - the highest-leverage _new_ build; the app becomes the field tool for City Ambassadors (check-in, photo capture, fast-track submit, scoreboard).
@@ -397,11 +410,10 @@ Run-rate adds should stay minimal: EAS, Resend, object storage, PostHog, and Sen
 
 **Realignment specs (v2 — to author next; each MUST state both web and mobile behavior per [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md) §10):**
 
-9. `PRD`/`TDD` - **Mobile image uploads** in submissions (camera/gallery via `/api/v1/uploads/presign`).
-10. `PRD`/`TDD` - **Editable mobile profile & preferences** (parity with web `/me`).
-11. `PRD`/`TDD` - **Role-aware workspace hub** in the `Me` tab (drive UI from `RoleAssignment` scopes) + authenticated web hand-off.
-12. `PRD`/`TDD` - **City Ambassador field mode** (dashboard, fast-track submit, check-in + photo, scoreboard).
-13. `PRD`/`TDD` - **Organizer lite** and **Event Host lite** mobile surfaces.
+9. `PRD`/`TDD` - **Role-aware workspace hub** in the `Me` tab (drive UI from `RoleAssignment` scopes) + authenticated web hand-off.
+10. `PRD`/`TDD` - **City Ambassador field mode** (dashboard, fast-track submit, check-in + photo, scoreboard).
+11. `PRD`/`TDD` - **Organizer lite** and **Event Host lite** mobile surfaces.
+12. `PRD`/`TDD` - **Server-driven reminders + push transport rollout** (preference-aware, idempotent, with quiet-hours enforcement).
 
 ---
 

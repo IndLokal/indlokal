@@ -36,11 +36,8 @@ Detailed steps live in [SETUP.md §4](SETUP.md#4-vercel-storage--create-both-neo
 
 Migrations are applied automatically by `pnpm run build:vercel` during each Vercel deployment, against that deployment's `DATABASE_URL`.
 
-For the first MVP seed only:
-
-```bash
-DATABASE_URL='<neon-url>' pnpm --filter web db:seed
-```
+Do **not** run `pnpm --filter web db:seed` against production. Demo seed is for local/staging only.
+Production baseline content is provided via deploy-time bootstrap + directory seed (`RUN_BOOTSTRAP_SEED=true`, `RUN_DIRECTORY_SEED=true`).
 
 ## 3. Vercel
 
@@ -57,24 +54,40 @@ Detailed steps live in [SETUP.md §3, §5](SETUP.md#3-vercel--create-the-project
 
 Use `apps/web` exactly for the Vercel Root Directory. Do not use `web` there. `web` is only the pnpm workspace name for commands such as `pnpm --filter web`.
 
-Minimum env vars in Vercel:
+Minimum env vars in Vercel (production-safe baseline):
 
 | Key                    | Value                                     |
 | ---------------------- | ----------------------------------------- |
 | `NEXT_PUBLIC_APP_URL`  | Vercel URL or custom domain               |
 | `NEXT_PUBLIC_APP_NAME` | `IndLokal`                                |
 | `CRON_SECRET`          | random string from `openssl rand -hex 32` |
+| `AUTH_JWT_PRIVATE_KEY` | RS256 private key PEM (see `SETUP.md` §5) |
+| `AUTH_JWT_PUBLIC_KEY`  | Matching RS256 public key PEM             |
+| `RUN_BOOTSTRAP_SEED`   | `true`                                    |
+| `RUN_DIRECTORY_SEED`   | `true`                                    |
 
 Add these only when the features are active:
 
-| Key                                                    | Needed for           |
-| ------------------------------------------------------ | -------------------- |
-| `RESEND_API_KEY`                                       | real outbound email  |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`            | Google sign-in       |
-| `OPENAI_API_KEY`                                       | AI pipeline          |
-| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | analytics            |
-| `EVENTBRITE_API_KEY`                                   | Eventbrite ingestion |
-| `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_ID`                 | Google CSE ingestion |
+| Key                                                    | Needed for                              |
+| ------------------------------------------------------ | --------------------------------------- |
+| `RESEND_API_KEY`                                       | real outbound email                     |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`            | Google sign-in                          |
+| `OPENAI_API_KEY`                                       | AI pipeline                             |
+| `NEXT_PUBLIC_POSTHOG_KEY` / `NEXT_PUBLIC_POSTHOG_HOST` | analytics                               |
+| `EVENTBRITE_API_KEY`                                   | Eventbrite ingestion                    |
+| `GOOGLE_CSE_API_KEY` / `GOOGLE_CSE_ID`                 | Google CSE ingestion                    |
+| `RESEND_FROM_EMAIL`                                    | recommended for production email sender |
+
+Discovery-specific rule:
+
+- Keep provider keys in Vercel env (`OPENAI_API_KEY`, `EVENTBRITE_API_KEY`, `GOOGLE_CSE_*`).
+- Keep discovery coverage/source-plan config (regions, keyword seeds/strategies,
+  pinned URLs) in DB table `pipeline_source_configs` synced from
+  `apps/web/prisma/data/pipeline-source-defaults.json` via
+  `pnpm --filter web pipeline:sources:sync`.
+- Do not place discovery coverage/source-plan config in GitHub secrets or mobile EAS secrets.
+
+`ADMIN_EMAIL` is optional (defaults to `admin@indlokal.com`), but recommended for real production setup.
 
 `DATABASE_URL` is supplied by Vercel Storage when you create both databases with the `DATABASE` prefix - do not set it manually.
 
@@ -89,7 +102,7 @@ Set these repository secrets:
 
 The CI workflow only validates code (typecheck, lint, test, build) against an ephemeral Postgres container. It does not write to any Neon database. Prisma migrations run inside the Vercel deployment for the connected environment, which keeps schema changes aligned with the exact Preview or Production deployment being built.
 
-The cron workflow can run on schedule or manually. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
+The cron workflow can run on schedule or manually. Pipeline is dispatched via `/api/cron/pipeline/dispatch` and fans out per enabled region. If AI costs become noisy, disable scheduled pipeline runs and use manual workflow dispatch.
 
 Release flow:
 

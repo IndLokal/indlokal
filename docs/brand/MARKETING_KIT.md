@@ -3,9 +3,16 @@
 _Version 2.0 - Ready-to-use copy for web, social, email, press._
 _Companion to [`BRAND_GUIDELINES.md`](./BRAND_GUIDELINES.md) and [`DESIGN_GUIDELINES.md`](./DESIGN_GUIDELINES.md)._
 
-Everything here is approved copy. Lift, paste, ship. If you change a line, run it past the brand checklist (`BRAND_GUIDELINES.md` §11).
+Everything here is approved copy. Lift, paste, ship. If you change a line, run it past the brand checklist (`BRAND_GUIDELINES.md` §12).
 
-> **What this kit is built around.** IndLokal is **not an events platform**. It is a city-first discovery layer with **three equally-important pillars**: the **Communities** active in your city, the **Events** they run this week, and the **Resources** every Indian in Germany ends up needing - Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung, apartment search, English-friendly doctors, Indian grocers. Copy that talks only about events sells the product short.
+## Strategic guardrails
+
+This kit follows [`docs/PRODUCT_DOCUMENT.md`](../PRODUCT_DOCUMENT.md) and keeps copy grounded in what is live now.
+
+- Lead with the user job: helping Indians navigate life in Germany, city by city.
+- Frame the live product as one connected discovery foundation: Communities + Events + Resources.
+- Do not reduce the product to an events app or a static directory.
+- Journey framing is valid where relevant; Business and Connect are still gated and must not be presented as live features.
 
 ---
 
@@ -13,13 +20,13 @@ Everything here is approved copy. Lift, paste, ship. If you change a line, run i
 
 Pick the version that fits the audience.
 
-| Audience                   | One-liner                                                                                                                                                                                               |
-| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Default / press / web**  | IndLokal is the city-first discovery platform for the Indian diaspora in Germany - the active communities, the events worth knowing about this week, and the practical resources Indians actually need. |
-| **A newcomer**             | Land in a German city, find your people, your festivals, and the answer to "what is Anmeldung?" - all in one place.                                                                                     |
-| **A settled resident**     | Stop missing what's happening for Indians in your city.                                                                                                                                                 |
-| **An organiser**           | Get found by the newcomers in your city who are already searching for you.                                                                                                                              |
-| **A partner / journalist** | The trusted, activity-led guide to Indian community life and expat-life resources in Germany.                                                                                                           |
+| Audience                   | One-liner                                                                                                                                                                                                        |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Default / press / web**  | IndLokal helps Indians in Germany navigate life in their city - the active communities, the events worth knowing about this week, and the practical resources Indians actually need, all in one place, per city. |
+| **A newcomer**             | Land in a German city, find your people, your festivals, and the answer to "what is Anmeldung?" - all in one place, per city.                                                                                    |
+| **A settled resident**     | Stop missing what's happening for Indians in your city.                                                                                                                                                          |
+| **An organiser**           | Get found by the newcomers in your city who are already searching for you.                                                                                                                                       |
+| **A partner / journalist** | The trusted, activity-led guide to Indian community life and expat-life resources in Germany.                                                                                                                    |
 
 ---
 
@@ -49,7 +56,7 @@ Pick the version that fits the audience.
 
 ### Medium (~500 chars, partner pages, newsletters)
 
-> IndLokal is the city-first discovery platform for the Indian diaspora in Germany. We do three things for every city: map the Indian communities that are actually active, surface the events worth knowing about this week, and curate the consular and expat-life resources every Indian in Germany ends up needing - from Anmeldung walkthroughs to Indian grocers, English-friendly doctors and CGI consular camp dates. Free for everyone. Free for community organisers. indlokal.de · indlokal.com
+> IndLokal is the city-first guide to Indian life in Germany. We do three things for every city: map the Indian communities that are actually active, surface the events worth knowing about this week, and curate the consular and expat-life resources every Indian in Germany ends up needing - from Anmeldung walkthroughs to Indian grocers, English-friendly doctors and CGI consular camp dates. Free for everyone. Free for community organisers. indlokal.de · indlokal.com
 
 ### Long (~1000 chars, press release)
 
@@ -65,7 +72,7 @@ Pick the version that fits the audience.
 
 ### LinkedIn - company page About
 
-> IndLokal is the city-first discovery platform for the Indian diaspora in Germany.
+> IndLokal is the city-first guide to Indian life in Germany.
 >
 > For every German city we cover, we do three things in one place:
 >
@@ -87,7 +94,7 @@ Pick the version that fits the audience.
 
 ### X / Twitter bio (max 160 chars)
 
-> The city-first discovery platform for Indians in Germany. Communities, events & expat-life resources active near you. indlokal.de
+> The city-first guide to Indian life in Germany. Communities, events & expat-life resources active near you. indlokal.de
 
 ### YouTube channel description
 
@@ -203,7 +210,7 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 
 ### LinkedIn - launch announcement
 
-> Today we're introducing **IndLokal** - the city-first discovery platform for the Indian diaspora in Germany.
+> Today we're introducing **IndLokal** - the city-first guide to Indian life in Germany.
 >
 > There are 250,000+ Indians in Germany. Their community life is rich, generous, and almost completely invisible from the outside. The Tamil Sangam meets every fortnight; almost nobody outside the WhatsApp group knows. The CGI consular camp comes to Mannheim every quarter; you only find out if a friend of a friend forwards the PDF. The Anmeldung appointment that took three weeks the first time can be done in three days if someone tells you which Bürgeramt to book. Diwali happens in seven different places; you went to the wrong one.
 >
@@ -239,7 +246,7 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 > • The CGI Munich consular camp comes to Mannheim quarterly - you don't have to drive to Munich.
 > • DTAA exists, your Indian Steuerberater probably doesn't know it, you need a German one who does.
 >
-> We wrote those guides - and a lot more - for every German city we cover. Plus the active Indian communities, plus what's happening this week, all in one place.
+> We wrote those guides - and a lot more - for every German city we cover. Plus the active Indian communities, plus what's happening this week, all in one place, per city.
 >
 > **IndLokal.** Your Indian community, locally. indlokal.de
 >
@@ -263,7 +270,7 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 
 ### X / Twitter - launch thread (5 posts)
 
-1. Today we're launching **IndLokal** - the city-first discovery platform for the Indian diaspora in Germany. 🇮🇳🇩🇪
+1. Today we're launching **IndLokal** - the city-first guide to Indian life in Germany. 🇮🇳🇩🇪
 2. 250,000+ Indians in Germany. Their community life is rich and almost invisible. WhatsApp groups, Tamil sangams, cricket clubs, founders' meet-ups, temple committees - all real, all hidden.
 3. Same with the practical stuff. Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung, the right Steuerberater, the Indian grocer worth the trip. Every newcomer relearns it from scratch.
 4. IndLokal does three things, per city: the active **communities**, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing. Ranked by what's actually alive - not who paid for a listing.
@@ -344,7 +351,7 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 
 > Hi {organiser_name},
 >
-> I run IndLokal - a discovery platform for the Indian diaspora in Germany. We just launched in {city} and your community ({community_name}) keeps coming up in our research as one of the most active ones in town.
+> I run IndLokal - a city-first guide to Indian life in Germany. We just launched in {city} and your community ({community_name}) keeps coming up in our research as one of the most active ones in town.
 >
 > We'd love to list you. Free, forever. We'll surface you to newcomers searching for {category/language}, push your events into the weekly feed, and you'll get a claim link so you can manage the listing yourself.
 >
@@ -358,18 +365,18 @@ These are the five jobs-to-be-done IndLokal serves. Use the matching block on la
 
 > **FOR IMMEDIATE RELEASE**
 >
-> **IndLokal launches the first city-first discovery platform for the Indian diaspora in Germany - bringing communities, events, and expat-life resources together in one place per city**
+> **IndLokal launches a city-first guide to Indian life in Germany - bringing communities, events, and expat-life resources together in one place, per city**
 >
-> _Germany - {date}_ - IndLokal today introduced indlokal.de and indlokal.com, the first city-first discovery platform built specifically for the Indian diaspora in Germany. For each city it covers, the platform brings together three things in one place: a curated, activity-ranked map of the active Indian communities; the events those communities run each week; and practical resources every Indian in Germany routinely needs - from Anmeldung and EU Blue Card guides to Kindergeld walkthroughs, GKV vs PKV explainers, Steuererklärung help, English-friendly doctors and Steuerberater, Indian grocers, and CGI consular camp dates.
+> _Germany - {date}_ - IndLokal today introduced indlokal.de and indlokal.com, a city-first guide to Indian life in Germany. For each city it covers, the product brings together three things in one place: a curated, activity-ranked map of the active Indian communities; the events those communities run each week; and practical resources every Indian in Germany routinely needs - from Anmeldung and EU Blue Card guides to Kindergeld walkthroughs, GKV vs PKV explainers, Steuererklärung help, English-friendly doctors and Steuerberater, Indian grocers, and CGI consular camp dates.
 >
 > With more than 250,000 Indians living in Germany - one of the country's fastest-growing immigrant populations - IndLokal addresses a long-standing gap: most Indian community life and most of the practical knowledge that goes with it lives inside closed WhatsApp groups, university societies, and word-of-mouth networks that are nearly impossible for newcomers to discover.
 >
-> _"Indian life in Germany is everywhere and almost invisible,"_ said {spokesperson*name}, {title} at IndLokal. *"We're not building another social network. We're building the trusted layer that helps people find the communities that already exist, the events those communities are running this week, and the answers to the practical questions every Indian in Germany ends up asking - all in one place per city."\_
+> _"Indian life in Germany is everywhere and almost invisible,"_ said {spokesperson*name}, {title} at IndLokal. *"We're not building another social network. We're building the trusted layer that helps people find the communities that already exist, the events those communities are running this week, and the answers to the practical questions every Indian in Germany ends up asking - all in one place, per city."\_
 >
 > The platform launches in the Stuttgart metro region - including Böblingen, Sindelfingen, Ludwigsburg, Esslingen, and Göppingen - with expansion to Karlsruhe, Mannheim, Munich and other German cities planned through the year. Community organisers can list their groups for free at indlokal.de/submit.
 >
 > **About IndLokal**
-> IndLokal is the city-first discovery platform for the Indian diaspora in Germany. For each German city it covers, the platform surfaces the active Indian communities, the events worth knowing about this week, and the consular and expat-life resources Indians actually need - helping newcomers, students, families, professionals and organisers find their people, and the help they need, faster. indlokal.de · indlokal.com
+> IndLokal is the city-first guide to Indian life in Germany. For each German city it covers, the product surfaces the active Indian communities, the events worth knowing about this week, and the consular and expat-life resources Indians actually need - helping newcomers, students, families, professionals and organisers find their people, and the help they need, faster. indlokal.de · indlokal.com
 >
 > **Press contact**
 > press@indlokal.de
@@ -397,7 +404,7 @@ Cap at five per post. Never use trending unrelated tags.
 <title>IndLokal - Your Indian community, locally</title>
 <meta
   name="description"
-  content="The city-first discovery platform for the Indian diaspora in Germany. Indian communities, events and expat-life resources active near you - Anmeldung, Kindergeld, EU Blue Card, doctors, grocers and more."
+  content="The city-first guide to Indian life in Germany. Indian communities, events and expat-life resources active near you - Anmeldung, Kindergeld, EU Blue Card, doctors, grocers and more."
 />
 <meta property="og:title" content="IndLokal - Your Indian community, locally" />
 <meta
@@ -501,4 +508,4 @@ The two are aligned: same spine, same vocabulary, same three pillars. They're se
 
 ---
 
-_Need a copy block this kit doesn't have? Add it here, in the right section, in the same voice. Then run it past `BRAND_GUIDELINES.md` §11 before it ships._
+_Need a copy block this kit doesn't have? Add it here, in the right section, in the same voice. Then run it past `BRAND_GUIDELINES.md` §12 before it ships._

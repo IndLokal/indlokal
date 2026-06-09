@@ -9,8 +9,7 @@ The IndLokal database is split into three seed tiers:
 | **Demo**      | `pnpm --filter web db:seed`      | Sample events + score recompute (calls Bootstrap + Directory first)                            | Local dev / staging only - **never production** |
 
 Resources live in [`apps/web/prisma/resources.ts`](../../apps/web/prisma/resources.ts)
-and are orchestrated by `runDirectorySeed()` so the directory tier always
-delivers a complete public-content baseline (orgs + resources) per city.
+and are orchestrated by `runDirectorySeed()`.
 
 > The single source of truth for cities + taxonomy is
 > [`apps/web/src/lib/config/cities.ts`](../../apps/web/src/lib/config/cities.ts).
@@ -22,7 +21,7 @@ delivers a complete public-content baseline (orgs + resources) per city.
 [`apps/web/prisma/bootstrap.ts`](../../apps/web/prisma/bootstrap.ts)
 
 - Always idempotent (uses `prisma.upsert`).
-- Contains only rows the app code structurally depends on.
+- Contains only structural reference rows the app depends on.
 - Safe to run repeatedly - it never deletes.
 
 ### Run manually
@@ -42,9 +41,7 @@ RUN_BOOTSTRAP_SEED=true
 ```
 
 Set it in **Vercel → Project → Settings → Environment Variables** for both
-Production and Preview environments. Because bootstrap is idempotent, leaving
-the flag enabled permanently is safe and recommended - it self-heals an empty
-database after a fresh migration.
+Production and Preview. Because bootstrap is idempotent, leaving this on is safe.
 
 If `RUN_BOOTSTRAP_SEED` is not `"true"`, the build skips bootstrap entirely.
 
@@ -68,17 +65,15 @@ Route group: [`apps/web/src/app/admin/(dashboard)/data/`](<../../apps/web/src/ap
 | `/admin/data/import`        | Bulk CSV/JSON upload with **preview → apply** flow     |
 | `/admin/data/health`        | Counts + integrity checks (orphans, missing FKs, etc.) |
 
-All admin pages are protected by `requireAdmin()` (PLATFORM_ADMIN role required).
+All admin pages are protected by `requireAdmin()` (PLATFORM_ADMIN).
 
 ## 3. Bulk import format
 
-The importer accepts either CSV (header row required) or JSON (`{ resource, rows: [...] }` or
-just an array). Resource is selected in the UI; payload is keyed by `slug` for upserts.
+The importer accepts CSV (header row required) or JSON (`{ resource, rows: [...] }` or array). Resource is selected in UI; rows are keyed by `slug` for upserts.
 
 See the **Schemas** panel at the bottom of `/admin/data/import` for ready-to-copy examples.
 
-Imports always go through a **preview** step that shows create/update/error counts per row.
-**Apply** is disabled until preview returns zero errors. Nothing is ever deleted.
+Imports always go through **preview** (create/update/error counts). **Apply** is disabled until preview has zero errors. Nothing is deleted.
 
 ## 4. Recovery playbook - production cities table is empty
 
@@ -89,7 +84,7 @@ Imports always go through a **preview** step that shows create/update/error coun
 
 ## 5. How to log in as admin
 
-Admin auth uses **passwordless magic links** sent by email. There is no password.
+Admin auth uses **passwordless magic links** (no password).
 
 1. Bootstrap creates exactly one platform admin user. Its email is whatever
    `ADMIN_EMAIL` env var is set to. **Default: `admin@indlokal.com`**.
@@ -99,7 +94,7 @@ Admin auth uses **passwordless magic links** sent by email. There is no password
 2. Visit `/admin/login` (e.g. <https://indlokal.com/admin/login> or
    <http://localhost:3001/admin/login>).
 3. Enter the admin email address. Click **Get access link**.
-4. Open the magic link to be signed in. The link is single-use and short-lived.
+4. Open the magic link (single-use, short-lived).
 
 ### Where the magic link arrives
 
@@ -109,19 +104,15 @@ Admin auth uses **passwordless magic links** sent by email. There is no password
 | Production  | Sent via **Resend** to the admin inbox. Requires `RESEND_API_KEY`.       |
 
 If neither Resend nor Mailpit is reachable in dev, the magic link URL is
-**printed to the Next.js server console** as a last-ditch fallback so you can
-always get in.
+printed to the Next.js server console.
 
 ### Adding more admins
 
-There is no UI for this yet. You have two options:
+There is no UI for this yet:
 
 #### Option 1: Set `ADMIN_EMAIL` before first deploy (easiest for initial setup)
 
-Before the first Vercel production deploy, set `ADMIN_EMAIL` in Vercel env vars to
-the first admin you want to create. Bootstrap will upsert that user with
-`PLATFORM_ADMIN` role on build. If you need to change it later or add a second
-admin, use Option 2.
+Before first production deploy, set `ADMIN_EMAIL` in Vercel env vars. Bootstrap upserts that user as `PLATFORM_ADMIN` on build.
 
 #### Option 2: Promote existing users via SQL (for adding admins post-launch)
 
@@ -158,8 +149,7 @@ DELETE FROM "User" WHERE email = 'someone@example.com';
 
 ## 6. Production email setup (Resend)
 
-Production deploys send admin magic links via **Resend**, a transactional email
-service. Without this setup, production magic link emails will not arrive.
+Production deploys send admin magic links via **Resend**. Without this, production magic-link emails will not arrive.
 
 ### 6.1 Create a Resend account and get your API key
 
@@ -174,8 +164,7 @@ service. Without this setup, production magic link emails will not arrive.
 
 ### 6.2 Verify your sending domain
 
-Resend requires you to verify ownership of the domain you're sending from. You
-cannot send from arbitrary addresses in production.
+Resend requires verified sender-domain ownership for production sending.
 
 1. In Resend dashboard, go to **Domains**.
 2. Click **Add Domain**.
@@ -188,10 +177,7 @@ cannot send from arbitrary addresses in production.
    - Scope: **Production** only.
    - Save.
 
-> If you use `indlokal.com` directly (not a subdomain), you may need to set up SPF
-> / DKIM on the root domain, which can be fiddly. A safer option is to use a
-> subdomain like `noreply.indlokal.com` or `mail.indlokal.com`, which isolates
-> Resend's DNS records.
+> Using a subdomain (e.g. `noreply.indlokal.com`) is often easier than root-domain SPF/DKIM setup.
 
 ### 6.3 Test admin email delivery
 
@@ -215,9 +201,9 @@ cannot send from arbitrary addresses in production.
 
 ## 7. Email environment variables
 
-See [§6 Production email setup (Resend)](#6-production-email-setup-resend) for complete Resend configuration.
+See [§6 Production email setup (Resend)](#6-production-email-setup-resend) for full Resend setup.
 
-These are the only env vars that influence admin login & outbound mail.
+These env vars control admin login and outbound mail.
 
 | Variable              | Required in    | Default                           | Purpose                                                                                                                  |
 | --------------------- | -------------- | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -240,30 +226,24 @@ These are the only env vars that influence admin login & outbound mail.
 
 ## 8. Directory seed - editorial policy
 
-[`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) holds
-curated, publicly-sourced community listings. It runs **after** bootstrap and
-before the app build. The goal is simple: **no city page should look dead on
 day one.**
+[`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) holds
+curated, publicly-sourced community listings. It runs **after\*\* bootstrap and
+before app build.
 
 ### Why it exists
 
-A directory product with zero entries on a city page has near-zero retention.
-Pre-populating each metro with 10-25 well-known orgs (then letting real
-organisers claim them) is how Eventbrite, Tracxn, Bandsintown, and every other
-serious directory bootstraps. We do the same - honestly.
+Pre-populate each metro with 10-25 well-known orgs, then let organisers claim them.
 
 ### Hard rules (do not bend)
 
 1. **Public source only.** Org must have a public website / Meetup page /
    Vereinsregister entry / official institutional listing.
-2. **Every entry MUST have a `sourceUrl`** stored on the row. This is our
-   defence if anyone ever asks "why is my org listed?"
+2. **Every entry MUST have a `sourceUrl`** stored on the row.
 3. **No personal data.** Name + public URL + city + category. Never a
    personal email or phone unless it is already on the org's public website.
-4. **NEVER seed events** here. Events go stale within weeks → site looks
-   wrong/dead. Worse than empty.
-5. **Create-only and idempotent.** The seed NEVER updates an existing row.
-   Admin / organiser edits always survive redeploys.
+4. **NEVER seed events** here. Events go stale quickly.
+5. **Create-only and idempotent.** The seed never updates existing rows.
 
 ### How a row is created
 
@@ -276,9 +256,7 @@ Every directory entry lands as:
 - `metadata.sourceUrl = '<the public URL>'`
 - `metadata.needsReview = true|false`
 
-The first time the real organiser visits `/admin/login` and goes through the
-claim flow ([`COMMUNITY_CLAIM_FLOW.md`](../COMMUNITY_CLAIM_FLOW.md)), they
-take ownership and edit freely.
+Organisers can claim ownership via [`COMMUNITY_CLAIM_FLOW.md`](../COMMUNITY_CLAIM_FLOW.md).
 
 ### Adding entries (workflow)
 
@@ -291,8 +269,7 @@ For each new metro:
    [`apps/web/prisma/directory.ts`](../../apps/web/prisma/directory.ts) with
    a real `sourceUrl`.
 3. Commit + deploy. The seed runs automatically (create-only).
-4. Reach out to organisers proactively: "Your group is on indlokal.com - claim
-   it here." Turns a passive listing into an activated power user.
+4. Reach out to organisers to claim and maintain listings.
 
 ### What NOT to put here
 
@@ -307,8 +284,7 @@ For each new metro:
 
 [`apps/web/prisma/resources.ts`](../../apps/web/prisma/resources.ts) holds
 curated public reference rows (consulates, university international offices,
-government registries, embassy services). It runs as part of
-`runDirectorySeed()` - there is no separate cron or env flag to manage.
+government registries, embassy services). It runs inside `runDirectorySeed()`.
 
 Same editorial rules as the directory tier:
 
@@ -322,23 +298,48 @@ To run only the resources tier locally:
 DATABASE_URL="<postgres-url>" pnpm --filter web db:resources
 ```
 
-## 10. Cron jobs (production)
+## 10. Discovery-specific config ownership
+
+For discovery and pipeline behavior, use this split:
+
+- Provider keys are environment variables in Vercel:
+  `OPENAI_API_KEY`, `EVENTBRITE_API_KEY`, `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_ID`.
+- Coverage/source-plan settings (enabled regions, keyword seeds/strategies,
+  pinned URLs) are runtime DB rows in `pipeline_source_configs`, with
+  `apps/web/prisma/data/pipeline-source-defaults.json` as fallback baseline.
+
+Where to apply coverage/source-plan changes:
+
+```bash
+pnpm --filter web pipeline:sources:sync
+```
+
+Use prune mode only when intentionally disabling DB rows missing from defaults:
+
+```bash
+pnpm --filter web pipeline:sources:sync:prune
+```
+
+Where not to put coverage/source-plan config:
+
+- Not in Vercel env vars.
+- Not in GitHub Actions secrets.
+- Not in Expo/EAS mobile secrets.
+
+## 11. Cron jobs (production)
 
 Cron is run by **GitHub Actions** ([.github/workflows/cron.yml](../../.github/workflows/cron.yml)),
 not Vercel Cron. Each job POSTs to `/api/cron/{name}` with the
 `Authorization: Bearer ${CRON_SECRET}` header.
 
-| Schedule (UTC) | Endpoint                                       | Purpose                                                                                  |
-| -------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| every 6 h      | `/api/cron/scores`                             | Recompute community scores **and** archive `UPCOMING → PAST` events whose end has passed |
-| 02:05 daily    | `/api/cron/pipeline?region=berlin`             | AI content pipeline shard for Berlin                                                     |
-| 02:20 daily    | `/api/cron/pipeline?region=baden-wuerttemberg` | AI content pipeline shard for Baden-Wuerttemberg                                         |
-| 02:35 daily    | `/api/cron/pipeline?region=bavaria`            | AI content pipeline shard for Bavaria                                                    |
-| 02:50 daily    | `/api/cron/pipeline?region=hesse`              | AI content pipeline shard for Hesse                                                      |
-| 03:00 daily    | `/api/cron/links`                              | Verify community join-link health                                                        |
-| 03:00 daily    | `/api/cron/keywords`                           | Refresh keyword suggestions                                                              |
-| 03:00 daily    | `/api/cron/relationships`                      | Infer related-community edges                                                            |
-| 03:00 daily    | `/api/cron/enrichment`                         | Background community enrichment                                                          |
+| Schedule (UTC) | Endpoint                      | Purpose                                                                                  |
+| -------------- | ----------------------------- | ---------------------------------------------------------------------------------------- |
+| every 6 h      | `/api/cron/scores`            | Recompute community scores **and** archive `UPCOMING → PAST` events whose end has passed |
+| 02:05 daily    | `/api/cron/pipeline/dispatch` | AI pipeline dispatcher that fans out one run per enabled region                          |
+| 03:00 daily    | `/api/cron/links`             | Verify community join-link health                                                        |
+| 03:00 daily    | `/api/cron/keywords`          | Refresh keyword suggestions                                                              |
+| 03:00 daily    | `/api/cron/relationships`     | Infer related-community edges                                                            |
+| 03:00 daily    | `/api/cron/enrichment`        | Background community enrichment                                                          |
 
 Required secrets (set in **both** Vercel project env and GitHub repo secrets):
 

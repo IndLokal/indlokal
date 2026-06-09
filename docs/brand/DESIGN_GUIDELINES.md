@@ -3,7 +3,7 @@
 _Version 2.0 - Pulse-mark release_
 _Owner: Brand & Marketing · Companion to `BRAND_GUIDELINES.md`_
 
-These guidelines cover the visual system: logo, colour, type, layout, iconography, photography, and the rules for social and ad creative. The product UI tokens already live in [`src/app/globals.css`](../../src/app/globals.css) - this document is the source of truth they map to.
+These guidelines cover the visual system: logo, colour, type, layout, iconography, photography, and the rules for social and ad creative. The product UI tokens already live in [`apps/web/src/app/globals.css`](../../apps/web/src/app/globals.css) - this document is the source of truth they map to.
 
 ---
 
@@ -65,7 +65,7 @@ Do not:
 
 ## 2. Colour
 
-The palette mirrors what already ships in product (`src/app/globals.css`) so brand and product never drift.
+The palette mirrors what already ships in product (`apps/web/src/app/globals.css`) so brand and product never drift.
 
 ### 2.1 Primary - Indigo (the Lokal)
 

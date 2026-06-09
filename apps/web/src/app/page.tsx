@@ -13,11 +13,16 @@ import { BrandLink } from '@/components/BrandLink';
 import { Footer } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 import { PERSONA_DEFINITIONS } from '@/modules/journeys';
+import {
+  DISCOVERY_FOUNDATION_CARDS,
+  PUBLIC_SITE_EMAILS,
+  PUBLIC_SITE_SOCIALS,
+} from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
   description:
-    'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+    'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
   keywords: [
     'indian communities in germany',
     'indian events in germany',
@@ -32,7 +37,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
     description:
-      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+      'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
     url: siteConfig.url,
     type: 'website',
   },
@@ -40,7 +45,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: `Indian Communities & Events in Germany | ${siteConfig.name}`,
     description:
-      'Find Indian communities in Germany and upcoming Indian events in Germany, city by city. Explore trusted local groups, weekly event activity, and practical expat resources on IndLokal.',
+      'IndLokal helps Indians in Germany navigate life in their city — find trusted local communities, the Indian events worth knowing about this week, and the practical resources you actually need, city by city.',
   },
 };
 export default function HomePage() {
@@ -65,8 +70,8 @@ export default function HomePage() {
     name: siteConfig.name,
     url: siteConfig.url,
     logo: `${siteConfig.url}/icon.svg`,
-    email: 'contact@indlokal.com',
-    sameAs: ['https://instagram.com/indlokal', 'https://linkedin.com/company/indlokal'],
+    email: PUBLIC_SITE_EMAILS.contact,
+    sameAs: [PUBLIC_SITE_SOCIALS.instagram, PUBLIC_SITE_SOCIALS.linkedin],
     areaServed: 'Germany',
   };
 
@@ -207,39 +212,24 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Three pillars */}
+        {/* Discovery foundation: communities, events, resources */}
         <section className="bg-white px-4 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="text-center">
               <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
-                Three pillars, one place
+                What you&apos;ll find in your city
               </span>
               <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
                 Communities. Events. Resources.
               </h2>
               <p className="text-muted mx-auto mt-3 max-w-xl">
-                Everything in {siteConfig.name} ladders up to one of three pillars. Equal weight,
-                ranked by what&apos;s actually alive - not who paid for a listing.
+                Three ways into the life of your city — the people, what&apos;s happening, and the
+                practical know-how to settle in. Ranked by what&apos;s actually alive, not by who
+                paid for a listing.
               </p>
             </div>
             <div className="mt-16 grid gap-6 sm:grid-cols-3">
-              {[
-                {
-                  icon: '🪷',
-                  title: 'Communities',
-                  desc: 'A curated, activity-ranked map of the Indian cultural associations, language groups, religious organisations, student bodies and professional networks alive in your city.',
-                },
-                {
-                  icon: '📅',
-                  title: 'Events',
-                  desc: "What's happening for Indians this week - from Diwali and garba to cricket leagues and consular camps. Surfaced by freshness, not by who posted last.",
-                },
-                {
-                  icon: '🧭',
-                  title: 'Resources',
-                  desc: 'Plain-English guides to Anmeldung, Kindergeld, EU Blue Card, GKV vs PKV, Steuererklärung - plus Indian grocers, English-friendly doctors and CGI consular dates.',
-                },
-              ].map((item) => (
+              {DISCOVERY_FOUNDATION_CARDS.map((item) => (
                 <div
                   key={item.title}
                   className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-8 text-center ring-1 transition-all hover:-translate-y-1 hover:shadow-lg"
@@ -261,7 +251,7 @@ export default function HomePage() {
             <div className="mx-auto max-w-5xl">
               <div className="text-center">
                 <span className="bg-brand-100 text-brand-700 inline-block rounded-full px-4 py-1.5 text-xs font-bold tracking-wider uppercase">
-                  New: Journeys
+                  Journeys
                 </span>
                 <h2 className="text-foreground mt-4 text-2xl font-bold sm:text-3xl">
                   A guided path for your move

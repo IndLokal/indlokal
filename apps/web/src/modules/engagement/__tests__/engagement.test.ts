@@ -108,6 +108,8 @@ describe('engagement helpers', () => {
   });
 
   it('re-saving reactivates previously suppressed reminders', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-06-08T17:00:00.000Z'));
     mockDb.notificationOutbox.updateMany.mockResolvedValue({ count: 1 });
 
     const result = await saveEventForUser('user-1', 'event-1');
@@ -127,5 +129,7 @@ describe('engagement helpers', () => {
       }),
     );
     expect(mockEnqueueNotification).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
   });
 });
