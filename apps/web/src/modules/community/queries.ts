@@ -74,6 +74,7 @@ export async function getCommunitiesByCity(
   citySlug: string,
   options?: {
     categorySlug?: string;
+    language?: string;
     limit?: number;
     offset?: number;
   },
@@ -87,6 +88,9 @@ export async function getCommunitiesByCity(
     mergedIntoId: null,
     ...(options?.categorySlug && {
       categories: { some: { category: { slug: options.categorySlug } } },
+    }),
+    ...(options?.language && {
+      languages: { has: options.language },
     }),
   };
 
@@ -122,7 +126,7 @@ export async function getCommunitiesByCity(
 
 export async function countCommunitiesByCity(
   citySlug: string,
-  options?: { categorySlug?: string },
+  options?: { categorySlug?: string; language?: string },
 ): Promise<number> {
   const cityIds = await resolveCityIds(citySlug);
   if (cityIds.length === 0) return 0;
@@ -134,6 +138,9 @@ export async function countCommunitiesByCity(
       mergedIntoId: null,
       ...(options?.categorySlug && {
         categories: { some: { category: { slug: options.categorySlug } } },
+      }),
+      ...(options?.language && {
+        languages: { has: options.language },
       }),
     },
   });
