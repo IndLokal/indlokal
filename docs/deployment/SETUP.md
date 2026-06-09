@@ -1,6 +1,6 @@
 # IndLokal - End-to-End Deployment Setup
 
-This is the **single source of truth** for setting up IndLokal's web deployment chain. Follow it top to bottom once, and the system is ready for repeated, safe production releases.
+This is the **single source of truth** for setting up IndLokal's web deployment chain.
 
 > Audience: someone setting this up from scratch (or repairing it).
 > Time: ~30-45 minutes if accounts already exist.
@@ -32,9 +32,9 @@ This is the **single source of truth** for setting up IndLokal's web deployment 
 └────────────────────┘
 ```
 
-**Key principle:** Prisma migrations run **inside the Vercel build for each deployment**, against that deployment's own `DATABASE_URL`. This means a Preview deployment migrates the staging DB, a Production deployment migrates the production DB. If the migration fails, the deployment fails - broken schemas never go live.
+**Key principle:** Prisma migrations run **inside the Vercel build** against that deployment's `DATABASE_URL` (Preview -> staging DB, Production -> production DB). If migration fails, deployment fails.
 
-GitHub Actions never writes to a real Neon database. It only validates that committed code (and committed migrations) work correctly.
+GitHub Actions only validates code and migrations against ephemeral Postgres; it does not write to Neon.
 
 ---
 
@@ -49,12 +49,8 @@ Accounts you need:
 | Neon             | Free                   | **created from inside Vercel in step 4** - no separate signup needed |
 | Domain registrar | only when going public | any registrar                                                        |
 
-You should already have:
-
-- The `ind-lokal` repo on GitHub
-- A Vercel account (free tier is fine)
-
-You do **not** need to visit [console.neon.tech](https://console.neon.tech) at all. Vercel will provision Neon for you. Visiting the Neon console later is optional (see [§4a](#4a-optional--use-the-neon-console-directly)).
+You should already have the `ind-lokal` repo and a Vercel account.
+You do **not** need to visit [console.neon.tech](https://console.neon.tech) during initial setup.
 
 ---
 
@@ -75,19 +71,19 @@ You do **not** need to visit [console.neon.tech](https://console.neon.tech) at a
 | Node.js Version                | `20.x`                                        |
 | Production Branch              | `main` (default)                              |
 
-Important: the Vercel Root Directory must be the filesystem path `apps/web`. Do not enter `web` there. `web` is only the pnpm workspace name used in commands like `pnpm --filter web`.
+Important: Vercel Root Directory must be `apps/web` (not `web`).
 
-4. Do **not** worry about env vars yet - you'll add them in step 5 after the database is created.
-5. Click **Deploy**. The first deploy will fail with a missing-`DATABASE_URL` error. That's expected and harmless - proceed to step 4.
+4. Add env vars in step 5 after database setup.
+5. Click **Deploy**. The first deploy may fail due to missing `DATABASE_URL`; continue to step 4.
 
 > The `build:vercel` script lives in [`apps/web/package.json`](../../apps/web/package.json) and runs:
-> `prisma generate && prisma migrate deploy && next build`
+> `prisma generate && prisma migrate deploy` (with retry) + optional `maybe-bootstrap` / `maybe-directory` seed shims + `next build --webpack`.
 
 ---
 
 ## 4. Vercel Storage - create both Neon databases
 
-You will create the two databases (production + staging) directly from the Vercel dashboard. Vercel provisions them on Neon's infrastructure and wires the env vars automatically.
+Create both databases from the Vercel dashboard (production + staging).
 
 ### 4.1 Create the production database
 
@@ -135,20 +131,20 @@ If either is missing, open the corresponding database in **Storage** → **Setti
 
 ### 4a. Optional - use the Neon console directly
 
-You only need [console.neon.tech](https://console.neon.tech) for things Vercel does not surface:
+Use [console.neon.tech](https://console.neon.tech) only when needed for:
 
 - Inspecting tables / running ad-hoc SQL via the Neon SQL Editor
 - Adjusting compute size or autoscaling
 - Manually resetting the staging DB
 - Recovering from `_prisma_migrations` problems (see [§9](#9-troubleshooting))
 
-To get there: open Vercel → **Storage** → click the database → **Open in Neon**. Vercel provisions databases inside a Neon project under your linked Neon account; the link logs you in automatically.
+Open Vercel → **Storage** → database → **Open in Neon**.
 
 ---
 
 ## 5. Vercel - application environment variables
 
-Add these in your Vercel project → **Settings → Environment Variables**. Apply each to **All Environments** unless noted. (You added the database via Storage in §4; this section covers the rest of the app's runtime config.)
+Add these in Vercel → **Settings → Environment Variables**. Apply to **All Environments** unless noted.
 
 ### Required for any deployment
 
@@ -180,6 +176,36 @@ openssl rsa -in jwt-private.pem -pubout -out jwt-public.pem
 | `EVENTBRITE_API_KEY`                                  | Eventbrite ingestion |
 | `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_ID`                 | Google CSE ingestion |
 
+### Discovery and pipeline config ownership (important)
+
+Use this split:
+
+1. **Provider/API credentials** are env vars in Vercel (this section):
+   `OPENAI_API_KEY`, `EVENTBRITE_API_KEY`, `GOOGLE_CSE_API_KEY`, `GOOGLE_CSE_ID`.
+2. **Discovery coverage/source plan** (enabled regions, keyword seeds/strategies, pinned URLs) are **not env vars**. They are runtime DB rows in `pipeline_source_configs`, with `prisma/data/pipeline-source-defaults.json` as fallback baseline.
+
+Where to configure discovery coverage/source plan:
+
+- Update `apps/web/prisma/data/pipeline-source-defaults.json` in git.
+- Apply/sync rows via:
+
+```bash
+pnpm --filter web pipeline:sources:sync
+```
+
+Use prune mode only when you intentionally want to disable DB rows missing
+from defaults:
+
+```bash
+pnpm --filter web pipeline:sources:sync:prune
+```
+
+Where **not** to configure discovery coverage/source plan:
+
+- Not in Vercel Environment Variables.
+- Not in GitHub Actions secrets.
+- Not in Expo/EAS mobile secrets.
+
 > `DATABASE_URL` is **not** added manually. It comes from Vercel Storage (step 4).
 
 ---
@@ -191,15 +217,13 @@ Go to GitHub repo → **Settings → Secrets and variables → Actions → New r
 | Secret        | Value                                             | Used by                                        |
 | ------------- | ------------------------------------------------- | ---------------------------------------------- |
 | `APP_URL`     | Your production URL (e.g. `https://indlokal.com`) | [`cron.yml`](../../.github/workflows/cron.yml) |
-| `CRON_SECRET` | Same value as in Vercel (step 6)                  | [`cron.yml`](../../.github/workflows/cron.yml) |
+| `CRON_SECRET` | Same value as in Vercel (step 5)                  | [`cron.yml`](../../.github/workflows/cron.yml) |
 
-That is the entire list. CI does **not** need any database secrets - it uses an ephemeral Postgres container per run.
+That is the entire list. CI does **not** need database secrets.
 
 ### 6a. Protect `main` so CI must pass before deploy-triggering merges
 
-Vercel and GitHub CI run in parallel on PR updates. To guarantee that production
-deploys are only triggered by CI-green code, enforce branch protection on
-`main` so direct pushes are blocked and merges require CI success.
+Vercel and GitHub CI run in parallel on PR updates. Enforce branch protection on `main` so merges require CI success.
 
 In GitHub: **Repo Settings → Branches → Add branch protection rule**
 
@@ -217,8 +241,7 @@ Use these settings:
 | Allow deletions                                  | ❌ disabled                                                                       |
 | Restrict who can push to matching branches       | Optional but recommended: admins only                                             |
 
-Result: merges to `main` (the event that triggers Vercel production deploy)
-cannot happen until CI is fully green.
+Result: production deploy-triggering merges to `main` require green CI.
 
 ---
 
@@ -242,7 +265,7 @@ Click the Preview URL. Verify:
 - The home page loads.
 - A city page like `/stuttgart` loads (even with no seeded data, it should respond, not error).
 
-If it loads, your **staging DB is connected, migrated, and serving the preview**.
+If it loads, staging DB wiring is correct.
 
 ### 7.2 Promote to production
 
@@ -275,7 +298,7 @@ git push -u origin feat/my-thing
 5. Merge to `main`.
 6. Vercel Production builds (applies migration to production DB, deploys).
 
-**That's the whole loop.** No tags, no manual steps, no ceremony.
+This is the full default loop.
 
 ---
 
@@ -283,13 +306,13 @@ git push -u origin feat/my-thing
 
 ### Build fails with "P3005: The database schema is not empty"
 
-The DB has tables but no `_prisma_migrations` table. This happens if someone used `prisma db push` against it. Baseline it:
+The DB has tables but no `_prisma_migrations` table (often from `prisma db push`). Baseline it:
 
 ```bash
 pnpm --filter web exec prisma migrate resolve --applied <migration_name>
 ```
 
-Run against the affected `DATABASE_URL` (staging or production).
+Run against the affected `DATABASE_URL`.
 
 ### Preview URL works but shows old schema
 
@@ -297,15 +320,15 @@ The migration didn't run. Check the Vercel build logs for the deploy - look for 
 
 ### Production deploy succeeded but app errors on requests
 
-A migration applied successfully, but runtime code expects a different schema. Roll back by promoting the previous green Vercel deployment from the Vercel dashboard (Deployments → ⋯ → Promote to Production), then fix forward in a new PR.
+A migration applied but runtime expects a different schema. Promote the previous green deployment, then fix forward in a new PR.
 
 ### CI passes but Vercel Preview build fails
 
-Almost always an env var difference. Check that the failing step in Vercel logs references a missing variable, then add it under **Settings → Environment Variables** with the correct scope.
+Usually an env-var mismatch. Check Vercel logs for missing variables and add with correct scope.
 
 ### Neon shows high storage on staging DB
 
-Truncate non-essential tables in `indlokal-db-staging` periodically. It's a sandbox; you can also recreate the DB and re-run migrations from a fresh PR.
+Truncate non-essential staging tables periodically, or recreate staging DB and rerun migrations.
 
 ### A secret leaked
 
@@ -317,7 +340,7 @@ Truncate non-essential tables in `indlokal-db-staging` periodically. It's a sand
 
 ## 10. What is intentionally not in this setup
 
-These are valid decisions to revisit later, but adding them now would create complexity without proportional benefit:
+Revisit later; currently unnecessary complexity:
 
 - ❌ Tag-driven releases (`v1.2.0`) - adds ceremony for a one-developer MVP.
 - ❌ Neon database branching per PR - useful at multi-developer scale; one shared staging DB is fine for MVP.

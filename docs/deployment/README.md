@@ -40,7 +40,7 @@ Members / founders
 Optional:
 - Resend for real emails
 - PostHog for analytics
-- GitHub Actions for scheduled cron calls
+- GitHub Actions for scheduled cron calls (including pipeline dispatch)
 - Cloudflare / registrar DNS for a custom domain
 ```
 
@@ -59,6 +59,7 @@ Optional:
 ## Files in this folder
 
 - [SETUP.md](SETUP.md) - **start here** - end-to-end setup of Vercel + Neon + GitHub Actions
+- [ADMIN_AND_BOOTSTRAP.md](ADMIN_AND_BOOTSTRAP.md) - bootstrap seeding, admin login, directory/resources seed policy, cron job map
 - [go-live.md](go-live.md) - condensed launch runbook (web + mobile)
 - [operations.md](operations.md) - ongoing ops checklist
 - [mobile.md](mobile.md) - Expo/EAS release notes
