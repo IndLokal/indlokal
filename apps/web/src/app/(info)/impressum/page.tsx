@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/lib/config';
 import { InfoPageHero } from '@/components/info/InfoPageHero';
+import {
+  PUBLIC_SITE_EMAILS,
+  PUBLIC_SITE_LAST_REVIEWED,
+  resolvePublicSiteUrl,
+} from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `Impressum - ${siteConfig.name}`,
@@ -11,15 +16,14 @@ export const metadata: Metadata = {
 };
 
 export default function ImpressumPage() {
-  const lastReviewed = '27 May 2026';
-  const legalUrl = siteConfig.url.includes('localhost') ? 'https://indlokal.com' : siteConfig.url;
+  const legalUrl = resolvePublicSiteUrl(siteConfig.url);
 
   return (
     <>
       <InfoPageHero
         title="Impressum"
         description={`Legal notice (Impressum) for ${siteConfig.name} in accordance with German law (§ 5 DDG).`}
-        meta={`Last reviewed: ${lastReviewed}`}
+        meta={`Last reviewed: ${PUBLIC_SITE_LAST_REVIEWED}`}
       />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
@@ -29,7 +33,8 @@ export default function ImpressumPage() {
             <p>
               {siteConfig.name}
               <br />
-              Digital information platform for Indian communities and events in Germany.
+              Digital platform helping Indians in Germany navigate life in their city — communities,
+              events and expat-life resources.
             </p>
           </section>
 
@@ -37,8 +42,11 @@ export default function ImpressumPage() {
             <h2>Contact</h2>
             <p>
               Email:{' '}
-              <a href="mailto:contact@indlokal.com" className="text-brand-600 hover:underline">
-                contact@indlokal.com
+              <a
+                href={`mailto:${PUBLIC_SITE_EMAILS.contact}`}
+                className="text-brand-600 hover:underline"
+              >
+                {PUBLIC_SITE_EMAILS.contact}
               </a>
               <br />
               Website:{' '}
@@ -53,8 +61,11 @@ export default function ImpressumPage() {
             <p>
               IndLokal Editorial Team
               <br />
-              <a href="mailto:contact@indlokal.com" className="text-brand-600 hover:underline">
-                contact@indlokal.com
+              <a
+                href={`mailto:${PUBLIC_SITE_EMAILS.contact}`}
+                className="text-brand-600 hover:underline"
+              >
+                {PUBLIC_SITE_EMAILS.contact}
               </a>
             </p>
           </section>

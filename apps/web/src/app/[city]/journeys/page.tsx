@@ -5,6 +5,7 @@ import { FLAGS, isJourneyAllowed } from '@/lib/config';
 import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { JourneyEntryCard } from '@/components/journeys/JourneyEntryCard';
+import { JOURNEYS_PUBLIC_COPY } from '@/lib/public-site-content';
 
 type Props = { params: Promise<{ city: string }> };
 
@@ -41,7 +42,7 @@ export default async function CityJourneysHubPage({ params }: Props) {
         cityName={cityRow.name}
         sectionLabel="Journeys"
         title={`Journeys in ${cityRow.name}`}
-        description="A journey is a guided path — the resources, communities and events that matter for your situation, in the order you need them."
+        description={JOURNEYS_PUBLIC_COPY.cityIntro}
       />
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/lib/config';
 import { InfoPageHero } from '@/components/info/InfoPageHero';
+import {
+  PUBLIC_SITE_EMAILS,
+  PUBLIC_SITE_LAST_REVIEWED,
+  resolvePublicSiteUrl,
+} from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `Privacy Policy - ${siteConfig.name}`,
@@ -11,15 +16,14 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPolicyPage() {
-  const lastUpdated = '27 May 2026';
-  const legalUrl = siteConfig.url.includes('localhost') ? 'https://indlokal.com' : siteConfig.url;
+  const legalUrl = resolvePublicSiteUrl(siteConfig.url);
 
   return (
     <>
       <InfoPageHero
         title="Privacy Policy"
         description={`Learn how ${siteConfig.name} collects, uses, and protects your data.`}
-        meta={`Last updated: ${lastUpdated}`}
+        meta={`Last updated: ${PUBLIC_SITE_LAST_REVIEWED}`}
       />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
@@ -50,7 +54,7 @@ export default function PrivacyPolicyPage() {
               <br />
               Germany
               <br />
-              Email: privacy@indlokal.com
+              Email: {PUBLIC_SITE_EMAILS.privacy}
             </p>
           </section>
 
@@ -194,8 +198,11 @@ export default function PrivacyPolicyPage() {
             </ul>
             <p>
               To exercise any of these rights, contact us at{' '}
-              <a href="mailto:privacy@indlokal.com" className="text-brand-600 hover:underline">
-                privacy@indlokal.com
+              <a
+                href={`mailto:${PUBLIC_SITE_EMAILS.privacy}`}
+                className="text-brand-600 hover:underline"
+              >
+                {PUBLIC_SITE_EMAILS.privacy}
               </a>
               .
             </p>
@@ -223,8 +230,11 @@ export default function PrivacyPolicyPage() {
             <h2>11. Contact</h2>
             <p>
               For privacy-related inquiries, contact us at:{' '}
-              <a href="mailto:privacy@indlokal.com" className="text-brand-600 hover:underline">
-                privacy@indlokal.com
+              <a
+                href={`mailto:${PUBLIC_SITE_EMAILS.privacy}`}
+                className="text-brand-600 hover:underline"
+              >
+                {PUBLIC_SITE_EMAILS.privacy}
               </a>
             </p>
             <p>

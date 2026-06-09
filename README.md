@@ -1,41 +1,53 @@
 # IndLokal
 
-**Your Indian community, locally - the city-first discovery platform for the Indian diaspora in Germany.**
+**Your Indian community, locally - helping Indians in Germany navigate life in their city.**
 
-IndLokal helps Indians in Germany discover the **communities** active in their city, the **events** worth knowing about this week, and the **resources** every Indian in Germany ends up needing - from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors. Ranked by what's actually alive, not by who paid for a directory listing.
+IndLokal helps Indians in Germany navigate life in their new city: discover the communities active around them, the events worth knowing about this week, and the resources every Indian in Germany ends up needing - from Anmeldung and EU Blue Card to Indian grocers and English-friendly doctors.
 
-Brand source of truth: [`docs/brand/`](docs/brand/). Marketing copy: [`docs/brand/MARKETING_KIT.md`](docs/brand/MARKETING_KIT.md).
+City-first discovery (communities, events, resources) is the live foundation today. The longer arc is documented in [docs/PRODUCT_DOCUMENT.md](docs/PRODUCT_DOCUMENT.md).
 
-> 🚀 Launch city: **Stuttgart** (metro region including Böblingen, Sindelfingen, Ludwigsburg, Esslingen, Leonberg, Göppingen)
+Brand source of truth: [docs/brand/](docs/brand/)
 
 ## Tech Stack
 
-- **Monorepo**: pnpm workspaces + Turborepo
-- **Web**: Next.js 16 App Router, React 19, Tailwind CSS 4
-- **Mobile**: Expo SDK 54, Expo Router, React Native
-- **Language**: TypeScript
-- **Database**: PostgreSQL via Prisma ORM
-- **Shared contracts**: `@indlokal/shared` with Zod/OpenAPI
-- **Deployment**: Vercel + Neon + Expo EAS + GitHub Actions
+- Monorepo: pnpm workspaces + Turborepo
+- Web: Next.js 16 App Router, React 19, Tailwind CSS 4
+- Mobile: Expo SDK 54, Expo Router, React Native
+- Language: TypeScript
+- Database: PostgreSQL + Prisma ORM
+- Shared contracts: `@indlokal/shared` (Zod + generated OpenAPI)
+- Testing: Vitest (web), Node test runner (mobile lib tests)
 
 ## Project Structure
 
-```
-apps/
-├── web/                    # Next.js app + API routes + Prisma schema
-│   ├── src/app/            # App Router pages and API endpoints
-│   ├── src/modules/        # Domain modules: community, event, discovery, search, scoring
-│   └── prisma/             # Database schema and seed data
-├── mobile/                 # Expo app for iOS and Android
-│   ├── app/                # Expo Router screens
-│   ├── components/         # Mobile UI components
-│   └── lib/                # Mobile auth, config, cache, notifications
-packages/
-└── shared/                 # Shared schemas, types, and generated OpenAPI
-docs/
-├── deployment/             # MVP deployment runbooks
-├── specs/                  # PRD, TDD, API, ADR, analytics, notification specs
-└── brand/                  # Brand and design guidelines
+```text
+.
+├── apps/
+│   ├── web/                     # Next.js app + API routes + Prisma
+│   │   ├── src/app/             # App Router pages and API endpoints
+│   │   ├── src/modules/         # Domain modules (community/event/search/pipeline/...)
+│   │   ├── prisma/              # schema, migrations, seeds, bootstrap scripts
+│   │   └── scripts/             # deployment/ops helper scripts
+│   └── mobile/                  # Expo app
+│       ├── app/                 # Expo Router screens
+│       ├── components/          # Mobile UI components
+│       └── lib/                 # Mobile client libraries and tests
+├── packages/
+│   └── shared/                  # Shared contracts/types + generated openapi.yaml
+├── docs/                        # Product, architecture, deployment, audits, specs
+│   ├── deployment/
+│   ├── brand/
+│   └── specs/
+├── decks/                       # Deck generation scripts and output artifacts
+│   ├── scripts/
+│   └── output/
+├── docker/
+│   └── init-test-db.sql
+├── dev.sh                       # Local development workflow helper
+├── docker-compose.yml           # Postgres + Mailpit services
+├── turbo.json
+├── pnpm-workspace.yaml
+└── package.json
 ```
 
 ## Getting Started
@@ -44,7 +56,7 @@ docs/
 
 - Node.js >= 20
 - pnpm >= 9
-- Docker (for PostgreSQL)
+- Docker (for PostgreSQL + Mailpit)
 
 ### Setup
 
@@ -55,105 +67,110 @@ git clone <repo-url> && cd ind-lokal
 # Install dependencies
 pnpm install
 
-# Set up local env, database, Prisma, seed data, and test DB
+# Set up env files, start DB, push Prisma schema, seed data, and prepare test DB
 ./dev.sh setup
 
-# Start the web app
+# Start web app + required local services
 ./dev.sh start
 ```
 
-Open [http://localhost:3001](http://localhost:3001).
+Local defaults:
 
-To start the mobile app, run:
+- Web: http://localhost:3001
+- Postgres (Docker): localhost:5434
+- Mailpit UI: http://localhost:8026
+
+To start mobile development:
 
 ```bash
 ./dev.sh mobile
 ```
 
-### Docker Commands
+## Dev Script Commands
 
-| Command                     | Description                     |
-| --------------------------- | ------------------------------- |
-| `docker compose up -d`      | Start PostgreSQL                |
-| `docker compose down`       | Stop PostgreSQL (data persists) |
-| `docker compose down -v`    | Stop and **wipe** all data      |
-| `docker compose logs -f db` | Tail database logs              |
+`dev.sh` is the canonical local workflow entrypoint.
 
-### Useful Commands
+| Command                  | Description                                                                 |
+| ------------------------ | --------------------------------------------------------------------------- |
+| `./dev.sh setup`         | Install deps, create env files, start DB, push schema, seed, set up test DB |
+| `./dev.sh start`         | Start DB/services and run web dev server                                    |
+| `./dev.sh stop`          | Stop Docker services                                                        |
+| `./dev.sh db:start`      | Start PostgreSQL container                                                  |
+| `./dev.sh db:stop`       | Stop PostgreSQL container                                                   |
+| `./dev.sh db:reset`      | Wipe DB volume, recreate schema, re-seed                                    |
+| `./dev.sh db:studio`     | Open Prisma Studio                                                          |
+| `./dev.sh mailbox`       | Open Mailpit UI                                                             |
+| `./dev.sh test:setup`    | Create/push schema for test DB                                              |
+| `./dev.sh test`          | Run tests                                                                   |
+| `./dev.sh test:watch`    | Run tests in watch mode                                                     |
+| `./dev.sh test:coverage` | Run tests with coverage (web)                                               |
+| `./dev.sh mobile`        | Start Expo app                                                              |
+| `./dev.sh check`         | Run typecheck + lint + format check                                         |
+| `./dev.sh clean`         | Remove node_modules/.next/.turbo and Docker volume                          |
+| `./dev.sh help`          | Show command help                                                           |
 
-| Command                 | Description                                |
-| ----------------------- | ------------------------------------------ |
-| `./dev.sh setup`        | Bootstrap local web + database development |
-| `./dev.sh start`        | Start PostgreSQL and the web app           |
-| `./dev.sh mobile`       | Start the Expo mobile app                  |
-| `pnpm dev:web`          | Start only the web app                     |
-| `pnpm build`            | Production build through Turborepo         |
-| `pnpm lint`             | Run ESLint across workspaces               |
-| `pnpm format`           | Format with Prettier                       |
-| `pnpm typecheck`        | TypeScript type check                      |
-| `pnpm check`            | Run typecheck, lint, and format check      |
-| `pnpm test`             | Run workspace tests                        |
-| `pnpm db:studio`        | Open Prisma Studio                         |
-| `pnpm db:seed`          | Seed database                              |
-| `pnpm db:migrate`       | Create/run local Prisma migrations         |
-| `pnpm openapi:generate` | Regenerate shared OpenAPI contract         |
+## Workspace Commands
 
-### Pipeline Source Config (No Runtime Hardcoding)
+| Command                  | Description                               |
+| ------------------------ | ----------------------------------------- |
+| `pnpm dev`               | Run workspace dev tasks via Turbo         |
+| `pnpm dev:web`           | Start only web app                        |
+| `pnpm build`             | Build all workspace packages/apps         |
+| `pnpm lint`              | Lint across workspaces                    |
+| `pnpm typecheck`         | Typecheck across workspaces               |
+| `pnpm test`              | Run workspace tests                       |
+| `pnpm check`             | `typecheck + lint + format:check`         |
+| `pnpm openapi:generate`  | Regenerate shared OpenAPI contract        |
+| `pnpm db:migrate`        | Run local Prisma dev migration flow (web) |
+| `pnpm db:migrate:deploy` | Apply Prisma deploy migrations (web)      |
+| `pnpm db:seed`           | Seed DB (web)                             |
+| `pnpm db:studio`         | Open Prisma Studio (web)                  |
 
-The content pipeline runs from database-managed source config (no runtime static fallback).
+## Pipeline Source Config
 
-Bootstrap defaults are stored in [apps/web/prisma/data/pipeline-source-defaults.json](apps/web/prisma/data/pipeline-source-defaults.json) and synced into DB by the bootstrap flow; runtime reads DB config only.
+Pipeline source config is DB-managed with JSON defaults.
 
-Keyword seeds are synced into DB as canonical `KEYWORD` config rows. Keyword search strategies in DB are provider templates only; the planner renders provider-specific query strings from that shared keyword pool at runtime.
+- Canonical defaults: `apps/web/prisma/data/pipeline-source-defaults.json`
+- Bootstrap/sync script: `apps/web/prisma/pipeline-source-config.ts`
+- Runtime reader: `apps/web/src/modules/pipeline/runtime-config.ts`
 
-1. Apply migrations:
-   `pnpm --filter web db:migrate:deploy`
-2. Run bootstrap (includes pipeline source config defaults):
-   `pnpm --filter web db:bootstrap`
+Runtime behavior:
 
-To keep source URLs fresh in DB:
+- Primary path reads `pipeline_source_configs` from DB.
+- If the table is missing or empty, runtime falls back to JSON defaults.
 
-1. Sync default source definitions:
-   `pnpm --filter web pipeline:sources:sync`
-2. Optional prune (disable DB rows no longer in defaults):
-   `pnpm --filter web pipeline:sources:sync:prune`
+Useful commands:
+
+1. `pnpm --filter web db:migrate:deploy`
+2. `pnpm --filter web db:bootstrap`
+3. `pnpm --filter web pipeline:sources:sync`
+4. `pnpm --filter web pipeline:sources:sync:prune` (optional)
 
 ## Architecture
 
-**Monorepo, single backend.** The web app owns the Next.js API routes and Prisma data model. The mobile app consumes the same backend and shared contracts; it does not get a separate backend for MVP.
-
-**Modular-internal backend.** Each domain module in `apps/web/src/modules/` encapsulates its own queries, types, and business logic. Modules communicate through well-defined exports - ready to extract later if usage justifies it.
-
-**City-first URL structure.** All user-facing routes are scoped under `/:city/` to enable multi-city expansion. Metro-region awareness means events in Böblingen surface under Stuttgart.
-
-**Activity-led scoring.** Communities are ranked by computed activity scores (events in last 90 days + recency decay), not just profile completeness. This is the core differentiator.
-
-**Sparse-content resilience.** When a city has few events this week, the system automatically expands the time window to avoid showing empty pages.
+- Monorepo, single backend: `apps/web` owns API routes and Prisma model; `apps/mobile` consumes shared APIs/contracts.
+- Modular backend internals: domain modules live in `apps/web/src/modules/`.
+- City-first URL model: user-facing routes are city scoped (`/:city/...`) with metro-region awareness.
 
 ## Deployment
 
-The MVP deployment plan is intentionally small:
+Current deployment runbooks live in [docs/deployment/](docs/deployment/).
 
-- **Vercel** for the Next.js app
-- **Expo EAS** for iOS/Android mobile builds
-- **Neon** for managed PostgreSQL
-- **GitHub Actions** for optional scheduled cron calls
-- **Resend / PostHog / custom domain** only when those features are actually needed
+MVP posture:
 
-See [docs/deployment/](docs/deployment/) for the current deployment runbooks.
+- Web: Vercel
+- Database: Neon PostgreSQL
+- Mobile builds: Expo EAS
+- Optional scheduled jobs: GitHub Actions
 
 ## Git Workflow
 
-- `develop` - primary branch for day-to-day work and feature integration
-- `main` - deployment branch; merge from `develop` when ready to deploy
+- Long-lived branches: `develop` and `main`
 - Feature branches: `feat/<description>`
-- Bug fixes: `fix/<description>`
+- Bug fix branches: `fix/<description>`
+- Commit convention: [Conventional Commits](https://www.conventionalcommits.org/)
 
-GitHub CI runs on pushes and PRs to both `develop` and `main`. Production deployment is tied to `main`.
-
-Commits follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
+```text
 feat: add community search
 fix: correct metro region query
 chore: update dependencies

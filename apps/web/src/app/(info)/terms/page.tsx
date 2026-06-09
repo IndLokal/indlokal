@@ -1,6 +1,11 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/lib/config';
 import { InfoPageHero } from '@/components/info/InfoPageHero';
+import {
+  PUBLIC_SITE_EMAILS,
+  PUBLIC_SITE_LAST_REVIEWED,
+  resolvePublicSiteUrl,
+} from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `Terms of Service - ${siteConfig.name}`,
@@ -11,15 +16,14 @@ export const metadata: Metadata = {
 };
 
 export default function TermsPage() {
-  const lastUpdated = '27 May 2026';
-  const legalUrl = siteConfig.url.includes('localhost') ? 'https://indlokal.com' : siteConfig.url;
+  const legalUrl = resolvePublicSiteUrl(siteConfig.url);
 
   return (
     <>
       <InfoPageHero
         title="Terms of Service"
         description={`Review the terms for using ${siteConfig.name}.`}
-        meta={`Last updated: ${lastUpdated}`}
+        meta={`Last updated: ${PUBLIC_SITE_LAST_REVIEWED}`}
       />
 
       <div className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
@@ -39,8 +43,9 @@ export default function TermsPage() {
           <section>
             <h2>2. Description of Service</h2>
             <p>
-              {siteConfig.name} is a community discovery platform that aggregates information about
-              Indian communities, events, and resources in German cities. The Service provides:
+              {siteConfig.name} is a platform that helps Indians in Germany navigate life in their
+              city. It aggregates information about Indian communities, events, and resources in
+              German cities. The Service provides:
             </p>
             <ul>
               <li>A directory of Indian communities and cultural groups</li>
@@ -168,8 +173,11 @@ export default function TermsPage() {
             <h2>13. Contact</h2>
             <p>
               For questions about these Terms, contact us at{' '}
-              <a href="mailto:legal@indlokal.com" className="text-brand-600 hover:underline">
-                legal@indlokal.com
+              <a
+                href={`mailto:${PUBLIC_SITE_EMAILS.legal}`}
+                className="text-brand-600 hover:underline"
+              >
+                {PUBLIC_SITE_EMAILS.legal}
               </a>
             </p>
           </section>

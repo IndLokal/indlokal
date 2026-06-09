@@ -2,6 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { siteConfig } from '@/lib/config';
 import { InfoPageHero } from '@/components/info/InfoPageHero';
+import {
+  PUBLIC_SITE_EMAILS,
+  PUBLIC_SITE_LAST_REVIEWED,
+  PUBLIC_SITE_SOCIALS,
+} from '@/lib/public-site-content';
 
 export const metadata: Metadata = {
   title: `Contact - ${siteConfig.name}`,
@@ -12,14 +17,12 @@ export const metadata: Metadata = {
 };
 
 export default function ContactPage() {
-  const lastReviewed = '27 May 2026';
-
   return (
     <>
       <InfoPageHero
         title="Contact Us"
         description="Have a question, suggestion, or want to work with us? We'd love to hear from you."
-        meta={`Last reviewed: ${lastReviewed}`}
+        meta={`Last reviewed: ${PUBLIC_SITE_LAST_REVIEWED}`}
       />
 
       <div className="mx-auto max-w-3xl px-4 py-16">
@@ -34,10 +37,10 @@ export default function ContactPage() {
               Questions about {siteConfig.name}, partnerships, or media inquiries.
             </p>
             <a
-              href="mailto:contact@indlokal.com"
+              href={`mailto:${PUBLIC_SITE_EMAILS.contact}`}
               className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
-              contact@indlokal.com →
+              {PUBLIC_SITE_EMAILS.contact} →
             </a>
           </div>
 
@@ -85,10 +88,10 @@ export default function ContactPage() {
               Found an issue or have technical feedback? Let us know.
             </p>
             <a
-              href="mailto:support@indlokal.com"
+              href={`mailto:${PUBLIC_SITE_EMAILS.support}`}
               className="text-brand-600 hover:text-brand-700 mt-4 inline-flex items-center gap-2 text-sm font-bold hover:underline"
             >
-              support@indlokal.com →
+              {PUBLIC_SITE_EMAILS.support} →
             </a>
           </div>
         </div>
@@ -102,7 +105,7 @@ export default function ContactPage() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
-              href="https://instagram.com/indlokal"
+              href={PUBLIC_SITE_SOCIALS.instagram}
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground ring-border/60 hover:ring-brand-300 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold ring-1 transition-all hover:-translate-y-0.5"
@@ -110,7 +113,7 @@ export default function ContactPage() {
               📸 Instagram
             </a>
             <a
-              href="https://linkedin.com/company/indlokal"
+              href={PUBLIC_SITE_SOCIALS.linkedin}
               target="_blank"
               rel="noopener noreferrer"
               className="text-foreground ring-border/60 hover:ring-brand-300 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-bold ring-1 transition-all hover:-translate-y-0.5"

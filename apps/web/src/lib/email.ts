@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import nodemailer from 'nodemailer';
 import { escapeHtmlAttribute } from '@/lib/html';
+import { EMAIL_FOOTERS, emailButton, emailLayout } from '@/lib/email-template';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
@@ -56,25 +57,14 @@ export async function sendMagicLinkEmail(
   await sendEmail(
     to,
     'Your IndLokal organizer login link',
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Organizer access for ${communityName}</h2>
   <p>Click the button below to log in to your IndLokal organizer dashboard.</p>
   <p style="margin:28px 0">
-    <a href="${verifyUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Open organizer dashboard →
-    </a>
+    ${emailButton(verifyUrl, 'Open organizer dashboard →')}
   </p>
   <p style="font-size:13px;color:#666">This link expires in 24 hours and can only be used once.</p>
-  <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>`),
   );
 }
 
@@ -86,25 +76,14 @@ export async function sendAdminMagicLinkEmail(to: string, token: string): Promis
   await sendEmail(
     to,
     'Your IndLokal admin login link',
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Admin Dashboard Access</h2>
   <p>Click the button below to log in to the IndLokal admin dashboard.</p>
   <p style="margin:28px 0">
-    <a href="${verifyUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Open admin dashboard →
-    </a>
+    ${emailButton(verifyUrl, 'Open admin dashboard →')}
   </p>
   <p style="font-size:13px;color:#666">This link expires in 24 hours and can only be used once.</p>
-  <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">If you didn't request this, you can safely ignore it.</p>`),
   );
 }
 
@@ -122,10 +101,7 @@ export async function sendClaimApprovedEmail(
   await sendEmail(
     to,
     `Your claim for "${communityName}" has been approved`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">You're now the organizer of ${communityName}!</h2>
   <p>Your ownership claim has been reviewed and approved. Your community listing is now shown as <strong>Claimed by organizer</strong> on IndLokal.</p>
   <p>You can now:</p>
@@ -135,19 +111,11 @@ export async function sendClaimApprovedEmail(
     <li>Manage access links</li>
   </ul>
   <p style="margin:28px 0">
-    <a href="${dashboardUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Go to your dashboard →
-    </a>
+    ${emailButton(dashboardUrl, 'Go to your dashboard →')}
   </p>
   <p style="font-size:13px">
     <a href="${communityUrl}" style="color:#4f46e5">View your public community page →</a>
-  </p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  </p>`),
   );
 }
 
@@ -157,18 +125,10 @@ export async function sendClaimRejectedEmail(to: string, communityName: string):
   await sendEmail(
     to,
     `Update on your claim for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Claim update: ${communityName}</h2>
   <p>We reviewed your ownership claim for <strong>${communityName}</strong> and were unable to approve it based on the information provided.</p>
-  <p>If you believe this is a mistake or can provide additional proof of ownership, please reply to this email or re-submit the claim with more details.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p>If you believe this is a mistake or can provide additional proof of ownership, please reply to this email or re-submit the claim with more details.</p>`),
   );
 }
 
@@ -185,23 +145,12 @@ export async function sendHostEventApprovedEmail(
   await sendEmail(
     to,
     `Your event "${eventTitle}" is now live`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Your event is live!</h2>
   <p>We reviewed <strong>${eventTitle}</strong> and it's now published on IndLokal. People in your city can discover it.</p>
   <p style="margin:28px 0">
-    <a href="${eventUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      View your event →
-    </a>
-  </p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+    ${emailButton(eventUrl, 'View your event →')}
+  </p>`),
   );
 }
 
@@ -215,19 +164,11 @@ export async function sendHostEventRejectedEmail(
   await sendEmail(
     to,
     `Update on your event "${eventTitle}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Event update: ${eventTitle}</h2>
   <p>We reviewed <strong>${eventTitle}</strong> and were unable to publish it at this time.</p>
   ${reason ? `<p style="background:#f9fafb;border-left:3px solid #e5e7eb;padding:12px 16px;color:#444"><strong>Reason:</strong> ${reason}</p>` : ''}
-  <p>If you can address this, please update the event details and re-submit, or reply to this email with questions.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p>If you can address this, please update the event details and re-submit, or reply to this email with questions.</p>`),
   );
 }
 
@@ -241,19 +182,11 @@ export async function sendSubmissionReceivedEmail(
   await sendEmail(
     to,
     `We received your submission: "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Thanks, ${submitterName}!</h2>
   <p>We've received your submission for <strong>${communityName}</strong> and will review it within 1-2 business days.</p>
   <p>Once approved, your community will appear on IndLokal. We'll email you when it's live.</p>
-  <p style="font-size:13px;color:#666">If you have any questions in the meantime, reply to this email.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">If you have any questions in the meantime, reply to this email.</p>`),
   );
 }
 
@@ -274,17 +207,11 @@ export async function sendSubmissionApprovedEmail(
   await sendEmail(
     to,
     `"${communityName}" is now live on IndLokal!`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Your community is live, ${submitterName}!</h2>
   <p><strong>${communityName}</strong> is now published on IndLokal and discoverable by the Indian diaspora in your city.</p>
   <p style="margin:28px 0">
-    <a href="${communityUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      View your community page →
-    </a>
+    ${emailButton(communityUrl, 'View your community page →')}
   </p>
   ${
     ownershipGranted
@@ -299,12 +226,7 @@ export async function sendSubmissionApprovedEmail(
       : `<p style="font-size:13px">Your listing is live, but organizer access is not enabled yet for this email.
     <a href="${communityUrl}" style="color:#4f46e5">Claim your community to get edit access →</a>
   </p>`
-  }
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  }`),
   );
 }
 
@@ -322,26 +244,15 @@ export async function sendCollaboratorAccessApprovedEmail(
   await sendEmail(
     to,
     `Organizer access approved for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Your organizer access is approved</h2>
   <p>You can now manage <strong>${communityName}</strong> on IndLokal as a collaborator.</p>
   <p style="margin:24px 0">
-    <a href="${organizerLoginUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Get organizer login link →
-    </a>
+    ${emailButton(organizerLoginUrl, 'Get organizer login link →')}
   </p>
   <p style="font-size:13px">
     <a href="${communityUrl}" style="color:#4f46e5">View community page →</a>
-  </p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  </p>`),
   );
 }
 
@@ -353,17 +264,9 @@ export async function sendOrganizerCollaboratorApprovedNotificationEmail(
   await sendEmail(
     to,
     `Collaborator approved for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Collaborator approved</h2>
-  <p><strong>${collaboratorEmail}</strong> is now an approved organizer collaborator for <strong>${communityName}</strong>.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p><strong>${collaboratorEmail}</strong> is now an approved organizer collaborator for <strong>${communityName}</strong>.</p>`),
   );
 }
 
@@ -378,10 +281,7 @@ export async function sendCollaboratorInviteRequestedEmail(
   await sendEmail(
     to,
     `Accept collaborator invite for "${safeCommunityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">You've been invited as a collaborator</h2>
   <p>
     ${inviterName ? `<strong>${inviterName}</strong> invited you` : 'You were invited'} to help manage
@@ -389,18 +289,10 @@ export async function sendCollaboratorInviteRequestedEmail(
   </p>
   <p>Confirm this invite to activate your collaborator access.</p>
   <p style="margin:24px 0">
-    <a href="${acceptUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Accept collaborator invite →
-    </a>
+    ${emailButton(acceptUrl, 'Accept collaborator invite →')}
   </p>
   <p style="font-size:13px;color:#666">This one-time link expires in 24 hours.</p>
-  <p style="font-size:13px;color:#666">If this wasn't expected, you can ignore this email.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">If this wasn't expected, you can ignore this email.</p>`),
   );
 }
 
@@ -413,18 +305,10 @@ export async function sendCollaboratorAccessRejectedEmail(
   await sendEmail(
     to,
     `Update on your collaborator access request for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Your access request was not approved</h2>
   <p>The organizer of <strong>${communityName}</strong> has reviewed your collaborator access request and has decided not to approve it at this time.</p>
-  <p style="font-size:13px;color:#555">If you believe this is a mistake, you can reach out to the community directly or submit a new request with more context about your role.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#555">If you believe this is a mistake, you can reach out to the community directly or submit a new request with more context about your role.</p>`),
   );
 }
 
@@ -436,17 +320,9 @@ export async function sendOrganizerCollaboratorRejectedNotificationEmail(
   await sendEmail(
     to,
     `Collaborator request rejected for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Collaborator request rejected</h2>
-  <p>The collaborator access request from <strong>${collaboratorEmail}</strong> for <strong>${communityName}</strong> was rejected.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p>The collaborator access request from <strong>${collaboratorEmail}</strong> for <strong>${communityName}</strong> was rejected.</p>`),
   );
 }
 
@@ -463,10 +339,7 @@ export async function sendCollaboratorRequestReceivedEmail(
   await sendEmail(
     to,
     `New collaborator access request for "${communityName}"`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Someone wants to co-manage your community</h2>
   <p>
     <strong>${requesterName}</strong> (${requesterEmail}) has requested collaborator access
@@ -479,20 +352,12 @@ export async function sendCollaboratorRequestReceivedEmail(
     </tr>
   </table>
   <p style="margin:24px 0">
-    <a href="${reviewUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Review request in your workspace →
-    </a>
+    ${emailButton(reviewUrl, 'Review request in your workspace →')}
   </p>
   <p style="font-size:13px;color:#666">
     You can approve or reject this request directly from your organizer workspace.
     If you do not recognise this person, you can safely reject the request.
-  </p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  </p>`),
   );
 }
 
@@ -505,25 +370,14 @@ export async function sendStaleReEngagementEmail(
   await sendEmail(
     to,
     `Is ${communityName} still active?`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(`
   <h2 style="margin-top:0">Hey ${organizerName},</h2>
   <p>We noticed <strong>${communityName}</strong> hasn't had any activity on IndLokal in a while.</p>
   <p>If your community is still active, just update your listing or add an upcoming event to keep it visible in search results.</p>
   <p style="margin:28px 0">
-    <a href="${loginUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Open organizer dashboard →
-    </a>
+    ${emailButton(loginUrl, 'Open organizer dashboard →')}
   </p>
-  <p style="font-size:13px;color:#666">Communities without activity for 180+ days are automatically moved to inactive status.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Indian community discovery in Germany</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">Communities without activity for 180+ days are automatically moved to inactive status.</p>`),
   );
 }
 
@@ -553,10 +407,8 @@ export async function sendReportNotificationEmail(
   await sendEmail(
     to,
     `[IndLokal] New report: ${reportType} (${reportId})`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(
+      `
   <h2 style="margin-top:0">New content report received</h2>
   <table style="border-collapse:collapse;width:100%;font-size:14px">
     <tr><td style="padding:4px 8px;font-weight:600;width:140px">Report ID</td><td style="padding:4px 8px">${reportId}</td></tr>
@@ -567,12 +419,9 @@ export async function sendReportNotificationEmail(
     ${details ? `<tr><td style="padding:4px 8px;font-weight:600">Details</td><td style="padding:4px 8px">${details}</td></tr>` : ''}
     ${reporterEmail ? `<tr><td style="padding:4px 8px;font-weight:600">Reporter email</td><td style="padding:4px 8px">${reporterEmail}</td></tr>` : ''}
     <tr><td style="padding:4px 8px;font-weight:600">User ID</td><td style="padding:4px 8px">${submittedByUserId}</td></tr>
-  </table>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal admin notification</p>
-</body>
-</html>
-`,
+  </table>`,
+      { footer: EMAIL_FOOTERS.admin },
+    ),
   );
 }
 
@@ -591,28 +440,20 @@ export async function sendBusinessConnectInviteEmail(
   await sendEmail(
     to,
     `You're invited to ${opts.partnerName} Business Connect`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(
+      `
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
   <h2 style="margin-top:0">You're invited to Business Connect</h2>
   <p>${inviterLabel} from ${partnerName} has invited you to submit a business enquiry through
-  IndLokal's curated Business Connect pilot. It's invite-only — this link is tied to your email
+  IndLokal's curated Business Connect pilot. It's invite-only - this link is tied to your email
   address and is the only way to open the enquiry form.</p>
   <p style="margin:24px 0">
-    <a href="${inviteUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Open my enquiry form →
-    </a>
+    ${emailButton(inviteUrl, 'Open my enquiry form →')}
   </p>
   <p style="font-size:13px;color:#666">Enquiries are reviewed manually by IndLokal and ${partnerName};
-  submitting does not guarantee an introduction. If this wasn't expected, you can ignore this email.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
-</body>
-</html>
-`,
+  submitting does not guarantee an introduction. If this wasn't expected, you can ignore this email.</p>`,
+      { footer: EMAIL_FOOTERS.businessConnect },
+    ),
   );
 }
 
@@ -631,28 +472,20 @@ export async function sendBusinessConnectConfirmEmail(
   await sendEmail(
     to,
     `Confirm your Business Connect enquiry`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(
+      `
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
   <h2 style="margin-top:0">Confirm your enquiry</h2>
   <p>Thanks for submitting a Business Connect enquiry for <strong>${companyName}</strong>. To keep
-  enquiries trustworthy, please confirm this email address — your enquiry is only sent to the
+  enquiries trustworthy, please confirm this email address - your enquiry is only sent to the
   ${partnerName} review team once you do.</p>
   <p style="margin:24px 0">
-    <a href="${confirmUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Confirm my enquiry →
-    </a>
+    ${emailButton(confirmUrl, 'Confirm my enquiry →')}
   </p>
   <p style="font-size:13px;color:#666">If you didn't submit this enquiry, you can safely ignore this
-  email — nothing will be sent to the review team.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
-</body>
-</html>
-`,
+  email - nothing will be sent to the review team.</p>`,
+      { footer: EMAIL_FOOTERS.businessConnect },
+    ),
   );
 }
 
@@ -670,22 +503,17 @@ export async function sendBusinessConnectConfirmationEmail(
   await sendEmail(
     to,
     `We received your Business Connect enquiry`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(
+      `
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
   <h2 style="margin-top:0">Thank you, ${contactName}.</h2>
   <p>We've received the Business Connect enquiry for <strong>${companyName}</strong>.</p>
   <p>IndLokal and ${partnerName} review every submission manually. If there is a relevant
   potential match, the team may contact you for a curated introduction.</p>
   <p style="font-size:13px;color:#666">Submitting an enquiry does not guarantee an introduction,
-  and your enquiry will never be publicly listed.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal · Curated India–Germany business connections</p>
-</body>
-</html>
-`,
+  and your enquiry will never be publicly listed.</p>`,
+      { footer: EMAIL_FOOTERS.businessConnect },
+    ),
   );
 }
 
@@ -713,10 +541,8 @@ export async function sendBusinessConnectAdminNotificationEmail(
   await sendEmail(
     to,
     `[IndLokal] New Business Connect enquiry: ${opts.companyName}`,
-    `
-<!DOCTYPE html>
-<html>
-<body style="font-family:system-ui,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#111">
+    emailLayout(
+      `
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${e(opts.eventLabel)}</p>
   <h2 style="margin-top:0">New Business Connect enquiry</h2>
   <table style="border-collapse:collapse;width:100%;font-size:14px">
@@ -729,16 +555,10 @@ export async function sendBusinessConnectAdminNotificationEmail(
     <tr><td style="padding:4px 8px;font-weight:600">Specific ask</td><td style="padding:4px 8px">${e(opts.specificAsk)}</td></tr>
   </table>
   <p style="margin:24px 0">
-    <a href="${reviewUrl}"
-       style="background:#4f46e5;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;display:inline-block">
-      Review in organizer queue →
-    </a>
+    ${emailButton(reviewUrl, 'Review in organizer queue →')}
   </p>
-  <p style="font-size:13px;color:#666">Reviewed manually with ${e(opts.partnerName)} before any introduction.</p>
-  <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0">
-  <p style="font-size:12px;color:#999">IndLokal admin notification</p>
-</body>
-</html>
-`,
+  <p style="font-size:13px;color:#666">Reviewed manually with ${e(opts.partnerName)} before any introduction.</p>`,
+      { footer: EMAIL_FOOTERS.admin, maxWidth: 560 },
+    ),
   );
 }
