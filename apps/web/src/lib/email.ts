@@ -445,7 +445,7 @@ export async function sendBusinessConnectInviteEmail(
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
   <h2 style="margin-top:0">You're invited to Business Connect</h2>
   <p>${inviterLabel} from ${partnerName} has invited you to submit a business enquiry through
-  IndLokal's curated Business Connect pilot. It's invite-only — this link is tied to your email
+  IndLokal's curated Business Connect pilot. It's invite-only - this link is tied to your email
   address and is the only way to open the enquiry form.</p>
   <p style="margin:24px 0">
     ${emailButton(inviteUrl, 'Open my enquiry form →')}
@@ -477,13 +477,13 @@ export async function sendBusinessConnectConfirmEmail(
   <p style="color:#4f46e5;font-weight:600;font-size:13px;margin:0 0 4px">${eventLabel}</p>
   <h2 style="margin-top:0">Confirm your enquiry</h2>
   <p>Thanks for submitting a Business Connect enquiry for <strong>${companyName}</strong>. To keep
-  enquiries trustworthy, please confirm this email address — your enquiry is only sent to the
+  enquiries trustworthy, please confirm this email address - your enquiry is only sent to the
   ${partnerName} review team once you do.</p>
   <p style="margin:24px 0">
     ${emailButton(confirmUrl, 'Confirm my enquiry →')}
   </p>
   <p style="font-size:13px;color:#666">If you didn't submit this enquiry, you can safely ignore this
-  email — nothing will be sent to the review team.</p>`,
+  email - nothing will be sent to the review team.</p>`,
       { footer: EMAIL_FOOTERS.businessConnect },
     ),
   );
