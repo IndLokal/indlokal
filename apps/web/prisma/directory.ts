@@ -49,7 +49,7 @@
  * 4. NEVER seed events here. Events go stale and make us look wrong/dead.
  * 5. Idempotent and create-only. Existing rows are NEVER updated or retired by
  *    this script - admin/organiser edits must survive every redeploy. Live-data
- *    cleanup must happen via the explicit seed-cleanup script, never as an
+ *    cleanup must happen via the admin console (deactivate/edit), never as an
  *    implicit side effect of editing this file.
  * 6. Never invent activity scores or `lastActivityAt`. The scoring engine
  *    derives those from real signals.
@@ -120,7 +120,7 @@ const STUTTGART: DirectoryEntry[] = [
       'HSS Stuttgart is one of the most active Hindu cultural organisations in Baden-Württemberg. Weekly Sunday shakhas, Diwali and Holi celebrations, family camps.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English', 'Gujarati'],
     foundedYear: 2005,
     sourceUrl: 'https://hssgermany.org/',
@@ -143,7 +143,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Samaikya Telugu Vedika (STV) e.V. brings together Telugu-speaking professionals and families across Stuttgart and the surrounding region. Major events include Ugadi and Sankranti.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Telugu', 'English'],
     foundedYear: 2010,
     sourceUrl: 'https://stvgermany.de/',
@@ -173,7 +173,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Community around the annual Indian Film Festival Stuttgart (22+ years running). Year-round film screenings, discussions and filmmaker meetups.',
     citySlug: 'stuttgart',
     categorySlugs: ['arts-entertainment', 'cultural'],
-    personaSegments: ['working-professional', 'single', 'persona-student'],
+    personaSegments: ['professional', 'single', 'student'],
     languages: ['English', 'Hindi'],
     foundedYear: 2003,
     sourceUrl: 'https://indisches-filmfestival.de',
@@ -208,7 +208,7 @@ const STUTTGART: DirectoryEntry[] = [
       'One of the oldest Indian Vereine in Germany, registered in Stuttgart since 2006. Promotes Indian culture through Diwali, Navaratri, and Summerfest.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'German'],
     foundedYear: 2006,
     sourceUrl: 'https://indiacultureforum.de/',
@@ -235,7 +235,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Focused on integration of Indian families in Germany. Organises open dialogues on German schooling, career pathways, and Indo-German relations.',
     citySlug: 'stuttgart',
     categorySlugs: ['networking-social', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'newcomer'],
+    personaSegments: ['family', 'professional', 'newcomer'],
     languages: ['Hindi', 'German', 'English'],
     sourceUrl: 'https://www.samvadgermany.org/',
     channels: [
@@ -261,7 +261,7 @@ const STUTTGART: DirectoryEntry[] = [
       'JITO Stuttgart brings together Jain entrepreneurs, professionals, students, and philanthropists in Germany through business networking, community programs, and economic-empowerment initiatives.',
     citySlug: 'stuttgart',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional', 'persona-student'],
+    personaSegments: ['professional', 'student'],
     languages: ['English', 'Hindi', 'Gujarati'],
     sourceUrl: 'https://jitostuttgart.de/about-us',
     channels: [
@@ -290,7 +290,7 @@ const STUTTGART: DirectoryEntry[] = [
       'BINDI: Bengalische Indische und Deutsche Initiative - Bengali/Indian cultural organisation since 2015. Durga Puja, Bengali Borshoboron, and cultural events.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'language-regional'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'German'],
     foundedYear: 2015,
     sourceUrl: 'https://bindi-ev.org/',
@@ -313,7 +313,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Also referred to publicly as Sri Sitti-Vinayagar Hindu-Tempel and ஸ்ரீ சித்திவிநாயகர் ஆலயம். The registered Verein maintains its temple at Lehmfeldstraße 18, Stuttgart.',
     citySlug: 'stuttgart',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional', 'newcomer'],
+    personaSegments: ['family', 'professional', 'newcomer'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://www.sri-sithivinayagar-kovil-ev.de/impressum',
     channels: [
@@ -342,7 +342,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Hindu temple and Vedic-culture community hub in Stuttgart with weekly Sunday mandir program, festival events, and volunteer-led family activities.',
     citySlug: 'stuttgart',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional', 'newcomer'],
+    personaSegments: ['family', 'professional', 'newcomer'],
     languages: ['Hindi', 'English', 'German'],
     sourceUrl: 'https://stuttgart-hindutemple.org/about-us/',
     channels: [
@@ -373,7 +373,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Temple project in Renningen (Wankelstrasse 4/A, 71272) led by Sri Venkateshwara Temple Stuttgart gUG (haftungsbeschraenkt), registered at Amtsgericht Stuttgart (HRB 802996).',
     citySlug: 'renningen',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional', 'newcomer'],
+    personaSegments: ['family', 'professional', 'newcomer'],
     languages: ['English', 'German', 'Telugu'],
     foundedYear: 2025,
     sourceUrl: 'https://svtstuttgart.de/impressum/',
@@ -412,7 +412,7 @@ const STUTTGART: DirectoryEntry[] = [
       "Stuttgart chapter of Germany's Deutsch-Indische Gesellschaft - cultural evenings, lectures and Indo-German dialogue for the Stuttgart metro. Member of Forum der Kulturen.",
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'http://www.digstuttgart.de/',
     channels: [
@@ -438,7 +438,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Registered Indian community association in Stuttgart - cultural events and community support for Indians in the region. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English'],
     sourceUrl: 'http://www.indischerverein-stuttgart.de/',
     channels: [
@@ -457,7 +457,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Tamil educational and cultural association based in Stuttgart - promotes Tamil language education, cultural heritage and community integration for the Tamil diaspora in Germany.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'German'],
     sourceUrl: 'https://tbvgermany.com/de/',
     channels: [
@@ -476,7 +476,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Tamil cultural association in Stuttgart organizing language, festival and family-community activities for the Tamil diaspora.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://stuttgarttamilsangam.com/STSangam/home',
     channels: [
@@ -505,7 +505,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Marathi community association in Stuttgart - Ganesh Chaturthi, Gudi Padwa and cultural events for the Maharashtrian diaspora. Member of Forum der Kulturen.',
     citySlug: 'stuttgart',
     categorySlugs: ['language-regional', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Marathi', 'Hindi', 'English'],
     sourceUrl: 'https://www.mmstuttgart.de',
     channels: [
@@ -530,7 +530,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Indian Bengali community in Esslingen/Stuttgart area. Organises Stuttgart Sarbojonin Durga Puja, Saraswati Puja, and cultural integration events.',
     citySlug: 'esslingen',
     categorySlugs: ['cultural', 'language-regional', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'German'],
     sourceUrl: 'https://maitree-ev.org/',
     channels: [
@@ -555,7 +555,7 @@ const STUTTGART: DirectoryEntry[] = [
       'A group of expatriate Bengalis fostering Bengali culture and heritage in Germany. Known for Durga Pujo in Stuttgart and music events.',
     citySlug: 'stuttgart',
     categorySlugs: ['cultural', 'language-regional', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'German'],
     sourceUrl: 'https://www.debiev.de/',
     channels: [
@@ -575,7 +575,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Cricket club in Sindelfingen playing in BW Landesliga. Active in tape-ball and leather-ball cricket with youth programs.',
     citySlug: 'sindelfingen',
     categorySlugs: ['sports-fitness'],
-    personaSegments: ['working-professional', 'single'],
+    personaSegments: ['professional', 'single'],
     languages: ['English', 'Hindi'],
     sourceUrl: 'https://squirrels.de/',
     channels: [
@@ -594,7 +594,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Fosters Tamil art, culture, language and heritage. Runs a Tamil Academy for children. Registered at Amtsgericht Stuttgart, based in Böblingen.',
     citySlug: 'boeblingen',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'German'],
     sourceUrl: 'https://tamilsangam.de/',
     channels: [
@@ -618,7 +618,7 @@ const STUTTGART: DirectoryEntry[] = [
       'Professional cricket club in Malmsheim (Landkreis Böblingen), est. 2019. Cricket Vision Campus initiative for skilled-worker integration through cricket.',
     citySlug: 'stuttgart',
     categorySlugs: ['sports-fitness'],
-    personaSegments: ['working-professional', 'single'],
+    personaSegments: ['professional', 'single'],
     languages: ['English', 'Hindi'],
     foundedYear: 2019,
     sourceUrl: 'https://cricket.tsv-malmsheim.de/',
@@ -672,7 +672,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       'Hindu Swayamsevak Sangh Karlsruhe unit - weekly shakha, Diwali and Holi celebrations for the Hindu community.',
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English'],
     sourceUrl: 'https://hssgermany.org/',
     channels: [
@@ -687,7 +687,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       "Karlsruhe chapter of Germany's Deutsch-Indische Gesellschaft - lectures, cultural events and Indo-German dialogue in the Karlsruhe region.",
     citySlug: 'karlsruhe',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://digkarlsruhe.de/',
     channels: [
@@ -716,7 +716,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       'Student-led Indian community around KIT Karlsruhe supporting onboarding, networking, cultural exchange and Indian festival celebrations.',
     citySlug: 'karlsruhe',
     categorySlugs: ['student', 'networking-social', 'cultural'],
-    personaSegments: ['persona-student'],
+    personaSegments: ['student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -741,7 +741,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       'Krishna devotional and Hindu spiritual community in Karlsruhe with kirtan, Bhagavad Gita sessions and festival celebrations.',
     citySlug: 'karlsruhe',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://www.iskcon.de/',
     channels: [
@@ -766,7 +766,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       'Tamil-speaking cultural community in Karlsruhe organising Pongal, Tamil New Year and family-oriented social activities.',
     citySlug: 'karlsruhe',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -785,7 +785,7 @@ const KARLSRUHE: DirectoryEntry[] = [
       'Malayali community network in Karlsruhe with Onam celebrations, cultural programs and social support for families and students.',
     citySlug: 'karlsruhe',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'persona-student', 'working-professional'],
+    personaSegments: ['family', 'student', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -802,7 +802,7 @@ const MANNHEIM: DirectoryEntry[] = [
     // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://www.dig-heidelberg.de/',
     channels: [
@@ -823,7 +823,7 @@ const MANNHEIM: DirectoryEntry[] = [
     // Keep anchored to Mannheim primary for stable city pages; satellite entries are additive.
     citySlug: 'mannheim',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://iskcon-heidelberg.de/',
     channels: [
@@ -858,7 +858,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Malayali cultural association active in the wider Rhein-Neckar/Baden region, with family-oriented festivals and community gatherings.',
     citySlug: 'schwetzingen',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -878,7 +878,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Hindu Swayamsevak Sangh unit serving the Mannheim-Heidelberg-Rhein-Neckar region with weekly shakha, yoga and Hindu cultural programs.',
     citySlug: 'mannheim',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://hssgermany.org/',
     channels: [
@@ -903,7 +903,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Indian student network in Heidelberg supporting onboarding, housing guidance, networking and cultural activities.',
     citySlug: 'mannheim',
     categorySlugs: ['student', 'networking-social'],
-    personaSegments: ['persona-student'],
+    personaSegments: ['student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.indianstudentsgermany.org/',
     channels: [
@@ -923,7 +923,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Telugu-speaking community organisation in the Rhein-Neckar region organising Ugadi, Sankranti and cultural family gatherings.',
     citySlug: 'mannheim',
     categorySlugs: ['language-regional', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Telugu', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -936,7 +936,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Gujarati cultural and social community serving Indian families in the Mannheim-Heidelberg region.',
     citySlug: 'mannheim',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Gujarati', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -955,7 +955,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Indian Hindu spiritual and cultural community connected to temple activities and festival celebrations in the Rhein-Neckar region.',
     citySlug: 'mannheim',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'Tamil', 'English', 'German'],
     sourceUrl: 'https://www.bharatiya-temple.de/',
     channels: [
@@ -975,7 +975,7 @@ const MANNHEIM: DirectoryEntry[] = [
       'Bengali cultural association in the Mannheim-Heidelberg area organising Durga Puja, Saraswati Puja and Bengali arts programs.',
     citySlug: 'mannheim',
     categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -991,7 +991,7 @@ const MUNICH: DirectoryEntry[] = [
       'Official Government of India consular mission in Munich serving Bavaria and Baden-Wuerttemberg with passport, visa, OCI and consular services.',
     citySlug: 'munich',
     categorySlugs: ['networking-social', 'professional'],
-    personaSegments: ['persona-student', 'working-professional', 'family'],
+    personaSegments: ['student', 'professional', 'family'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.cgimunich.gov.in/',
     channels: [
@@ -1031,7 +1031,7 @@ const MUNICH: DirectoryEntry[] = [
       'Indo-German civic and cultural association listed for Munich in institutional diaspora directories, with regular cross-cultural community activities.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1056,7 +1056,7 @@ const MUNICH: DirectoryEntry[] = [
       'Munich-based Indo-German cultural association listed in institutional directories for Indian diaspora organisations in Germany.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'arts-entertainment', 'networking-social'],
-    personaSegments: ['working-professional', 'family', 'persona-student'],
+    personaSegments: ['professional', 'family', 'student'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1086,7 +1086,7 @@ const MUNICH: DirectoryEntry[] = [
       'Munich chapter of Indo-German civic exchange activity listed in institutional directories for Indian associations in Germany.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1111,7 +1111,7 @@ const MUNICH: DirectoryEntry[] = [
       'Regional Indo-German association in Bavaria (Augsburg) that serves the wider Munich-Bavaria diaspora corridor through cultural and civic exchange.',
     citySlug: 'augsburg',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1136,7 +1136,7 @@ const MUNICH: DirectoryEntry[] = [
       'Bavaria-based Indo-German association in the Ingolstadt-Munich belt listed in institutional community directories.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1156,7 +1156,7 @@ const MUNICH: DirectoryEntry[] = [
       'Kannada-speaking community organisation active in Germany and listed in institutional directories used for Munich/Bavaria diaspora discovery.',
     citySlug: 'garching',
     categorySlugs: ['language-regional', 'cultural', 'networking-social'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Kannada', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1180,7 +1180,7 @@ const MUNICH: DirectoryEntry[] = [
       'Malayali umbrella community listed in institutional directories and relevant to the Munich-Bavaria regional diaspora network.',
     citySlug: 'munich',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1210,7 +1210,7 @@ const MUNICH: DirectoryEntry[] = [
       'Germany-wide Gujarati community association listed in institutional directories with participation across major metros including Munich.',
     citySlug: 'munich',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Gujarati', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1229,7 +1229,7 @@ const MUNICH: DirectoryEntry[] = [
       'Germany-wide Hindu community organisation listed in institutional directories and relevant for Munich-area religious and cultural network discovery.',
     citySlug: 'munich',
     categorySlugs: ['religious', 'cultural', 'networking-social'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1254,7 +1254,7 @@ const MUNICH: DirectoryEntry[] = [
       'Indian student support network linked from official consular resources and used by students in Munich and Bavaria for onboarding and coordination.',
     citySlug: 'garching',
     categorySlugs: ['student', 'networking-social'],
-    personaSegments: ['persona-student'],
+    personaSegments: ['student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.indianstudentsgermany.org/',
     channels: [
@@ -1274,7 +1274,7 @@ const MUNICH: DirectoryEntry[] = [
       'Hindu Swayamsevak Sangh München - weekly shakha, Diwali and Holi celebrations and cultural programs for the Hindu community in Munich.',
     citySlug: 'munich',
     categorySlugs: ['cultural', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English', 'Gujarati'],
     sourceUrl: 'https://hssgermany.org/',
     channels: [
@@ -1299,7 +1299,7 @@ const MUNICH: DirectoryEntry[] = [
       'International Society for Krishna Consciousness Munich center - Sunday feast, Bhagavad Gita classes, Janmashtami and Ratha Yatra festivals.',
     citySlug: 'munich',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.iskcon.de/',
     channels: [
@@ -1334,7 +1334,7 @@ const MUNICH: DirectoryEntry[] = [
       'Malayali community association in Munich organising Onam, Vishu and other cultural gatherings, with member services and community activities year-round.',
     citySlug: 'munich',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://keralasamajammunich.de/',
     channels: [
@@ -1369,7 +1369,7 @@ const MUNICH: DirectoryEntry[] = [
     // TUM and nearby student communities extend into the north metro corridor.
     citySlug: 'garching',
     categorySlugs: ['student', 'networking-social', 'cultural'],
-    personaSegments: ['persona-student'],
+    personaSegments: ['student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1393,7 +1393,7 @@ const MUNICH: DirectoryEntry[] = [
       'Tamil cultural association in the Munich metro organising Tamil language, festival and family-community activities.',
     citySlug: 'freising',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1423,7 +1423,7 @@ const MUNICH: DirectoryEntry[] = [
       'Gujarati community association serving families and professionals in the Munich and western metro area.',
     citySlug: 'augsburg',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Gujarati', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1453,7 +1453,7 @@ const MUNICH: DirectoryEntry[] = [
       'Telugu-speaking community in the Munich metro with recurring cultural gatherings and festival celebrations.',
     citySlug: 'unterschleissheim',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Telugu', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1478,7 +1478,7 @@ const MUNICH: DirectoryEntry[] = [
       'Bengali cultural association in the Munich metro organising arts, festivals and social community programs.',
     citySlug: 'starnberg',
     categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1497,7 +1497,7 @@ const MUNICH: DirectoryEntry[] = [
       'Marathi cultural association in the Munich metro community with regional-language and festival activities.',
     citySlug: 'dachau',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Marathi', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1520,7 +1520,7 @@ const BERLIN: DirectoryEntry[] = [
       'Official Embassy of India in Germany serving diplomatic, consular, diaspora and cultural relations across Germany.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional', 'family', 'persona-student'],
+    personaSegments: ['professional', 'family', 'student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indianembassyberlin.gov.in/',
     channels: [
@@ -1559,7 +1559,7 @@ const BERLIN: DirectoryEntry[] = [
       'Embassy-supported Indian student support network helping students in Berlin and across Germany with onboarding, education and diaspora coordination.',
     citySlug: 'berlin',
     categorySlugs: ['student', 'networking-social'],
-    personaSegments: ['persona-student'],
+    personaSegments: ['student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indianstudentsgermany.org/',
     channels: [
@@ -1583,7 +1583,7 @@ const BERLIN: DirectoryEntry[] = [
       'Professional and policy-oriented Indo-German leadership network connecting students, entrepreneurs, researchers and young professionals.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional', 'persona-student'],
+    personaSegments: ['professional', 'student'],
     languages: ['English', 'German'],
     sourceUrl: 'https://igylf.org/',
     channels: [
@@ -1612,7 +1612,7 @@ const BERLIN: DirectoryEntry[] = [
       'Historic Indo-German cultural and networking institution in Berlin focused on diplomacy, arts, business and community dialogue.',
     citySlug: 'berlin',
     categorySlugs: ['cultural', 'professional', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://www.indiaclubberlin.com/',
     channels: [
@@ -1641,7 +1641,7 @@ const BERLIN: DirectoryEntry[] = [
       'German-Indian business ecosystem and networking platform supporting Indo-German trade, startups, professionals and economic collaboration.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional'],
+    personaSegments: ['professional'],
     languages: ['English', 'German'],
     sourceUrl: 'https://indien.ahk.de/',
     channels: [
@@ -1675,7 +1675,7 @@ const BERLIN: DirectoryEntry[] = [
       'Berlin chapter of Hindu Swayamsevak Sangh organising Hindu cultural activities, yoga, festivals and family programs.',
     citySlug: 'berlin',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://hssgermany.org/',
     channels: [
@@ -1705,7 +1705,7 @@ const BERLIN: DirectoryEntry[] = [
       'Berlin Krishna temple and Vaishnava spiritual community with regular kirtan, Sunday feast and festival celebrations.',
     citySlug: 'berlin',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://iskconberlin.com/',
     channels: [
@@ -1739,7 +1739,7 @@ const BERLIN: DirectoryEntry[] = [
       'Europe-wide Kannada and Lingayat cultural-spiritual organisation with active Indian diaspora participation from Berlin and Germany.',
     citySlug: 'berlin',
     categorySlugs: ['language-regional', 'cultural', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Kannada', 'English', 'German'],
     sourceUrl: 'https://basavasamithieurope.org/',
     channels: [
@@ -1768,7 +1768,7 @@ const BERLIN: DirectoryEntry[] = [
       'Professional networking ecosystem connecting Indian founders, consultants, engineers and business leaders in Berlin.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional'],
+    personaSegments: ['professional'],
     languages: ['English', 'German', 'Hindi'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -1788,7 +1788,7 @@ const BERLIN: DirectoryEntry[] = [
       'India-focused startup and innovation networking ecosystem connecting founders, investors, operators and tech professionals in Berlin.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional'],
+    personaSegments: ['professional'],
     languages: ['English'],
     sourceUrl: 'https://www.startupindia.gov.in/',
     channels: [
@@ -1818,7 +1818,7 @@ const BERLIN: DirectoryEntry[] = [
       'Bengali cultural community in Berlin organising Durga Puja, Saraswati Puja and Bengali arts and literary activities.',
     citySlug: 'berlin',
     categorySlugs: ['language-regional', 'cultural', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://www.durgapuja-berlin.de/',
     channels: [
@@ -1847,7 +1847,7 @@ const BERLIN: DirectoryEntry[] = [
       'Tamil cultural organisation in Berlin focused on Tamil language, Pongal celebrations and regional cultural activities.',
     citySlug: 'berlin',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'English', 'German'],
     sourceUrl: 'https://tamilsangam.de/',
     channels: [
@@ -1877,7 +1877,7 @@ const BERLIN: DirectoryEntry[] = [
       'Kannada-speaking community in Berlin organising Karnataka Rajyotsava, Ugadi and networking events for families and professionals.',
     citySlug: 'berlin',
     categorySlugs: ['language-regional', 'cultural'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Kannada', 'English', 'German'],
     sourceUrl: 'https://kanasugermany.org/',
     channels: [
@@ -1906,7 +1906,7 @@ const BERLIN: DirectoryEntry[] = [
       'Malayali diaspora community in Berlin organising Onam, Vishu and cultural networking activities for families and professionals.',
     citySlug: 'berlin',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://www.gmcgermany.com/',
     channels: [
@@ -1936,7 +1936,7 @@ const BERLIN: DirectoryEntry[] = [
       'Indian cultural and arts community in Berlin promoting dance, music, festivals and Indo-German cultural exchange.',
     citySlug: 'berlin',
     categorySlugs: ['cultural', 'arts-entertainment'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.indiaclubberlin.com/',
     channels: [
@@ -1961,7 +1961,7 @@ const BERLIN: DirectoryEntry[] = [
       'Indian-subcontinent-led cricket ecosystem in Berlin connecting amateur, league and student cricket communities.',
     citySlug: 'berlin',
     categorySlugs: ['sports-fitness'],
-    personaSegments: ['single', 'working-professional', 'persona-student'],
+    personaSegments: ['single', 'professional', 'student'],
     languages: ['English', 'Hindi'],
     sourceUrl: 'https://www.berlincricketacademy.de/',
     channels: [
@@ -1990,7 +1990,7 @@ const BERLIN: DirectoryEntry[] = [
       'Academic and research-oriented Indian professional ecosystem across Berlin universities, research institutes and innovation labs.',
     citySlug: 'berlin',
     categorySlugs: ['professional', 'student', 'networking-social'],
-    personaSegments: ['persona-student', 'working-professional'],
+    personaSegments: ['student', 'professional'],
     languages: ['English', 'German'],
     sourceUrl: 'https://www.daad.de/en/',
     channels: [
@@ -2023,7 +2023,7 @@ const FRANKFURT: DirectoryEntry[] = [
       "Regional chapter of Germany's Indo-German cultural society covering Frankfurt and the Rhein-Main area - lectures, film screenings and cultural exchanges.",
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'networking-social'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['German', 'English', 'Hindi'],
     sourceUrl: 'https://www.dig-ev.de/home-2/zweiggesellschaften/darmstadtfrankfurt/',
     channels: [
@@ -2043,7 +2043,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Tamil cultural association in Frankfurt organising Pongal, Tamil New Year, Diwali, sports days and arts programming for families in the Rhein-Main region.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Tamil', 'English', 'German'],
     foundedYear: 2015,
     sourceUrl: 'https://frankfurttamilsangam.com/',
@@ -2083,7 +2083,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Germany-wide Telugu association with a listed Frankfurt address and a long-running program of Telugu cultural gatherings and Ugadi celebrations.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Telugu', 'English', 'German'],
     foundedYear: 2006,
     sourceUrl: 'https://teluguvelugu.de/',
@@ -2114,7 +2114,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Indian community association serving students and families in the Darmstadt area with cultural meetups and diaspora support.',
     citySlug: 'darmstadt',
     categorySlugs: ['networking-social', 'cultural'],
-    personaSegments: ['persona-student', 'working-professional', 'family'],
+    personaSegments: ['student', 'professional', 'family'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2144,7 +2144,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Community association connecting Indian residents across Mainz and Wiesbaden with social and cultural activities.',
     citySlug: 'mainz',
     categorySlugs: ['networking-social', 'cultural'],
-    personaSegments: ['working-professional', 'family'],
+    personaSegments: ['professional', 'family'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2174,7 +2174,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Kannada-speaking community in the Rhein-Main area organising language, cultural and family events.',
     citySlug: 'offenbach',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Kannada', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2194,7 +2194,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Bengali cultural association in Rhein-Main running festival celebrations and community programs for families.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Bengali', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -2207,7 +2207,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Frankfurt-based Indian sports and family association for regular social, recreational and community activities.',
     citySlug: 'frankfurt',
     categorySlugs: ['sports-fitness', 'family-kids', 'networking-social'],
-    personaSegments: ['family', 'working-professional', 'single'],
+    personaSegments: ['family', 'professional', 'single'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -2220,7 +2220,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Malayali community association in the Frankfurt metro with cultural and family-oriented gatherings.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [],
@@ -2233,7 +2233,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Hindu Swayamsevak Sangh Frankfurt - weekly shakha, cultural activities, yoga, Hindu festivals and family programs for the Rhein-Main Indian community.',
     citySlug: 'frankfurt',
     categorySlugs: ['cultural', 'religious'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English', 'German'],
     sourceUrl: 'https://hssgermany.org/',
     channels: [
@@ -2263,7 +2263,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Hare Krishna temple and Vaishnava spiritual community in Frankfurt with Sunday feast programs, kirtan, Bhagavad Gita classes and major Hindu festival celebrations.',
     citySlug: 'frankfurt',
     categorySlugs: ['religious', 'cultural'],
-    personaSegments: ['family', 'working-professional', 'persona-student'],
+    personaSegments: ['family', 'professional', 'student'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://www.krishna-frankfurt.de/',
     channels: [
@@ -2297,7 +2297,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Gujarati cultural and family community in the Frankfurt Rhein-Main region organising Navratri, Diwali and social networking activities.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Gujarati', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2316,7 +2316,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Malayali cultural and social association in the Frankfurt region organising Onam, Vishu and family-oriented community gatherings.',
     citySlug: 'frankfurt',
     categorySlugs: ['language-regional', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Malayalam', 'English', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2335,7 +2335,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Hindu temple and spiritual-cultural center serving the Indian diaspora in Frankfurt with puja, festivals and family religious activities.',
     citySlug: 'frankfurt',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Hindi', 'English', 'Tamil', 'German'],
     sourceUrl: 'https://www.bharatiya-temple.de/',
     channels: [
@@ -2359,7 +2359,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Swaminarayan Hindu mandir and volunteer-driven spiritual community serving Indian families in the Frankfurt Rhein-Main area.',
     citySlug: 'frankfurt',
     categorySlugs: ['religious', 'cultural', 'family-kids'],
-    personaSegments: ['family', 'working-professional'],
+    personaSegments: ['family', 'professional'],
     languages: ['Gujarati', 'Hindi', 'English', 'German'],
     sourceUrl: 'https://www.baps.org/Global-Network/Europe/Frankfurt.aspx',
     channels: [
@@ -2389,7 +2389,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Professional networking community for Indian entrepreneurs, consultants and professionals in the Frankfurt financial and technology ecosystem.',
     citySlug: 'frankfurt',
     categorySlugs: ['professional', 'networking-social'],
-    personaSegments: ['working-professional'],
+    personaSegments: ['professional'],
     languages: ['English', 'Hindi', 'German'],
     sourceUrl: 'https://indoeuropean.eu/list-of-indian-association-in-germany/',
     channels: [
@@ -2408,7 +2408,7 @@ const FRANKFURT: DirectoryEntry[] = [
       'Indian-subcontinent-led cricket club ecosystem in Frankfurt participating in regional cricket leagues and community tournaments.',
     citySlug: 'frankfurt',
     categorySlugs: ['sports-fitness'],
-    personaSegments: ['working-professional', 'single', 'persona-student'],
+    personaSegments: ['professional', 'single', 'student'],
     languages: ['English', 'Hindi'],
     sourceUrl: 'https://www.frankfurt-cricket.de/',
     channels: [
@@ -2540,7 +2540,6 @@ export async function runDirectorySeed(): Promise<DirectoryResult> {
       skippedExisting: 0,
       skippedMissingCity: 0,
       skippedInvalid: 0,
-      skippedDuplicate: 0,
     },
   };
 

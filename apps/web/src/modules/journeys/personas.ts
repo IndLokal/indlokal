@@ -37,7 +37,7 @@ export const PERSONA_DEFINITIONS: readonly PersonaDefinition[] = [
     tagline: 'Schools, childcare, family visas and the people who get parenting here.',
     icon: '👨‍👩‍👧',
     gradient: 'from-orange-400 to-rose-500',
-    audiences: ['FAMILY'],
+    audiences: ['NEWCOMER', 'FAMILY'],
     personaSegments: ['family'],
   },
   {
@@ -47,7 +47,7 @@ export const PERSONA_DEFINITIONS: readonly PersonaDefinition[] = [
     tagline: 'Visas, enrolment, part-time work and finding your circle.',
     icon: '🎓',
     gradient: 'from-indigo-500 to-blue-600',
-    audiences: ['STUDENT', 'STUDENT_VISA'],
+    audiences: ['NEWCOMER', 'STUDENT', 'STUDENT_VISA'],
     personaSegments: ['student'],
   },
   {
@@ -57,7 +57,7 @@ export const PERSONA_DEFINITIONS: readonly PersonaDefinition[] = [
     tagline: 'Relocation, registration and a network in your field.',
     icon: '💼',
     gradient: 'from-teal-500 to-blue-600',
-    audiences: ['EMPLOYEE'],
+    audiences: ['NEWCOMER', 'EMPLOYEE'],
     personaSegments: ['professional'],
   },
   {
@@ -77,7 +77,7 @@ export const PERSONA_DEFINITIONS: readonly PersonaDefinition[] = [
     tagline: 'Company setup, visas for founders and the startup ecosystem.',
     icon: '🚀',
     gradient: 'from-rose-500 to-fuchsia-600',
-    audiences: ['FOUNDER'],
+    audiences: ['NEWCOMER', 'EMPLOYEE', 'FOUNDER'],
     personaSegments: ['professional'],
   },
   {
@@ -87,7 +87,7 @@ export const PERSONA_DEFINITIONS: readonly PersonaDefinition[] = [
     tagline: 'Market entry, partners and operating across India and Germany.',
     icon: '🏢',
     gradient: 'from-indigo-500 to-fuchsia-600',
-    audiences: ['FOUNDER'],
+    audiences: ['NEWCOMER', 'EMPLOYEE', 'FOUNDER'],
     personaSegments: ['professional'],
   },
 ];
