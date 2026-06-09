@@ -30,10 +30,7 @@ const PRIMARY_BUTTON_STYLE =
  * matching the escape-at-callsite convention used throughout `email.ts`.
  */
 export function emailButton(href: string, label: string): string {
-  return `<a href="${href}"
-       style="${PRIMARY_BUTTON_STYLE}">
-      ${label}
-    </a>`;
+  return `<a href="${href}" style="${PRIMARY_BUTTON_STYLE}">${label}</a>`;
 }
 
 /**
@@ -45,8 +42,8 @@ export function emailButton(href: string, label: string): string {
  * `email.ts`). Do not pass unescaped user input directly.
  *
  * @param inner  The body content (everything between the `<body>` and the footer).
- * @param footer Footer line to display. Defaults to the brand footer.
- * @param maxWidth Body max width in px. Defaults to 480 (most emails); a few
+ * @param options.footer Footer line to display. Defaults to the brand footer.
+ * @param options.maxWidth Body max width in px. Defaults to 480 (most emails); a few
  *   data-heavy admin notifications use a wider layout.
  */
 export function emailLayout(
