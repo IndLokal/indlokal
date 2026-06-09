@@ -2,7 +2,8 @@
 
 import { useActionState } from 'react';
 import { checkInToEvent } from './actions';
-import type { SubmitResult } from '../submit/actions';
+import type { SubmitResult } from '../lib/form-state';
+import { FormField, TextArea, TextInput } from '@/components/forms/fields';
 
 export function CheckInForm({ eventId }: { eventId: string }) {
   const [state, action, pending] = useActionState<SubmitResult | null, FormData>(
@@ -23,31 +24,27 @@ export function CheckInForm({ eventId }: { eventId: string }) {
         <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{state.error}</div>
       )}
 
-      <div>
-        <label className="text-muted mb-1 block text-xs font-medium">
-          Photo evidence (optional)
-        </label>
-        <p className="text-muted mb-2 text-xs">
-          Upload a photo to support the attendance signal. Coming soon - direct upload via
-          pre-signed URL.
-        </p>
-        <input
+      <FormField
+        label="Photo evidence (optional)"
+        htmlFor="checkinPhotoKey"
+        hint="Upload a photo to support the attendance signal. Coming soon - direct upload via pre-signed URL."
+      >
+        <TextInput
+          id="checkinPhotoKey"
           name="photoKey"
           type="text"
           placeholder="Paste an uploaded image key (S3/R2 key)"
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label className="text-muted mb-1 block text-xs font-medium">Notes</label>
-        <textarea
+      <FormField label="Notes" htmlFor="checkinNotes">
+        <TextArea
+          id="checkinNotes"
           name="notes"
           rows={3}
           placeholder="How was the event? Approx attendance, vibe, etc."
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
         />
-      </div>
+      </FormField>
 
       <button
         type="submit"

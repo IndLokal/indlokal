@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { requireCan } from '@/lib/auth/permissions';
+import { getAmbassadorCityIds, hasAmbassadorAllCitiesAccess } from '@/lib/auth/ambassador';
 import { db } from '@/lib/db';
 import { AMBASSADOR_NAV_LINKS } from './nav-links';
 import { BrandLink } from '@/components/BrandLink';
@@ -17,13 +18,10 @@ export default async function AmbassadorLayout({ children }: { children: React.R
   const accountLabel = user.displayName ?? user.email ?? 'Account';
   const accountInitial = accountLabel.charAt(0).toUpperCase();
 
-  // Resolve the ambassador's city scopes from active RoleAssignments
-  const cityScopes = user.roleAssignments
-    .filter((a) => a.role === 'CITY_AMBASSADOR' && a.cityId && !a.revokedAt)
-    .map((a) => a.cityId as string);
+  const cityScopes = getAmbassadorCityIds(user);
 
   // PLATFORM_ADMIN / OPS_LEAD fall-through: no city scope required
-  if (cityScopes.length === 0 && user.role !== 'PLATFORM_ADMIN' && user.role !== 'OPS_LEAD') {
+  if (cityScopes.length === 0 && !hasAmbassadorAllCitiesAccess(user)) {
     redirect('/admin');
   }
 

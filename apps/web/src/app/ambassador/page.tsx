@@ -1,19 +1,13 @@
 import Link from 'next/link';
 import { requireCan } from '@/lib/auth/permissions';
+import { getAmbassadorCityIds } from '@/lib/auth/ambassador';
 import { db } from '@/lib/db';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminStatsStrip } from '@/components/admin/stats-strip';
+import { Badge, EmptyState, SectionHeader } from '@/components/ui';
+import type { ExtractedCommunity, ExtractedEvent } from '@/modules/pipeline';
 
 export const metadata = { title: 'Ambassador Dashboard' };
-
-function KpiCard({ label, value, sub }: { label: string; value: number | string; sub?: string }) {
-  return (
-    <div className="border-border rounded-[var(--radius-card)] border bg-white p-5">
-      <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">{label}</p>
-      <p className="mt-1 text-3xl font-bold">{value}</p>
-      {sub && <p className="text-muted mt-1 text-xs">{sub}</p>}
-    </div>
-  );
-}
 
 type RecentPipelineItem = {
   id: string;
@@ -31,12 +25,20 @@ type RecentEvent = {
   community: { name: string } | null;
 };
 
+function getPipelineItemName(item: RecentPipelineItem) {
+  const data = item.extractedData as ExtractedEvent | ExtractedCommunity;
+  if (data && 'type' in data) {
+    return data.type === 'EVENT' ? data.title : data.name;
+  }
+
+  const fallback = item.extractedData as Record<string, unknown>;
+  return (fallback?.name as string) || (fallback?.title as string) || '-';
+}
+
 export default async function AmbassadorDashboardPage() {
   const user = await requireCan('ambassador.read');
 
-  const cityIds = user.roleAssignments
-    .filter((a) => a.role === 'CITY_AMBASSADOR' && a.cityId && !a.revokedAt)
-    .map((a) => a.cityId as string);
+  const cityIds = getAmbassadorCityIds(user);
 
   // PLATFORM_ADMIN / OPS_LEAD see all cities
   const cityFilter = cityIds.length > 0 ? { cityId: { in: cityIds } } : {};
@@ -138,15 +140,17 @@ export default async function AmbassadorDashboardPage() {
           month: 'long',
           year: 'numeric',
         })}
+        actions={
+          <AdminStatsStrip
+            items={[
+              { key: 'submissions', label: 'My submissions', value: mySubmissionsThisWeek },
+              { key: 'pending', label: 'Pending review', value: pendingPipelineItems },
+              { key: 'events', label: 'Upcoming events', value: upcomingEvents },
+              { key: 'stale', label: 'Stale communities', value: unverifiedCommunities },
+            ]}
+          />
+        }
       />
-
-      {/* KPI row */}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-        <KpiCard label="My submissions" value={mySubmissionsThisWeek} sub="this week" />
-        <KpiCard label="Pending review" value={pendingPipelineItems} sub="in your city" />
-        <KpiCard label="Upcoming events" value={upcomingEvents} sub="next 7 days" />
-        <KpiCard label="Stale communities" value={unverifiedCommunities} sub=">30 days silent" />
-      </div>
 
       {/* Quick actions */}
       <div className="mt-8 flex flex-wrap gap-3">
@@ -173,33 +177,42 @@ export default async function AmbassadorDashboardPage() {
       <div className="mt-10 grid gap-8 lg:grid-cols-2">
         {/* Recent pipeline items */}
         <section>
-          <h2 className="mb-3 text-[11px] font-semibold tracking-[0.08em] uppercase">
-            Pending in pipeline
-          </h2>
+          <SectionHeader
+            title="Pending in pipeline"
+            subtitle="Fast-track queue items in your city scope."
+          />
           {recentPipelineItems.length === 0 ? (
-            <p className="text-muted text-sm">Nothing pending - all clear!</p>
+            <div className="mt-4">
+              <EmptyState
+                icon="✅"
+                title="Nothing pending"
+                description="All clear in your pipeline queue."
+              />
+            </div>
           ) : (
-            <div className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
+            <div className="card-base divide-border mt-4 divide-y">
               {recentPipelineItems.map((item: RecentPipelineItem) => {
-                const d = item.extractedData as Record<string, unknown>;
-                const name = (d?.name as string) || (d?.title as string) || '-';
+                const name = getPipelineItemName(item);
                 const isMine = item.submittedBy === user.id;
+                const confidenceVariant =
+                  item.confidence >= 0.85
+                    ? 'success'
+                    : item.confidence >= 0.6
+                      ? 'warning'
+                      : 'danger';
                 return (
                   <div key={item.id} className="flex items-center justify-between px-4 py-3">
                     <div>
                       <p className="text-sm font-medium">{name}</p>
-                      <p className="text-muted mt-0.5 text-xs">
-                        {item.entityType} · {item.city.name}
-                        {isMine && (
-                          <span className="ml-2 rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-700">
-                            mine
-                          </span>
-                        )}
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                        <Badge>{item.entityType}</Badge>
+                        <Badge variant="muted">{item.city.name}</Badge>
+                        {isMine && <Badge variant="info">Mine</Badge>}
+                      </div>
                     </div>
-                    <span className="text-muted text-xs">
+                    <Badge variant={confidenceVariant}>
                       {Math.round(item.confidence * 100)}% conf
-                    </span>
+                    </Badge>
                   </div>
                 );
               })}
@@ -209,13 +222,20 @@ export default async function AmbassadorDashboardPage() {
 
         {/* Upcoming events */}
         <section>
-          <h2 className="mb-3 text-[11px] font-semibold tracking-[0.08em] uppercase">
-            Upcoming events to check in to
-          </h2>
+          <SectionHeader
+            title="Upcoming events to check in to"
+            subtitle="Events in the next 7 days within your city scope."
+          />
           {recentEvents.length === 0 ? (
-            <p className="text-muted text-sm">No events in the next 7 days.</p>
+            <div className="mt-4">
+              <EmptyState
+                icon="🗓️"
+                title="No events in the next 7 days"
+                description="You’re all caught up for upcoming ambassador check-ins."
+              />
+            </div>
           ) : (
-            <div className="border-border divide-border divide-y overflow-hidden rounded-[var(--radius-card)] border">
+            <div className="card-base divide-border mt-4 divide-y">
               {recentEvents.map((ev: RecentEvent) => (
                 <div key={ev.id} className="flex items-center justify-between px-4 py-3">
                   <div>

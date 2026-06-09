@@ -1,8 +1,10 @@
 import { requireCan } from '@/lib/auth/permissions';
+import { getAmbassadorCityIds } from '@/lib/auth/ambassador';
 import { db } from '@/lib/db';
 import { OutreachKanban } from '@/app/admin/(dashboard)/outreach/OutreachKanban';
 import { CreateLeadForm } from '@/app/admin/(dashboard)/outreach/CreateLeadForm';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { EmptyState } from '@/components/ui';
 
 export const metadata = { title: 'Outreach - Ambassador Console' };
 export const dynamic = 'force-dynamic';
@@ -10,10 +12,7 @@ export const dynamic = 'force-dynamic';
 export default async function AmbassadorOutreachPage() {
   const user = await requireCan('outreach.read');
 
-  // Scope to cities where the user is an active CITY_AMBASSADOR
-  const cityScopes = user.roleAssignments
-    .filter((a) => a.role === 'CITY_AMBASSADOR' && a.cityId && !a.revokedAt)
-    .map((a) => a.cityId as string);
+  const cityScopes = getAmbassadorCityIds(user);
 
   // Build DB filter: ambassador sees their own city leads; admin sees all
   const where = cityScopes.length > 0 ? { cityId: { in: cityScopes }, ownerUserId: user.id } : {};
@@ -47,8 +46,12 @@ export default async function AmbassadorOutreachPage() {
       />
 
       {leads.length === 0 ? (
-        <div className="border-border mb-8 rounded-[var(--radius-card)] border border-dashed py-16 text-center">
-          <p className="text-muted text-sm">No leads yet. Add your first lead below.</p>
+        <div className="mb-8">
+          <EmptyState
+            icon="🤝"
+            title="No leads yet"
+            description="Add your first outreach lead below."
+          />
         </div>
       ) : (
         <OutreachKanban leads={leads} showCityBadge={cityScopes.length !== 1} />
