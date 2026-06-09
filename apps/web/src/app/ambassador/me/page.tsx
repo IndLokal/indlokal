@@ -2,28 +2,10 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { startOfISOWeek, subWeeks } from 'date-fns';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
+import { AdminStatRow } from '@/components/admin/stat-row';
+import { Badge } from '@/components/ui';
 
 export const metadata = { title: 'My Score - Ambassador' };
-
-function StatRow({
-  label,
-  thisWeek,
-  allTime,
-}: {
-  label: string;
-  thisWeek: number;
-  allTime: number;
-}) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <span className="text-sm">{label}</span>
-      <div className="flex gap-8 text-sm">
-        <span className="w-14 text-right font-semibold">{thisWeek}</span>
-        <span className="text-muted w-14 text-right">{allTime}</span>
-      </div>
-    </div>
-  );
-}
 
 export default async function AmbassadorMePage() {
   const user = await requireCan('ambassador.read');
@@ -103,13 +85,12 @@ export default async function AmbassadorMePage() {
               <p className="mt-1 text-3xl font-bold">{totalThisWeek} actions</p>
             </div>
             {wowChange !== null && (
-              <span
-                className={`ml-auto rounded-full px-2.5 py-1 text-sm font-semibold ${
-                  wowChange >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                }`}
+              <Badge
+                variant={wowChange >= 0 ? 'success' : 'danger'}
+                className="ml-auto px-2.5 py-1 text-sm font-semibold"
               >
                 {wowChange >= 0 ? `+${wowChange}%` : `${wowChange}%`} vs last week
-              </span>
+              </Badge>
             )}
           </div>
         </div>
@@ -130,20 +111,20 @@ export default async function AmbassadorMePage() {
             </div>
           </div>
           <div className="divide-border divide-y px-4">
-            <StatRow
+            <AdminStatRow
               label="Communities submitted"
-              thisWeek={submissionsThisWeek}
-              allTime={submissionsAllTime}
+              primaryValue={submissionsThisWeek}
+              secondaryValue={submissionsAllTime}
             />
-            <StatRow
+            <AdminStatRow
               label="Events checked in"
-              thisWeek={checkInsThisWeek}
-              allTime={checkInsAllTime}
+              primaryValue={checkInsThisWeek}
+              secondaryValue={checkInsAllTime}
             />
-            <StatRow
+            <AdminStatRow
               label="Feedback reports"
-              thisWeek={feedbackThisWeek}
-              allTime={feedbackAllTime}
+              primaryValue={feedbackThisWeek}
+              secondaryValue={feedbackAllTime}
             />
           </div>
           <div className="border-border bg-muted-bg flex items-center justify-between border-t px-4 py-3">

@@ -2,7 +2,8 @@
 
 import { useActionState } from 'react';
 import { submitFeedback } from './actions';
-import type { SubmitResult } from '../submit/actions';
+import type { SubmitResult } from '../lib/form-state';
+import { FormField, SelectInput, TextArea } from '@/components/forms/fields';
 
 const SUBJECTS = [
   'Wrong or outdated information',
@@ -29,46 +30,37 @@ export function FeedbackForm({ cities, defaultCityId }: Props) {
       {defaultCityId && <input type="hidden" name="cityId" value={defaultCityId} />}
 
       {!defaultCityId && (
-        <div>
-          <label className="text-muted mb-1 block text-xs font-medium">City</label>
-          <select
-            name="cityId"
-            className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
-          >
+        <FormField label="City" htmlFor="feedbackCityId">
+          <SelectInput id="feedbackCityId" name="cityId">
             <option value="">All / not city-specific</option>
             {cities.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
-          </select>
-        </div>
+          </SelectInput>
+        </FormField>
       )}
 
-      <div>
-        <label className="text-muted mb-1 block text-xs font-medium">Subject</label>
-        <select
-          name="subject"
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
-        >
+      <FormField label="Subject" htmlFor="feedbackSubject">
+        <SelectInput id="feedbackSubject" name="subject">
           {SUBJECTS.map((s) => (
             <option key={s} value={s}>
               {s}
             </option>
           ))}
-        </select>
-      </div>
+        </SelectInput>
+      </FormField>
 
-      <div>
-        <label className="text-muted mb-1 block text-xs font-medium">Details *</label>
-        <textarea
+      <FormField label="Details" htmlFor="feedbackDetails" required>
+        <TextArea
+          id="feedbackDetails"
           name="details"
           rows={5}
           required
           placeholder="Describe what you found, what you expected, and any links/names…"
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
         />
-      </div>
+      </FormField>
 
       {state?.success && (
         <div className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">

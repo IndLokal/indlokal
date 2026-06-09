@@ -1,18 +1,11 @@
 import { db } from '@/lib/db';
+import { getSourceLabel } from '@/lib/content/source-labels';
 import { approveEvent, rejectEvent } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { ConfirmSubmitButton } from '@/components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Review Events - Admin' };
-
-const SOURCE_LABELS: Record<string, string> = {
-  USER_SUGGESTED: 'Host submission',
-  PUBLIC_SUBMITTED: 'Public submission',
-  AMBASSADOR_SUBMITTED: 'Ambassador',
-  AI_GENERATED: 'AI pipeline',
-  COMMUNITY_SUBMITTED: 'Community',
-};
 
 export default async function AdminEventsReviewPage() {
   const events = await db.event.findMany({
@@ -59,7 +52,7 @@ export default async function AdminEventsReviewPage() {
                     {new Date(e.startsAt).toLocaleString()}
                   </p>
                   <p className="text-muted mt-1 text-xs tracking-wide uppercase">
-                    {SOURCE_LABELS[e.source] ?? e.source}
+                    {getSourceLabel(e.source)}
                     {e.createdBy ? ` · ${e.createdBy.displayName ?? e.createdBy.email}` : ''}
                   </p>
 

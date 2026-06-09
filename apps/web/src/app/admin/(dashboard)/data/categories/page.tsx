@@ -3,6 +3,7 @@ import { createCategoryAction, deleteCategoryAction, updateCategoryAction } from
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { ConfirmSubmitButton } from '@/components/ui';
+import { FormField, TextInput } from '@/components/forms/fields';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Categories - Admin' };
@@ -169,15 +170,14 @@ function Input({
   defaultValue?: string | number;
 }) {
   return (
-    <label className="block text-sm">
-      <span className="text-muted">{label}</span>
-      <input
+    <FormField label={label} className="block text-sm">
+      <TextInput
         name={name}
         type={type}
         required={required}
         defaultValue={defaultValue}
-        className="border-border mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
+        className="mt-1 rounded-md px-2 py-1.5"
       />
-    </label>
+    </FormField>
   );
 }

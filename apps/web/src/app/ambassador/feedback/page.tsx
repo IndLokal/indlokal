@@ -1,4 +1,5 @@
 import { requireCan } from '@/lib/auth/permissions';
+import { getAmbassadorCityIds } from '@/lib/auth/ambassador';
 import { db } from '@/lib/db';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { FeedbackForm } from './FeedbackForm';
@@ -8,9 +9,7 @@ export const metadata = { title: 'Feedback - Ambassador' };
 export default async function AmbassadorFeedbackPage() {
   const user = await requireCan('ambassador.submit');
 
-  const cityIds = user.roleAssignments
-    .filter((a) => a.role === 'CITY_AMBASSADOR' && a.cityId && !a.revokedAt)
-    .map((a) => a.cityId as string);
+  const cityIds = getAmbassadorCityIds(user);
 
   const cities = await db.city.findMany({
     where: cityIds.length > 0 ? { id: { in: cityIds }, isActive: true } : { isActive: true },

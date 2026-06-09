@@ -3,22 +3,14 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
-
-function getAuthorizedCityId(
-  user: Awaited<ReturnType<typeof assertCan>>,
-  cityId: string | null,
-): string | null {
-  const allowedCityIds = user.roleAssignments
-    .filter(
-      (assignment) =>
-        assignment.role === 'CITY_AMBASSADOR' && assignment.cityId && !assignment.revokedAt,
-    )
-    .map((assignment) => assignment.cityId as string);
-
-  if (allowedCityIds.length === 0) return null;
-  if (cityId) return allowedCityIds.includes(cityId) ? cityId : null;
-  return allowedCityIds.length === 1 ? allowedCityIds[0] : null;
-}
+import { getAuthorizedCityId } from '@/lib/auth/ambassador';
+import type { SubmitResult } from '../lib/form-state';
+import {
+  buildAmbassadorCommunityExtractedData,
+  buildAmbassadorEventExtractedData,
+  normalizeCommunityChannelType,
+  sanitizeLanguages,
+} from '../lib/submission-mapping';
 
 // ─────────────────────────────────────────────────
 // Submit community (fast-track to pipeline)
@@ -26,7 +18,12 @@ function getAuthorizedCityId(
 // so it surfaces at the top of the admin pipeline queue.
 // ─────────────────────────────────────────────────
 
-export type SubmitResult = { success: true; message: string } | { success: false; error: string };
+function getStringValues(formData: FormData, key: string) {
+  return formData
+    .getAll(key)
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter(Boolean);
+}
 
 export async function submitAmbassadorCommunity(
   _prev: SubmitResult | null,
@@ -37,9 +34,13 @@ export async function submitAmbassadorCommunity(
   const name = (formData.get('name') as string | null)?.trim();
   const description = (formData.get('description') as string | null)?.trim();
   const cityId = (formData.get('cityId') as string | null)?.trim();
-  const channelUrl = (formData.get('channelUrl') as string | null)?.trim();
-  const channelType = (formData.get('channelType') as string | null)?.trim() || 'WHATSAPP';
+  const channelValue = (formData.get('channelValue') as string | null)?.trim();
+  const channelTypeRaw = (formData.get('channelType') as string | null)?.trim();
+  const contactEmail = (formData.get('contactEmail') as string | null)?.trim();
+  const categories = getStringValues(formData, 'categories');
+  const languages = sanitizeLanguages(getStringValues(formData, 'languages'));
   const notes = (formData.get('notes') as string | null)?.trim();
+  const channelType = normalizeCommunityChannelType(channelTypeRaw);
 
   const authorizedCityId = getAuthorizedCityId(user, cityId || null);
   if (!authorizedCityId) {
@@ -51,8 +52,22 @@ export async function submitAmbassadorCommunity(
   }
 
   // Resolve city
-  const city = await db.city.findUnique({ where: { id: authorizedCityId }, select: { id: true } });
+  const city = await db.city.findUnique({
+    where: { id: authorizedCityId },
+    select: { id: true, name: true },
+  });
   if (!city) return { success: false, error: 'Invalid city.' };
+
+  const { extracted, supplementalChannels } = buildAmbassadorCommunityExtractedData({
+    name,
+    description,
+    cityName: city.name,
+    categories,
+    languages,
+    channelType,
+    channelValue,
+    contactEmail,
+  });
 
   await db.pipelineItem.create({
     data: {
@@ -61,16 +76,16 @@ export async function submitAmbassadorCommunity(
       cityId: city.id,
       confidence: 0.75, // ambassador submissions start with higher confidence
       submittedBy: user.id,
-      extractedData: {
-        name,
-        description: description ?? '',
-        channelType,
-        channelUrl: channelUrl ?? '',
-        notes: notes ?? '',
-      },
+      extractedData: extracted,
       metadata: {
         submittedByRole: 'CITY_AMBASSADOR',
         submittedByUserId: user.id,
+        ambassadorSubmission: {
+          notes: notes ?? null,
+          channelType,
+          channelValue: channelValue ?? null,
+          supplementalChannels,
+        },
       },
     },
   });
@@ -94,9 +109,19 @@ export async function submitAmbassadorEvent(
   const description = (formData.get('description') as string | null)?.trim();
   const cityId = (formData.get('cityId') as string | null)?.trim();
   const startDate = (formData.get('startDate') as string | null)?.trim();
-  const location = (formData.get('location') as string | null)?.trim();
+  const startTime = (formData.get('startTime') as string | null)?.trim();
+  const endDate = (formData.get('endDate') as string | null)?.trim();
+  const endTime = (formData.get('endTime') as string | null)?.trim();
+  const venueName = (formData.get('venueName') as string | null)?.trim();
+  const venueAddress = (formData.get('venueAddress') as string | null)?.trim();
+  const registrationUrl = (formData.get('registrationUrl') as string | null)?.trim();
+  const priceType = (formData.get('priceType') as string | null)?.trim();
+  const cost = (formData.get('cost') as string | null)?.trim();
+  const isOnline = formData.get('isOnline') === 'on';
   const communityName = (formData.get('communityName') as string | null)?.trim();
   const sourceUrl = (formData.get('sourceUrl') as string | null)?.trim();
+  const categories = getStringValues(formData, 'categories');
+  const languages = sanitizeLanguages(getStringValues(formData, 'languages'));
   const notes = (formData.get('notes') as string | null)?.trim();
 
   const authorizedCityId = getAuthorizedCityId(user, cityId || null);
@@ -108,8 +133,31 @@ export async function submitAmbassadorEvent(
     return { success: false, error: 'Title and city are required.' };
   }
 
-  const city = await db.city.findUnique({ where: { id: authorizedCityId }, select: { id: true } });
+  const city = await db.city.findUnique({
+    where: { id: authorizedCityId },
+    select: { id: true, name: true },
+  });
   if (!city) return { success: false, error: 'Invalid city.' };
+
+  const isFree = priceType === 'free' ? true : priceType === 'paid' ? false : null;
+  const extractedData = buildAmbassadorEventExtractedData({
+    title,
+    description,
+    date: startDate,
+    time: startTime,
+    endDate,
+    endTime,
+    venueName,
+    venueAddress,
+    cityName: city.name,
+    isOnline,
+    isFree,
+    cost,
+    registrationUrl,
+    hostCommunity: communityName,
+    categories,
+    languages,
+  });
 
   await db.pipelineItem.create({
     data: {
@@ -119,17 +167,14 @@ export async function submitAmbassadorEvent(
       cityId: city.id,
       confidence: 0.75,
       submittedBy: user.id,
-      extractedData: {
-        title,
-        description: description ?? '',
-        startDate: startDate ?? '',
-        location: location ?? '',
-        communityName: communityName ?? '',
-        notes: notes ?? '',
-      },
+      extractedData,
       metadata: {
         submittedByRole: 'CITY_AMBASSADOR',
         submittedByUserId: user.id,
+        ambassadorSubmission: {
+          notes: notes ?? null,
+          sourceUrl: sourceUrl ?? null,
+        },
       },
     },
   });

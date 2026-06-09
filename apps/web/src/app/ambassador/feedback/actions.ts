@@ -3,23 +3,8 @@
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
-import type { SubmitResult } from '../submit/actions';
-
-function getAuthorizedCityId(
-  user: Awaited<ReturnType<typeof assertCan>>,
-  cityId: string | null,
-): string | null {
-  const allowedCityIds = user.roleAssignments
-    .filter(
-      (assignment) =>
-        assignment.role === 'CITY_AMBASSADOR' && assignment.cityId && !assignment.revokedAt,
-    )
-    .map((assignment) => assignment.cityId as string);
-
-  if (allowedCityIds.length === 0) return null;
-  if (cityId) return allowedCityIds.includes(cityId) ? cityId : null;
-  return allowedCityIds.length === 1 ? allowedCityIds[0] : null;
-}
+import { getAuthorizedCityId } from '@/lib/auth/ambassador';
+import type { SubmitResult } from '../lib/form-state';
 
 export async function submitFeedback(
   _prev: SubmitResult | null,

@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 import { Prisma } from '@prisma/client';
-import type { SubmitResult } from '../submit/actions';
+import type { SubmitResult } from '../lib/form-state';
 
 // Allowed S3/R2 key format - alphanumeric, hyphens, underscores, dots, slashes.
 // Prevents arbitrary strings from reaching storage layers.
