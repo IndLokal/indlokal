@@ -1,6 +1,7 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { SCORING } from '@/lib/config';
 import { addDays, endOfWeek } from 'date-fns';
+import type { Prisma } from '@prisma/client';
 import type { EventWithRelations, EventListItem, EventDetailRow } from './types';
 
 export const eventListSelect = {
@@ -18,6 +19,46 @@ export const eventListSelect = {
   city: { select: { name: true, slug: true } },
   categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
 } as const;
+
+type UpcomingEventFilters = {
+  categorySlug?: string;
+  categorySlugs?: string[];
+  cost?: 'free' | 'paid';
+  type?: 'online' | 'in-person';
+};
+
+function buildUpcomingEventFilters(options?: UpcomingEventFilters): Prisma.EventWhereInput {
+  const normalizedCategorySlugs = (options?.categorySlugs ?? [])
+    .map((slug) => slug.trim())
+    .filter(Boolean);
+
+  const categoryWhere =
+    normalizedCategorySlugs.length > 0
+      ? { categories: { some: { category: { slug: { in: normalizedCategorySlugs } } } } }
+      : options?.categorySlug
+        ? { categories: { some: { category: { slug: options.categorySlug } } } }
+        : {};
+
+  const costWhere =
+    options?.cost === 'free'
+      ? { cost: 'free' as const }
+      : options?.cost === 'paid'
+        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
+        : {};
+
+  const typeWhere =
+    options?.type === 'online'
+      ? { isOnline: true }
+      : options?.type === 'in-person'
+        ? { isOnline: false }
+        : {};
+
+  return {
+    ...categoryWhere,
+    ...costWhere,
+    ...typeWhere,
+  };
+}
 
 /**
  * Get a single event with full relations.
@@ -115,30 +156,7 @@ export async function getEventsPage(
   const cityIds = await resolveCityIds(citySlug);
   if (!cityIds.length) return { items: [], hasMore: false };
 
-  const normalizedCategorySlugs = (opts.categorySlugs ?? [])
-    .map((slug) => slug.trim())
-    .filter(Boolean);
-
-  const categoryWhere =
-    normalizedCategorySlugs.length > 0
-      ? { categories: { some: { category: { slug: { in: normalizedCategorySlugs } } } } }
-      : opts.categorySlug
-        ? { categories: { some: { category: { slug: opts.categorySlug } } } }
-        : {};
-
-  const costWhere =
-    opts.cost === 'free'
-      ? { cost: 'free' }
-      : opts.cost === 'paid'
-        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
-        : {};
-
-  const typeWhere =
-    opts.type === 'online'
-      ? { isOnline: true }
-      : opts.type === 'in-person'
-        ? { isOnline: false }
-        : {};
+  const sharedFilters = buildUpcomingEventFilters(opts);
 
   const rows = await db.event.findMany({
     where: {
@@ -149,9 +167,7 @@ export async function getEventsPage(
         gte: opts.from ?? new Date(),
         ...(opts.to && { lte: opts.to }),
       },
-      ...categoryWhere,
-      ...costWhere,
-      ...typeWhere,
+      ...sharedFilters,
       ...(opts.communityId && { communityId: opts.communityId }),
     },
     select: eventListSelect,
@@ -179,30 +195,7 @@ export async function getUpcomingEvents(
   const cityIds = await resolveCityIds(citySlug);
   if (cityIds.length === 0) return [];
 
-  const normalizedCategorySlugs = (options?.categorySlugs ?? [])
-    .map((slug) => slug.trim())
-    .filter(Boolean);
-
-  const categoryWhere =
-    normalizedCategorySlugs.length > 0
-      ? { categories: { some: { category: { slug: { in: normalizedCategorySlugs } } } } }
-      : options?.categorySlug
-        ? { categories: { some: { category: { slug: options.categorySlug } } } }
-        : {};
-
-  const costWhere =
-    options?.cost === 'free'
-      ? { cost: 'free' }
-      : options?.cost === 'paid'
-        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
-        : {};
-
-  const typeWhere =
-    options?.type === 'online'
-      ? { isOnline: true }
-      : options?.type === 'in-person'
-        ? { isOnline: false }
-        : {};
+  const sharedFilters = buildUpcomingEventFilters(options);
 
   return db.event.findMany({
     where: {
@@ -210,14 +203,31 @@ export async function getUpcomingEvents(
       startsAt: { gte: new Date() },
       status: { not: 'CANCELLED' },
       moderationState: 'PUBLISHED',
-      ...categoryWhere,
-      ...costWhere,
-      ...typeWhere,
+      ...sharedFilters,
     },
     select: eventListSelect,
     orderBy: { startsAt: 'asc' },
     take: options?.limit ?? 200,
     skip: options?.offset ?? 0,
+  });
+}
+
+export async function countUpcomingEvents(
+  citySlug: string,
+  options?: UpcomingEventFilters,
+): Promise<number> {
+  const cityIds = await resolveCityIds(citySlug);
+  if (cityIds.length === 0) return 0;
+
+  const sharedFilters = buildUpcomingEventFilters(options);
+  return db.event.count({
+    where: {
+      cityId: { in: cityIds },
+      startsAt: { gte: new Date() },
+      status: { not: 'CANCELLED' },
+      moderationState: 'PUBLISHED',
+      ...sharedFilters,
+    },
   });
 }
 

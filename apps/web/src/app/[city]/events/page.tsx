@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { discovery as d } from '@indlokal/shared';
-import { getUpcomingEvents } from '@/modules/event';
+import { PaginationControls } from '@/components/ui/PaginationControls';
+import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
+import { countUpcomingEvents, getUpcomingEvents } from '@/modules/event';
 import { db } from '@/lib/db';
 import { EventCard } from '@/components/EventCard';
 import { BusinessLensTracker } from '@/components/analytics';
@@ -21,7 +23,14 @@ import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection'
 
 type Props = {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ category?: string; cost?: string; type?: string; lens?: string }>;
+  searchParams: Promise<{
+    category?: string;
+    cost?: string;
+    type?: string;
+    lens?: string;
+    page?: string;
+    pageSize?: string;
+  }>;
 };
 
 export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
@@ -79,6 +88,7 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 export default async function EventsPage({ params, searchParams }: Props) {
   const { city } = await params;
   const filters = await searchParams;
+  const pagination = parseOffsetPagination(filters, { defaultPageSize: 16, maxPageSize: 48 });
   const cost = filters.cost === 'free' || filters.cost === 'paid' ? filters.cost : undefined;
   const type = filters.type === 'online' || filters.type === 'in-person' ? filters.type : undefined;
   const lens = filters.lens === 'business' ? 'business' : undefined;
@@ -99,26 +109,40 @@ export default async function EventsPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const events = await getUpcomingEvents(city, {
-    categorySlug: lens === 'business' ? undefined : filters.category,
-    categorySlugs: lens === 'business' ? [...d.BUSINESS_EVENT_CATEGORY_SLUGS] : undefined,
-    cost,
-    type,
-  });
-
   const cityName = cityRow.name;
 
-  // Fetch categories for filter bar
-  const categories = await db.category.findMany({
-    where: { type: 'CATEGORY' },
-    select: { name: true, slug: true, icon: true },
-    orderBy: { sortOrder: 'asc' },
-  });
+  const [totalEventCount, events, categories] = await Promise.all([
+    countUpcomingEvents(city, {
+      categorySlug: lens === 'business' ? undefined : filters.category,
+      categorySlugs: lens === 'business' ? [...d.BUSINESS_EVENT_CATEGORY_SLUGS] : undefined,
+      cost,
+      type,
+    }),
+    getUpcomingEvents(city, {
+      categorySlug: lens === 'business' ? undefined : filters.category,
+      categorySlugs: lens === 'business' ? [...d.BUSINESS_EVENT_CATEGORY_SLUGS] : undefined,
+      cost,
+      type,
+      limit: pagination.take,
+      offset: pagination.skip,
+    }),
+    db.category.findMany({
+      where: { type: 'CATEGORY' },
+      select: { name: true, slug: true, icon: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
+  ]);
   type CategoryItem = (typeof categories)[number];
+  const paginationMeta = buildOffsetPaginationMeta({
+    page: pagination.page,
+    pageSize: pagination.pageSize,
+    totalCount: totalEventCount,
+    itemCount: events.length,
+  });
 
   const description =
-    events.length > 0
-      ? `${events.length} upcoming Indian event${events.length !== 1 ? 's' : ''} in ${cityName}, Germany.`
+    totalEventCount > 0
+      ? `${totalEventCount} upcoming Indian event${totalEventCount !== 1 ? 's' : ''} in ${cityName}, Germany.`
       : `No upcoming Indian events right now in ${cityName}, Germany - check back soon.`;
 
   const activeCategoryName = filters.category
@@ -139,7 +163,7 @@ export default async function EventsPage({ params, searchParams }: Props) {
   return (
     <div className="space-y-8">
       {lens === 'business' && (
-        <BusinessLensTracker city={city} surface="events_page" resultCount={events.length} />
+        <BusinessLensTracker city={city} surface="events_page" resultCount={totalEventCount} />
       )}
 
       <CitySubpageHeader
@@ -441,6 +465,12 @@ export default async function EventsPage({ params, searchParams }: Props) {
             />
           ))}
         </div>
+      )}
+      {totalEventCount > 0 && (
+        <PaginationControls
+          meta={paginationMeta}
+          getPageHref={(page) => buildPageHref({ searchParams: filters, page })}
+        />
       )}
 
       {!filters.category && !filters.cost && !filters.type && lens !== 'business' && (

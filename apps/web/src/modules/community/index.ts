@@ -15,6 +15,7 @@ export {
   getCommunityBySlug,
   getCommunityRedirectTarget,
   getCommunitiesByCity,
+  countCommunitiesByCity,
   getCommunitiesPage,
   getCommunityDetail,
   getRelatedCommunities,
