@@ -337,16 +337,16 @@ export function AmbassadorSubmitForm({ cities, categories, defaultCityId }: Prop
   return (
     <div>
       <div className="mb-6 flex rounded-lg border border-gray-200 bg-gray-100 p-1">
-        {(['community', 'event'] as Mode[]).map((currentMode) => (
+        {(['community', 'event'] as Mode[]).map((modeOption) => (
           <button
-            key={currentMode}
+            key={modeOption}
             type="button"
-            onClick={() => setMode(currentMode)}
+            onClick={() => setMode(modeOption)}
             className={`flex-1 rounded-md py-2 text-sm font-medium capitalize transition-colors ${
-              mode === currentMode ? 'bg-white shadow-sm' : 'text-muted hover:text-foreground'
+              mode === modeOption ? 'bg-white shadow-sm' : 'text-muted hover:text-foreground'
             }`}
           >
-            {currentMode}
+            {modeOption}
           </button>
         ))}
       </div>

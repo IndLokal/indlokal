@@ -1,7 +1,6 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { communityOptions } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
 import { getAuthorizedCityId } from '@/lib/auth/ambassador';
@@ -9,6 +8,7 @@ import type { SubmitResult } from '../lib/form-state';
 import {
   buildAmbassadorCommunityExtractedData,
   buildAmbassadorEventExtractedData,
+  normalizeCommunityChannelType,
   sanitizeLanguages,
 } from '../lib/submission-mapping';
 
@@ -35,16 +35,12 @@ export async function submitAmbassadorCommunity(
   const description = (formData.get('description') as string | null)?.trim();
   const cityId = (formData.get('cityId') as string | null)?.trim();
   const channelValue = (formData.get('channelValue') as string | null)?.trim();
-  const channelTypeRaw = (formData.get('channelType') as string | null)?.trim() || 'WHATSAPP';
+  const channelTypeRaw = (formData.get('channelType') as string | null)?.trim();
   const contactEmail = (formData.get('contactEmail') as string | null)?.trim();
   const categories = getStringValues(formData, 'categories');
   const languages = sanitizeLanguages(getStringValues(formData, 'languages'));
   const notes = (formData.get('notes') as string | null)?.trim();
-  const channelType = communityOptions.CHANNEL_TYPE_VALUES.includes(
-    channelTypeRaw as (typeof communityOptions.CHANNEL_TYPE_VALUES)[number],
-  )
-    ? (channelTypeRaw as (typeof communityOptions.CHANNEL_TYPE_VALUES)[number])
-    : 'WHATSAPP';
+  const channelType = normalizeCommunityChannelType(channelTypeRaw);
 
   const authorizedCityId = getAuthorizedCityId(user, cityId || null);
   if (!authorizedCityId) {

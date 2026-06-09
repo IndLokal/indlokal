@@ -130,6 +130,14 @@ export function sanitizeLanguages(values: string[]) {
   );
 }
 
+export function normalizeCommunityChannelType(
+  value: string | null | undefined,
+): CommunityChannelType {
+  return communityOptions.CHANNEL_TYPE_VALUES.includes(value as CommunityChannelType)
+    ? (value as CommunityChannelType)
+    : 'WHATSAPP';
+}
+
 export function buildAmbassadorEventExtractedData({
   title,
   description,
