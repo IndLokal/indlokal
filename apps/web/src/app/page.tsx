@@ -207,7 +207,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Three pillars */}
+        {/* Discovery foundation: communities, events, resources */}
         <section className="bg-white px-4 py-24">
           <div className="mx-auto max-w-5xl">
             <div className="text-center">

@@ -52,6 +52,13 @@ Primary jobs-to-be-done on mobile:
 3. **Save & share** with family/friends via WhatsApp/Telegram.
 4. **Contribute** as organizer/community admin on the go.
 
+> **Roadmap note.** These are the Phase-1 (Discovery) jobs and remain the core of the app. As the
+> Journey Layer ships ([`PHASE_2_JOURNEY_LAYER.md`](./PHASE_2_JOURNEY_LAYER.md),
+> [`PRODUCT_DOCUMENT.md`](./PRODUCT_DOCUMENT.md) §6–7), mobile gains **stage-aware, journey jobs** —
+> "show me what to do next for my situation (student / family / professional / founder), in order"
+> — composed over the same data, not a separate content system. The "For you" surface is where this
+> lands first.
+
 ---
 
 ## 2. Technology Choice

@@ -54,7 +54,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Three pillars */}
+      {/* Discovery foundation: communities, events, resources */}
       <section className="bg-white px-4 py-12 sm:py-14">
         <div className="mx-auto max-w-3xl">
           <h2 className="text-foreground text-2xl font-extrabold">

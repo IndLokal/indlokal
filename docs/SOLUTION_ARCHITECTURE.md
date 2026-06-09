@@ -1,8 +1,10 @@
 # IndLokal - Solution Architecture & Implementation Plan
 
-**Activity-Led Community Discovery Platform for the Indian Diaspora in Germany**
+**Activity-Led Community Discovery — the Phase-1 (Discovery) foundation of the journey-led IndLokal platform for the Indian diaspora in Germany**
 
 _Architecture Planning Document - April 2026. Updated May 2026 to reflect the monorepo, the native mobile MVP path, magic-link admin/organizer auth with 7-day sliding sessions, the admin Data Management Console with cascade-safe deletes, source-scoped submissions, the three-tier seed pipeline, Resend transport, and the spec-driven workflow. Updated 11 May 2026 to add the operator-team architecture (scoped roles + Ambassador console + Outreach CRM + multi-community/event-host + audit log)._
+
+> **Strategic framing (June 2026).** This document describes the **Discovery foundation (L0 Trust+Data and L1 Discovery)** of the capability ladder defined in [`docs/PRODUCT_DOCUMENT.md`](PRODUCT_DOCUMENT.md) §6 — Discovery → Journeys → Personalization → Ecosystem → Business → Connect → Intelligence. Activity-led, city-first discovery is the live product and the substrate; upper layers (the Journey Layer onward) **compose over this same trusted graph** rather than re-architecting it. Read the architecture below as the durable foundation, not the ceiling of the product.
 
 > **Spec discipline:** Every non-trivial change is captured as a PRD/TDD pair (or ADR for cross-cutting decisions) under [docs/specs/](specs/README.md) **before** coding. This document is the durable architectural narrative; the spec matrix in [docs/specs/README.md](specs/README.md) is the per-capability source of truth.
 >
@@ -31,7 +33,7 @@ _Architecture Planning Document - April 2026. Updated May 2026 to reflect the mo
 
 ## 1. Executive Summary
 
-IndLokal is an **activity-led community discovery platform** for the Indian diaspora in Germany. The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** - a structured, scored, and evolving map of communities, events, relationships, activity, and relevance.
+IndLokal is an **activity-led community discovery platform** for the Indian diaspora in Germany — the live **Discovery foundation** of a broader journey-led product (see [`docs/PRODUCT_DOCUMENT.md`](PRODUCT_DOCUMENT.md)). The user-facing product answers: _"What's happening for Indians in my city this week?"_ The internal architecture builds a **trusted community graph** - a structured, scored, and evolving map of communities, events, relationships, activity, and relevance - that the Journey, Personalization, and Ecosystem layers later compose over without re-architecting.
 
 ### Key architectural decisions
 
