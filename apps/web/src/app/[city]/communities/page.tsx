@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { communityOptions } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { countCommunitiesByCity, getCommunitiesByCity } from '@/modules/community';
@@ -13,12 +15,14 @@ import { getSessionUser } from '@/lib/session';
 
 /**
  * Community Explorer - browse communities in a city.
- * Supports optional ?language= filter for SEO pages
- * (e.g. /stuttgart/telugu-communities → rewritten to /stuttgart/communities?language=telugu)
+ * Supports ?category= and ?language= filters.
+ * (SEO-friendly language pages like /stuttgart/telugu-communities are rewritten
+ *  to /stuttgart/communities?language=telugu)
  *
  * Route: /[city]/communities/
  * Example: /stuttgart/communities/
  * Example: /stuttgart/communities?language=telugu
+ * Example: /stuttgart/communities?category=cultural
  */
 
 type Props = {
@@ -89,16 +93,22 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
 
-  const [allCommunities, totalCountWithoutLanguage, pagedCommunities, user] = await Promise.all([
-    language ? getCommunitiesByCity(city, { categorySlug: category }) : Promise.resolve([]),
-    countCommunitiesByCity(city, { categorySlug: category }),
-    language
-      ? Promise.resolve([])
-      : getCommunitiesByCity(city, {
-          categorySlug: category,
-          limit: pagination.take,
-          offset: pagination.skip,
-        }),
+  // Normalise language to proper case for DB query (stored as "Telugu", not "telugu")
+  const languageName = language ? capitalize(language) : undefined;
+
+  const [totalCount, communities, categories, user] = await Promise.all([
+    countCommunitiesByCity(city, { categorySlug: category, language: languageName }),
+    getCommunitiesByCity(city, {
+      categorySlug: category,
+      language: languageName,
+      limit: pagination.take,
+      offset: pagination.skip,
+    }),
+    db.category.findMany({
+      where: { type: 'CATEGORY' },
+      select: { name: true, slug: true, icon: true },
+      orderBy: { sortOrder: 'asc' },
+    }),
     getSessionUser(),
   ]);
   const cityName = cityRow.name;
@@ -106,17 +116,8 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
     user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
   );
 
-  // Optional language filter (for SEO pages like /telugu-communities)
-  const languageName = language ? capitalize(language) : null;
-  const communitiesByLanguage = languageName
-    ? allCommunities.filter(
-        (c) => c.languages?.some((l) => l.toLowerCase() === languageName.toLowerCase()) ?? false,
-      )
-    : [];
-  const totalCount = languageName ? communitiesByLanguage.length : totalCountWithoutLanguage;
-  const communities = languageName
-    ? communitiesByLanguage.slice(pagination.skip, pagination.skip + pagination.take)
-    : pagedCommunities;
+  type CategoryItem = (typeof categories)[number];
+
   const paginationMeta = buildOffsetPaginationMeta({
     page: pagination.page,
     pageSize: pagination.pageSize,
@@ -133,6 +134,25 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
         ? `No ${languageName} communities listed yet.`
         : `No Indian communities listed yet in ${cityName}, Germany.`;
 
+  // Helper: build href with a given param toggled/set while preserving others
+  function buildFilterHref(key: 'category' | 'language', value: string | null) {
+    const params = new URLSearchParams();
+    if (key !== 'category' && category) params.set('category', category);
+    if (key !== 'language' && language) params.set('language', language);
+    if (value) params.set(key, value);
+    const qs = params.toString();
+    return qs ? `/${city}/communities?${qs}` : `/${city}/communities`;
+  }
+
+  const activeFilterSummary = [
+    category
+      ? `Category: ${categories.find((c: CategoryItem) => c.slug === category)?.name ?? category}`
+      : null,
+    languageName ? `Language: ${languageName}` : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+
   return (
     <div className="space-y-8">
       <CitySubpageHeader
@@ -146,6 +166,128 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
         }
         description={description}
       />
+
+      {/* Mobile filters: expandable panel */}
+      <div className="space-y-2 sm:hidden">
+        <details className="border-border rounded-[var(--radius-button)] border bg-white p-3">
+          <summary className="text-muted cursor-pointer list-none text-sm font-medium marker:hidden">
+            {activeFilterSummary ? `Filters: ${activeFilterSummary}` : 'Filter communities'}
+          </summary>
+
+          <div className="mt-3 space-y-3">
+            {/* Category filter */}
+            <div className="space-y-2">
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Category</p>
+              <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                <Link
+                  href={buildFilterHref('category', null)}
+                  className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                    !category
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-border text-muted hover:border-border hover:text-foreground'
+                  }`}
+                >
+                  All
+                </Link>
+                {categories.map((cat: CategoryItem) => (
+                  <Link
+                    key={cat.slug}
+                    href={buildFilterHref('category', cat.slug === category ? null : cat.slug)}
+                    className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                      category === cat.slug
+                        ? 'border-brand-600 bg-brand-50 text-brand-700'
+                        : 'border-border text-muted hover:border-border hover:text-foreground'
+                    }`}
+                  >
+                    {cat.icon} {cat.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            {/* Language filter */}
+            <div className="space-y-2">
+              <p className="text-muted text-xs font-semibold tracking-wide uppercase">Language</p>
+              <div className="scrollbar-none -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+                <Link
+                  href={buildFilterHref('language', null)}
+                  className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                    !language
+                      ? 'border-brand-600 bg-brand-50 text-brand-700'
+                      : 'border-border text-muted hover:border-border hover:text-foreground'
+                  }`}
+                >
+                  All
+                </Link>
+                {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => {
+                  const isActive = languageName === lang;
+                  return (
+                    <Link
+                      key={lang}
+                      href={buildFilterHref('language', isActive ? null : lang.toLowerCase())}
+                      className={`inline-flex shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition-colors active:opacity-70 ${
+                        isActive
+                          ? 'border-brand-600 bg-brand-50 text-brand-700'
+                          : 'border-border text-muted hover:border-border hover:text-foreground'
+                      }`}
+                    >
+                      {lang}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      {/* Desktop filters */}
+      <div className="hidden flex-wrap gap-2 sm:flex">
+        {/* Category filter */}
+        <Link
+          href={buildFilterHref('category', null)}
+          className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+            !category
+              ? 'border-brand-600 bg-brand-50 text-brand-700'
+              : 'border-border text-muted hover:border-border hover:text-foreground'
+          }`}
+        >
+          All
+        </Link>
+        {categories.map((cat: CategoryItem) => (
+          <Link
+            key={cat.slug}
+            href={buildFilterHref('category', cat.slug === category ? null : cat.slug)}
+            className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+              category === cat.slug
+                ? 'border-brand-600 bg-brand-50 text-brand-700'
+                : 'border-border text-muted hover:border-border hover:text-foreground'
+            }`}
+          >
+            {cat.icon} {cat.name}
+          </Link>
+        ))}
+
+        <span className="text-border hidden self-center sm:inline">|</span>
+
+        {/* Language filter */}
+        {communityOptions.COMMUNITY_LANGUAGE_VALUES.map((lang) => {
+          const isActive = languageName === lang;
+          return (
+            <Link
+              key={lang}
+              href={buildFilterHref('language', isActive ? null : lang.toLowerCase())}
+              className={`inline-flex items-center rounded-full border px-3.5 py-2.5 text-xs font-medium transition-colors active:opacity-70 ${
+                isActive
+                  ? 'border-brand-600 bg-brand-50 text-brand-700'
+                  : 'border-border text-muted hover:border-border hover:text-foreground'
+              }`}
+            >
+              {lang}
+            </Link>
+          );
+        })}
+      </div>
 
       {/* Community grid */}
       {communities.length > 0 && (
@@ -167,11 +309,21 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
         </>
       )}
 
-      {/* Empty state for language filter */}
-      {languageName && communities.length === 0 && (
+      {/* Empty state */}
+      {communities.length === 0 && (
         <CitySubpageEmptyState
-          title={`No ${languageName} communities yet`}
-          description={`Check back soon or browse all ${cityName} communities.`}
+          title={
+            languageName
+              ? `No ${languageName} communities yet`
+              : category
+                ? `No communities in this category yet`
+                : `No communities listed yet`
+          }
+          description={
+            languageName || category
+              ? `Check back soon or browse all ${cityName} communities.`
+              : `Check back soon.`
+          }
           actions={[
             { href: `/${city}/communities`, label: 'Browse all communities', variant: 'primary' },
           ]}
