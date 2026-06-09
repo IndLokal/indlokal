@@ -1,8 +1,8 @@
-# IndLokal AI Content Agent - Product Document
+# IndLokal AI Content Pipeline - Product Document
 
 ## What It Is
 
-The AI Content Agent is IndLokal's automated discovery and review pipeline for diaspora events and communities.
+The AI Content Pipeline is IndLokal's automated discovery and review pipeline for diaspora events and communities.
 
 It does not operate as an open-ended web crawler. The current product is intentionally known-source-first:
 
@@ -15,14 +15,14 @@ This keeps the pipeline cheaper, faster, and less noisy than the earlier broad-s
 
 ## The Problem It Solves
 
-Without the agent:
+Without the pipeline:
 
 - admins have to keep revisiting community websites and city directories manually
 - event pages go stale quickly, especially when organisations publish only to a calendar subpage
 - newly approved communities do not automatically become future discovery sources
 - low-coverage cities are easy to neglect because no one knows when discovery should widen beyond existing sources
 
-With the agent:
+With the pipeline:
 
 - approved and seeded community websites become reusable discovery sources automatically
 - pinned high-value sources are checked in minutes, not manually
@@ -125,6 +125,7 @@ The currently enabled search regions are:
 - Baden-Württemberg
 - Bavaria
 - Hesse
+- Berlin
 
 City coverage inside those regions is derived from the seeded city and satellite-city config, not maintained separately inside the pipeline.
 
@@ -144,7 +145,7 @@ The queue is still the main moderation surface. Auto-approval exists, but only f
 
 This is still a hard problem, and the current implementation is deliberately honest about it.
 
-The agent helps in three practical ways:
+The pipeline helps in three practical ways:
 
 1. **Suggestion bridge**
    User and ambassador submissions create `COMMUNITY_SUGGESTION` pipeline items immediately.

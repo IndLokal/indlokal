@@ -1,4 +1,4 @@
-# IndLokal AI Content Agent - Technical Architecture
+# IndLokal AI Content Pipeline - Technical Architecture
 
 ## Current Architecture Summary
 
@@ -12,7 +12,7 @@ This is a deliberate shift away from the older generic-search-first architecture
 
 ```text
 src/modules/pipeline/
-├── config.ts         # Regions, fallback keyword seeds, static pinned URLs
+├── runtime-config.ts # DB-first pipeline config + JSON fallback
 ├── db-sources.ts     # DB-derived pinned sources + event-page discovery/scoring
 ├── extraction.ts     # Two-stage LLM filter/extract with batching + timeout handling
 ├── index.ts          # Public exports
@@ -43,7 +43,7 @@ src/app/admin/(dashboard)/pipeline/
 
 ```mermaid
 flowchart TD
-    A[Regions from config.ts] --> B[source-plan.ts]
+    A[Regions from runtime-config.ts] --> B[source-plan.ts]
     C[Static pinned URLs] --> B
     D[DB community website / Meetup channels] --> B
     E[DB city coverage analysis] --> B
@@ -170,8 +170,8 @@ This uses source-level reliability stats from `reliability.ts`.
 
 ### Inputs
 
-- enabled regions from `config.ts`
-- static pinned URLs from `config.ts`
+- enabled regions from `runtime-config.ts`
+- static pinned URLs from `runtime-config.ts`
 - DB community strategies from `db-sources.ts`
 - approved dynamic keywords from `intelligence.ts`
 - runtime env vars
@@ -196,13 +196,14 @@ This uses source-level reliability stats from `reliability.ts`.
 - `PIPELINE_FORCE_KEYWORD_SEARCH`
 - `PIPELINE_ENABLE_DDG`
 
-## Regions and coverage (`config.ts`)
+## Regions and coverage (`runtime-config.ts`)
 
 Current enabled regions:
 
 - Baden-Württemberg
 - Bavaria
 - Hesse
+- Berlin
 
 Region city coverage is derived from seeded metro and satellite city data. The pipeline does not keep a separate city-coverage list by hand.
 
