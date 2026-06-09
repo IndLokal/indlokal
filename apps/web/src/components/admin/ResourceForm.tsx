@@ -1,7 +1,7 @@
 import { resources } from '@indlokal/shared';
 
 const RESOURCE_TYPES = resources.ResourceType.options;
-const RESOURCE_SCOPES = resources.ResourceScope.options;
+const RESOURCE_SCOPES = resources.ResourceScope.options.filter((scope) => scope !== 'DISTRICT');
 const RESOURCE_AUDIENCES = resources.ResourceAudience.options;
 const RESOURCE_STAGES = resources.ResourceStage.options;
 

@@ -354,7 +354,7 @@ const ResourceInput = z.object({
   title: z.string().min(2).max(160),
   slug: z.string().min(2).max(120).regex(slugRe, 'lowercase letters, digits, hyphens'),
   resourceType: resources.ResourceType,
-  scope: resources.ResourceScope.default('CITY'),
+  scope: resources.ResourceScope.exclude(['DISTRICT']).default('CITY'),
   citySlug: z.string().optional(),
   scopeRegion: z.string().optional(),
   url: z.string().trim().url().optional(),
