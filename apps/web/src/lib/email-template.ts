@@ -24,6 +24,10 @@ const PRIMARY_BUTTON_STYLE =
  *
  * The caller is responsible for any surrounding spacing (e.g. a wrapping
  * `<p style="margin:...">`) so individual templates keep their own rhythm.
+ *
+ * `href` and `label` are inserted verbatim and must be trusted/pre-escaped by
+ * the caller (URLs via `encodeURI`, dynamic text via `escapeHtmlAttribute`),
+ * matching the escape-at-callsite convention used throughout `email.ts`.
  */
 export function emailButton(href: string, label: string): string {
   return `<a href="${href}"
@@ -34,6 +38,11 @@ export function emailButton(href: string, label: string): string {
 
 /**
  * Wraps inner body markup in the shared HTML document, divider, and footer.
+ *
+ * `inner` is treated as trusted HTML and `footer` defaults to a fixed brand
+ * constant; both are inserted verbatim, so any dynamic values they contain must
+ * be escaped by the caller (the escape-at-callsite convention used in
+ * `email.ts`). Do not pass unescaped user input directly.
  *
  * @param inner  The body content (everything between the `<body>` and the footer).
  * @param footer Footer line to display. Defaults to the brand footer.
