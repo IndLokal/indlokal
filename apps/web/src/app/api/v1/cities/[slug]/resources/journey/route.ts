@@ -32,6 +32,8 @@ function serialize(r: ResolvedResource) {
     resourceType: r.resourceType,
     url: r.url,
     description: r.description,
+    validFrom: r.validFrom?.toISOString() ?? null,
+    validUntil: r.validUntil?.toISOString() ?? null,
     metadata: r.metadata ?? null,
     scope: r.scope,
     resolvedScope: r.resolvedScope,

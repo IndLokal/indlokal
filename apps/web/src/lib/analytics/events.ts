@@ -36,6 +36,27 @@ export const Events = {
   SUBMISSION_IMAGE_ADDED: 'submission_image_added',
   BUSINESS_LENS_VIEWED: 'business_lens_viewed',
 
+  // Resources improvement baseline (Sprint 1)
+  RESOURCES_HUB_VIEW: 'resources_hub_view',
+  RESOURCES_PERSONA_SELECTED: 'resources_persona_selected',
+  RESOURCES_INTENT_CHIP_SELECTED: 'resources_intent_chip_selected',
+  RESOURCES_ESSENTIALS_CLICK: 'resources_essentials_click',
+  RESOURCES_TRUST_BADGE_IMPRESSION: 'resources_trust_badge_impression',
+  RESOURCES_FIRST_MEANINGFUL_ACTION: 'resources_first_meaningful_action',
+  RESOURCES_TO_RELATED_CLICK: 'resources_to_related_click',
+  RESOURCES_STALE_ITEM_OPENED: 'resources_stale_item_opened',
+  RESOURCES_EXPERIMENT_VARIANT_ASSIGNED: 'resources_experiment_variant_assigned',
+  JOURNEY_NEXT_ACTION_IMPRESSION: 'journey_next_action_impression',
+  JOURNEY_NEXT_ACTION_CLICK: 'journey_next_action_click',
+  JOURNEY_NEXT_ACTION_COMPLETED: 'journey_next_action_completed',
+  JOURNEY_STEP_COMPLETED: 'journey_step_completed',
+  JOURNEY_RESUME_PROMPT_SHOWN: 'journey_resume_prompt_shown',
+  JOURNEY_RESUME_CLICKED: 'journey_resume_clicked',
+  JOURNEY_PROGRESS_RESET: 'journey_progress_reset',
+  RESOURCE_CTA_IMPRESSION: 'resource_cta_impression',
+  RESOURCE_CTA_CLICK: 'resource_cta_click',
+  RESOURCE_CTA_VARIANT_ASSIGNED: 'resource_cta_variant_assigned',
+
   // Journey Layer (PRD/TDD-0052)
   JOURNEY_ENTRY_CLICK: 'journey_entry_click',
   JOURNEY_VIEW: 'journey_view',

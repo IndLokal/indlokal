@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
+import { FLAGS } from '@/lib/config/flags';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { getResourcesForCity, type ResolvedResource } from '@/modules/resources';
+import { JourneyNextBestAction } from './JourneyNextBestAction';
 
 /**
  * Newcomer Journey - essentials-only resources grouped by lifecycle stage.
@@ -53,6 +55,28 @@ const STAGE_LABELS: Record<ResourceStage, { title: string; blurb: string; icon: 
   },
 };
 
+const OFFICIAL_TYPES = new Set([
+  'CONSULAR_SERVICE',
+  'OFFICIAL_EVENT',
+  'GOVERNMENT_INFO',
+  'VISA_SERVICE',
+]);
+
+function isStale(validUntil: Date | null): boolean {
+  return Boolean(validUntil && validUntil.getTime() < Date.now());
+}
+
+function trustLabel(resourceType: string): string {
+  return OFFICIAL_TYPES.has(resourceType) ? 'Official' : 'Curated';
+}
+
+function buildResourceHref(city: string, resource: ResolvedResource): string {
+  const categorySlug =
+    RESOURCE_CATEGORIES.find((category) => category.type === resource.resourceType)?.slug ??
+    'city-registration';
+  return `/${city}/resources/${categorySlug}#${resource.slug}`;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city } = await params;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
@@ -65,11 +89,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 function ItemCard({ r, city }: { r: ResolvedResource; city: string }) {
   const cat = RESOURCE_CATEGORIES.find((c) => c.type === r.resourceType);
-  const categorySlug = cat?.slug ?? 'city-registration';
   return (
     <li>
       <Link
-        href={`/${city}/resources/${categorySlug}#${r.slug}`}
+        href={buildResourceHref(city, r)}
         className="hover:ring-brand-200 group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
       >
         <span
@@ -81,6 +104,20 @@ function ItemCard({ r, city }: { r: ResolvedResource; city: string }) {
           <h3 className="text-foreground group-hover:text-brand-600 text-[15px] font-semibold transition-colors">
             {r.title}
           </h3>
+          <div className="mt-1 flex items-center gap-2">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+              {trustLabel(r.resourceType)}
+            </span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                isStale(r.validUntil)
+                  ? 'bg-amber-100 text-amber-800'
+                  : 'bg-emerald-100 text-emerald-800'
+              }`}
+            >
+              {isStale(r.validUntil) ? 'Needs review' : 'Fresh'}
+            </span>
+          </div>
           {r.description && (
             <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
               {r.description}
@@ -103,6 +140,12 @@ export default async function JourneyPage({ params }: Props) {
   const cityName = cityRow.name;
 
   const rows = await getResourcesForCity(city, { essentialsOnly: true });
+  const actionCandidates = rows.map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    href: buildResourceHref(city, resource),
+    stage: resource.lifecycleStage[0],
+  }));
 
   const groups: Record<ResourceStage, ResolvedResource[]> = {
     PRE_ARRIVAL: [],
@@ -150,6 +193,13 @@ export default async function JourneyPage({ params }: Props) {
           The official steps Indian newcomers need to complete - grouped by when they matter.
         </p>
       </div>
+
+      <JourneyNextBestAction
+        city={city}
+        cityName={cityName}
+        candidates={actionCandidates}
+        enabled={FLAGS.resourcesJourneyResumeEnabled}
+      />
 
       {rows.length === 0 && (
         <div className="border-border rounded-xl border border-dashed p-10 text-center">

@@ -21,6 +21,18 @@ export const FLAGS = {
    * disabled. Enable explicitly with JOURNEY_TAG_SUGGESTIONS_ENABLED=true.
    */
   journeyTagSuggestionsEnabled: process.env.JOURNEY_TAG_SUGGESTIONS_ENABLED === 'true',
+
+  /** Resources persona quick-start modules. Disable via FEATURE_RESOURCES_PERSONA=false */
+  resourcesPersonaEnabled: process.env.FEATURE_RESOURCES_PERSONA !== 'false',
+
+  /** Resources intent chips + smart essentials. Disable via FEATURE_RESOURCES_INTENT=false */
+  resourcesIntentEnabled: process.env.FEATURE_RESOURCES_INTENT !== 'false',
+
+  /** Resume-first modules on resources/journey surfaces. Disable via FEATURE_RESOURCES_RESUME=false */
+  resourcesJourneyResumeEnabled: process.env.FEATURE_RESOURCES_RESUME !== 'false',
+
+  /** Action-first CTA hierarchy rollout for resources surfaces. Disable via FEATURE_RESOURCES_CTA=false */
+  resourcesActionCtaEnabled: process.env.FEATURE_RESOURCES_CTA !== 'false',
 } as const;
 
 /**
