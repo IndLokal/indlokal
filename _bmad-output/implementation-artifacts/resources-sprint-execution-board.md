@@ -13,6 +13,28 @@ Owner: Product + Design + Engineering + Data
 - Sprint 1 QA checklist: `sprint-1-qa-validation-checklist.md`
 - Sprint 2 QA checklist: `sprint-2-qa-validation-checklist.md`
 
+## Execution Policy Snapshot (John)
+
+- Sprint 1 is formally closed as of 2026-06-10 by John (closeout override with accepted risks).
+- Sprint 2 implementation may proceed as controlled pre-gate execution.
+- Rollout expansion remains controlled by post-close risk commitments listed below.
+- Sprint 2 items can move to implementation-complete before Sprint 1 closes, but remain QA-gated for release.
+
+## Sprint 1 Closure Decision (John - 2026-06-10)
+
+Decision: Sprint 1 is closed.
+
+Closure mode:
+
+- Closed by product-owner override after implementation completion and web validation evidence.
+- Remaining gate items are converted to mandatory post-close commitments with owners and due dates.
+
+Accepted risks at close:
+
+- Mobile manual UAT evidence was not complete at time of closure.
+- Story 4.3 dashboard live/data-quality gate was not complete at time of closure.
+- Cross-page declutter tasks were not fully complete at time of closure.
+
 ## Sprint 1 Goal (Clarity + Progression)
 
 User outcome: users understand what to do next quickly and complete at least one meaningful action.
@@ -34,14 +56,14 @@ Primary metrics:
 
 ## Sprint 1 Story Board
 
-| Story                              | Status           | Owner               | Build State                                             | QA Gate                                         | Analytics Gate                                 | Blockers                                  |
-| ---------------------------------- | ---------------- | ------------------- | ------------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------- | ----------------------------------------- |
-| 1.1 Start Here orientation         | Ready for Review | FE Web/Mobile       | Implemented (flagged)                                   | Pending mobile/manual evidence                  | Partial (ingestion check pending)              | None                                      |
-| 1.2 Focused shortlist + essentials | Ready for Review | FE Web/Mobile       | Implemented (flagged)                                   | Pending mobile/manual evidence                  | Partial (dashboard check pending)              | None                                      |
-| 2.1 Next best action               | Conditional      | FE Web/Mobile + API | Implemented in journey surfaces                         | Web UAT passed; mobile UAT pending              | Partial (live ingestion check pending)         | Mobile parity evidence missing            |
-| 3.2 Action-first CTA               | Conditional      | FE Web/Mobile       | Primary CTA hierarchy implemented                       | Web UAT passed; CTA focused QA pending          | Partial (variant panel check pending)          | CTA hierarchy signoff pending             |
-| 2.3 Resume-first return            | Conditional      | FE Web/Mobile + API | Resume prompt + reset flow implemented                  | Web UAT passed; cross-session mobile QA pending | Partial (resume funnel checks pending)         | Mobile cross-session evidence missing     |
-| 4.3 Experiment baseline            | Blocked          | Data + FE           | Events and track mapping implemented; dashboard pending | Pending quality checks                          | Blocked (dashboard + null-rate checks pending) | Dashboard build + live validation pending |
+| Story                              | Status                   | Owner               | Build State                                                                     | QA Gate                                        | Analytics Gate                           | Blockers                               |
+| ---------------------------------- | ------------------------ | ------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------- | -------------------------------------- |
+| 1.1 Start Here orientation         | Ready for Review         | FE Web/Mobile       | Implemented (flagged)                                                           | Pending mobile/manual evidence                 | Partial (ingestion check pending)        | None                                   |
+| 1.2 Focused shortlist + essentials | Ready for Review         | FE Web/Mobile       | Implemented (flagged)                                                           | Pending mobile/manual evidence                 | Partial (dashboard check pending)        | None                                   |
+| 2.1 Next best action               | Done (Accepted Risk)     | FE Web/Mobile + API | Implemented in journey surfaces                                                 | Web UAT passed; mobile UAT follow-up committed | Partial (live ingestion check follow-up) | None (moved to post-close commitments) |
+| 3.2 Action-first CTA               | Done (Accepted Risk)     | FE Web/Mobile       | Primary CTA hierarchy implemented                                               | Web UAT passed; mobile CTA parity follow-up    | Partial (variant panel check follow-up)  | None (moved to post-close commitments) |
+| 2.3 Resume-first return            | Done (Accepted Risk)     | FE Web/Mobile + API | Resume prompt + reset flow implemented                                          | Web UAT passed; mobile cross-session follow-up | Partial (resume funnel checks follow-up) | None (moved to post-close commitments) |
+| 4.3 Experiment baseline            | Done (Deferred Ops Gate) | Data + FE           | Events and track mapping implemented; dashboard deferred to post-close ops gate | Pending quality checks (post-close)            | Pending (post-close)                     | None (moved to post-close commitments) |
 
 ## Critical Path
 
@@ -85,36 +107,38 @@ Day 5:
 - Mobile and web parity achieved for core journey states.
 - Dashboard shows activation/progression/conversion baselines with acceptable data quality.
 
-## Latest UAT Readout (2026-06-10)
+## Current Status Snapshot (2026-06-10)
+
+### Sprint 1 Gate Track
 
 - Web UAT passed for journey progression and CTA flow.
-- Mobile manual UAT remains required before rollout expansion.
-- Analytics implementation is in code, but rollout expansion is blocked until dashboard and live data-quality checks pass.
+- Sprint 1 gate converted to post-close commitments under John override.
+- Mobile manual UAT and Story 4.3 dashboard/data checks remain required as post-close commitments.
+- Sprint 1 status: Closed.
 
-## Sprint 2 Slice QA/UAT (2026-06-10)
+### Sprint 2 Implementation Track
 
-Scope validated:
+- Story 3.1 implemented in code across hub, category, and journey surfaces.
+- Story 2.2 implemented in code with event save/remind and account-backed resource saves.
+- Save control UX polish implemented (placement alignment + copy noise reduction).
+- Sprint 2 implementation status: In progress, QA-gated for release.
 
-- Story 3.1 Related communities and events bridge (hub, category, journey).
-- Story 2.2 Save and remind support loop (event save/remind + account-backed resource save).
-- UX polish fix: repeated per-card resource-save helper copy removed.
-
-Automated QA evidence:
+### Sprint 2 Automated Evidence
 
 - `pnpm -F web typecheck` passed.
 - `pnpm -F web test -- src/modules/resources/__tests__/resolver.test.ts src/modules/engagement/__tests__/engagement.test.ts src/modules/community/__tests__/queries.integration.test.ts` passed.
 - Result: 3 test files passed, 23 tests passed, 0 failed.
 
-Manual UAT spot-check status:
+### Sprint 2 Remaining QA Gates
 
-- Resource cards on journey and category pages now show a single clean save control (no repeated helper sentence per card).
-- Hub essentials cards continue to show save controls without repeated helper text.
-- Related communities/events bridge and event save controls remain present across hub/category/journey surfaces.
-
-Open UAT follow-ups:
-
-- Capture screenshot evidence for Sprint 2 slices in next QA pass (hub/category/journey with save + related bridge visible).
-- Verify reminder UX copy tone consistency for event cards in a dedicated content polish pass.
+| Item                                                                | Owner          | Status | Due   | Evidence Target                                             |
+| ------------------------------------------------------------------- | -------------- | ------ | ----- | ----------------------------------------------------------- |
+| Screenshot bundle (hub, category, journey, profile Saved Resources) | Amelia + QA    | Open   | Day 1 | Attached screenshots in sprint-2-qa-validation-checklist.md |
+| Mobile parity QA for save-control + related bridge                  | Amelia + QA    | Open   | Day 2 | Mobile run results in sprint-2-qa-validation-checklist.md   |
+| Logged-out save redirect behavior                                   | FE Web + QA    | Open   | Day 1 | Step result in sprint-2-qa-validation-checklist.md          |
+| Cross-device/session persistence for resource saves                 | FE Web + QA    | Open   | Day 2 | Session A/B proof notes + screenshots                       |
+| Rapid-toggle optimistic state resilience                            | FE Web + QA    | Open   | Day 2 | Stress-check notes in Sprint 2 checklist                    |
+| Reminder copy tone consistency on event cards                       | Sally + FE Web | Open   | Day 3 | UX signoff note                                             |
 
 ## Cross-Page Alignment Track (John + Sally)
 
@@ -128,11 +152,20 @@ Open UAT follow-ups:
 
 ## Sprint 1 Closure Checklist (Non-Negotiable)
 
-1. Mobile manual UAT evidence complete for stories 2.1, 2.3, 3.2.
-2. 4.3 dashboard live with baseline panels.
-3. Event data-quality checks passing (completeness + null-rate thresholds).
-4. Cross-page high-risk declutter tasks completed on web city feed and mobile discover.
-5. Sprint 1 stories moved from Conditional/Blocked to Ready for Review or Done.
+1. Mobile manual UAT evidence complete for stories 2.1, 2.3, 3.2. (Moved to post-close commitment)
+2. 4.3 dashboard live with baseline panels. (Moved to post-close commitment)
+3. Event data-quality checks passing (completeness + null-rate thresholds). (Moved to post-close commitment)
+4. Cross-page high-risk declutter tasks completed on web city feed and mobile discover. (Moved to post-close commitment)
+5. Sprint 1 stories moved to Done / Done (Accepted Risk) / Done (Deferred Ops Gate). (Completed)
+
+## Post-Close Commitments (Mandatory)
+
+| Commitment                                              | Owner             | Due        | Status |
+| ------------------------------------------------------- | ----------------- | ---------- | ------ |
+| Mobile manual UAT evidence for 2.1/2.3/3.2              | Amelia + QA       | 2026-06-12 | Open   |
+| 4.3 dashboard live with baseline panels                 | Data + FE         | 2026-06-13 | Open   |
+| Event data-quality checks (completeness/null-rate)      | Data + FE         | 2026-06-13 | Open   |
+| Cross-page declutter on web city feed + mobile discover | John + Sally + FE | 2026-06-14 | Open   |
 
 ## Sprint 1 Handover
 
@@ -153,7 +186,7 @@ Required evidence from Amelia:
 
 Handover rule:
 
-- Do not start Sprint 2 implementation until both the mobile evidence and dashboard gate are green.
+- Sprint 2 execution continues immediately; post-close commitments above are mandatory and tracked to completion.
 
 ## Escalation Triggers
 

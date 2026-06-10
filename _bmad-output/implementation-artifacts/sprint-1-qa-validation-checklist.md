@@ -4,6 +4,21 @@ Date: 2026-06-10
 Scope: Story 1.1, 1.2, 1.3, 4.3
 Validator: Amelia implementation pass + automated evidence checks
 
+## Sprint 1 Closeout Decision (John - 2026-06-10)
+
+Decision: Sprint 1 is formally closed.
+
+Closeout mode:
+
+- Closed by product-owner override after implementation completion and web validation evidence.
+- Pending gate items are converted into mandatory post-close commitments.
+
+Accepted risks at close:
+
+- Mobile manual UAT evidence incomplete at close time.
+- Story 4.3 dashboard-live and data-quality gate incomplete at close time.
+- Accessibility evidence for Story 1.3 incomplete at close time.
+
 ## 1. Automated Validation
 
 ### Build/Type Safety
@@ -87,7 +102,7 @@ Evidence highlights:
 - Context count change observed from baseline to filtered pages.
 - Fresh/Needs review labels present on essentials and journey cards.
 
-Pending (not executed in this run):
+Pending at close time (converted to post-close commitments):
 
 1. Mobile UI manual pass on device/emulator.
 2. Accessibility evidence capture for Story 1.3 (contrast/labels).
@@ -213,16 +228,16 @@ Story 1.2 Focused shortlist and essentials behavior
 Story 1.3 Low-noise trust and freshness layer
 
 - Criteria status: complete in code
-- QA status: in progress (web visual QA passed; accessibility evidence + mobile visual QA signoff pending)
+- QA status: closed with accepted risk (web visual QA passed; accessibility evidence + mobile visual QA moved to post-close)
 
 Story 4.3 Experimentation and dashboard baseline
 
 - Criteria status: event contract and emitters complete
-- QA status: in progress (requires live dashboard build + data quality checks on traffic)
+- QA status: closed with deferred ops gate (live dashboard + data-quality checks moved to post-close)
 
-## 4. Remaining Work Before Sprint 1 Close
+## 4. Post-Close Commitments (Mandatory)
 
-1. Run the one-pass mobile QA script above and attach the listed evidence.
-2. Execute accessibility checks for Story 1.3 surfaces.
-3. Build and validate baseline analytics dashboard from resources-analytics-baseline.md.
-4. After the above, transition Story 1.3 and 4.3 to Ready for Review.
+1. Run the one-pass mobile QA script above and attach the listed evidence. (Owner: Amelia + QA, Due: 2026-06-12)
+2. Execute accessibility checks for Story 1.3 surfaces. (Owner: Amelia + QA, Due: 2026-06-12)
+3. Build and validate baseline analytics dashboard from resources-analytics-baseline.md. (Owner: Data + FE, Due: 2026-06-13)
+4. Complete event data-quality checks (completeness + null-rate thresholds). (Owner: Data + FE, Due: 2026-06-13)
