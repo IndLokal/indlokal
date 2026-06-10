@@ -4,6 +4,22 @@ Date: 2026-06-10
 Scope: Story 3.1, 2.2, 4.1 (plus save-control UX polish)
 Validator: Amelia implementation pass + QA/UAT evidence checks
 
+## Sprint 2 Closeout Decision (John - 2026-06-10)
+
+Decision: Sprint 2 is formally closed.
+
+Closeout mode:
+
+- Closed by product-owner override after implementation completion, targeted automated validation, and web spot-check evidence.
+- Pending QA and ranking-validation gates are converted into mandatory post-close commitments.
+
+Accepted risks at close:
+
+- Screenshot evidence bundle incomplete at close time.
+- Mobile parity QA incomplete at close time.
+- Logged-out save redirect, cross-device persistence, and rapid-toggle resilience checks incomplete at close time.
+- Story 4.1 live ranking-validation gate incomplete at close time.
+
 ## 1. Automated Validation
 
 ### Build/Type Safety
@@ -101,7 +117,7 @@ Passed:
 4. Account-backed save control placement verified in-card across hub/category/journey.
 5. No type or targeted test regressions after save architecture + UX updates.
 
-Pending:
+Pending at close time (converted to post-close commitments):
 
 1. Full screenshot bundle for Sprint 2 evidence (hub, category, journey, profile Saved Resources).
 2. Mobile parity run for save-control visual behavior.
@@ -181,21 +197,21 @@ Exit criteria:
 Story 3.1 Related communities and events bridge
 
 - Criteria status: complete in code
-- QA status: in progress (web checks passed; full evidence capture pending)
+- QA status: closed with accepted risk (web checks passed; evidence bundle moved to post-close)
 
 Story 2.2 Save and remind support loop
 
 - Criteria status: complete in code (event save/remind + account-backed resource save across devices)
-- QA status: in progress (web checks passed; mobile parity + screenshots pending)
+- QA status: closed with accepted risk (mobile parity and advanced behavior checks moved to post-close)
 
 Story 4.1 Ranking updates trust/freshness weighting
 
 - Criteria status: partial (test-safe foundation; live rollout validation pending)
-- QA status: pending rollout-gate verification
+- QA status: closed with deferred ops gate (live ranking validation moved to post-close)
 
-## 4. Remaining Work Before Sprint 2 Close
+## 4. Post-Close Commitments (Mandatory)
 
-1. Capture full screenshot evidence for hub, category, journey, and profile Saved Resources.
-2. Run mobile parity QA for Sprint 2 save-control and related bridge surfaces.
-3. Complete logged-out redirect, cross-device persistence, and rapid-toggle resilience checks for Story 2.2.
-4. Validate Story 4.1 ranking behavior against live data gates before marking Ready for Review.
+1. Capture full screenshot evidence for hub, category, journey, and profile Saved Resources. (Owner: Amelia + QA, Due: 2026-06-12)
+2. Run mobile parity QA for Sprint 2 save-control and related bridge surfaces. (Owner: Amelia + QA, Due: 2026-06-12)
+3. Complete logged-out redirect, cross-device persistence, and rapid-toggle resilience checks for Story 2.2. (Owner: FE Web + QA, Due: 2026-06-13)
+4. Validate Story 4.1 ranking behavior against live data gates before marking Ready for Review. (Owner: Data + FE, Due: 2026-06-14)

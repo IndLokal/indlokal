@@ -35,6 +35,22 @@ Accepted risks at close:
 - Story 4.3 dashboard live/data-quality gate was not complete at time of closure.
 - Cross-page declutter tasks were not fully complete at time of closure.
 
+## Sprint 2 Closure Decision (John - 2026-06-10)
+
+Decision: Sprint 2 is closed.
+
+Closure mode:
+
+- Closed by product-owner override after implementation completion, targeted automated validation, and web spot-check evidence.
+- Remaining QA and ranking-validation gates are converted into mandatory post-close commitments.
+
+Accepted risks at close:
+
+- Screenshot evidence bundle was not complete at close time.
+- Mobile parity QA for Sprint 2 surfaces was not complete at close time.
+- Logged-out save redirect, cross-device persistence, and rapid-toggle resilience checks were not complete at close time.
+- Story 4.1 live ranking-validation gate was not complete at close time.
+
 ## Sprint 1 Goal (Clarity + Progression)
 
 User outcome: users understand what to do next quickly and complete at least one meaningful action.
@@ -121,7 +137,7 @@ Day 5:
 - Story 3.1 implemented in code across hub, category, and journey surfaces.
 - Story 2.2 implemented in code with event save/remind and account-backed resource saves.
 - Save control UX polish implemented (placement alignment + copy noise reduction).
-- Sprint 2 implementation status: In progress, QA-gated for release.
+- Sprint 2 implementation status: Closed by override; remaining gates moved to post-close commitments.
 
 ### Sprint 2 Automated Evidence
 
@@ -129,16 +145,17 @@ Day 5:
 - `pnpm -F web test -- src/modules/resources/__tests__/resolver.test.ts src/modules/engagement/__tests__/engagement.test.ts src/modules/community/__tests__/queries.integration.test.ts` passed.
 - Result: 3 test files passed, 23 tests passed, 0 failed.
 
-### Sprint 2 Remaining QA Gates
+### Sprint 2 Post-Close Commitments (Mandatory)
 
-| Item                                                                | Owner          | Status | Due   | Evidence Target                                             |
-| ------------------------------------------------------------------- | -------------- | ------ | ----- | ----------------------------------------------------------- |
-| Screenshot bundle (hub, category, journey, profile Saved Resources) | Amelia + QA    | Open   | Day 1 | Attached screenshots in sprint-2-qa-validation-checklist.md |
-| Mobile parity QA for save-control + related bridge                  | Amelia + QA    | Open   | Day 2 | Mobile run results in sprint-2-qa-validation-checklist.md   |
-| Logged-out save redirect behavior                                   | FE Web + QA    | Open   | Day 1 | Step result in sprint-2-qa-validation-checklist.md          |
-| Cross-device/session persistence for resource saves                 | FE Web + QA    | Open   | Day 2 | Session A/B proof notes + screenshots                       |
-| Rapid-toggle optimistic state resilience                            | FE Web + QA    | Open   | Day 2 | Stress-check notes in Sprint 2 checklist                    |
-| Reminder copy tone consistency on event cards                       | Sally + FE Web | Open   | Day 3 | UX signoff note                                             |
+| Item                                                                | Owner          | Status | Due        | Evidence Target                                             |
+| ------------------------------------------------------------------- | -------------- | ------ | ---------- | ----------------------------------------------------------- |
+| Screenshot bundle (hub, category, journey, profile Saved Resources) | Amelia + QA    | Open   | 2026-06-12 | Attached screenshots in sprint-2-qa-validation-checklist.md |
+| Mobile parity QA for save-control + related bridge                  | Amelia + QA    | Open   | 2026-06-12 | Mobile run results in sprint-2-qa-validation-checklist.md   |
+| Logged-out save redirect behavior                                   | FE Web + QA    | Open   | 2026-06-12 | Step result in sprint-2-qa-validation-checklist.md          |
+| Cross-device/session persistence for resource saves                 | FE Web + QA    | Open   | 2026-06-13 | Session A/B proof notes + screenshots                       |
+| Rapid-toggle optimistic state resilience                            | FE Web + QA    | Open   | 2026-06-13 | Stress-check notes in Sprint 2 checklist                    |
+| Reminder copy tone consistency on event cards                       | Sally + FE Web | Open   | 2026-06-13 | UX signoff note                                             |
+| Story 4.1 live ranking validation                                   | Data + FE      | Open   | 2026-06-14 | Ranking readout + gate signoff                              |
 
 ## Cross-Page Alignment Track (John + Sally)
 
@@ -186,7 +203,7 @@ Required evidence from Amelia:
 
 Handover rule:
 
-- Sprint 2 execution continues immediately; post-close commitments above are mandatory and tracked to completion.
+- Sprint 2 is closed; post-close commitments above are mandatory and tracked to completion.
 
 ## Escalation Triggers
 
