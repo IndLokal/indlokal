@@ -100,6 +100,13 @@ Preconditions:
 - API/web running on local dev server.
 - Mobile app launched with selected city set to `stuttgart`.
 - Test user state available for normal browsing.
+- Flags enabled for resources intent/persona, resume, and CTA modules.
+
+One-pass execution rule:
+
+- Run the steps below in order without resetting the app unless a step fails.
+- If any step fails, capture one screenshot and one short note, then stop and file the defect.
+- If all steps pass, this run is sufficient evidence for the mobile manual gate on Stories 1.1, 1.2, 1.3, 2.1, 2.3, and 3.2.
 
 Execution steps:
 
@@ -136,46 +143,74 @@ Execution steps:
 - Result: [ ] Pass [ ] Fail
 - Notes:
 
-6. Journey navigation and badges.
+6. Resume prompt and CTA behavior.
+
+- Action: if resume card is visible, tap `Continue next step`; if not visible, note `No existing progress` and continue.
+- Expected: resume card, when present, opens Journey without error and shows a clear next-step CTA.
+- Result: [ ] Pass [ ] Fail [ ] Not applicable
+- Notes:
+
+7. Journey navigation and badges.
 
 - Action: open Journey from Resources screen.
 - Expected: journey cards render trust/freshness badges; no rendering errors.
 - Result: [ ] Pass [ ] Fail
 - Notes:
 
-7. Stale open path safety.
+8. Next-action and mark-complete behavior.
+
+- Action: on Journey, use `Continue next step`, then `Mark complete` on the next-action card.
+- Expected: next-action state updates immediately; progress count changes without crash or stale UI.
+- Result: [ ] Pass [ ] Fail
+- Notes:
+
+9. Reset progress behavior.
+
+- Action: tap `Reset` on Journey after at least one completion.
+- Expected: progress clears immediately and resume state is removed on return to Resources.
+- Result: [ ] Pass [ ] Fail
+- Notes:
+
+10. Stale open path safety.
 
 - Action: open at least one `Needs review` resource link.
 - Expected: link opens without crash; user remains in stable app state on return.
 - Result: [ ] Pass [ ] Fail
 - Notes:
 
-8. Basic analytics smoke check.
+11. Basic analytics smoke check.
 
 - Action: perform one persona click, one intent click, one essentials click.
 - Expected: no client errors; telemetry calls remain non-blocking.
 - Result: [ ] Pass [ ] Fail
 - Notes:
 
+Exit criteria for mobile evidence signoff:
+
+- All applicable steps marked Pass.
+- No crashes, stuck states, or broken navigation.
+- Resume, next-action, mark-complete, and reset behavior confirmed in one run.
+
 Artifacts to attach:
 
-- 2 screenshots from Resources screen (chips + badges visible).
-- 1 screenshot from Journey screen (badges visible).
+- 1 screenshot from Resources screen showing persona/intent + trust/freshness.
+- 1 screenshot from Resources screen showing resume card, or a short note stating `No existing progress to resume`.
+- 1 screenshot from Journey screen showing next-action card + progress state.
 - 1 short note confirming no runtime errors observed.
 
 ## 3. Acceptance Gate Summary
 
-Story 1.1 Persona quick-start modules
+Story 1.1 Start Here orientation module
 
 - Criteria status: complete in code
 - QA status: ready for review (web verified; mobile manual run pending)
 
-Story 1.2 Intent chips and smart essentials
+Story 1.2 Focused shortlist and essentials behavior
 
 - Criteria status: complete in code
 - QA status: ready for review (web verified; mobile manual run pending)
 
-Story 1.3 Trust and freshness on cards
+Story 1.3 Low-noise trust and freshness layer
 
 - Criteria status: complete in code
 - QA status: in progress (web visual QA passed; accessibility evidence + mobile visual QA signoff pending)
@@ -187,7 +222,7 @@ Story 4.3 Experimentation and dashboard baseline
 
 ## 4. Remaining Work Before Sprint 1 Close
 
-1. Run manual QA matrix on web/mobile and capture screenshots or notes.
+1. Run the one-pass mobile QA script above and attach the listed evidence.
 2. Execute accessibility checks for Story 1.3 surfaces.
 3. Build and validate baseline analytics dashboard from resources-analytics-baseline.md.
 4. After the above, transition Story 1.3 and 4.3 to Ready for Review.
