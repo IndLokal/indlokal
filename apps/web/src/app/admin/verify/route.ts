@@ -1,9 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createSession, generateSessionToken, hashToken } from '@/lib/session';
+import {
+  createSession,
+  generateSessionToken,
+  hashToken,
+  setSessionCookieOnResponse,
+} from '@/lib/session';
 import { db } from '@/lib/db';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
+import { escapeHtmlAttribute } from '@/lib/html';
 
 const ADMIN_VERIFY_TOKEN_COOKIE = 'admin_verify_token';
 
@@ -13,6 +19,8 @@ export async function GET(request: NextRequest) {
   if (!rawToken) {
     return NextResponse.redirect(new URL('/admin/login?error=missing_token', request.url));
   }
+
+  const escapedToken = escapeHtmlAttribute(rawToken);
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -35,6 +43,7 @@ export async function GET(request: NextRequest) {
       <h1>Confirm admin login</h1>
       <p>Click below to complete your one-time sign in.</p>
       <form method="POST" action="/admin/verify">
+        <input type="hidden" name="token" value="${escapedToken}" />
         <button type="submit">Continue to admin dashboard</button>
       </form>
       <small>This extra step prevents email scanners from consuming your one-time link.</small>
@@ -62,8 +71,10 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const jar = await cookies();
+  const formData = await request.formData();
   const cookieToken = jar.get(ADMIN_VERIFY_TOKEN_COOKIE)?.value ?? '';
-  const rawToken = cookieToken.trim();
+  const formToken = (formData.get('token') as string | null) ?? '';
+  const rawToken = (formToken || cookieToken).trim();
   jar.delete(ADMIN_VERIFY_TOKEN_COOKIE);
 
   // POST→GET redirects must use 303 so the browser switches to GET on the
@@ -106,7 +117,10 @@ export async function POST(request: NextRequest) {
         login_surface: 'admin_web',
         auth_method: 'magic_link',
       });
-      return seeOther('/admin');
+      const response = seeOther('/admin');
+      setSessionCookieOnResponse(response, sessionToken);
+      response.cookies.delete(ADMIN_VERIFY_TOKEN_COOKIE);
+      return response;
     }
 
     return seeOther('/admin/login?error=invalid_token');
@@ -127,6 +141,8 @@ export async function POST(request: NextRequest) {
     login_surface: 'admin_web',
     auth_method: 'magic_link',
   });
-
-  return seeOther('/admin');
+  const response = seeOther('/admin');
+  setSessionCookieOnResponse(response, sessionToken);
+  response.cookies.delete(ADMIN_VERIFY_TOKEN_COOKIE);
+  return response;
 }
