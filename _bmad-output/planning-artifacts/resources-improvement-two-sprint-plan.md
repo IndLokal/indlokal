@@ -65,11 +65,13 @@ Sprint 2 gate to expand rollout:
 3. Deterministic next-action logic is preferred before deeper personalization.
 4. Telemetry must be enough for decisions, not a full analytics rebuild.
 
-## Deferred Track Reference
+## Next Track Reference
 
 Content-ops and freshness-governance work is intentionally separated from Sprint 1/2 execution and tracked in:
 
-- `phase-3-content/resources-content-structure-and-freshness-plan.md`
+- `resources-trust-freshness-ops-plan.md`
+
+This next track owns the remaining Product Document Section 17 work for resources after Sprint 1/Sprint 2 post-close commitments are completed.
 
 ## 5) Execution Reality Reset (2026-06-10)
 
