@@ -9,6 +9,7 @@ import { requireAccessToken } from '@/lib/auth/middleware';
 import { getNotificationPreferences } from '@/lib/notifications/preferences';
 import { getSavedCommunities } from '@/modules/community';
 import { getSavedEvents } from '@/modules/event';
+import { getSavedResources } from '@/modules/resources';
 
 export const runtime = 'nodejs';
 
@@ -16,9 +17,10 @@ export const GET = apiHandler(async (req: NextRequest) => {
   const auth = await requireAccessToken(req);
   if (!auth.ok) return auth.response;
 
-  const [communities, events, notificationPreferences] = await Promise.all([
+  const [communities, events, resources, notificationPreferences] = await Promise.all([
     getSavedCommunities(auth.user.userId, { limit: 50 }),
     getSavedEvents(auth.user.userId, { limit: 50 }),
+    getSavedResources(auth.user.userId, { limit: 50 }),
     getNotificationPreferences(auth.user.userId),
   ]);
 
@@ -43,6 +45,14 @@ export const GET = apiHandler(async (req: NextRequest) => {
       isOnline: row.event.isOnline,
       savedAt: row.savedAt.toISOString(),
       city: row.event.city,
+    })),
+    savedResources: resources.items.map((row) => ({
+      id: row.resource.id,
+      title: row.resource.title,
+      slug: row.resource.slug,
+      resourceType: row.resource.resourceType,
+      savedAt: row.savedAt.toISOString(),
+      city: row.resource.city,
     })),
     notificationPreferences,
   });

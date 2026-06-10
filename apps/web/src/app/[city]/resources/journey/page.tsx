@@ -5,9 +5,12 @@ import type { ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
 import { FLAGS } from '@/lib/config/flags';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
+import { EventSaveButton } from '@/components/EventSaveButton';
+import { ResourceSaveButton } from '@/components/ResourceSaveButton';
 import { getCommunitiesByCity } from '@/modules/community/queries';
 import { getUpcomingEvents } from '@/modules/event/queries';
 import { getResourcesForCity, type ResolvedResource } from '@/modules/resources';
+import { getSessionUser } from '@/lib/session';
 import { JourneyNextBestAction } from './JourneyNextBestAction';
 import { ResourcesTrackedLink } from '../ResourcesHubTracking';
 
@@ -90,44 +93,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function ItemCard({ r, city }: { r: ResolvedResource; city: string }) {
+function ItemCard({ r, city, saved }: { r: ResolvedResource; city: string; saved: boolean }) {
   const cat = RESOURCE_CATEGORIES.find((c) => c.type === r.resourceType);
   return (
     <li>
-      <Link
-        href={buildResourceHref(city, r)}
-        className="hover:ring-brand-200 group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-base shadow-sm`}
+      <div className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md">
+        <Link
+          href={buildResourceHref(city, r)}
+          className="hover:ring-brand-200 group flex items-start gap-3"
         >
-          {cat?.icon ?? '✓'}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-foreground group-hover:text-brand-600 text-[15px] font-semibold transition-colors">
-            {r.title}
-          </h3>
-          <div className="mt-1 flex items-center gap-2">
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
-              {trustLabel(r.resourceType)}
-            </span>
-            <span
-              className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                isStale(r.validUntil)
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-emerald-100 text-emerald-800'
-              }`}
-            >
-              {isStale(r.validUntil) ? 'Needs review' : 'Fresh'}
-            </span>
+          <span
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-base shadow-sm`}
+          >
+            {cat?.icon ?? '✓'}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-foreground group-hover:text-brand-600 text-[15px] font-semibold transition-colors">
+              {r.title}
+            </h3>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                {trustLabel(r.resourceType)}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  isStale(r.validUntil)
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {isStale(r.validUntil) ? 'Needs review' : 'Fresh'}
+              </span>
+            </div>
+            {r.description && (
+              <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
+                {r.description}
+              </p>
+            )}
           </div>
-          {r.description && (
-            <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
-              {r.description}
-            </p>
-          )}
+        </Link>
+        <div className="mt-2 flex justify-end border-t border-black/[0.06] pt-1.5">
+          <ResourceSaveButton
+            resourceId={r.id}
+            resourceTitle={r.title}
+            saved={saved}
+            citySlug={city}
+            sourceSurface="resources_journey"
+          />
         </div>
-      </Link>
+      </div>
     </li>
   );
 }
@@ -141,6 +155,9 @@ export default async function JourneyPage({ params }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
   const cityName = cityRow.name;
+  const user = await getSessionUser();
+  const savedEventIds = new Set(user?.savedEvents.map((row) => row.eventId) ?? []);
+  const savedResourceIds = new Set(user?.savedResources.map((row) => row.resourceId) ?? []);
 
   const rows = await getResourcesForCity(city, { essentialsOnly: true });
   const relatedCategorySlug = RESOURCE_CATEGORIES.find((category) =>
@@ -279,39 +296,54 @@ export default async function JourneyPage({ params }: Props) {
                 </h3>
                 <div className="mt-3 space-y-3">
                   {relatedEvents.map((event) => (
-                    <ResourcesTrackedLink
+                    <div
                       key={event.id}
-                      href={`/${city}/events/${event.slug}`}
-                      event="resources_to_related_click"
-                      properties={{
-                        city,
-                        target_type: 'event',
-                        target_id: event.id,
-                        category: relatedCategorySlug,
-                        source_surface: 'resources_journey',
-                      }}
-                      persistEntityType="EVENT"
-                      persistEntityId={event.id}
-                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                      className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
                     >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
-                            {event.title}
-                          </span>
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
-                            {event.startsAt.toLocaleDateString('en-DE', {
-                              day: 'numeric',
-                              month: 'short',
-                            })}
-                          </span>
+                      <ResourcesTrackedLink
+                        href={`/${city}/events/${event.slug}`}
+                        event="resources_to_related_click"
+                        properties={{
+                          city,
+                          target_type: 'event',
+                          target_id: event.id,
+                          category: relatedCategorySlug,
+                          source_surface: 'resources_journey',
+                        }}
+                        persistEntityType="EVENT"
+                        persistEntityId={event.id}
+                        className="group block"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                              {event.title}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                              {event.startsAt.toLocaleDateString('en-DE', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-muted mt-1 text-sm leading-relaxed">
+                            {event.community ? `${event.community.name} · ` : ''}
+                            {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                          </p>
                         </div>
-                        <p className="text-muted mt-1 text-sm leading-relaxed">
-                          {event.community ? `${event.community.name} · ` : ''}
-                          {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                      </ResourcesTrackedLink>
+                      <div className="mt-3">
+                        <EventSaveButton
+                          eventId={event.id}
+                          saved={savedEventIds.has(event.id)}
+                          city={city}
+                        />
+                        <p className="text-muted mt-2 text-xs">
+                          Save this event to keep it handy and receive an in-app reminder before it
+                          starts.
                         </p>
                       </div>
-                    </ResourcesTrackedLink>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -346,7 +378,12 @@ export default async function JourneyPage({ params }: Props) {
             </div>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {groups[stage].map((r) => (
-                <ItemCard key={`${stage}-${r.slug}`} r={r} city={city} />
+                <ItemCard
+                  key={`${stage}-${r.slug}`}
+                  r={r}
+                  city={city}
+                  saved={savedResourceIds.has(r.id)}
+                />
               ))}
             </ul>
           </section>
@@ -359,7 +396,7 @@ export default async function JourneyPage({ params }: Props) {
           <p className="text-muted text-sm">Important any time during your stay.</p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {unscheduled.map((r) => (
-              <ItemCard key={`u-${r.slug}`} r={r} city={city} />
+              <ItemCard key={`u-${r.slug}`} r={r} city={city} saved={savedResourceIds.has(r.id)} />
             ))}
           </ul>
         </section>

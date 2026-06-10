@@ -4,9 +4,12 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { FLAGS } from '@/lib/config/flags';
+import { EventSaveButton } from '@/components/EventSaveButton';
+import { ResourceSaveButton } from '@/components/ResourceSaveButton';
 import { getCommunitiesByCity } from '@/modules/community/queries';
 import { getUpcomingEvents } from '@/modules/event/queries';
 import { getResourcesForCity } from '@/modules/resources';
+import { getSessionUser } from '@/lib/session';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
 import { ResourcesHubViewTracking, ResourcesTrackedLink } from './ResourcesHubTracking';
@@ -95,6 +98,9 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
   if (!cityRow || !cityRow.isActive) notFound();
 
   const cityName = cityRow.name;
+  const user = await getSessionUser();
+  const savedEventIds = new Set(user?.savedEvents.map((row) => row.eventId) ?? []);
+  const savedResourceIds = new Set(user?.savedResources.map((row) => row.resourceId) ?? []);
   const selectedPersona = qp.persona?.toLowerCase();
   const selectedIntent = qp.intent?.toLowerCase();
 
@@ -306,37 +312,48 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
               const categorySlug = cat?.slug ?? 'city-registration';
               return (
                 <li key={r.slug}>
-                  <ResourcesTrackedLink
-                    href={`/${city}/resources/${categorySlug}#${r.slug}`}
-                    event="resources_essentials_click"
-                    properties={{
-                      city,
-                      resource_slug: r.slug,
-                      resource_type: r.resourceType,
-                      is_stale: isResourceStale(r.validUntil),
-                    }}
-                    persistEntityType="RESOURCE"
-                    persistEntityId={`resources_hub:${city}`}
-                    className="hover:ring-brand-200 group flex items-center gap-3 rounded-lg bg-white px-3 py-2.5 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5"
-                  >
-                    <span
-                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-sm shadow-sm`}
+                  <div className="hover:ring-brand-200 rounded-lg bg-white px-3 py-2.5 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5">
+                    <ResourcesTrackedLink
+                      href={`/${city}/resources/${categorySlug}#${r.slug}`}
+                      event="resources_essentials_click"
+                      properties={{
+                        city,
+                        resource_slug: r.slug,
+                        resource_type: r.resourceType,
+                        is_stale: isResourceStale(r.validUntil),
+                      }}
+                      persistEntityType="RESOURCE"
+                      persistEntityId={`resources_hub:${city}`}
+                      className="group flex items-center gap-3"
                     >
-                      {cat?.icon ?? '✓'}
-                    </span>
-                    <span className="text-foreground group-hover:text-brand-600 truncate text-sm font-medium transition-colors">
-                      {r.title}
-                    </span>
-                    <span
-                      className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                        isResourceStale(r.validUntil)
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {isResourceStale(r.validUntil) ? 'Needs review' : 'Fresh'}
-                    </span>
-                  </ResourcesTrackedLink>
+                      <span
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-sm shadow-sm`}
+                      >
+                        {cat?.icon ?? '✓'}
+                      </span>
+                      <span className="text-foreground group-hover:text-brand-600 truncate text-sm font-medium transition-colors">
+                        {r.title}
+                      </span>
+                      <span
+                        className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                          isResourceStale(r.validUntil)
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        {isResourceStale(r.validUntil) ? 'Needs review' : 'Fresh'}
+                      </span>
+                    </ResourcesTrackedLink>
+                    <div className="mt-2 flex justify-end border-t border-black/[0.06] pt-1.5">
+                      <ResourceSaveButton
+                        resourceId={r.id}
+                        resourceTitle={r.title}
+                        saved={savedResourceIds.has(r.id)}
+                        citySlug={city}
+                        sourceSurface="resources_hub"
+                      />
+                    </div>
+                  </div>
                 </li>
               );
             })}
@@ -393,36 +410,51 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                 ))}
 
                 {relatedEvents.map((event) => (
-                  <ResourcesTrackedLink
+                  <div
                     key={event.id}
-                    href={`/${city}/events/${event.slug}`}
-                    event="resources_to_related_click"
-                    properties={{
-                      city,
-                      target_type: 'event',
-                      target_id: event.id,
-                      category: relatedCategorySlug,
-                    }}
-                    persistEntityType="EVENT"
-                    persistEntityId={event.id}
-                    className="group rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
                   >
-                    <div className="flex items-center gap-2">
-                      <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
-                        {event.title}
-                      </span>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
-                        {event.startsAt.toLocaleDateString('en-DE', {
-                          day: 'numeric',
-                          month: 'short',
-                        })}
-                      </span>
+                    <ResourcesTrackedLink
+                      href={`/${city}/events/${event.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'event',
+                        target_id: event.id,
+                        category: relatedCategorySlug,
+                      }}
+                      persistEntityType="EVENT"
+                      persistEntityId={event.id}
+                      className="group block"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                          {event.title}
+                        </span>
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                          {event.startsAt.toLocaleDateString('en-DE', {
+                            day: 'numeric',
+                            month: 'short',
+                          })}
+                        </span>
+                      </div>
+                      <p className="text-muted mt-1 text-sm leading-relaxed">
+                        {event.community ? `${event.community.name} · ` : ''}
+                        {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                      </p>
+                    </ResourcesTrackedLink>
+                    <div className="mt-3">
+                      <EventSaveButton
+                        eventId={event.id}
+                        saved={savedEventIds.has(event.id)}
+                        city={city}
+                      />
+                      <p className="text-muted mt-2 text-xs">
+                        Save this event to keep it handy and receive an in-app reminder before it
+                        starts.
+                      </p>
                     </div>
-                    <p className="text-muted mt-1 text-sm leading-relaxed">
-                      {event.community ? `${event.community.name} · ` : ''}
-                      {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
-                    </p>
-                  </ResourcesTrackedLink>
+                  </div>
                 ))}
               </div>
             </div>

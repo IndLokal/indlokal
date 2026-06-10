@@ -2,7 +2,11 @@
 
 import { revalidatePath } from 'next/cache';
 import { getSessionUser } from '@/lib/session';
-import { toggleFollowCommunityForUser, toggleSaveEventForUser } from '@/modules/engagement';
+import {
+  toggleFollowCommunityForUser,
+  toggleSaveEventForUser,
+  toggleSaveResourceForUser,
+} from '@/modules/engagement';
 
 export type SaveResult =
   | { saved: boolean; remindersScheduled?: number; remindersSuppressed?: number }
@@ -50,5 +54,28 @@ export async function toggleSaveEvent(
     return result;
   } catch {
     return { error: 'Failed to update save. Please try again.' };
+  }
+}
+
+// ─── Resource saves ──────────────────────────────────────────────────────────
+
+export async function toggleSaveResource(
+  resourceId: string,
+  options?: { sourceSurface?: 'resources_journey' | 'resources_hub' | 'resources_category' },
+): Promise<SaveResult> {
+  const user = await getSessionUser();
+  if (!user) return { requiresAuth: true };
+
+  if (!resourceId || typeof resourceId !== 'string') {
+    return { error: 'Invalid resource ID' };
+  }
+
+  try {
+    const metadata = options?.sourceSurface ? { source_surface: options.sourceSurface } : undefined;
+    const result = await toggleSaveResourceForUser(user.id, resourceId, metadata);
+    revalidatePath('/me');
+    return { saved: result.saved };
+  } catch {
+    return { error: 'Failed to update resource save. Please try again.' };
   }
 }

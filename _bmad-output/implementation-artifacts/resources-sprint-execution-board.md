@@ -10,6 +10,8 @@ Owner: Product + Design + Engineering + Data
 - UX blueprint: `../planning-artifacts/resources-ux-redefinition-blueprint.md`
 - Story contract: `../planning-artifacts/resources-improvement-epics-stories.md`
 - Story sequencing: `resources-improvement-story-sequence.md`
+- Sprint 1 QA checklist: `sprint-1-qa-validation-checklist.md`
+- Sprint 2 QA checklist: `sprint-2-qa-validation-checklist.md`
 
 ## Sprint 1 Goal (Clarity + Progression)
 
@@ -88,6 +90,31 @@ Day 5:
 - Web UAT passed for journey progression and CTA flow.
 - Mobile manual UAT remains required before rollout expansion.
 - Analytics implementation is in code, but rollout expansion is blocked until dashboard and live data-quality checks pass.
+
+## Sprint 2 Slice QA/UAT (2026-06-10)
+
+Scope validated:
+
+- Story 3.1 Related communities and events bridge (hub, category, journey).
+- Story 2.2 Save and remind support loop (event save/remind + account-backed resource save).
+- UX polish fix: repeated per-card resource-save helper copy removed.
+
+Automated QA evidence:
+
+- `pnpm -F web typecheck` passed.
+- `pnpm -F web test -- src/modules/resources/__tests__/resolver.test.ts src/modules/engagement/__tests__/engagement.test.ts src/modules/community/__tests__/queries.integration.test.ts` passed.
+- Result: 3 test files passed, 23 tests passed, 0 failed.
+
+Manual UAT spot-check status:
+
+- Resource cards on journey and category pages now show a single clean save control (no repeated helper sentence per card).
+- Hub essentials cards continue to show save controls without repeated helper text.
+- Related communities/events bridge and event save controls remain present across hub/category/journey surfaces.
+
+Open UAT follow-ups:
+
+- Capture screenshot evidence for Sprint 2 slices in next QA pass (hub/category/journey with save + related bridge visible).
+- Verify reminder UX copy tone consistency for event cards in a dedicated content polish pass.
 
 ## Cross-Page Alignment Track (John + Sally)
 

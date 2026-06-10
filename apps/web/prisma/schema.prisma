@@ -567,6 +567,7 @@ model Resource {
   reviewCadenceDays Int           @default(180) @map("review_cadence_days")
   source            ContentSource @default(ADMIN_SEED)
   metadata          Json?
+  savedBy           SavedResource[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -654,6 +655,7 @@ model User {
   interactions            UserInteraction[]
   savedCommunities        SavedCommunity[]
   savedEvents             SavedEvent[]
+  savedResources          SavedResource[]
   magicLinkTokens         MagicLinkToken[]
   refreshTokens           RefreshToken[]
   roleAssignments         RoleAssignment[]
@@ -968,6 +970,18 @@ model SavedEvent {
 
   @@id([userId, eventId])
   @@map("saved_events")
+}
+
+model SavedResource {
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId String   @map("resource_id")
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  savedAt    DateTime @default(now()) @map("saved_at")
+
+  @@id([userId, resourceId])
+  @@index([userId, savedAt], map: "saved_resources_user_saved_at_idx")
+  @@map("saved_resources")
 }
 
 // ─────────────────────────────────────────────────

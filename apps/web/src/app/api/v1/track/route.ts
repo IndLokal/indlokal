@@ -42,6 +42,8 @@ const INTERACTION_TYPE_MAP: Record<string, string> = {
   [Events.RESOURCE_CTA_IMPRESSION]: 'VIEW',
   [Events.RESOURCE_CTA_CLICK]: 'CLICK_ACCESS',
   [Events.RESOURCE_CTA_VARIANT_ASSIGNED]: 'VIEW',
+  [Events.RESOURCE_SAVED]: 'SAVE',
+  [Events.RESOURCE_UNSAVED]: 'SAVE',
 };
 
 const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
@@ -81,6 +83,8 @@ const POSTHOG_EVENT_MAP: Record<string, AnalyticsEvent> = {
   [Events.RESOURCE_CTA_IMPRESSION]: Events.RESOURCE_CTA_IMPRESSION,
   [Events.RESOURCE_CTA_CLICK]: Events.RESOURCE_CTA_CLICK,
   [Events.RESOURCE_CTA_VARIANT_ASSIGNED]: Events.RESOURCE_CTA_VARIANT_ASSIGNED,
+  [Events.RESOURCE_SAVED]: Events.RESOURCE_SAVED,
+  [Events.RESOURCE_UNSAVED]: Events.RESOURCE_UNSAVED,
 };
 
 const TrackBody = z.object({

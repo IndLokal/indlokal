@@ -136,6 +136,7 @@ export async function getSessionUser() {
         },
         savedCommunities: { select: { communityId: true } },
         savedEvents: { select: { eventId: true } },
+        savedResources: { select: { resourceId: true } },
       },
     });
 

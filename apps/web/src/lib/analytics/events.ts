@@ -44,6 +44,8 @@ export const Events = {
   RESOURCES_TRUST_BADGE_IMPRESSION: 'resources_trust_badge_impression',
   RESOURCES_FIRST_MEANINGFUL_ACTION: 'resources_first_meaningful_action',
   RESOURCES_TO_RELATED_CLICK: 'resources_to_related_click',
+  RESOURCE_SAVED: 'resource_saved',
+  RESOURCE_UNSAVED: 'resource_unsaved',
   RESOURCES_STALE_ITEM_OPENED: 'resources_stale_item_opened',
   RESOURCES_EXPERIMENT_VARIANT_ASSIGNED: 'resources_experiment_variant_assigned',
   JOURNEY_NEXT_ACTION_IMPRESSION: 'journey_next_action_impression',
