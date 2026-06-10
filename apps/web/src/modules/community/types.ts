@@ -7,6 +7,7 @@ import type {
   Prisma,
   TrustSignal,
 } from '@prisma/client';
+import type { CommunityEvidenceBadge } from '@/lib/community-trust';
 
 /** Community with all relations needed for the detail page */
 export type CommunityWithRelations = Community & {
@@ -41,6 +42,11 @@ export type CommunityListItem = Pick<
   city: Pick<City, 'name' | 'slug'>;
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
   _count: { events: number };
+  /**
+   * Honest source-quality badge derived from access channels (PRD/TDD-0055).
+   * Absent/null when the listing has no usable strong/public source.
+   */
+  evidenceBadge?: CommunityEvidenceBadge | null;
 };
 
 /** Full community for the detail API - includes channels, trust signals */

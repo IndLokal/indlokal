@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { CommunityListItem } from '@/modules/community/types';
+import { getCommunityCardTrustMarkers } from '@/lib/community-trust';
 import { BookmarkButton } from './BookmarkButton';
 import { PulseBadge } from '@/components/ui';
 
@@ -38,6 +39,13 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
       (community.trustScore ?? 0) * 0.2,
   );
 
+  const topMarkers = getCommunityCardTrustMarkers({
+    claimState: community.claimState,
+    status: community.status,
+    isTrending: community.isTrending,
+    hasStrongSource: community.evidenceBadge?.kind === 'strong_source',
+  });
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/[0.06] transition-all duration-200 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/[0.06]">
       {/* Colored top stripe */}
@@ -62,22 +70,57 @@ export function CommunityCard({ community, city, savedByUser }: Props) {
             )}
           </div>
           <div className="flex flex-wrap items-center justify-end gap-1.5">
-            {community.isTrending && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600 ring-1 ring-orange-200">
-                🔥 Trending
-              </span>
+            {topMarkers.slice(0, 2).map((marker) => {
+              if (marker === 'claimed') {
+                return (
+                  <span
+                    key="claimed"
+                    className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200"
+                  >
+                    Claimed
+                  </span>
+                );
+              }
+
+              if (marker === 'strong_source' && community.evidenceBadge?.kind === 'strong_source') {
+                return (
+                  <span
+                    key="strong-source"
+                    title={community.evidenceBadge.title}
+                    className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[10px] font-semibold text-teal-700 ring-1 ring-teal-200"
+                  >
+                    ✓ {community.evidenceBadge.label}
+                  </span>
+                );
+              }
+
+              if (marker === 'provisional') {
+                return (
+                  <span
+                    key="provisional"
+                    className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200"
+                  >
+                    Provisional
+                  </span>
+                );
+              }
+
+              if (marker === 'trending') {
+                return (
+                  <span
+                    key="trending"
+                    className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600 ring-1 ring-orange-200"
+                  >
+                    🔥 Trending
+                  </span>
+                );
+              }
+
+              return null;
+            })}
+            {topMarkers.includes('pulse') && (
+              <PulseBadge pulseScore={pulseScore} isRecentlyAdded={isRecentlyAdded} />
             )}
-            {community.status === 'UNVERIFIED' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200">
-                Provisional
-              </span>
-            )}
-            {community.claimState === 'CLAIMED' && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 ring-1 ring-emerald-200">
-                Claimed by organizer
-              </span>
-            )}
-            <PulseBadge pulseScore={pulseScore} isRecentlyAdded={isRecentlyAdded} />
           </div>
         </div>
 

@@ -1,7 +1,13 @@
 import Link from 'next/link';
+import type { Prisma } from '@prisma/client';
 import { db } from '@/lib/db';
+import { resolveEvidenceReadout } from '@/lib/community-trust';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
-import { deleteCommunityAction, setCommunityStatusAction } from '../actions';
+import {
+  deleteCommunityAction,
+  refreshCommunityEvidenceAction,
+  setCommunityStatusAction,
+} from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
@@ -19,6 +25,7 @@ export default async function AdminCommunitiesPage({
     city?: string;
     status?: string;
     claimState?: string;
+    evidence?: string;
     gap?: string;
     q?: string;
     page?: string;
@@ -27,13 +34,7 @@ export default async function AdminCommunitiesPage({
 }) {
   const sp = await searchParams;
   const pagination = parseOffsetPagination(sp);
-  const where: {
-    city?: { slug: string };
-    status?: 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
-    claimState?: 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
-    name?: { contains: string; mode: 'insensitive' };
-    personaSegments?: { isEmpty: boolean };
-  } = {};
+  const where: Prisma.CommunityWhereInput = {};
   if (sp.city) where.city = { slug: sp.city };
   if (sp.status && ['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(sp.status)) {
     where.status = sp.status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
@@ -42,6 +43,15 @@ export default async function AdminCommunitiesPage({
     where.claimState = sp.claimState as 'UNCLAIMED' | 'CLAIM_PENDING' | 'CLAIMED';
   }
   if (sp.q) where.name = { contains: sp.q, mode: 'insensitive' };
+  if (
+    sp.evidence &&
+    ['verified_candidate', 'source_supported', 'insufficient'].includes(sp.evidence)
+  ) {
+    where.metadata = {
+      path: ['sourceEvidence', 'quality'],
+      equals: sp.evidence,
+    };
+  }
   // Journey-coverage backfill worklist: communities with no persona segments
   // never surface in journey "find your people" blocks (PRD/TDD-0053).
   if (sp.gap === 'persona') where.personaSegments = { isEmpty: true };
@@ -55,6 +65,7 @@ export default async function AdminCommunitiesPage({
       take: pagination.take,
       include: {
         city: { select: { name: true, slug: true } },
+        accessChannels: { select: { url: true } },
         _count: { select: { events: true, accessChannels: true } },
       },
     }),
@@ -124,6 +135,18 @@ export default async function AdminCommunitiesPage({
               <option value="CLAIMED">Claimed</option>
             </select>
           </AdminFilterItem>
+          <AdminFilterItem label="Evidence quality">
+            <select
+              name="evidence"
+              defaultValue={sp.evidence ?? ''}
+              className="border-border w-full rounded border px-3 py-2 text-sm"
+            >
+              <option value="">Any evidence</option>
+              <option value="verified_candidate">Strong evidence</option>
+              <option value="source_supported">Source-supported</option>
+              <option value="insufficient">Insufficient</option>
+            </select>
+          </AdminFilterItem>
           <AdminFilterItem label="Journey gap">
             <select
               name="gap"
@@ -152,6 +175,7 @@ export default async function AdminCommunitiesPage({
               <AdminTh>City</AdminTh>
               <AdminTh>Lifecycle Status</AdminTh>
               <AdminTh>Claim Status</AdminTh>
+              <AdminTh>Evidence</AdminTh>
               <AdminTh>Persona tags</AdminTh>
               <AdminTh>Events</AdminTh>
               <AdminTh>Channels</AdminTh>
@@ -159,67 +183,106 @@ export default async function AdminCommunitiesPage({
             </tr>
           </AdminTableHead>
           <tbody>
-            {communities.map((c) => (
-              <tr key={c.id} className="border-border border-b last:border-b-0">
-                <td className="px-3 py-2">
-                  <div className="font-medium">{c.name}</div>
-                  <div className="text-muted font-mono text-xs">{c.slug}</div>
-                </td>
-                <td className="px-3 py-2 text-xs">{c.city?.name ?? '-'}</td>
-                <td className="px-3 py-2">
-                  <form action={setCommunityStatusAction} className="flex items-center gap-1">
-                    <input type="hidden" name="id" value={c.id} />
-                    <select
-                      name="status"
-                      defaultValue={c.status}
-                      className="border-border rounded-md border px-2 py-1 text-xs"
+            {communities.map((c) => {
+              const metadata = (c.metadata ?? {}) as Record<string, unknown>;
+              const persistedEvidence = metadata.sourceEvidence as
+                | {
+                    quality?: 'verified_candidate' | 'source_supported' | 'insufficient';
+                    strongestLabel?: string | null;
+                    reason?: string;
+                  }
+                | undefined;
+              const evidence = resolveEvidenceReadout({
+                storedEvidence: persistedEvidence,
+                sourceUrls: c.accessChannels.map((ch) => ch.url),
+              });
+
+              const evidenceTone =
+                evidence.display.tone === 'strong'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : evidence.display.tone === 'supported'
+                    ? 'bg-amber-100 text-amber-700'
+                    : 'bg-red-100 text-red-700';
+
+              return (
+                <tr key={c.id} className="border-border border-b last:border-b-0">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">{c.name}</div>
+                    <div className="text-muted font-mono text-xs">{c.slug}</div>
+                  </td>
+                  <td className="px-3 py-2 text-xs">{c.city?.name ?? '-'}</td>
+                  <td className="px-3 py-2">
+                    <form action={setCommunityStatusAction} className="flex items-center gap-1">
+                      <input type="hidden" name="id" value={c.id} />
+                      <select
+                        name="status"
+                        defaultValue={c.status}
+                        className="border-border rounded-md border px-2 py-1 text-xs"
+                      >
+                        <option value="ACTIVE">ACTIVE</option>
+                        <option value="INACTIVE">INACTIVE</option>
+                        <option value="UNVERIFIED">UNVERIFIED</option>
+                      </select>
+                      <button
+                        type="submit"
+                        className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
+                      >
+                        save
+                      </button>
+                    </form>
+                  </td>
+                  <td className="px-3 py-2 text-xs font-medium">{c.claimState}</td>
+                  <td className="px-3 py-2 text-xs">
+                    <span
+                      title={`${evidence.reason}${evidence.strongestLabel ? ` (${evidence.strongestLabel})` : ''}`}
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${evidenceTone}`}
                     >
-                      <option value="ACTIVE">ACTIVE</option>
-                      <option value="INACTIVE">INACTIVE</option>
-                      <option value="UNVERIFIED">UNVERIFIED</option>
-                    </select>
-                    <button
-                      type="submit"
-                      className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
-                    >
-                      save
-                    </button>
-                  </form>
-                </td>
-                <td className="px-3 py-2 text-xs font-medium">{c.claimState}</td>
-                <td className="px-3 py-2 align-top">
-                  <CommunityPersonaTagEditor
-                    id={c.id}
-                    personaSegments={c.personaSegments}
-                    languages={c.languages}
-                  />
-                </td>
-                <td className="px-3 py-2 text-xs">{c._count.events}</td>
-                <td className="px-3 py-2 text-xs">{c._count.accessChannels}</td>
-                <td className="px-3 py-2 text-right">
-                  {c.city?.slug && (
-                    <Link
-                      href={`/${c.city.slug}/communities/${c.slug}`}
-                      className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
-                      target="_blank"
-                    >
-                      view ↗
-                    </Link>
-                  )}
-                  <form action={deleteCommunityAction} className="ml-3 inline-block">
-                    <input type="hidden" name="id" value={c.id} />
-                    <ConfirmSubmitButton
-                      triggerLabel="delete"
-                      title="Delete this community permanently?"
-                      description="This action permanently removes the community and related records. Use only for duplicates or spam."
-                      confirmLabel="Delete community"
-                      tone="danger"
-                      triggerClassName="text-xs text-red-600 hover:underline"
+                      {evidence.display.shortLabel}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 align-top">
+                    <CommunityPersonaTagEditor
+                      id={c.id}
+                      personaSegments={c.personaSegments}
+                      languages={c.languages}
                     />
-                  </form>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-3 py-2 text-xs">{c._count.events}</td>
+                  <td className="px-3 py-2 text-xs">{c._count.accessChannels}</td>
+                  <td className="px-3 py-2 text-right align-top">
+                    {c.city?.slug && (
+                      <Link
+                        href={`/${c.city.slug}/communities/${c.slug}`}
+                        className="text-brand-600 hover:text-brand-700 block text-xs hover:underline"
+                        target="_blank"
+                      >
+                        view ↗
+                      </Link>
+                    )}
+                    <form action={refreshCommunityEvidenceAction} className="mt-0.5">
+                      <input type="hidden" name="id" value={c.id} />
+                      <button
+                        type="submit"
+                        className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
+                      >
+                        refresh evidence
+                      </button>
+                    </form>
+                    <form action={deleteCommunityAction} className="mt-0.5">
+                      <input type="hidden" name="id" value={c.id} />
+                      <ConfirmSubmitButton
+                        triggerLabel="delete"
+                        title="Delete this community permanently?"
+                        description="This action permanently removes the community and related records. Use only for duplicates or spam."
+                        confirmLabel="Delete community"
+                        tone="danger"
+                        triggerClassName="text-xs text-red-600 hover:underline"
+                      />
+                    </form>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </AdminTable>
       </AdminTableWrap>
