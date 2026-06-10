@@ -1,5 +1,6 @@
 import { db, resolveCityIds } from '@/lib/db';
 import { subDays } from 'date-fns';
+import { getCommunityEvidenceBadge } from '@/lib/community-trust';
 import type {
   CommunityWithRelations,
   CommunityListItem,
@@ -114,6 +115,7 @@ export async function getCommunitiesByCity(
       claimState: true,
       city: { select: { name: true, slug: true } },
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
+      accessChannels: { select: { url: true } },
       _count: { select: { events: { where: { startsAt: { gte: new Date() } } } } },
     },
     orderBy: { activityScore: 'desc' },
@@ -121,7 +123,10 @@ export async function getCommunitiesByCity(
     skip: options?.offset ?? 0,
   });
 
-  return rows.map(addIsRecentlyAdded);
+  return rows.map(({ accessChannels, ...row }) => ({
+    ...addIsRecentlyAdded(row),
+    evidenceBadge: getCommunityEvidenceBadge(accessChannels.map((ch) => ch.url)),
+  }));
 }
 
 export async function countCommunitiesByCity(
@@ -189,6 +194,7 @@ export async function getCommunitiesPage(
       claimState: true,
       city: { select: { name: true, slug: true } },
       categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
+      accessChannels: { select: { url: true } },
       _count: { select: { events: { where: { startsAt: { gte: new Date() } } } } },
     },
     orderBy: [{ activityScore: 'desc' }, { id: 'asc' }],
@@ -197,8 +203,12 @@ export async function getCommunitiesPage(
   });
 
   const hasMore = rows.length > opts.limit;
+  const pageRows = hasMore ? rows.slice(0, opts.limit) : rows;
   return {
-    items: (hasMore ? rows.slice(0, opts.limit) : rows).map(addIsRecentlyAdded),
+    items: pageRows.map(({ accessChannels, ...row }) => ({
+      ...addIsRecentlyAdded(row),
+      evidenceBadge: getCommunityEvidenceBadge(accessChannels.map((ch) => ch.url)),
+    })),
     hasMore,
   };
 }

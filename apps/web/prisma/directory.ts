@@ -67,6 +67,7 @@ import {
 
 import { runResourcesSeed, type ResourcesResult } from './resources';
 import { assessEvidenceUrl } from '../src/lib/source-policy';
+import { buildStoredEvidence } from '../src/lib/community-trust';
 
 const prisma = new PrismaClient();
 
@@ -2460,6 +2461,15 @@ async function insertEntry(
     return { created: false, skippedInvalid: true };
   }
 
+  // PRD/TDD-0055: persist the SAME canonical evidence record everywhere
+  // (seed / submission / backfill) so `metadata.sourceEvidence` has one shape.
+  // Derive it from every public source the listing carries, matching what the
+  // backfill recomputes from access channels.
+  const sourceEvidence = buildStoredEvidence([
+    entry.sourceUrl,
+    ...entry.channels.map((channel) => channel.url),
+  ]);
+
   const cityId = cityIdBySlug.get(entry.citySlug);
   if (!cityId) {
     console.warn(
@@ -2491,13 +2501,9 @@ async function insertEntry(
       metadata: {
         editorialSource: 'directory-seed',
         sourceUrl: entry.sourceUrl,
-        sourceEvidence: {
-          tier: evidence.tier,
-          label: evidence.label,
-          requiresReview: evidence.requiresReview,
-        },
+        sourceEvidence,
         seededAt: new Date().toISOString(),
-        needsReview: entry.needsReview ?? evidence.requiresReview,
+        needsReview: entry.needsReview ?? sourceEvidence.requiresReview,
       },
     },
   });

@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { communityOptions } from '@indlokal/shared';
+import { getClaimProofReadout } from '@/lib/community-trust';
 import { approveClaim, rejectClaim } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { ConfirmSubmitButton } from '@/components/ui';
@@ -91,6 +92,13 @@ export default async function AdminClaimsPage() {
             const evidenceLinks =
               structuredEvidence.length > 0 ? structuredEvidence : legacyEvidence;
 
+            const proof = getClaimProofReadout(evidenceLinks.map((ev) => ev.url));
+            const proofChipColor =
+              proof?.display.tone === 'strong'
+                ? 'bg-emerald-100 text-emerald-700'
+                : proof?.display.tone === 'supported'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700';
             return (
               <div key={c.id} className="card-base p-6">
                 <div className="flex items-start justify-between gap-4">
@@ -116,10 +124,18 @@ export default async function AdminClaimsPage() {
                             <p className="text-muted text-xs font-medium tracking-wide uppercase">
                               Evidence ({evidenceLinks.length})
                             </p>
+                            {proof && (
+                              <span
+                                title={proof.reason}
+                                className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${proofChipColor}`}
+                              >
+                                {proof.text}
+                              </span>
+                            )}
                             <div className="mt-1.5 flex flex-wrap gap-2">
                               {evidenceLinks.map((ev) => (
                                 <a
-                                  key={ev.label}
+                                  key={`${ev.label}:${ev.url}`}
                                   href={ev.url}
                                   target="_blank"
                                   rel="noopener noreferrer"

@@ -23,6 +23,12 @@ If the community already exists on IndLokal, the user should claim it instead. I
 
 A manually reviewed submission pipeline ensures the directory maintains quality. A community with bad data, a dead link, or a duplicate entry degrades trust for all users. Every submission is a gate-kept write to the community graph.
 
+> How submitted sources are classified (strong vs weak vs not-evidence) and what each
+> class is allowed to unlock is defined by the
+> [Source & Evidence Policy](./SOURCE_AND_EVIDENCE_POLICY.md). "Broad discovery + strict
+> verification": weak public sources can still be listed for discovery; only strong
+> evidence supports a verified/trusted status.
+
 ### 2.2 Minimal Upfront Investment
 
 The form collects the minimum viable profile. The organiser is not asked to write a perfect description or upload a logo on day one. They can complete those via the organiser portal after approval.

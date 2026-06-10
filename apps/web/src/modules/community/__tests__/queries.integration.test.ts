@@ -121,4 +121,38 @@ describe('getCommunitiesByCity', () => {
     const result = await getCommunitiesByCity('does-not-exist');
     expect(result).toHaveLength(0);
   });
+
+  it('derives a strong_source evidence badge from a strong channel (PRD/TDD-0055)', async () => {
+    const city = await createCity(testDb);
+    await createCommunity(testDb, {
+      slug: 'registry-backed',
+      cityId: city.id,
+      accessChannels: {
+        create: [
+          {
+            channelType: 'WEBSITE',
+            url: 'https://www.handelsregister.de/rp_web/welcome.do',
+            label: 'Register',
+            isPrimary: true,
+          },
+        ],
+      },
+    });
+
+    const result = await getCommunitiesByCity('stuttgart');
+    const community = result.find((c) => c.slug === 'registry-backed');
+    expect(community?.evidenceBadge?.kind).toBe('strong_source');
+  });
+
+  it('omits the badge when channels carry no usable public evidence (PRD/TDD-0055)', async () => {
+    const city = await createCity(testDb);
+    await createCommunity(testDb, {
+      slug: 'no-evidence',
+      cityId: city.id,
+    });
+
+    const result = await getCommunitiesByCity('stuttgart');
+    const community = result.find((c) => c.slug === 'no-evidence');
+    expect(community?.evidenceBadge ?? null).toBeNull();
+  });
 });
