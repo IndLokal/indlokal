@@ -12,5 +12,7 @@ export {
   priorityBandForScore,
 } from './reverification';
 export type { ReverificationPriorityBand } from './reverification';
+export { getSection17OpsReadout } from './ops-readout';
+export type { Section17OpsReadout } from './ops-readout';
 export { getSavedResources } from './saved';
 export type { SavedResourceRow } from './saved';

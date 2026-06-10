@@ -44,6 +44,16 @@ export default async function DataHubPage() {
       label: 'Resource Reverification Queue',
       value: 'Ops queue + SLA',
     },
+    {
+      href: '/admin/data/journeys/backlog',
+      label: 'Journey Gap Backlog',
+      value: 'City × persona × stage SLA',
+    },
+    {
+      href: '/admin/data/resources/ops-readout',
+      label: 'Trust & Freshness Health',
+      value: 'Coverage, freshness, risk alerts',
+    },
     { href: '/admin/data/journeys', label: 'Journey Coverage', value: 'Persona × stage gate' },
     { href: '/admin/data/import', label: 'Bulk Import (CSV / JSON)', value: 'Upload & preview' },
     { href: '/admin/data/health', label: 'Data Health', value: 'Counts & integrity' },

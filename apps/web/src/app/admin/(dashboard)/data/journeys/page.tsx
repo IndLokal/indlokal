@@ -34,6 +34,14 @@ export default async function AdminJourneyCoveragePage({
         description="Per persona × stage component counts, graded against the same density gate the journey engine uses. READY = promotable. (PRD/TDD-0053)"
         backHref="/admin/data"
         backLabel="Data"
+        actions={
+          <Link
+            href="/admin/data/journeys/backlog"
+            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Open gap backlog
+          </Link>
+        }
       />
 
       <form className="mt-6" method="get">

@@ -18,6 +18,12 @@ import {
   resolveReverificationItem,
   setReverificationSla,
 } from '@/modules/resources/reverification';
+import {
+  assignJourneyGapItem,
+  ingestJourneyGapBacklog,
+  resolveJourneyGapItem,
+  setJourneyGapSla,
+} from '@/modules/journeys/ops-backlog';
 import { runBootstrap } from '../../../../../prisma/bootstrap';
 
 /* ───────────────────────────── Auth guard ───────────────────────────── */
@@ -794,6 +800,56 @@ export async function resolveResourceReverificationAction(formData: FormData) {
 
   await invalidateResourceCaches();
   revalidatePath('/admin/data/resources/reverification');
+}
+
+const JourneyGapResolutionStatus = z.enum(['RESOLVED', 'DISMISSED']);
+
+export async function ingestJourneyGapBacklogAction() {
+  await assertCan('admin.data.write');
+  await ingestJourneyGapBacklog(new Date());
+  revalidatePath('/admin/data/journeys');
+  revalidatePath('/admin/data/journeys/backlog');
+  redirect('/admin/data/journeys/backlog');
+}
+
+export async function assignJourneyGapBacklogAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const ownerUserId = String(formData.get('ownerUserId') || '');
+  if (!id || !ownerUserId) throw new Error('Missing backlog item or owner.');
+
+  await assignJourneyGapItem({ id, ownerUserId, reviewerId: reviewer.id });
+  revalidatePath('/admin/data/journeys/backlog');
+}
+
+export async function setJourneyGapBacklogSlaAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const slaDueAtRaw = String(formData.get('slaDueAt') || '');
+  if (!id || !slaDueAtRaw) throw new Error('Missing backlog item or SLA date.');
+
+  const slaDueAt = new Date(slaDueAtRaw);
+  if (Number.isNaN(slaDueAt.getTime())) throw new Error('Invalid SLA date.');
+
+  await setJourneyGapSla({ id, slaDueAt, reviewerId: reviewer.id });
+  revalidatePath('/admin/data/journeys/backlog');
+}
+
+export async function resolveJourneyGapBacklogAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) throw new Error('Missing backlog item id.');
+  const status = JourneyGapResolutionStatus.parse(formData.get('resolutionStatus'));
+  const notes = String(formData.get('resolutionNotes') || '').trim();
+
+  await resolveJourneyGapItem({
+    id,
+    status,
+    notes,
+    reviewerId: reviewer.id,
+  });
+
+  revalidatePath('/admin/data/journeys/backlog');
 }
 
 /**

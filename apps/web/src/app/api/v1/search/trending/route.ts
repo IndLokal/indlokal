@@ -8,6 +8,7 @@ import { apiHandler } from '@/lib/api/handlers';
 import { getTrendingKeywords } from '@/modules/search';
 import { withPublicCache } from '@/lib/api/cache';
 
+export const dynamic = 'force-dynamic';
 export const revalidate = 60;
 
 export const GET = apiHandler(async (req: NextRequest) => {

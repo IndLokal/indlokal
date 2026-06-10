@@ -41,6 +41,7 @@ model City {
   contentReports   ContentReport[]   @relation("CityReports")
   pipelineItems    PipelineItem[]
   outreachLeads    OutreachLead[]
+  journeyGapBacklogItems JourneyGapBacklog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -552,6 +553,14 @@ enum ResourceReverificationResolutionAction {
   DISMISSED
 }
 
+enum JourneyGapBacklogStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
 model Resource {
   id           String       @id @default(cuid())
   title        String
@@ -622,6 +631,37 @@ model ResourceReverificationQueue {
   @@index([ownerUserId, status], map: "resource_reverification_queue_owner_status_idx")
   @@index([slaDueAt, status], map: "resource_reverification_queue_sla_status_idx")
   @@map("resource_reverification_queue")
+}
+
+model JourneyGapBacklog {
+  id                    String                   @id @default(cuid())
+  cityId                String                   @map("city_id")
+  city                  City                     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  personaSlug           String                   @map("persona_slug")
+  personaLabel          String                   @map("persona_label")
+  stage                 ResourceStage
+  status                JourneyGapBacklogStatus  @default(OPEN)
+  priorityScore         Int                      @default(0) @map("priority_score")
+  trafficScore          Int                      @default(0) @map("traffic_score")
+  severityScore         Int                      @default(0) @map("severity_score")
+  stageCriticalityScore Int                      @default(0) @map("stage_criticality_score")
+  trustGapScore         Int                      @default(0) @map("trust_gap_score")
+  ownerUserId           String?                  @map("owner_user_id")
+  ownerUser             User?                    @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  slaDueAt              DateTime?                @map("sla_due_at")
+  gapSummary            String                   @map("gap_summary")
+  notes                 String?
+  firstDetectedAt       DateTime                 @default(now()) @map("first_detected_at")
+  lastDetectedAt        DateTime                 @default(now()) @map("last_detected_at")
+  resolvedAt            DateTime?                @map("resolved_at")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([cityId, personaSlug, stage], map: "journey_gap_backlog_city_persona_stage_key")
+  @@index([status, priorityScore], map: "journey_gap_backlog_status_priority_idx")
+  @@index([ownerUserId, status], map: "journey_gap_backlog_owner_status_idx")
+  @@index([slaDueAt, status], map: "journey_gap_backlog_sla_status_idx")
+  @@map("journey_gap_backlog")
 }
 
 // ─────────────────────────────────────────────────
@@ -711,6 +751,7 @@ model User {
   inboxItems              InboxItem[]
   businessConnectInvites  BusinessConnectInvite[]  @relation("BusinessConnectInviteInvitedBy")
   resourceReverificationAssignments ResourceReverificationQueue[]
+  journeyGapAssignments   JourneyGapBacklog[]
 
   metadata Json? // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
 
