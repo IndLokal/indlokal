@@ -37,6 +37,12 @@ export const authFlags: {
 
 export const mobileFlags = {
   auth: authFlags,
+  resources: {
+    personaEnabled: process.env.EXPO_PUBLIC_FEATURE_RESOURCES_PERSONA !== 'false',
+    intentEnabled: process.env.EXPO_PUBLIC_FEATURE_RESOURCES_INTENT !== 'false',
+    resumeEnabled: process.env.EXPO_PUBLIC_FEATURE_RESOURCES_RESUME !== 'false',
+    ctaEnabled: process.env.EXPO_PUBLIC_FEATURE_RESOURCES_CTA !== 'false',
+  },
   push: {
     preprompt: {
       enabled: process.env.EXPO_PUBLIC_PUSH_PREPROMPT_ENABLED !== 'false',
