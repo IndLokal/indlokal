@@ -179,6 +179,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                   href={withFilterHref(city, 'intent', active ? undefined : slug)}
                   event="resources_intent_chip_selected"
                   properties={{ city, intent: slug }}
+                  persistEntityType="RESOURCE"
+                  persistEntityId={`resources_hub:${city}`}
                   className={`rounded-lg px-3 py-2 text-sm ring-1 transition-all ${
                     active
                       ? 'bg-brand-100 text-brand-800 ring-brand-300'
@@ -204,6 +206,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       href={withFilterHref(city, 'persona', active ? undefined : slug)}
                       event="resources_persona_selected"
                       properties={{ city, persona: slug }}
+                      persistEntityType="RESOURCE"
+                      persistEntityId={`resources_hub:${city}`}
                       className={`rounded-lg px-3 py-2 text-sm ring-1 transition-all ${
                         active
                           ? 'bg-brand-600 ring-brand-600 text-white'
@@ -243,6 +247,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                   cta_position: 'primary',
                   variant: 'action_first_v1',
                 }}
+                persistEntityType="RESOURCE"
+                persistEntityId={`resources_hub:${city}`}
                 className="btn-primary self-start px-4 py-2 text-sm sm:shrink-0"
               >
                 Continue next step →
@@ -268,6 +274,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                   variant: 'action_first_v1',
                   action: 'browse_all',
                 }}
+                persistEntityType="RESOURCE"
+                persistEntityId={`resources_hub:${city}`}
                 className="text-brand-700 text-sm font-semibold hover:underline"
               >
                 Or browse all topics
@@ -289,6 +297,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       resource_type: r.resourceType,
                       is_stale: isResourceStale(r.validUntil),
                     }}
+                    persistEntityType="RESOURCE"
+                    persistEntityId={`resources_hub:${city}`}
                     className="hover:ring-brand-200 group flex items-center gap-3 rounded-lg bg-white px-3 py-2.5 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5"
                   >
                     <span
@@ -348,6 +358,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       resource_type: resource.resourceType,
                       is_stale: isResourceStale(resource.validUntil),
                     }}
+                    persistEntityType="RESOURCE"
+                    persistEntityId={`resources_hub:${city}`}
                     className="hover:ring-brand-200 group inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
                   >
                     <span>{guide.icon}</span>
@@ -384,6 +396,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                           resource_type: resource.resourceType,
                           is_stale: isResourceStale(resource.validUntil),
                         }}
+                        persistEntityType="RESOURCE"
+                        persistEntityId={`resources_hub:${city}`}
                         className="hover:ring-brand-200 group inline-flex items-center gap-2 rounded-lg bg-white px-3.5 py-2.5 text-sm ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
                       >
                         <span>{guide.icon}</span>

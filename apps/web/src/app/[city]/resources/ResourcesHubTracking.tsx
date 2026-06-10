@@ -13,6 +13,14 @@ type TrackingProps = {
   ctaEnabled?: boolean;
 };
 
+function persistTrack(payload: Record<string, unknown>): void {
+  fetch('/api/v1/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  }).catch(() => {});
+}
+
 export function ResourcesHubViewTracking({
   city,
   persona,
@@ -24,6 +32,13 @@ export function ResourcesHubViewTracking({
 
   useEffect(() => {
     track(Events.RESOURCES_HUB_VIEW, { city, persona, intent, variant });
+    persistTrack({
+      event: Events.RESOURCES_HUB_VIEW,
+      entityType: 'RESOURCE',
+      entityId: `resources_hub:${city}`,
+      citySlug: city,
+      metadata: { persona, intent, variant, source_surface: 'resources_hub' },
+    });
     track(Events.RESOURCES_EXPERIMENT_VARIANT_ASSIGNED, {
       city,
       variant,
@@ -54,6 +69,8 @@ type TrackedLinkProps = {
   properties?: Record<string, unknown>;
   className?: string;
   children: ReactNode;
+  persistEntityType?: 'RESOURCE' | 'EVENT' | 'COMMUNITY';
+  persistEntityId?: string;
 };
 
 export function ResourcesTrackedLink({
@@ -62,6 +79,8 @@ export function ResourcesTrackedLink({
   properties,
   className,
   children,
+  persistEntityType,
+  persistEntityId,
 }: TrackedLinkProps) {
   const track = useTrackEvent();
 
@@ -71,6 +90,15 @@ export function ResourcesTrackedLink({
       className={className}
       onClick={() => {
         track(event, properties);
+        if (persistEntityType && persistEntityId) {
+          persistTrack({
+            event,
+            entityType: persistEntityType,
+            entityId: persistEntityId,
+            citySlug: typeof properties?.city === 'string' ? properties.city : undefined,
+            metadata: { ...(properties ?? {}), source_event: event },
+          });
+        }
         if (properties?.is_stale === true) {
           track(Events.RESOURCES_STALE_ITEM_OPENED, properties);
         }
