@@ -6,7 +6,10 @@ import { RESOURCE_CATEGORIES, RESOURCE_SLUG_TO_TYPE } from '@/lib/config';
 import { PaginationControls } from '@/components/ui/PaginationControls';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { getResourcesForCity } from '@/modules/resources';
+import { getCommunitiesByCity } from '@/modules/community/queries';
+import { getUpcomingEvents } from '@/modules/event/queries';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
+import { ResourcesTrackedLink } from '../ResourcesHubTracking';
 
 /**
  * Resource Category Page - all guides within one topic.
@@ -58,6 +61,10 @@ export default async function ResourceCategoryPage({ params, searchParams }: Pro
   const resources = await getResourcesForCity(city, {
     type: resourceType as ResolverType,
   });
+  const [relatedCommunities, relatedEvents] = await Promise.all([
+    getCommunitiesByCity(city, { categorySlug: category, limit: 3 }),
+    getUpcomingEvents(city, { categorySlug: category, limit: 3 }),
+  ]);
   resources.sort((a, b) => a.title.localeCompare(b.title));
   const pagedResources = resources.slice(pagination.skip, pagination.skip + pagination.take);
   const paginationMeta = buildOffsetPaginationMeta({
@@ -175,6 +182,105 @@ export default async function ResourceCategoryPage({ params, searchParams }: Pro
           ))}
         </div>
       </section>
+
+      {(relatedCommunities.length > 0 || relatedEvents.length > 0) && (
+        <section>
+          <h2 className="text-lg font-semibold">Related communities and upcoming events</h2>
+          <p className="text-muted mt-1 text-sm">
+            Move from reading to participation with groups and events tied to this topic.
+          </p>
+
+          <div className="mt-4 grid gap-6 lg:grid-cols-2">
+            {relatedCommunities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Communities
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedCommunities.map((community) => (
+                    <ResourcesTrackedLink
+                      key={community.id}
+                      href={`/${city}/communities/${community.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'community',
+                        target_id: community.id,
+                        category,
+                      }}
+                      persistEntityType="COMMUNITY"
+                      persistEntityId={community.id}
+                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                            {community.name}
+                          </span>
+                          {community._count.events > 0 && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                              {community._count.events} upcoming
+                            </span>
+                          )}
+                        </div>
+                        {community.description && (
+                          <p className="text-muted mt-1 line-clamp-2 text-sm leading-relaxed">
+                            {community.description}
+                          </p>
+                        )}
+                      </div>
+                    </ResourcesTrackedLink>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {relatedEvents.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Upcoming events
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedEvents.map((event) => (
+                    <ResourcesTrackedLink
+                      key={event.id}
+                      href={`/${city}/events/${event.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'event',
+                        target_id: event.id,
+                        category,
+                      }}
+                      persistEntityType="EVENT"
+                      persistEntityId={event.id}
+                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                            {event.title}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                            {event.startsAt.toLocaleDateString('en-DE', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-muted mt-1 text-sm leading-relaxed">
+                          {event.community ? `${event.community.name} · ` : ''}
+                          {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                        </p>
+                      </div>
+                    </ResourcesTrackedLink>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="border-brand-100 bg-brand-50 rounded-xl border p-5">

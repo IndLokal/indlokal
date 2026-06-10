@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
 import { FLAGS } from '@/lib/config/flags';
+import { getCommunitiesByCity } from '@/modules/community/queries';
+import { getUpcomingEvents } from '@/modules/event/queries';
 import { getResourcesForCity } from '@/modules/resources';
 import { CitySubpageHeader } from '@/components/city/CitySubpageHeader';
 import { CitySeoTemplateSection } from '@/components/seo/CitySeoTemplateSection';
@@ -140,6 +142,22 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
       href: `/${city}/resources/${categorySlug}#${resource.slug}`,
     };
   });
+
+  const relatedCategorySlug =
+    (intentCfg
+      ? RESOURCE_CATEGORIES.find((category) => intentCfg.types.includes(category.type))?.slug
+      : undefined) ??
+    RESOURCE_CATEGORIES.find((category) => essentials.some((r) => r.resourceType === category.type))
+      ?.slug;
+  const relatedCategory = relatedCategorySlug
+    ? RESOURCE_CATEGORIES.find((category) => category.slug === relatedCategorySlug)
+    : undefined;
+  const [relatedCommunities, relatedEvents] = relatedCategorySlug
+    ? await Promise.all([
+        getCommunitiesByCity(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+        getUpcomingEvents(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+      ])
+    : [[], []];
 
   const totalGuides = visibleResources.length;
 
@@ -331,6 +349,82 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
               >
                 View full newcomer checklist
               </Link>
+            </div>
+          )}
+
+          {(relatedCommunities.length > 0 || relatedEvents.length > 0) && (
+            <div className="border-brand-100 mt-6 border-t pt-4">
+              <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                Related communities and events
+                {relatedCategory ? ` for ${relatedCategory.shortTitle}` : ''}
+              </h3>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {relatedCommunities.map((community) => (
+                  <ResourcesTrackedLink
+                    key={community.id}
+                    href={`/${city}/communities/${community.slug}`}
+                    event="resources_to_related_click"
+                    properties={{
+                      city,
+                      target_type: 'community',
+                      target_id: community.id,
+                      category: relatedCategorySlug,
+                    }}
+                    persistEntityType="COMMUNITY"
+                    persistEntityId={community.id}
+                    className="group rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                        {community.name}
+                      </span>
+                      {community._count.events > 0 && (
+                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                          {community._count.events} upcoming
+                        </span>
+                      )}
+                    </div>
+                    {community.description && (
+                      <p className="text-muted mt-1 line-clamp-2 text-sm leading-relaxed">
+                        {community.description}
+                      </p>
+                    )}
+                  </ResourcesTrackedLink>
+                ))}
+
+                {relatedEvents.map((event) => (
+                  <ResourcesTrackedLink
+                    key={event.id}
+                    href={`/${city}/events/${event.slug}`}
+                    event="resources_to_related_click"
+                    properties={{
+                      city,
+                      target_type: 'event',
+                      target_id: event.id,
+                      category: relatedCategorySlug,
+                    }}
+                    persistEntityType="EVENT"
+                    persistEntityId={event.id}
+                    className="group rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                        {event.title}
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                        {event.startsAt.toLocaleDateString('en-DE', {
+                          day: 'numeric',
+                          month: 'short',
+                        })}
+                      </span>
+                    </div>
+                    <p className="text-muted mt-1 text-sm leading-relaxed">
+                      {event.community ? `${event.community.name} · ` : ''}
+                      {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                    </p>
+                  </ResourcesTrackedLink>
+                ))}
+              </div>
             </div>
           )}
         </section>

@@ -5,8 +5,11 @@ import type { ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
 import { FLAGS } from '@/lib/config/flags';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
+import { getCommunitiesByCity } from '@/modules/community/queries';
+import { getUpcomingEvents } from '@/modules/event/queries';
 import { getResourcesForCity, type ResolvedResource } from '@/modules/resources';
 import { JourneyNextBestAction } from './JourneyNextBestAction';
+import { ResourcesTrackedLink } from '../ResourcesHubTracking';
 
 /**
  * Newcomer Journey - essentials-only resources grouped by lifecycle stage.
@@ -140,6 +143,20 @@ export default async function JourneyPage({ params }: Props) {
   const cityName = cityRow.name;
 
   const rows = await getResourcesForCity(city, { essentialsOnly: true });
+  const relatedCategorySlug = RESOURCE_CATEGORIES.find((category) =>
+    rows.some((resource) => resource.resourceType === category.type),
+  )?.slug;
+  const relatedCategory = relatedCategorySlug
+    ? RESOURCE_CATEGORIES.find((category) => category.slug === relatedCategorySlug)
+    : undefined;
+  let relatedCommunities: Awaited<ReturnType<typeof getCommunitiesByCity>> = [];
+  let relatedEvents: Awaited<ReturnType<typeof getUpcomingEvents>> = [];
+  if (relatedCategorySlug) {
+    [relatedCommunities, relatedEvents] = await Promise.all([
+      getCommunitiesByCity(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+      getUpcomingEvents(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+    ]);
+  }
   const actionCandidates = rows.map((resource) => ({
     id: resource.id,
     title: resource.title,
@@ -200,6 +217,108 @@ export default async function JourneyPage({ params }: Props) {
         candidates={actionCandidates}
         enabled={FLAGS.resourcesJourneyResumeEnabled}
       />
+
+      {(relatedCommunities.length > 0 || relatedEvents.length > 0) && (
+        <section>
+          <h2 className="text-lg font-semibold">Related communities and upcoming events</h2>
+          <p className="text-muted mt-1 text-sm">
+            Continue beyond the checklist with people and events connected to
+            {relatedCategory ? ` ${relatedCategory.shortTitle.toLowerCase()}` : ' this journey'}.
+          </p>
+
+          <div className="mt-4 grid gap-6 lg:grid-cols-2">
+            {relatedCommunities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Communities
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedCommunities.map((community) => (
+                    <ResourcesTrackedLink
+                      key={community.id}
+                      href={`/${city}/communities/${community.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'community',
+                        target_id: community.id,
+                        category: relatedCategorySlug,
+                        source_surface: 'resources_journey',
+                      }}
+                      persistEntityType="COMMUNITY"
+                      persistEntityId={community.id}
+                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                            {community.name}
+                          </span>
+                          {community._count.events > 0 && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                              {community._count.events} upcoming
+                            </span>
+                          )}
+                        </div>
+                        {community.description && (
+                          <p className="text-muted mt-1 line-clamp-2 text-sm leading-relaxed">
+                            {community.description}
+                          </p>
+                        )}
+                      </div>
+                    </ResourcesTrackedLink>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {relatedEvents.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Upcoming events
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedEvents.map((event) => (
+                    <ResourcesTrackedLink
+                      key={event.id}
+                      href={`/${city}/events/${event.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'event',
+                        target_id: event.id,
+                        category: relatedCategorySlug,
+                        source_surface: 'resources_journey',
+                      }}
+                      persistEntityType="EVENT"
+                      persistEntityId={event.id}
+                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                            {event.title}
+                          </span>
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                            {event.startsAt.toLocaleDateString('en-DE', {
+                              day: 'numeric',
+                              month: 'short',
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-muted mt-1 text-sm leading-relaxed">
+                          {event.community ? `${event.community.name} · ` : ''}
+                          {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                        </p>
+                      </div>
+                    </ResourcesTrackedLink>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {rows.length === 0 && (
         <div className="border-border rounded-xl border border-dashed p-10 text-center">
