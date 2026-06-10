@@ -4,6 +4,12 @@ Date: 2026-06-10
 Owner: Product (John)
 Status: Draft for execution
 
+## Document Authority
+
+- This file is the single source of truth for problem, goals, scope, and success metrics.
+- Delivery sequencing and sprint gate status live in `resources-improvement-two-sprint-plan.md`.
+- Story-level sequencing and ownership live in `../implementation-artifacts/resources-improvement-story-sequence.md`.
+
 ## 1. Problem
 
 The Resources section is useful but still behaves like a directory in key moments. Users with urgent life-transition intent (move, visa, housing, health, tax) need a guided, city-aware next-step experience. Current experience has strong data quality and scope resolution, but limited need-first entry, limited cross-linking to communities/events, and insufficient retention loops.

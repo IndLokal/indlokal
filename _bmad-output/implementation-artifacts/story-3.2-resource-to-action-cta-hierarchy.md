@@ -1,6 +1,6 @@
 # Story 3.2: Action-First Resource Detail CTA
 
-Status: Ready for Review
+Status: See resources-sprint-execution-board.md
 Epic: Information to Real-World Action
 Priority: P0
 Sprint Target: Sprint 1

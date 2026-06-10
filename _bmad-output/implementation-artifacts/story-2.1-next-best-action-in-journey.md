@@ -1,6 +1,6 @@
 # Story 2.1: Next Best Action in My Journey
 
-Status: Ready for Review
+Status: See resources-sprint-execution-board.md
 Epic: Progression and Resume
 Priority: P0
 Sprint Target: Sprint 1

@@ -1,6 +1,6 @@
 # Story 4.2: Outdated Feedback Loop
 
-Status: Draft
+Status: See resources-sprint-execution-board.md
 Epic: Measurement and Quality
 Priority: P2
 Sprint Target: Sprint 3+

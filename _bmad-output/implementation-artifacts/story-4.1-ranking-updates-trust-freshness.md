@@ -1,6 +1,6 @@
 # Story 4.1: Ranking Updates with Trust and Freshness
 
-Status: Draft
+Status: See resources-sprint-execution-board.md
 Epic: Measurement and Quality
 Priority: P1
 Sprint Target: Sprint 2

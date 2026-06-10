@@ -1,6 +1,6 @@
 # Story 4.3: Experimentation and Dashboard Baseline
 
-Status: In Progress
+Status: See resources-sprint-execution-board.md
 Epic: Measurement and Quality
 Priority: P0
 Sprint Target: Sprint 1

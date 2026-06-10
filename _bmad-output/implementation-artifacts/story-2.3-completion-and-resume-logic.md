@@ -1,6 +1,6 @@
 # Story 2.3: Resume-First Return State
 
-Status: Ready for Review
+Status: See resources-sprint-execution-board.md
 Epic: Progression and Resume
 Priority: P0
 Sprint Target: Sprint 1

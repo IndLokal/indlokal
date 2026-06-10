@@ -5,6 +5,13 @@ Owner: UX + Product + Engineering
 Scope: Web + Mobile resources experience
 Constraint: Additive rollout behind flags, no route breakage
 
+## Document Authority
+
+- This file owns UX IA, module ordering, and interaction behavior.
+- It does not own product scope, sprint gate truth, or story sequencing.
+- Product scope and outcomes: `resources-improvement-prd-one-pager.md`.
+- Sprint closure and rollout truth: `resources-improvement-two-sprint-plan.md` and `../implementation-artifacts/resources-sprint-execution-board.md`.
+
 ## 1. User Jobs to Win
 
 ### First 2 minutes

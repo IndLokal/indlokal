@@ -24,9 +24,9 @@ Primary metrics:
 ### Sprint 1 Scope (Execution)
 
 1. Story 1.1 Start Here orientation module
-2. Story 1.2 Focused shortlist and smart essentials
+2. Story 1.2 Focused shortlist and essentials behavior
 3. Story 2.1 Next best action in My Journey
-4. Story 3.2 Action-first resource detail CTA
+4. Story 3.2 Action-first resource details
 5. Story 2.3 Resume-first return state
 6. Story 4.3 Experimentation and dashboard baseline
 
@@ -88,6 +88,45 @@ Day 5:
 - Web UAT passed for journey progression and CTA flow.
 - Mobile manual UAT remains required before rollout expansion.
 - Analytics implementation is in code, but rollout expansion is blocked until dashboard and live data-quality checks pass.
+
+## Cross-Page Alignment Track (John + Sally)
+
+| Surface                                               | UX Risk | Status      | Sprint         | Required Action                                                           |
+| ----------------------------------------------------- | ------- | ----------- | -------------- | ------------------------------------------------------------------------- |
+| Web city feed (`/[city]`)                             | High    | Open        | Sprint 1 close | Collapse secondary sections by default and reduce first-view card density |
+| Mobile discover (`/(tabs)/index`)                     | High    | Open        | Sprint 1 close | Reduce control stack (chips/rail/tabs/lens) and simplify first viewport   |
+| Mobile resources (`/resources`)                       | Medium  | In progress | Sprint 1 close | Keep progressive disclosure defaults and validate comprehension in UAT    |
+| Web consular (`/[city]/consular-services`)            | Low     | Monitor     | Sprint 2       | Keep lean; only minor CTA clarity polish if needed                        |
+| Web weekly events (`/[city]/indian-events-this-week`) | Low     | Monitor     | Sprint 2       | Keep lean; verify no conversion drop after feed changes                   |
+
+## Sprint 1 Closure Checklist (Non-Negotiable)
+
+1. Mobile manual UAT evidence complete for stories 2.1, 2.3, 3.2.
+2. 4.3 dashboard live with baseline panels.
+3. Event data-quality checks passing (completeness + null-rate thresholds).
+4. Cross-page high-risk declutter tasks completed on web city feed and mobile discover.
+5. Sprint 1 stories moved from Conditional/Blocked to Ready for Review or Done.
+
+## Sprint 1 Handover
+
+Current owner: John.
+
+Next step in the chain:
+
+1. Amelia / FE-MOBILE + QA runs the one-pass mobile QA script in `sprint-1-qa-validation-checklist.md` and closes the mobile manual UAT evidence for stories 2.1, 2.3, and 3.2.
+2. DATA-ANALYTICS closes 4.3 by making the dashboard live and passing completeness / null-rate checks.
+3. John reviews the evidence, marks Sprint 1 green, and only then hands Sprint 2 kickoff to the next delivery owner.
+
+Required evidence from Amelia:
+
+- 1 Resources screenshot showing persona/intent plus trust/freshness.
+- 1 Resources resume screenshot, or a note stating `No existing progress to resume`.
+- 1 Journey screenshot showing next-action card plus progress state.
+- 1 short note confirming no runtime errors observed.
+
+Handover rule:
+
+- Do not start Sprint 2 implementation until both the mobile evidence and dashboard gate are green.
 
 ## Escalation Triggers
 

@@ -1,6 +1,6 @@
 # Story 1.2: Focused Shortlist and Smart Essentials
 
-Status: Ready for Review
+Status: See resources-sprint-execution-board.md
 Epic: Journey Shell and Orientation
 Priority: P0
 Sprint Target: Sprint 1

@@ -16,19 +16,19 @@ This file owns sequencing only.
 
 ### Sprint 1
 
-1. Story 1.1 Persona quick-start modules
-2. Story 1.2 Intent chips and smart essentials
-3. Story 2.1 Next best action in journey
-4. Story 3.2 Resource-to-action CTA hierarchy
-5. Story 2.3 Completion and resume logic
+1. Story 1.1 Start Here orientation module
+2. Story 1.2 Focused shortlist and essentials behavior
+3. Story 2.1 Next best action in My Journey
+4. Story 3.2 Action-first resource details
+5. Story 2.3 Resume-first return state
 6. Story 4.3 Experimentation and dashboard baseline
 
 ### Sprint 2
 
-7. Story 3.1 Related communities/events modules
-8. Story 2.2 Save and remind actions
-9. Story 1.3 Trust and freshness on cards
-10. Story 4.1 Ranking updates with freshness/trust
+7. Story 3.1 Related communities and events bridge
+8. Story 2.2 Save and remind support loop
+9. Story 1.3 Low-noise trust and freshness layer
+10. Story 4.1 Ranking policy with trust/freshness weighting
 
 ### Sprint 3+
 
@@ -66,20 +66,20 @@ This file owns sequencing only.
 
 ### Sprint 1
 
-- Story 1.1 Persona quick-start modules: 5 points
-- Story 1.2 Intent chips and smart essentials: 5 points
-- Story 2.1 Next best action in journey: 5 points
-- Story 3.2 Resource-to-action CTA hierarchy: 3 points
-- Story 2.3 Completion and resume logic: 5 points
+- Story 1.1 Start Here orientation module: 5 points
+- Story 1.2 Focused shortlist and essentials behavior: 5 points
+- Story 2.1 Next best action in My Journey: 5 points
+- Story 3.2 Action-first resource details: 3 points
+- Story 2.3 Resume-first return state: 5 points
 - Story 4.3 Experimentation and dashboard baseline: 3 points
 - Sprint 1 total: 26 points
 
 ### Sprint 2
 
-- Story 3.1 Related communities/events modules: 5 points
-- Story 2.2 Save and remind actions: 8 points
-- Story 1.3 Trust and freshness on cards: 3 points
-- Story 4.1 Ranking updates with freshness/trust: 5 points
+- Story 3.1 Related communities and events bridge: 5 points
+- Story 2.2 Save and remind support loop: 8 points
+- Story 1.3 Low-noise trust and freshness layer: 3 points
+- Story 4.1 Ranking policy with trust/freshness weighting: 5 points
 - Sprint 2 total: 21 points
 
 ### Sprint 3+

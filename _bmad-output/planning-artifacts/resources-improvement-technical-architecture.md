@@ -5,6 +5,13 @@ Architect: Winston
 Status: Proposed
 Inputs: resources-improvement-prd-one-pager.md, resources-improvement-epics-stories.md, resources-improvement-story-sequence.md
 
+## Document Authority
+
+- This file owns system design choices, compatibility constraints, APIs, and rollout architecture.
+- It does not own sprint gate status, story sequencing, or QA closure state.
+- Sprint gate truth: `resources-improvement-two-sprint-plan.md` and `../implementation-artifacts/resources-sprint-execution-board.md`.
+- Story sequencing truth: `../implementation-artifacts/resources-improvement-story-sequence.md`.
+
 ## 1. Architecture Intent
 
 Design a low-risk evolution of the current Resources stack from directory-style browsing to guided, intent-first progression while preserving:

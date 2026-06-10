@@ -4,6 +4,13 @@ Date: 2026-06-10
 Owner: Product (John)
 Status: aligned to journey-first redefinition
 
+## Document Authority
+
+- This file owns epic and story intent plus acceptance criteria.
+- It does not own sprint sequencing, gate status, or day-by-day execution.
+- Sprint sequencing source: `../implementation-artifacts/resources-improvement-story-sequence.md`.
+- Sprint gates and closure truth: `resources-improvement-two-sprint-plan.md` and `../implementation-artifacts/resources-sprint-execution-board.md`.
+
 ## Single Source of Truth
 
 To avoid repetition, these files are canonical and this file only defines execution deltas:
@@ -133,16 +140,6 @@ Acceptance Criteria:
 - Report payload includes resource, city, and timestamp metadata.
 - Triage state is visible to Ops workflow.
 
-## Priority by Sprint
+## Sequencing Note
 
-Sprint 1 (Journey shell + clarity):
-
-- 1.1, 1.2, 2.1, 3.2, 2.3, 4.3
-
-Sprint 2 (momentum + conversion):
-
-- 3.1, 2.2, 1.3 hardening, 4.1
-
-Sprint 3+:
-
-- 4.2 operational hardening and moderation feedback loops
+Story ordering by sprint is intentionally maintained only in `../implementation-artifacts/resources-improvement-story-sequence.md` to avoid divergence.

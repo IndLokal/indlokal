@@ -1,6 +1,6 @@
 # Story 2.2: Save and Remind Actions
 
-Status: Draft
+Status: See resources-sprint-execution-board.md
 Epic: Progression and Resume
 Priority: P1
 Sprint Target: Sprint 2

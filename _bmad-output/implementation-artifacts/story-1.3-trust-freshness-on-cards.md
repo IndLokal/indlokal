@@ -1,6 +1,6 @@
 # Story 1.3: Low-Noise Trust and Freshness Layer
 
-Status: In Progress
+Status: See resources-sprint-execution-board.md
 Epic: Journey Shell and Orientation
 Priority: P1
 Sprint Target: Sprint 2 (hardening)

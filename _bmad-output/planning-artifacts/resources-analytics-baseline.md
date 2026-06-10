@@ -4,6 +4,12 @@ Date: 2026-06-10
 Status: Sprint 1 baseline
 Owners: PM, DATA-ANALYTICS, FE-WEB, FE-MOBILE
 
+## Document Authority
+
+- This file owns event contract baseline, panel definitions, and data-quality gates.
+- It does not own sprint gate state or story acceptance criteria.
+- Sprint gate status is tracked in `resources-improvement-two-sprint-plan.md` and `../implementation-artifacts/resources-sprint-execution-board.md`.
+
 ## 1. Objective
 
 Establish a baseline event contract and dashboard slices for Sprint 1 resources improvements:

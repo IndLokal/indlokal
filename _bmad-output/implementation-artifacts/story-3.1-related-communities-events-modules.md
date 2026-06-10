@@ -1,6 +1,6 @@
 # Story 3.1: Related Communities and Events Modules
 
-Status: Draft
+Status: See resources-sprint-execution-board.md
 Epic: Information to Real-World Action
 Priority: P0
 Sprint Target: Sprint 2
