@@ -20,15 +20,11 @@ type Props = {
 
 export function JourneyNextBestAction({ city, cityName, candidates, enabled }: Props) {
   const track = useTrackEvent();
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) return;
+  const [checked, setChecked] = useState<Set<string>>(() => {
+    if (!enabled || typeof window === 'undefined') return new Set();
     const stored = window.localStorage.getItem(getJourneyProgressStorageKey(city));
-    setChecked(parseJourneyProgress(stored));
-    setHydrated(true);
-  }, [city, enabled]);
+    return parseJourneyProgress(stored);
+  });
 
   const nextAction = useMemo(
     () => selectNextJourneyAction(candidates, checked),
@@ -39,12 +35,12 @@ export function JourneyNextBestAction({ city, cityName, candidates, enabled }: P
   const total = candidates.length;
 
   useEffect(() => {
-    if (!enabled || !hydrated) return;
+    if (!enabled) return;
     track(Events.JOURNEY_VIEW, { city, source_surface: 'resources_journey' });
-  }, [enabled, hydrated, city, track]);
+  }, [enabled, city, track]);
 
   useEffect(() => {
-    if (!enabled || !hydrated || !nextAction) return;
+    if (!enabled || !nextAction) return;
     track(Events.JOURNEY_NEXT_ACTION_IMPRESSION, {
       city,
       source_surface: 'resources_journey',
@@ -58,10 +54,10 @@ export function JourneyNextBestAction({ city, cityName, candidates, enabled }: P
       cta_position: 'primary',
       variant: 'action_first_v1',
     });
-  }, [enabled, hydrated, nextAction, city, checked.size, total, track]);
+  }, [enabled, nextAction, city, checked.size, total, track]);
 
   useEffect(() => {
-    if (!enabled || !hydrated || !hasProgress || !nextAction) return;
+    if (!enabled || !hasProgress || !nextAction) return;
     track(Events.JOURNEY_RESUME_PROMPT_SHOWN, {
       city,
       source_surface: 'resources_journey',
@@ -69,9 +65,9 @@ export function JourneyNextBestAction({ city, cityName, candidates, enabled }: P
       progress_completed: checked.size,
       progress_total: total,
     });
-  }, [enabled, hydrated, hasProgress, nextAction, city, checked.size, total, track]);
+  }, [enabled, hasProgress, nextAction, city, checked.size, total, track]);
 
-  if (!enabled || !hydrated || total === 0) {
+  if (!enabled || total === 0) {
     return null;
   }
 

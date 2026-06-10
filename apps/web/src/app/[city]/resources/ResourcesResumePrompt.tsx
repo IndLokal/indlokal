@@ -20,15 +20,11 @@ type Props = {
 
 export function ResourcesResumePrompt({ city, cityName, candidates, enabled }: Props) {
   const track = useTrackEvent();
-  const [checked, setChecked] = useState<Set<string>>(new Set());
-  const [hydrated, setHydrated] = useState(false);
-
-  useEffect(() => {
-    if (!enabled) return;
+  const [checked, setChecked] = useState<Set<string>>(() => {
+    if (!enabled || typeof window === 'undefined') return new Set();
     const stored = window.localStorage.getItem(getJourneyProgressStorageKey(city));
-    setChecked(parseJourneyProgress(stored));
-    setHydrated(true);
-  }, [city, enabled]);
+    return parseJourneyProgress(stored);
+  });
 
   const nextAction = useMemo(
     () => selectNextJourneyAction(candidates, checked),
@@ -38,7 +34,7 @@ export function ResourcesResumePrompt({ city, cityName, candidates, enabled }: P
   const hasProgress = checked.size > 0 && checked.size < candidates.length;
 
   useEffect(() => {
-    if (!enabled || !hydrated || !hasProgress || !nextAction) return;
+    if (!enabled || !hasProgress || !nextAction) return;
     track(Events.JOURNEY_RESUME_PROMPT_SHOWN, {
       city,
       progress_completed: checked.size,
@@ -56,9 +52,9 @@ export function ResourcesResumePrompt({ city, cityName, candidates, enabled }: P
       cta_position: 'primary',
       variant: 'action_first_v1',
     });
-  }, [enabled, hydrated, hasProgress, nextAction, city, checked.size, candidates.length, track]);
+  }, [enabled, hasProgress, nextAction, city, checked.size, candidates.length, track]);
 
-  if (!enabled || !hydrated || !hasProgress || !nextAction) {
+  if (!enabled || !hasProgress || !nextAction) {
     return null;
   }
 
