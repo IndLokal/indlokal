@@ -56,6 +56,7 @@ import {
   computeSimilarity,
   findRejectedCommunityMatch,
   findRejectedEventMatch,
+  findRejectedResourceMatch,
   hasStrongEventIdentityEvidence,
   isCommunityNameMatch,
   isEventTitleMatch,
@@ -70,6 +71,7 @@ export { computeSimilarity, normalizeEventTitleForDedup } from './dedup';
 import type {
   ExtractedData,
   ExtractedEvent,
+  ExtractedResource,
   RawContent,
   PipelineRunResult,
   SearchRegion,
@@ -494,6 +496,12 @@ async function fetchAllSources(
 
 type ExtractedItem = ExtractedData & { sourceIndex: number };
 
+function getExtractedItemLabel(item: ExtractedData): string {
+  if (item.type === 'EVENT') return item.title;
+  if (item.type === 'COMMUNITY') return item.name;
+  return item.title;
+}
+
 // ─── Phase 2: Filter & Extract ─────────────────────────
 
 async function filterRelevantItems(
@@ -551,8 +559,9 @@ async function extractRelevantItems(
   result.itemsExtracted = extracted.length;
   const eventCount = extracted.filter((item) => item.type === 'EVENT').length;
   const communityCount = extracted.filter((item) => item.type === 'COMMUNITY').length;
+  const resourceCount = extracted.filter((item) => item.type === 'RESOURCE').length;
   console.log(
-    `[Pipeline] Extracted: ${extracted.length} structured items (${eventCount} events, ${communityCount} communities)`,
+    `[Pipeline] Extracted: ${extracted.length} structured items (${eventCount} events, ${communityCount} communities, ${resourceCount} resources)`,
   );
 
   return extracted;
@@ -596,13 +605,17 @@ async function resolveAndQueue(
   const decisionCounts = {
     queuedEvents: 0,
     queuedCommunities: 0,
+    queuedResources: 0,
     queuedPendingCityEvents: 0,
     queuedPendingCityCommunities: 0,
+    queuedPendingCityResources: 0,
     duplicateEvents: 0,
     duplicateCommunities: 0,
+    duplicateResources: 0,
     rejectedSuppressed: 0,
     noCityEvents: 0,
     noCityCommunities: 0,
+    noCityResources: 0,
     pastEvents: 0,
   };
 
@@ -614,8 +627,10 @@ async function resolveAndQueue(
       extracted: number;
       queuedEvents: number;
       queuedCommunities: number;
+      queuedResources: number;
       duplicateEvents: number;
       duplicateCommunities: number;
+      duplicateResources: number;
       pastEvents: number;
     }
   >();
@@ -631,8 +646,10 @@ async function resolveAndQueue(
       extracted: 0,
       queuedEvents: 0,
       queuedCommunities: 0,
+      queuedResources: 0,
       duplicateEvents: 0,
       duplicateCommunities: 0,
+      duplicateResources: 0,
       pastEvents: 0,
     };
     cityDecisionMap.set(cityId, created);
@@ -668,7 +685,7 @@ async function resolveAndQueue(
       cityId = fallbackCity.id;
       isCityPending = true;
       console.log(
-        `[Pipeline] Pending city fallback: ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+        `[Pipeline] Pending city fallback: ${getExtractedItemLabel(item)} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
       );
     }
 
@@ -694,11 +711,13 @@ async function resolveAndQueue(
       result.itemsSkippedNoCity++;
       if (item.type === 'EVENT') {
         decisionCounts.noCityEvents++;
-      } else {
+      } else if (item.type === 'COMMUNITY') {
         decisionCounts.noCityCommunities++;
+      } else {
+        decisionCounts.noCityResources++;
       }
       console.log(
-        `[Pipeline] Skipped (no city): ${item.type === 'EVENT' ? item.title : item.name} - cityName: ${item.cityName}`,
+        `[Pipeline] Skipped (no city): ${getExtractedItemLabel(item)} - cityName: ${item.cityName}`,
       );
       continue;
     }
@@ -737,9 +756,12 @@ async function resolveAndQueue(
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
         cityCounter.duplicateEvents++;
-      } else {
+      } else if (item.type === 'COMMUNITY') {
         decisionCounts.duplicateCommunities++;
         cityCounter.duplicateCommunities++;
+      } else {
+        decisionCounts.duplicateResources++;
+        cityCounter.duplicateResources++;
       }
       continue;
     }
@@ -751,20 +773,24 @@ async function resolveAndQueue(
     const rejectedMatch =
       item.type === 'EVENT'
         ? await findRejectedEventMatch({ event: item, cityId, sourceUrl: sourceRaw.sourceUrl })
-        : await findRejectedCommunityMatch({
-            community: item,
-            cityId,
-            sourceUrl: sourceRaw.sourceUrl,
-          });
+        : item.type === 'COMMUNITY'
+          ? await findRejectedCommunityMatch({
+              community: item,
+              cityId,
+              sourceUrl: sourceRaw.sourceUrl,
+            })
+          : await findRejectedResourceMatch({
+              resource: item,
+              cityId,
+              sourceUrl: sourceRaw.sourceUrl,
+            });
     if (rejectedMatch) {
       // Counted under the duplicate bucket for run-history persistence (no new
       // schema column), but logged distinctly for diagnosis.
       result.itemsSkippedDuplicate++;
       decisionCounts.rejectedSuppressed++;
       console.log(
-        `[Pipeline] Skipped (previously rejected: ${rejectedMatch.reason}): ${
-          item.type === 'EVENT' ? item.title : item.name
-        }`,
+        `[Pipeline] Skipped (previously rejected: ${rejectedMatch.reason}): ${getExtractedItemLabel(item)}`,
       );
       continue;
     }
@@ -784,9 +810,20 @@ async function resolveAndQueue(
       !item.cityName && resolvedCity ? { ...item, cityName: resolvedCity.name } : item;
 
     // Queue for review
+    // Winston/ADR: RESOURCE lane is flag-gated. Drop resource items silently
+    // when lane is not yet enabled so deployments can precede migration.
+    if (queuedItem.type === 'RESOURCE' && !FLAGS.pipelineResourceLaneEnabled) {
+      continue;
+    }
+
     const createdItem = await db.pipelineItem.create({
       data: {
-        entityType: queuedItem.type === 'EVENT' ? 'EVENT' : 'COMMUNITY',
+        entityType:
+          queuedItem.type === 'EVENT'
+            ? 'EVENT'
+            : queuedItem.type === 'COMMUNITY'
+              ? 'COMMUNITY'
+              : 'RESOURCE',
         sourceType: sourceRaw.sourceType as import('@prisma/client').PipelineSourceType,
         sourceUrl: sourceRaw.sourceUrl,
         rawContent: sourceRaw.text.slice(0, 50_000),
@@ -843,10 +880,14 @@ async function resolveAndQueue(
       decisionCounts.queuedEvents++;
       cityCounter.queuedEvents++;
       if (isCityPending) decisionCounts.queuedPendingCityEvents++;
-    } else {
+    } else if (queuedItem.type === 'COMMUNITY') {
       decisionCounts.queuedCommunities++;
       cityCounter.queuedCommunities++;
       if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
+    } else {
+      decisionCounts.queuedResources++;
+      cityCounter.queuedResources++;
+      if (isCityPending) decisionCounts.queuedPendingCityResources++;
     }
 
     const autoApprove =
@@ -871,12 +912,15 @@ async function resolveAndQueue(
   }
 
   console.log(
-    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities; previously-rejected suppressed ${decisionCounts.rejectedSuppressed}; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities; past events ${decisionCounts.pastEvents}`,
+    `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities/${decisionCounts.queuedResources} resources (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities/${decisionCounts.queuedPendingCityResources} resources); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities/${decisionCounts.duplicateResources} resources; previously-rejected suppressed ${decisionCounts.rejectedSuppressed}; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities/${decisionCounts.noCityResources} resources; past events ${decisionCounts.pastEvents}`,
   );
 
   result.cityBreakdown = [...cityDecisionMap.values()].sort((a, b) => {
     const queuedDelta =
-      b.queuedEvents + b.queuedCommunities - (a.queuedEvents + a.queuedCommunities);
+      b.queuedEvents +
+      b.queuedCommunities +
+      b.queuedResources -
+      (a.queuedEvents + a.queuedCommunities + a.queuedResources);
     if (queuedDelta !== 0) return queuedDelta;
     return b.extracted - a.extracted;
   });
@@ -903,6 +947,10 @@ async function checkDuplicate(
     return checkEventDuplicate(item, cityId);
   }
 
+  if (item.type === 'RESOURCE') {
+    return checkResourceDuplicate(item, cityId);
+  }
+
   return checkCommunityDuplicate(item, cityId);
 }
 
@@ -911,7 +959,8 @@ async function checkSourceUrlDuplicate(
   cityId: string,
   itemType: ExtractedData['type'],
 ): Promise<DedupResult> {
-  const entityType = itemType === 'EVENT' ? 'EVENT' : 'COMMUNITY';
+  const entityType =
+    itemType === 'EVENT' ? 'EVENT' : itemType === 'COMMUNITY' ? 'COMMUNITY' : 'RESOURCE';
   const existingQueueItem = await db.pipelineItem.findFirst({
     where: {
       sourceUrl,
@@ -1241,6 +1290,131 @@ async function checkCommunityDuplicate(
           normalizedIncomingName,
           normalizeCommunityName(String(pendingCommunity.name)),
         ),
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+  }
+
+  return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
+}
+
+function normalizeScopeForDedup(value: string | null | undefined): string {
+  return (value ?? 'CITY').toUpperCase();
+}
+
+function normalizeScopeRegionForDedup(value: string | null | undefined): string | null {
+  const v = value?.trim().toLowerCase();
+  return v && v.length > 0 ? v : null;
+}
+
+function isResourceScopeCompatible(
+  incoming: { scope: string | null; scopeRegion: string | null },
+  candidate: { scope: string | null; scopeRegion: string | null },
+): boolean {
+  const incomingScope = normalizeScopeForDedup(incoming.scope);
+  const candidateScope = normalizeScopeForDedup(candidate.scope);
+  if (incomingScope !== candidateScope) return false;
+
+  if (incomingScope === 'GLOBAL') return true;
+
+  const incomingRegion = normalizeScopeRegionForDedup(incoming.scopeRegion);
+  const candidateRegion = normalizeScopeRegionForDedup(candidate.scopeRegion);
+  return incomingRegion === candidateRegion;
+}
+
+async function checkResourceDuplicate(
+  resource: ExtractedResource,
+  cityId: string,
+): Promise<DedupResult> {
+  const incomingUrl = normalizeComparableUrl(resource.url);
+  const normalizedTitle = normalizeCommunityName(resource.title);
+  const incomingScope = resource.scope ?? 'CITY';
+  const incomingScopeRegion = resource.scopeRegion ?? null;
+
+  const resourceCandidates = await db.resource.findMany({
+    where: {
+      OR: [{ cityId }, { scope: { in: ['COUNTRY', 'GLOBAL', 'STATE', 'METRO', 'DISTRICT'] } }],
+      isHidden: false,
+    },
+    select: {
+      id: true,
+      title: true,
+      url: true,
+      resourceType: true,
+      scope: true,
+      scopeRegion: true,
+    },
+    take: DEDUP_QUEUE_SCAN_LIMIT,
+  });
+
+  for (const candidate of resourceCandidates) {
+    if (
+      !isResourceScopeCompatible(
+        { scope: incomingScope, scopeRegion: incomingScopeRegion },
+        { scope: candidate.scope, scopeRegion: candidate.scopeRegion },
+      )
+    ) {
+      continue;
+    }
+
+    const candidateUrl = normalizeComparableUrl(candidate.url);
+    if (incomingUrl && candidateUrl && incomingUrl === candidateUrl) {
+      return { isDuplicate: true, matchedId: candidate.id, matchScore: 1, matchKind: 'ENTITY' };
+    }
+
+    const titleScore = computeSimilarity(normalizedTitle, normalizeCommunityName(candidate.title));
+    if (
+      titleScore >= 0.72 &&
+      (!resource.resourceType || resource.resourceType === candidate.resourceType)
+    ) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: titleScore,
+        matchKind: 'ENTITY',
+      };
+    }
+  }
+
+  const pendingItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType: 'RESOURCE',
+      status: { in: [...DEDUP_ACTIVE_STATUSES] },
+    },
+    select: { id: true, extractedData: true },
+    take: DEDUP_QUEUE_SCAN_LIMIT,
+  });
+
+  for (const candidate of pendingItems) {
+    const pending = candidate.extractedData as unknown as Partial<ExtractedResource>;
+    if (!pending.title) continue;
+
+    if (
+      !isResourceScopeCompatible(
+        { scope: incomingScope, scopeRegion: incomingScopeRegion },
+        { scope: pending.scope ?? null, scopeRegion: pending.scopeRegion ?? null },
+      )
+    ) {
+      continue;
+    }
+
+    const pendingUrl = normalizeComparableUrl(pending.url ?? null);
+    if (incomingUrl && pendingUrl && incomingUrl === pendingUrl) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: 1,
+        matchKind: 'PIPELINE_ITEM',
+      };
+    }
+
+    const titleScore = computeSimilarity(normalizedTitle, normalizeCommunityName(pending.title));
+    if (titleScore >= 0.72) {
+      return {
+        isDuplicate: true,
+        matchedId: candidate.id,
+        matchScore: titleScore,
         matchKind: 'PIPELINE_ITEM',
       };
     }

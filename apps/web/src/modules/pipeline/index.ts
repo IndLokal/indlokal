@@ -27,6 +27,12 @@ export {
 export { getSourceReliabilityStats } from './reliability';
 
 // ─── Types ──────────────────────────────────────────────────────────────
-export type { PipelineRunResult, ExtractedEvent, ExtractedCommunity, ExtractedData } from './types';
+export type {
+  PipelineRunResult,
+  ExtractedEvent,
+  ExtractedCommunity,
+  ExtractedResource,
+  ExtractedData,
+} from './types';
 export type { PipelineRunScope } from './orchestrator';
 export type { SourceReliabilityStat } from './reliability';

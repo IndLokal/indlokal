@@ -171,7 +171,25 @@ export type ExtractedCommunity = {
   fieldConfidence: Record<string, number>;
 };
 
-export type ExtractedData = ExtractedEvent | ExtractedCommunity;
+/** Structured resource data discovered from official/utility pages */
+export type ExtractedResource = {
+  type: 'RESOURCE';
+  title: string;
+  description: string | null;
+  cityName: string | null;
+  resourceType: string | null;
+  scope: 'GLOBAL' | 'COUNTRY' | 'STATE' | 'METRO' | 'CITY' | 'DISTRICT' | null;
+  scopeRegion: string | null;
+  audiences: string[];
+  lifecycleStage: string[];
+  url: string | null;
+  validUntil: string | null; // YYYY-MM-DD
+  isOfficialSource: boolean;
+  confidence: number;
+  fieldConfidence: Record<string, number>;
+};
+
+export type ExtractedData = ExtractedEvent | ExtractedCommunity | ExtractedResource;
 
 // ─── Pipeline run metrics ──────────────────────────────
 
@@ -181,8 +199,10 @@ export type PipelineCityBreakdown = {
   extracted: number;
   queuedEvents: number;
   queuedCommunities: number;
+  queuedResources: number;
   duplicateEvents: number;
   duplicateCommunities: number;
+  duplicateResources: number;
   pastEvents: number;
 };
 

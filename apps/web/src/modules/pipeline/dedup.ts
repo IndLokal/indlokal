@@ -416,3 +416,62 @@ export async function findRejectedCommunityMatch(input: {
 
   return null;
 }
+
+/**
+ * Return a match if this resource was previously rejected for the same city.
+ * Compares by normalized source URL first, then by canonical URL/title similarity.
+ */
+export async function findRejectedResourceMatch(input: {
+  resource: ExtractedData & { type: 'RESOURCE' };
+  cityId: string;
+  sourceUrl?: string | null;
+}): Promise<RejectedMatch | null> {
+  const { resource, cityId, sourceUrl } = input;
+
+  const rejectedItems = await db.pipelineItem.findMany({
+    where: {
+      cityId,
+      entityType: 'RESOURCE',
+      status: { in: [...DEDUP_REJECTED_STATUSES] },
+    },
+    orderBy: { reviewedAt: 'desc' },
+    take: DEDUP_QUEUE_SCAN_LIMIT,
+    select: { id: true, sourceUrl: true, extractedData: true },
+  });
+  if (rejectedItems.length === 0) return null;
+
+  const normalizedIncomingSourceUrl = normalizeSourceUrlForDedup(sourceUrl);
+  const normalizedIncomingResourceUrl = normalizeComparableUrl(resource.url);
+  const normalizedIncomingTitle = normalizeCommunityName(resource.title);
+
+  for (const item of rejectedItems) {
+    if (
+      normalizedIncomingSourceUrl &&
+      normalizeSourceUrlForDedup(item.sourceUrl) === normalizedIncomingSourceUrl
+    ) {
+      return { matchedItemId: item.id, reason: 'rejected-source-url' };
+    }
+
+    const previous = item.extractedData as unknown as Partial<ExtractedData>;
+    if (previous.type !== 'RESOURCE' || !previous.title) continue;
+
+    const previousUrl = normalizeComparableUrl(previous.url ?? null);
+    if (
+      normalizedIncomingResourceUrl &&
+      previousUrl &&
+      normalizedIncomingResourceUrl === previousUrl
+    ) {
+      return { matchedItemId: item.id, reason: 'rejected-source-url' };
+    }
+
+    const titleScore = computeSimilarity(
+      normalizedIncomingTitle,
+      normalizeCommunityName(previous.title),
+    );
+    if (titleScore >= COMMUNITY_DUPLICATE_NAME_THRESHOLD) {
+      return { matchedItemId: item.id, reason: 'rejected-name' };
+    }
+  }
+
+  return null;
+}

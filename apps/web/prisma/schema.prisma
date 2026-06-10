@@ -1107,6 +1107,7 @@ model ContentLog {
 enum PipelineEntityType {
   EVENT
   COMMUNITY
+  RESOURCE
 }
 
 enum PipelineItemStatus {

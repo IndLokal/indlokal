@@ -21,7 +21,8 @@ function scoreRisk(resourceType: string): number {
   if (
     resourceType === 'CONSULAR_SERVICE' ||
     resourceType === 'VISA_SERVICE' ||
-    resourceType === 'CITY_REGISTRATION'
+    resourceType === 'CITY_REGISTRATION' ||
+    resourceType === 'HEALTH_DOCTORS'
   ) {
     return 90;
   }
