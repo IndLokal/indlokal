@@ -8,7 +8,6 @@ Status: Draft for next implementation track after current resources closeout com
 
 - This file is the active planning source for remaining Product Document Section 17 work.
 - Strategy source: `../../docs/PRODUCT_DOCUMENT.md` Section 17.
-- Implementation gap source: `../../docs/RESOURCE_SUPPLY_TRUST_AUDIT.md`.
 - Active sprint execution remains in `../implementation-artifacts/resources-sprint-execution-board.md`.
 
 ## 1. What remains from Product Document Section 17
