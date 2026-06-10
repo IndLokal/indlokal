@@ -69,6 +69,7 @@ export async function cleanDb(): Promise<void> {
     testDb.eventCategory.deleteMany(),
     testDb.accessChannel.deleteMany(),
     testDb.event.deleteMany(),
+    testDb.resourceReverificationQueue.deleteMany(),
     testDb.resource.deleteMany(),
     testDb.community.deleteMany(),
     testDb.user.deleteMany(),

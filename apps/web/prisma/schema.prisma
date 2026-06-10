@@ -537,6 +537,21 @@ enum ResourceStage {
   ANYTIME
 }
 
+enum ResourceReverificationStatus {
+  OPEN
+  ASSIGNED
+  RESOLVED
+  DISMISSED
+}
+
+enum ResourceReverificationResolutionAction {
+  VERIFIED
+  CORRECTED
+  HIDDEN
+  ARCHIVED
+  DISMISSED
+}
+
 model Resource {
   id           String       @id @default(cuid())
   title        String
@@ -568,6 +583,7 @@ model Resource {
   source            ContentSource @default(ADMIN_SEED)
   metadata          Json?
   savedBy           SavedResource[]
+  reverificationQueue ResourceReverificationQueue[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -578,6 +594,34 @@ model Resource {
   @@index([isEssential])
   @@index([scope, scopeRegion])
   @@map("resources")
+}
+
+model ResourceReverificationQueue {
+  id               String                                @id @default(cuid())
+  resourceId       String                                @map("resource_id")
+  resource         Resource                              @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  status           ResourceReverificationStatus          @default(OPEN)
+  stateBucket      String                                @map("state_bucket")
+  priorityScore    Int                                   @default(0) @map("priority_score")
+  riskScore        Int                                   @default(0) @map("risk_score")
+  trafficScore     Int                                   @default(0) @map("traffic_score")
+  stalenessScore   Int                                   @default(0) @map("staleness_score")
+  criticalityScore Int                                   @default(0) @map("criticality_score")
+  ownerUserId      String?                               @map("owner_user_id")
+  ownerUser        User?                                 @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  slaDueAt         DateTime?                             @map("sla_due_at")
+  resolutionAction ResourceReverificationResolutionAction? @map("resolution_action")
+  resolutionNotes  String?                               @map("resolution_notes")
+  firstQueuedAt    DateTime                              @default(now()) @map("first_queued_at")
+  lastStateChangedAt DateTime                            @default(now()) @map("last_state_changed_at")
+  createdAt        DateTime                              @default(now()) @map("created_at")
+  updatedAt        DateTime                              @updatedAt @map("updated_at")
+
+  @@unique([resourceId], map: "resource_reverification_queue_resource_id_key")
+  @@index([status, priorityScore], map: "resource_reverification_queue_status_priority_idx")
+  @@index([ownerUserId, status], map: "resource_reverification_queue_owner_status_idx")
+  @@index([slaDueAt, status], map: "resource_reverification_queue_sla_status_idx")
+  @@map("resource_reverification_queue")
 }
 
 // ─────────────────────────────────────────────────
@@ -666,6 +710,7 @@ model User {
   notificationOutbox      NotificationOutbox[]
   inboxItems              InboxItem[]
   businessConnectInvites  BusinessConnectInvite[]  @relation("BusinessConnectInviteInvitedBy")
+  resourceReverificationAssignments ResourceReverificationQueue[]
 
   metadata Json? // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
 

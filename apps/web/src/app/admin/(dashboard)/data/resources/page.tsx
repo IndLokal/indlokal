@@ -67,6 +67,24 @@ export default async function AdminResourcesPage({
     itemCount: resources.length,
   });
 
+  function governanceSummary(metadata: Prisma.JsonValue | null): {
+    mode: 'OWNED' | 'CURATED';
+    riskClass: string | null;
+  } {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+      return { mode: 'CURATED', riskClass: null };
+    }
+    const obj = metadata as Record<string, unknown>;
+    const mode = obj.contentMode === 'OWNED' ? 'OWNED' : 'CURATED';
+    const governance =
+      obj.governance && typeof obj.governance === 'object' && !Array.isArray(obj.governance)
+        ? (obj.governance as Record<string, unknown>)
+        : null;
+    const riskClass =
+      governance && typeof governance.riskClass === 'string' ? governance.riskClass : null;
+    return { mode, riskClass };
+  }
+
   return (
     <AdminPage>
       <AdminPageHeader
@@ -74,12 +92,20 @@ export default async function AdminResourcesPage({
         backHref="/admin/data"
         backLabel="Data"
         actions={
-          <Link
-            href="/admin/data/resources/new"
-            className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white"
-          >
-            New resource
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/admin/data/resources/reverification"
+              className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              Reverification queue
+            </Link>
+            <Link
+              href="/admin/data/resources/new"
+              className="bg-brand-600 hover:bg-brand-700 rounded-lg px-4 py-2 text-sm font-medium text-white"
+            >
+              New resource
+            </Link>
+          </div>
         }
       />
 
@@ -152,59 +178,77 @@ export default async function AdminResourcesPage({
               <AdminTh>Type</AdminTh>
               <AdminTh>City</AdminTh>
               <AdminTh>Journey tags</AdminTh>
+              <AdminTh>Governance</AdminTh>
               <AdminTh>URL</AdminTh>
               <AdminTh>Actions</AdminTh>
             </tr>
           </AdminTableHead>
           <tbody>
-            {resources.map((r) => (
-              <tr key={r.id} className="border-border border-b last:border-b-0">
-                <td className="px-3 py-2">
-                  <div className="font-medium">{r.title}</div>
-                  <div className="text-muted font-mono text-xs">{r.slug}</div>
-                </td>
-                <td className="px-3 py-2 text-xs">{r.resourceType}</td>
-                <td className="px-3 py-2 text-xs">{r.city?.name ?? '-'}</td>
-                <td className="px-3 py-2 align-top">
-                  <ResourceJourneyTagEditor
-                    id={r.id}
-                    audiences={r.audiences}
-                    lifecycleStage={r.lifecycleStage}
-                  />
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  {r.url && (
-                    <a
-                      href={r.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-600 hover:underline"
-                    >
-                      open ↗
-                    </a>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <Link
-                    href={`/admin/data/resources/${r.id}`}
-                    className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
-                  >
-                    edit
-                  </Link>
-                  <form action={deleteResourceAction} className="ml-3 inline-block">
-                    <input type="hidden" name="id" value={r.id} />
-                    <ConfirmSubmitButton
-                      triggerLabel="delete"
-                      title="Delete this resource permanently?"
-                      description="This action permanently removes the resource record."
-                      confirmLabel="Delete resource"
-                      tone="danger"
-                      triggerClassName="text-xs text-red-600 hover:underline"
+            {resources.map((r) => {
+              const gov = governanceSummary(r.metadata as Prisma.JsonValue | null);
+              return (
+                <tr key={r.id} className="border-border border-b last:border-b-0">
+                  <td className="px-3 py-2">
+                    <div className="font-medium">{r.title}</div>
+                    <div className="text-muted font-mono text-xs">{r.slug}</div>
+                  </td>
+                  <td className="px-3 py-2 text-xs">{r.resourceType}</td>
+                  <td className="px-3 py-2 text-xs">{r.city?.name ?? '-'}</td>
+                  <td className="px-3 py-2 align-top">
+                    <ResourceJourneyTagEditor
+                      id={r.id}
+                      audiences={r.audiences}
+                      lifecycleStage={r.lifecycleStage}
                     />
-                  </form>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        gov.mode === 'OWNED'
+                          ? 'bg-amber-100 text-amber-800'
+                          : 'bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      {gov.mode}
+                    </span>
+                    {gov.riskClass ? (
+                      <div className="text-muted mt-1 text-[11px]">risk: {gov.riskClass}</div>
+                    ) : null}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {r.url && (
+                      <a
+                        href={r.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-600 hover:underline"
+                      >
+                        open ↗
+                      </a>
+                    )}
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <Link
+                      href={`/admin/data/resources/${r.id}`}
+                      className="text-brand-600 hover:text-brand-700 text-xs hover:underline"
+                    >
+                      edit
+                    </Link>
+                    <form action={deleteResourceAction} className="ml-3 inline-block">
+                      <input type="hidden" name="id" value={r.id} />
+                      <ConfirmSubmitButton
+                        triggerLabel="delete"
+                        title="Delete this resource permanently?"
+                        description="This action permanently removes the resource record."
+                        confirmLabel="Delete resource"
+                        tone="danger"
+                        triggerClassName="text-xs text-red-600 hover:underline"
+                      />
+                    </form>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </AdminTable>
       </AdminTableWrap>

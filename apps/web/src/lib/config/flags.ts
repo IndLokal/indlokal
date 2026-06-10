@@ -33,6 +33,10 @@ export const FLAGS = {
 
   /** Action-first CTA hierarchy rollout for resources surfaces. Disable via FEATURE_RESOURCES_CTA=false */
   resourcesActionCtaEnabled: process.env.FEATURE_RESOURCES_CTA !== 'false',
+
+  /** Resource reverification queue ingestion/ops loop. Enable with RESOURCES_REVERIFICATION_QUEUE_ENABLED=true */
+  resourcesReverificationQueueEnabled:
+    process.env.RESOURCES_REVERIFICATION_QUEUE_ENABLED === 'true',
 } as const;
 
 /**

@@ -61,19 +61,8 @@ const STAGE_LABELS: Record<ResourceStage, { title: string; blurb: string; icon: 
   },
 };
 
-const OFFICIAL_TYPES = new Set([
-  'CONSULAR_SERVICE',
-  'OFFICIAL_EVENT',
-  'GOVERNMENT_INFO',
-  'VISA_SERVICE',
-]);
-
-function isStale(validUntil: Date | null): boolean {
-  return Boolean(validUntil && validUntil.getTime() < Date.now());
-}
-
-function trustLabel(resourceType: string): string {
-  return OFFICIAL_TYPES.has(resourceType) ? 'Official' : 'Curated';
+function isStale(freshnessState: string): boolean {
+  return freshnessState !== 'IN_TTL';
 }
 
 function buildResourceHref(city: string, resource: ResolvedResource): string {
@@ -113,16 +102,16 @@ function ItemCard({ r, city, saved }: { r: ResolvedResource; city: string; saved
             </h3>
             <div className="mt-1 flex items-center gap-2">
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
-                {trustLabel(r.resourceType)}
+                {r.trust.sourceLabel}
               </span>
               <span
                 className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                  isStale(r.validUntil)
+                  isStale(r.freshness.state)
                     ? 'bg-amber-100 text-amber-800'
                     : 'bg-emerald-100 text-emerald-800'
                 }`}
               >
-                {isStale(r.validUntil) ? 'Needs review' : 'Fresh'}
+                {r.freshness.stateLabel}
               </span>
             </div>
             {r.description && (

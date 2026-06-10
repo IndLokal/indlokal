@@ -39,6 +39,11 @@ export default async function DataHubPage() {
     { href: '/admin/data/communities', label: 'Communities', value: communityCount.toString() },
     { href: '/admin/data/events', label: 'Events', value: eventCount.toString() },
     { href: '/admin/data/resources', label: 'Resources', value: resourceCount.toString() },
+    {
+      href: '/admin/data/resources/reverification',
+      label: 'Resource Reverification Queue',
+      value: 'Ops queue + SLA',
+    },
     { href: '/admin/data/journeys', label: 'Journey Coverage', value: 'Persona × stage gate' },
     { href: '/admin/data/import', label: 'Bulk Import (CSV / JSON)', value: 'Upload & preview' },
     { href: '/admin/data/health', label: 'Data Health', value: 'Counts & integrity' },

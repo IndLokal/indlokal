@@ -59,14 +59,8 @@ const POPULAR_GUIDES = [
   { slug: 'guide-apartment-search-stuttgart', label: 'Apartment Search', icon: '🏠' },
 ];
 
-const CONSULAR_TYPES = ['CONSULAR_SERVICE', 'OFFICIAL_EVENT', 'GOVERNMENT_INFO', 'VISA_SERVICE'];
-
-function isResourceStale(validUntil: Date | null): boolean {
-  return Boolean(validUntil && validUntil.getTime() < Date.now());
-}
-
-function trustLabelForType(type: ResourceType): string {
-  return CONSULAR_TYPES.includes(type) ? 'Official' : 'Curated';
+function isResourceStale(freshnessState: string): boolean {
+  return freshnessState !== 'IN_TTL';
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -124,8 +118,8 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
     countMap[r.resourceType] = (countMap[r.resourceType] ?? 0) + 1;
   }
 
-  const consularCount = visibleResources.filter((r) =>
-    CONSULAR_TYPES.includes(r.resourceType),
+  const consularCount = visibleResources.filter(
+    (r) => r.trust.trustBand === 'STRONG_SOURCE',
   ).length;
   const popularBySlug = new Map(
     visibleResources
@@ -320,7 +314,7 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                         city,
                         resource_slug: r.slug,
                         resource_type: r.resourceType,
-                        is_stale: isResourceStale(r.validUntil),
+                        is_stale: isResourceStale(r.freshness.state),
                       }}
                       persistEntityType="RESOURCE"
                       persistEntityId={`resources_hub:${city}`}
@@ -336,12 +330,12 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       </span>
                       <span
                         className={`ml-auto rounded-full px-2 py-0.5 text-[11px] font-semibold ${
-                          isResourceStale(r.validUntil)
+                          isResourceStale(r.freshness.state)
                             ? 'bg-amber-100 text-amber-800'
                             : 'bg-emerald-100 text-emerald-800'
                         }`}
                       >
-                        {isResourceStale(r.validUntil) ? 'Needs review' : 'Fresh'}
+                        {r.freshness.stateLabel}
                       </span>
                     </ResourcesTrackedLink>
                     <div className="mt-2 flex justify-end border-t border-black/[0.06] pt-1.5">
@@ -482,7 +476,7 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       city,
                       resource_slug: resource.slug,
                       resource_type: resource.resourceType,
-                      is_stale: isResourceStale(resource.validUntil),
+                      is_stale: isResourceStale(resource.freshness.state),
                     }}
                     persistEntityType="RESOURCE"
                     persistEntityId={`resources_hub:${city}`}
@@ -493,7 +487,7 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                       {guide.label}
                     </span>
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
-                      {trustLabelForType(resource.resourceType)}
+                      {resource.trust.sourceLabel}
                     </span>
                   </ResourcesTrackedLink>
                 );
@@ -520,7 +514,7 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
                           city,
                           resource_slug: resource.slug,
                           resource_type: resource.resourceType,
-                          is_stale: isResourceStale(resource.validUntil),
+                          is_stale: isResourceStale(resource.freshness.state),
                         }}
                         persistEntityType="RESOURCE"
                         persistEntityId={`resources_hub:${city}`}
