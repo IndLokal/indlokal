@@ -599,10 +599,75 @@ These pages are assembled dynamically from existing tagged data (resources by `a
 Carried forward largely intact from the old §10 — it was strong. Summary of what survives:
 
 - **City-first density discipline:** a launch city must feel complete before expansion (old §5.2). Kept.
-- **AI for supply, humans for trust:** the ingestion pipeline (source monitoring → LLM filter/extract/dedup → human review queue, with cost guards and per-call audit) is a core capability. Kept and scaled (more sources, vision extraction, high-confidence pre-fill — never auto-publish to users).
+- **AI for supply, humans for trust:** the ingestion pipeline (source monitoring → LLM filter/extract/dedup → human review queue, with cost guards and per-call audit) is a core capability. Kept and scaled (more sources, vision extraction, high-confidence pre-fill). Current implementation allows bounded, auditable auto-approval for trusted high-confidence lanes; policy target remains review-gated trust by default.
 - **Freshness ladder:** age-based downranking + "last updated" badges + link-health checks. Kept; feeds the Trust moat (§11).
 - **Seed sources & content quality guidelines:** the Stuttgart research sources, the "every community needs name/city/description/category/access-channel" bar, the consular-coverage priority. Kept.
 - **New emphasis:** supply prioritization is now **journey-aware** — fill the gaps that block the most-trafficked journeys (zero-result analytics already identify them), not just raw listing count (consistent with the moat re-ranking in §11).
+
+### 17.1 IndLokal Resource Supply & Trust Operating Model
+
+IndLokal follows a hybrid resource operating system designed for scale, trust, and operational sustainability:
+
+1. **Curate first.** Source from public authoritative sources, official organization pages, partner feeds, and structured community submissions.
+2. **Verify and rank.** Score every resource by source quality, freshness, risk level, and journey relevance before prominent distribution.
+3. **Create owned content only where required.** Produce original guides only for high-frequency, high-risk, or high-confusion gaps where curation cannot provide a clear, actionable answer.
+4. **Use AI as an operations assistant, not a factual authority.** AI may extract, normalize, translate, dedupe, cluster, and summarize source-grounded information. Default publish posture is human review; bounded auto-approval is allowed only for trusted high-confidence lanes with full auditability and rollback.
+5. **Publish with transparent trust signals.** Every resource card should show source label, last verified timestamp, trust band, and clear action link.
+6. **Refresh continuously with lifecycle controls.** Apply category-based TTL, stale badges, demotion rules, archive/hide logic, and re-verification queues.
+7. **Prioritize by journey completion, not content volume.** Success is not "more resources." Success is key journeys that are complete, current, trustworthy, and actionable.
+8. **Enforce governance and compliance by default.** Require provenance metadata, attribution, policy checks, and escalation paths for sensitive or high-risk claims.
+
+### 17.2 Trust Bands, Freshness, and Lifecycle Rules
+
+Trust bands are based on source admissibility + freshness status:
+
+- **Strong Source:** official institution, direct owner source, or partner-verified source; within TTL.
+- **Source-Supported:** credible source with partial corroboration; within TTL or near-TTL.
+- **Needs Verification:** weak or conflicting evidence, or freshness breach.
+
+Default TTL policy by change velocity:
+
+- **Fast-changing:** 7-14 days (e.g., event-heavy, deadlines, policy updates).
+- **Medium:** 30 days (e.g., local service details, eligibility pages).
+- **Slow:** 90 days (e.g., evergreen process explainers with stable sources).
+
+Lifecycle behavior after TTL breach:
+
+1. Add stale badge and lower ranking.
+2. Demote from journey-critical placements after grace window.
+3. Archive/hide from primary surfaces if still unverified.
+4. Re-publish only after successful re-verification.
+
+### 17.3 KPI Block (Resource Supply + Trust)
+
+North-star support metric for this layer: **Trusted Journey Resource Coverage** per city.
+
+Leading indicators:
+
+- % of top journey intents with at least one trust-qualified resource.
+- % resources with complete provenance metadata.
+- % resources within TTL.
+- Median ingest-to-publish cycle time.
+- Duplicate exposure rate.
+- Review queue SLA adherence (new, stale, borderline-risk).
+
+Lagging indicators:
+
+- Journey progression uplift where resource cards are consumed.
+- Save/contact/share action rate per trust band.
+- Repeat usage for users who consumed trust-qualified resources.
+- Reduction in "no useful result" or stale-report feedback.
+
+Anti-metrics:
+
+- Raw listing growth without trust qualification.
+- Stale resource impression rate.
+- Unverified AI-generated factual claims reaching user surfaces.
+- Legal takedown and attribution-violation incidents.
+
+### 17.4 Execution Planning Boundary
+
+This section defines operating policy, trust/freshness rules, and KPI standards. Detailed delivery sequencing, sprint plans, and pilot rollout timelines belong in PRDs/specs under `docs/specs/`, while strategic phase progression remains governed by §14.
 
 ## 18. Competitive Landscape
 
