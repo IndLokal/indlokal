@@ -90,13 +90,24 @@ export function formatCostBadge(input: {
   costNote?: string | null;
   cost?: string | null;
 }): string {
+  const legacyCost = input.cost?.trim() ?? null;
+
+  // Migration-safe fallback: PAID rows may have only legacy `cost` text populated.
+  if (input.costType === 'PAID' && input.priceAmount == null && !input.costNote && legacyCost) {
+    const costLower = legacyCost.toLowerCase();
+    if (costLower === 'free') return 'Free';
+    if (costLower === 'unclear') return 'Cost unclear';
+    if (costLower === 'paid') return 'Paid';
+    return legacyCost;
+  }
+
   // Use structured fields if costType is not UNCLEAR, or if legacy cost is absent
-  if (input.costType !== 'UNCLEAR' || !input.cost) {
+  if (input.costType !== 'UNCLEAR' || !legacyCost) {
     return formatCostLabel(input);
   }
   // Legacy fallback
-  const costLower = input.cost.toLowerCase();
+  const costLower = legacyCost.toLowerCase();
   if (costLower === 'free') return 'Free';
   if (costLower === 'unclear') return 'Cost unclear';
-  return input.cost;
+  return legacyCost;
 }

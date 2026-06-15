@@ -166,6 +166,30 @@ describe('formatCostBadge', () => {
     ).toBe('Free');
   });
 
+  it('preserves legacy paid text when PAID has no structured amount or note', () => {
+    expect(
+      formatCostBadge({
+        costType: 'PAID',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        cost: '€25 early bird',
+      }),
+    ).toBe('€25 early bird');
+  });
+
+  it('normalizes legacy paid string when PAID has no structured amount or note', () => {
+    expect(
+      formatCostBadge({
+        costType: 'PAID',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        cost: 'paid',
+      }),
+    ).toBe('Paid');
+  });
+
   it('falls back to legacy cost when costType is UNCLEAR and cost is present', () => {
     expect(
       formatCostBadge({

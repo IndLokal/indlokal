@@ -473,7 +473,8 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
                   : event.costType === 'PAID'
                     ? `💰 ${event.cost ?? 'Paid'}`
                     : `❓ ${event.cost ?? 'Cost unclear'}`}
-                {event.accessType !== 'UNCLEAR' &&
+                {event.accessType &&
+                  event.accessType !== 'UNCLEAR' &&
                   ` · ${event.accessType.replace(/_/g, ' ').toLowerCase()}`}
               </p>
             </div>
