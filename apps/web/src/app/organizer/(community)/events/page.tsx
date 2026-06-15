@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { format } from 'date-fns';
 import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
+import { formatEventDateShort, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const metadata = { title: 'Community Events - Organizer' };
 export const dynamic = 'force-dynamic';
@@ -17,7 +17,7 @@ type OrganizerEventRow = {
   startsAt: Date;
   status: string;
   moderationState: 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
-  city: { name: string; slug: string };
+  city: { name: string; slug: string; timezone: string };
 };
 
 export default async function OrganizerEventsPage() {
@@ -36,7 +36,7 @@ export default async function OrganizerEventsPage() {
       startsAt: true,
       status: true,
       moderationState: true,
-      city: { select: { name: true, slug: true } },
+      city: { select: { name: true, slug: true, timezone: true } },
     },
     orderBy: { startsAt: 'asc' },
   });
@@ -121,7 +121,10 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
                 {event.city.name}
               </td>
               <td className="text-muted px-4 py-3 text-xs">
-                {format(new Date(event.startsAt), 'dd MMM yyyy')}
+                {formatEventDateShort(
+                  new Date(event.startsAt),
+                  event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                )}
               </td>
               <td className="px-4 py-3">
                 <EventModerationChip

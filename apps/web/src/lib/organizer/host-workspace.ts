@@ -75,7 +75,7 @@ export type HostEventRow = {
   reviewReason: string | null;
   isOnline: boolean;
   venueName: string | null;
-  city: { name: string; slug: string };
+  city: { name: string; slug: string; timezone: string };
 };
 
 export type HostEventStats = {
@@ -161,7 +161,7 @@ export async function getHostEventStats(
       reviewReason: true,
       isOnline: true,
       venueName: true,
-      city: { select: { name: true, slug: true } },
+      city: { select: { name: true, slug: true, timezone: true } },
     },
     orderBy: { startsAt: 'asc' },
   });

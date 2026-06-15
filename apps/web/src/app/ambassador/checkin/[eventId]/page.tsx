@@ -3,6 +3,7 @@ import { requireCan } from '@/lib/auth/permissions';
 import { db } from '@/lib/db';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { CheckInForm } from '../CheckInForm';
+import { formatEventDateTimeMedium, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,20 +22,16 @@ export default async function CheckInPage({ params }: { params: Promise<{ eventI
       venueAddress: true,
       isOnline: true,
       community: { select: { name: true } },
-      city: { select: { name: true } },
+      city: { select: { name: true, timezone: true } },
     },
   });
 
   if (!event) notFound();
 
-  const startLabel = new Date(event.startsAt).toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const startLabel = formatEventDateTimeMedium(
+    new Date(event.startsAt),
+    event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+  );
 
   return (
     <AdminPage>

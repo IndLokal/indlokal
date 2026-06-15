@@ -105,3 +105,116 @@ export function formatDateTimeLocalInTimeZone(date: Date, timeZone: string): str
   if (!year || !month || !day || !hour || !minute) return '';
   return `${year}-${month}-${day}T${hour}:${minute}`;
 }
+
+// ---------------------------------------------------------------------------
+// User-facing display formatters
+//
+// Always pass a timezone (typically city.timezone) so the rendered time
+// matches the event's intended wall-clock time, not the server/browser
+// local timezone.  Never use date-fns format() or toLocaleString() directly
+// on event dates — they apply the host machine's local timezone.
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns a time string like "11:00 AM". Use for event start/end times.
+ */
+export function formatEventTime(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
+}
+
+/**
+ * Returns a long date string like "Monday, June 22, 2026".
+ * Use for the event detail page date heading.
+ */
+export function formatEventDateLong(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date);
+}
+
+/**
+ * Returns a short date string like "22 Jun 2026".
+ * Use for compact date columns and metadata where time is omitted.
+ */
+export function formatEventDateShort(date: Date, timeZone: string): string {
+  return new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+}
+
+/**
+ * Returns a medium date+time string like "Mon, 22 Jun 2026, 11:00 AM".
+ * Use for organizer/admin detail views that show both date and time.
+ */
+export function formatEventDateTimeMedium(date: Date, timeZone: string): string {
+  const datePart = new Intl.DateTimeFormat('en-GB', {
+    timeZone,
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  }).format(date);
+  return `${datePart}, ${formatEventTime(date, timeZone)}`;
+}
+
+/**
+ * Returns a smart event-card date label in the given timezone. Examples:
+ *   "Today · 11:00 AM"  /  "Tomorrow · 11:00 AM"  /
+ *   "Monday · 11:00 AM"  /  "Mon, Jun 22 · 11:00 AM"
+ */
+export function formatEventCardDate(date: Date, timeZone: string): string {
+  const timeStr = formatEventTime(date, timeZone);
+  const now = new Date();
+
+  // YYYY-MM-DD string in the target timezone — used for today/tomorrow checks.
+  const toDateStr = (d: Date): string =>
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(d);
+
+  const eventDateStr = toDateStr(date);
+  const todayStr = toDateStr(now);
+
+  // Advance a YYYY-MM-DD string by `days` calendar days using UTC overflow arithmetic.
+  // Using Date.UTC + getUTC* methods keeps arithmetic timezone-agnostic regardless of host locale.
+  const advanceDateStr = (s: string, days: number): string => {
+    const [y, mo, dy] = s.split('-').map(Number);
+    const next = new Date(Date.UTC(y, mo - 1, dy + days));
+    return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-${String(next.getUTCDate()).padStart(2, '0')}`;
+  };
+
+  const tomorrowStr = advanceDateStr(todayStr, 1);
+  const sevenDaysStr = advanceDateStr(todayStr, 7);
+
+  if (eventDateStr === todayStr) return `Today · ${timeStr}`;
+  if (eventDateStr === tomorrowStr) return `Tomorrow · ${timeStr}`;
+
+  // Check if within the next 7 calendar days using timezone-aware date strings.
+  if (eventDateStr > todayStr && eventDateStr <= sevenDaysStr) {
+    const weekday = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' }).format(date);
+    return `${weekday} · ${timeStr}`;
+  }
+
+  const shortDate = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+  return `${shortDate} · ${timeStr}`;
+}

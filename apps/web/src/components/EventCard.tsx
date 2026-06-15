@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { format, isToday, isTomorrow, isThisWeek } from 'date-fns';
 import type { EventListItem } from '@/modules/event/types';
 import { SATELLITE_TO_METRO } from '@/lib/config';
+import { formatEventCardDate } from '@/lib/datetime/event-timezone';
 
 type Props = {
   event: EventListItem;
@@ -10,17 +10,10 @@ type Props = {
   lens?: 'business';
 };
 
-function formatEventDate(date: Date): string {
-  if (isToday(date)) return `Today · ${format(date, 'h:mm a')}`;
-  if (isTomorrow(date)) return `Tomorrow · ${format(date, 'h:mm a')}`;
-  if (isThisWeek(date)) return format(date, 'EEEE · h:mm a');
-  return format(date, 'EEE, MMM d · h:mm a');
-}
-
 export function EventCard({ event, city, past = false, lens }: Props) {
   const canonicalCity = SATELLITE_TO_METRO[city] ?? city;
   const href = `/${canonicalCity}/events/${event.slug}${lens === 'business' ? '?lens=business' : ''}`;
-  const dateLabel = formatEventDate(new Date(event.startsAt));
+  const dateLabel = formatEventCardDate(new Date(event.startsAt), event.city.timezone);
 
   return (
     <Link

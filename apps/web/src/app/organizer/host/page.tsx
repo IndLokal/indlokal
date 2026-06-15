@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { format } from 'date-fns';
 import { redirect } from 'next/navigation';
 import { getSessionUser } from '@/lib/session';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
@@ -12,6 +11,7 @@ import {
   computeHostCompleteness,
   HOST_UNVERIFIED_CAP,
 } from '@/lib/organizer/host-workspace';
+import { formatEventDateTimeMedium, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 
@@ -162,7 +162,11 @@ export default async function HostDashboardPage() {
             <div className="min-w-0">
               <p className="text-foreground truncate font-medium">{stats.nextUpcoming.title}</p>
               <p className="text-muted mt-0.5 text-sm">
-                {format(new Date(stats.nextUpcoming.startsAt), 'EEE, d MMM yyyy · HH:mm')} ·{' '}
+                {formatEventDateTimeMedium(
+                  new Date(stats.nextUpcoming.startsAt),
+                  stats.nextUpcoming.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                )}
+                {' · '}
                 {stats.nextUpcoming.isOnline
                   ? 'Online'
                   : (stats.nextUpcoming.venueName ?? stats.nextUpcoming.city.name)}
