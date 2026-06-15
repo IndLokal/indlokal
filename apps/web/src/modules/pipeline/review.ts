@@ -2,6 +2,11 @@ import { db } from '@/lib/db';
 import { refreshCommunityScore } from '@/modules/scoring';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
 import slugify from 'slugify';
+import {
+  parseEventDateTimeInTimeZone,
+  formatDateTimeLocalInTimeZone,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 import type { SourceReliabilityStat } from './reliability';
 import type { ExtractedCommunity, ExtractedData, ExtractedEvent } from './types';
 import {
@@ -101,6 +106,14 @@ async function findDuplicateEventForApproval(input: {
 }): Promise<EventDuplicateMatch | null> {
   const { event, cityId, sourceUrl, currentPipelineItemId } = input;
 
+  // Resolve the event city's timezone so wall-clock dedup comparisons interpret
+  // date/time values in the city's zone rather than the server's local timezone.
+  const city = await db.city.findUnique({
+    where: { id: cityId },
+    select: { timezone: true },
+  });
+  const timeZone = city?.timezone || DEFAULT_EVENT_TIMEZONE;
+
   const normalizedIncomingSourceUrl = normalizeSourceUrlForDedup(sourceUrl);
   if (normalizedIncomingSourceUrl) {
     const priorApprovedItems = await db.pipelineItem.findMany({
@@ -124,8 +137,8 @@ async function findDuplicateEventForApproval(input: {
       const sameNormalizedTitle =
         typeof previous.title === 'string' &&
         normalizeEventTitleForDedup(previous.title) === normalizeEventTitleForDedup(event.title);
-      const incomingStart = parseEventStart(event.date, event.time);
-      const previousStart = parseEventStart(previous.date ?? null, previous.time ?? null);
+      const incomingStart = parseEventStart(event.date, event.time, timeZone);
+      const previousStart = parseEventStart(previous.date ?? null, previous.time ?? null, timeZone);
       const closeDate =
         incomingStart && previousStart
           ? Math.abs(incomingStart.getTime() - previousStart.getTime()) / (1000 * 60 * 60 * 24) <= 1
@@ -140,15 +153,16 @@ async function findDuplicateEventForApproval(input: {
 
   if (!event.date) return null;
 
-  const eventDate = new Date(`${event.date}T12:00:00`);
-  if (Number.isNaN(eventDate.getTime())) return null;
+  // Anchor the dedup window to the start of the event day in the city's
+  // timezone, then widen by ±1 calendar day. Using the shared timezone helper
+  // (instead of a server-local `new Date(...)`) keeps the window stable
+  // regardless of the server's local timezone.
+  const dayStart = parseEventDateTimeInTimeZone(event.date, '00:00', timeZone);
+  if (!dayStart) return null;
 
-  const startOfWindow = new Date(eventDate);
-  startOfWindow.setDate(startOfWindow.getDate() - 1);
-  startOfWindow.setHours(0, 0, 0, 0);
-  const endOfWindow = new Date(eventDate);
-  endOfWindow.setDate(endOfWindow.getDate() + 1);
-  endOfWindow.setHours(23, 59, 59, 999);
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const startOfWindow = new Date(dayStart.getTime() - DAY_MS);
+  const endOfWindow = new Date(dayStart.getTime() + 2 * DAY_MS - 1);
 
   const candidates = await db.event.findMany({
     where: {
@@ -176,6 +190,7 @@ async function findDuplicateEventForApproval(input: {
       return { eventId: candidate.id, reason: 'registration-url' };
     }
 
+    const candidateLocal = formatDateTimeLocalInTimeZone(candidate.startsAt, timeZone);
     if (
       isEventTitleMatch(event.title, candidate.title) &&
       hasStrongEventIdentityEvidence(
@@ -188,8 +203,8 @@ async function findDuplicateEventForApproval(input: {
         },
         {
           title: candidate.title,
-          date: candidate.startsAt.toISOString().slice(0, 10),
-          time: candidate.startsAt.toISOString().slice(11, 16),
+          date: candidateLocal.slice(0, 10),
+          time: candidateLocal.slice(11, 16),
           venueName: candidate.venueName,
           hostCommunity: candidate.community?.name ?? null,
         },
@@ -295,10 +310,15 @@ async function createEventFromExtraction(
     pipelineItemId?: string;
   },
 ): Promise<string> {
-  const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
-    const parsed = new Date(`${dateStr}T${timeStr}:00`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  };
+  // Resolve the event city's timezone so wall-clock date/time strings are
+  // interpreted in the city's zone rather than the server's local timezone.
+  const city = await db.city.findUnique({
+    where: { id: cityId },
+    select: { timezone: true },
+  });
+  const timeZone = city?.timezone || DEFAULT_EVENT_TIMEZONE;
+  const parseDateTime = (dateStr: string, timeStr: string): Date | null =>
+    parseEventDateTimeInTimeZone(dateStr, timeStr, timeZone);
   const today = new Date().toISOString().slice(0, 10);
   const safeDate = event.date?.trim() || '';
   const safeTime = event.time?.trim() || '';

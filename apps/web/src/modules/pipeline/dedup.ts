@@ -28,6 +28,10 @@
 
 import { db } from '@/lib/db';
 import type { ExtractedData, ExtractedEvent } from './types';
+import {
+  DEFAULT_EVENT_TIMEZONE,
+  parseEventDateTimeInTimeZone,
+} from '@/lib/datetime/event-timezone';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 1. Tuning constants — the ONLY place these numbers should be defined.
@@ -150,15 +154,18 @@ export function normalizeCommunityName(value: string | null | undefined): string
   return normalizeIdentityText(value);
 }
 
-/** Combine an event's date (YYYY-MM-DD) and optional time (HH:mm) into a Date. */
+/**
+ * Combine an event's date (YYYY-MM-DD) and optional time (HH:mm) into a Date,
+ * interpreting the wall-clock value in `timeZone`. Used for relative date/time
+ * comparisons during dedup; both sides of a comparison must use the same zone so
+ * the comparison is consistent regardless of the server's local timezone.
+ */
 export function parseEventStart(
   date: string | null | undefined,
   time: string | null | undefined,
+  timeZone: string = DEFAULT_EVENT_TIMEZONE,
 ): Date | null {
-  if (!date) return null;
-  const safeTime = time?.trim() || '00:00';
-  const parsed = new Date(`${date}T${safeTime}:00`);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return parseEventDateTimeInTimeZone(date, time, timeZone);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -10,7 +10,10 @@ import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 import slugify from 'slugify';
 import { Prisma } from '@prisma/client';
-import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  parseDateTimeLocalInTimeZone,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 import {
   createRecurrencePresetSchema,
   DEFAULT_RECURRENCE_PRESET,
@@ -134,8 +137,11 @@ export async function addHostEvent(
     return { success: false, errors: { cityId: ['Please select a valid city.'] } };
   }
 
-  const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, city.timezone || 'Europe/Berlin');
-  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, city.timezone || 'Europe/Berlin');
+  const startsAt = parseDateTimeLocalInTimeZone(
+    data.startsAt,
+    city.timezone || DEFAULT_EVENT_TIMEZONE,
+  );
+  const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, city.timezone || DEFAULT_EVENT_TIMEZONE);
   if (!startsAt) {
     return { success: false, errors: { startsAt: ['Invalid start date'] } };
   }

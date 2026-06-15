@@ -10,7 +10,10 @@ import { refreshCommunityScore } from '@/modules/scoring';
 import { enqueueCommunityUpdateForFollowers } from '@/modules/engagement';
 import slugify from 'slugify';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
-import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  parseDateTimeLocalInTimeZone,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 import {
   createRecurrencePresetSchema,
   DEFAULT_RECURRENCE_PRESET,
@@ -119,7 +122,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     where: { id: community.id },
     select: { city: { select: { timezone: true } } },
   });
-  const timeZone = timezoneRow?.city.timezone || 'Europe/Berlin';
+  const timeZone = timezoneRow?.city.timezone || DEFAULT_EVENT_TIMEZONE;
 
   const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, timeZone);
   const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, timeZone);
