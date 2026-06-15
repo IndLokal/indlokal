@@ -49,9 +49,42 @@ function buildUpcomingEventFilters(options?: UpcomingEventFilters): Prisma.Event
 
   const costWhere =
     options?.cost === 'free'
-      ? { costType: 'FREE' as const }
+      ? {
+          OR: [
+            { costType: 'FREE' as const },
+            {
+              AND: [
+                { costType: 'UNCLEAR' as const },
+                {
+                  OR: [
+                    { cost: { equals: 'free', mode: 'insensitive' as const } },
+                    { cost: { equals: '0' } },
+                    { cost: { equals: '0.00' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        }
       : options?.cost === 'paid'
-        ? { costType: 'PAID' as const }
+        ? {
+            OR: [
+              { costType: 'PAID' as const },
+              {
+                AND: [
+                  { costType: 'UNCLEAR' as const },
+                  { cost: { not: null } },
+                  {
+                    NOT: [
+                      { cost: { equals: 'free', mode: 'insensitive' as const } },
+                      { cost: { equals: '0' } },
+                      { cost: { equals: '0.00' } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          }
         : {};
 
   const typeWhere =
