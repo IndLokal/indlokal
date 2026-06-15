@@ -22,7 +22,7 @@ export type EventListItem = Pick<
   | 'isRecurring'
 > & {
   community: Pick<Community, 'name' | 'slug'> | null;
-  city: Pick<City, 'name' | 'slug'>;
+  city: Pick<City, 'name' | 'slug' | 'timezone'>;
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
 };
 
@@ -46,7 +46,7 @@ export type EventDetailRow = Pick<
   | 'isRecurring'
 > & {
   community: Pick<Community, 'id' | 'name' | 'slug' | 'logoUrl'> | null;
-  city: Pick<City, 'name' | 'slug'>;
+  city: Pick<City, 'name' | 'slug' | 'timezone'>;
   categories: { category: Pick<Category, 'name' | 'slug' | 'icon'> }[];
   trustSignals: Pick<TrustSignal, 'id' | 'signalType' | 'createdAt'>[];
   relatedEvents: EventListItem[];

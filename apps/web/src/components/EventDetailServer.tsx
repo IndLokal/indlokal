@@ -1,10 +1,14 @@
 import Link from 'next/link';
-import { format } from 'date-fns';
 import type { EventWithRelations } from '@/modules/event/types';
 import { ViewTracker } from '@/components/analytics';
 import { escapeJsonForHtmlScript } from '@/lib/html';
 import { EventSaveButton } from '@/components/EventSaveButton';
 import { EventRegistrationLink } from '@/components/EventRegistrationLink';
+import {
+  formatEventDateLong,
+  formatEventTime,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 
 export default function EventDetailServer({
   event,
@@ -23,6 +27,7 @@ export default function EventDetailServer({
   const endsAt = event.endsAt ? new Date(event.endsAt) : null;
   const isPast = startsAt < new Date();
   const virtualLocationUrl = event.onlineLink || event.registrationUrl || null;
+  const timeZone = event.city.timezone ?? DEFAULT_EVENT_TIMEZONE;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -137,10 +142,10 @@ export default function EventDetailServer({
           <div className="flex items-start gap-3">
             <span className="mt-0.5 text-xl">📅</span>
             <div>
-              <p className="font-medium">{format(startsAt, 'EEEE, MMMM d, yyyy')}</p>
+              <p className="font-medium">{formatEventDateLong(startsAt, timeZone)}</p>
               <p className="text-muted text-sm">
-                {format(startsAt, 'h:mm a')}
-                {endsAt && ` - ${format(endsAt, 'h:mm a')}`}
+                {formatEventTime(startsAt, timeZone)}
+                {endsAt && ` - ${formatEventTime(endsAt, timeZone)}`}
               </p>
             </div>
           </div>

@@ -21,7 +21,7 @@ function evt(overrides: Partial<HostEventRow>): HostEventRow {
     reviewReason: null,
     isOnline: false,
     venueName: 'Venue',
-    city: { name: 'Stuttgart', slug: 'stuttgart' },
+    city: { name: 'Stuttgart', slug: 'stuttgart', timezone: 'Europe/Berlin' },
     ...overrides,
   };
 }

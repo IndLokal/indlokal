@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import { db } from '@/lib/db';
 import { signOut } from '@/app/actions/auth';
 import { can, type SessionUser } from '@/lib/auth/permissions';
 import { PreferencesForm } from './PreferencesForm';
+import { formatEventCardDate, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const metadata: Metadata = {
   title: 'My Account - IndLokal',
@@ -47,7 +47,7 @@ export default async function MePage() {
             startsAt: true,
             venueName: true,
             isOnline: true,
-            city: { select: { name: true, slug: true } },
+            city: { select: { name: true, slug: true, timezone: true } },
           },
         },
       },
@@ -97,7 +97,7 @@ export default async function MePage() {
       startsAt: Date;
       venueName: string | null;
       isOnline: boolean;
-      city: { name: string; slug: string };
+      city: { name: string; slug: string; timezone: string };
     };
   };
 
@@ -301,7 +301,10 @@ export default async function MePage() {
                       <div>
                         <p className="text-foreground font-medium">{event.title}</p>
                         <p className="text-muted mt-0.5 text-sm">
-                          {format(new Date(event.startsAt), 'EEE, MMM d · h:mm a')}
+                          {formatEventCardDate(
+                            new Date(event.startsAt),
+                            event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                          )}
                           {event.isOnline
                             ? ' · Online'
                             : event.venueName
@@ -332,7 +335,10 @@ export default async function MePage() {
                       <div>
                         <p className="text-foreground font-medium">{event.title}</p>
                         <p className="text-muted mt-0.5 text-sm">
-                          {format(new Date(event.startsAt), 'EEE, MMM d · h:mm a')}
+                          {formatEventCardDate(
+                            new Date(event.startsAt),
+                            event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                          )}
                           {event.isOnline
                             ? ' · Online'
                             : event.venueName
