@@ -9,7 +9,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./contracts/*": "./src/contracts/*.ts",
-    "./config/*": "./src/config/*.ts"
+    "./config/*": "./src/config/*.ts",
+    "./content/*": "./src/content/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

@@ -467,9 +467,16 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
                 </p>
               )}
               {event.hostCommunity && <p>👥 {event.hostCommunity}</p>}
-              {event.isFree !== null && (
-                <p>{event.isFree ? '🆓 Free' : `💰 ${event.cost ?? 'Paid'}`}</p>
-              )}
+              <p>
+                {event.costType === 'FREE'
+                  ? '🆓 Free'
+                  : event.costType === 'PAID'
+                    ? `💰 ${event.cost ?? 'Paid'}`
+                    : `❓ ${event.cost ?? 'Cost unclear'}`}
+                {event.accessType &&
+                  event.accessType !== 'UNCLEAR' &&
+                  ` · ${event.accessType.replace(/_/g, ' ').toLowerCase()}`}
+              </p>
             </div>
           )}
 

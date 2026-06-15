@@ -40,6 +40,7 @@ export default async function EditHostEventPage({ params }: Props) {
       onlineLink: true,
       registrationUrl: true,
       cost: true,
+      accessType: true,
       categories: { select: { category: { select: { slug: true } } } },
     },
   });

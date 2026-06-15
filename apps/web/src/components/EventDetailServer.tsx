@@ -9,6 +9,7 @@ import {
   formatEventTime,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
+import { formatCostBadge, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
 
 export default function EventDetailServer({
   event,
@@ -165,14 +166,19 @@ export default function EventDetailServer({
             </div>
           ) : null}
 
-          {event.cost && (
+          {(event.costType !== 'UNCLEAR' || event.cost) && (
             <div className="flex items-center gap-3">
               <span className="text-xl">🎟️</span>
               <span
-                className={`badge-base px-3 py-1 text-sm ${event.cost === 'free' ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-700'}`}
+                className={`badge-base px-3 py-1 text-sm ${event.costType === 'FREE' ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-700'}`}
               >
-                {event.cost === 'free' ? 'Free entry' : event.cost}
+                {formatCostBadge(event)}
               </span>
+              {event.accessType !== 'UNCLEAR' && (
+                <span className="badge-base bg-blue-50 px-3 py-1 text-sm text-blue-700">
+                  {formatAccessLabel(event)}
+                </span>
+              )}
             </div>
           )}
         </div>

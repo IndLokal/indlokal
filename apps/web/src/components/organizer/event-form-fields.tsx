@@ -25,6 +25,13 @@ export type EventFormValues = {
   imageUrl?: string;
   registrationUrl: string;
   cost: 'free' | 'paid' | 'unclear';
+  accessType?:
+    | 'OPEN_ENTRY'
+    | 'REGISTRATION_REQUIRED'
+    | 'APPROVAL_REQUIRED'
+    | 'INVITE_ONLY'
+    | 'MEMBERS_ONLY'
+    | 'UNCLEAR';
 };
 
 type CityMode = 'none' | 'select' | 'hidden' | 'readonly';
@@ -276,8 +283,8 @@ export function EventFormFields({
         </div>
       </div>
 
-      {/* Cost + Registration */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Cost + Access + Registration */}
+      <div className="grid gap-4 sm:grid-cols-3">
         <div>
           <label className="text-foreground block text-sm font-medium">Cost</label>
           <select
@@ -288,6 +295,21 @@ export function EventFormFields({
             <option value="free">Free</option>
             <option value="paid">Paid</option>
             <option value="unclear">Unclear / contact organizer</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-foreground block text-sm font-medium">Entry / Access</label>
+          <select
+            name="accessType"
+            defaultValue={values.accessType ?? 'UNCLEAR'}
+            className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+          >
+            <option value="OPEN_ENTRY">Open entry</option>
+            <option value="REGISTRATION_REQUIRED">Registration required</option>
+            <option value="APPROVAL_REQUIRED">Approval / selection required</option>
+            <option value="INVITE_ONLY">Invite only</option>
+            <option value="MEMBERS_ONLY">Members only</option>
+            <option value="UNCLEAR">Unclear / not specified</option>
           </select>
         </div>
         <div>

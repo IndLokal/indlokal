@@ -13,6 +13,14 @@ export const eventListSelect = {
   venueName: true,
   isOnline: true,
   cost: true,
+  costType: true,
+  priceAmount: true,
+  priceCurrency: true,
+  costNote: true,
+  accessType: true,
+  requiresRegistration: true,
+  requiresApproval: true,
+  entryNote: true,
   imageUrl: true,
   isRecurring: true,
   community: { select: { name: true, slug: true } },
@@ -41,9 +49,42 @@ function buildUpcomingEventFilters(options?: UpcomingEventFilters): Prisma.Event
 
   const costWhere =
     options?.cost === 'free'
-      ? { cost: 'free' as const }
+      ? {
+          OR: [
+            { costType: 'FREE' as const },
+            {
+              AND: [
+                { costType: 'UNCLEAR' as const },
+                {
+                  OR: [
+                    { cost: { equals: 'free', mode: 'insensitive' as const } },
+                    { cost: { equals: '0' } },
+                    { cost: { equals: '0.00' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        }
       : options?.cost === 'paid'
-        ? { AND: [{ cost: { not: null } }, { cost: { not: 'free' } }] }
+        ? {
+            OR: [
+              { costType: 'PAID' as const },
+              {
+                AND: [
+                  { costType: 'UNCLEAR' as const },
+                  { cost: { not: null } },
+                  {
+                    NOT: [
+                      { cost: { equals: 'free', mode: 'insensitive' as const } },
+                      { cost: { equals: '0' } },
+                      { cost: { equals: '0.00' } },
+                    ],
+                  },
+                ],
+              },
+            ],
+          }
         : {};
 
   const typeWhere =

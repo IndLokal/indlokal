@@ -12,6 +12,7 @@ import {
   formatEventTime,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
+import { formatCostBadge, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Event Summary - Event Host' };
@@ -39,6 +40,12 @@ export default async function HostEventSummaryPage({ params }: Props) {
       registrationUrl: true,
       imageUrl: true,
       cost: true,
+      costType: true,
+      priceAmount: true,
+      priceCurrency: true,
+      costNote: true,
+      accessType: true,
+      entryNote: true,
       status: true,
       moderationState: true,
       city: { select: { slug: true, name: true, timezone: true } },
@@ -95,7 +102,11 @@ export default async function HostEventSummaryPage({ params }: Props) {
           </div>
           <div>
             <p className="text-muted text-xs tracking-wide uppercase">Cost</p>
-            <p className="mt-1 text-sm">{event.cost ?? '—'}</p>
+            <p className="mt-1 text-sm">{formatCostBadge(event)}</p>
+          </div>
+          <div>
+            <p className="text-muted text-xs tracking-wide uppercase">Entry</p>
+            <p className="mt-1 text-sm">{formatAccessLabel(event)}</p>
           </div>
         </div>
 

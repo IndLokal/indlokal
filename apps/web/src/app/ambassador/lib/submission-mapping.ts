@@ -16,6 +16,14 @@ const EVENT_FIELD_KEYS: Array<keyof ExtractedEvent> = [
   'isOnline',
   'isFree',
   'cost',
+  'costType',
+  'priceAmount',
+  'priceCurrency',
+  'costNote',
+  'accessType',
+  'requiresRegistration',
+  'requiresApproval',
+  'entryNote',
   'registrationUrl',
   'imageUrl',
   'hostCommunity',
@@ -173,6 +181,8 @@ export function buildAmbassadorEventExtractedData({
   categories: string[];
   languages: string[];
 }): ExtractedEvent {
+  const hasRegistration = Boolean(toOptional(registrationUrl));
+  const normalizedCost = toOptional(cost);
   const extracted: ExtractedEvent = {
     type: 'EVENT',
     title,
@@ -186,7 +196,15 @@ export function buildAmbassadorEventExtractedData({
     cityName: toOptional(cityName),
     isOnline,
     isFree,
-    cost: isFree === false ? toOptional(cost) : null,
+    cost: isFree === false ? normalizedCost : null,
+    costType: isFree === true ? 'FREE' : isFree === false ? 'PAID' : 'UNCLEAR',
+    priceAmount: null,
+    priceCurrency: null,
+    costNote: isFree === false ? normalizedCost : null,
+    accessType: hasRegistration ? 'REGISTRATION_REQUIRED' : 'OPEN_ENTRY',
+    requiresRegistration: hasRegistration,
+    requiresApproval: false,
+    entryNote: null,
     registrationUrl: toOptional(registrationUrl),
     imageUrl: null,
     hostCommunity: toOptional(hostCommunity),
