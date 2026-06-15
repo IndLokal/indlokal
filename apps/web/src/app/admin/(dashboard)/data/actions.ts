@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { communityOptions, resources } from '@indlokal/shared';
 import { z } from 'zod';
 import { db } from '@/lib/db';
+import { buildStoredEvidence, type StoredEvidenceRecord } from '@/lib/community-trust';
 import { assertCan } from '@/lib/auth/permissions';
 import {
   type ImportResource,
@@ -17,6 +18,45 @@ import { runBootstrap } from '../../../../../prisma/bootstrap';
 
 const slugRe = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
+function hasEvidenceChanged(
+  existing: Record<string, unknown> | null | undefined,
+  next: StoredEvidenceRecord,
+): boolean {
+  if (!existing) return true;
+  return (
+    existing.quality !== next.quality ||
+    existing.score !== next.score ||
+    existing.strongestTier !== next.strongestTier ||
+    existing.strongestLabel !== next.strongestLabel ||
+    existing.requiresReview !== next.requiresReview ||
+    existing.reason !== next.reason
+  );
+}
+
+function computeCommunityEvidenceComputation(
+  metadata: Record<string, unknown>,
+  accessChannelUrls: readonly string[],
+): { record: StoredEvidenceRecord; changed: boolean; needsReview: boolean } {
+  const fallbackUrl = typeof metadata.sourceUrl === 'string' ? metadata.sourceUrl : null;
+  const sourceUrls =
+    accessChannelUrls.length > 0 ? accessChannelUrls : fallbackUrl ? [fallbackUrl] : [];
+
+  const record = buildStoredEvidence(sourceUrls);
+  const existing = (metadata.sourceEvidence ?? null) as Record<string, unknown> | null;
+
+  const hasExplicitNeedsReviewOverride =
+    typeof metadata.needsReview === 'boolean' && metadata.needsReview !== record.requiresReview;
+  const needsReview = hasExplicitNeedsReviewOverride
+    ? (metadata.needsReview as boolean)
+    : record.requiresReview;
+
+  return {
+    record,
+    changed: hasEvidenceChanged(existing, record),
+    needsReview,
+  };
+}
+
 /* ───────────────────────────── Bootstrap ────────────────────────────── */
 
 export async function runBootstrapAction() {
@@ -26,6 +66,47 @@ export async function runBootstrapAction() {
   revalidatePath('/admin/data/health');
   revalidatePath('/admin/data/cities');
   revalidatePath('/admin/data/categories');
+}
+
+export async function refreshCommunityEvidenceAction(formData: FormData) {
+  await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) return;
+
+  const community = await db.community.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      metadata: true,
+      city: { select: { slug: true } },
+      accessChannels: { select: { url: true } },
+    },
+  });
+  if (!community) return;
+
+  const metadata = (community.metadata ?? {}) as Record<string, unknown>;
+  const computation = computeCommunityEvidenceComputation(
+    metadata,
+    community.accessChannels.map((channel) => channel.url),
+  );
+
+  if (!computation.changed) return;
+
+  await db.community.update({
+    where: { id },
+    data: {
+      metadata: {
+        ...metadata,
+        sourceEvidence: computation.record,
+        needsReview: computation.needsReview,
+      },
+    },
+  });
+
+  revalidateTag('city-feed', 'max');
+  revalidatePath('/admin/data/communities');
+  revalidatePath('/admin/submissions');
+  if (community.city?.slug) revalidatePath(`/${community.city.slug}/communities`);
 }
 
 /* ───────────────────────────── Cities ───────────────────────────────── */

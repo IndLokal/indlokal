@@ -1,5 +1,14 @@
 const DATETIME_LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
+/**
+ * Default IANA timezone used to interpret event wall-clock date/time values when
+ * a city has no timezone configured. Cities are created with this same default
+ * (`City.timezone` is non-nullable), so this fallback is a last-resort guard and
+ * should rarely trigger. Centralized here so every event date/time code path
+ * shares one explicit, documented default instead of scattered magic strings.
+ */
+export const DEFAULT_EVENT_TIMEZONE = 'Europe/Berlin';
+
 function getOffsetMinutes(date: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,
@@ -51,6 +60,26 @@ export function parseDateTimeLocalInTimeZone(value: string, timeZone: string): D
 
   const parsed = new Date(utcMs);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+/**
+ * Combine a separate date (YYYY-MM-DD) and optional time (HH:mm) that were
+ * entered in `timeZone` and resolve them to an absolute UTC `Date`.
+ *
+ * Unlike `new Date(\`${date}T${time}:00\`)`, this does not depend on the
+ * server's local timezone: the wall-clock value is always interpreted in the
+ * supplied IANA `timeZone`, so an organizer who enters 11:00 in Europe/Berlin
+ * is stored as 09:00Z (summer) rather than shifting with the host machine.
+ */
+export function parseEventDateTimeInTimeZone(
+  date: string | null | undefined,
+  time: string | null | undefined,
+  timeZone: string,
+): Date | null {
+  const trimmedDate = date?.trim();
+  if (!trimmedDate) return null;
+  const trimmedTime = time?.trim() || '00:00';
+  return parseDateTimeLocalInTimeZone(`${trimmedDate}T${trimmedTime}`, timeZone);
 }
 
 export function formatDateTimeLocalInTimeZone(date: Date, timeZone: string): string {

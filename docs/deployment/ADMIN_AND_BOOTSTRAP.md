@@ -54,16 +54,16 @@ Visit `/admin/data` and click **Run bootstrap**. Available to users with
 
 Route group: [`apps/web/src/app/admin/(dashboard)/data/`](<../../apps/web/src/app/admin/(dashboard)/data>)
 
-| Route                       | Purpose                                                |
-| --------------------------- | ------------------------------------------------------ |
-| `/admin/data`               | Hub: counts, bootstrap trigger, links to all sub-tools |
-| `/admin/data/cities`        | List, create, toggle active                            |
-| `/admin/data/cities/[slug]` | Full edit form                                         |
-| `/admin/data/categories`    | List + inline edit + create (Categories & Personas)    |
-| `/admin/data/communities`   | Filter by city/status, change status                   |
-| `/admin/data/events`        | Filter, change event status                            |
-| `/admin/data/import`        | Bulk CSV/JSON upload with **preview → apply** flow     |
-| `/admin/data/health`        | Counts + integrity checks (orphans, missing FKs, etc.) |
+| Route                       | Purpose                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------- |
+| `/admin/data`               | Hub: counts, bootstrap trigger, links to all sub-tools                                   |
+| `/admin/data/cities`        | List, create, toggle active                                                              |
+| `/admin/data/cities/[slug]` | Full edit form                                                                           |
+| `/admin/data/categories`    | List + inline edit + create (Categories & Personas)                                      |
+| `/admin/data/communities`   | Filter by city/status, change status, evidence-quality review + per-row evidence refresh |
+| `/admin/data/events`        | Filter, change event status                                                              |
+| `/admin/data/import`        | Bulk CSV/JSON upload with **preview → apply** flow                                       |
+| `/admin/data/health`        | Counts + integrity checks (orphans, missing FKs, etc.)                                   |
 
 All admin pages are protected by `requireAdmin()` (PLATFORM_ADMIN).
 

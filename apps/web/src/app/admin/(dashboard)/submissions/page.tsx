@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { resolveEvidenceReadout } from '@/lib/community-trust';
 import { approveSubmission, rejectSubmission } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { ApproveSubmissionForm } from './ApproveSubmissionForm';
@@ -47,6 +48,25 @@ export default async function AdminSubmissionsPage() {
                   ownershipIntent?: boolean;
                 }
               | undefined;
+            // PRD/TDD-0055: evidence pre-graded at intake (may be absent on
+            // submissions created before this shipped).
+            const sourceEvidence = meta?.sourceEvidence as
+              | {
+                  quality?: 'verified_candidate' | 'source_supported' | 'insufficient';
+                  strongestLabel?: string | null;
+                  reason?: string;
+                }
+              | undefined;
+            const evidenceReadout =
+              sourceEvidence === undefined
+                ? null
+                : resolveEvidenceReadout({ storedEvidence: sourceEvidence });
+            const evidenceChipColor =
+              evidenceReadout?.display.tone === 'strong'
+                ? 'bg-emerald-100 text-emerald-700'
+                : evidenceReadout?.display.tone === 'supported'
+                  ? 'bg-amber-100 text-amber-700'
+                  : 'bg-red-100 text-red-700';
             // PRD/TDD-0036: ownership default follows the declared relationship
             // (older submissions only carry the legacy ownershipIntent flag).
             const helpsRun =
@@ -72,6 +92,17 @@ export default async function AdminSubmissionsPage() {
                     <p className="text-muted mt-1 text-xs">
                       Submitter relationship: {helpsRun ? 'Organizer' : 'Just sharing'}
                     </p>
+                    {evidenceReadout && (
+                      <span
+                        title={evidenceReadout.reason}
+                        className={`mt-1.5 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${evidenceChipColor}`}
+                      >
+                        {evidenceReadout.display.label}
+                        {evidenceReadout.strongestLabel && (
+                          <span className="opacity-70">· {evidenceReadout.strongestLabel}</span>
+                        )}
+                      </span>
+                    )}
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <ApproveSubmissionForm

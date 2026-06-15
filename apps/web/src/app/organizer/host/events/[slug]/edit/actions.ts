@@ -6,7 +6,10 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
-import { parseDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  parseDateTimeLocalInTimeZone,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 import {
   DEFAULT_RECURRENCE_PRESET,
   recurrencePresetSchema,
@@ -101,7 +104,7 @@ export async function editHostEvent(
     };
   }
 
-  const timeZone = event.city.timezone || 'Europe/Berlin';
+  const timeZone = event.city.timezone || DEFAULT_EVENT_TIMEZONE;
   const startsAt = parseDateTimeLocalInTimeZone(data.startsAt, timeZone);
   const endsAt = parseDateTimeLocalInTimeZone(data.endsAt, timeZone);
   if (!startsAt) {

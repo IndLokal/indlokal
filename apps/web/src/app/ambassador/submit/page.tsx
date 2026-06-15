@@ -14,7 +14,7 @@ export default async function AmbassadorSubmitPage() {
   const [cities, categories] = await Promise.all([
     db.city.findMany({
       where: cityIds.length > 0 ? { id: { in: cityIds }, isActive: true } : { isActive: true },
-      select: { id: true, name: true },
+      select: { id: true, name: true, timezone: true },
       orderBy: { name: 'asc' },
     }),
     db.category.findMany({

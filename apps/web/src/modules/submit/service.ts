@@ -3,6 +3,7 @@ import { PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { getS3Client, UPLOAD_BUCKET, UPLOAD_PRESIGN_TTL_SECONDS } from '@/lib/storage';
 import { computeSimilarity } from '@/modules/pipeline';
+import { buildStoredEvidence } from '@/lib/community-trust';
 import { submit as s } from '@indlokal/shared';
 type EventSubmission = s.EventSubmission;
 type CommunitySubmission = s.CommunitySubmission;
@@ -171,6 +172,10 @@ export async function createCommunitySubmission(
     contactName: data.contactName,
   };
 
+  // PRD/TDD-0055: pre-grade channel evidence so the pipeline/admin review queue
+  // sees the same trust readout as the web submission path. Pure + total.
+  const sourceEvidence = buildStoredEvidence(channels.map((c) => c.url));
+
   return db.pipelineItem.create({
     data: {
       entityType: 'COMMUNITY',
@@ -178,6 +183,7 @@ export async function createCommunitySubmission(
       reviewKind: 'DISCOVERY',
       sourceType: 'USER_SUBMITTED',
       extractedData,
+      metadata: { sourceEvidence, needsReview: sourceEvidence.requiresReview },
       confidence: 1.0,
       cityId: targetCityId,
       submittedBy: userId,

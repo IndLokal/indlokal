@@ -10,6 +10,7 @@ import { Events } from '@/lib/analytics/events';
 import { headers } from 'next/headers';
 import { checkRateLimit, submitLimiter } from '@/lib/rate-limit';
 import { computeSimilarity } from '@/modules/pipeline';
+import { buildStoredEvidence } from '@/lib/community-trust';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -154,6 +155,11 @@ export async function submitCommunity(
     isPrimary: channel.isPrimary,
   }));
 
+  // PRD/TDD-0055: classify channel evidence at intake so the admin queue is
+  // pre-graded (strong vs weak vs insufficient). Best-effort, never blocks the
+  // write — summarizeEvidence is pure and total.
+  const sourceEvidence = buildStoredEvidence(channels.map((c) => c.url));
+
   // Create or resolve a submitter user so createdByUserId is tracked
   let submitterUserId: string | null = null;
   try {
@@ -207,6 +213,8 @@ export async function submitCommunity(
             submittedCitySlug: city.slug,
             normalizedCitySlug,
           },
+          sourceEvidence,
+          needsReview: sourceEvidence.requiresReview,
         },
         categories: {
           create: categoryRows.map((c) => ({ categoryId: c.id })),

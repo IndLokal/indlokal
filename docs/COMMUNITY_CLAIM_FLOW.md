@@ -18,6 +18,12 @@ This is not just a admin feature. It is the **primary supply-side growth mechani
 
 **Known future need:** Once organisers are active, the system needs to show them that the platform is working for them - event views, profile clicks, channel sign-ups. Without this feedback loop, claim rate rises but retention falls. The analytics tab (see Future Enhancements) directly addresses this.
 
+> **Trust layer:** what makes a claim's proof links acceptable (and what the "verified"
+> badge is allowed to mean) is governed by the
+> [Source & Evidence Policy](./SOURCE_AND_EVIDENCE_POLICY.md). Messaging links
+> (WhatsApp/Telegram) are contact info, not claim evidence; strong evidence + review is
+> what backs verification.
+
 ---
 
 ## 1. What This Document Covers

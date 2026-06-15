@@ -18,6 +18,7 @@ import { escapeJsonForHtmlScript } from '@/lib/html';
 import { getSessionUser } from '@/lib/session';
 import { CommunityFollowButton } from '@/components/CommunityFollowButton';
 import { canEditCommunity } from '@/lib/auth/community-permissions';
+import { getCommunityEvidenceBadge } from '@/lib/community-trust';
 
 /**
  * Community Detail Page
@@ -73,6 +74,10 @@ export default async function CommunityDetailPage({ params }: Props) {
   );
   const followedByUser = user ? await isCommunityFollowed(user.id, community.id) : false;
   const canManageProfile = user ? canEditCommunity(user, community.id) : false;
+  // PRD/TDD-0055: honest source-quality read derived from public channels.
+  const evidenceBadge = getCommunityEvidenceBadge(
+    community.accessChannels.map((channel: CommunityChannel) => channel.url),
+  );
   const personaLabels: string[] = [];
   const personaSegments = (community.personaSegments ?? []) as string[];
   for (const segment of personaSegments) {
@@ -164,6 +169,19 @@ export default async function CommunityDetailPage({ params }: Props) {
                 {community.memberCountApprox && (
                   <span className="text-muted text-sm">
                     ~{community.memberCountApprox.toLocaleString()} members
+                  </span>
+                )}
+                {evidenceBadge && (
+                  <span
+                    title={evidenceBadge.title}
+                    className={
+                      evidenceBadge.kind === 'strong_source'
+                        ? 'badge-base bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 ring-1 ring-teal-200 ring-inset'
+                        : 'badge-base bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-amber-200 ring-inset'
+                    }
+                  >
+                    {evidenceBadge.kind === 'strong_source' ? '✓ ' : ''}
+                    {evidenceBadge.label}
                   </span>
                 )}
               </div>
