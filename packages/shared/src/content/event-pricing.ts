@@ -95,7 +95,8 @@ export function formatCostBadge(input: {
     return formatCostLabel(input);
   }
   // Legacy fallback
-  if (input.cost.toLowerCase() === 'free') return 'Free';
-  if (input.cost.toLowerCase() === 'unclear') return 'Cost unclear';
+  const costLower = input.cost.toLowerCase();
+  if (costLower === 'free') return 'Free';
+  if (costLower === 'unclear') return 'Cost unclear';
   return input.cost;
 }

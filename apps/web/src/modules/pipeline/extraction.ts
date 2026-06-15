@@ -746,6 +746,8 @@ function derivePricingAccess(
   let costNote: string | null = null;
 
   const costLower = (cost ?? '').toLowerCase().trim();
+  const currencyPrefixRe = /([€$£])\s*(\d+(?:[.,]\d+)?)/;
+  const currencySuffixRe = /(\d+(?:[.,]\d+)?)\s*(?:€|eur|euro)/;
 
   if (isFree === true || /^(free|kostenlos|no fee|gratis|kein eintritt)$/i.test(costLower)) {
     costType = 'FREE';
@@ -753,12 +755,12 @@ function derivePricingAccess(
     costType = 'PAID';
     // Still try to parse a price from the cost string
     if (cost) {
-      const priceMatch = costLower.match(/([€$£])\s*(\d+(?:[.,]\d+)?)/);
+      const priceMatch = costLower.match(currencyPrefixRe);
       if (priceMatch) {
         priceCurrency = priceMatch[1];
         priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
       } else {
-        const numMatch = costLower.match(/(\d+(?:[.,]\d+)?)\s*(?:€|eur|euro)/);
+        const numMatch = costLower.match(currencySuffixRe);
         if (numMatch) {
           priceCurrency = '€';
           priceAmount = parseFloat(numMatch[1].replace(',', '.'));
@@ -769,13 +771,13 @@ function derivePricingAccess(
     }
   } else if (cost) {
     // Try to extract a numeric price
-    const priceMatch = costLower.match(/([€$£])\s*(\d+(?:[.,]\d+)?)/);
+    const priceMatch = costLower.match(currencyPrefixRe);
     if (priceMatch) {
       costType = 'PAID';
       priceCurrency = priceMatch[1];
       priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
     } else {
-      const numMatch = costLower.match(/(\d+(?:[.,]\d+)?)\s*(?:€|eur|euro)/);
+      const numMatch = costLower.match(currencySuffixRe);
       if (numMatch) {
         costType = 'PAID';
         priceCurrency = '€';
@@ -791,7 +793,6 @@ function derivePricingAccess(
   let accessType: ExtractedEvent['accessType'] = 'UNCLEAR';
   let requiresRegistration = false;
   let requiresApproval = false;
-  const entryNote: string | null = null;
 
   // Check both the cost string and description for access hints
   const textToCheck = [costLower, String(raw.description ?? '').toLowerCase()].join(' ');
@@ -829,7 +830,7 @@ function derivePricingAccess(
     accessType,
     requiresRegistration,
     requiresApproval,
-    entryNote,
+    entryNote: null,
   };
 }
 

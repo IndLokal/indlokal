@@ -13,6 +13,7 @@ import {
   formatEventTime,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
+import { formatCostLabel, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Event Summary - Organizer' };
@@ -44,7 +45,11 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
       imageUrl: true,
       cost: true,
       costType: true,
+      priceAmount: true,
+      priceCurrency: true,
+      costNote: true,
       accessType: true,
+      entryNote: true,
       status: true,
       moderationState: true,
       city: { select: { slug: true, name: true, timezone: true } },
@@ -100,17 +105,11 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
           </div>
           <div>
             <p className="text-muted text-xs tracking-wide uppercase">Cost</p>
-            <p className="mt-1 text-sm">
-              {event.costType === 'FREE'
-                ? 'Free'
-                : event.costType === 'PAID'
-                  ? (event.cost ?? 'Paid')
-                  : (event.cost ?? '—')}
-            </p>
+            <p className="mt-1 text-sm">{formatCostLabel(event)}</p>
           </div>
           <div>
             <p className="text-muted text-xs tracking-wide uppercase">Entry</p>
-            <p className="mt-1 text-sm">{event.accessType.replace(/_/g, ' ').toLowerCase()}</p>
+            <p className="mt-1 text-sm">{formatAccessLabel(event)}</p>
           </div>
         </div>
 
