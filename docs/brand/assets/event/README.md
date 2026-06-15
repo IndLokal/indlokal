@@ -14,11 +14,11 @@ rectangles - the SVGs are fully self-contained and need no external build step.
 
 ## Files
 
-| Collateral             | Source SVG                                                | Print file                                 | Size (portrait)            | Use at the stall                                 |
-| ---------------------- | --------------------------------------------------------- | ------------------------------------------ | -------------------------- | ------------------------------------------------ |
-| **A0 banner / roll-up**| [`event-banner-a0.svg`](./event-banner-a0.svg)            | [`event-banner-a0.pdf`](./event-banner-a0.pdf) | 841 × 1189 mm (A0)     | Backdrop / pull-up stand behind the table        |
-| **A5 flyer**           | [`event-flyer-a5.svg`](./event-flyer-a5.svg)              | [`event-flyer-a5.pdf`](./event-flyer-a5.pdf)   | 148 × 210 mm (A5)      | Handout for visitors                             |
-| **A6 table tent**      | [`event-table-tent-a6.svg`](./event-table-tent-a6.svg)    | [`event-table-tent-a6.pdf`](./event-table-tent-a6.pdf) | 105 × 148 mm (A6)  | Folded card on the table; QR to scan             |
+| Collateral              | Source SVG                                             | Print file                                             | Size (portrait)    | Use at the stall                          |
+| ----------------------- | ------------------------------------------------------ | ------------------------------------------------------ | ------------------ | ----------------------------------------- |
+| **A0 banner / roll-up** | [`event-banner-a0.svg`](./event-banner-a0.svg)         | [`event-banner-a0.pdf`](./event-banner-a0.pdf)         | 841 × 1189 mm (A0) | Backdrop / pull-up stand behind the table |
+| **A5 flyer**            | [`event-flyer-a5.svg`](./event-flyer-a5.svg)           | [`event-flyer-a5.pdf`](./event-flyer-a5.pdf)           | 148 × 210 mm (A5)  | Handout for visitors                      |
+| **A6 table tent**       | [`event-table-tent-a6.svg`](./event-table-tent-a6.svg) | [`event-table-tent-a6.pdf`](./event-table-tent-a6.pdf) | 105 × 148 mm (A6)  | Folded card on the table; QR to scan      |
 
 `*-preview.png` files (≈150 dpi) are for on-screen proofing only - **send the
 PDF or the SVG to the printer**, not the PNG.
