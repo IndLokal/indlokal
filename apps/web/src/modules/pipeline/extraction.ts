@@ -667,6 +667,21 @@ export const __testing = {
 };
 
 function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
+  const isFree = raw.isFree != null ? Boolean(raw.isFree) : null;
+  const cost = raw.cost ? String(raw.cost) : null;
+
+  // Derive structured pricing/access from LLM output
+  const {
+    costType,
+    priceAmount,
+    priceCurrency,
+    costNote,
+    accessType,
+    requiresRegistration,
+    requiresApproval,
+    entryNote,
+  } = derivePricingAccess(isFree, cost, raw);
+
   return {
     type: 'EVENT',
     title: String(raw.title ?? ''),
@@ -679,8 +694,16 @@ function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
     venueAddress: raw.venueAddress ? String(raw.venueAddress) : null,
     cityName: raw.cityName ? String(raw.cityName) : null,
     isOnline: Boolean(raw.isOnline),
-    isFree: raw.isFree != null ? Boolean(raw.isFree) : null,
-    cost: raw.cost ? String(raw.cost) : null,
+    isFree,
+    cost,
+    costType,
+    priceAmount,
+    priceCurrency,
+    costNote,
+    accessType,
+    requiresRegistration,
+    requiresApproval,
+    entryNote,
     registrationUrl: raw.registrationUrl ? String(raw.registrationUrl) : null,
     imageUrl: raw.imageUrl ? String(raw.imageUrl) : null,
     hostCommunity: raw.hostCommunity ? String(raw.hostCommunity) : null,
@@ -688,6 +711,126 @@ function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
     languages: normalizeStringArray(raw.languages),
     confidence: normalizeConfidence(raw.confidence),
     fieldConfidence: normalizeFieldConfidence(raw.fieldConfidence),
+  };
+}
+
+/**
+ * Derive structured pricing and access fields from LLM extraction output.
+ * Pipeline mapping rules per spec:
+ *   free/kostenlos/no fee → costType = FREE
+ *   paid/ticket/fee/price/Eintritt/€ amount → costType = PAID
+ *   register/Anmeldung/RSVP/sign up → accessType = REGISTRATION_REQUIRED
+ *   application/selection/approval/confirmation → accessType = APPROVAL_REQUIRED
+ *   invite only → INVITE_ONLY
+ *   members only → MEMBERS_ONLY
+ *   unclear/missing → UNCLEAR
+ */
+function derivePricingAccess(
+  isFree: boolean | null,
+  cost: string | null,
+  raw: Record<string, unknown>,
+): {
+  costType: ExtractedEvent['costType'];
+  priceAmount: number | null;
+  priceCurrency: string | null;
+  costNote: string | null;
+  accessType: ExtractedEvent['accessType'];
+  requiresRegistration: boolean;
+  requiresApproval: boolean;
+  entryNote: string | null;
+} {
+  // --- Cost type ---
+  let costType: ExtractedEvent['costType'] = 'UNCLEAR';
+  let priceAmount: number | null = null;
+  let priceCurrency: string | null = null;
+  let costNote: string | null = null;
+
+  const costLower = (cost ?? '').toLowerCase().trim();
+  const currencyPrefixRe = /([€$£])\s*(\d+(?:[.,]\d+)?)/;
+  const currencySuffixRe = /(\d+(?:[.,]\d+)?)\s*(?:€|eur|euro)/;
+
+  if (isFree === true || /^(free|kostenlos|no fee|gratis|kein eintritt)$/i.test(costLower)) {
+    costType = 'FREE';
+  } else if (isFree === false || /^(paid|ticket|fee|eintritt)$/i.test(costLower)) {
+    costType = 'PAID';
+    // Still try to parse a price from the cost string
+    if (cost) {
+      const priceMatch = costLower.match(currencyPrefixRe);
+      if (priceMatch) {
+        priceCurrency = priceMatch[1];
+        priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
+      } else {
+        const numMatch = costLower.match(currencySuffixRe);
+        if (numMatch) {
+          priceCurrency = '€';
+          priceAmount = parseFloat(numMatch[1].replace(',', '.'));
+        } else {
+          costNote = cost;
+        }
+      }
+    }
+  } else if (cost) {
+    // Try to extract a numeric price
+    const priceMatch = costLower.match(currencyPrefixRe);
+    if (priceMatch) {
+      costType = 'PAID';
+      priceCurrency = priceMatch[1];
+      priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
+    } else {
+      const numMatch = costLower.match(currencySuffixRe);
+      if (numMatch) {
+        costType = 'PAID';
+        priceCurrency = '€';
+        priceAmount = parseFloat(numMatch[1].replace(',', '.'));
+      } else if (/price|fee|ticket|eintritt|€|\$|£/.test(costLower)) {
+        costType = 'PAID';
+        costNote = cost;
+      }
+    }
+  }
+
+  // --- Access type ---
+  let accessType: ExtractedEvent['accessType'] = 'UNCLEAR';
+  let requiresRegistration = false;
+  let requiresApproval = false;
+
+  // Check both the cost string and description for access hints
+  const textToCheck = [costLower, String(raw.description ?? '').toLowerCase()].join(' ');
+
+  if (/invite[- ]only|nur auf einladung/i.test(textToCheck)) {
+    accessType = 'INVITE_ONLY';
+  } else if (/members[- ]only|nur für mitglieder/i.test(textToCheck)) {
+    accessType = 'MEMBERS_ONLY';
+  } else if (
+    /application|selection|approval|confirmation|selected participants|ausgewählt/i.test(
+      textToCheck,
+    )
+  ) {
+    accessType = 'APPROVAL_REQUIRED';
+    requiresRegistration = true;
+    requiresApproval = true;
+  } else if (/register|anmeldung|rsvp|sign[- ]up|registration/i.test(textToCheck)) {
+    accessType = 'REGISTRATION_REQUIRED';
+    requiresRegistration = true;
+  }
+
+  // If there's a registration URL, mark registration required
+  if (raw.registrationUrl && String(raw.registrationUrl).trim()) {
+    requiresRegistration = true;
+    if (accessType === 'UNCLEAR') {
+      accessType = 'REGISTRATION_REQUIRED';
+    }
+  }
+
+  return {
+    costType,
+    priceAmount,
+    priceCurrency,
+    costNote,
+    accessType,
+    requiresRegistration,
+    requiresApproval,
+    entryNote: null,
   };
 }
 

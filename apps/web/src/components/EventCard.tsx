@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { EventListItem } from '@/modules/event/types';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import { formatEventCardDate } from '@/lib/datetime/event-timezone';
+import { formatCostBadge } from '@indlokal/shared/content/event-pricing';
 
 type Props = {
   event: EventListItem;
@@ -79,15 +80,16 @@ export function EventCard({ event, city, past = false, lens }: Props) {
           ) : (
             <span />
           )}
-          {event.cost && (
+          {(event.costType !== 'UNCLEAR' || event.cost) && (
             <span
               className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
-                event.cost.toLowerCase() === 'free'
+                event.costType === 'FREE' ||
+                (event.costType === 'UNCLEAR' && event.cost?.toLowerCase() === 'free')
                   ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'
                   : 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
               }`}
             >
-              {event.cost.toLowerCase() === 'free' ? 'Free' : event.cost}
+              {formatCostBadge(event)}
             </span>
           )}
         </div>

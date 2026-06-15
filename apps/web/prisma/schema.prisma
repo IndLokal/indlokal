@@ -250,6 +250,23 @@ enum EventModerationState {
   REJECTED
 }
 
+// Structured pricing axis: what does it cost?
+enum EventCostType {
+  FREE
+  PAID
+  UNCLEAR
+}
+
+// Structured access axis: who can attend? (orthogonal to moderation)
+enum EventAccessType {
+  OPEN_ENTRY
+  REGISTRATION_REQUIRED
+  APPROVAL_REQUIRED
+  INVITE_ONLY
+  MEMBERS_ONLY
+  UNCLEAR
+}
+
 model Event {
   id          String  @id @default(cuid())
   title       String
@@ -275,7 +292,17 @@ model Event {
   isOnline        Boolean @default(false) @map("is_online")
   onlineLink      String? @map("online_link")
   registrationUrl String? @map("registration_url")
-  cost            String? // "free", "paid", "unclear", or amount
+  cost            String? // DEPRECATED: legacy field, use structured fields below
+
+  // Structured pricing/access fields (replaces freeform cost)
+  costType             EventCostType   @default(UNCLEAR) @map("cost_type")
+  priceAmount          Float?          @map("price_amount")
+  priceCurrency        String?         @map("price_currency")
+  costNote             String?         @map("cost_note")
+  accessType           EventAccessType @default(UNCLEAR) @map("access_type")
+  requiresRegistration Boolean         @default(false) @map("requires_registration")
+  requiresApproval     Boolean         @default(false) @map("requires_approval")
+  entryNote            String?         @map("entry_note")
 
   imageUrl String?       @map("image_url")
   status   EventStatus   @default(UPCOMING)
