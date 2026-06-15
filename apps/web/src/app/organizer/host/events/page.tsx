@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
-import { format } from 'date-fns';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 import { SATELLITE_TO_METRO } from '@/lib/config';
+import { formatEventDateShort, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Events - Event Host' };
@@ -25,7 +25,7 @@ export default async function HostEventsPage() {
       moderationState: true,
       isOnline: true,
       venueName: true,
-      city: { select: { name: true, slug: true } },
+      city: { select: { name: true, slug: true, timezone: true } },
     },
     orderBy: { startsAt: 'asc' },
   });
@@ -84,7 +84,7 @@ type EventRow = {
   moderationState: 'PUBLISHED' | 'PENDING_REVIEW' | 'REJECTED';
   isOnline: boolean;
   venueName: string | null;
-  city: { name: string; slug: string };
+  city: { name: string; slug: string; timezone: string };
 };
 
 function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
@@ -113,7 +113,10 @@ function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
               </td>
               <td className="text-muted hidden px-4 py-3 text-xs sm:table-cell">{ev.city.name}</td>
               <td className="text-muted px-4 py-3 text-xs">
-                {format(new Date(ev.startsAt), 'dd MMM yyyy')}
+                {formatEventDateShort(
+                  new Date(ev.startsAt),
+                  ev.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                )}
               </td>
               <td className="px-4 py-3">
                 <EventModerationChip status={ev.status} moderationState={ev.moderationState} />

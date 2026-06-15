@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { format } from 'date-fns';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import { requireOrganizerWorkspace } from '@/lib/organizer/workspace';
@@ -9,6 +8,11 @@ import { EventModerationChip } from '@/components/organizer/event-moderation-chi
 import { ConfirmSubmitButton } from '@/components/ui';
 import { archiveEvent } from './actions';
 import { SATELLITE_TO_METRO } from '@/lib/config';
+import {
+  formatEventDateTimeMedium,
+  formatEventTime,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Event Summary - Organizer' };
@@ -41,7 +45,7 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
       cost: true,
       status: true,
       moderationState: true,
-      city: { select: { slug: true, name: true } },
+      city: { select: { slug: true, name: true, timezone: true } },
     },
   });
 
@@ -66,8 +70,14 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
           <div>
             <h2 className="text-2xl font-semibold">{event.title}</h2>
             <p className="text-muted mt-1 text-sm">
-              {event.city.name} · {format(new Date(event.startsAt), 'EEE, dd MMM yyyy h:mm a')}
-              {event.endsAt ? ` - ${format(new Date(event.endsAt), 'h:mm a')}` : ''}
+              {event.city.name} ·{' '}
+              {formatEventDateTimeMedium(
+                new Date(event.startsAt),
+                event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+              )}
+              {event.endsAt
+                ? ` - ${formatEventTime(new Date(event.endsAt), event.city.timezone ?? DEFAULT_EVENT_TIMEZONE)}`
+                : ''}
             </p>
           </div>
 

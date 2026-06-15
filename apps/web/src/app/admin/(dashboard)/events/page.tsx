@@ -3,6 +3,7 @@ import { getSourceLabel } from '@/lib/content/source-labels';
 import { approveEvent, rejectEvent } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { ConfirmSubmitButton } from '@/components/ui';
+import { formatEventDateTimeMedium, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Review Events - Admin' };
@@ -20,7 +21,7 @@ export default async function AdminEventsReviewPage() {
       venueAddress: true,
       source: true,
       registrationUrl: true,
-      city: { select: { name: true } },
+      city: { select: { name: true, timezone: true } },
       community: { select: { name: true } },
       createdBy: { select: { email: true, displayName: true } },
     },
@@ -49,7 +50,10 @@ export default async function AdminEventsReviewPage() {
                   <p className="text-muted mt-0.5 text-sm">
                     {e.city.name}
                     {e.venueName ? ` · ${e.venueName}` : ''} ·{' '}
-                    {new Date(e.startsAt).toLocaleString()}
+                    {formatEventDateTimeMedium(
+                      new Date(e.startsAt),
+                      e.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                    )}
                   </p>
                   <p className="text-muted mt-1 text-xs tracking-wide uppercase">
                     {getSourceLabel(e.source)}

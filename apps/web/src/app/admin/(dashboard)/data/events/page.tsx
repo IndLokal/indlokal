@@ -6,6 +6,7 @@ import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/component
 import { AdminTable, AdminTableHead, AdminTableWrap, AdminTh } from '@/components/admin/table';
 import { PaginationControls } from '@/components/ui/PaginationControls';
 import { ConfirmSubmitButton } from '@/components/ui';
+import { formatEventDateTimeMedium, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Events - Admin' };
@@ -34,7 +35,7 @@ export default async function AdminEventsPage({
       skip: pagination.skip,
       take: pagination.take,
       include: {
-        city: { select: { name: true, slug: true } },
+        city: { select: { name: true, slug: true, timezone: true } },
         community: { select: { name: true, slug: true } },
       },
     }),
@@ -111,7 +112,10 @@ export default async function AdminEventsPage({
                   <div className="text-muted font-mono text-xs">{e.slug}</div>
                 </td>
                 <td className="px-3 py-2 text-xs">
-                  {e.startsAt.toISOString().slice(0, 16).replace('T', ' ')}
+                  {formatEventDateTimeMedium(
+                    e.startsAt,
+                    e.city?.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                  )}
                 </td>
                 <td className="px-3 py-2 text-xs">{e.city?.name ?? '-'}</td>
                 <td className="px-3 py-2 text-xs">{e.community?.name ?? '-'}</td>

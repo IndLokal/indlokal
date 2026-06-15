@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
-import { format } from 'date-fns';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import EventDetailServer from '@/components/EventDetailServer';
 import { getEventBySlug, isEventSaved } from '@/modules/event';
 import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
+import { formatEventDateShort, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 
 type Props = {
   params: Promise<{ city: string; slug: string }>;
@@ -16,7 +16,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const event = await getEventBySlug(slug);
   if (!event) return { title: 'Event not found' };
-  const dateStr = format(new Date(event.startsAt), 'MMM d, yyyy');
+  const dateStr = formatEventDateShort(
+    new Date(event.startsAt),
+    event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+  );
   return {
     title: `${event.title} - ${dateStr}`,
     description: event.description ?? `${event.title} in ${event.city.name}, Germany.`,

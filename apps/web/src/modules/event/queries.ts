@@ -16,7 +16,7 @@ export const eventListSelect = {
   imageUrl: true,
   isRecurring: true,
   community: { select: { name: true, slug: true } },
-  city: { select: { name: true, slug: true } },
+  city: { select: { name: true, slug: true, timezone: true } },
   categories: { select: { category: { select: { name: true, slug: true, icon: true } } } },
 } as const;
 
@@ -240,7 +240,7 @@ export async function getEventDetail(slug: string): Promise<EventDetailRow | nul
     where: { slug, moderationState: 'PUBLISHED' },
     include: {
       community: { select: { id: true, name: true, slug: true, logoUrl: true } },
-      city: { select: { name: true, slug: true } },
+      city: { select: { name: true, slug: true, timezone: true } },
       categories: { include: { category: { select: { name: true, slug: true, icon: true } } } },
       trustSignals: {
         select: { id: true, signalType: true, createdAt: true },
@@ -309,7 +309,7 @@ export interface SavedEventRow {
     endsAt: Date | null;
     venueName: string | null;
     isOnline: boolean;
-    city: { name: string; slug: string };
+    city: { name: string; slug: string; timezone: string };
   };
 }
 
@@ -335,7 +335,7 @@ export async function getSavedEvents(
           endsAt: true,
           venueName: true,
           isOnline: true,
-          city: { select: { name: true, slug: true } },
+          city: { select: { name: true, slug: true, timezone: true } },
         },
       },
     },
