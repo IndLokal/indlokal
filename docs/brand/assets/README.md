@@ -17,6 +17,14 @@ This folder is the source of truth for IndLokal’s visual identity. All files a
 | [`linkedin-cover.svg`](./linkedin-cover.svg)               | LinkedIn page cover                             | PNG @ 1584 × 396                                |
 | [`og-image.svg`](./og-image.svg)                           | Open Graph / link preview image                 | PNG @ 1200 × 630                                |
 
+## Event & stall collateral
+
+Print-ready banners and handouts for events live in
+[`event/`](./event/) - an A0 banner/roll-up, an A5 flyer and an A6 table tent,
+each as a self-contained SVG plus a print-ready PDF (with a baked-in QR to
+`indlokal.de`). See [`event/README.md`](./event/README.md) for print specs
+(bleed, CMYK, roll-up sizing) and how to regenerate them.
+
 ## How to export to PNG
 
 Pick one - all produce identical output:
