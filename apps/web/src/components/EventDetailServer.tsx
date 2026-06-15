@@ -9,7 +9,7 @@ import {
   formatEventTime,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
-import { formatCostLabel, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
+import { formatCostBadge, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
 
 export default function EventDetailServer({
   event,
@@ -172,7 +172,7 @@ export default function EventDetailServer({
               <span
                 className={`badge-base px-3 py-1 text-sm ${event.costType === 'FREE' ? 'bg-emerald-50 text-emerald-700' : 'bg-orange-50 text-orange-700'}`}
               >
-                {formatCostLabel(event)}
+                {formatCostBadge(event)}
               </span>
               {event.accessType !== 'UNCLEAR' && (
                 <span className="badge-base bg-blue-50 px-3 py-1 text-sm text-blue-700">
