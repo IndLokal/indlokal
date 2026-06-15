@@ -1,5 +1,14 @@
 const DATETIME_LOCAL_RE = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/;
 
+/**
+ * Default IANA timezone used to interpret event wall-clock date/time values when
+ * a city has no timezone configured. Cities are created with this same default
+ * (`City.timezone` is non-nullable), so this fallback is a last-resort guard and
+ * should rarely trigger. Centralized here so every event date/time code path
+ * shares one explicit, documented default instead of scattered magic strings.
+ */
+export const DEFAULT_EVENT_TIMEZONE = 'Europe/Berlin';
+
 function getOffsetMinutes(date: Date, timeZone: string): number {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone,

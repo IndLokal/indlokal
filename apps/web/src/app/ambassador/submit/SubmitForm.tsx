@@ -10,8 +10,10 @@ type Mode = 'community' | 'event';
 
 type Category = { slug: string; name: string; icon: string | null };
 
+type City = { id: string; name: string; timezone: string };
+
 type Props = {
-  cities: Array<{ id: string; name: string }>;
+  cities: City[];
   categories: Category[];
   defaultCityId?: string;
 };
@@ -91,9 +93,11 @@ function LanguageChecklist() {
 function CityField({
   cities,
   defaultCityId,
+  onCityChange,
 }: {
   cities: Array<{ id: string; name: string }>;
   defaultCityId?: string;
+  onCityChange?: (cityId: string) => void;
 }) {
   if (defaultCityId) {
     return <input type="hidden" name="cityId" value={defaultCityId} />;
@@ -101,7 +105,13 @@ function CityField({
 
   return (
     <FormField label="City" htmlFor="cityId" required>
-      <SelectInput id="cityId" name="cityId" required defaultValue={cities[0]?.id ?? ''}>
+      <SelectInput
+        id="cityId"
+        name="cityId"
+        required
+        defaultValue={cities[0]?.id ?? ''}
+        onChange={(event) => onCityChange?.(event.target.value)}
+      >
         {cities.map((city) => (
           <option key={city.id} value={city.id}>
             {city.name}
@@ -204,11 +214,14 @@ function CommunityFields({ cities, categories, defaultCityId }: Props) {
 }
 
 function EventFields({ cities, categories, defaultCityId }: Props) {
+  const [selectedCityId, setSelectedCityId] = useState(defaultCityId ?? cities[0]?.id ?? '');
+  const selectedTimezone = cities.find((city) => city.id === selectedCityId)?.timezone ?? null;
+
   return (
     <>
       <fieldset className="card-base space-y-4 p-5">
         <legend className="text-foreground -ml-1 text-base font-bold">Event details</legend>
-        <CityField cities={cities} defaultCityId={defaultCityId} />
+        <CityField cities={cities} defaultCityId={defaultCityId} onCityChange={setSelectedCityId} />
         <FormField label="Event title" htmlFor="title" required>
           <TextInput
             id="title"
@@ -236,6 +249,11 @@ function EventFields({ cities, categories, defaultCityId }: Props) {
 
       <fieldset className="card-base space-y-4 p-5">
         <legend className="text-foreground -ml-1 text-base font-bold">Date, time & venue</legend>
+        <p className="text-muted text-xs">
+          Enter the event&rsquo;s local time
+          {selectedTimezone ? ` (${selectedTimezone})` : ''}. Times are stored in the event
+          city&rsquo;s timezone.
+        </p>
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField label="Start date" htmlFor="startDate">
             <TextInput id="startDate" name="startDate" type="date" />

@@ -3,7 +3,10 @@ import { db } from '@/lib/db';
 import { getSessionUser } from '@/lib/session';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import EditHostEventForm from './EditHostEventForm';
-import { formatDateTimeLocalInTimeZone } from '@/lib/datetime/event-timezone';
+import {
+  formatDateTimeLocalInTimeZone,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 import { recurrenceRuleToPreset } from '@/lib/events/recurrence';
 
 export const dynamic = 'force-dynamic';
@@ -49,7 +52,7 @@ export default async function EditHostEventPage({ params }: Props) {
     orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
   });
 
-  const timeZone = event.city.timezone || 'Europe/Berlin';
+  const timeZone = event.city.timezone || DEFAULT_EVENT_TIMEZONE;
   const startsAt = formatDateTimeLocalInTimeZone(event.startsAt, timeZone);
   const fallbackEnd = event.endsAt ?? new Date(event.startsAt.getTime() + 2 * 60 * 60 * 1000);
   const endsAt = formatDateTimeLocalInTimeZone(fallbackEnd, timeZone);
