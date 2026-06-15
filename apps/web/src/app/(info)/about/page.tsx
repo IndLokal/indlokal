@@ -100,6 +100,65 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Strategic Advisors & Early Ecosystem Support */}
+      <section className="mx-auto max-w-3xl px-4 py-12 sm:py-14">
+        <h2 className="text-foreground text-2xl font-extrabold">
+          Strategic Advisors &amp; Early Ecosystem Support
+        </h2>
+        <p className="text-muted mt-4 leading-relaxed">
+          IndLokal is built as an independent, city-first platform for Indians in Germany. We are
+          guided by senior leaders and ecosystem contributors with experience across brand building,
+          market intelligence, business transformation, community networks, and India–Germany
+          ecosystem development.
+        </p>
+        <p className="text-muted mt-4 leading-relaxed">
+          Our advisors help us think beyond listings — towards trust, discovery, partnerships,
+          growth, and long-term platform relevance for Indians in Germany.
+        </p>
+
+        <div className="mt-8 grid gap-5 sm:grid-cols-2">
+          <div className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-6 ring-1">
+            <h3 className="text-foreground text-lg font-bold">
+              Strategic Advisor – Brand, Growth &amp; Market Intelligence
+            </h3>
+            <p className="text-muted mt-2 text-sm leading-relaxed">
+              Senior marketing and analytics leader with experience across automotive brand
+              building, customer insights, market intelligence, positioning, and data-led growth.
+            </p>
+          </div>
+          <div className="from-brand-50 ring-brand-100 rounded-2xl bg-gradient-to-br to-white p-6 ring-1">
+            <h3 className="text-foreground text-lg font-bold">
+              Strategic Advisor – Business Transformation &amp; Ecosystem Partnerships
+            </h3>
+            <p className="text-muted mt-2 text-sm leading-relaxed">
+              Senior consulting and transformation leader advising on business strategy, operating
+              model, ecosystem partnerships, enterprise connects, and scale-up guidance.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-gray-100 bg-gray-50 p-6">
+          <h3 className="text-foreground text-lg font-bold">Early Ecosystem Support</h3>
+          <p className="text-muted mt-2 leading-relaxed">
+            In Stuttgart, IndLokal has benefited from early community, youth, and
+            business-networking inputs from the JITO Stuttgart ecosystem.
+          </p>
+          <p className="text-muted mt-3 text-sm leading-relaxed">
+            IndLokal remains an independent platform built for the wider Indian community in
+            Germany.
+          </p>
+        </div>
+
+        <div className="mt-10">
+          <h3 className="text-foreground text-lg font-bold">Built from the community</h3>
+          <p className="text-muted mt-2 leading-relaxed">
+            IndLokal grew from a simple observation: Indian communities, events, services, and
+            business opportunities exist across Germany, but they are hard to discover in one
+            trusted place.
+          </p>
+        </div>
+      </section>
+
       {/* For organizers */}
       <section className="relative overflow-hidden px-4 py-14 text-center sm:py-16">
         <div className="from-brand-600 via-brand-700 to-brand-900 absolute inset-0 bg-gradient-to-br" />
