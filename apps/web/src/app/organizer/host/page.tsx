@@ -165,8 +165,8 @@ export default async function HostDashboardPage() {
                 {formatEventDateTimeMedium(
                   new Date(stats.nextUpcoming.startsAt),
                   stats.nextUpcoming.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
-                )}{' '}
-                ·{' '}
+                )}
+                {' · '}
                 {stats.nextUpcoming.isOnline
                   ? 'Online'
                   : (stats.nextUpcoming.venueName ?? stats.nextUpcoming.city.name)}

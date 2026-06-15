@@ -190,12 +190,12 @@ export function formatEventCardDate(date: Date, timeZone: string): string {
   const eventDateStr = toDateStr(date);
   const todayStr = toDateStr(now);
 
-  // Advance a YYYY-MM-DD string by `days` calendar days using JS overflow arithmetic.
-  // This is DST-safe because we work with calendar components, not millisecond offsets.
+  // Advance a YYYY-MM-DD string by `days` calendar days using UTC overflow arithmetic.
+  // Using Date.UTC + getUTC* methods keeps arithmetic timezone-agnostic regardless of host locale.
   const advanceDateStr = (s: string, days: number): string => {
     const [y, mo, dy] = s.split('-').map(Number);
-    const next = new Date(y, mo - 1, dy + days);
-    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+    const next = new Date(Date.UTC(y, mo - 1, dy + days));
+    return `${next.getUTCFullYear()}-${String(next.getUTCMonth() + 1).padStart(2, '0')}-${String(next.getUTCDate()).padStart(2, '0')}`;
   };
 
   const tomorrowStr = advanceDateStr(todayStr, 1);
