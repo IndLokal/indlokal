@@ -190,15 +190,22 @@ export function formatEventCardDate(date: Date, timeZone: string): string {
   const eventDateStr = toDateStr(date);
   const todayStr = toDateStr(now);
 
-  // Advance by one calendar day in the target timezone.
-  const [ty, tm, td] = todayStr.split('-').map(Number);
-  const tomorrowStr = toDateStr(new Date(Date.UTC(ty, tm - 1, td + 1)));
+  // Advance a YYYY-MM-DD string by `days` calendar days using JS overflow arithmetic.
+  // This is DST-safe because we work with calendar components, not millisecond offsets.
+  const advanceDateStr = (s: string, days: number): string => {
+    const [y, mo, dy] = s.split('-').map(Number);
+    const next = new Date(y, mo - 1, dy + days);
+    return `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, '0')}-${String(next.getDate()).padStart(2, '0')}`;
+  };
+
+  const tomorrowStr = advanceDateStr(todayStr, 1);
+  const sevenDaysStr = advanceDateStr(todayStr, 7);
 
   if (eventDateStr === todayStr) return `Today · ${timeStr}`;
   if (eventDateStr === tomorrowStr) return `Tomorrow · ${timeStr}`;
 
-  const msUntil = date.getTime() - now.getTime();
-  if (msUntil >= 0 && msUntil < 7 * 24 * 60 * 60 * 1000) {
+  // Check if within the next 7 calendar days using timezone-aware date strings.
+  if (eventDateStr > todayStr && eventDateStr <= sevenDaysStr) {
     const weekday = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'long' }).format(date);
     return `${weekday} · ${timeStr}`;
   }
