@@ -9,7 +9,7 @@
  * Reset + reseed: ./dev.sh db:reset
  */
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type EventAccessType, type EventCostType } from '@prisma/client';
 import { subDays, addDays, setHours, setMinutes } from 'date-fns';
 import { refreshAllScores } from '../src/modules/scoring/scoring';
 import { runBootstrap } from './bootstrap';
@@ -24,6 +24,100 @@ const past = (daysAgo: number, hour = 18) =>
   setMinutes(setHours(subDays(new Date(), daysAgo), hour), 0);
 const future = (daysAhead: number, hour = 18) =>
   setMinutes(setHours(addDays(new Date(), daysAhead), hour), 0);
+
+const currencyPrefixRe = /([€$£])\s*(\d+(?:[.,]\d+)?)/i;
+const currencySuffixRe = /(\d+(?:[.,]\d+)?)\s*(?:€|eur|euro)/i;
+
+type SeedPricingAccessInput = {
+  cost?: string | null;
+  description?: string | null;
+  registrationUrl?: string | null;
+  costType?: EventCostType;
+  priceAmount?: number | null;
+  priceCurrency?: string | null;
+  costNote?: string | null;
+  accessType?: EventAccessType;
+  requiresRegistration?: boolean;
+  requiresApproval?: boolean;
+  entryNote?: string | null;
+};
+
+function deriveSeedPricingAccess(input: SeedPricingAccessInput) {
+  const costRaw = (input.cost ?? '').trim();
+  const costLower = costRaw.toLowerCase();
+  const textToCheck = [costLower, String(input.description ?? '').toLowerCase()].join(' ');
+
+  let costType: EventCostType = input.costType ?? 'UNCLEAR';
+  let priceAmount = input.priceAmount ?? null;
+  let priceCurrency = input.priceCurrency ?? null;
+  let costNote = input.costNote ?? null;
+
+  if (!input.costType) {
+    if (/^(free|kostenlos|no fee|gratis|kein eintritt)$/i.test(costLower)) {
+      costType = 'FREE';
+    } else if (/^(paid|ticket|fee|eintritt)$/i.test(costLower)) {
+      costType = 'PAID';
+    } else if (currencyPrefixRe.test(costLower) || currencySuffixRe.test(costLower)) {
+      costType = 'PAID';
+    }
+  }
+
+  if (costType === 'PAID' && priceAmount == null && costRaw) {
+    const prefixMatch = costLower.match(currencyPrefixRe);
+    if (prefixMatch) {
+      priceCurrency = priceCurrency ?? prefixMatch[1];
+      priceAmount = parseFloat(prefixMatch[2].replace(',', '.'));
+    } else {
+      const suffixMatch = costLower.match(currencySuffixRe);
+      if (suffixMatch) {
+        priceCurrency = priceCurrency ?? '€';
+        priceAmount = parseFloat(suffixMatch[1].replace(',', '.'));
+      } else if (!costNote && costLower !== 'paid') {
+        costNote = costRaw;
+      }
+    }
+  }
+
+  let accessType: EventAccessType = input.accessType ?? 'UNCLEAR';
+
+  if (!input.accessType) {
+    if (/invite[- ]only|nur auf einladung/i.test(textToCheck)) {
+      accessType = 'INVITE_ONLY';
+    } else if (/members[- ]only|nur für mitglieder/i.test(textToCheck)) {
+      accessType = 'MEMBERS_ONLY';
+    } else if (
+      /application|selection|approval|confirmation|selected participants|ausgewählt/i.test(
+        textToCheck,
+      )
+    ) {
+      accessType = 'APPROVAL_REQUIRED';
+    } else if (
+      input.registrationUrl?.trim() ||
+      /register|anmeldung|rsvp|sign[- ]up|registration/i.test(textToCheck)
+    ) {
+      accessType = 'REGISTRATION_REQUIRED';
+    } else {
+      // Demo events should show an explicit access label instead of mostly "unclear".
+      accessType = 'OPEN_ENTRY';
+    }
+  }
+
+  const requiresRegistration =
+    input.requiresRegistration ??
+    (accessType === 'REGISTRATION_REQUIRED' || accessType === 'APPROVAL_REQUIRED');
+  const requiresApproval = input.requiresApproval ?? accessType === 'APPROVAL_REQUIRED';
+
+  return {
+    costType,
+    priceAmount,
+    priceCurrency,
+    costNote,
+    accessType,
+    requiresRegistration,
+    requiresApproval,
+    entryNote: input.entryNote ?? null,
+  };
+}
 
 async function main() {
   console.log('🌱 Seeding IndLokal database (demo content)...\n');
@@ -223,6 +317,10 @@ async function main() {
           startsAt: future(21, 17),
           endsAt: future(21, 22),
           cost: 'paid',
+          costType: 'PAID' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['cultural'],
         },
@@ -237,6 +335,10 @@ async function main() {
           startsAt: future(9, 18),
           endsAt: future(9, 21),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['professional', 'networking-social'],
         },
@@ -251,6 +353,10 @@ async function main() {
           startsAt: future(12, 8),
           endsAt: future(12, 10),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           isRecurring: true,
           recurrenceRule: 'FREQ=MONTHLY;BYDAY=2FR',
@@ -267,6 +373,10 @@ async function main() {
           startsAt: future(25, 14),
           endsAt: future(25, 19),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['student'],
         },
@@ -281,6 +391,10 @@ async function main() {
           startsAt: future(180, 19),
           endsAt: future(180, 24),
           cost: 'paid',
+          costType: 'PAID' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['cultural', 'arts-entertainment'],
         },
@@ -295,6 +409,10 @@ async function main() {
           startsAt: future(200, 17),
           endsAt: future(200, 22),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['cultural', 'arts-entertainment', 'family-kids'],
         },
@@ -309,6 +427,10 @@ async function main() {
           startsAt: future(202, 18),
           endsAt: future(202, 22),
           cost: 'paid',
+          costType: 'PAID' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['cultural', 'language-regional'],
         },
@@ -325,6 +447,10 @@ async function main() {
           startsAt: future(90, 19),
           endsAt: future(90, 22),
           cost: 'paid',
+          costType: 'PAID' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['arts-entertainment', 'cultural'],
         },
@@ -339,6 +465,10 @@ async function main() {
           startsAt: future(2, 10),
           endsAt: future(2, 17),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['religious', 'cultural'],
         },
@@ -353,6 +483,10 @@ async function main() {
           startsAt: future(22, 17),
           endsAt: future(22, 21),
           cost: 'paid',
+          costType: 'PAID' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           categories: ['cultural', 'language-regional', 'arts-entertainment'],
         },
@@ -369,6 +503,10 @@ async function main() {
           startsAt: future(4, 16),
           endsAt: future(4, 18),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           isRecurring: true,
           recurrenceRule: 'FREQ=WEEKLY;BYDAY=SA',
@@ -385,6 +523,10 @@ async function main() {
           startsAt: future(28, 19),
           endsAt: future(28, 23),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           isRecurring: true,
           recurrenceRule: 'FREQ=MONTHLY;BYDAY=2SA',
@@ -401,6 +543,10 @@ async function main() {
           startsAt: future(5, 11),
           endsAt: future(5, 13),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           isRecurring: true,
           recurrenceRule: 'FREQ=WEEKLY;BYDAY=SU',
@@ -417,6 +563,10 @@ async function main() {
           startsAt: future(20, 19),
           endsAt: future(20, 22),
           cost: 'free',
+          costType: 'FREE' as const,
+          accessType: 'OPEN_ENTRY' as const,
+          requiresRegistration: false,
+          requiresApproval: false,
           status: 'UPCOMING' as const,
           isRecurring: true,
           recurrenceRule: 'FREQ=MONTHLY;BYDAY=3TH',
@@ -429,6 +579,11 @@ async function main() {
   let eventSkipped = 0;
   for (const e of eventDefs) {
     const { categories, communitySlug, isRecurring, recurrenceRule, ...data } = e;
+    const dataWithOptionalRegistration = data as { registrationUrl?: string | null };
+    const registrationUrl =
+      typeof dataWithOptionalRegistration.registrationUrl === 'string'
+        ? dataWithOptionalRegistration.registrationUrl
+        : null;
     const communityId = communityIds[communitySlug];
     if (!communityId) {
       // Community wasn't seeded by directory.ts (e.g. dropped for lacking a
@@ -436,11 +591,38 @@ async function main() {
       eventSkipped++;
       continue;
     }
+
+    const structured = deriveSeedPricingAccess({
+      ...data,
+      registrationUrl,
+    });
+
     await prisma.event.upsert({
       where: { slug: data.slug },
-      update: { status: data.status },
+      update: {
+        title: data.title,
+        description: data.description,
+        venueName: data.venueName,
+        venueAddress: data.venueAddress,
+        startsAt: data.startsAt,
+        endsAt: data.endsAt,
+        registrationUrl,
+        cost: data.cost,
+        costType: structured.costType,
+        priceAmount: structured.priceAmount,
+        priceCurrency: structured.priceCurrency,
+        costNote: structured.costNote,
+        accessType: structured.accessType,
+        requiresRegistration: structured.requiresRegistration,
+        requiresApproval: structured.requiresApproval,
+        entryNote: structured.entryNote,
+        status: data.status,
+        isRecurring: isRecurring ?? false,
+        recurrenceRule: recurrenceRule ?? null,
+      },
       create: {
         ...data,
+        ...structured,
         isRecurring: isRecurring ?? false,
         recurrenceRule: recurrenceRule ?? null,
         cityId: stuttgart.id,
@@ -621,7 +803,14 @@ async function main() {
 
     await prisma.event.upsert({
       where: { slug: 'demo-community-diwali-mixer' },
-      update: { moderationState: 'PUBLISHED' },
+      update: {
+        moderationState: 'PUBLISHED',
+        cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+      },
       create: {
         slug: 'demo-community-diwali-mixer',
         title: 'Community Diwali Mixer',
@@ -631,6 +820,10 @@ async function main() {
         startsAt: future(15, 18),
         endsAt: future(15, 21),
         cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
         status: 'UPCOMING',
         cityId: stuttgart.id,
         communityId: firstCommunity.id,
@@ -642,7 +835,14 @@ async function main() {
 
     await prisma.event.upsert({
       where: { slug: 'demo-host-pending-meetup' },
-      update: { moderationState: 'PENDING_REVIEW' },
+      update: {
+        moderationState: 'PENDING_REVIEW',
+        cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+      },
       create: {
         slug: 'demo-host-pending-meetup',
         title: 'Host Submitted Meetup (Pending Review)',
@@ -652,6 +852,10 @@ async function main() {
         startsAt: future(25, 19),
         endsAt: future(25, 21),
         cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
         status: 'UPCOMING',
         cityId: stuttgart.id,
         source: 'USER_SUGGESTED',
@@ -665,7 +869,14 @@ async function main() {
     // "Live" / "Next up" signals, plus a past and a declined event.
     await prisma.event.upsert({
       where: { slug: 'demo-host-live-concert' },
-      update: { moderationState: 'PUBLISHED' },
+      update: {
+        moderationState: 'PUBLISHED',
+        cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+      },
       create: {
         slug: 'demo-host-live-concert',
         title: 'Sitar Evening (Live)',
@@ -675,6 +886,10 @@ async function main() {
         startsAt: future(8, 19),
         endsAt: future(8, 22),
         cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
         status: 'UPCOMING',
         cityId: stuttgart.id,
         source: 'USER_SUGGESTED',
@@ -686,7 +901,14 @@ async function main() {
 
     await prisma.event.upsert({
       where: { slug: 'demo-host-past-workshop' },
-      update: { moderationState: 'PUBLISHED' },
+      update: {
+        moderationState: 'PUBLISHED',
+        cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+      },
       create: {
         slug: 'demo-host-past-workshop',
         title: 'Cooking Workshop (Past)',
@@ -696,6 +918,10 @@ async function main() {
         startsAt: future(-10, 18),
         endsAt: future(-10, 20),
         cost: 'free',
+        costType: 'FREE',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
         status: 'PAST',
         cityId: stuttgart.id,
         source: 'USER_SUGGESTED',
@@ -707,7 +933,14 @@ async function main() {
 
     await prisma.event.upsert({
       where: { slug: 'demo-host-declined-party' },
-      update: { moderationState: 'REJECTED' },
+      update: {
+        moderationState: 'REJECTED',
+        cost: 'paid',
+        costType: 'PAID',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+      },
       create: {
         slug: 'demo-host-declined-party',
         title: 'Rooftop Party (Declined)',
@@ -717,6 +950,10 @@ async function main() {
         startsAt: future(20, 21),
         endsAt: future(20, 23),
         cost: 'paid',
+        costType: 'PAID',
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
         status: 'UPCOMING',
         cityId: stuttgart.id,
         source: 'USER_SUGGESTED',
