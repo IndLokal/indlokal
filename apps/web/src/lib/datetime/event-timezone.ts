@@ -53,6 +53,26 @@ export function parseDateTimeLocalInTimeZone(value: string, timeZone: string): D
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/**
+ * Combine a separate date (YYYY-MM-DD) and optional time (HH:mm) that were
+ * entered in `timeZone` and resolve them to an absolute UTC `Date`.
+ *
+ * Unlike `new Date(\`${date}T${time}:00\`)`, this does not depend on the
+ * server's local timezone: the wall-clock value is always interpreted in the
+ * supplied IANA `timeZone`, so an organizer who enters 11:00 in Europe/Berlin
+ * is stored as 09:00Z (summer) rather than shifting with the host machine.
+ */
+export function parseEventDateTimeInTimeZone(
+  date: string | null | undefined,
+  time: string | null | undefined,
+  timeZone: string,
+): Date | null {
+  const trimmedDate = date?.trim();
+  if (!trimmedDate) return null;
+  const trimmedTime = time?.trim() || '00:00';
+  return parseDateTimeLocalInTimeZone(`${trimmedDate}T${trimmedTime}`, timeZone);
+}
+
 export function formatDateTimeLocalInTimeZone(date: Date, timeZone: string): string {
   const parts = new Intl.DateTimeFormat('en-CA', {
     timeZone,

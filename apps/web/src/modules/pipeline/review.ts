@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { refreshCommunityScore } from '@/modules/scoring';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
 import slugify from 'slugify';
+import { parseEventDateTimeInTimeZone } from '@/lib/datetime/event-timezone';
 import type { SourceReliabilityStat } from './reliability';
 import type { ExtractedCommunity, ExtractedData, ExtractedEvent } from './types';
 import {
@@ -295,10 +296,15 @@ async function createEventFromExtraction(
     pipelineItemId?: string;
   },
 ): Promise<string> {
-  const parseDateTime = (dateStr: string, timeStr: string): Date | null => {
-    const parsed = new Date(`${dateStr}T${timeStr}:00`);
-    return Number.isNaN(parsed.getTime()) ? null : parsed;
-  };
+  // Resolve the event city's timezone so wall-clock date/time strings are
+  // interpreted in the city's zone rather than the server's local timezone.
+  const city = await db.city.findUnique({
+    where: { id: cityId },
+    select: { timezone: true },
+  });
+  const timeZone = city?.timezone || 'Europe/Berlin';
+  const parseDateTime = (dateStr: string, timeStr: string): Date | null =>
+    parseEventDateTimeInTimeZone(dateStr, timeStr, timeZone);
   const today = new Date().toISOString().slice(0, 10);
   const safeDate = event.date?.trim() || '';
   const safeTime = event.time?.trim() || '';
