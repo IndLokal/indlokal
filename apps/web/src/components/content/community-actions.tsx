@@ -13,15 +13,17 @@ export function CommunityActionGrid({
   title,
   description,
   cards,
+  titleClassName,
 }: {
   title: string;
   description?: string;
   cards: CommunityActionCard[];
+  titleClassName?: string;
 }) {
   return (
     <section className="space-y-6">
       <div className="max-w-2xl">
-        <h2 className="text-foreground text-2xl font-extrabold">{title}</h2>
+        <h2 className={titleClassName ?? 'text-foreground text-2xl font-extrabold'}>{title}</h2>
         {description && <p className="text-muted mt-3 leading-relaxed">{description}</p>}
       </div>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">

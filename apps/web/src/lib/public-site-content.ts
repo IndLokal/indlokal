@@ -1,3 +1,5 @@
+import type { CommunityActionCard } from '@/components/content/community-actions';
+
 export const PUBLIC_SITE_LAST_REVIEWED = '27 May 2026';
 
 export const PUBLIC_SITE_EMAILS = {
@@ -39,6 +41,63 @@ export const JOURNEYS_PUBLIC_COPY = {
   cityIntro:
     'A journey is a guided path — the resources, communities and events that matter for your situation, in the order you need them.',
 } as const;
+
+export const ABOUT_TOP_QUESTIONS_COPY = {
+  title: 'What should I do next?',
+  description:
+    'Use this guide when you are not sure where to start. It covers the most common actions people take on IndLokal today.',
+} as const;
+
+export const ABOUT_TOP_QUESTION_CARDS: CommunityActionCard[] = [
+  {
+    id: 'find-events',
+    audience: 'VISITORS',
+    title: 'I want to find Indian events this week',
+    body: 'Browse your city event feed to see upcoming events that are active now.',
+    cta: 'Open city events',
+    href: '/stuttgart/events',
+  },
+  {
+    id: 'find-communities',
+    audience: 'VISITORS',
+    title: 'I want to find communities near me',
+    body: 'Explore city community listings to discover cultural, language, and professional groups.',
+    cta: 'Open city communities',
+    href: '/stuttgart/communities',
+  },
+  {
+    id: 'find-resources',
+    audience: 'NEWCOMERS AND FAMILIES',
+    title: 'I need practical city resources',
+    body: 'Use local resource pages for consular and expat-life guidance relevant to your city.',
+    cta: 'Open city resources',
+    href: '/stuttgart/resources',
+  },
+  {
+    id: 'suggest-missing',
+    audience: 'COMMUNITY MEMBERS',
+    title: 'Something is missing on IndLokal',
+    body: 'Use suggest when a community, event, or resource should exist but is not listed yet.',
+    cta: 'Suggest from city page',
+    href: '/stuttgart/suggest',
+  },
+  {
+    id: 'submit-new',
+    audience: 'FOUNDERS AND MEMBERS',
+    title: 'I am adding a new community',
+    body: 'Submit a brand-new listing when the community is not yet on IndLokal.',
+    cta: 'Submit a community',
+    href: '/submit',
+  },
+  {
+    id: 'organizer-access',
+    audience: 'ORGANIZERS',
+    title: 'I run a listed community',
+    body: 'Open organizer access to claim or manage your listing, profile details, and events.',
+    cta: 'Open organizer login',
+    href: '/organizer/login',
+  },
+];
 
 export function resolvePublicSiteUrl(siteUrl: string): string {
   return siteUrl.includes('localhost') ? 'https://indlokal.com' : siteUrl;
