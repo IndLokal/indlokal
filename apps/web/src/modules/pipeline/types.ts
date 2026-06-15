@@ -130,6 +130,20 @@ export type ExtractedEvent = {
   isOnline: boolean;
   isFree: boolean | null;
   cost: string | null;
+  costType: 'FREE' | 'PAID' | 'UNCLEAR';
+  priceAmount: number | null;
+  priceCurrency: string | null;
+  costNote: string | null;
+  accessType:
+    | 'OPEN_ENTRY'
+    | 'REGISTRATION_REQUIRED'
+    | 'APPROVAL_REQUIRED'
+    | 'INVITE_ONLY'
+    | 'MEMBERS_ONLY'
+    | 'UNCLEAR';
+  requiresRegistration: boolean;
+  requiresApproval: boolean;
+  entryNote: string | null;
   registrationUrl: string | null;
   imageUrl: string | null;
   hostCommunity: string | null;

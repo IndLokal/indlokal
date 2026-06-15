@@ -62,6 +62,21 @@ export const CategoryRef = z.object({
 });
 export type CategoryRef = z.infer<typeof CategoryRef>;
 
+// ─── Event pricing/access enums ────────────────────────────────────────────
+
+export const EventCostType = z.enum(['FREE', 'PAID', 'UNCLEAR']);
+export type EventCostType = z.infer<typeof EventCostType>;
+
+export const EventAccessType = z.enum([
+  'OPEN_ENTRY',
+  'REGISTRATION_REQUIRED',
+  'APPROVAL_REQUIRED',
+  'INVITE_ONLY',
+  'MEMBERS_ONLY',
+  'UNCLEAR',
+]);
+export type EventAccessType = z.infer<typeof EventAccessType>;
+
 // ─── Event card ────────────────────────────────────────────────────────────
 
 export const EventCard = z.object({
@@ -72,7 +87,15 @@ export const EventCard = z.object({
   endsAt: IsoDateTime.nullable(),
   venueName: z.string().nullable(),
   isOnline: z.boolean(),
-  cost: z.string().nullable(),
+  cost: z.string().nullable(), // legacy, deprecated
+  costType: EventCostType,
+  priceAmount: z.number().nullable(),
+  priceCurrency: z.string().nullable(),
+  costNote: z.string().nullable(),
+  accessType: EventAccessType,
+  requiresRegistration: z.boolean(),
+  requiresApproval: z.boolean(),
+  entryNote: z.string().nullable(),
   imageUrl: z.string().nullable(),
   isRecurring: z.boolean(),
   community: CommunityRef.nullable(),

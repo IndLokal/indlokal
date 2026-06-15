@@ -46,6 +46,7 @@ export default async function EditCommunityEventPage({ params }: Props) {
       imageUrl: true,
       registrationUrl: true,
       cost: true,
+      accessType: true,
       city: { select: { timezone: true } },
       categories: { select: { category: { select: { slug: true } } } },
     },
@@ -84,6 +85,7 @@ export default async function EditCommunityEventPage({ params }: Props) {
           imageUrl: event.imageUrl,
           registrationUrl: event.registrationUrl,
           cost: event.cost,
+          accessType: event.accessType,
         }}
       />
     </div>

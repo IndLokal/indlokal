@@ -43,6 +43,8 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
       registrationUrl: true,
       imageUrl: true,
       cost: true,
+      costType: true,
+      accessType: true,
       status: true,
       moderationState: true,
       city: { select: { slug: true, name: true, timezone: true } },
@@ -98,7 +100,17 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
           </div>
           <div>
             <p className="text-muted text-xs tracking-wide uppercase">Cost</p>
-            <p className="mt-1 text-sm">{event.cost ?? '—'}</p>
+            <p className="mt-1 text-sm">
+              {event.costType === 'FREE'
+                ? 'Free'
+                : event.costType === 'PAID'
+                  ? (event.cost ?? 'Paid')
+                  : (event.cost ?? '—')}
+            </p>
+          </div>
+          <div>
+            <p className="text-muted text-xs tracking-wide uppercase">Entry</p>
+            <p className="mt-1 text-sm">{event.accessType.replace(/_/g, ' ').toLowerCase()}</p>
           </div>
         </div>
 

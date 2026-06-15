@@ -40,6 +40,7 @@ export default async function EditHostEventPage({ params }: Props) {
       onlineLink: true,
       registrationUrl: true,
       cost: true,
+      accessType: true,
       categories: { select: { category: { select: { slug: true } } } },
     },
   });
@@ -82,6 +83,7 @@ export default async function EditHostEventPage({ params }: Props) {
           onlineLink: event.onlineLink,
           registrationUrl: event.registrationUrl,
           cost: event.cost,
+          accessType: event.accessType,
         }}
         city={event.city}
       />

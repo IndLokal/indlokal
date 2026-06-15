@@ -43,6 +43,16 @@ const addEventSchema = z.object({
   imageUrl: z.string().url().optional().or(z.literal('')),
   registrationUrl: z.string().url().optional().or(z.literal('')),
   cost: z.enum(['free', 'paid', 'unclear']).default('free'),
+  accessType: z
+    .enum([
+      'OPEN_ENTRY',
+      'REGISTRATION_REQUIRED',
+      'APPROVAL_REQUIRED',
+      'INVITE_ONLY',
+      'MEMBERS_ONLY',
+      'UNCLEAR',
+    ])
+    .default('UNCLEAR'),
   recurrencePreset: createRecurrencePresetSchema.default(DEFAULT_RECURRENCE_PRESET),
 });
 
@@ -87,6 +97,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     imageUrl: (formData.get('imageUrl') as string) || '',
     registrationUrl: (formData.get('registrationUrl') as string) || '',
     cost: (formData.get('cost') as string) || 'free',
+    accessType: (formData.get('accessType') as string) || 'UNCLEAR',
     recurrencePreset: String(formData.get('recurrencePreset') ?? DEFAULT_RECURRENCE_PRESET),
   };
 
@@ -184,6 +195,11 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
+          costType: data.cost === 'free' ? 'FREE' : data.cost === 'paid' ? 'PAID' : 'UNCLEAR',
+          accessType: data.accessType,
+          requiresRegistration:
+            data.accessType === 'REGISTRATION_REQUIRED' || data.accessType === 'APPROVAL_REQUIRED',
+          requiresApproval: data.accessType === 'APPROVAL_REQUIRED',
           isRecurring: recurrenceRule !== null,
           recurrenceRule,
           categories: {
