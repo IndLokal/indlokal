@@ -1,13 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState, useMemo, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import { communityOptions } from '@indlokal/shared';
+import { CitySearchSelect } from '@/components/ui';
 import { submitCommunity, type SubmitResult } from './actions';
 
 type Props = {
   cities: { slug: string; name: string }[];
   categories: { slug: string; name: string; icon: string | null }[];
+  defaultCitySlug?: string;
+  successHref?: string;
+  successLabel?: string;
 };
 
 type ChannelDraft = {
@@ -35,14 +39,19 @@ function FormError({ errors }: { errors?: string[] }) {
   );
 }
 
-export function SubmitForm({ cities, categories }: Props) {
+export function SubmitForm({
+  cities,
+  categories,
+  defaultCitySlug,
+  successHref = '/submit',
+  successLabel = 'Submit another community',
+}: Props) {
   const [state, formAction, isPending] = useActionState<SubmitResult, FormData>(
     submitCommunity,
     null,
   );
-  const [cityQuery, setCityQuery] = useState('');
-  const [selectedCitySlug, setSelectedCitySlug] = useState('');
-  const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
+  const defaultCity = defaultCitySlug ? cities.find((city) => city.slug === defaultCitySlug) : null;
+  const [selectedCitySlug, setSelectedCitySlug] = useState(defaultCity?.slug ?? '');
   const [cityClientError, setCityClientError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [expandedChannelLabelIds, setExpandedChannelLabelIds] = useState<number[]>([]);
@@ -93,38 +102,9 @@ export function SubmitForm({ cities, categories }: Props) {
     setChannels((prev) => prev.map((c) => ({ ...c, isPrimary: c.id === id })));
   };
 
-  const filteredCities = useMemo(() => {
-    const q = cityQuery.trim().toLowerCase();
-    if (!q) return cities.slice(0, 12);
-    return cities
-      .filter((city) => {
-        const name = city.name.toLowerCase();
-        const slug = city.slug.toLowerCase();
-        return name.includes(q) || slug.includes(q);
-      })
-      .slice(0, 12);
-  }, [cities, cityQuery]);
-
   const visibleCategories = showAllCategories
     ? categories
     : categories.slice(0, INITIAL_CATEGORY_COUNT);
-
-  const syncCitySelection = (value: string) => {
-    const normalized = value.trim().toLowerCase();
-    const exact = cities.find((city) => {
-      const cityName = city.name.toLowerCase();
-      const citySlug = city.slug.toLowerCase();
-      return cityName === normalized || citySlug === normalized;
-    });
-    setSelectedCitySlug(exact?.slug ?? '');
-  };
-
-  const handleCityPick = (city: { slug: string; name: string }) => {
-    setCityQuery(city.name);
-    setSelectedCitySlug(city.slug);
-    setCityClientError(null);
-    setIsCityMenuOpen(false);
-  };
 
   if (state?.success) {
     return (
@@ -135,8 +115,8 @@ export function SubmitForm({ cities, categories }: Props) {
           <strong>{state.communityName}</strong> has been submitted for review. Our team will review
           it and make it live within a few days.
         </p>
-        <Link href="/submit" className="btn-primary mt-6 inline-block px-5 py-2.5 text-sm">
-          Submit another community
+        <Link href={successHref} className="btn-primary mt-6 inline-block px-5 py-2.5 text-sm">
+          {successLabel}
         </Link>
       </div>
     );
@@ -187,46 +167,19 @@ export function SubmitForm({ cities, categories }: Props) {
             <label htmlFor="citySlug" className="text-foreground block text-sm font-medium">
               City *
             </label>
-            <div className="relative mt-1">
-              <input
-                id="citySlug"
-                type="text"
-                value={cityQuery}
-                autoComplete="off"
-                placeholder="Search city by name"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setCityQuery(value);
-                  syncCitySelection(value);
-                  setCityClientError(null);
-                }}
-                onFocus={() => setIsCityMenuOpen(true)}
-                onBlur={() => {
-                  setIsCityMenuOpen(false);
-                  syncCitySelection(cityQuery);
-                }}
-                className="input-base"
-              />
-
-              {isCityMenuOpen && filteredCities.length > 0 && (
-                <div className="border-border mt-1 max-h-56 w-full overflow-y-auto rounded-[var(--radius-button)] border bg-white shadow-sm">
-                  {filteredCities.map((city) => (
-                    <button
-                      key={city.slug}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => handleCityPick(city)}
-                      className="hover:bg-brand-50 block w-full px-3 py-2 text-left text-sm"
-                    >
-                      <span className="text-foreground">{city.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <input type="hidden" name="citySlug" value={selectedCitySlug} />
-            {cityClientError ? <FieldError errors={[cityClientError]} /> : null}
-            <FieldError errors={errors.citySlug} />
+            <CitySearchSelect
+              className="mt-1"
+              inputId="citySlug"
+              name="citySlug"
+              cities={cities.map((c) => ({ value: c.slug, name: c.name }))}
+              defaultValue={defaultCitySlug}
+              clientError={cityClientError}
+              error={errors.citySlug}
+              onSelectionChange={(value) => {
+                setSelectedCitySlug(value);
+                if (value) setCityClientError(null);
+              }}
+            />
           </div>
         </div>
 
