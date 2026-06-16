@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import { communityOptions } from '@indlokal/shared';
+import {
+  communityDescriptionSchema,
+  communityLanguagesSchema,
+  communityNameSchema,
+} from '@/lib/communities/form-input';
 
 const normalizeUrl = (value: string) => value.trim().toLowerCase().replace(/\/$/, '');
 
@@ -17,11 +22,11 @@ const claimEvidenceSchema = z.object({
 
 export const submitCommunitySchema = z
   .object({
-    name: z.string().min(2, 'Name must be at least 2 characters').max(200),
-    description: z.string().min(10, 'Description must be at least 10 characters').max(2000),
+    name: communityNameSchema,
+    description: communityDescriptionSchema,
     citySlug: z.string().min(1, 'Please select a city'),
     categories: z.array(z.string()).min(1, 'Select at least one category').max(20),
-    languages: z.array(z.string()).max(20).default([]),
+    languages: communityLanguagesSchema,
     channels: z.array(submitChannelSchema).min(1, 'Add at least one channel').max(6),
     // PRD/TDD-0036: submitter declares their relationship to the community.
     // HELP_RUN -> eligible for organizer ownership on approval; JUST_ADDING ->

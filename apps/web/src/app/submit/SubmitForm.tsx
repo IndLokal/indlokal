@@ -5,6 +5,7 @@ import { startTransition, useActionState, useState } from 'react';
 import { communityOptions } from '@indlokal/shared';
 import { CitySearchSelect } from '@/components/ui';
 import { ConfirmationModal } from '@/components/contribute/ConfirmationModal';
+import { FormFieldError, FormGlobalError } from '@/components/forms/FormFeedback';
 import { submitCommunity, type SubmitResult } from './actions';
 
 type Props = {
@@ -28,20 +29,6 @@ type ChannelDraft = {
 
 const MAX_CHANNELS = 6;
 const INITIAL_CATEGORY_COUNT = 6;
-
-function FieldError({ errors }: { errors?: string[] }) {
-  if (!errors || errors.length === 0) return null;
-  return <p className="mt-1 text-sm text-red-600">{errors[0]}</p>;
-}
-
-function FormError({ errors }: { errors?: string[] }) {
-  if (!errors || errors.length === 0) return null;
-  return (
-    <div className="rounded-[var(--radius-button)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-      {errors[0]}
-    </div>
-  );
-}
 
 export function SubmitForm({
   cities,
@@ -156,7 +143,7 @@ export function SubmitForm({
         });
       }}
     >
-      <FormError errors={errors._} />
+      <FormGlobalError errors={errors._} />
 
       {/* Community details */}
       <fieldset className="card-base space-y-4 p-4 sm:p-5">
@@ -175,7 +162,7 @@ export function SubmitForm({
               className="input-base mt-1"
               placeholder="e.g. Telugu Association Stuttgart"
             />
-            <FieldError errors={errors.name} />
+            <FormFieldError errors={errors.name} />
           </div>
 
           <div>
@@ -210,7 +197,7 @@ export function SubmitForm({
             className="input-base mt-1"
             placeholder="What does your community do? Who is it for? How often do you meet?"
           />
-          <FieldError errors={errors.description} />
+          <FormFieldError errors={errors.description} />
         </div>
       </fieldset>
 
@@ -245,7 +232,7 @@ export function SubmitForm({
             {showAllCategories ? 'Show fewer categories' : 'Show all categories'}
           </button>
         )}
-        <FieldError errors={errors.categories} />
+        <FormFieldError errors={errors.categories} />
 
         <details className="group pt-1">
           <summary className="text-foreground cursor-pointer text-sm font-medium">
@@ -395,7 +382,7 @@ export function SubmitForm({
             })),
           )}
         />
-        <FieldError errors={errors.channels} />
+        <FormFieldError errors={errors.channels} />
       </fieldset>
 
       {/* Contact Information */}
@@ -437,7 +424,7 @@ export function SubmitForm({
               I am sharing a community I know about.
             </span>
           </label>
-          <FieldError errors={errors.relationship} />
+          <FormFieldError errors={errors.relationship} />
         </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -452,7 +439,7 @@ export function SubmitForm({
               required
               className="input-base mt-1"
             />
-            <FieldError errors={errors.contactName} />
+            <FormFieldError errors={errors.contactName} />
           </div>
           <div>
             <label htmlFor="contactEmail" className="text-foreground block text-sm font-medium">
@@ -465,7 +452,7 @@ export function SubmitForm({
               required
               className="input-base mt-1"
             />
-            <FieldError errors={errors.contactEmail} />
+            <FormFieldError errors={errors.contactEmail} />
           </div>
         </div>
 
