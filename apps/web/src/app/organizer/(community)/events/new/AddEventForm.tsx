@@ -1,8 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
-import { addEvent, type AddEventResult } from './actions';
-import { EventFormFields } from '@/components/organizer/event-form-fields';
+import { addEvent } from './actions';
+import { OrganizerEventFormWrapper } from '@/components/organizer/OrganizerEventFormWrapper';
 import { DEFAULT_RECURRENCE_PRESET } from '@/lib/events/recurrence';
 
 type Category = { slug: string; name: string; icon: string | null };
@@ -14,10 +13,6 @@ export default function AddEventForm({
   communityName: string;
   categories: Category[];
 }) {
-  const [state, formAction, isPending] = useActionState<AddEventResult, FormData>(addEvent, null);
-
-  const errors = state?.success === false ? state.errors : {};
-
   function toLocalInputValue(date: Date): string {
     const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
     return local.toISOString().slice(0, 16);
@@ -40,10 +35,8 @@ export default function AddEventForm({
   })();
 
   return (
-    <EventFormFields
-      action={formAction}
-      isPending={isPending}
-      errors={errors}
+    <OrganizerEventFormWrapper
+      action={addEvent}
       values={{
         title: '',
         description: '',
