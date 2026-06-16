@@ -78,7 +78,7 @@ export const ReportType = z.enum([
   'STALE_INFO',
   'BROKEN_LINK',
   'INCORRECT_DETAILS',
-  'SUGGEST_COMMUNITY',
+  'CONTRIBUTE_COMMUNITY',
   'OTHER',
 ]);
 export type ReportType = z.infer<typeof ReportType>;
@@ -94,9 +94,9 @@ export const ContentReportInput = z.object({
   communityId: Cuid.optional(),
   /** ID of the event being reported (orthogonal to communityId) */
   eventId: Cuid.optional(),
-  /** Free-text name for SUGGEST_COMMUNITY */
+  /** Free-text name for CONTRIBUTE_COMMUNITY */
   suggestedName: z.string().max(200).optional(),
-  /** City for SUGGEST_COMMUNITY */
+  /** City for CONTRIBUTE_COMMUNITY */
   citySlug: z.string().optional(),
   /** Additional detail the reporter wants to share */
   details: z.string().max(2000).optional(),

@@ -8,7 +8,9 @@ const REPORT_TYPE_LABELS: Record<string, string> = {
   STALE_INFO: 'Stale info',
   BROKEN_LINK: 'Broken link',
   INCORRECT_DETAILS: 'Incorrect details',
-  SUGGEST_COMMUNITY: 'Suggest community',
+  SUGGEST_COMMUNITY: 'Contribute community',
+  SUGGEST_EVENT: 'Contribute event',
+  SUGGEST_RESOURCE: 'Contribute resource',
   OTHER: 'Other',
 };
 
@@ -34,7 +36,7 @@ export default async function AdminReportsPage() {
   return (
     <AdminPage className="space-y-6">
       <AdminPageHeader
-        title="Reports & Suggestions"
+        title="Reports & Contributions"
         description={`${reports.length} pending · sorted by newest first`}
         backHref="/admin"
       />
@@ -95,7 +97,7 @@ export default async function AdminReportsPage() {
               <div className="mt-3">
                 {report.reportType === 'SUGGEST_COMMUNITY' ? (
                   <p className="text-foreground font-medium">
-                    Suggested: &ldquo;{report.suggestedName}&rdquo;
+                    Contributed: &ldquo;{report.suggestedName}&rdquo;
                     {report.city && (
                       <span className="text-muted ml-2 text-sm font-normal">
                         in {report.city.name}

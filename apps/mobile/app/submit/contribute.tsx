@@ -1,7 +1,7 @@
 /**
- * Suggest a community - PRD-0009.
+ * Contribute a community - PRD-0009.
  * Lightest-weight submit path: name + city + optional note.
- * Posts to POST /api/v1/submissions/suggest.
+ * Posts to POST /api/v1/submissions/contribute.
  */
 
 import { useEffect, useState } from 'react';
@@ -27,7 +27,7 @@ import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const SELECTED_CITY_KEY = 'indlokal.discover.selectedCitySlug.v1';
 
-export default function SuggestCommunityScreen() {
+export default function ContributeCommunityScreen() {
   const [cities, setCities] = useState<d.City[]>([]);
   const [citySlug, setCitySlug] = useState('');
   const [name, setName] = useState('');
@@ -62,16 +62,16 @@ export default function SuggestCommunityScreen() {
     if (!canSubmit) return;
     setBusy(true);
     try {
-      const payload: s.SuggestSubmission = {
+      const payload: s.ContributeSubmission = {
         name: name.trim(),
         citySlug,
         note: note.trim() || undefined,
         contactEmail: contactEmail.trim() || undefined,
       };
-      const validated = s.SuggestSubmission.parse(payload);
-      await authClient.postAuthed<s.SuggestSubmission, s.SubmissionResult>(
-        '/api/v1/submissions/suggest',
-        validated as unknown as s.SuggestSubmission & Record<string, unknown>,
+      const validated = s.ContributeSubmission.parse(payload);
+      await authClient.postAuthed<s.ContributeSubmission, s.SubmissionResult>(
+        '/api/v1/submissions/contribute',
+        validated as unknown as s.ContributeSubmission & Record<string, unknown>,
       );
       Alert.alert('Thanks!', "We'll look into it.", [{ text: 'OK', onPress: () => router.back() }]);
     } catch (err) {
@@ -83,13 +83,15 @@ export default function SuggestCommunityScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen options={{ title: 'Suggest a community' }} />
+      <Stack.Screen options={{ title: 'Contribute a community' }} />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Text style={styles.helper}>{content.COMMUNITY_ACTION_COPY.mobileSubmitSuggestHint}</Text>
+          <Text style={styles.helper}>
+            {content.COMMUNITY_ACTION_COPY.mobileSubmitContributeHint}
+          </Text>
 
           <Text style={styles.label}>Community name *</Text>
           <TextInput

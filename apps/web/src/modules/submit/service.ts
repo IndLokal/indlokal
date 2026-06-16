@@ -7,7 +7,7 @@ import { buildStoredEvidence } from '@/lib/community-trust';
 import { submit as s } from '@indlokal/shared';
 type EventSubmission = s.EventSubmission;
 type CommunitySubmission = s.CommunitySubmission;
-type SuggestSubmission = s.SuggestSubmission;
+type ContributeSubmission = s.ContributeSubmission;
 
 export interface PresignResult {
   url: string;
@@ -193,11 +193,11 @@ export async function createCommunitySubmission(
   });
 }
 
-// ─── Suggest community ──────────────────────────────────────────────────────
+// ─── Contribute community ──────────────────────────────────────────────────
 
-export async function createSuggestSubmission(
+export async function createContributeSubmission(
   userId: string,
-  data: SuggestSubmission,
+  data: ContributeSubmission,
 ): Promise<{ id: string; entityType: string; status: string; createdAt: Date }> {
   const city = await db.city.findFirst({
     where: {

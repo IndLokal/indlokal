@@ -44,7 +44,7 @@ function buildTemplateContent({
         links: [
           { href: `/${city}/events`, label: `Indian events in ${cityName}` },
           { href: `/${city}/resources`, label: `Expat resources in ${cityName}` },
-          { href: `/${city}/suggest`, label: 'Suggest a missing community' },
+          { href: `/${city}/contribute?type=community`, label: 'Contribute a missing community' },
         ],
         faq: [
           {
@@ -162,7 +162,7 @@ function buildTemplateContent({
         links: [
           { href: `/${city}/resources/journey`, label: 'Newcomer checklist' },
           { href: `/${city}/consular-services`, label: 'Consular services' },
-          { href: `/${city}/suggest`, label: 'Suggest a useful resource' },
+          { href: `/${city}/contribute`, label: 'Contribute a useful resource' },
         ],
         faq: [
           {

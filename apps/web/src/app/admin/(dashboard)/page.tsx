@@ -55,8 +55,8 @@ export default async function AdminDashboardPage() {
             ],
           },
           {
-            title: 'Automation Ops',
-            description: 'Pipeline review, scoring refresh, and merge operations',
+            title: 'Contribution Queue',
+            description: 'Contribution and ingestion review, scoring refresh, and merge operations',
             href: '/admin/pipeline',
             pendingCount: pendingCounts.pipeline,
             links: [
@@ -72,8 +72,8 @@ export default async function AdminDashboardPage() {
         description="Daily moderation and approval work"
         cards={[
           {
-            title: 'Submissions',
-            description: 'Primary moderation queue for new community entries',
+            title: 'Community Contributions',
+            description: 'Review community contribution entries submitted by users',
             href: '/admin/submissions',
             pendingCount: pendingCounts.submissions,
           },
@@ -90,8 +90,9 @@ export default async function AdminDashboardPage() {
             pendingCount: pendingCounts.cityChanges,
           },
           {
-            title: 'Events',
-            description: 'Review host/public event submissions before publishing',
+            title: 'Event Review',
+            description:
+              'Approve or reject pending events, including event contributions, before publishing',
             href: '/admin/events',
             pendingCount: pendingCounts.events,
           },
@@ -102,8 +103,8 @@ export default async function AdminDashboardPage() {
             pendingCount: pendingCounts.collaboratorRequests,
           },
           {
-            title: 'Reports',
-            description: 'User reports and feedback requiring moderation',
+            title: 'Reports & Contributions',
+            description: 'User reports and contribution records requiring moderation',
             href: '/admin/reports',
             pendingCount: pendingCounts.reports,
           },

@@ -114,13 +114,13 @@ export const CommunitySubmission = z
   });
 export type CommunitySubmission = z.infer<typeof CommunitySubmission>;
 
-// ─── Suggest community submission ─────────────────────────────────────────
+// ─── Contribute community submission ─────────────────────────────────────
 
-export const SuggestSubmission = z.object({
+export const ContributeSubmission = z.object({
   name: z.string().min(2).max(200),
   description: z.string().max(2000).optional(),
   citySlug: z.string().min(1),
   contactEmail: z.string().email().optional(),
   note: z.string().max(500).optional(),
 });
-export type SuggestSubmission = z.infer<typeof SuggestSubmission>;
+export type ContributeSubmission = z.infer<typeof ContributeSubmission>;

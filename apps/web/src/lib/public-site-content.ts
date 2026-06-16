@@ -77,9 +77,9 @@ export const ABOUT_TOP_QUESTION_CARDS: CommunityActionCard[] = [
     id: 'suggest-missing',
     audience: 'COMMUNITY MEMBERS',
     title: 'Something is missing on IndLokal',
-    body: 'Use suggest when a community, event, or resource should exist but is not listed yet.',
-    cta: 'Suggest from city page',
-    href: '/stuttgart/suggest',
+    body: 'Use contribute when a community, event, or resource should exist but is not listed yet.',
+    cta: 'Contribute from city page',
+    href: '/stuttgart/contribute',
   },
   {
     id: 'submit-new',

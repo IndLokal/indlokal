@@ -16,12 +16,12 @@
 
 ## 3. API surface
 
-| Method | Path                            | Auth   | Request                              | Response                  |
-| ------ | ------------------------------- | ------ | ------------------------------------ | ------------------------- |
-| POST   | `/api/v1/uploads/presign`       | access | `{ contentType, sizeBytes, sha256 }` | `{ url, key, expiresAt }` |
-| POST   | `/api/v1/submissions/event`     | access | `EventSubmission`                    | `PipelineItem`            |
-| POST   | `/api/v1/submissions/community` | access | `CommunitySubmission`                | `PipelineItem`            |
-| POST   | `/api/v1/submissions/suggest`   | access | `SuggestSubmission`                  | `PipelineItem`            |
+| Method | Path                             | Auth   | Request                              | Response                  |
+| ------ | -------------------------------- | ------ | ------------------------------------ | ------------------------- |
+| POST   | `/api/v1/uploads/presign`        | access | `{ contentType, sizeBytes, sha256 }` | `{ url, key, expiresAt }` |
+| POST   | `/api/v1/submissions/event`      | access | `EventSubmission`                    | `PipelineItem`            |
+| POST   | `/api/v1/submissions/community`  | access | `CommunitySubmission`                | `PipelineItem`            |
+| POST   | `/api/v1/submissions/contribute` | access | `ContributeSubmission`               | `PipelineItem`            |
 
 ## 4. Mobile screens & navigation
 
@@ -30,7 +30,7 @@ submit/
   index.tsx              # type picker
   event.tsx
   community.tsx
-  suggest.tsx
+  contribute.tsx
   success.tsx
 ```
 

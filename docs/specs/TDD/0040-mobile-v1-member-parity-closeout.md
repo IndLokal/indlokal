@@ -48,7 +48,7 @@ BROKEN_LINK / INCORRECT_DETAILS / OTHER apply to events too).
 ## 3. API surface
 
 - **Contract (`packages/shared/contracts/resources.ts`):** add `eventId: Cuid.optional()` to
-  `ContentReportInput`. One of `communityId` / `eventId` / suggestion fields is provided.
+  `ContentReportInput`. One of `communityId` / `eventId` / contribution fields is provided.
 - **Service (`apps/web/src/modules/report/service.ts`):** accept `eventId`, validate the
   event exists, persist it, include in the admin notification email.
 - **Route (`apps/web/src/app/api/v1/reports/route.ts`):** unchanged (delegates to contract +

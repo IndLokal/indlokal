@@ -667,7 +667,7 @@ registry.register('PresignRequest', submitContracts.PresignRequest);
 registry.register('PresignResponse', submitContracts.PresignResponse);
 registry.register('EventSubmission', submitContracts.EventSubmission);
 registry.register('CommunitySubmission', submitContracts.CommunitySubmission);
-registry.register('SuggestSubmission', submitContracts.SuggestSubmission);
+registry.register('ContributeSubmission', submitContracts.ContributeSubmission);
 registry.register('SubmissionResult', submitContracts.SubmissionResult);
 
 registry.registerPath({
@@ -729,11 +729,11 @@ registry.registerPath({
 
 registry.registerPath({
   method: 'post',
-  path: '/api/v1/submissions/suggest',
-  summary: 'Suggest a community for IndLokal to add',
+  path: '/api/v1/submissions/contribute',
+  summary: 'Contribute a missing community for IndLokal to review',
   security: [{ bearerAuth: [] }],
   request: {
-    body: { content: { 'application/json': { schema: submitContracts.SuggestSubmission } } },
+    body: { content: { 'application/json': { schema: submitContracts.ContributeSubmission } } },
   },
   responses: {
     201: {

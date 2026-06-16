@@ -125,12 +125,12 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             label: noUpcomingEvents
               ? hasUpcomingLater
                 ? 'See upcoming events'
-                : 'Suggest a listing'
+                : 'Contribute a listing'
               : 'See all events',
             href: noUpcomingEvents
               ? hasUpcomingLater
                 ? `/${city}/events`
-                : `/${city}/suggest`
+                : `/${city}/contribute`
               : `/${city}/events`,
           }}
         />
@@ -157,10 +157,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
                     {hasUpcomingLater ? 'View upcoming events' : 'Browse communities'}
                   </Link>
                   <Link
-                    href={`/${city}/suggest`}
+                    href={`/${city}/contribute`}
                     className="text-brand-700 bg-white px-4 py-2 text-sm font-semibold ring-1 ring-black/[0.08] transition-colors hover:bg-black/[0.02]"
                   >
-                    {hasUpcomingLater ? 'Suggest another listing' : 'Suggest a listing'}
+                    {hasUpcomingLater ? 'Contribute another listing' : 'Contribute a listing'}
                   </Link>
                 </div>
               </div>
@@ -312,10 +312,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         <p className="text-muted text-center text-sm">
           Don&apos;t see a community?{' '}
           <Link
-            href={`/${city}/suggest`}
+            href={`/${city}/contribute?type=community`}
             className="text-brand-600 hover:text-brand-700 font-semibold hover:underline"
           >
-            Suggest one →
+            Contribute one →
           </Link>
         </p>
       </section>

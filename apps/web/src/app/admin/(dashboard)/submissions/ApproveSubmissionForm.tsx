@@ -4,17 +4,21 @@ import { useState } from 'react';
 import { ConfirmSubmitButton } from '@/components/ui';
 
 type Props = {
-  submissionId: string;
+  contributionId: string;
   defaultGrantOwnership: boolean;
   action: (formData: FormData) => void | Promise<void>;
 };
 
-export function ApproveSubmissionForm({ submissionId, defaultGrantOwnership, action }: Props) {
+export function ApproveCommunityContributionForm({
+  contributionId,
+  defaultGrantOwnership,
+  action,
+}: Props) {
   const [grantOwnership, setGrantOwnership] = useState(defaultGrantOwnership);
 
   return (
     <form action={action}>
-      <input type="hidden" name="id" value={submissionId} />
+      <input type="hidden" name="id" value={contributionId} />
       <p
         className={`mb-2 inline-flex rounded-full px-2 py-1 text-[11px] font-medium ${
           grantOwnership ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
@@ -34,13 +38,13 @@ export function ApproveSubmissionForm({ submissionId, defaultGrantOwnership, act
       </label>
       <ConfirmSubmitButton
         triggerLabel="Approve"
-        title="Approve this community submission?"
+        title="Approve this community contribution?"
         description={
           grantOwnership
             ? 'This will publish the community and grant organizer ownership to the submitter email.'
             : 'This will publish the community without granting organizer ownership.'
         }
-        confirmLabel="Approve submission"
+        confirmLabel="Approve contribution"
         tone="primary"
         triggerClassName="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
       />
