@@ -819,6 +819,41 @@ components:
           type:
             - string
             - "null"
+        costType:
+          type: string
+          enum: &a6
+            - FREE
+            - PAID
+            - UNCLEAR
+        priceAmount:
+          type:
+            - number
+            - "null"
+        priceCurrency:
+          type:
+            - string
+            - "null"
+        costNote:
+          type:
+            - string
+            - "null"
+        accessType:
+          type: string
+          enum: &a7
+            - OPEN_ENTRY
+            - REGISTRATION_REQUIRED
+            - APPROVAL_REQUIRED
+            - INVITE_ONLY
+            - MEMBERS_ONLY
+            - UNCLEAR
+        requiresRegistration:
+          type: boolean
+        requiresApproval:
+          type: boolean
+        entryNote:
+          type:
+            - string
+            - "null"
         imageUrl:
           type:
             - string
@@ -878,6 +913,14 @@ components:
         - venueName
         - isOnline
         - cost
+        - costType
+        - priceAmount
+        - priceCurrency
+        - costNote
+        - accessType
+        - requiresRegistration
+        - requiresApproval
+        - entryNote
         - imageUrl
         - isRecurring
         - community
@@ -908,12 +951,12 @@ components:
           maxItems: 10
         cost:
           type: string
-          enum: &a17
+          enum: &a20
             - free
             - paid
         type:
           type: string
-          enum: &a18
+          enum: &a21
             - online
             - in-person
     EventsPage:
@@ -947,6 +990,32 @@ components:
               isOnline:
                 type: boolean
               cost:
+                type:
+                  - string
+                  - "null"
+              costType:
+                type: string
+                enum: *a6
+              priceAmount:
+                type:
+                  - number
+                  - "null"
+              priceCurrency:
+                type:
+                  - string
+                  - "null"
+              costNote:
+                type:
+                  - string
+                  - "null"
+              accessType:
+                type: string
+                enum: *a7
+              requiresRegistration:
+                type: boolean
+              requiresApproval:
+                type: boolean
+              entryNote:
                 type:
                   - string
                   - "null"
@@ -1009,6 +1078,14 @@ components:
               - venueName
               - isOnline
               - cost
+              - costType
+              - priceAmount
+              - priceCurrency
+              - costNote
+              - accessType
+              - requiresRegistration
+              - requiresApproval
+              - entryNote
               - imageUrl
               - isRecurring
               - community
@@ -1020,14 +1097,14 @@ components:
         - items
     CommunityStatus:
       type: string
-      enum: &a6
+      enum: &a8
         - ACTIVE
         - INACTIVE
         - UNVERIFIED
         - CLAIMED
     ClaimState:
       type: string
-      enum: &a7
+      enum: &a9
         - UNCLAIMED
         - CLAIM_PENDING
         - CLAIMED
@@ -1048,7 +1125,7 @@ components:
             - "null"
         status:
           type: string
-          enum: *a6
+          enum: *a8
         activityScore:
           type: number
         completenessScore:
@@ -1059,7 +1136,7 @@ components:
           type: boolean
         claimState:
           type: string
-          enum: *a7
+          enum: *a9
         memberCountApprox:
           type:
             - integer
@@ -1162,7 +1239,7 @@ components:
                   - "null"
               status:
                 type: string
-                enum: *a6
+                enum: *a8
               activityScore:
                 type: number
               completenessScore:
@@ -1173,7 +1250,7 @@ components:
                 type: boolean
               claimState:
                 type: string
-                enum: *a7
+                enum: *a9
               memberCountApprox:
                 type:
                   - integer
@@ -1269,7 +1346,7 @@ components:
                   - "null"
               status:
                 type: string
-                enum: *a6
+                enum: *a8
               activityScore:
                 type: number
               completenessScore:
@@ -1280,7 +1357,7 @@ components:
                 type: boolean
               claimState:
                 type: string
-                enum: *a7
+                enum: *a9
               memberCountApprox:
                 type:
                   - integer
@@ -1381,6 +1458,32 @@ components:
                 type:
                   - string
                   - "null"
+              costType:
+                type: string
+                enum: *a6
+              priceAmount:
+                type:
+                  - number
+                  - "null"
+              priceCurrency:
+                type:
+                  - string
+                  - "null"
+              costNote:
+                type:
+                  - string
+                  - "null"
+              accessType:
+                type: string
+                enum: *a7
+              requiresRegistration:
+                type: boolean
+              requiresApproval:
+                type: boolean
+              entryNote:
+                type:
+                  - string
+                  - "null"
               imageUrl:
                 type:
                   - string
@@ -1440,6 +1543,14 @@ components:
               - venueName
               - isOnline
               - cost
+              - costType
+              - priceAmount
+              - priceCurrency
+              - costNote
+              - accessType
+              - requiresRegistration
+              - requiresApproval
+              - entryNote
               - imageUrl
               - isRecurring
               - community
@@ -1471,7 +1582,7 @@ components:
         - categories
     TrustSignalType:
       type: string
-      enum: &a8
+      enum: &a10
         - ADMIN_VERIFIED
         - COMMUNITY_CLAIMED
         - USER_REPORTED_ACCURATE
@@ -1486,7 +1597,7 @@ components:
           maxLength: 40
         signalType:
           type: string
-          enum: *a8
+          enum: *a10
         createdAt:
           type: string
           format: date-time
@@ -1496,7 +1607,7 @@ components:
         - createdAt
     EventStatus:
       type: string
-      enum: &a9
+      enum: &a11
         - UPCOMING
         - ONGOING
         - PAST
@@ -1518,7 +1629,7 @@ components:
             - "null"
         status:
           type: string
-          enum: *a9
+          enum: *a11
         startsAt:
           type: string
           format: date-time
@@ -1542,6 +1653,41 @@ components:
             - string
             - "null"
         cost:
+          type:
+            - string
+            - "null"
+        costType:
+          type: string
+          enum: &a22
+            - FREE
+            - PAID
+            - UNCLEAR
+        priceAmount:
+          type:
+            - number
+            - "null"
+        priceCurrency:
+          type:
+            - string
+            - "null"
+        costNote:
+          type:
+            - string
+            - "null"
+        accessType:
+          type: string
+          enum: &a23
+            - OPEN_ENTRY
+            - REGISTRATION_REQUIRED
+            - APPROVAL_REQUIRED
+            - INVITE_ONLY
+            - MEMBERS_ONLY
+            - UNCLEAR
+        requiresRegistration:
+          type: boolean
+        requiresApproval:
+          type: boolean
+        entryNote:
           type:
             - string
             - "null"
@@ -1615,7 +1761,7 @@ components:
                 maxLength: 40
               signalType:
                 type: string
-                enum: *a8
+                enum: *a10
               createdAt:
                 type: string
                 format: date-time
@@ -1651,6 +1797,32 @@ components:
               isOnline:
                 type: boolean
               cost:
+                type:
+                  - string
+                  - "null"
+              costType:
+                type: string
+                enum: *a6
+              priceAmount:
+                type:
+                  - number
+                  - "null"
+              priceCurrency:
+                type:
+                  - string
+                  - "null"
+              costNote:
+                type:
+                  - string
+                  - "null"
+              accessType:
+                type: string
+                enum: *a7
+              requiresRegistration:
+                type: boolean
+              requiresApproval:
+                type: boolean
+              entryNote:
                 type:
                   - string
                   - "null"
@@ -1713,6 +1885,14 @@ components:
               - venueName
               - isOnline
               - cost
+              - costType
+              - priceAmount
+              - priceCurrency
+              - costNote
+              - accessType
+              - requiresRegistration
+              - requiresApproval
+              - entryNote
               - imageUrl
               - isRecurring
               - community
@@ -1731,6 +1911,14 @@ components:
         - isOnline
         - onlineUrl
         - cost
+        - costType
+        - priceAmount
+        - priceCurrency
+        - costNote
+        - accessType
+        - requiresRegistration
+        - requiresApproval
+        - entryNote
         - imageUrl
         - isRecurring
         - registrationUrl
@@ -1748,9 +1936,14 @@ components:
         - saved
     TrackEventType:
       type: string
-      enum: &a10
+      enum: &a12
+        - community.detail.viewed
+        - community.followed
+        - community.unfollowed
+        - community.channel.tapped
         - event.detail.viewed
         - event.saved
+        - event.unsaved
         - event.calendar_added
         - event.shared
         - event.register_clicked
@@ -1761,10 +1954,10 @@ components:
       properties:
         event:
           type: string
-          enum: *a10
+          enum: *a12
         entityType:
           type: string
-          enum: &a19
+          enum: &a24
             - COMMUNITY
             - EVENT
             - RESOURCE
@@ -1781,7 +1974,7 @@ components:
         - event
     ChannelType:
       type: string
-      enum: &a11
+      enum: &a13
         - WHATSAPP
         - TELEGRAM
         - WEBSITE
@@ -1801,7 +1994,7 @@ components:
           maxLength: 40
         channelType:
           type: string
-          enum: *a11
+          enum: *a13
         url:
           type: string
         label:
@@ -1828,7 +2021,7 @@ components:
           maxLength: 40
         signalType:
           type: string
-          enum: *a8
+          enum: *a10
         createdAt:
           type: string
           format: date-time
@@ -1857,10 +2050,10 @@ components:
             - "null"
         status:
           type: string
-          enum: *a6
+          enum: *a8
         claimState:
           type: string
-          enum: *a7
+          enum: *a9
         logoUrl:
           type:
             - string
@@ -1941,7 +2134,7 @@ components:
                 maxLength: 40
               channelType:
                 type: string
-                enum: *a11
+                enum: *a13
               url:
                 type: string
               label:
@@ -1970,7 +2163,7 @@ components:
                 maxLength: 40
               signalType:
                 type: string
-                enum: *a8
+                enum: *a10
               createdAt:
                 type: string
                 format: date-time
@@ -2080,9 +2273,10 @@ components:
         - followed
     SearchType:
       type: string
-      enum: &a12
+      enum: &a14
         - COMMUNITY
         - EVENT
+        - RESOURCE
         - ALL
     Suggestion:
       type: object
@@ -2091,7 +2285,9 @@ components:
           type: string
         type:
           type: string
-          enum: *a12
+          enum: *a14
+        slug:
+          type: string
       required:
         - text
         - type
@@ -2114,7 +2310,7 @@ components:
           format: date-time
         type:
           type: string
-          enum: *a12
+          enum: *a14
           default: ALL
         cursor:
           type: string
@@ -2149,7 +2345,7 @@ components:
                     - "null"
                 status:
                   type: string
-                  enum: *a6
+                  enum: *a8
                 activityScore:
                   type: number
                 completenessScore:
@@ -2160,7 +2356,7 @@ components:
                   type: boolean
                 claimState:
                   type: string
-                  enum: *a7
+                  enum: *a9
                 memberCountApprox:
                   type:
                     - integer
@@ -2268,6 +2464,32 @@ components:
                   type:
                     - string
                     - "null"
+                costType:
+                  type: string
+                  enum: *a6
+                priceAmount:
+                  type:
+                    - number
+                    - "null"
+                priceCurrency:
+                  type:
+                    - string
+                    - "null"
+                costNote:
+                  type:
+                    - string
+                    - "null"
+                accessType:
+                  type: string
+                  enum: *a7
+                requiresRegistration:
+                  type: boolean
+                requiresApproval:
+                  type: boolean
+                entryNote:
+                  type:
+                    - string
+                    - "null"
                 imageUrl:
                   type:
                     - string
@@ -2327,11 +2549,89 @@ components:
                 - venueName
                 - isOnline
                 - cost
+                - costType
+                - priceAmount
+                - priceCurrency
+                - costNote
+                - accessType
+                - requiresRegistration
+                - requiresApproval
+                - entryNote
                 - imageUrl
                 - isRecurring
                 - community
                 - city
                 - categories
+          required:
+            - type
+            - item
+        - type: object
+          properties:
+            type:
+              type: string
+              enum:
+                - RESOURCE
+            item:
+              type: object
+              properties:
+                id:
+                  type: string
+                title:
+                  type: string
+                slug:
+                  type: string
+                resourceType:
+                  type: string
+                  enum: &a15
+                    - CONSULAR_SERVICE
+                    - OFFICIAL_EVENT
+                    - GOVERNMENT_INFO
+                    - VISA_SERVICE
+                    - CITY_REGISTRATION
+                    - DRIVING
+                    - HOUSING
+                    - HEALTH_DOCTORS
+                    - FAMILY_CHILDREN
+                    - JOBS_CAREERS
+                    - TAX_FINANCE
+                    - BUSINESS_SETUP
+                    - GROCERY_FOOD
+                    - COMMUNITY_RESOURCE
+                url:
+                  type:
+                    - string
+                    - "null"
+                description:
+                  type:
+                    - string
+                    - "null"
+                isEssential:
+                  type: boolean
+                createdAt:
+                  type: string
+                  format: date-time
+                city:
+                  type:
+                    - object
+                    - "null"
+                  properties:
+                    name:
+                      type: string
+                    slug:
+                      type: string
+                  required:
+                    - name
+                    - slug
+              required:
+                - id
+                - title
+                - slug
+                - resourceType
+                - url
+                - description
+                - isEssential
+                - createdAt
+                - city
           required:
             - type
             - item
@@ -2365,7 +2665,7 @@ components:
                           - "null"
                       status:
                         type: string
-                        enum: *a6
+                        enum: *a8
                       activityScore:
                         type: number
                       completenessScore:
@@ -2376,7 +2676,7 @@ components:
                         type: boolean
                       claimState:
                         type: string
-                        enum: *a7
+                        enum: *a9
                       memberCountApprox:
                         type:
                           - integer
@@ -2484,6 +2784,32 @@ components:
                         type:
                           - string
                           - "null"
+                      costType:
+                        type: string
+                        enum: *a6
+                      priceAmount:
+                        type:
+                          - number
+                          - "null"
+                      priceCurrency:
+                        type:
+                          - string
+                          - "null"
+                      costNote:
+                        type:
+                          - string
+                          - "null"
+                      accessType:
+                        type: string
+                        enum: *a7
+                      requiresRegistration:
+                        type: boolean
+                      requiresApproval:
+                        type: boolean
+                      entryNote:
+                        type:
+                          - string
+                          - "null"
                       imageUrl:
                         type:
                           - string
@@ -2543,11 +2869,75 @@ components:
                       - venueName
                       - isOnline
                       - cost
+                      - costType
+                      - priceAmount
+                      - priceCurrency
+                      - costNote
+                      - accessType
+                      - requiresRegistration
+                      - requiresApproval
+                      - entryNote
                       - imageUrl
                       - isRecurring
                       - community
                       - city
                       - categories
+                required:
+                  - type
+                  - item
+              - type: object
+                properties:
+                  type:
+                    type: string
+                    enum:
+                      - RESOURCE
+                  item:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      title:
+                        type: string
+                      slug:
+                        type: string
+                      resourceType:
+                        type: string
+                        enum: *a15
+                      url:
+                        type:
+                          - string
+                          - "null"
+                      description:
+                        type:
+                          - string
+                          - "null"
+                      isEssential:
+                        type: boolean
+                      createdAt:
+                        type: string
+                        format: date-time
+                      city:
+                        type:
+                          - object
+                          - "null"
+                        properties:
+                          name:
+                            type: string
+                          slug:
+                            type: string
+                        required:
+                          - name
+                          - slug
+                    required:
+                      - id
+                      - title
+                      - slug
+                      - resourceType
+                      - url
+                      - description
+                      - isEssential
+                      - createdAt
+                      - city
                 required:
                   - type
                   - item
@@ -2560,7 +2950,7 @@ components:
       properties:
         contentType:
           type: string
-          enum: &a20
+          enum: &a25
             - image/jpeg
             - image/png
             - image/webp
@@ -2667,15 +3057,38 @@ components:
           items:
             type: string
           maxItems: 20
-          default: &a23 []
+          default: &a28 []
+        channels:
+          type: array
+          items:
+            type: object
+            properties:
+              channelType:
+                type: string
+                enum: *a13
+              url:
+                type: string
+                format: uri
+              label:
+                type: string
+                maxLength: 100
+              isPrimary:
+                type: boolean
+                default: false
+            required:
+              - channelType
+              - url
+          minItems: 1
+          maxItems: 6
         primaryChannelType:
           type: string
-          minLength: 1
+          enum: *a13
         primaryChannelUrl:
           type: string
           format: uri
         secondaryChannelType:
           type: string
+          enum: *a13
         secondaryChannelUrl:
           anyOf:
             - type: string
@@ -2697,11 +3110,9 @@ components:
         - description
         - citySlug
         - categories
-        - primaryChannelType
-        - primaryChannelUrl
         - contactEmail
         - contactName
-    SuggestSubmission:
+    ContributeSubmission:
       type: object
       properties:
         name:
@@ -2730,12 +3141,12 @@ components:
           type: string
         entityType:
           type: string
-          enum: &a21
+          enum: &a26
             - EVENT
             - COMMUNITY
         status:
           type: string
-          enum: &a22
+          enum: &a27
             - PENDING
             - APPROVED
             - REJECTED
@@ -2750,21 +3161,7 @@ components:
         - createdAt
     ResourceType:
       type: string
-      enum: &a13
-        - CONSULAR_SERVICE
-        - OFFICIAL_EVENT
-        - GOVERNMENT_INFO
-        - VISA_SERVICE
-        - CITY_REGISTRATION
-        - DRIVING
-        - HOUSING
-        - HEALTH_DOCTORS
-        - FAMILY_CHILDREN
-        - JOBS_CAREERS
-        - TAX_FINANCE
-        - BUSINESS_SETUP
-        - GROCERY_FOOD
-        - COMMUNITY_RESOURCE
+      enum: *a15
     Resource:
       type: object
       properties:
@@ -2778,7 +3175,7 @@ components:
           type: string
         resourceType:
           type: string
-          enum: *a13
+          enum: *a15
         url:
           type:
             - string
@@ -2806,6 +3203,49 @@ components:
         createdAt:
           type: string
           format: date-time
+        scope:
+          type: string
+          enum: &a16
+            - GLOBAL
+            - COUNTRY
+            - STATE
+            - METRO
+            - CITY
+            - DISTRICT
+        scopeRegion:
+          type:
+            - string
+            - "null"
+        audiences:
+          type: array
+          items:
+            type: string
+            enum: &a29
+              - NEWCOMER
+              - FAMILY
+              - FOUNDER
+              - EMPLOYEE
+              - STUDENT
+              - STUDENT_VISA
+              - SENIOR
+              - RETURNEE
+        lifecycleStage:
+          type: array
+          items:
+            type: string
+            enum: &a30
+              - PRE_ARRIVAL
+              - FIRST_30_DAYS
+              - FIRST_90_DAYS
+              - SETTLED
+              - ANYTIME
+        priority:
+          type: integer
+        isEssential:
+          type: boolean
+        resolvedScope:
+          type: string
+          enum: *a16
       required:
         - id
         - title
@@ -2817,17 +3257,23 @@ components:
         - validUntil
         - metadata
         - createdAt
+        - scope
+        - scopeRegion
+        - audiences
+        - lifecycleStage
+        - priority
+        - isEssential
     ReportType:
       type: string
-      enum: &a14
+      enum: &a17
         - STALE_INFO
         - BROKEN_LINK
         - INCORRECT_DETAILS
-        - SUGGEST_COMMUNITY
+        - CONTRIBUTE_COMMUNITY
         - OTHER
     ReportStatus:
       type: string
-      enum: &a15
+      enum: &a18
         - PENDING
         - REVIEWED
         - RESOLVED
@@ -2836,8 +3282,12 @@ components:
       properties:
         reportType:
           type: string
-          enum: *a14
+          enum: *a17
         communityId:
+          type: string
+          minLength: 20
+          maxLength: 40
+        eventId:
           type: string
           minLength: 20
           maxLength: 40
@@ -2863,10 +3313,10 @@ components:
           maxLength: 40
         reportType:
           type: string
-          enum: *a14
+          enum: *a17
         status:
           type: string
-          enum: *a15
+          enum: *a18
         createdAt:
           type: string
           format: date-time
@@ -3023,13 +3473,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: &a16
+            application/json: &a19
               schema:
                 $ref: "#/components/schemas/ApiError"
         "429":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/auth/magic-link/verify:
     post:
       summary: Verify a magic-link token and receive auth tokens
@@ -3135,11 +3585,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/auth/google:
     post:
       summary: Exchange a Google authorization code for auth tokens
@@ -3251,15 +3701,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "500":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/auth/apple:
     post:
       summary: Verify an Apple identity token and exchange for auth tokens
@@ -3381,15 +3831,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "500":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/auth/refresh:
     post:
       summary: Rotate the refresh token and mint a fresh access token
@@ -3494,11 +3944,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/auth/logout:
     post:
       summary: Revoke a refresh token
@@ -3530,7 +3980,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/me:
     get:
       summary: Return the authenticated user profile
@@ -3607,11 +4057,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/devices:
     post:
       summary: Register or refresh the calling device
@@ -3696,11 +4146,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/devices/{installationId}:
     patch:
       summary: Update mutable device fields (push token, locale, ...)
@@ -3784,15 +4234,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
     delete:
       summary: Sign out from the given device
       security:
@@ -3820,7 +4270,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/notifications/preferences:
     get:
       summary: Read the full topic × channel preference matrix
@@ -3876,7 +4326,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
     put:
       summary: Patch preferences and/or quiet hours
       security:
@@ -3969,11 +4419,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/notifications/inbox:
     get:
       summary: List inbox items, newest first
@@ -4043,7 +4493,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/notifications/inbox/read:
     post:
       summary: Mark inbox items as read
@@ -4082,11 +4532,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/cities:
     get:
       summary: List all active cities
@@ -4239,7 +4689,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/discovery/{citySlug}/events:
     get:
       summary: Cursor-paginated event feed for a city
@@ -4289,13 +4739,13 @@ paths:
           in: query
         - schema:
             type: string
-            enum: *a17
+            enum: *a20
           required: false
           name: cost
           in: query
         - schema:
             type: string
-            enum: *a18
+            enum: *a21
           required: false
           name: type
           in: query
@@ -4335,6 +4785,32 @@ paths:
                         isOnline:
                           type: boolean
                         cost:
+                          type:
+                            - string
+                            - "null"
+                        costType:
+                          type: string
+                          enum: *a6
+                        priceAmount:
+                          type:
+                            - number
+                            - "null"
+                        priceCurrency:
+                          type:
+                            - string
+                            - "null"
+                        costNote:
+                          type:
+                            - string
+                            - "null"
+                        accessType:
+                          type: string
+                          enum: *a7
+                        requiresRegistration:
+                          type: boolean
+                        requiresApproval:
+                          type: boolean
+                        entryNote:
                           type:
                             - string
                             - "null"
@@ -4397,6 +4873,14 @@ paths:
                         - venueName
                         - isOnline
                         - cost
+                        - costType
+                        - priceAmount
+                        - priceCurrency
+                        - costNote
+                        - accessType
+                        - requiresRegistration
+                        - requiresApproval
+                        - entryNote
                         - imageUrl
                         - isRecurring
                         - community
@@ -4409,7 +4893,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/discovery/{citySlug}/communities:
     get:
       summary: Cursor-paginated community feed for a city
@@ -4463,7 +4947,7 @@ paths:
                             - "null"
                         status:
                           type: string
-                          enum: *a6
+                          enum: *a8
                         activityScore:
                           type: number
                         completenessScore:
@@ -4474,7 +4958,7 @@ paths:
                           type: boolean
                         claimState:
                           type: string
-                          enum: *a7
+                          enum: *a9
                         memberCountApprox:
                           type:
                             - integer
@@ -4551,7 +5035,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/discovery/{citySlug}/trending:
     get:
       summary: Trending communities, upcoming events, and category grid for a city
@@ -4588,7 +5072,7 @@ paths:
                             - "null"
                         status:
                           type: string
-                          enum: *a6
+                          enum: *a8
                         activityScore:
                           type: number
                         completenessScore:
@@ -4599,7 +5083,7 @@ paths:
                           type: boolean
                         claimState:
                           type: string
-                          enum: *a7
+                          enum: *a9
                         memberCountApprox:
                           type:
                             - integer
@@ -4700,6 +5184,32 @@ paths:
                           type:
                             - string
                             - "null"
+                        costType:
+                          type: string
+                          enum: *a6
+                        priceAmount:
+                          type:
+                            - number
+                            - "null"
+                        priceCurrency:
+                          type:
+                            - string
+                            - "null"
+                        costNote:
+                          type:
+                            - string
+                            - "null"
+                        accessType:
+                          type: string
+                          enum: *a7
+                        requiresRegistration:
+                          type: boolean
+                        requiresApproval:
+                          type: boolean
+                        entryNote:
+                          type:
+                            - string
+                            - "null"
                         imageUrl:
                           type:
                             - string
@@ -4759,6 +5269,14 @@ paths:
                         - venueName
                         - isOnline
                         - cost
+                        - costType
+                        - priceAmount
+                        - priceCurrency
+                        - costNote
+                        - accessType
+                        - requiresRegistration
+                        - requiresApproval
+                        - entryNote
                         - imageUrl
                         - isRecurring
                         - community
@@ -4791,7 +5309,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/events/{slug}:
     get:
       summary: Event detail - optional auth for savedByUser flag
@@ -4824,7 +5342,7 @@ paths:
                       - "null"
                   status:
                     type: string
-                    enum: *a9
+                    enum: *a11
                   startsAt:
                     type: string
                     format: date-time
@@ -4848,6 +5366,32 @@ paths:
                       - string
                       - "null"
                   cost:
+                    type:
+                      - string
+                      - "null"
+                  costType:
+                    type: string
+                    enum: *a22
+                  priceAmount:
+                    type:
+                      - number
+                      - "null"
+                  priceCurrency:
+                    type:
+                      - string
+                      - "null"
+                  costNote:
+                    type:
+                      - string
+                      - "null"
+                  accessType:
+                    type: string
+                    enum: *a23
+                  requiresRegistration:
+                    type: boolean
+                  requiresApproval:
+                    type: boolean
+                  entryNote:
                     type:
                       - string
                       - "null"
@@ -4921,7 +5465,7 @@ paths:
                           maxLength: 40
                         signalType:
                           type: string
-                          enum: *a8
+                          enum: *a10
                         createdAt:
                           type: string
                           format: date-time
@@ -4957,6 +5501,32 @@ paths:
                         isOnline:
                           type: boolean
                         cost:
+                          type:
+                            - string
+                            - "null"
+                        costType:
+                          type: string
+                          enum: *a6
+                        priceAmount:
+                          type:
+                            - number
+                            - "null"
+                        priceCurrency:
+                          type:
+                            - string
+                            - "null"
+                        costNote:
+                          type:
+                            - string
+                            - "null"
+                        accessType:
+                          type: string
+                          enum: *a7
+                        requiresRegistration:
+                          type: boolean
+                        requiresApproval:
+                          type: boolean
+                        entryNote:
                           type:
                             - string
                             - "null"
@@ -5019,6 +5589,14 @@ paths:
                         - venueName
                         - isOnline
                         - cost
+                        - costType
+                        - priceAmount
+                        - priceCurrency
+                        - costNote
+                        - accessType
+                        - requiresRegistration
+                        - requiresApproval
+                        - entryNote
                         - imageUrl
                         - isRecurring
                         - community
@@ -5037,6 +5615,14 @@ paths:
                   - isOnline
                   - onlineUrl
                   - cost
+                  - costType
+                  - priceAmount
+                  - priceCurrency
+                  - costNote
+                  - accessType
+                  - requiresRegistration
+                  - requiresApproval
+                  - entryNote
                   - imageUrl
                   - isRecurring
                   - registrationUrl
@@ -5048,7 +5634,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/events/{slug}/save:
     post:
       summary: Save an event (requires auth)
@@ -5075,11 +5661,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
     delete:
       summary: Unsave an event (requires auth)
       security:
@@ -5105,11 +5691,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/track:
     post:
       summary: Client-side behavioral event tracking (optional auth)
@@ -5122,10 +5708,10 @@ paths:
               properties:
                 event:
                   type: string
-                  enum: *a10
+                  enum: *a12
                 entityType:
                   type: string
-                  enum: *a19
+                  enum: *a24
                 entityId:
                   type: string
                   minLength: 20
@@ -5154,7 +5740,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/communities/{slug}:
     get:
       summary: Community detail - optional auth for followedByUser flag
@@ -5191,10 +5777,10 @@ paths:
                       - "null"
                   status:
                     type: string
-                    enum: *a6
+                    enum: *a8
                   claimState:
                     type: string
-                    enum: *a7
+                    enum: *a9
                   logoUrl:
                     type:
                       - string
@@ -5275,7 +5861,7 @@ paths:
                           maxLength: 40
                         channelType:
                           type: string
-                          enum: *a11
+                          enum: *a13
                         url:
                           type: string
                         label:
@@ -5304,7 +5890,7 @@ paths:
                           maxLength: 40
                         signalType:
                           type: string
-                          enum: *a8
+                          enum: *a10
                         createdAt:
                           type: string
                           format: date-time
@@ -5341,7 +5927,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/communities/{slug}/follow:
     post:
       summary: Follow a community (requires auth)
@@ -5368,11 +5954,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
     delete:
       summary: Unfollow a community (requires auth)
       security:
@@ -5398,11 +5984,11 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/communities/{slug}/events:
     get:
       summary: Cursor-paginated upcoming events for a community
@@ -5452,13 +6038,13 @@ paths:
           in: query
         - schema:
             type: string
-            enum: *a17
+            enum: *a20
           required: false
           name: cost
           in: query
         - schema:
             type: string
-            enum: *a18
+            enum: *a21
           required: false
           name: type
           in: query
@@ -5498,6 +6084,32 @@ paths:
                         isOnline:
                           type: boolean
                         cost:
+                          type:
+                            - string
+                            - "null"
+                        costType:
+                          type: string
+                          enum: *a6
+                        priceAmount:
+                          type:
+                            - number
+                            - "null"
+                        priceCurrency:
+                          type:
+                            - string
+                            - "null"
+                        costNote:
+                          type:
+                            - string
+                            - "null"
+                        accessType:
+                          type: string
+                          enum: *a7
+                        requiresRegistration:
+                          type: boolean
+                        requiresApproval:
+                          type: boolean
+                        entryNote:
                           type:
                             - string
                             - "null"
@@ -5560,6 +6172,14 @@ paths:
                         - venueName
                         - isOnline
                         - cost
+                        - costType
+                        - priceAmount
+                        - priceCurrency
+                        - costNote
+                        - accessType
+                        - requiresRegistration
+                        - requiresApproval
+                        - entryNote
                         - imageUrl
                         - isRecurring
                         - community
@@ -5572,11 +6192,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/communities/{slug}/related:
     get:
       summary: Related communities via relationship graph
@@ -5663,7 +6283,7 @@ paths:
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/search:
     get:
       summary: Full-text search across communities and events
@@ -5699,7 +6319,7 @@ paths:
           in: query
         - schema:
             type: string
-            enum: *a12
+            enum: *a14
             default: ALL
           required: false
           name: type
@@ -5751,7 +6371,7 @@ paths:
                                     - "null"
                                 status:
                                   type: string
-                                  enum: *a6
+                                  enum: *a8
                                 activityScore:
                                   type: number
                                 completenessScore:
@@ -5762,7 +6382,7 @@ paths:
                                   type: boolean
                                 claimState:
                                   type: string
-                                  enum: *a7
+                                  enum: *a9
                                 memberCountApprox:
                                   type:
                                     - integer
@@ -5870,6 +6490,32 @@ paths:
                                   type:
                                     - string
                                     - "null"
+                                costType:
+                                  type: string
+                                  enum: *a6
+                                priceAmount:
+                                  type:
+                                    - number
+                                    - "null"
+                                priceCurrency:
+                                  type:
+                                    - string
+                                    - "null"
+                                costNote:
+                                  type:
+                                    - string
+                                    - "null"
+                                accessType:
+                                  type: string
+                                  enum: *a7
+                                requiresRegistration:
+                                  type: boolean
+                                requiresApproval:
+                                  type: boolean
+                                entryNote:
+                                  type:
+                                    - string
+                                    - "null"
                                 imageUrl:
                                   type:
                                     - string
@@ -5929,11 +6575,75 @@ paths:
                                 - venueName
                                 - isOnline
                                 - cost
+                                - costType
+                                - priceAmount
+                                - priceCurrency
+                                - costNote
+                                - accessType
+                                - requiresRegistration
+                                - requiresApproval
+                                - entryNote
                                 - imageUrl
                                 - isRecurring
                                 - community
                                 - city
                                 - categories
+                          required:
+                            - type
+                            - item
+                        - type: object
+                          properties:
+                            type:
+                              type: string
+                              enum:
+                                - RESOURCE
+                            item:
+                              type: object
+                              properties:
+                                id:
+                                  type: string
+                                title:
+                                  type: string
+                                slug:
+                                  type: string
+                                resourceType:
+                                  type: string
+                                  enum: *a15
+                                url:
+                                  type:
+                                    - string
+                                    - "null"
+                                description:
+                                  type:
+                                    - string
+                                    - "null"
+                                isEssential:
+                                  type: boolean
+                                createdAt:
+                                  type: string
+                                  format: date-time
+                                city:
+                                  type:
+                                    - object
+                                    - "null"
+                                  properties:
+                                    name:
+                                      type: string
+                                    slug:
+                                      type: string
+                                  required:
+                                    - name
+                                    - slug
+                              required:
+                                - id
+                                - title
+                                - slug
+                                - resourceType
+                                - url
+                                - description
+                                - isEssential
+                                - createdAt
+                                - city
                           required:
                             - type
                             - item
@@ -5944,7 +6654,7 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/search/suggest:
     get:
       summary: Autocomplete suggestions for a partial query
@@ -5974,14 +6684,16 @@ paths:
                       type: string
                     type:
                       type: string
-                      enum: *a12
+                      enum: *a14
+                    slug:
+                      type: string
                   required:
                     - text
                     - type
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/search/trending:
     get:
       summary: Trending search terms, optionally scoped to a city
@@ -6013,7 +6725,7 @@ paths:
               properties:
                 contentType:
                   type: string
-                  enum: *a20
+                  enum: *a25
                 sizeBytes:
                   type: integer
                   minimum: 1
@@ -6048,11 +6760,11 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/submissions/event:
     post:
       summary: Submit a new event for review
@@ -6123,10 +6835,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a21
+                    enum: *a26
                   status:
                     type: string
-                    enum: *a22
+                    enum: *a27
                   createdAt:
                     type: string
                     format: date-time
@@ -6138,15 +6850,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/submissions/community:
     post:
       summary: Submit a new community for review
@@ -6180,15 +6892,38 @@ paths:
                   items:
                     type: string
                   maxItems: 20
-                  default: *a23
+                  default: *a28
+                channels:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      channelType:
+                        type: string
+                        enum: *a13
+                      url:
+                        type: string
+                        format: uri
+                      label:
+                        type: string
+                        maxLength: 100
+                      isPrimary:
+                        type: boolean
+                        default: false
+                    required:
+                      - channelType
+                      - url
+                  minItems: 1
+                  maxItems: 6
                 primaryChannelType:
                   type: string
-                  minLength: 1
+                  enum: *a13
                 primaryChannelUrl:
                   type: string
                   format: uri
                 secondaryChannelType:
                   type: string
+                  enum: *a13
                 secondaryChannelUrl:
                   anyOf:
                     - type: string
@@ -6210,8 +6945,6 @@ paths:
                 - description
                 - citySlug
                 - categories
-                - primaryChannelType
-                - primaryChannelUrl
                 - contactEmail
                 - contactName
       responses:
@@ -6226,10 +6959,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a21
+                    enum: *a26
                   status:
                     type: string
-                    enum: *a22
+                    enum: *a27
                   createdAt:
                     type: string
                     format: date-time
@@ -6241,22 +6974,22 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "409":
           description: Error envelope
           content:
-            application/json: *a16
-  /api/v1/submissions/suggest:
+            application/json: *a19
+  /api/v1/submissions/contribute:
     post:
-      summary: Suggest a community for IndLokal to add
+      summary: Contribute a missing community for IndLokal to review
       security:
         - bearerAuth: []
       requestBody:
@@ -6296,10 +7029,10 @@ paths:
                     type: string
                   entityType:
                     type: string
-                    enum: *a21
+                    enum: *a26
                   status:
                     type: string
-                    enum: *a22
+                    enum: *a27
                   createdAt:
                     type: string
                     format: date-time
@@ -6311,15 +7044,15 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/cities/{slug}/resources:
     get:
       summary: Get resources for a city, optionally filtered by type
@@ -6331,7 +7064,7 @@ paths:
           in: path
         - schema:
             type: string
-            enum: *a13
+            enum: *a15
           required: false
           name: type
           in: query
@@ -6355,7 +7088,7 @@ paths:
                       type: string
                     resourceType:
                       type: string
-                      enum: *a13
+                      enum: *a15
                     url:
                       type:
                         - string
@@ -6383,6 +7116,30 @@ paths:
                     createdAt:
                       type: string
                       format: date-time
+                    scope:
+                      type: string
+                      enum: *a16
+                    scopeRegion:
+                      type:
+                        - string
+                        - "null"
+                    audiences:
+                      type: array
+                      items:
+                        type: string
+                        enum: *a29
+                    lifecycleStage:
+                      type: array
+                      items:
+                        type: string
+                        enum: *a30
+                    priority:
+                      type: integer
+                    isEssential:
+                      type: boolean
+                    resolvedScope:
+                      type: string
+                      enum: *a16
                   required:
                     - id
                     - title
@@ -6394,6 +7151,12 @@ paths:
                     - validUntil
                     - metadata
                     - createdAt
+                    - scope
+                    - scopeRegion
+                    - audiences
+                    - lifecycleStage
+                    - priority
+                    - isEssential
   /api/v1/me/saves/events:
     get:
       summary: Paginated saved events for the authenticated user
@@ -6475,7 +7238,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/me/saves/communities:
     get:
       summary: Paginated saved communities for the authenticated user
@@ -6554,7 +7317,7 @@ paths:
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
   /api/v1/reports:
     post:
       summary: Submit a content report (feature-flagged)
@@ -6566,8 +7329,12 @@ paths:
               properties:
                 reportType:
                   type: string
-                  enum: *a14
+                  enum: *a17
                 communityId:
+                  type: string
+                  minLength: 20
+                  maxLength: 40
+                eventId:
                   type: string
                   minLength: 20
                   maxLength: 40
@@ -6598,10 +7365,10 @@ paths:
                     maxLength: 40
                   reportType:
                     type: string
-                    enum: *a14
+                    enum: *a17
                   status:
                     type: string
-                    enum: *a15
+                    enum: *a18
                   createdAt:
                     type: string
                     format: date-time
@@ -6613,13 +7380,13 @@ paths:
         "400":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "401":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
         "404":
           description: Error envelope
           content:
-            application/json: *a16
+            application/json: *a19
 webhooks: {}

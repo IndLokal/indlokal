@@ -86,3 +86,51 @@ export const claimCommunitySchema = z
   });
 
 export type ClaimCommunityInput = z.infer<typeof claimCommunitySchema>;
+
+// ─── Suggestion Schemas ──────────────────────────────────────────────────
+
+export const suggestCommunitySchema = z.object({
+  suggestedName: z
+    .string()
+    .min(2, 'Community name must be at least 2 characters')
+    .max(150, 'Name too long'),
+  citySlug: z.string().min(1, 'City is required'),
+  whatDoesItDo: z.string().max(500, 'Description too long').optional(),
+  howToJoin: z.string().max(300, 'How to join info too long').optional(),
+  reporterEmail: z.string().email('Invalid email').or(z.literal('')).optional(),
+});
+
+export type SuggestCommunityInput = z.infer<typeof suggestCommunitySchema>;
+
+export const contributeEventSchema = z.object({
+  eventTitle: z
+    .string()
+    .min(3, 'Event title must be at least 3 characters')
+    .max(150, 'Title too long'),
+  citySlug: z.string().min(1, 'City is required'),
+  eventDate: z.coerce.date().min(new Date(), 'Event date must be in the future'),
+  eventTime: z
+    .string()
+    .regex(/^\d{2}:\d{2}$/, 'Invalid time format')
+    .optional()
+    .or(z.literal('')),
+  venue: z.string().max(200, 'Venue too long').optional(),
+  category: z
+    .enum([
+      'MUSIC',
+      'ART',
+      'TECH',
+      'LANGUAGE',
+      'SOCIAL',
+      'PROFESSIONAL',
+      'CULTURAL',
+      'SPORTS',
+      'FOOD',
+      'OTHER',
+    ])
+    .optional(),
+  sourceUrl: z.string().url('Invalid URL').optional().or(z.literal('')),
+  reporterEmail: z.string().email('Invalid email').or(z.literal('')).optional(),
+});
+
+export type ContributeEventInput = z.infer<typeof contributeEventSchema>;

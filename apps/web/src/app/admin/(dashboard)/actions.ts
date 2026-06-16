@@ -38,9 +38,9 @@ function asObject(metadata: unknown): Record<string, unknown> {
     : {};
 }
 
-/* --- Submission actions --- */
+/* --- Community contribution actions --- */
 
-export async function approveSubmission(formData: FormData) {
+export async function approveCommunityContribution(formData: FormData) {
   await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   const grantOwnership = formData.has('grantOwnership');
@@ -178,7 +178,7 @@ export async function approveSubmission(formData: FormData) {
   revalidatePath('/admin/submissions');
 }
 
-export async function rejectSubmission(formData: FormData) {
+export async function rejectCommunityContribution(formData: FormData) {
   await assertCan('pipeline.reject');
   const id = formData.get('id') as string;
   if (!id) return;
@@ -541,6 +541,20 @@ export async function approveEvent(formData: FormData) {
         metadata: { decision: 'approved', moderationState: 'PUBLISHED' },
       },
     }),
+    db.pipelineItem.updateMany({
+      where: {
+        createdEntityId: id,
+        entityType: 'EVENT',
+        sourceType: 'EVENT_SUGGESTION',
+        status: 'PENDING',
+      },
+      data: {
+        status: 'APPROVED',
+        reviewedAt: new Date(),
+        reviewedBy: reviewer.id,
+        reviewNotes: 'Approved via Admin Events moderation queue.',
+      },
+    }),
   ]);
 
   await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
@@ -577,6 +591,7 @@ export async function approveEvent(formData: FormData) {
 
   revalidateTag('city-feed', 'max');
   revalidatePath('/admin/events');
+  revalidatePath('/admin/pipeline');
 }
 
 export async function rejectEvent(formData: FormData) {
@@ -607,6 +622,20 @@ export async function rejectEvent(formData: FormData) {
         metadata: { decision: 'rejected', moderationState: 'REJECTED', reason },
       },
     }),
+    db.pipelineItem.updateMany({
+      where: {
+        createdEntityId: id,
+        entityType: 'EVENT',
+        sourceType: 'EVENT_SUGGESTION',
+        status: 'PENDING',
+      },
+      data: {
+        status: 'REJECTED',
+        reviewedAt: new Date(),
+        reviewedBy: reviewer.id,
+        reviewNotes: reason || 'Rejected via Admin Events moderation queue.',
+      },
+    }),
   ]);
 
   await captureServerEvent(reviewer.id, Events.EVENT_REVIEW_DECISION, {
@@ -625,6 +654,7 @@ export async function rejectEvent(formData: FormData) {
   }
 
   revalidatePath('/admin/events');
+  revalidatePath('/admin/pipeline');
 }
 
 /* --- City-change governance actions --- */

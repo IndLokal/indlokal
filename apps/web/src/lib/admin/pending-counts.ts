@@ -23,7 +23,14 @@ export async function getAdminPendingCounts(): Promise<AdminPendingCounts> {
     reports,
     businessConnect,
   ] = await Promise.all([
-    db.pipelineItem.count({ where: { status: 'PENDING' } }),
+    db.pipelineItem.count({
+      where: {
+        status: 'PENDING',
+        NOT: {
+          AND: [{ sourceType: 'EVENT_SUGGESTION' }, { createdEntityId: { not: null } }],
+        },
+      },
+    }),
     db.keywordSuggestion.count({ where: { status: 'PENDING' } }),
     db.community.count({ where: { status: 'UNVERIFIED', source: 'COMMUNITY_SUBMITTED' } }),
     db.community.count({ where: { claimState: 'CLAIM_PENDING' } }),

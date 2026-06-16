@@ -70,6 +70,9 @@ export const Events = {
   // Conversion - high-value business outcomes
   COMMUNITY_SUBMITTED: 'community_submitted',
   CLAIM_SUBMITTED: 'claim_submitted',
+  CONTRIBUTION_STARTED: 'contribution_started',
+  CONTRIBUTION_SUBMITTED: 'contribution_submitted',
+  CONTRIBUTION_REVIEWED: 'contribution_reviewed',
 
   // Governance - community authority changes (ADR-0008 / TDD-0036)
   COMMUNITY_ROLE_CHANGED: 'community_role_changed',
