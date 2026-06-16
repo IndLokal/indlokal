@@ -8,6 +8,7 @@ import { getSessionUser } from '@/lib/session';
 import { SectionHeader } from '@/components/ui';
 import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
 import { JourneyFeedStrip } from '@/components/journeys/JourneyFeedStrip';
+import { ScrollToTopOnMount } from './ScrollToTopOnMount';
 
 /**
  * City Feed - the primary discovery surface.
@@ -85,8 +86,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
 
   return (
     <div className="space-y-14">
+      <ScrollToTopOnMount />
+
       {/* Hero - dark, bold */}
-      <section className="relative -mx-4 -mt-8 overflow-hidden sm:-mx-6 sm:-mt-12 lg:-mx-8">
+      <section className="relative -mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
         <div className="from-brand-900 via-brand-800 to-brand-700 bg-gradient-to-br px-4 pt-10 pb-8 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0">
             <div className="bg-brand-500/10 absolute -top-20 -right-20 hidden h-80 w-80 rounded-full blur-3xl sm:block" />
