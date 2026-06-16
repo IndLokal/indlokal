@@ -1,9 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { content } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { SubmitForm } from '@/app/submit/SubmitForm';
-import { ContentCallout } from '@/components/content/community-actions';
 import { ContributeEventForm } from './ContributeEventForm';
 import { SuggestHub } from './SuggestHub';
 
@@ -14,6 +12,12 @@ type Props = {
 
 function selectedContributionType(type?: string): 'community' | 'event' | undefined {
   return type === 'community' || type === 'event' ? type : undefined;
+}
+
+function contributionTypeLabel(type?: 'community' | 'event') {
+  if (type === 'community') return 'Community';
+  if (type === 'event') return 'Event';
+  return null;
 }
 
 export async function ContributePageContent({ type, citySlug }: Props) {
@@ -43,6 +47,7 @@ export async function ContributePageContent({ type, citySlug }: Props) {
   ]);
 
   const baseHref = cityData ? `/${cityData.slug}/contribute` : '/contribute';
+  const selectedTypeLabel = contributionTypeLabel(selectedType);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -55,7 +60,15 @@ export async function ContributePageContent({ type, citySlug }: Props) {
             {cityData?.name ?? 'Home'}
           </Link>
           {' / '}
-          <span className="text-foreground">Contribute</span>
+          <Link href={baseHref} className="hover:text-foreground transition-colors hover:underline">
+            Contribute
+          </Link>
+          {selectedTypeLabel ? (
+            <>
+              {' / '}
+              <span className="text-foreground">{selectedTypeLabel}</span>
+            </>
+          ) : null}
         </nav>
         <h1 className="text-foreground mt-4 text-2xl font-bold">
           Help us find what&apos;s missing
@@ -67,16 +80,6 @@ export async function ContributePageContent({ type, citySlug }: Props) {
         </p>
       </div>
 
-      {cityData ? (
-        <ContentCallout
-          title="Who should use this?"
-          body={content.interpolateActionCopy(content.COMMUNITY_ACTION_COPY.contributeWho, {
-            city: cityData.name,
-          })}
-          cta={{ label: 'Browse existing communities', href: `/${cityData.slug}/communities` }}
-        />
-      ) : null}
-
       {!selectedType ? (
         <SuggestHub baseHref={baseHref} />
       ) : selectedType === 'community' ? (
@@ -86,8 +89,10 @@ export async function ContributePageContent({ type, citySlug }: Props) {
             cities={cities.map((city) => ({ slug: city.slug, name: city.name }))}
             categories={categories}
             defaultCitySlug={cityData?.slug}
-            successHref={baseHref}
+            successHref={`${baseHref}?type=community`}
             successLabel="Contribute another community"
+            cancelHref={baseHref}
+            cancelLabel="Back to contribute"
           />
         </div>
       ) : (
@@ -97,7 +102,7 @@ export async function ContributePageContent({ type, citySlug }: Props) {
             citySlug={cityData?.slug}
             cityId={cityData?.id}
             cityName={cityData?.name}
-            cities={cityData ? undefined : cities.map((city) => ({ id: city.id, name: city.name }))}
+            cities={cities.map((city) => ({ id: city.id, slug: city.slug, name: city.name }))}
             categories={categories}
           />
         </div>

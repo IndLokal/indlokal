@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState, useEffect, useState } from 'react';
 import { contributeEvent, type ContributeEventResult } from '@/app/actions/contributions';
 import { ConfirmationModal } from './ConfirmationModal';
 import { Events, useTrackEvent } from '@/lib/analytics';
@@ -8,7 +8,7 @@ import { EventFormFields } from '@/components/organizer/event-form-fields';
 import { DEFAULT_RECURRENCE_PRESET } from '@/lib/events/recurrence';
 
 type ContributeEventCategory = { slug: string; name: string; icon: string | null };
-type ContributeEventCity = { id: string; name: string };
+type ContributeEventCity = { id: string; slug: string; name: string };
 
 function toLocalInputValue(date: Date): string {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -33,6 +33,9 @@ export function ContributeEventForm({
     null,
   );
   const track = useTrackEvent();
+  const defaultSelectedCitySlug =
+    citySlug ?? (cityId ? cities?.find((city) => city.id === cityId)?.slug : undefined);
+  const [selectedCitySlug, setSelectedCitySlug] = useState(defaultSelectedCitySlug);
 
   const defaultStart = (() => {
     const d = new Date();
@@ -56,19 +59,28 @@ export function ContributeEventForm({
 
   if (state?.success) {
     const query = encodeURIComponent(state.title);
+    const routeCitySlug = citySlug ? selectedCitySlug : undefined;
+    const contributeAnotherHref = routeCitySlug
+      ? `/${routeCitySlug}/contribute?type=event`
+      : '/contribute?type=event';
+    const dismissHref = routeCitySlug ? `/${routeCitySlug}/contribute` : '/contribute';
     return (
       <ConfirmationModal
         entityType="event"
         entityName={state.title}
         isOpen={true}
-        backHref={citySlug ? `/${citySlug}/events` : '/contribute'}
-        backLabel={citySlug ? 'Back to events' : 'Back to contribute'}
-        similarHref={citySlug ? `/${citySlug}/search?q=${query}` : `/search?q=${query}`}
+        backHref={contributeAnotherHref}
+        backLabel="Contribute another event"
+        dismissHref={dismissHref}
+        dismissLabel="Back to contribute"
+        similarHref={routeCitySlug ? `/${routeCitySlug}/search?q=${query}` : `/search?q=${query}`}
       />
     );
   }
 
   const errorMap: Record<string, string[]> = state?.success === false ? { _: [state.error] } : {};
+  const routeCitySlug = citySlug ? selectedCitySlug : undefined;
+  const cancelHref = routeCitySlug ? `/${routeCitySlug}/contribute` : '/contribute';
 
   return (
     <EventFormFields
@@ -93,19 +105,22 @@ export function ContributeEventForm({
       titlePlaceholder="e.g. Holi Celebration 2026"
       submitLabel="Contribute event"
       pendingLabel="Submitting..."
-      cancelHref={citySlug ? `/${citySlug}/contribute` : '/contribute'}
-      cityMode={citySlug ? 'readonly' : 'select'}
+      cancelHref={cancelHref}
+      cityMode="select"
       cities={cities}
       selectedCityId={cityId}
       cityName={cityName}
+      onCitySelectionChange={(value) => {
+        const nextCity = cities?.find((city) => city.id === value);
+        setSelectedCitySlug(nextCity?.slug);
+      }}
       categories={categories}
       bannerText="Share full details so the event can be verified and published faster."
       showSourceUrl
+      surfaceContributionRequirements
       preserveValuesOnError
       extraFields={
         <>
-          {citySlug ? <input type="hidden" name="citySlug" value={citySlug} /> : null}
-
           <div>
             <label htmlFor="reporterEmail" className="text-foreground block text-sm font-medium">
               Your email <span className="text-muted">(optional)</span>

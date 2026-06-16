@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { startTransition, useActionState, useState } from 'react';
 import { communityOptions } from '@indlokal/shared';
 import { CitySearchSelect } from '@/components/ui';
+import { ConfirmationModal } from '@/components/contribute/ConfirmationModal';
 import { submitCommunity, type SubmitResult } from './actions';
 
 type Props = {
@@ -12,6 +13,8 @@ type Props = {
   defaultCitySlug?: string;
   successHref?: string;
   successLabel?: string;
+  cancelHref?: string;
+  cancelLabel?: string;
 };
 
 type ChannelDraft = {
@@ -45,6 +48,8 @@ export function SubmitForm({
   defaultCitySlug,
   successHref = '/submit',
   successLabel = 'Submit another community',
+  cancelHref,
+  cancelLabel = 'Back',
 }: Props) {
   const [state, formAction, isPending] = useActionState<SubmitResult, FormData>(
     submitCommunity,
@@ -107,18 +112,21 @@ export function SubmitForm({
     : categories.slice(0, INITIAL_CATEGORY_COUNT);
 
   if (state?.success) {
+    const query = encodeURIComponent(state.communityName);
+    const dismissHref = selectedCitySlug ? `/${selectedCitySlug}/contribute` : '/contribute';
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-8 text-center">
-        <div className="text-4xl">🎉</div>
-        <h2 className="mt-4 text-xl font-semibold text-green-800">Community submitted!</h2>
-        <p className="mt-2 text-green-700">
-          <strong>{state.communityName}</strong> has been submitted for review. Our team will review
-          it and make it live within a few days.
-        </p>
-        <Link href={successHref} className="btn-primary mt-6 inline-block px-5 py-2.5 text-sm">
-          {successLabel}
-        </Link>
-      </div>
+      <ConfirmationModal
+        entityType="community"
+        entityName={state.communityName}
+        isOpen={true}
+        backHref={successHref}
+        backLabel={successLabel}
+        dismissHref={dismissHref}
+        dismissLabel="Back to contribute"
+        similarHref={
+          selectedCitySlug ? `/${selectedCitySlug}/search?q=${query}` : `/search?q=${query}`
+        }
+      />
     );
   }
 
@@ -468,13 +476,20 @@ export function SubmitForm({
         </p>
       </fieldset>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50"
-      >
-        {isPending ? 'Submitting...' : 'Submit Community for Review'}
-      </button>
+      <div className="flex gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="btn-primary flex-1 px-5 py-3 text-sm disabled:opacity-50"
+        >
+          {isPending ? 'Submitting...' : 'Submit Community for Review'}
+        </button>
+        {cancelHref ? (
+          <Link href={cancelHref} className="btn-secondary px-6 py-3 text-sm">
+            {cancelLabel}
+          </Link>
+        ) : null}
+      </div>
     </form>
   );
 }

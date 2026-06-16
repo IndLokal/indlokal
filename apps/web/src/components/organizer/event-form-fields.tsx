@@ -54,12 +54,14 @@ type Props = {
   cities?: City[];
   selectedCityId?: string;
   cityName?: string;
+  onCitySelectionChange?: (value: string) => void;
   categories?: Category[];
   showImageUrl?: boolean;
   titleHelper?: string;
   descriptionHelper?: string;
   bannerText?: string;
   showSourceUrl?: boolean;
+  surfaceContributionRequirements?: boolean;
   preserveValuesOnError?: boolean;
   extraFields?: ReactNode;
 };
@@ -78,12 +80,14 @@ export function EventFormFields({
   cities = [],
   selectedCityId,
   cityName,
+  onCitySelectionChange,
   categories = [],
   showImageUrl = false,
   titleHelper,
   descriptionHelper,
   bannerText,
   showSourceUrl = false,
+  surfaceContributionRequirements = false,
   preserveValuesOnError = false,
   extraFields,
 }: Props) {
@@ -91,6 +95,9 @@ export function EventFormFields({
   const [isOnline, setIsOnline] = useState(values.isOnline);
   const [cost, setCost] = useState(values.cost);
   const [accessType, setAccessType] = useState(values.accessType ?? 'UNCLEAR');
+  const [verificationMode, setVerificationMode] = useState<'public_link' | 'manual_context'>(
+    'public_link',
+  );
   const [showAllCategories, setShowAllCategories] = useState(false);
 
   const visibleCategories =
@@ -161,6 +168,7 @@ export function EventFormFields({
               cities={cities.map((c) => ({ value: c.id, name: c.name }))}
               defaultValue={selectedCityId}
               error={errors.cityId ?? errors.citySlug}
+              onSelectionChange={onCitySelectionChange}
             />
           ) : cityMode === 'hidden' ? (
             <>
@@ -266,6 +274,158 @@ export function EventFormFields({
         </div>
       </div>
 
+      {surfaceContributionRequirements && (
+        <div className="space-y-4 rounded-[var(--radius-button)] border border-slate-200 bg-slate-50 p-4">
+          <div>
+            <label className="text-foreground flex items-center gap-2 text-sm font-medium">
+              <input
+                type="checkbox"
+                name="isOnline"
+                value="true"
+                defaultChecked={values.isOnline}
+                onChange={(event) => setIsOnline(event.currentTarget.checked)}
+                className="rounded"
+              />
+              This is an online event
+            </label>
+            <p className="text-muted mt-1 text-xs">
+              Online events need an online link or registration URL. Offline events need a venue
+              name.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="text-foreground block text-sm font-medium">
+                Venue name {!isOnline ? '*' : <span className="text-muted">(optional)</span>}
+              </label>
+              <input
+                name="venueName"
+                type="text"
+                maxLength={200}
+                defaultValue={values.venueName}
+                placeholder="e.g. Kulturhaus Stuttgart"
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+              />
+            </div>
+            <div>
+              <label className="text-foreground block text-sm font-medium">
+                Venue address <span className="text-muted">(optional)</span>
+              </label>
+              <input
+                name="venueAddress"
+                type="text"
+                maxLength={500}
+                defaultValue={values.venueAddress}
+                placeholder="e.g. Theodor-Heuss-Str. 2, 70174 Stuttgart"
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+              />
+            </div>
+          </div>
+
+          {isOnline && (
+            <div>
+              <label className="text-foreground block text-sm font-medium">
+                Online link <span className="text-muted">(recommended)</span>
+              </label>
+              <input
+                name="onlineLink"
+                type="url"
+                defaultValue={values.onlineLink}
+                placeholder="https://meet.google.com/..."
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+              />
+              <p className="text-muted mt-1 text-xs">
+                Add the direct event link if this event is fully online.
+              </p>
+            </div>
+          )}
+
+          {showSourceUrl && (
+            <div>
+              <div className="space-y-3">
+                <input type="hidden" name="verificationMode" value={verificationMode} />
+                <div>
+                  <p className="text-foreground text-sm font-medium">
+                    How can we verify this event?
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
+                      <input
+                        type="radio"
+                        name="verificationModeChoice"
+                        value="public_link"
+                        checked={verificationMode === 'public_link'}
+                        onChange={() => setVerificationMode('public_link')}
+                        className="accent-brand-500 mt-0.5"
+                      />
+                      <span className="text-foreground leading-relaxed">
+                        I have a public event page or listing.
+                      </span>
+                    </label>
+                    <label className="border-border hover:border-brand-300 flex cursor-pointer items-start gap-3 rounded-[var(--radius-button)] border bg-white px-4 py-3 text-sm transition-colors">
+                      <input
+                        type="radio"
+                        name="verificationModeChoice"
+                        value="manual_context"
+                        checked={verificationMode === 'manual_context'}
+                        onChange={() => setVerificationMode('manual_context')}
+                        className="accent-brand-500 mt-0.5"
+                      />
+                      <span className="text-foreground leading-relaxed">
+                        I do not have a public link, but I can explain how to verify it.
+                      </span>
+                    </label>
+                  </div>
+                </div>
+
+                {verificationMode === 'public_link' ? (
+                  <div>
+                    <label
+                      htmlFor="sourceUrl"
+                      className="text-foreground block text-sm font-medium"
+                    >
+                      Verification link <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      id="sourceUrl"
+                      name="sourceUrl"
+                      type="url"
+                      placeholder="https://eventbrite.com/... or official event page"
+                      className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                    />
+                    <p className="text-muted mt-1 text-xs">
+                      Use any public event page, organizer site, social post, or listing we can
+                      check.
+                    </p>
+                  </div>
+                ) : (
+                  <div>
+                    <label
+                      htmlFor="verificationDetails"
+                      className="text-foreground block text-sm font-medium"
+                    >
+                      Verification details <span className="text-red-600">*</span>
+                    </label>
+                    <textarea
+                      id="verificationDetails"
+                      name="verificationDetails"
+                      rows={4}
+                      placeholder="Explain how we can verify this event: organizer name, where it is being shared, venue contact, flyer source, WhatsApp group context, or anything else useful."
+                      className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                    />
+                    <p className="text-muted mt-1 text-xs">
+                      No public link is fine, but we need enough context to manually verify the
+                      event before review.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <details
         className="border-border rounded-[var(--radius-button)] border bg-white p-4"
         open={showAdvanced}
@@ -299,63 +459,64 @@ export function EventFormFields({
             </select>
           </div>
 
-          {/* Location */}
-          <div className="space-y-3">
-            <label className="text-foreground flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                name="isOnline"
-                value="true"
-                defaultChecked={values.isOnline}
-                onChange={(event) => setIsOnline(event.currentTarget.checked)}
-                className="rounded"
-              />
-              This is an online event
-            </label>
-            <p className="text-muted text-xs">
-              Online events need a link. Offline events need a venue name and address.
-            </p>
+          {!surfaceContributionRequirements && (
+            <div className="space-y-3">
+              <label className="text-foreground flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="isOnline"
+                  value="true"
+                  defaultChecked={values.isOnline}
+                  onChange={(event) => setIsOnline(event.currentTarget.checked)}
+                  className="rounded"
+                />
+                This is an online event
+              </label>
+              <p className="text-muted text-xs">
+                Online events need a link. Offline events need a venue name and address.
+              </p>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="text-foreground block text-sm font-medium">Venue name</label>
-                <input
-                  name="venueName"
-                  type="text"
-                  maxLength={200}
-                  defaultValue={values.venueName}
-                  placeholder="e.g. Kulturhaus Stuttgart"
-                  className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-foreground block text-sm font-medium">Venue name</label>
+                  <input
+                    name="venueName"
+                    type="text"
+                    maxLength={200}
+                    defaultValue={values.venueName}
+                    placeholder="e.g. Kulturhaus Stuttgart"
+                    className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-foreground block text-sm font-medium">Venue address</label>
+                  <input
+                    name="venueAddress"
+                    type="text"
+                    maxLength={500}
+                    defaultValue={values.venueAddress}
+                    placeholder="e.g. Theodor-Heuss-Str. 2, 70174 Stuttgart"
+                    className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-foreground block text-sm font-medium">Venue address</label>
-                <input
-                  name="venueAddress"
-                  type="text"
-                  maxLength={500}
-                  defaultValue={values.venueAddress}
-                  placeholder="e.g. Theodor-Heuss-Str. 2, 70174 Stuttgart"
-                  className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                />
-              </div>
+
+              {isOnline && (
+                <div>
+                  <label className="text-foreground block text-sm font-medium">
+                    Online link <span className="text-muted">(for online events)</span>
+                  </label>
+                  <input
+                    name="onlineLink"
+                    type="url"
+                    defaultValue={values.onlineLink}
+                    placeholder="https://meet.google.com/..."
+                    className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                  />
+                </div>
+              )}
             </div>
-
-            {isOnline && (
-              <div>
-                <label className="text-foreground block text-sm font-medium">
-                  Online link <span className="text-muted">(for online events)</span>
-                </label>
-                <input
-                  name="onlineLink"
-                  type="url"
-                  defaultValue={values.onlineLink}
-                  placeholder="https://meet.google.com/..."
-                  className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-                />
-              </div>
-            )}
-          </div>
+          )}
 
           {/* Cost + Access + Registration */}
           <div className="grid gap-4 sm:grid-cols-3">
@@ -469,7 +630,7 @@ export function EventFormFields({
             </div>
           )}
 
-          {showSourceUrl && (
+          {showSourceUrl && !surfaceContributionRequirements && (
             <div>
               <label htmlFor="sourceUrl" className="text-foreground block text-sm font-medium">
                 Source URL <span className="text-muted">(verification link)</span>

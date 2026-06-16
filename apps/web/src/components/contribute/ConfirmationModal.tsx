@@ -9,6 +9,8 @@ interface ConfirmationModalProps {
   isOpen: boolean;
   backHref: string;
   backLabel?: string;
+  dismissHref: string;
+  dismissLabel?: string;
   similarHref: string;
 }
 
@@ -18,6 +20,8 @@ export function ConfirmationModal({
   isOpen,
   backHref,
   backLabel,
+  dismissHref,
+  dismissLabel,
   similarHref,
 }: ConfirmationModalProps) {
   useEffect(() => {
@@ -52,34 +56,24 @@ export function ConfirmationModal({
           </div>
         </div>
 
-        <h2 className="text-foreground mb-2 text-lg font-bold">Thanks for the suggestion!</h2>
+        <h2 className="text-foreground mb-2 text-lg font-bold">Thanks for your contribution</h2>
 
-        <p className="text-muted mb-4 text-sm">
-          <strong className="text-foreground">{entityName}</strong> has been submitted for review.
+        <p className="text-muted mb-6 text-sm">
+          <strong className="text-foreground">{entityName}</strong> was received and is now in
+          review.
         </p>
 
-        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm">
-            <span className="font-semibold text-blue-900">Status:</span>{' '}
-            <span className="text-blue-800">Under review</span>
-          </p>
-          <p className="mt-2 text-xs text-blue-700">
-            Expected timeline: <strong>~72 hours</strong>
-          </p>
-        </div>
-
         <div className="space-y-3">
-          <Link href={backHref} className="btn-primary block w-full py-2.5">
+          <a href={backHref} className="btn-primary block w-full py-2.5">
             {backLabel ?? `Back to ${entityType === 'community' ? 'Communities' : 'Events'}`}
-          </Link>
+          </a>
           <Link href={similarHref} className="btn-secondary block w-full py-2.5">
             View similar
           </Link>
+          <a href={dismissHref} className="text-muted hover:text-foreground block pt-1 text-sm">
+            {dismissLabel ?? 'Done'}
+          </a>
         </div>
-
-        <p className="text-muted mt-4 text-xs">
-          This window will close automatically when you navigate away.
-        </p>
       </div>
     </div>
   );

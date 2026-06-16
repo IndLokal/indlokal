@@ -40,7 +40,9 @@ const contributeEventSchema = z
       .optional(),
     category: z.string().max(64).optional(),
     categorySlugs: z.array(z.string().max(64)).optional(),
+    verificationMode: z.enum(['public_link', 'manual_context']).optional(),
     sourceUrl: z.string().url().optional(),
+    verificationDetails: z.string().trim().max(2000).optional(),
     reporterEmail: z.string().email().optional().or(z.literal('')),
   })
   .refine((data) => data.citySlug || data.cityId, {
@@ -128,7 +130,10 @@ export async function contributeEvent(
     categorySlugs: (formData.getAll('categorySlugs') as string[])
       .map((slug) => String(slug).trim())
       .filter(Boolean),
+    verificationMode: ((formData.get('verificationMode') as string) || 'public_link').trim(),
     sourceUrl: (formData.get('sourceUrl') as string) || undefined,
+    verificationDetails:
+      ((formData.get('verificationDetails') as string) || '').trim() || undefined,
     reporterEmail: (formData.get('reporterEmail') as string) || undefined,
   };
 
@@ -159,16 +164,20 @@ export async function contributeEvent(
     accessType,
     category,
     categorySlugs,
+    verificationMode,
     sourceUrl,
+    verificationDetails,
     reporterEmail,
   } = parsed.data;
   let dupCandidatesFound = 0;
 
-  // Require sourceUrl for anonymous users
-  if (!user && !sourceUrl) {
+  const usesManualVerification = verificationMode === 'manual_context' || !sourceUrl;
+
+  if (usesManualVerification && (!verificationDetails || verificationDetails.length < 20)) {
     return {
       success: false,
-      error: 'Please provide a source URL (website or social link) where we can verify the event.',
+      error:
+        'Please tell us how to verify this event when no public event link is available. Add at least 20 characters with organizer, venue, flyer, or discovery details.',
     };
   }
 
@@ -319,6 +328,8 @@ export async function contributeEvent(
           metadata: {
             suggestedBy: user?.email || reporterEmail,
             sourceUrl,
+            verificationMode,
+            verificationDetails,
             category,
             pricing: {
               costType,
@@ -335,7 +346,8 @@ export async function contributeEvent(
 
       // Create PipelineItem
       const trustLane = user ? 'IDENTIFIED_CONTRIBUTOR' : 'PUBLIC_UNTRUSTED';
-      const confidence = trustLane === 'IDENTIFIED_CONTRIBUTOR' ? 0.6 : 0.4;
+      const confidence =
+        trustLane === 'IDENTIFIED_CONTRIBUTOR' ? 0.6 : usesManualVerification ? 0.25 : 0.4;
 
       await tx.pipelineItem.create({
         data: {
@@ -358,6 +370,8 @@ export async function contributeEvent(
             priceAmount,
             priceCurrency,
             accessType,
+            verificationMode,
+            verificationDetails,
             trustLane,
             submittedBy: user?.email,
           },
@@ -367,6 +381,8 @@ export async function contributeEvent(
             contentReportId: report.id,
             reporterEmail,
             trustLane,
+            verificationMode,
+            manualVerificationRequired: usesManualVerification,
           },
         },
       });
@@ -377,8 +393,9 @@ export async function contributeEvent(
     void captureServerEvent(user?.id ?? 'anonymous-submitter', Events.CONTRIBUTION_SUBMITTED, {
       entity_type: 'EVENT',
       trust_lane: user ? 'IDENTIFIED_CONTRIBUTOR' : 'PUBLIC_UNTRUSTED',
-      confidence: user ? 0.6 : 0.4,
+      confidence: user ? 0.6 : usesManualVerification ? 0.25 : 0.4,
       dup_candidates_found: dupCandidatesFound,
+      verification_mode: verificationMode,
       source_url: sourceUrl || null,
     });
 

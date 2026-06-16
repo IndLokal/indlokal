@@ -508,6 +508,7 @@ async function loadReviewableEvent(id: string) {
       communityId: true,
       moderationState: true,
       createdByUserId: true,
+      metadata: true,
       city: { select: { slug: true } },
       createdBy: { select: { email: true, displayName: true } },
     },
@@ -576,14 +577,16 @@ export async function approveEvent(formData: FormData) {
     }
   }
 
-  if (event.createdBy?.email && event.city?.slug) {
+  const metadata = (event.metadata ?? {}) as Record<string, unknown>;
+  const suggestedByEmail =
+    typeof metadata.suggestedBy === 'string' && metadata.suggestedBy.includes('@')
+      ? metadata.suggestedBy
+      : null;
+  const approvalEmail = event.createdBy?.email ?? suggestedByEmail;
+
+  if (approvalEmail && event.city?.slug) {
     try {
-      await sendHostEventApprovedEmail(
-        event.createdBy.email,
-        event.title,
-        event.city.slug,
-        event.slug,
-      );
+      await sendHostEventApprovedEmail(approvalEmail, event.title, event.city.slug, event.slug);
     } catch {
       // Email is best-effort
     }
