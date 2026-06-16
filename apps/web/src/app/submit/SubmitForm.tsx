@@ -12,6 +12,7 @@ type Props = {
   categories: { slug: string; name: string; icon: string | null }[];
   defaultCitySlug?: string;
   successHref?: string;
+  successHrefTemplate?: string;
   successLabel?: string;
   cancelHref?: string;
   cancelLabel?: string;
@@ -47,6 +48,7 @@ export function SubmitForm({
   categories,
   defaultCitySlug,
   successHref = '/submit',
+  successHrefTemplate,
   successLabel = 'Submit another community',
   cancelHref,
   cancelLabel = 'Back',
@@ -114,12 +116,17 @@ export function SubmitForm({
   if (state?.success) {
     const query = encodeURIComponent(state.communityName);
     const dismissHref = selectedCitySlug ? `/${selectedCitySlug}/contribute` : '/contribute';
+    const resolvedSuccessHref = successHrefTemplate
+      ? successHrefTemplate
+          .replace('{communityName}', encodeURIComponent(state.communityName))
+          .replace('{citySlug}', encodeURIComponent(selectedCitySlug || ''))
+      : successHref;
     return (
       <ConfirmationModal
         entityType="community"
         entityName={state.communityName}
         isOpen={true}
-        backHref={successHref}
+        backHref={resolvedSuccessHref}
         backLabel={successLabel}
         dismissHref={dismissHref}
         dismissLabel="Back to contribute"

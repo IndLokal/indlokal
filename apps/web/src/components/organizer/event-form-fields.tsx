@@ -11,6 +11,7 @@ import { CitySearchSelect } from '@/components/ui';
 
 type City = { id: string; name: string };
 type Category = { slug: string; name: string; icon: string | null };
+type Community = { id: string; name: string; cityId: string };
 
 export type EventFormValues = {
   slug?: string;
@@ -37,6 +38,7 @@ export type EventFormValues = {
 };
 
 type CityMode = 'none' | 'select' | 'hidden' | 'readonly';
+type CommunityMode = 'none' | 'select' | 'hidden';
 
 const INITIAL_CATEGORY_COUNT = 6;
 
@@ -55,6 +57,14 @@ type Props = {
   selectedCityId?: string;
   cityName?: string;
   onCitySelectionChange?: (value: string) => void;
+  communityMode?: CommunityMode;
+  communities?: Community[];
+  selectedCommunityId?: string;
+  selectedCommunityName?: string;
+  communitySearchPlaceholder?: string;
+  communityAddHref?: string;
+  onCommunitySelectionChange?: (value: string) => void;
+  onCommunityNameChange?: (value: string) => void;
   categories?: Category[];
   showImageUrl?: boolean;
   titleHelper?: string;
@@ -81,6 +91,14 @@ export function EventFormFields({
   selectedCityId,
   cityName,
   onCitySelectionChange,
+  communityMode = 'none',
+  communities = [],
+  selectedCommunityId,
+  selectedCommunityName,
+  communitySearchPlaceholder = 'Search community by name',
+  communityAddHref,
+  onCommunitySelectionChange,
+  onCommunityNameChange,
   categories = [],
   showImageUrl = false,
   titleHelper,
@@ -99,6 +117,15 @@ export function EventFormFields({
     'public_link',
   );
   const [showAllCategories, setShowAllCategories] = useState(false);
+
+  const visibleCommunities =
+    selectedCityId && communityMode === 'select'
+      ? communities.filter((community) => community.cityId === selectedCityId)
+      : communities;
+
+  const selectedCommunity = selectedCommunityId
+    ? communities.find((community) => community.id === selectedCommunityId)
+    : undefined;
 
   const visibleCategories =
     showAllCategories || categories.length <= INITIAL_CATEGORY_COUNT
@@ -185,6 +212,74 @@ export function EventFormFields({
           )}
           {cityMode !== 'select' && (errors.cityId ?? errors.citySlug) && (
             <p className="mt-1 text-sm text-red-600">{(errors.cityId ?? errors.citySlug)?.[0]}</p>
+          )}
+        </div>
+      )}
+
+      {/* Community */}
+      {communityMode !== 'none' && (
+        <div className="space-y-2">
+          <label className="text-foreground block text-sm font-medium">
+            Community <span className="text-muted">(optional)</span>
+          </label>
+
+          {communityMode === 'select' ? (
+            <>
+              <CitySearchSelect
+                className="mt-1"
+                name="communityId"
+                cities={visibleCommunities.map((community) => ({
+                  value: community.id,
+                  name: community.name,
+                }))}
+                defaultValue={selectedCommunityId}
+                defaultQuery={selectedCommunityName}
+                placeholder={communitySearchPlaceholder}
+                error={errors.communityId}
+                onSelectionChange={onCommunitySelectionChange}
+              />
+              <input
+                type="hidden"
+                name="communityName"
+                value={selectedCommunityName ?? selectedCommunity?.name ?? ''}
+                readOnly
+              />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  name="communityNameFallback"
+                  type="text"
+                  maxLength={160}
+                  placeholder="If not listed, type the community name"
+                  defaultValue={selectedCommunityName ?? ''}
+                  onChange={(event) => onCommunityNameChange?.(event.currentTarget.value)}
+                  className="border-border focus:border-brand-500 min-w-[18rem] flex-1 rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+                />
+                {communityAddHref ? (
+                  <Link
+                    href={communityAddHref}
+                    className="text-brand-700 text-xs font-medium hover:underline"
+                  >
+                    Can&apos;t find it? Contribute community
+                  </Link>
+                ) : null}
+              </div>
+              <p className="text-muted text-xs">
+                Select an existing community when available. If it&apos;s not listed yet, keep it
+                blank or type the name.
+              </p>
+            </>
+          ) : (
+            <>
+              <input type="hidden" name="communityId" value={selectedCommunityId ?? ''} />
+              <p className="text-muted text-sm">
+                {selectedCommunityName ?? selectedCommunity?.name}
+              </p>
+            </>
+          )}
+
+          {errors.communityName && (
+            <p className="mt-1 text-sm text-red-600">{errors.communityName[0]}</p>
           )}
         </div>
       )}

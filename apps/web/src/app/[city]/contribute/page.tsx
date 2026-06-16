@@ -4,7 +4,7 @@ import { ContributePageContent } from '@/components/contribute/ContributePageCon
 
 type Props = {
   params: Promise<{ city: string }>;
-  searchParams: Promise<{ type?: string }>;
+  searchParams: Promise<{ type?: string; returnType?: string; communityName?: string }>;
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -22,7 +22,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CityContributePage({ params, searchParams }: Props) {
-  const [{ city }, { type }] = await Promise.all([params, searchParams]);
+  const [{ city }, { type, returnType, communityName }] = await Promise.all([params, searchParams]);
 
-  return <ContributePageContent citySlug={city} type={type} />;
+  return (
+    <ContributePageContent
+      citySlug={city}
+      type={type}
+      returnType={returnType}
+      communityName={communityName}
+    />
+  );
 }

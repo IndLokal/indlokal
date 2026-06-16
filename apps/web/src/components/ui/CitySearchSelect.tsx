@@ -11,6 +11,8 @@ type Props = {
   name: string;
   /** Pre-selected value (matched against `value`). */
   defaultValue?: string;
+  /** Optional prefilled visible query when no exact selection exists. */
+  defaultQuery?: string;
   /** Optional id for the visible text input (label association). */
   inputId?: string;
   placeholder?: string;
@@ -35,6 +37,7 @@ export function CitySearchSelect({
   cities,
   name,
   defaultValue,
+  defaultQuery,
   inputId,
   placeholder = 'Search city by name',
   maxResults = 12,
@@ -44,7 +47,7 @@ export function CitySearchSelect({
   className,
 }: Props) {
   const defaultCity = defaultValue ? cities.find((city) => city.value === defaultValue) : undefined;
-  const [query, setQuery] = useState(defaultCity?.name ?? '');
+  const [query, setQuery] = useState(defaultCity?.name ?? defaultQuery ?? '');
   const [selectedValue, setSelectedValue] = useState(defaultCity?.value ?? '');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 

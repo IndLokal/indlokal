@@ -16,6 +16,8 @@ const contributeEventSchema = z
     eventTitle: z.string().min(3).max(150),
     citySlug: z.string().optional(),
     cityId: z.string().optional(),
+    communityId: z.string().optional(),
+    communityName: z.string().trim().max(160).optional(),
     eventDate: z.coerce.date(),
     eventTime: z.string().optional(),
     eventEndDate: z.coerce.date().optional(),
@@ -85,6 +87,15 @@ export async function contributeEvent(
     )?.trim(),
     citySlug: ((formData.get('citySlug') as string) || '').trim() || undefined,
     cityId: ((formData.get('cityId') as string) || '').trim() || undefined,
+    communityId: ((formData.get('communityId') as string) || '').trim() || undefined,
+    communityName:
+      (
+        (formData.get('communityName') as string) ||
+        (formData.get('communityNameFallback') as string) ||
+        ''
+      )
+        .trim()
+        .slice(0, 160) || undefined,
     eventDate:
       (formData.get('eventDate') as string) ||
       ((formData.get('startsAt') as string)
@@ -149,6 +160,8 @@ export async function contributeEvent(
     eventTitle,
     citySlug,
     cityId,
+    communityId,
+    communityName,
     eventDate,
     eventTime,
     eventEndDate,
@@ -183,11 +196,32 @@ export async function contributeEvent(
 
   // Resolve city and check for dedup
   let city: { id: string } | null;
+  let selectedCommunity: { id: string; name: string } | null = null;
   try {
     city = citySlug
       ? await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } })
       : await db.city.findUnique({ where: { id: cityId }, select: { id: true } });
     if (!city) return { success: false, error: 'City not found.' };
+
+    if (communityId) {
+      selectedCommunity = await db.community.findFirst({
+        where: {
+          id: communityId,
+          cityId: city.id,
+          mergedIntoId: null,
+          status: { not: 'INACTIVE' },
+        },
+        select: { id: true, name: true },
+      });
+
+      if (!selectedCommunity) {
+        return {
+          success: false,
+          error:
+            'Selected community is no longer available in this city. Clear it or choose another community.',
+        };
+      }
+    }
 
     // Dedup check - look for events with similar title in same city, same date ±1 day
     const dateWindow = {
@@ -299,6 +333,7 @@ export async function contributeEvent(
           title: eventTitle,
           slug: `${eventTitle.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`.slice(0, 80),
           description: `Suggested event: ${venue || 'location TBD'}`,
+          communityId: selectedCommunity?.id ?? null,
           cityId: city!.id,
           startsAt,
           endsAt,
@@ -330,6 +365,7 @@ export async function contributeEvent(
             sourceUrl,
             verificationMode,
             verificationDetails,
+            communityName,
             category,
             pricing: {
               costType,
@@ -366,6 +402,7 @@ export async function contributeEvent(
             onlineLink,
             registrationUrl,
             category,
+            hostCommunity: selectedCommunity?.name ?? communityName,
             costType,
             priceAmount,
             priceCurrency,

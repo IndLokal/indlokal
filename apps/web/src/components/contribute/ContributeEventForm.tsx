@@ -9,6 +9,7 @@ import { DEFAULT_RECURRENCE_PRESET } from '@/lib/events/recurrence';
 
 type ContributeEventCategory = { slug: string; name: string; icon: string | null };
 type ContributeEventCity = { id: string; slug: string; name: string };
+type ContributeEventCommunity = { id: string; name: string; cityId: string };
 
 function toLocalInputValue(date: Date): string {
   const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
@@ -20,12 +21,16 @@ export function ContributeEventForm({
   cityId,
   cityName,
   cities,
+  communities,
+  prefillCommunityName,
   categories,
 }: {
   citySlug?: string;
   cityId?: string;
   cityName?: string;
   cities?: ContributeEventCity[];
+  communities?: ContributeEventCommunity[];
+  prefillCommunityName?: string;
   categories: ContributeEventCategory[];
 }) {
   const [state, formAction, isPending] = useActionState<ContributeEventResult, FormData>(
@@ -36,6 +41,9 @@ export function ContributeEventForm({
   const defaultSelectedCitySlug =
     citySlug ?? (cityId ? cities?.find((city) => city.id === cityId)?.slug : undefined);
   const [selectedCitySlug, setSelectedCitySlug] = useState(defaultSelectedCitySlug);
+  const [selectedCityId, setSelectedCityId] = useState(cityId);
+  const [selectedCommunityId, setSelectedCommunityId] = useState('');
+  const [selectedCommunityName, setSelectedCommunityName] = useState(prefillCommunityName ?? '');
 
   const defaultStart = (() => {
     const d = new Date();
@@ -81,6 +89,12 @@ export function ContributeEventForm({
   const errorMap: Record<string, string[]> = state?.success === false ? { _: [state.error] } : {};
   const routeCitySlug = citySlug ? selectedCitySlug : undefined;
   const cancelHref = routeCitySlug ? `/${routeCitySlug}/contribute` : '/contribute';
+  const communityNameQuery = selectedCommunityName.trim()
+    ? `&communityName=${encodeURIComponent(selectedCommunityName.trim())}`
+    : '';
+  const communityAddHref = routeCitySlug
+    ? `/${routeCitySlug}/contribute?type=community&returnType=event${communityNameQuery}`
+    : `/contribute?type=community&returnType=event${communityNameQuery}`;
 
   return (
     <EventFormFields
@@ -108,12 +122,25 @@ export function ContributeEventForm({
       cancelHref={cancelHref}
       cityMode="select"
       cities={cities}
-      selectedCityId={cityId}
+      selectedCityId={selectedCityId}
       cityName={cityName}
       onCitySelectionChange={(value) => {
         const nextCity = cities?.find((city) => city.id === value);
         setSelectedCitySlug(nextCity?.slug);
+        setSelectedCityId(value);
+        setSelectedCommunityId('');
       }}
+      communityMode="select"
+      communities={communities}
+      selectedCommunityId={selectedCommunityId}
+      selectedCommunityName={selectedCommunityName}
+      onCommunitySelectionChange={(value) => {
+        setSelectedCommunityId(value);
+        const selected = communities?.find((community) => community.id === value);
+        setSelectedCommunityName(selected?.name ?? selectedCommunityName);
+      }}
+      onCommunityNameChange={(value) => setSelectedCommunityName(value)}
+      communityAddHref={communityAddHref}
       categories={categories}
       bannerText="Share full details so the event can be verified and published faster."
       showSourceUrl

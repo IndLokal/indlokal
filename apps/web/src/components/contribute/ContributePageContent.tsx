@@ -8,6 +8,8 @@ import { SuggestHub } from './SuggestHub';
 type Props = {
   type?: string;
   citySlug?: string;
+  returnType?: string;
+  communityName?: string;
 };
 
 function selectedContributionType(type?: string): 'community' | 'event' | undefined {
@@ -20,7 +22,7 @@ function contributionTypeLabel(type?: 'community' | 'event') {
   return null;
 }
 
-export async function ContributePageContent({ type, citySlug }: Props) {
+export async function ContributePageContent({ type, citySlug, returnType, communityName }: Props) {
   const selectedType = selectedContributionType(type);
   const cityData = citySlug
     ? await db.city.findUnique({
@@ -31,7 +33,7 @@ export async function ContributePageContent({ type, citySlug }: Props) {
 
   if (citySlug && (!cityData || !cityData.isActive)) notFound();
 
-  const [cities, categories] = await Promise.all([
+  const [cities, categories, communities] = await Promise.all([
     db.city.findMany({
       where: {
         OR: [{ isActive: true }, { metroRegionId: { not: null } }],
@@ -44,10 +46,20 @@ export async function ContributePageContent({ type, citySlug }: Props) {
       select: { slug: true, name: true, icon: true },
       orderBy: { sortOrder: 'asc' },
     }),
+    db.community.findMany({
+      where: {
+        mergedIntoId: null,
+        city: { isActive: true },
+        status: { not: 'INACTIVE' },
+      },
+      select: { id: true, name: true, cityId: true },
+      orderBy: { name: 'asc' },
+    }),
   ]);
 
   const baseHref = cityData ? `/${cityData.slug}/contribute` : '/contribute';
   const selectedTypeLabel = contributionTypeLabel(selectedType);
+  const eventReturnHrefTemplate = `${baseHref}?type=event&communityName={communityName}`;
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -89,8 +101,13 @@ export async function ContributePageContent({ type, citySlug }: Props) {
             cities={cities.map((city) => ({ slug: city.slug, name: city.name }))}
             categories={categories}
             defaultCitySlug={cityData?.slug}
-            successHref={`${baseHref}?type=community`}
-            successLabel="Contribute another community"
+            successHref={
+              returnType === 'event' ? `${baseHref}?type=event` : `${baseHref}?type=community`
+            }
+            successHrefTemplate={returnType === 'event' ? eventReturnHrefTemplate : undefined}
+            successLabel={
+              returnType === 'event' ? 'Back to event form' : 'Contribute another community'
+            }
             cancelHref={baseHref}
             cancelLabel="Back to contribute"
           />
@@ -103,6 +120,8 @@ export async function ContributePageContent({ type, citySlug }: Props) {
             cityId={cityData?.id}
             cityName={cityData?.name}
             cities={cities.map((city) => ({ id: city.id, slug: city.slug, name: city.name }))}
+            communities={communities}
+            prefillCommunityName={communityName}
             categories={categories}
           />
         </div>
