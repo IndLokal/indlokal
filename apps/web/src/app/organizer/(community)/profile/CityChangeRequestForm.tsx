@@ -1,7 +1,8 @@
 'use client';
 
-import { startTransition, useMemo, useState } from 'react';
+import { startTransition, useState } from 'react';
 import { useActionState } from 'react';
+import { CitySearchSelect } from '@/components/ui';
 import { requestCommunityCityChange, type CityChangeRequestResult } from '../edit/actions';
 
 type CityOption = {
@@ -47,39 +48,10 @@ export default function CityChangeRequestForm({
     null,
   );
   const [isOpen, setIsOpen] = useState(false);
-  const [cityQuery, setCityQuery] = useState('');
   const [selectedCityId, setSelectedCityId] = useState('');
-  const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
   const [cityClientError, setCityClientError] = useState<string | null>(null);
 
-  const filteredCities = useMemo(() => {
-    const q = cityQuery.trim().toLowerCase();
-    if (!q) return cityOptions.slice(0, 12);
-    return cityOptions
-      .filter((city) => {
-        const name = city.name.toLowerCase();
-        const slug = city.slug.toLowerCase();
-        return name.includes(q) || slug.includes(q);
-      })
-      .slice(0, 12);
-  }, [cityOptions, cityQuery]);
-
-  const syncCitySelection = (value: string) => {
-    const normalized = value.trim().toLowerCase();
-    const exact = cityOptions.find((city) => {
-      const cityName = city.name.toLowerCase();
-      const citySlug = city.slug.toLowerCase();
-      return cityName === normalized || citySlug === normalized;
-    });
-    setSelectedCityId(exact?.id ?? '');
-  };
-
-  const handleCityPick = (city: CityOption) => {
-    setCityQuery(city.name);
-    setSelectedCityId(city.id);
-    setCityClientError(null);
-    setIsCityMenuOpen(false);
-  };
+  const selectableCities = cityOptions.filter((city) => city.id !== currentCityId);
 
   const errors = state?.success === false ? state.errors : {};
   const pendingTarget = existingRequest?.toCityId
@@ -162,47 +134,17 @@ export default function CityChangeRequestForm({
           >
             <div>
               <label className="text-foreground block text-sm font-medium">Target city *</label>
-              <div className="relative mt-1">
-                <input
-                  type="text"
-                  value={cityQuery}
-                  autoComplete="off"
-                  placeholder="Search city by name"
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    setCityQuery(value);
-                    syncCitySelection(value);
-                    setCityClientError(null);
-                  }}
-                  onFocus={() => setIsCityMenuOpen(true)}
-                  onBlur={() => {
-                    setIsCityMenuOpen(false);
-                    syncCitySelection(cityQuery);
-                  }}
-                  className="input-base"
-                />
-
-                {isCityMenuOpen && filteredCities.length > 0 && (
-                  <div className="border-border mt-1 max-h-56 w-full overflow-y-auto rounded-[var(--radius-button)] border bg-white shadow-sm">
-                    {filteredCities
-                      .filter((city) => city.id !== currentCityId)
-                      .map((city) => (
-                        <button
-                          key={city.id}
-                          type="button"
-                          onMouseDown={(event) => event.preventDefault()}
-                          onClick={() => handleCityPick(city)}
-                          className="hover:bg-brand-50 block w-full px-3 py-2 text-left text-sm"
-                        >
-                          <span className="text-foreground">{city.name}</span>
-                        </button>
-                      ))}
-                  </div>
-                )}
-              </div>
-              <input type="hidden" name="cityId" value={selectedCityId} />
-              {cityClientError && <p className="mt-1 text-sm text-red-600">{cityClientError}</p>}
-              {errors.cityId && <p className="mt-1 text-sm text-red-600">{errors.cityId[0]}</p>}
+              <CitySearchSelect
+                className="mt-1"
+                name="cityId"
+                cities={selectableCities.map((c) => ({ value: c.id, name: c.name }))}
+                clientError={cityClientError}
+                error={errors.cityId}
+                onSelectionChange={(value) => {
+                  setSelectedCityId(value);
+                  if (value) setCityClientError(null);
+                }}
+              />
             </div>
 
             <div>
