@@ -176,6 +176,8 @@ export async function contributeEvent(
   let dupCandidatesFound = 0;
 
   const usesManualVerification = verificationMode === 'manual_context' || !sourceUrl;
+  const trustLane = user ? 'IDENTIFIED_CONTRIBUTOR' : 'PUBLIC_UNTRUSTED';
+  const confidence = user ? 0.6 : usesManualVerification ? 0.25 : 0.4;
 
   if (usesManualVerification && (!verificationDetails || verificationDetails.length < 20)) {
     return {
@@ -373,10 +375,6 @@ export async function contributeEvent(
       });
 
       // Create PipelineItem
-      const trustLane = user ? 'IDENTIFIED_CONTRIBUTOR' : 'PUBLIC_UNTRUSTED';
-      const confidence =
-        trustLane === 'IDENTIFIED_CONTRIBUTOR' ? 0.6 : usesManualVerification ? 0.25 : 0.4;
-
       await tx.pipelineItem.create({
         data: {
           entityType: 'EVENT',
@@ -421,8 +419,8 @@ export async function contributeEvent(
 
     void captureServerEvent(user?.id ?? 'anonymous-submitter', Events.CONTRIBUTION_SUBMITTED, {
       entity_type: 'EVENT',
-      trust_lane: user ? 'IDENTIFIED_CONTRIBUTOR' : 'PUBLIC_UNTRUSTED',
-      confidence: user ? 0.6 : usesManualVerification ? 0.25 : 0.4,
+      trust_lane: trustLane,
+      confidence,
       dup_candidates_found: dupCandidatesFound,
       verification_mode: verificationMode,
       source_url: sourceUrl || null,
