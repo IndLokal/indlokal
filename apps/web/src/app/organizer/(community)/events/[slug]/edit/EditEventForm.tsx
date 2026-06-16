@@ -64,6 +64,7 @@ export default function EditEventForm({
       cancelHref="/organizer/events"
       categories={categories}
       showImageUrl
+      surfaceContributionRequirements
       bannerText="Editing a community event keeps it published and updates the public listing."
     />
   );

@@ -67,6 +67,7 @@ export default function EditHostEventForm({
       selectedCityId={event.cityId}
       cityName={city.name}
       categories={categories}
+      surfaceContributionRequirements
       bannerText="Editing a host event sends it back to review before it appears publicly."
     />
   );

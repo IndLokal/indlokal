@@ -8,6 +8,12 @@ import { computeSimilarity } from '@/modules/pipeline';
 import { getSessionUser } from '@/lib/session';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
+import {
+  hasValidTimeRange,
+  normalizeCategorySlugs,
+  readBaseEventFormData,
+  toStructuredCostType,
+} from '@/lib/events/form-input';
 
 // ─── Schemas ─────────────────────────────────────────────────────────────
 
@@ -80,6 +86,7 @@ export async function contributeEvent(
   }
 
   const user = await getSessionUser();
+  const baseForm = readBaseEventFormData(formData);
 
   const raw = {
     eventTitle: (
@@ -98,34 +105,22 @@ export async function contributeEvent(
         .slice(0, 160) || undefined,
     eventDate:
       (formData.get('eventDate') as string) ||
-      ((formData.get('startsAt') as string)
-        ? (formData.get('startsAt') as string).split('T')[0]
-        : ''),
+      (baseForm.startsAt ? baseForm.startsAt.split('T')[0] : ''),
     eventTime:
       (formData.get('eventTime') as string) ||
-      ((formData.get('startsAt') as string)
-        ? (formData.get('startsAt') as string).split('T')[1]?.slice(0, 5)
-        : ''),
+      (baseForm.startsAt ? baseForm.startsAt.split('T')[1]?.slice(0, 5) : ''),
     eventEndDate:
       (formData.get('eventEndDate') as string) ||
-      ((formData.get('endsAt') as string) ? (formData.get('endsAt') as string).split('T')[0] : ''),
+      (baseForm.endsAt ? baseForm.endsAt.split('T')[0] : ''),
     eventEndTime:
       (formData.get('eventEndTime') as string) ||
-      ((formData.get('endsAt') as string)
-        ? (formData.get('endsAt') as string).split('T')[1]?.slice(0, 5)
-        : ''),
-    venue: (formData.get('venue') as string) || (formData.get('venueName') as string) || undefined,
-    venueAddress: (formData.get('venueAddress') as string) || undefined,
-    isOnline: formData.get('isOnline') === 'true',
-    onlineLink: (formData.get('onlineLink') as string) || undefined,
-    registrationUrl: (formData.get('registrationUrl') as string) || undefined,
-    costType:
-      (formData.get('costType') as string) ||
-      ((formData.get('cost') as string) === 'free'
-        ? 'FREE'
-        : (formData.get('cost') as string) === 'paid'
-          ? 'PAID'
-          : 'UNCLEAR'),
+      (baseForm.endsAt ? baseForm.endsAt.split('T')[1]?.slice(0, 5) : ''),
+    venue: (formData.get('venue') as string) || baseForm.venueName || undefined,
+    venueAddress: baseForm.venueAddress || undefined,
+    isOnline: baseForm.isOnline,
+    onlineLink: baseForm.onlineLink || undefined,
+    registrationUrl: baseForm.registrationUrl || undefined,
+    costType: (formData.get('costType') as string) || toStructuredCostType(baseForm.cost),
     priceAmount: (() => {
       const rawAmount = (formData.get('priceAmount') as string) || '';
       if (!rawAmount.trim()) return undefined;
@@ -133,14 +128,10 @@ export async function contributeEvent(
       return Number.isFinite(parsed) ? parsed : undefined;
     })(),
     priceCurrency: ((formData.get('priceCurrency') as string) || 'EUR').trim(),
-    accessType: ((formData.get('accessType') as string) || 'UNCLEAR').trim(),
+    accessType: baseForm.accessType,
     category:
-      (formData.get('category') as string) ||
-      ((formData.getAll('categorySlugs') as string[])[0] as string) ||
-      undefined,
-    categorySlugs: (formData.getAll('categorySlugs') as string[])
-      .map((slug) => String(slug).trim())
-      .filter(Boolean),
+      (formData.get('category') as string) || (baseForm.categorySlugs[0] as string) || undefined,
+    categorySlugs: baseForm.categorySlugs.map((slug) => String(slug).trim()).filter(Boolean),
     verificationMode: ((formData.get('verificationMode') as string) || 'public_link').trim(),
     sourceUrl: (formData.get('sourceUrl') as string) || undefined,
     verificationDetails:
@@ -291,7 +282,7 @@ export async function contributeEvent(
       })()
     : new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
 
-  if (endsAt <= startsAt) {
+  if (!hasValidTimeRange(startsAt, endsAt)) {
     return {
       success: false,
       error: 'End time must be after start time.',
@@ -299,9 +290,10 @@ export async function contributeEvent(
   }
 
   // Resolve valid category slugs (drop any that do not exist)
-  const requestedSlugs = Array.from(
-    new Set([...(categorySlugs ?? []), ...(category ? [category] : [])]),
-  );
+  const requestedSlugs = normalizeCategorySlugs([
+    ...(categorySlugs ?? []),
+    ...(category ? [category] : []),
+  ]);
   const validCategorySlugs = requestedSlugs.length
     ? (
         await db.category.findMany({

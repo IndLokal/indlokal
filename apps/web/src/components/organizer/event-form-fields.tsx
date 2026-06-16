@@ -405,7 +405,7 @@ export function EventFormFields({
             </div>
             <div>
               <label className="text-foreground block text-sm font-medium">
-                Venue address <span className="text-muted">(optional)</span>
+                Venue address {!isOnline ? '*' : <span className="text-muted">(optional)</span>}
               </label>
               <input
                 name="venueAddress"

@@ -65,6 +65,7 @@ export default function AddEventForm({
       cancelHref="/organizer"
       categories={categories}
       showImageUrl
+      surfaceContributionRequirements
       bannerText="Publish directly to your community summary page."
     />
   );

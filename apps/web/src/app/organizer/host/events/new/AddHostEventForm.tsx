@@ -50,6 +50,7 @@ export function AddHostEventForm({ cities, categories, defaultCityId }: Props) {
       selectedCityId={selectedCityId}
       categories={categories}
       showImageUrl={false}
+      surfaceContributionRequirements
       bannerText="Submit to the host review queue; edits after publish return to review."
     />
   );
