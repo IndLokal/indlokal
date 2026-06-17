@@ -11,14 +11,18 @@ type BaseEventFormActionState =
 type EventFormFieldsProps = ComponentProps<typeof EventFormFields>;
 
 type Props = Omit<EventFormFieldsProps, 'action' | 'isPending' | 'errors'> & {
-  action: (_prev: any, formData: FormData) => Promise<BaseEventFormActionState>;
+  action: (_prev: never, formData: FormData) => Promise<BaseEventFormActionState>;
 };
 
 export function OrganizerEventFormWrapper({ action, ...formProps }: Props) {
   const [state, formAction, isPending] = useActionState<BaseEventFormActionState, FormData>(
-    action,
+    action as (
+      prev: BaseEventFormActionState,
+      formData: FormData,
+    ) => Promise<BaseEventFormActionState>,
     null,
   );
+
   const errors = state?.success === false ? state.errors : {};
 
   return (
