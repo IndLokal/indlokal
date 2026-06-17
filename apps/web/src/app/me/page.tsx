@@ -21,15 +21,15 @@ const RESOURCE_CATEGORY_BY_TYPE = {
   GOVERNMENT_INFO: 'consular-services',
   VISA_SERVICE: 'city-registration',
   CITY_REGISTRATION: 'city-registration',
-  DRIVING: 'driving-transport',
-  HOUSING: 'housing-utilities',
-  HEALTH_DOCTORS: 'health-insurance',
-  FAMILY_CHILDREN: 'family-childcare',
+  DRIVING: 'driving',
+  HOUSING: 'housing',
+  HEALTH_DOCTORS: 'health-doctors',
+  FAMILY_CHILDREN: 'family-children',
   JOBS_CAREERS: 'jobs-careers',
   TAX_FINANCE: 'tax-finance',
-  BUSINESS_SETUP: 'business-entrepreneurship',
+  BUSINESS_SETUP: 'business-setup',
   GROCERY_FOOD: 'grocery-food',
-  COMMUNITY_RESOURCE: 'community-living',
+  COMMUNITY_RESOURCE: 'community-resource',
 } as const;
 
 type ResourceTypeKey = keyof typeof RESOURCE_CATEGORY_BY_TYPE;
