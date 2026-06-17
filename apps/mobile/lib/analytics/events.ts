@@ -28,6 +28,27 @@ export const ANALYTICS_EVENTS = {
   consularViewed: 'consular_viewed',
   thisWeekViewed: 'this_week_viewed',
   submissionImageAdded: 'submission_image_added',
+
+  // Resources improvement baseline (Sprint 1)
+  resourcesHubView: 'resources_hub_view',
+  resourcesPersonaSelected: 'resources_persona_selected',
+  resourcesIntentChipSelected: 'resources_intent_chip_selected',
+  resourcesEssentialsClick: 'resources_essentials_click',
+  resourcesTrustBadgeImpression: 'resources_trust_badge_impression',
+  resourcesFirstMeaningfulAction: 'resources_first_meaningful_action',
+  resourcesToRelatedClick: 'resources_to_related_click',
+  resourcesStaleItemOpened: 'resources_stale_item_opened',
+  resourcesExperimentVariantAssigned: 'resources_experiment_variant_assigned',
+  journeyNextActionImpression: 'journey_next_action_impression',
+  journeyNextActionClick: 'journey_next_action_click',
+  journeyNextActionCompleted: 'journey_next_action_completed',
+  journeyStepCompleted: 'journey_step_completed',
+  journeyResumePromptShown: 'journey_resume_prompt_shown',
+  journeyResumeClicked: 'journey_resume_clicked',
+  journeyProgressReset: 'journey_progress_reset',
+  resourceCtaImpression: 'resource_cta_impression',
+  resourceCtaClick: 'resource_cta_click',
+  resourceCtaVariantAssigned: 'resource_cta_variant_assigned',
 } as const;
 
 export type AnalyticsEventName = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS];

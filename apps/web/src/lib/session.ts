@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { CollaboratorRole } from '@prisma/client';
+import type { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 export type { CollaboratorRole };
@@ -19,6 +20,16 @@ const SESSION_REFRESH_THRESHOLD_HOURS = 24;
 
 function sessionMaxAgeSeconds(): number {
   return SESSION_TTL_DAYS * 24 * 60 * 60;
+}
+
+function sessionCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: sessionMaxAgeSeconds(),
+  };
 }
 
 /** Expiry timestamp for a magic-link token (one-time login link). */
@@ -89,13 +100,12 @@ export async function createSession(userId: string, rawToken: string) {
 /** Set the session cookie (call from a Route Handler, not a Server Action) */
 export async function setSessionCookie(token: string) {
   const jar = await cookies();
-  jar.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: sessionMaxAgeSeconds(),
-  });
+  jar.set(COOKIE_NAME, token, sessionCookieOptions());
+}
+
+/** Set the session cookie on a Route Handler response before returning it. */
+export function setSessionCookieOnResponse(response: NextResponse, token: string) {
+  response.cookies.set(COOKIE_NAME, token, sessionCookieOptions());
 }
 
 /** Read the session cookie, hash it, and return the authenticated user or null */
@@ -136,6 +146,7 @@ export async function getSessionUser() {
         },
         savedCommunities: { select: { communityId: true } },
         savedEvents: { select: { eventId: true } },
+        savedResources: { select: { resourceId: true } },
       },
     });
 

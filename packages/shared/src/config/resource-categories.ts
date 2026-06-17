@@ -135,6 +135,30 @@ export const RESOURCE_CATEGORIES: readonly ResourceCategory[] = [
     textColor: 'text-orange-700',
     ringColor: 'ring-orange-200/60',
   },
+  {
+    slug: 'consular-services',
+    type: 'CONSULAR_SERVICE',
+    title: 'Consular Services',
+    shortTitle: 'Consular Services',
+    icon: '🇮🇳',
+    description: 'Indian consulate services, official events, government info, and visa updates.',
+    color: 'from-orange-500 to-amber-600',
+    bgLight: 'bg-orange-50',
+    textColor: 'text-orange-700',
+    ringColor: 'ring-orange-200/60',
+  },
+  {
+    slug: 'community-resource',
+    type: 'COMMUNITY_RESOURCE',
+    title: 'Community Resources',
+    shortTitle: 'Community',
+    icon: '🤝',
+    description: 'Community platforms, networks, local initiatives, and cultural groups.',
+    color: 'from-cyan-400 to-blue-500',
+    bgLight: 'bg-cyan-50',
+    textColor: 'text-cyan-700',
+    ringColor: 'ring-cyan-200/60',
+  },
 ] as const;
 
 export const RESOURCE_TYPE_TO_SLUG: Record<string, string> = Object.fromEntries(

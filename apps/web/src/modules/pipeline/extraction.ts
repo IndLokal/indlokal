@@ -418,6 +418,40 @@ async function filterBatch(batch: RawContent[], startIndex: number): Promise<Rel
 // ─── Stage 2: Batch structured extraction ──────────────
 
 const CATEGORY_LIST = CATEGORIES.join(', ');
+const RESOURCE_TYPE_LIST = [
+  'CONSULAR_SERVICE',
+  'OFFICIAL_EVENT',
+  'GOVERNMENT_INFO',
+  'VISA_SERVICE',
+  'CITY_REGISTRATION',
+  'DRIVING',
+  'HOUSING',
+  'HEALTH_DOCTORS',
+  'FAMILY_CHILDREN',
+  'JOBS_CAREERS',
+  'TAX_FINANCE',
+  'BUSINESS_SETUP',
+  'GROCERY_FOOD',
+  'COMMUNITY_RESOURCE',
+] as const;
+const RESOURCE_SCOPE_LIST = ['GLOBAL', 'COUNTRY', 'STATE', 'METRO', 'CITY', 'DISTRICT'] as const;
+const RESOURCE_AUDIENCE_LIST = [
+  'NEWCOMER',
+  'FAMILY',
+  'FOUNDER',
+  'EMPLOYEE',
+  'STUDENT',
+  'STUDENT_VISA',
+  'SENIOR',
+  'RETURNEE',
+] as const;
+const RESOURCE_STAGE_LIST = [
+  'PRE_ARRIVAL',
+  'FIRST_30_DAYS',
+  'FIRST_90_DAYS',
+  'SETTLED',
+  'ANYTIME',
+] as const;
 
 const EXTRACT_SYSTEM_PROMPT = `You are a data extraction assistant for IndLokal, a platform for Indian/South Asian diaspora communities across Europe.
 
@@ -451,6 +485,23 @@ For EACH item, extract structured data and determine the city. Return JSON:
     "whatsappUrl": null, "telegramUrl": null, "contactEmail": null,
     "confidence": 0.85,
     "fieldConfidence": {"name": 0.95}
+  },
+  {
+    "index": 2,
+    "type": "RESOURCE",
+    "title": "Anmeldung in Stuttgart - Bürgerbüro guide",
+    "description": "How to register your address, required documents, and official links.",
+    "cityName": "Stuttgart",
+    "resourceType": "CITY_REGISTRATION",
+    "scope": "CITY",
+    "scopeRegion": "stuttgart",
+    "audiences": ["NEWCOMER", "FAMILY"],
+    "lifecycleStage": ["FIRST_30_DAYS"],
+    "url": "https://www.stuttgart.de/anmeldung",
+    "validUntil": null,
+    "isOfficialSource": true,
+    "confidence": 0.9,
+    "fieldConfidence": {"resourceType": 0.9, "url": 0.95}
   }
 ]}
 
@@ -459,11 +510,16 @@ CRITICAL RULES:
 - cityName precedence: venueAddress > venueName/host organization name > event title > generic page context. If venue or host explicitly contains a different city than the surrounding page context, use the explicit venue/host city.
 - Never infer city from source coverage region alone. If city is ambiguous, set cityName to null and reduce confidence.
 - categories: Use ONLY from this list: ${CATEGORY_LIST}
+- resourceType (RESOURCE only): Use ONLY from this list: ${RESOURCE_TYPE_LIST.join(', ')}
+- scope (RESOURCE only): Use ONLY from this list: ${RESOURCE_SCOPE_LIST.join(', ')}
+- audiences (RESOURCE only): Use ONLY from this list: ${RESOURCE_AUDIENCE_LIST.join(', ')}
+- lifecycleStage (RESOURCE only): Use ONLY from this list: ${RESOURCE_STAGE_LIST.join(', ')}
 - dates: Convert DD.MM.YYYY → YYYY-MM-DD. Use current year (${new Date().getFullYear()}) if missing.
 - Registration forms, RSVP pages, agenda pages, and single-event landing pages are still EVENTs when they clearly name one event and date. Do not skip them just because much of the page is form fields or boilerplate.
 - If the current page URL is the event or registration page, use that same URL as registrationUrl. Do not replace it with unrelated navigation links from the page.
+- Extract RESOURCE when the content is a practical guide/service page for diaspora outcomes (visa, Anmeldung/registration, tax, health, housing, driving, consular tasks, jobs/careers, business setup). Prefer official/canonical links.
 - If an item contains BOTH event and community data, return separate entries for each.
-- If an item has no extractable event or community, return {"index": N, "type": "SKIP", "reason": "..."}.
+- If an item has no extractable event, community, or resource, return {"index": N, "type": "SKIP", "reason": "..."}.
 - confidence: 0.0-1.0. Lower if fields are inferred rather than explicit.
 - Extract WhatsApp/Telegram links if present, but do not treat them as sufficient proof for a community. Prefer websiteUrl, registry/institutional listing, or a public organiser page as the evidence anchor.
 - Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V., gUG, UG (haftungsbeschränkt), gGmbH - these are community organisers, not just event names.`;
@@ -582,7 +638,9 @@ async function extractBatchCallOnce(
   if (!Array.isArray(parsed.items)) return [];
 
   const normalized = parsed.items
-    .filter((item) => item.type === 'EVENT' || item.type === 'COMMUNITY')
+    .filter(
+      (item) => item.type === 'EVENT' || item.type === 'COMMUNITY' || item.type === 'RESOURCE',
+    )
     .map((item) => normalizeParsedItem(item, startIndex, batch.length));
 
   // Drop items the LLM tagged with an out-of-range index - silent mis-attribution
@@ -632,6 +690,9 @@ function normalizeParsedItem(
   if (sourceIndex === null) return null;
   if (shouldNormalizeAsEvent(raw)) {
     return { ...normalizeEvent(raw), sourceIndex };
+  }
+  if (raw.type === 'RESOURCE') {
+    return { ...normalizeResource(raw), sourceIndex };
   }
   return { ...normalizeCommunity(raw), sourceIndex };
 }
@@ -853,6 +914,27 @@ function normalizeCommunity(raw: Record<string, unknown>): ExtractedCommunity {
   };
 }
 
+function normalizeResource(raw: Record<string, unknown>): ExtractedData & { type: 'RESOURCE' } {
+  const resourceType = normalizeEnum(raw.resourceType, RESOURCE_TYPE_LIST);
+  const scope = normalizeEnum(raw.scope, RESOURCE_SCOPE_LIST);
+  return {
+    type: 'RESOURCE',
+    title: String(raw.title ?? ''),
+    description: raw.description ? String(raw.description) : null,
+    cityName: raw.cityName ? String(raw.cityName) : null,
+    resourceType,
+    scope,
+    scopeRegion: raw.scopeRegion ? String(raw.scopeRegion) : null,
+    audiences: normalizeEnumArray(raw.audiences, RESOURCE_AUDIENCE_LIST),
+    lifecycleStage: normalizeEnumArray(raw.lifecycleStage, RESOURCE_STAGE_LIST),
+    url: raw.url ? String(raw.url) : null,
+    validUntil: raw.validUntil ? String(raw.validUntil) : null,
+    isOfficialSource: Boolean(raw.isOfficialSource),
+    confidence: normalizeConfidence(raw.confidence),
+    fieldConfidence: normalizeFieldConfidence(raw.fieldConfidence),
+  };
+}
+
 function normalizeStringArray(val: unknown): string[] {
   if (Array.isArray(val)) return val.filter((v) => typeof v === 'string');
   return [];
@@ -872,4 +954,22 @@ function normalizeFieldConfidence(val: unknown): Record<string, number> {
     return result;
   }
   return {};
+}
+
+function normalizeEnum<const T extends readonly string[]>(
+  val: unknown,
+  allowed: T,
+): T[number] | null {
+  if (typeof val !== 'string') return null;
+  return (allowed as readonly string[]).includes(val) ? (val as T[number]) : null;
+}
+
+function normalizeEnumArray<const T extends readonly string[]>(
+  val: unknown,
+  allowed: T,
+): T[number][] {
+  if (!Array.isArray(val)) return [];
+  return val.filter(
+    (v): v is T[number] => typeof v === 'string' && (allowed as readonly string[]).includes(v),
+  );
 }

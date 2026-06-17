@@ -41,6 +41,7 @@ model City {
   contentReports   ContentReport[]   @relation("CityReports")
   pipelineItems    PipelineItem[]
   outreachLeads    OutreachLead[]
+  journeyGapBacklogItems JourneyGapBacklog[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -537,6 +538,29 @@ enum ResourceStage {
   ANYTIME
 }
 
+enum ResourceReverificationStatus {
+  OPEN
+  ASSIGNED
+  RESOLVED
+  DISMISSED
+}
+
+enum ResourceReverificationResolutionAction {
+  VERIFIED
+  CORRECTED
+  HIDDEN
+  ARCHIVED
+  DISMISSED
+}
+
+enum JourneyGapBacklogStatus {
+  OPEN
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  DISMISSED
+}
+
 model Resource {
   id           String       @id @default(cuid())
   title        String
@@ -567,6 +591,8 @@ model Resource {
   reviewCadenceDays Int           @default(180) @map("review_cadence_days")
   source            ContentSource @default(ADMIN_SEED)
   metadata          Json?
+  savedBy           SavedResource[]
+  reverificationQueue ResourceReverificationQueue[]
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -577,6 +603,65 @@ model Resource {
   @@index([isEssential])
   @@index([scope, scopeRegion])
   @@map("resources")
+}
+
+model ResourceReverificationQueue {
+  id               String                                @id @default(cuid())
+  resourceId       String                                @map("resource_id")
+  resource         Resource                              @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  status           ResourceReverificationStatus          @default(OPEN)
+  stateBucket      String                                @map("state_bucket")
+  priorityScore    Int                                   @default(0) @map("priority_score")
+  riskScore        Int                                   @default(0) @map("risk_score")
+  trafficScore     Int                                   @default(0) @map("traffic_score")
+  stalenessScore   Int                                   @default(0) @map("staleness_score")
+  criticalityScore Int                                   @default(0) @map("criticality_score")
+  ownerUserId      String?                               @map("owner_user_id")
+  ownerUser        User?                                 @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  slaDueAt         DateTime?                             @map("sla_due_at")
+  resolutionAction ResourceReverificationResolutionAction? @map("resolution_action")
+  resolutionNotes  String?                               @map("resolution_notes")
+  firstQueuedAt    DateTime                              @default(now()) @map("first_queued_at")
+  lastStateChangedAt DateTime                            @default(now()) @map("last_state_changed_at")
+  createdAt        DateTime                              @default(now()) @map("created_at")
+  updatedAt        DateTime                              @updatedAt @map("updated_at")
+
+  @@unique([resourceId], map: "resource_reverification_queue_resource_id_key")
+  @@index([status, priorityScore], map: "resource_reverification_queue_status_priority_idx")
+  @@index([ownerUserId, status], map: "resource_reverification_queue_owner_status_idx")
+  @@index([slaDueAt, status], map: "resource_reverification_queue_sla_status_idx")
+  @@map("resource_reverification_queue")
+}
+
+model JourneyGapBacklog {
+  id                    String                   @id @default(cuid())
+  cityId                String                   @map("city_id")
+  city                  City                     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  personaSlug           String                   @map("persona_slug")
+  personaLabel          String                   @map("persona_label")
+  stage                 ResourceStage
+  status                JourneyGapBacklogStatus  @default(OPEN)
+  priorityScore         Int                      @default(0) @map("priority_score")
+  trafficScore          Int                      @default(0) @map("traffic_score")
+  severityScore         Int                      @default(0) @map("severity_score")
+  stageCriticalityScore Int                      @default(0) @map("stage_criticality_score")
+  trustGapScore         Int                      @default(0) @map("trust_gap_score")
+  ownerUserId           String?                  @map("owner_user_id")
+  ownerUser             User?                    @relation(fields: [ownerUserId], references: [id], onDelete: SetNull)
+  slaDueAt              DateTime?                @map("sla_due_at")
+  gapSummary            String                   @map("gap_summary")
+  notes                 String?
+  firstDetectedAt       DateTime                 @default(now()) @map("first_detected_at")
+  lastDetectedAt        DateTime                 @default(now()) @map("last_detected_at")
+  resolvedAt            DateTime?                @map("resolved_at")
+  createdAt             DateTime                 @default(now()) @map("created_at")
+  updatedAt             DateTime                 @updatedAt @map("updated_at")
+
+  @@unique([cityId, personaSlug, stage], map: "journey_gap_backlog_city_persona_stage_key")
+  @@index([status, priorityScore], map: "journey_gap_backlog_status_priority_idx")
+  @@index([ownerUserId, status], map: "journey_gap_backlog_owner_status_idx")
+  @@index([slaDueAt, status], map: "journey_gap_backlog_sla_status_idx")
+  @@map("journey_gap_backlog")
 }
 
 // ─────────────────────────────────────────────────
@@ -654,6 +739,7 @@ model User {
   interactions            UserInteraction[]
   savedCommunities        SavedCommunity[]
   savedEvents             SavedEvent[]
+  savedResources          SavedResource[]
   magicLinkTokens         MagicLinkToken[]
   refreshTokens           RefreshToken[]
   roleAssignments         RoleAssignment[]
@@ -664,6 +750,8 @@ model User {
   notificationOutbox      NotificationOutbox[]
   inboxItems              InboxItem[]
   businessConnectInvites  BusinessConnectInvite[]  @relation("BusinessConnectInviteInvitedBy")
+  resourceReverificationAssignments ResourceReverificationQueue[]
+  journeyGapAssignments   JourneyGapBacklog[]
 
   metadata Json? // flexible bag: { hostProfile: { displayName, city, links[] }, ... }
 
@@ -970,6 +1058,18 @@ model SavedEvent {
   @@map("saved_events")
 }
 
+model SavedResource {
+  userId     String   @map("user_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resourceId String   @map("resource_id")
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  savedAt    DateTime @default(now()) @map("saved_at")
+
+  @@id([userId, resourceId])
+  @@index([userId, savedAt], map: "saved_resources_user_saved_at_idx")
+  @@map("saved_resources")
+}
+
 // ─────────────────────────────────────────────────
 // Content Log - provenance tracking for every data change
 // ─────────────────────────────────────────────────
@@ -1007,6 +1107,7 @@ model ContentLog {
 enum PipelineEntityType {
   EVENT
   COMMUNITY
+  RESOURCE
 }
 
 enum PipelineItemStatus {

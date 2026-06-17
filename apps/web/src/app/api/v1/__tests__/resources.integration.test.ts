@@ -31,6 +31,7 @@ vi.mock('@/lib/email', async (importOriginal) => {
 });
 
 import { GET as resourcesGET } from '@/app/api/v1/cities/[slug]/resources/route';
+import { GET as resourcesJourneyGET } from '@/app/api/v1/cities/[slug]/resources/journey/route';
 import { GET as savedEventsGET } from '@/app/api/v1/me/saves/events/route';
 import { GET as savedCommunitiesGET } from '@/app/api/v1/me/saves/communities/route';
 import { POST as reportPOST } from '@/app/api/v1/reports/route';
@@ -84,6 +85,11 @@ describe('GET /api/v1/cities/:slug/resources', () => {
       : `http://localhost/api/v1/cities/${slug}/resources`;
     const req = makeGET(url);
     return resourcesGET(req, { params: Promise.resolve({ slug }) });
+  }
+
+  async function makeJourneyResourcesRequest(slug: string) {
+    const req = makeGET(`http://localhost/api/v1/cities/${slug}/resources/journey`);
+    return resourcesJourneyGET(req, { params: Promise.resolve({ slug }) });
   }
 
   it('returns empty array for city with no resources', async () => {
@@ -193,6 +199,71 @@ describe('GET /api/v1/cities/:slug/resources', () => {
     const body = await res.json();
     expect(body).toHaveLength(1);
     expect(body[0].resourceType).toBe('DRIVING');
+  });
+
+  it('returns trust fields in /resources payload', async () => {
+    await testDb.resource.create({
+      data: {
+        title: 'Trust Test Guide',
+        slug: 'trust-test-guide',
+        resourceType: 'CITY_REGISTRATION',
+        cityId,
+        source: 'IMPORTED',
+        lastReviewedAt: new Date('2026-02-10T00:00:00.000Z'),
+      },
+    });
+
+    const res = await makeResourcesRequest(citySlug);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toHaveLength(1);
+    expect(body[0].trust).toMatchObject({
+      trustBand: 'SOURCE_SUPPORTED',
+      sourceLabel: 'Imported',
+      verificationMethod: expect.any(String),
+      lastVerifiedAt: '2026-02-10T00:00:00.000Z',
+      lastVerifiedAtDisplay: expect.any(String),
+    });
+    expect(body[0].freshness).toMatchObject({
+      state: expect.any(String),
+      stateLabel: expect.any(String),
+      ttlDueAt: expect.any(String),
+      lifecycleReason: expect.any(String),
+    });
+  });
+
+  it('returns trust fields in /resources/journey payload', async () => {
+    await testDb.resource.create({
+      data: {
+        title: 'Journey Trust Guide',
+        slug: 'journey-trust-guide',
+        resourceType: 'CITY_REGISTRATION',
+        cityId,
+        isEssential: true,
+        lifecycleStage: ['FIRST_30_DAYS'],
+      },
+    });
+
+    const res = await makeJourneyResourcesRequest(citySlug);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    const firstStage = body.stages.find(
+      (stage: { stage: string; items: Array<{ trust?: unknown }> }) =>
+        stage.stage === 'FIRST_30_DAYS',
+    );
+    expect(firstStage?.items).toHaveLength(1);
+    expect(firstStage?.items[0].trust).toMatchObject({
+      trustBand: expect.any(String),
+      trustBandLabel: expect.any(String),
+      sourceLabel: expect.any(String),
+      verificationMethod: expect.any(String),
+      lastVerifiedAtDisplay: expect.any(String),
+    });
+    expect(firstStage?.items[0].freshness).toMatchObject({
+      state: expect.any(String),
+      stateLabel: expect.any(String),
+      lifecycleReason: expect.any(String),
+    });
   });
 });
 

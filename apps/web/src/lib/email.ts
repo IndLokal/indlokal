@@ -70,8 +70,13 @@ export async function sendMagicLinkEmail(
 
 /* ─── Admin magic link ─── */
 
-export async function sendAdminMagicLinkEmail(to: string, token: string): Promise<void> {
-  const verifyUrl = `${APP_URL}/admin/verify?token=${token}`;
+export async function sendAdminMagicLinkEmail(
+  to: string,
+  token: string,
+  verifyUrlOverride?: string,
+): Promise<void> {
+  const verifyUrl =
+    verifyUrlOverride ?? `${APP_URL}/admin/verify?token=${encodeURIComponent(token)}`;
 
   await sendEmail(
     to,

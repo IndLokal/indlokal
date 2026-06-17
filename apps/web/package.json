@@ -20,6 +20,7 @@
     "db:directory": "tsx prisma/directory.ts",
     "db:resources": "tsx prisma/resources.ts",
     "journey:coverage": "tsx scripts/journey-coverage.ts",
+    "resources:ops-readout": "tsx scripts/resources-ops-readout.ts",
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "test": "vitest run",

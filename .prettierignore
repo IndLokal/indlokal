@@ -1,8 +1,29 @@
-node_modules
-.next
-dist
-out
-coverage
+node_modules/
+
+# Build and cache outputs
+.next/
+out/
+build/
+dist/
+.turbo/
+
+# Test outputs
+coverage/
+playwright-report/
+test-results/
+.vitest-cache/
+
+# Environment and generated local artifacts
 .env
 .env.local
+.env.*.local
 *.tsbuildinfo
+next-env.d.ts
+apps/mobile/.expo/
+apps/mobile/expo-env.d.ts
+
+# Internal/generated planning and agent artifacts
+_bmad/
+_bmad-output/
+.agents/
+.github/

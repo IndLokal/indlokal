@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import { resources } from '@indlokal/shared';
 
 const RESOURCE_TYPES = resources.ResourceType.options;
@@ -22,6 +25,12 @@ export interface ResourceFormValues {
   validUntil?: Date | null;
   audiences?: string[];
   lifecycleStage?: string[];
+  contentMode?: 'CURATED' | 'OWNED';
+  governanceRationale?: string | null;
+  riskClass?: string | null;
+  confusionClass?: string | null;
+  frequencyClass?: string | null;
+  alternativesConsidered?: string | null;
 }
 
 function toDateInput(d?: Date | null) {
@@ -144,6 +153,9 @@ export function ResourceForm({
 }) {
   const audienceSet = new Set(values.audiences ?? []);
   const stageSet = new Set(values.lifecycleStage ?? []);
+  const [contentMode, setContentMode] = useState<'CURATED' | 'OWNED'>(
+    values.contentMode ?? 'CURATED',
+  );
 
   return (
     <form action={action} className="grid gap-3 sm:grid-cols-2">
@@ -171,6 +183,19 @@ export function ResourceForm({
         defaultValue={values.scope ?? 'CITY'}
         options={RESOURCE_SCOPES.map((s) => ({ value: s, label: s }))}
       />
+
+      <label className="block text-sm">
+        <span className="text-muted">Content mode</span>
+        <select
+          name="contentMode"
+          value={contentMode}
+          onChange={(e) => setContentMode(e.target.value as 'CURATED' | 'OWNED')}
+          className="border-border mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
+        >
+          <option value="CURATED">Curated</option>
+          <option value="OWNED">Owned</option>
+        </select>
+      </label>
 
       <SelectField
         name="citySlug"
@@ -208,6 +233,59 @@ export function ResourceForm({
           className="border-border mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
         />
       </label>
+
+      {contentMode === 'OWNED' ? (
+        <fieldset className="border-border rounded border p-3 sm:col-span-2">
+          <legend className="text-muted px-1 text-[10px] tracking-wide uppercase">
+            Owned content governance (required)
+          </legend>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm sm:col-span-2">
+              <span className="text-muted">Governance rationale</span>
+              <textarea
+                name="governanceRationale"
+                rows={3}
+                required
+                defaultValue={values.governanceRationale ?? ''}
+                placeholder="Why curated sources are insufficient for this resource"
+                className="border-border mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
+              />
+            </label>
+            <Field
+              name="riskClass"
+              label="Risk class"
+              required
+              defaultValue={values.riskClass ?? ''}
+              placeholder="e.g. HIGH"
+            />
+            <Field
+              name="confusionClass"
+              label="Confusion class"
+              required
+              defaultValue={values.confusionClass ?? ''}
+              placeholder="e.g. HIGH"
+            />
+            <Field
+              name="frequencyClass"
+              label="Frequency class"
+              required
+              defaultValue={values.frequencyClass ?? ''}
+              placeholder="e.g. HIGH"
+            />
+            <label className="block text-sm sm:col-span-2">
+              <span className="text-muted">Alternatives considered</span>
+              <textarea
+                name="alternativesConsidered"
+                rows={2}
+                required
+                defaultValue={values.alternativesConsidered ?? ''}
+                placeholder="List curated alternatives reviewed before using owned content"
+                className="border-border mt-1 w-full rounded-md border px-2 py-1.5 text-sm"
+              />
+            </label>
+          </div>
+        </fieldset>
+      ) : null}
 
       <div className="sm:col-span-2">
         <CheckGroup

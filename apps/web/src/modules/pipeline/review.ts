@@ -1,6 +1,13 @@
 import { db } from '@/lib/db';
 import { refreshCommunityScore } from '@/modules/scoring';
-import { Prisma, type PipelineSourceType } from '@prisma/client';
+import {
+  Prisma,
+  type PipelineSourceType,
+  type ResourceAudience,
+  type ResourceScope,
+  type ResourceStage,
+  type ResourceType,
+} from '@prisma/client';
 import slugify from 'slugify';
 import {
   parseEventDateTimeInTimeZone,
@@ -8,7 +15,7 @@ import {
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
 import type { SourceReliabilityStat } from './reliability';
-import type { ExtractedCommunity, ExtractedData, ExtractedEvent } from './types';
+import type { ExtractedCommunity, ExtractedData, ExtractedEvent, ExtractedResource } from './types';
 import {
   DEDUP_QUEUE_SCAN_LIMIT,
   hasStrongEventIdentityEvidence,
@@ -23,6 +30,48 @@ type EventDuplicateMatch = {
   eventId: string;
   reason: 'source-url' | 'registration-url' | 'title-date';
 };
+
+const RESOURCE_TYPE_VALUES: ReadonlySet<ResourceType> = new Set([
+  'CONSULAR_SERVICE',
+  'OFFICIAL_EVENT',
+  'GOVERNMENT_INFO',
+  'VISA_SERVICE',
+  'CITY_REGISTRATION',
+  'DRIVING',
+  'HOUSING',
+  'HEALTH_DOCTORS',
+  'FAMILY_CHILDREN',
+  'JOBS_CAREERS',
+  'TAX_FINANCE',
+  'BUSINESS_SETUP',
+  'GROCERY_FOOD',
+  'COMMUNITY_RESOURCE',
+]);
+const RESOURCE_SCOPE_VALUES: ReadonlySet<ResourceScope> = new Set([
+  'GLOBAL',
+  'COUNTRY',
+  'STATE',
+  'METRO',
+  'CITY',
+  'DISTRICT',
+]);
+const RESOURCE_AUDIENCE_VALUES: ReadonlySet<ResourceAudience> = new Set([
+  'NEWCOMER',
+  'FAMILY',
+  'FOUNDER',
+  'EMPLOYEE',
+  'STUDENT',
+  'STUDENT_VISA',
+  'SENIOR',
+  'RETURNEE',
+]);
+const RESOURCE_STAGE_VALUES: ReadonlySet<ResourceStage> = new Set([
+  'PRE_ARRIVAL',
+  'FIRST_30_DAYS',
+  'FIRST_90_DAYS',
+  'SETTLED',
+  'ANYTIME',
+]);
 
 const COMMUNITY_MATCH_STOPWORDS = new Set([
   'community',
@@ -241,6 +290,10 @@ export function shouldAutoApprovePipelineItem(input: {
       return { eligible: false, reason: 'event-too-sparse' };
     }
     return { eligible: true, reason: 'trusted-source-high-confidence-event' };
+  }
+
+  if (item.type === 'RESOURCE') {
+    return { eligible: false, reason: 'resource-admin-approval-required' };
   }
 
   const hasAccessChannel = Boolean(
@@ -466,6 +519,82 @@ async function createCommunityFromExtraction(
   return created.id;
 }
 
+function normalizeResourceType(value: string | null): ResourceType {
+  if (value && RESOURCE_TYPE_VALUES.has(value as ResourceType)) {
+    return value as ResourceType;
+  }
+  return 'COMMUNITY_RESOURCE';
+}
+
+function normalizeResourceScope(value: string | null): ResourceScope {
+  if (value && RESOURCE_SCOPE_VALUES.has(value as ResourceScope)) {
+    return value as ResourceScope;
+  }
+  return 'CITY';
+}
+
+function normalizeResourceAudiences(values: string[]): ResourceAudience[] {
+  return values.filter((value): value is ResourceAudience =>
+    RESOURCE_AUDIENCE_VALUES.has(value as ResourceAudience),
+  );
+}
+
+function normalizeResourceStages(values: string[]): ResourceStage[] {
+  return values.filter((value): value is ResourceStage =>
+    RESOURCE_STAGE_VALUES.has(value as ResourceStage),
+  );
+}
+
+function parseDateOnly(value: string | null): Date | null {
+  if (!value) return null;
+  const parsed = new Date(`${value}T00:00:00.000Z`);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+async function createResourceFromExtraction(
+  resource: ExtractedResource,
+  city: { id: string; slug: string },
+): Promise<string> {
+  const resourceType = normalizeResourceType(resource.resourceType);
+  const scope = normalizeResourceScope(resource.scope);
+  const audiences = normalizeResourceAudiences(resource.audiences);
+  const lifecycleStage = normalizeResourceStages(resource.lifecycleStage);
+  const scopeRegion =
+    resource.scopeRegion?.trim() ||
+    (scope === 'CITY' || scope === 'METRO' ? city.slug : scope === 'COUNTRY' ? 'DE' : null);
+  const cityId = scope === 'CITY' ? city.id : null;
+  const baseSlug = slugify(resource.title, { lower: true, strict: true }) || 'resource';
+  const slug = `${baseSlug}-${Date.now().toString(36)}`;
+
+  const created = await db.resource.create({
+    data: {
+      title: resource.title,
+      slug,
+      resourceType,
+      cityId,
+      scope,
+      scopeRegion,
+      audiences,
+      lifecycleStage,
+      priority: resource.isOfficialSource ? 75 : 55,
+      isEssential: resourceType === 'CONSULAR_SERVICE' || resourceType === 'VISA_SERVICE',
+      url: resource.url,
+      description: resource.description,
+      validUntil: parseDateOnly(resource.validUntil),
+      source: 'IMPORTED',
+      reviewCadenceDays: resource.isOfficialSource ? 120 : 180,
+      lastReviewedAt: new Date(),
+      metadata: {
+        pipelineExtracted: true,
+        confidence: resource.confidence,
+        isOfficialSource: resource.isOfficialSource,
+      },
+    },
+  });
+
+  return created.id;
+}
+
 async function applyCommunityEnrichmentSuggestion(
   communityId: string,
   suggestion: ExtractedCommunity,
@@ -541,7 +670,10 @@ export async function approvePipelineItemRecord(
 
   if (!item || item.status !== 'PENDING') return null;
 
-  const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
+  const data = item.extractedData as unknown as
+    | ExtractedEvent
+    | ExtractedCommunity
+    | ExtractedResource;
   let createdEntityId: string;
   let nextPipelineStatus: 'APPROVED' | 'MERGED' = 'APPROVED';
   let nextMatchedEntityId: string | null = item.matchedEntityId;
@@ -612,16 +744,20 @@ export async function approvePipelineItemRecord(
       await refreshCommunityScore(created.communityId);
     }
   } else {
-    // Admin-approved pipeline items go straight to ACTIVE - they've already
-    // been reviewed here. Auto-approved items stay UNVERIFIED so a human
-    // still has a chance to vet them before they go public.
-    const newStatus: 'ACTIVE' | 'UNVERIFIED' = options.autoApproved ? 'UNVERIFIED' : 'ACTIVE';
-    createdEntityId = await createCommunityFromExtraction(
-      data as ExtractedCommunity,
-      item.cityId,
-      newStatus,
-      suggestedPersonaSegments,
-    );
+    if (item.entityType === 'RESOURCE') {
+      createdEntityId = await createResourceFromExtraction(data as ExtractedResource, item.city);
+    } else {
+      // Admin-approved pipeline items go straight to ACTIVE - they've already
+      // been reviewed here. Auto-approved items stay UNVERIFIED so a human
+      // still has a chance to vet them before they go public.
+      const newStatus: 'ACTIVE' | 'UNVERIFIED' = options.autoApproved ? 'UNVERIFIED' : 'ACTIVE';
+      createdEntityId = await createCommunityFromExtraction(
+        data as ExtractedCommunity,
+        item.cityId,
+        newStatus,
+        suggestedPersonaSegments,
+      );
+    }
   }
 
   await db.pipelineItem.update({
@@ -706,6 +842,8 @@ export async function revertAutoApprovedPipelineItems(ids: string[], reviewedBy 
 
     if (item.entityType === 'EVENT') {
       await db.event.deleteMany({ where: { id: item.createdEntityId, source: 'IMPORTED' } });
+    } else if (item.entityType === 'RESOURCE') {
+      await db.resource.deleteMany({ where: { id: item.createdEntityId, source: 'IMPORTED' } });
     } else {
       await db.community.deleteMany({
         where: {

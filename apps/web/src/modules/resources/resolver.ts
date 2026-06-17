@@ -21,12 +21,15 @@
 
 import { db } from '@/lib/db';
 import type {
+  ContentSource,
   Prisma,
   ResourceType,
   ResourceScope,
   ResourceAudience,
   ResourceStage,
 } from '@prisma/client';
+import { projectResourceTrust, type ResourceTrustProjection } from './trust-read-model';
+import { evaluateResourceFreshness, type ResourceFreshnessProjection } from './freshness-lifecycle';
 
 // ── Consular jurisdiction map ────────────────────────────────────────────
 //
@@ -110,12 +113,17 @@ export interface ResolvedResource {
   validUntil: Date | null;
   metadata: unknown;
   createdAt: Date;
+  source: ContentSource;
+  lastReviewedAt: Date | null;
+  reviewCadenceDays: number;
   scope: ResourceScope;
   scopeRegion: string | null;
   audiences: ResourceAudience[];
   lifecycleStage: ResourceStage[];
   priority: number;
   isEssential: boolean;
+  freshness: ResourceFreshnessProjection;
+  trust: ResourceTrustProjection;
   /** Which scope tier matched this resource for the requested city. */
   resolvedScope: ResourceScope;
 }
@@ -223,6 +231,11 @@ export async function getResourcesForCity(
       validUntil: true,
       metadata: true,
       createdAt: true,
+      source: true,
+      lastReviewedAt: true,
+      reviewCadenceDays: true,
+      isHidden: true,
+      hiddenReason: true,
       scope: true,
       scopeRegion: true,
       audiences: true,
@@ -243,14 +256,46 @@ export async function getResourcesForCity(
       const tag = (row.metadata as { consulate?: unknown } | null)?.consulate;
       if (typeof tag === 'string' && tag !== consulate) continue;
     }
-    const candidate: ResolvedResource = { ...row, resolvedScope: row.scope };
+    const freshness = evaluateResourceFreshness({
+      isHidden: row.isHidden,
+      hiddenReason: row.hiddenReason,
+      lastReviewedAt: row.lastReviewedAt,
+      reviewCadenceDays: row.reviewCadenceDays,
+      isEssential: row.isEssential,
+      lifecycleStage: row.lifecycleStage,
+      metadata: row.metadata,
+    });
+    if (freshness.shouldHide) continue;
+
+    const candidate: ResolvedResource = {
+      ...row,
+      freshness,
+      trust: projectResourceTrust({
+        resourceType: row.resourceType,
+        source: row.source,
+        metadata: row.metadata,
+        lastReviewedAt: row.lastReviewedAt,
+      }),
+      resolvedScope: row.scope,
+    };
     const existing = bySlug.get(row.slug);
     if (!existing || SCOPE_RANK[candidate.scope] > SCOPE_RANK[existing.scope]) {
       bySlug.set(row.slug, candidate);
     }
   }
   const deduped = [...bySlug.values()].sort((a, b) => {
-    if (a.priority !== b.priority) return b.priority - a.priority;
+    const aScore = a.priority - a.freshness.demotionPenalty;
+    const bScore = b.priority - b.freshness.demotionPenalty;
+    if (aScore !== bScore) return bScore - aScore;
+    if (a.freshness.state !== b.freshness.state) {
+      const rank: Record<ResourceFreshnessProjection['state'], number> = {
+        IN_TTL: 0,
+        STALE_DEMOTED: 1,
+        PROLONGED_STALE: 2,
+        HIDDEN_ARCHIVED: 3,
+      };
+      return rank[a.freshness.state] - rank[b.freshness.state];
+    }
     return a.title.localeCompare(b.title);
   });
 

@@ -1,20 +1,20 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createSession, generateSessionToken, hashToken } from '@/lib/session';
-import { db } from '@/lib/db';
+import { type NextRequest, NextResponse } from 'next/server';
+
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
+import { db } from '@/lib/db';
+import {
+  createSession,
+  generateSessionToken,
+  hashToken,
+  setSessionCookieOnResponse,
+} from '@/lib/session';
 
 const ADMIN_VERIFY_TOKEN_COOKIE = 'admin_verify_token';
+const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
 
-export async function GET(request: NextRequest) {
-  const rawToken = request.nextUrl.searchParams.get('token');
-
-  if (!rawToken) {
-    return NextResponse.redirect(new URL('/admin/login?error=missing_token', request.url));
-  }
-
-  const html = `<!DOCTYPE html>
+const CONFIRM_ADMIN_LOGIN_HTML = `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charSet="utf-8" />
@@ -42,91 +42,140 @@ export async function GET(request: NextRequest) {
   </body>
 </html>`;
 
-  const response = new NextResponse(html, {
+function seeOther(path: string, request: NextRequest): NextResponse {
+  return NextResponse.redirect(new URL(path, request.url), {
+    status: 303,
+  });
+}
+
+function redirectAndClearVerifyCookie(path: string, request: NextRequest): NextResponse {
+  const response = seeOther(path, request);
+
+  response.cookies.delete(ADMIN_VERIFY_TOKEN_COOKIE);
+
+  return response;
+}
+
+async function createAdminSessionResponse(
+  userId: string,
+  request: NextRequest,
+): Promise<NextResponse> {
+  const sessionToken = generateSessionToken();
+
+  await createSession(userId, sessionToken);
+
+  void captureServerEvent(userId, Events.USER_LOGGED_IN, {
+    auth_method: 'magic_link',
+    login_surface: 'admin_web',
+  });
+
+  const response = seeOther('/admin', request);
+
+  setSessionCookieOnResponse(response, sessionToken);
+  response.cookies.delete(ADMIN_VERIFY_TOKEN_COOKIE);
+
+  return response;
+}
+
+export async function GET(request: NextRequest): Promise<NextResponse> {
+  const rawToken = request.nextUrl.searchParams.get('token')?.trim();
+
+  if (!rawToken) {
+    return NextResponse.redirect(new URL('/admin/login?error=missing_token', request.url));
+  }
+
+  const response = new NextResponse(CONFIRM_ADMIN_LOGIN_HTML, {
     headers: {
-      'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store, no-cache, must-revalidate',
+      'content-security-policy':
+        "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'",
+      'content-type': 'text/html; charset=utf-8',
+      'x-content-type-options': 'nosniff',
     },
   });
 
   response.cookies.set(ADMIN_VERIFY_TOKEN_COOKIE, rawToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/admin/verify',
     maxAge: 10 * 60,
+    path: '/admin/verify',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
   });
 
   return response;
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   const jar = await cookies();
-  const cookieToken = jar.get(ADMIN_VERIFY_TOKEN_COOKIE)?.value ?? '';
-  const rawToken = cookieToken.trim();
-  jar.delete(ADMIN_VERIFY_TOKEN_COOKIE);
-
-  // POST→GET redirects must use 303 so the browser switches to GET on the
-  // target URL. NextResponse.redirect() defaults to 307 which preserves the
-  // method and would cause the destination page (GET-only) to 405.
-  const seeOther = (path: string) =>
-    NextResponse.redirect(new URL(path, request.url), { status: 303 });
+  const rawToken = jar.get(ADMIN_VERIFY_TOKEN_COOKIE)?.value.trim() ?? '';
 
   if (!rawToken) {
-    return seeOther('/admin/login?error=missing_token');
+    return redirectAndClearVerifyCookie('/admin/login?error=missing_token', request);
   }
 
   const tokenHash = await hashToken(rawToken);
   const now = new Date();
-  const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
 
   const claim = await db.magicLinkToken.updateMany({
-    where: { tokenHash, usedAt: null, expiresAt: { gt: now } },
-    data: { usedAt: now },
+    data: {
+      usedAt: now,
+    },
+    where: {
+      expiresAt: {
+        gt: now,
+      },
+      tokenHash,
+      usedAt: null,
+    },
   });
 
   if (claim.count === 0) {
     const existing = await db.magicLinkToken.findUnique({
-      where: { tokenHash },
-      include: { user: { select: { id: true, role: true } } },
+      include: {
+        user: {
+          select: {
+            id: true,
+            role: true,
+          },
+        },
+      },
+      where: {
+        tokenHash,
+      },
     });
 
     if (!existing || existing.user.role !== 'PLATFORM_ADMIN') {
-      return seeOther('/admin/login?error=invalid_token');
+      return redirectAndClearVerifyCookie('/admin/login?error=invalid_token', request);
     }
 
     if (existing.expiresAt < now) {
-      return seeOther('/admin/login?error=expired_token');
+      return redirectAndClearVerifyCookie('/admin/login?error=expired_token', request);
     }
 
     if (existing.usedAt && now.getTime() - existing.usedAt.getTime() <= RECENT_USE_GRACE_MS) {
-      const sessionToken = generateSessionToken();
-      await createSession(existing.user.id, sessionToken);
-      void captureServerEvent(existing.user.id, Events.USER_LOGGED_IN, {
-        login_surface: 'admin_web',
-        auth_method: 'magic_link',
-      });
-      return seeOther('/admin');
+      return createAdminSessionResponse(existing.user.id, request);
     }
 
-    return seeOther('/admin/login?error=invalid_token');
+    return redirectAndClearVerifyCookie('/admin/login?error=invalid_token', request);
   }
 
   const magicLink = await db.magicLinkToken.findUnique({
-    where: { tokenHash },
-    include: { user: { select: { id: true, role: true } } },
+    include: {
+      user: {
+        select: {
+          id: true,
+          role: true,
+        },
+      },
+    },
+    where: {
+      tokenHash,
+    },
   });
 
   if (!magicLink || magicLink.user.role !== 'PLATFORM_ADMIN') {
-    return seeOther('/admin/login?error=invalid_token');
+    return redirectAndClearVerifyCookie('/admin/login?error=invalid_token', request);
   }
 
-  const sessionToken = generateSessionToken();
-  await createSession(magicLink.user.id, sessionToken);
-  void captureServerEvent(magicLink.user.id, Events.USER_LOGGED_IN, {
-    login_surface: 'admin_web',
-    auth_method: 'magic_link',
-  });
-
-  return seeOther('/admin');
+  return createAdminSessionResponse(magicLink.user.id, request);
 }

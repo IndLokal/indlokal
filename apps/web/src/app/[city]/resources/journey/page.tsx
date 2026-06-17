@@ -3,8 +3,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
+import { FLAGS } from '@/lib/config/flags';
 import { RESOURCE_CATEGORIES } from '@/lib/config';
+import { EventSaveButton } from '@/components/EventSaveButton';
+import { ResourceSaveButton } from '@/components/ResourceSaveButton';
+import { getCommunitiesByCity } from '@/modules/community/queries';
+import { getUpcomingEvents } from '@/modules/event/queries';
 import { getResourcesForCity, type ResolvedResource } from '@/modules/resources';
+import { getSessionUser } from '@/lib/session';
+import { JourneyNextBestAction } from './JourneyNextBestAction';
+import { ResourcesTrackedLink } from '../ResourcesHubTracking';
 
 /**
  * Newcomer Journey - essentials-only resources grouped by lifecycle stage.
@@ -53,6 +61,17 @@ const STAGE_LABELS: Record<ResourceStage, { title: string; blurb: string; icon: 
   },
 };
 
+function isStale(freshnessState: string): boolean {
+  return freshnessState !== 'IN_TTL';
+}
+
+function buildResourceHref(city: string, resource: ResolvedResource): string {
+  const categorySlug =
+    RESOURCE_CATEGORIES.find((category) => category.type === resource.resourceType)?.slug ??
+    'city-registration';
+  return `/${city}/resources/${categorySlug}#${resource.slug}`;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { city } = await params;
   const cityRow = await db.city.findUnique({ where: { slug: city }, select: { name: true } });
@@ -63,31 +82,55 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function ItemCard({ r, city }: { r: ResolvedResource; city: string }) {
+function ItemCard({ r, city, saved }: { r: ResolvedResource; city: string; saved: boolean }) {
   const cat = RESOURCE_CATEGORIES.find((c) => c.type === r.resourceType);
-  const categorySlug = cat?.slug ?? 'city-registration';
   return (
     <li>
-      <Link
-        href={`/${city}/resources/${categorySlug}#${r.slug}`}
-        className="hover:ring-brand-200 group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
-      >
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-base shadow-sm`}
+      <div className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md">
+        <Link
+          href={buildResourceHref(city, r)}
+          className="hover:ring-brand-200 group flex items-start gap-3"
         >
-          {cat?.icon ?? '✓'}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="text-foreground group-hover:text-brand-600 text-[15px] font-semibold transition-colors">
-            {r.title}
-          </h3>
-          {r.description && (
-            <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
-              {r.description}
-            </p>
-          )}
+          <span
+            className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${cat?.color ?? 'from-slate-400 to-slate-500'} text-base shadow-sm`}
+          >
+            {cat?.icon ?? '✓'}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h3 className="text-foreground group-hover:text-brand-600 text-[15px] font-semibold transition-colors">
+              {r.title}
+            </h3>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                {r.trust.sourceLabel}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                  isStale(r.freshness.state)
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                }`}
+              >
+                {r.freshness.stateLabel}
+              </span>
+            </div>
+            {r.description && (
+              <p className="text-muted mt-1 line-clamp-2 text-[13px] leading-relaxed">
+                {r.description}
+              </p>
+            )}
+          </div>
+        </Link>
+        <div className="mt-2 flex justify-end border-t border-black/[0.06] pt-1.5">
+          <ResourceSaveButton
+            resourceId={r.id}
+            resourceTitle={r.title}
+            saved={saved}
+            citySlug={city}
+            sourceSurface="resources_journey"
+          />
         </div>
-      </Link>
+      </div>
     </li>
   );
 }
@@ -101,8 +144,31 @@ export default async function JourneyPage({ params }: Props) {
   });
   if (!cityRow || !cityRow.isActive) notFound();
   const cityName = cityRow.name;
+  const user = await getSessionUser();
+  const savedEventIds = new Set(user?.savedEvents.map((row) => row.eventId) ?? []);
+  const savedResourceIds = new Set(user?.savedResources.map((row) => row.resourceId) ?? []);
 
   const rows = await getResourcesForCity(city, { essentialsOnly: true });
+  const relatedCategorySlug = RESOURCE_CATEGORIES.find((category) =>
+    rows.some((resource) => resource.resourceType === category.type),
+  )?.slug;
+  const relatedCategory = relatedCategorySlug
+    ? RESOURCE_CATEGORIES.find((category) => category.slug === relatedCategorySlug)
+    : undefined;
+  let relatedCommunities: Awaited<ReturnType<typeof getCommunitiesByCity>> = [];
+  let relatedEvents: Awaited<ReturnType<typeof getUpcomingEvents>> = [];
+  if (relatedCategorySlug) {
+    [relatedCommunities, relatedEvents] = await Promise.all([
+      getCommunitiesByCity(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+      getUpcomingEvents(city, { categorySlug: relatedCategorySlug, limit: 2 }),
+    ]);
+  }
+  const actionCandidates = rows.map((resource) => ({
+    id: resource.id,
+    title: resource.title,
+    href: buildResourceHref(city, resource),
+    stage: resource.lifecycleStage[0],
+  }));
 
   const groups: Record<ResourceStage, ResolvedResource[]> = {
     PRE_ARRIVAL: [],
@@ -151,6 +217,130 @@ export default async function JourneyPage({ params }: Props) {
         </p>
       </div>
 
+      <JourneyNextBestAction
+        city={city}
+        cityName={cityName}
+        candidates={actionCandidates}
+        enabled={FLAGS.resourcesJourneyResumeEnabled}
+      />
+
+      {(relatedCommunities.length > 0 || relatedEvents.length > 0) && (
+        <section>
+          <h2 className="text-lg font-semibold">Related communities and upcoming events</h2>
+          <p className="text-muted mt-1 text-sm">
+            Continue beyond the checklist with people and events connected to
+            {relatedCategory ? ` ${relatedCategory.shortTitle.toLowerCase()}` : ' this journey'}.
+          </p>
+
+          <div className="mt-4 grid gap-6 lg:grid-cols-2">
+            {relatedCommunities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Communities
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedCommunities.map((community) => (
+                    <ResourcesTrackedLink
+                      key={community.id}
+                      href={`/${city}/communities/${community.slug}`}
+                      event="resources_to_related_click"
+                      properties={{
+                        city,
+                        target_type: 'community',
+                        target_id: community.id,
+                        category: relatedCategorySlug,
+                        source_surface: 'resources_journey',
+                      }}
+                      persistEntityType="COMMUNITY"
+                      persistEntityId={community.id}
+                      className="group flex items-start gap-3 rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                            {community.name}
+                          </span>
+                          {community._count.events > 0 && (
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                              {community._count.events} upcoming
+                            </span>
+                          )}
+                        </div>
+                        {community.description && (
+                          <p className="text-muted mt-1 line-clamp-2 text-sm leading-relaxed">
+                            {community.description}
+                          </p>
+                        )}
+                      </div>
+                    </ResourcesTrackedLink>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {relatedEvents.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold tracking-wide text-slate-600 uppercase">
+                  Upcoming events
+                </h3>
+                <div className="mt-3 space-y-3">
+                  {relatedEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="rounded-xl bg-white p-4 ring-1 ring-black/[0.06] transition-all hover:-translate-y-0.5 hover:shadow-md"
+                    >
+                      <ResourcesTrackedLink
+                        href={`/${city}/events/${event.slug}`}
+                        event="resources_to_related_click"
+                        properties={{
+                          city,
+                          target_type: 'event',
+                          target_id: event.id,
+                          category: relatedCategorySlug,
+                          source_surface: 'resources_journey',
+                        }}
+                        persistEntityType="EVENT"
+                        persistEntityId={event.id}
+                        className="group block"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-foreground group-hover:text-brand-600 text-sm font-semibold transition-colors">
+                              {event.title}
+                            </span>
+                            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-700">
+                              {event.startsAt.toLocaleDateString('en-DE', {
+                                day: 'numeric',
+                                month: 'short',
+                              })}
+                            </span>
+                          </div>
+                          <p className="text-muted mt-1 text-sm leading-relaxed">
+                            {event.community ? `${event.community.name} · ` : ''}
+                            {event.isOnline ? 'Online' : (event.venueName ?? cityName)}
+                          </p>
+                        </div>
+                      </ResourcesTrackedLink>
+                      <div className="mt-3">
+                        <EventSaveButton
+                          eventId={event.id}
+                          saved={savedEventIds.has(event.id)}
+                          city={city}
+                        />
+                        <p className="text-muted mt-2 text-xs">
+                          Save this event to keep it handy and receive an in-app reminder before it
+                          starts.
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {rows.length === 0 && (
         <div className="border-border rounded-xl border border-dashed p-10 text-center">
           <p className="text-muted text-lg">No journey items yet</p>
@@ -177,7 +367,12 @@ export default async function JourneyPage({ params }: Props) {
             </div>
             <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {groups[stage].map((r) => (
-                <ItemCard key={`${stage}-${r.slug}`} r={r} city={city} />
+                <ItemCard
+                  key={`${stage}-${r.slug}`}
+                  r={r}
+                  city={city}
+                  saved={savedResourceIds.has(r.id)}
+                />
               ))}
             </ul>
           </section>
@@ -190,7 +385,7 @@ export default async function JourneyPage({ params }: Props) {
           <p className="text-muted text-sm">Important any time during your stay.</p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {unscheduled.map((r) => (
-              <ItemCard key={`u-${r.slug}`} r={r} city={city} />
+              <ItemCard key={`u-${r.slug}`} r={r} city={city} saved={savedResourceIds.has(r.id)} />
             ))}
           </ul>
         </section>

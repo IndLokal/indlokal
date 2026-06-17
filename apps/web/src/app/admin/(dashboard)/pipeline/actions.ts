@@ -14,11 +14,13 @@ import {
 /* --- Approve: create entity from pipeline item --- */
 
 export async function approvePipelineItem(formData: FormData) {
-  await assertCan('pipeline.approve');
+  const actor = await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   if (!id) return;
-  await approvePipelineItemRecord(id, { reviewedBy: 'admin' });
+  await approvePipelineItemRecord(id, { reviewedBy: actor.id });
 
+  const { invalidateResolver } = await import('@/modules/resources/resolver');
+  invalidateResolver();
   revalidateTag('city-feed', 'max');
   revalidatePath('/admin/pipeline');
 }
@@ -26,7 +28,7 @@ export async function approvePipelineItem(formData: FormData) {
 /* --- Reject pipeline item --- */
 
 export async function rejectPipelineItem(formData: FormData) {
-  await assertCan('pipeline.reject');
+  const actor = await assertCan('pipeline.reject');
   const id = formData.get('id') as string;
   if (!id) return;
 
@@ -35,11 +37,13 @@ export async function rejectPipelineItem(formData: FormData) {
     data: {
       status: 'REJECTED',
       reviewedAt: new Date(),
-      reviewedBy: 'admin',
+      reviewedBy: actor.id,
       reviewNotes: (formData.get('reason') as string) || undefined,
     },
   });
 
+  const { invalidateResolver } = await import('@/modules/resources/resolver');
+  invalidateResolver();
   revalidatePath('/admin/pipeline');
 }
 
