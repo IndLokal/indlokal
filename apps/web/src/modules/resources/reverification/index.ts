@@ -261,7 +261,7 @@ export async function resolveReverificationItem(params: {
       where: { id: item.resourceId },
       select: { metadata: true },
     });
-    
+
     const existingMetadata = (resource?.metadata as Record<string, unknown>) ?? {};
     const updatedMetadata = {
       ...existingMetadata,
