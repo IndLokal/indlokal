@@ -29,6 +29,13 @@ export {
   type CoverageRow,
   type CityCoverageReport,
 } from './coverage';
+export {
+  ingestJourneyGapBacklog,
+  assignJourneyGapItem,
+  setJourneyGapSla,
+  resolveJourneyGapItem,
+  priorityBandForJourneyGap,
+} from './ops-backlog';
 export type {
   JourneyPersona,
   JourneyView,

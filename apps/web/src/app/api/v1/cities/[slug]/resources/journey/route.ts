@@ -32,12 +32,29 @@ function serialize(r: ResolvedResource) {
     resourceType: r.resourceType,
     url: r.url,
     description: r.description,
+    validFrom: r.validFrom?.toISOString() ?? null,
+    validUntil: r.validUntil?.toISOString() ?? null,
     metadata: r.metadata ?? null,
     scope: r.scope,
     resolvedScope: r.resolvedScope,
     priority: r.priority,
     isEssential: r.isEssential,
     lifecycleStage: r.lifecycleStage,
+    freshness: {
+      state: r.freshness.state,
+      stateLabel: r.freshness.stateLabel,
+      ttlDueAt: r.freshness.ttlDueAt?.toISOString() ?? null,
+      staleSinceAt: r.freshness.staleSinceAt?.toISOString() ?? null,
+      lifecycleReason: r.freshness.lifecycleReason,
+    },
+    trust: {
+      trustBand: r.trust.trustBand,
+      trustBandLabel: r.trust.trustBandLabel,
+      sourceLabel: r.trust.sourceLabel,
+      verificationMethod: r.trust.verificationMethod,
+      lastVerifiedAt: r.trust.lastVerifiedAt?.toISOString() ?? null,
+      lastVerifiedAtDisplay: r.trust.lastVerifiedAtDisplay,
+    },
   };
 }
 

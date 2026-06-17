@@ -22,6 +22,16 @@ export default async function EditResourcePage({ params }: { params: Promise<{ i
   ]);
   if (!resource) notFound();
 
+  const metadata =
+    resource.metadata && typeof resource.metadata === 'object' && !Array.isArray(resource.metadata)
+      ? (resource.metadata as Record<string, unknown>)
+      : {};
+  const governance =
+    metadata.governance && typeof metadata.governance === 'object'
+      ? (metadata.governance as Record<string, unknown>)
+      : {};
+  const contentMode = metadata.contentMode === 'OWNED' ? 'OWNED' : 'CURATED';
+
   return (
     <AdminPage>
       <AdminPageHeader
@@ -51,6 +61,18 @@ export default async function EditResourcePage({ params }: { params: Promise<{ i
             validUntil: resource.validUntil,
             audiences: resource.audiences,
             lifecycleStage: resource.lifecycleStage,
+            contentMode,
+            governanceRationale:
+              typeof governance.rationale === 'string' ? governance.rationale : undefined,
+            riskClass: typeof governance.riskClass === 'string' ? governance.riskClass : undefined,
+            confusionClass:
+              typeof governance.confusionClass === 'string' ? governance.confusionClass : undefined,
+            frequencyClass:
+              typeof governance.frequencyClass === 'string' ? governance.frequencyClass : undefined,
+            alternativesConsidered:
+              typeof governance.alternativesConsidered === 'string'
+                ? governance.alternativesConsidered
+                : undefined,
           }}
         />
       </div>

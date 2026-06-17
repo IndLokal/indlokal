@@ -8,17 +8,37 @@ import { signOut } from '@/app/actions/auth';
 import { can, type SessionUser } from '@/lib/auth/permissions';
 import { PreferencesForm } from './PreferencesForm';
 import { formatEventCardDate, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
+import { LocalDeviceSavesCard } from './LocalDeviceSavesCard';
 
 export const metadata: Metadata = {
   title: 'My Account - IndLokal',
   robots: { index: false },
 };
 
+const RESOURCE_CATEGORY_BY_TYPE = {
+  CONSULAR_SERVICE: 'consular-services',
+  OFFICIAL_EVENT: 'consular-services',
+  GOVERNMENT_INFO: 'consular-services',
+  VISA_SERVICE: 'city-registration',
+  CITY_REGISTRATION: 'city-registration',
+  DRIVING: 'driving-transport',
+  HOUSING: 'housing-utilities',
+  HEALTH_DOCTORS: 'health-insurance',
+  FAMILY_CHILDREN: 'family-childcare',
+  JOBS_CAREERS: 'jobs-careers',
+  TAX_FINANCE: 'tax-finance',
+  BUSINESS_SETUP: 'business-entrepreneurship',
+  GROCERY_FOOD: 'grocery-food',
+  COMMUNITY_RESOURCE: 'community-living',
+} as const;
+
+type ResourceTypeKey = keyof typeof RESOURCE_CATEGORY_BY_TYPE;
+
 export default async function MePage() {
   const user = await getSessionUser();
   if (!user) redirect('/me/login');
 
-  const [savedCommunities, savedEvents, activeCities] = await Promise.all([
+  const [savedCommunities, savedEvents, savedResources, activeCities] = await Promise.all([
     db.savedCommunity.findMany({
       where: { userId: user.id },
       orderBy: { savedAt: 'desc' },
@@ -52,6 +72,21 @@ export default async function MePage() {
         },
       },
     }),
+    db.savedResource.findMany({
+      where: { userId: user.id },
+      orderBy: { savedAt: 'desc' },
+      include: {
+        resource: {
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            resourceType: true,
+            city: { select: { name: true, slug: true } },
+          },
+        },
+      },
+    }),
     db.city.findMany({
       where: { isActive: true },
       select: { id: true, name: true, slug: true },
@@ -60,6 +95,10 @@ export default async function MePage() {
   ]);
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
+  const fallbackCitySlug =
+    activeCities.find((city) => city.id === user.cityId)?.slug ??
+    activeCities[0]?.slug ??
+    'stuttgart';
   const isAdminLike = user.role === 'PLATFORM_ADMIN' || user.role === 'OPS_LEAD';
   const permissionUser = user as SessionUser;
   const hasOrganizerAccess =
@@ -224,6 +263,8 @@ export default async function MePage() {
         </div>
       </section>
 
+      <LocalDeviceSavesCard fallbackCitySlug={fallbackCitySlug} />
+
       {/* Following */}
       <section>
         <h2 className="text-xl font-semibold">Following</h2>
@@ -353,6 +394,48 @@ export default async function MePage() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+      </section>
+
+      {/* Saved Resources */}
+      <section>
+        <h2 className="text-xl font-semibold">Saved Resources</h2>
+        {savedResources.length === 0 ? (
+          <p className="text-muted mt-3 text-sm">
+            No saved resources yet.{' '}
+            <Link
+              href={`/${fallbackCitySlug}/resources`}
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
+              Browse resources →
+            </Link>
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {savedResources.map(({ resource }) => {
+              const citySlug = resource.city?.slug ?? fallbackCitySlug;
+              const categorySlug =
+                RESOURCE_CATEGORY_BY_TYPE[resource.resourceType as ResourceTypeKey] ??
+                'city-registration';
+
+              return (
+                <Link
+                  key={resource.id}
+                  href={`/${citySlug}/resources/${categorySlug}#${resource.slug}`}
+                  className="card-base flex items-center justify-between p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  <div className="min-w-0">
+                    <p className="text-foreground truncate font-medium">{resource.title}</p>
+                    <p className="text-muted mt-0.5 text-xs">
+                      {resource.city?.name ?? 'Germany'} ·{' '}
+                      {resource.resourceType.replaceAll('_', ' ')}
+                    </p>
+                  </div>
+                  <span className="text-muted shrink-0">→</span>
+                </Link>
+              );
+            })}
           </div>
         )}
       </section>

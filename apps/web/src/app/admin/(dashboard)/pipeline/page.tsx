@@ -12,7 +12,7 @@ import {
 import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
-import type { ExtractedEvent, ExtractedCommunity } from '@/modules/pipeline';
+import type { ExtractedEvent, ExtractedCommunity, ExtractedResource } from '@/modules/pipeline';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
 import { PaginationControls } from '@/components/ui/PaginationControls';
@@ -276,8 +276,16 @@ export default async function AdminPipelinePage({
           <h2 className="text-lg font-semibold text-sky-700">Auto-Approved</h2>
           <div className="mt-4 space-y-2">
             {autoApprovedItems.map((item: AutoApprovedItem) => {
-              const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
-              const name = data.type === 'EVENT' ? data.title : data.name;
+              const data = item.extractedData as unknown as
+                | ExtractedEvent
+                | ExtractedCommunity
+                | ExtractedResource;
+              const name =
+                data.type === 'EVENT'
+                  ? data.title
+                  : data.type === 'COMMUNITY'
+                    ? data.name
+                    : data.title;
               return (
                 <div
                   key={item.id}
@@ -331,11 +339,16 @@ export default async function AdminPipelinePage({
           <h2 className="text-muted text-lg font-semibold">Recently Processed</h2>
           <div className="mt-4 space-y-2">
             {recentlyProcessed.map((item: ProcessedItem) => {
-              const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
+              const data = item.extractedData as unknown as
+                | ExtractedEvent
+                | ExtractedCommunity
+                | ExtractedResource;
               const name =
                 data.type === 'EVENT'
                   ? (data as ExtractedEvent).title
-                  : (data as ExtractedCommunity).name;
+                  : data.type === 'COMMUNITY'
+                    ? (data as ExtractedCommunity).name
+                    : (data as ExtractedResource).title;
               return (
                 <div
                   key={item.id}
@@ -410,10 +423,16 @@ function getCalendarSourceMeta(sourceUrl: string | null): {
 }
 
 function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
-  const data = item.extractedData as unknown as ExtractedEvent | ExtractedCommunity;
+  const data = item.extractedData as unknown as
+    | ExtractedEvent
+    | ExtractedCommunity
+    | ExtractedResource;
   const isEvent = data.type === 'EVENT';
+  const isCommunity = data.type === 'COMMUNITY';
+  const isResource = data.type === 'RESOURCE';
   const event = isEvent ? (data as ExtractedEvent) : null;
-  const community = !isEvent ? (data as ExtractedCommunity) : null;
+  const community = isCommunity ? (data as ExtractedCommunity) : null;
+  const resource = isResource ? (data as ExtractedResource) : null;
   const calendarSource = isEvent ? getCalendarSourceMeta(item.sourceUrl) : null;
 
   const confidenceColor =
@@ -431,7 +450,11 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
           <div className="flex items-center gap-2">
             <span
               className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-                isEvent ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
+                isEvent
+                  ? 'bg-blue-100 text-blue-700'
+                  : isCommunity
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-amber-100 text-amber-700'
               }`}
             >
               {item.entityType}
@@ -439,7 +462,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
             <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-700">
               {item.reviewKind}
             </span>
-            <h3 className="font-semibold">{event?.title ?? community?.name}</h3>
+            <h3 className="font-semibold">{event?.title ?? community?.name ?? resource?.title}</h3>
             <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${confidenceColor}`}>
               {Math.round(item.confidence * 100)}%
             </span>
@@ -488,10 +511,35 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
             </div>
           )}
 
+          {/* Resource details */}
+          {resource && (
+            <div className="text-muted mt-1.5 space-y-0.5 text-sm">
+              {resource.description && <p>{resource.description}</p>}
+              <p>📚 {resource.resourceType ?? 'COMMUNITY_RESOURCE'}</p>
+              {resource.audiences.length > 0 && <p>🎯 {resource.audiences.join(', ')}</p>}
+              {resource.lifecycleStage.length > 0 && <p>🧭 {resource.lifecycleStage.join(', ')}</p>}
+              {resource.validUntil && <p>⏳ Valid until {resource.validUntil}</p>}
+              {resource.isOfficialSource && <p>🏛️ Official source</p>}
+              {resource.url && (
+                <p>
+                  🔗{' '}
+                  <a
+                    href={resource.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-500 hover:underline"
+                  >
+                    Open resource ↗
+                  </a>
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Description */}
-          {(event?.description ?? community?.description) && (
+          {(event?.description ?? community?.description ?? resource?.description) && (
             <p className="text-muted mt-2 line-clamp-2 text-sm">
-              {event?.description ?? community?.description}
+              {event?.description ?? community?.description ?? resource?.description}
             </p>
           )}
 

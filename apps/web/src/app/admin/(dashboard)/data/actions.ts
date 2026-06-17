@@ -12,6 +12,18 @@ import {
   parseImportPayload,
   validateImportEnvelope,
 } from '@/modules/admin-import/parsing';
+import {
+  assignReverificationItem,
+  ingestReverificationQueue,
+  resolveReverificationItem,
+  setReverificationSla,
+} from '@/modules/resources/reverification';
+import {
+  assignJourneyGapItem,
+  ingestJourneyGapBacklog,
+  resolveJourneyGapItem,
+  setJourneyGapSla,
+} from '@/modules/journeys/ops-backlog';
 import { runBootstrap } from '../../../../../prisma/bootstrap';
 
 /* ───────────────────────────── Auth guard ───────────────────────────── */
@@ -447,6 +459,21 @@ const ResourceInput = z.object({
   validUntil: z.coerce.date().optional(),
 });
 
+const ResourceContentMode = z.enum(['CURATED', 'OWNED']);
+const ReverificationResolutionAction = z.enum([
+  'VERIFIED',
+  'CORRECTED',
+  'HIDDEN',
+  'ARCHIVED',
+  'DISMISSED',
+]);
+
+function asMetadataObject(metadata: unknown): Record<string, unknown> {
+  return metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>)
+    : {};
+}
+
 /** Mirror the seeder's scopeRegion derivation when the admin leaves it blank. */
 function deriveScopeRegion(
   scope: resources.ResourceScope,
@@ -500,6 +527,94 @@ function fdToResourceTags(fd: FormData) {
   return { audiences, lifecycleStage };
 }
 
+function fdToResourceGovernance(fd: FormData): {
+  contentMode: 'CURATED' | 'OWNED';
+  governance: {
+    rationale: string;
+    riskClass: string;
+    confusionClass: string;
+    frequencyClass: string;
+    alternativesConsidered: string;
+  } | null;
+} {
+  const contentMode = ResourceContentMode.parse(fd.get('contentMode') || 'CURATED');
+  const governance = {
+    rationale: String(fd.get('governanceRationale') || '').trim(),
+    riskClass: String(fd.get('riskClass') || '').trim(),
+    confusionClass: String(fd.get('confusionClass') || '').trim(),
+    frequencyClass: String(fd.get('frequencyClass') || '').trim(),
+    alternativesConsidered: String(fd.get('alternativesConsidered') || '').trim(),
+  };
+
+  if (contentMode === 'OWNED') {
+    if (!governance.rationale) {
+      throw new Error('Owned content requires a governance rationale.');
+    }
+    if (!governance.riskClass) {
+      throw new Error('Owned content requires a risk class.');
+    }
+    if (!governance.confusionClass) {
+      throw new Error('Owned content requires a confusion class.');
+    }
+    if (!governance.frequencyClass) {
+      throw new Error('Owned content requires a frequency class.');
+    }
+    if (!governance.alternativesConsidered) {
+      throw new Error('Owned content requires alternatives considered.');
+    }
+    return { contentMode, governance };
+  }
+
+  return { contentMode, governance: null };
+}
+
+function buildResourceMetadata(
+  existingMetadata: unknown,
+  governanceInput: ReturnType<typeof fdToResourceGovernance>,
+) {
+  const base = { ...asMetadataObject(existingMetadata) };
+  delete base.governance;
+  if (governanceInput.contentMode === 'OWNED') {
+    return {
+      ...base,
+      editorialSource: 'admin-ui',
+      contentMode: 'OWNED',
+      governance: governanceInput.governance,
+    };
+  }
+  return {
+    ...base,
+    editorialSource: 'admin-ui',
+    contentMode: 'CURATED',
+  };
+}
+
+async function logResourceGovernanceChange(params: {
+  resourceId: string;
+  changedBy: string;
+  action: 'CREATED' | 'UPDATED';
+  contentMode: 'CURATED' | 'OWNED';
+  governance: ReturnType<typeof fdToResourceGovernance>['governance'];
+}) {
+  await db.contentLog.create({
+    data: {
+      entityType: 'resource',
+      entityId: params.resourceId,
+      action: params.action,
+      source: 'ADMIN_SEED',
+      changedBy: params.changedBy,
+      metadata: {
+        via: 'resource_admin_governance',
+        contentMode: params.contentMode,
+        hasGovernanceRationale: Boolean(params.governance?.rationale),
+        riskClass: params.governance?.riskClass ?? null,
+        confusionClass: params.governance?.confusionClass ?? null,
+        frequencyClass: params.governance?.frequencyClass ?? null,
+      },
+    },
+  });
+}
+
 /** Resolve cityId (CITY scope only) + scopeRegion for a resource write. */
 async function resolveResourceLocation(input: z.infer<typeof ResourceInput>) {
   let cityId: string | null = null;
@@ -524,9 +639,10 @@ async function invalidateResourceCaches() {
 }
 
 export async function createResourceAction(formData: FormData) {
-  await assertCan('admin.data.write');
+  const actor = await assertCan('admin.data.write');
   const input = fdToResourceInput(formData);
   const { audiences, lifecycleStage } = fdToResourceTags(formData);
+  const governanceInput = fdToResourceGovernance(formData);
 
   const existing = await db.resource.findUnique({
     where: { slug: input.slug },
@@ -536,7 +652,7 @@ export async function createResourceAction(formData: FormData) {
 
   const { cityId, scopeRegion } = await resolveResourceLocation(input);
 
-  await db.resource.create({
+  const created = await db.resource.create({
     data: {
       title: input.title,
       slug: input.slug,
@@ -555,8 +671,17 @@ export async function createResourceAction(formData: FormData) {
       validUntil: input.validUntil ?? null,
       lastReviewedAt: new Date(),
       source: 'ADMIN_SEED',
-      metadata: { editorialSource: 'admin-ui' },
+      metadata: buildResourceMetadata(null, governanceInput),
     },
+    select: { id: true },
+  });
+
+  await logResourceGovernanceChange({
+    resourceId: created.id,
+    changedBy: actor.id,
+    action: 'CREATED',
+    contentMode: governanceInput.contentMode,
+    governance: governanceInput.governance,
   });
 
   await invalidateResourceCaches();
@@ -564,11 +689,18 @@ export async function createResourceAction(formData: FormData) {
 }
 
 export async function updateResourceAction(formData: FormData) {
-  await assertCan('admin.data.write');
+  const actor = await assertCan('admin.data.write');
   const id = String(formData.get('id') || '');
   if (!id) throw new Error('Missing resource id');
   const input = fdToResourceInput(formData);
   const { audiences, lifecycleStage } = fdToResourceTags(formData);
+  const governanceInput = fdToResourceGovernance(formData);
+
+  const existingResource = await db.resource.findUnique({
+    where: { id },
+    select: { id: true, metadata: true },
+  });
+  if (!existingResource) throw new Error('Resource not found');
 
   const dupe = await db.resource.findFirst({
     where: { slug: input.slug, NOT: { id } },
@@ -578,7 +710,7 @@ export async function updateResourceAction(formData: FormData) {
 
   const { cityId, scopeRegion } = await resolveResourceLocation(input);
 
-  await db.resource.update({
+  const updated = await db.resource.update({
     where: { id },
     data: {
       title: input.title,
@@ -597,11 +729,127 @@ export async function updateResourceAction(formData: FormData) {
       validFrom: input.validFrom ?? null,
       validUntil: input.validUntil ?? null,
       lastReviewedAt: new Date(),
+      metadata: buildResourceMetadata(existingResource.metadata, governanceInput),
     },
+    select: { id: true },
+  });
+
+  await logResourceGovernanceChange({
+    resourceId: updated.id,
+    changedBy: actor.id,
+    action: 'UPDATED',
+    contentMode: governanceInput.contentMode,
+    governance: governanceInput.governance,
   });
 
   await invalidateResourceCaches();
   redirect('/admin/data/resources');
+}
+
+export async function ingestResourceReverificationQueueAction() {
+  await assertCan('admin.data.write');
+  await ingestReverificationQueue(new Date());
+  revalidatePath('/admin/data/resources/reverification');
+  redirect('/admin/data/resources/reverification');
+}
+
+export async function assignResourceReverificationAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const ownerUserId = String(formData.get('ownerUserId') || '');
+  if (!id || !ownerUserId) throw new Error('Missing queue item or owner.');
+
+  await assignReverificationItem({ id, ownerUserId, reviewerId: reviewer.id });
+
+  revalidatePath('/admin/data/resources/reverification');
+}
+
+export async function setResourceReverificationSlaAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const slaDueAtRaw = String(formData.get('slaDueAt') || '');
+  if (!id || !slaDueAtRaw) throw new Error('Missing queue item or SLA date.');
+
+  const slaDueAt = new Date(slaDueAtRaw);
+  if (Number.isNaN(slaDueAt.getTime())) {
+    throw new Error('Invalid SLA date.');
+  }
+
+  await setReverificationSla({ id, slaDueAt, reviewerId: reviewer.id });
+
+  revalidatePath('/admin/data/resources/reverification');
+}
+
+export async function resolveResourceReverificationAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const action = ReverificationResolutionAction.parse(formData.get('resolutionAction'));
+  const notes = String(formData.get('resolutionNotes') || '').trim();
+
+  if (!id) throw new Error('Missing queue item id.');
+  if ((action === 'HIDDEN' || action === 'ARCHIVED') && !notes) {
+    throw new Error('Resolution notes are required when hiding or archiving.');
+  }
+
+  await resolveReverificationItem({
+    id,
+    action,
+    notes,
+    reviewerId: reviewer.id,
+  });
+
+  await invalidateResourceCaches();
+  revalidatePath('/admin/data/resources/reverification');
+}
+
+const JourneyGapResolutionStatus = z.enum(['RESOLVED', 'DISMISSED']);
+
+export async function ingestJourneyGapBacklogAction() {
+  await assertCan('admin.data.write');
+  await ingestJourneyGapBacklog(new Date());
+  revalidatePath('/admin/data/journeys');
+  revalidatePath('/admin/data/journeys/backlog');
+  redirect('/admin/data/journeys/backlog');
+}
+
+export async function assignJourneyGapBacklogAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const ownerUserId = String(formData.get('ownerUserId') || '');
+  if (!id || !ownerUserId) throw new Error('Missing backlog item or owner.');
+
+  await assignJourneyGapItem({ id, ownerUserId, reviewerId: reviewer.id });
+  revalidatePath('/admin/data/journeys/backlog');
+}
+
+export async function setJourneyGapBacklogSlaAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  const slaDueAtRaw = String(formData.get('slaDueAt') || '');
+  if (!id || !slaDueAtRaw) throw new Error('Missing backlog item or SLA date.');
+
+  const slaDueAt = new Date(slaDueAtRaw);
+  if (Number.isNaN(slaDueAt.getTime())) throw new Error('Invalid SLA date.');
+
+  await setJourneyGapSla({ id, slaDueAt, reviewerId: reviewer.id });
+  revalidatePath('/admin/data/journeys/backlog');
+}
+
+export async function resolveJourneyGapBacklogAction(formData: FormData) {
+  const reviewer = await assertCan('admin.data.write');
+  const id = String(formData.get('id') || '');
+  if (!id) throw new Error('Missing backlog item id.');
+  const status = JourneyGapResolutionStatus.parse(formData.get('resolutionStatus'));
+  const notes = String(formData.get('resolutionNotes') || '').trim();
+
+  await resolveJourneyGapItem({
+    id,
+    status,
+    notes,
+    reviewerId: reviewer.id,
+  });
+
+  revalidatePath('/admin/data/journeys/backlog');
 }
 
 /**

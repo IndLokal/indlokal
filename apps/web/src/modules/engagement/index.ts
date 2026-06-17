@@ -55,6 +55,20 @@ async function getEventForEngagement(eventId: string) {
   });
 }
 
+async function getResourceForEngagement(resourceId: string) {
+  return db.resource.findUnique({
+    where: { id: resourceId },
+    select: {
+      id: true,
+      slug: true,
+      title: true,
+      cityId: true,
+      city: { select: { slug: true } },
+      resourceType: true,
+    },
+  });
+}
+
 export async function followCommunityForUser(
   userId: string,
   communityId: string,
@@ -270,6 +284,73 @@ export async function toggleSaveEventForUser(
   return existing
     ? unsaveEventForUser(userId, eventId, metadata)
     : saveEventForUser(userId, eventId, metadata);
+}
+
+export async function saveResourceForUser(
+  userId: string,
+  resourceId: string,
+  metadata?: Record<string, unknown>,
+): Promise<{ saved: true }> {
+  const resource = await getResourceForEngagement(resourceId);
+  await db.savedResource.upsert({
+    where: { userId_resourceId: { userId, resourceId } },
+    create: { userId, resourceId },
+    update: {},
+  });
+
+  await Promise.all([
+    recordInteraction({
+      userId,
+      entityType: 'RESOURCE',
+      entityId: resourceId,
+      interactionType: 'SAVE',
+      cityId: resource?.cityId,
+      metadata,
+    }),
+    captureServerEvent(userId, Events.RESOURCE_SAVED, {
+      resource_id: resourceId,
+      resource_slug: resource?.slug,
+      resource_type: resource?.resourceType,
+      city: resource?.city?.slug,
+      ...(metadata ?? {}),
+    }),
+  ]);
+
+  return { saved: true };
+}
+
+export async function unsaveResourceForUser(
+  userId: string,
+  resourceId: string,
+  metadata?: Record<string, unknown>,
+): Promise<{ saved: false }> {
+  const resource = await getResourceForEngagement(resourceId);
+  await db.savedResource.deleteMany({ where: { userId, resourceId } });
+
+  await captureServerEvent(userId, Events.RESOURCE_UNSAVED, {
+    resource_id: resourceId,
+    resource_slug: resource?.slug,
+    resource_type: resource?.resourceType,
+    city: resource?.city?.slug,
+    ...(metadata ?? {}),
+  });
+
+  return { saved: false };
+}
+
+export async function toggleSaveResourceForUser(
+  userId: string,
+  resourceId: string,
+  metadata?: Record<string, unknown>,
+): Promise<{ saved: boolean }> {
+  const existing = await db.savedResource.findUnique({
+    where: { userId_resourceId: { userId, resourceId } },
+    select: { userId: true },
+  });
+
+  return existing
+    ? unsaveResourceForUser(userId, resourceId, metadata)
+    : saveResourceForUser(userId, resourceId, metadata);
 }
 
 export async function enqueueCommunityUpdateForFollowers(args: {

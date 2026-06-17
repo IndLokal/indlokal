@@ -21,6 +21,30 @@ export const FLAGS = {
    * disabled. Enable explicitly with JOURNEY_TAG_SUGGESTIONS_ENABLED=true.
    */
   journeyTagSuggestionsEnabled: process.env.JOURNEY_TAG_SUGGESTIONS_ENABLED === 'true',
+
+  /** Resources persona quick-start modules. Disable via FEATURE_RESOURCES_PERSONA=false */
+  resourcesPersonaEnabled: process.env.FEATURE_RESOURCES_PERSONA !== 'false',
+
+  /** Resources intent chips + smart essentials. Disable via FEATURE_RESOURCES_INTENT=false */
+  resourcesIntentEnabled: process.env.FEATURE_RESOURCES_INTENT !== 'false',
+
+  /** Resume-first modules on resources/journey surfaces. Disable via FEATURE_RESOURCES_RESUME=false */
+  resourcesJourneyResumeEnabled: process.env.FEATURE_RESOURCES_RESUME !== 'false',
+
+  /** Action-first CTA hierarchy rollout for resources surfaces. Disable via FEATURE_RESOURCES_CTA=false */
+  resourcesActionCtaEnabled: process.env.FEATURE_RESOURCES_CTA !== 'false',
+
+  /** Resource reverification queue ingestion/ops loop. Enable with RESOURCES_REVERIFICATION_QUEUE_ENABLED=true */
+  resourcesReverificationQueueEnabled:
+    process.env.RESOURCES_REVERIFICATION_QUEUE_ENABLED === 'true',
+
+  /**
+   * Pipeline RESOURCE lane (PRD/TDD-0056). When OFF, extracted RESOURCE items
+   * are silently dropped at queue time and the lane behaves as if it does not
+   * exist. Defaults to OFF — enable with PIPELINE_RESOURCE_LANE_ENABLED=true.
+   * Must only be enabled AFTER migration 20260610213000 has been applied.
+   */
+  pipelineResourceLaneEnabled: process.env.PIPELINE_RESOURCE_LANE_ENABLED === 'true',
 } as const;
 
 /**

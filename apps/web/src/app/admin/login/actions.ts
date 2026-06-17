@@ -15,6 +15,20 @@ import { z } from 'zod';
 
 const emailSchema = z.string().email();
 
+function deriveRequestOrigin(headersList: Headers): string | null {
+  const forwardedHost = headersList.get('x-forwarded-host')?.split(',')[0]?.trim().toLowerCase();
+  const host = forwardedHost || headersList.get('host')?.split(',')[0]?.trim().toLowerCase();
+
+  if (!host) return null;
+
+  const forwardedProto = headersList.get('x-forwarded-proto')?.split(',')[0]?.trim().toLowerCase();
+  const proto =
+    forwardedProto ||
+    (host.includes('localhost') || host.startsWith('127.0.0.1') ? 'http' : 'https');
+
+  return `${proto}://${host}`;
+}
+
 export type AdminLoginResult = { success: true } | { success: false; error: string } | null;
 
 export async function requestAdminMagicLink(
@@ -30,7 +44,8 @@ export async function requestAdminMagicLink(
   // IP + global checks first - before any DB work - so unbounded probes
   // can't even reach the user lookup. Use a deliberately vague error so
   // the response shape doesn't reveal which limit fired.
-  const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const requestHeaders = await headers();
+  const ip = requestHeaders.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
   const ipRl = checkRateLimit(magicLinkIpLimiter, ip);
   const globalRl = checkRateLimit(magicLinkGlobalLimiter, MAGIC_LINK_GLOBAL_KEY);
   if (!ipRl.allowed || !globalRl.allowed) {
@@ -59,9 +74,13 @@ export async function requestAdminMagicLink(
   }
 
   const rawToken = await createMagicLinkToken(user.id);
+  const requestOrigin = deriveRequestOrigin(requestHeaders);
+  const verifyUrlOverride = requestOrigin
+    ? `${requestOrigin}/admin/verify?token=${encodeURIComponent(rawToken)}`
+    : undefined;
 
   try {
-    await sendAdminMagicLinkEmail(email, rawToken);
+    await sendAdminMagicLinkEmail(email, rawToken, verifyUrlOverride);
   } catch {
     return { success: false, error: 'Failed to send login email. Please try again.' };
   }
