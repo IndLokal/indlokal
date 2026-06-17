@@ -91,7 +91,7 @@ export default function RootLayout() {
         <Stack.Screen name="submit/index" options={{ title: 'Submit' }} />
         <Stack.Screen name="submit/event" options={{ title: 'Submit event' }} />
         <Stack.Screen name="submit/community" options={{ title: 'Add community' }} />
-        <Stack.Screen name="submit/suggest" options={{ title: 'Suggest community' }} />
+        <Stack.Screen name="submit/contribute" options={{ title: 'Contribute community' }} />
         <Stack.Screen
           name="report/community/[id]"
           options={{ title: 'Report', presentation: 'modal' }}

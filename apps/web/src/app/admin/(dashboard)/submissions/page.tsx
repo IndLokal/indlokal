@@ -1,11 +1,11 @@
 import { db } from '@/lib/db';
 import { resolveEvidenceReadout } from '@/lib/community-trust';
-import { approveSubmission, rejectSubmission } from '../actions';
+import { approveCommunityContribution, rejectCommunityContribution } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
-import { ApproveSubmissionForm } from './ApproveSubmissionForm';
+import { ApproveCommunityContributionForm } from './ApproveSubmissionForm';
 import { ConfirmSubmitButton } from '@/components/ui';
 
-export const metadata = { title: 'Review Submissions - Admin' };
+export const metadata = { title: 'Review Community Contributions - Admin' };
 
 export default async function AdminSubmissionsPage() {
   // Only show genuine user submissions awaiting first-touch review.
@@ -28,13 +28,13 @@ export default async function AdminSubmissionsPage() {
   return (
     <AdminPage>
       <AdminPageHeader
-        title="Community Submissions"
+        title="Community Contributions"
         description={`${submissions.length} pending review`}
         backHref="/admin"
       />
 
       {submissions.length === 0 ? (
-        <p className="text-muted mt-12 text-center">No submissions to review.</p>
+        <p className="text-muted mt-12 text-center">No community contributions to review.</p>
       ) : (
         <div className="mt-8 space-y-6">
           {submissions.map((c: SubmissionRow) => {
@@ -105,12 +105,12 @@ export default async function AdminSubmissionsPage() {
                     )}
                   </div>
                   <div className="flex shrink-0 gap-2">
-                    <ApproveSubmissionForm
-                      submissionId={c.id}
+                    <ApproveCommunityContributionForm
+                      contributionId={c.id}
                       defaultGrantOwnership={helpsRun}
-                      action={approveSubmission}
+                      action={approveCommunityContribution}
                     />
-                    <form action={rejectSubmission}>
+                    <form action={rejectCommunityContribution}>
                       <input type="hidden" name="id" value={c.id} />
                       <ConfirmSubmitButton
                         triggerLabel="Reject"

@@ -1,4 +1,4 @@
-export type CommunityActionId = 'browse' | 'claim' | 'suggest' | 'submit' | 'organizer';
+export type CommunityActionId = 'browse' | 'claim' | 'contribute' | 'submit' | 'organizer';
 
 export type CommunityActionCopy = {
   id: CommunityActionId;
@@ -26,12 +26,12 @@ export const COMMUNITY_ACTIONS: Record<CommunityActionId, CommunityActionCopy> =
     cta: 'Claim a listed community',
     href: '/organizer/login',
   },
-  suggest: {
-    id: 'suggest',
+  contribute: {
+    id: 'contribute',
     title: 'This community or resource is missing',
     audience: 'Community members',
-    body: 'Use suggest when something should exist on IndLokal but is not listed yet.',
-    cta: 'Open a city page to suggest it',
+    body: 'Use contribute when something should exist on IndLokal but is not listed yet.',
+    cta: 'Open a city page to contribute it',
   },
   submit: {
     id: 'submit',
@@ -54,37 +54,37 @@ export const COMMUNITY_ACTIONS: Record<CommunityActionId, CommunityActionCopy> =
 export const ACTION_GRID_ORDER: CommunityActionId[] = [
   'browse',
   'claim',
-  'suggest',
+  'contribute',
   'submit',
   'organizer',
 ];
 
 export const COMMUNITY_ACTION_COPY = {
   aboutDescription:
-    'Use this guide when you are not sure whether to browse, suggest, submit, or claim. Rule of thumb: if you run the community, claim it. If it is missing, suggest it. If you are adding a brand-new listing, submit it.',
+    'Use this guide when you are not sure whether to browse, contribute, submit, or claim. Rule of thumb: if you run the community, claim it. If it is missing, contribute it. If you are adding a brand-new listing, submit it.',
   claimSectionLead:
     'Claim it if you are the organizer, founder, or admin. After approval, you can manage the profile, join links, and events for this listing.',
   claimSectionHint:
-    'If this community is not listed yet, use the suggest flow instead. Claiming is for existing listings that you already help run.',
-  suggestPageLead:
+    'If this community is not listed yet, use the contribute flow instead. Claiming is for existing listings that you already help run.',
+  contributePageLead:
     'Use this when something should be in IndLokal but is not listed yet. If you run the community yourself, open its page and claim it instead.',
-  suggestWho:
-    'People who know of a community, service, or useful resource in {{city}} that is missing from IndLokal. You do not need ownership to send a suggestion.',
+  contributeWho:
+    'People who know of a community, service, or useful resource in {{city}} that is missing from IndLokal. You do not need ownership to send a contribution.',
   submitPageLead:
-    'Use this when the community is not listed yet. If it already exists, claim it instead. If you are only pointing us to a missing group or resource, use Suggest instead.',
+    'Use this when the community is not listed yet. If it already exists, claim it instead. If you are only pointing us to a missing group or resource, use Contribute instead.',
   submitWho:
     'People adding a new community for the first time. The submission is reviewed before it goes live, so visitors see a clear and active listing rather than a duplicate or incomplete page.',
   submitFormHint: 'Use this form when the community is not listed yet.',
   submitFormBody:
-    'If the community already exists on IndLokal, claim it instead. If you are only telling us about a missing group or resource, use the suggest flow on your city page.',
+    'If the community already exists on IndLokal, claim it instead. If you are only telling us about a missing group or resource, use the contribute flow on your city page.',
   organizerLoginBody:
     'Once your claim is approved, this is where you edit the community profile, manage join links, and add events. If you do not manage a listed community yet, start by claiming it on the community page or by submitting a new listing.',
   organizerDashboardBody:
     'This dashboard is for approved organizers - the person or team that runs the community listing. Here you can edit the profile, manage join links, and post events that appear on the city feed.',
   mobileSubmitChooserSub: 'Submissions are reviewed before going live.',
   mobileSubmitCommunityHint:
-    'Use this when the community is not listed yet. If it already exists, claim it on the web page instead. If you only want to point us to something missing, use Suggest.',
-  mobileSubmitSuggestHint:
+    'Use this when the community is not listed yet. If it already exists, claim it on the web page instead. If you only want to point us to something missing, use Contribute.',
+  mobileSubmitContributeHint:
     'Use this when a community, service, or resource should be listed but is missing from IndLokal. You do not need to manage it yourself.',
 } as const;
 

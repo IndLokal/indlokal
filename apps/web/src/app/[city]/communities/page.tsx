@@ -337,8 +337,8 @@ export default async function CommunitiesPage({ params, searchParams }: Props) {
       <CitySubpageCrossLinks
         lead={{
           text: "Don't see your community?",
-          href: `/${city}/suggest`,
-          label: 'Suggest one →',
+          href: `/${city}/contribute?type=community`,
+          label: 'Contribute one →',
         }}
         links={[{ href: `/${city}/events`, label: 'Browse events →' }]}
       />

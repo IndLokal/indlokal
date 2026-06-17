@@ -3,6 +3,8 @@
 import { revalidatePath, revalidateTag } from 'next/cache';
 import { db } from '@/lib/db';
 import { assertCan } from '@/lib/auth/permissions';
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
 import {
   approvePipelineItemRecord,
   enrichSparseCommunities,
@@ -17,7 +19,20 @@ export async function approvePipelineItem(formData: FormData) {
   const actor = await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
   if (!id) return;
+  const item = await db.pipelineItem.findUnique({
+    where: { id },
+    select: { entityType: true, sourceType: true, confidence: true },
+  });
   await approvePipelineItemRecord(id, { reviewedBy: actor.id });
+
+  if (item) {
+    void captureServerEvent(actor.id, Events.CONTRIBUTION_REVIEWED, {
+      entity_type: item.entityType,
+      source_type: item.sourceType,
+      outcome: 'APPROVED',
+      confidence: item.confidence,
+    });
+  }
 
   const { invalidateResolver } = await import('@/modules/resources/resolver');
   invalidateResolver();
@@ -32,15 +47,51 @@ export async function rejectPipelineItem(formData: FormData) {
   const id = formData.get('id') as string;
   if (!id) return;
 
+  const reason = (formData.get('reason') as string) || undefined;
+  const item = await db.pipelineItem.findUnique({
+    where: { id },
+    select: { entityType: true, sourceType: true, confidence: true, createdEntityId: true },
+  });
+
   await db.pipelineItem.update({
     where: { id },
     data: {
       status: 'REJECTED',
       reviewedAt: new Date(),
       reviewedBy: actor.id,
-      reviewNotes: (formData.get('reason') as string) || undefined,
+      reviewNotes: reason,
     },
   });
+
+  if (item?.entityType === 'EVENT' && item.createdEntityId) {
+    await db.event.update({
+      where: { id: item.createdEntityId },
+      data: {
+        moderationState: 'REJECTED',
+        rejectionReason:
+          (reason as
+            | 'POLICY_VIOLATION'
+            | 'UNVERIFIABLE'
+            | 'DUPLICATE'
+            | 'SPAM'
+            | 'OUTSIDE_COVERAGE'
+            | undefined) ?? 'UNVERIFIABLE',
+        reviewedById: actor.id,
+        reviewedAt: new Date(),
+        reviewReason: reason,
+      },
+    });
+  }
+
+  if (item) {
+    void captureServerEvent(actor.id, Events.CONTRIBUTION_REVIEWED, {
+      entity_type: item.entityType,
+      source_type: item.sourceType,
+      outcome: 'REJECTED',
+      confidence: item.confidence,
+      rejection_reason: reason ?? null,
+    });
+  }
 
   const { invalidateResolver } = await import('@/modules/resources/resolver');
   invalidateResolver();

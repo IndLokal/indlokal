@@ -11,6 +11,7 @@ import { headers } from 'next/headers';
 import { checkRateLimit, submitLimiter } from '@/lib/rate-limit';
 import { computeSimilarity } from '@/modules/pipeline';
 import { buildStoredEvidence } from '@/lib/community-trust';
+import { readCommunityCoreFormData } from '@/lib/communities/form-input';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -49,12 +50,14 @@ export async function submitCommunity(
     parsedChannels = [];
   }
 
+  const core = readCommunityCoreFormData(formData);
+
   const raw = {
-    name: formData.get('name') as string,
-    description: formData.get('description') as string,
+    name: core.name,
+    description: core.description,
     citySlug: formData.get('citySlug') as string,
     categories: formData.getAll('categories') as string[],
-    languages: formData.getAll('languages') as string[],
+    languages: core.languages,
     channels: parsedChannels,
     relationship: (formData.get('relationship') as string) || 'JUST_ADDING',
     contactEmail: formData.get('contactEmail') as string,

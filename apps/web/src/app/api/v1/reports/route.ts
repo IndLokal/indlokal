@@ -10,8 +10,17 @@ import { apiError } from '@/lib/api/error';
 import { apiHandler } from '@/lib/api/handlers';
 import { FLAGS } from '@/lib/config/flags';
 import { resources as r } from '@indlokal/shared';
+import type { ReportType as PrismaReportType } from '@prisma/client';
 
 export const runtime = 'nodejs';
+
+function toPersistedReportType(reportType: r.ReportType): PrismaReportType {
+  return reportType === 'CONTRIBUTE_COMMUNITY' ? 'SUGGEST_COMMUNITY' : reportType;
+}
+
+function toPublicReportType(reportType: PrismaReportType): string {
+  return reportType === 'SUGGEST_COMMUNITY' ? 'CONTRIBUTE_COMMUNITY' : reportType;
+}
 
 export const POST = apiHandler(async (req: NextRequest) => {
   if (!FLAGS.reportEnabled) {
@@ -36,11 +45,14 @@ export const POST = apiHandler(async (req: NextRequest) => {
   }
 
   try {
-    const report = await createReport(auth.user.userId, parsed.data);
+    const report = await createReport(auth.user.userId, {
+      ...parsed.data,
+      reportType: toPersistedReportType(parsed.data.reportType),
+    });
     return NextResponse.json(
       {
         id: report.id,
-        reportType: report.reportType,
+        reportType: toPublicReportType(report.reportType),
         status: report.status,
         createdAt: report.createdAt.toISOString(),
       },

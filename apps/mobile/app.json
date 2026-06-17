@@ -17,9 +17,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.indlokal.mobile",
-      "associatedDomains": [
-        "applinks:indlokal.com"
-      ]
+      "associatedDomains": ["applinks:indlokal.com"]
     },
     "android": {
       "package": "com.indlokal.mobile",
@@ -50,10 +48,7 @@
               "pathPattern": "/.*/communities/.*"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ]
     },

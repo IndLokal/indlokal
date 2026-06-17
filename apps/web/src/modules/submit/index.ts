@@ -2,6 +2,6 @@ export {
   createPresignUrl,
   createEventSubmission,
   createCommunitySubmission,
-  createSuggestSubmission,
+  createContributeSubmission,
 } from './service';
 export type { PresignResult } from './service';

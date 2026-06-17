@@ -15,6 +15,7 @@ vi.mock('@/components/NavAuthWidget', () => ({
 
 vi.mock('@/components/layout', () => ({
   Footer: () => null,
+  SiteHeader: () => null,
 }));
 
 // CitySearch is a client component that calls useState; the page-test runs the

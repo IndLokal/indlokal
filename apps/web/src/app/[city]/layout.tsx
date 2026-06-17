@@ -60,7 +60,7 @@ export default async function CityLayout({ children, params }: CityLayoutProps) 
     { href: `/${city}/communities`, label: 'Communities' },
     { href: `/${city}/resources`, label: 'Resources' },
     ...(FLAGS.journeyLayerEnabled ? [{ href: `/${city}/journeys`, label: 'Get Started' }] : []),
-    { href: '/submit', label: '+ Submit', highlight: true },
+    { href: `/${city}/contribute`, label: 'Contribute', highlight: true },
   ];
 
   return (

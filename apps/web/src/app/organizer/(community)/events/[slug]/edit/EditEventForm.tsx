@@ -1,8 +1,7 @@
 'use client';
 
-import { useActionState } from 'react';
-import { editEvent, type EditEventResult } from './actions';
-import { EventFormFields } from '@/components/organizer/event-form-fields';
+import { editEvent } from './actions';
+import { OrganizerEventFormWrapper } from '@/components/organizer/OrganizerEventFormWrapper';
 import { type RecurrencePreset } from '@/lib/events/recurrence';
 
 type EventDefaults = {
@@ -31,18 +30,9 @@ export default function EditEventForm({
   communityName: string;
   categories: { slug: string; name: string; icon: string | null }[];
 }) {
-  const [state, formAction, isPending] = useActionState<EditEventResult, FormData>(
-    editEvent.bind(null, event.slug),
-    null,
-  );
-
-  const errors = state?.success === false ? state.errors : {};
-
   return (
-    <EventFormFields
-      action={formAction}
-      isPending={isPending}
-      errors={errors}
+    <OrganizerEventFormWrapper
+      action={editEvent.bind(null, event.slug)}
       values={{
         title: event.title,
         description: event.description ?? '',
@@ -64,6 +54,7 @@ export default function EditEventForm({
       cancelHref="/organizer/events"
       categories={categories}
       showImageUrl
+      surfaceContributionRequirements
       bannerText="Editing a community event keeps it published and updates the public listing."
     />
   );

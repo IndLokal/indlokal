@@ -333,8 +333,11 @@ export default async function ResourceCategoryPage({ params, searchParams }: Pro
         <p className="text-brand-700 mt-1 text-sm">
           Help fellow Indians in {cityName} by suggesting a service or guide.
         </p>
-        <Link href={`/${city}/suggest`} className="btn-primary mt-3 inline-block px-4 py-2 text-sm">
-          Suggest a resource →
+        <Link
+          href={`/${city}/contribute`}
+          className="btn-primary mt-3 inline-block px-4 py-2 text-sm"
+        >
+          Contribute a resource →
         </Link>
       </section>
 

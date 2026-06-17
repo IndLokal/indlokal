@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CitySearchSelect } from '@/components/ui';
 import { submitFeedback } from './actions';
 import type { SubmitResult } from '../lib/form-state';
 import { FormField, SelectInput, TextArea } from '@/components/forms/fields';
@@ -31,14 +32,12 @@ export function FeedbackForm({ cities, defaultCityId }: Props) {
 
       {!defaultCityId && (
         <FormField label="City" htmlFor="feedbackCityId">
-          <SelectInput id="feedbackCityId" name="cityId">
-            <option value="">All / not city-specific</option>
-            {cities.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </SelectInput>
+          <CitySearchSelect
+            inputId="feedbackCityId"
+            name="cityId"
+            cities={cities.map((c) => ({ value: c.id, name: c.name }))}
+            placeholder="Search city (leave blank if not city-specific)"
+          />
         </FormField>
       )}
 

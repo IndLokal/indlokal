@@ -3,6 +3,7 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { communityOptions } from '@indlokal/shared';
+import { FormFieldError, FormGlobalError } from '@/components/forms/FormFeedback';
 import { editCommunityProfile, type EditProfileResult } from './actions';
 
 type Community = {
@@ -39,6 +40,8 @@ export default function EditProfileForm({ community }: { community: Community })
 
   return (
     <form action={formAction} className="space-y-6">
+      <FormGlobalError errors={errors._} />
+
       <div className="card-base p-4">
         <div className="flex items-center justify-between">
           <p className="text-foreground text-sm font-semibold">Public profile readiness</p>
@@ -89,7 +92,7 @@ export default function EditProfileForm({ community }: { community: Community })
           defaultValue={community.name}
           className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
-        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name[0]}</p>}
+        <FormFieldError errors={errors.name} />
       </div>
 
       {/* Short description */}
@@ -102,7 +105,7 @@ export default function EditProfileForm({ community }: { community: Community })
           defaultValue={community.description ?? ''}
           className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
         />
-        {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description[0]}</p>}
+        <FormFieldError errors={errors.description} />
       </div>
 
       {/* Long description */}
@@ -134,7 +137,7 @@ export default function EditProfileForm({ community }: { community: Community })
         <p className="text-muted mt-1 text-xs">
           Use a public square image URL for the best card appearance.
         </p>
-        {errors.logoUrl && <p className="mt-1 text-sm text-red-600">{errors.logoUrl[0]}</p>}
+        <FormFieldError errors={errors.logoUrl} />
       </div>
 
       {/* Organization type */}

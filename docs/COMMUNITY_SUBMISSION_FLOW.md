@@ -1,5 +1,8 @@
 # Community Self-Submission Flow
 
+**Part of:** [Submission and Suggestion Flows: Unified Policy](./SUBMISSION_AND_SUGGESTION_FLOWS.md)  
+**Related specs:** PRD/TDD-0057 (unified suggestion intake), PRD/TDD-0009 (community submission)
+
 ---
 
 ## 1. Overview
@@ -13,7 +16,7 @@ The **Community Self-Submission Flow** allows a community organiser whose commun
 
 Both flows converge at admin review and result in an approved, organiser-managed community. Neither allows self-publishing without oversight.
 
-If the community already exists on IndLokal, the user should claim it instead. If the listing is missing entirely but should exist, the user should use the suggest flow.
+If the community already exists on IndLokal, the user should claim it instead. If the listing is missing entirely but should exist, the user should use the Contribute flow. Internally, that lightweight intake is still classified as a suggestion.
 
 ---
 

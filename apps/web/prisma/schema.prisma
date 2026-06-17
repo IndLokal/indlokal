@@ -251,6 +251,14 @@ enum EventModerationState {
   REJECTED
 }
 
+enum EventRejectionReason {
+  POLICY_VIOLATION
+  UNVERIFIABLE
+  DUPLICATE
+  SPAM
+  OUTSIDE_COVERAGE
+}
+
 // Structured pricing axis: what does it cost?
 enum EventCostType {
   FREE
@@ -312,6 +320,7 @@ model Event {
 
   // ADR-0009: moderation axis + accountable creator + review record.
   moderationState EventModerationState @default(PUBLISHED) @map("moderation_state")
+  rejectionReason EventRejectionReason? @map("rejection_reason") // (NEW) Why event was rejected if moderationState=REJECTED
   createdByUserId String?              @map("created_by_user_id")
   createdBy       User?                @relation("CreatedEvents", fields: [createdByUserId], references: [id])
   reviewedById    String?              @map("reviewed_by_id")
@@ -989,6 +998,7 @@ enum ReportType {
   BROKEN_LINK
   INCORRECT_DETAILS
   SUGGEST_COMMUNITY
+  SUGGEST_EVENT
   OTHER
 }
 
@@ -1134,6 +1144,7 @@ enum PipelineSourceType {
   DUCKDUCKGO
   MEETUP
   COMMUNITY_SUGGESTION
+  EVENT_SUGGESTION
   DB_COMMUNITY
   USER_SUBMITTED
 }
