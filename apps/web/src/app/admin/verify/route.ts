@@ -1,14 +1,15 @@
-import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { type NextRequest, NextResponse } from 'next/server';
+
+import { captureServerEvent } from '@/lib/analytics/server';
+import { Events } from '@/lib/analytics/events';
+import { db } from '@/lib/db';
 import {
   createSession,
   generateSessionToken,
   hashToken,
   setSessionCookieOnResponse,
 } from '@/lib/session';
-import { db } from '@/lib/db';
-import { captureServerEvent } from '@/lib/analytics/server';
-import { Events } from '@/lib/analytics/events';
 
 const ADMIN_VERIFY_TOKEN_COOKIE = 'admin_verify_token';
 const RECENT_USE_GRACE_MS = 2 * 60 * 1000;
@@ -21,47 +22,12 @@ const CONFIRM_ADMIN_LOGIN_HTML = `<!DOCTYPE html>
     <meta name="robots" content="noindex,nofollow" />
     <title>Confirm Admin Login</title>
     <style>
-      body {
-        font-family: system-ui, sans-serif;
-        margin: 0;
-        background: #f8fafc;
-        color: #0f172a;
-      }
-
-      .wrap {
-        max-width: 480px;
-        margin: 10vh auto;
-        background: #fff;
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 24px;
-      }
-
-      h1 {
-        margin: 0 0 12px;
-        font-size: 1.25rem;
-      }
-
-      p {
-        margin: 0 0 16px;
-        color: #334155;
-      }
-
-      button {
-        background: #0f766e;
-        color: #fff;
-        border: 0;
-        border-radius: 8px;
-        padding: 10px 14px;
-        font-weight: 600;
-        cursor: pointer;
-      }
-
-      small {
-        display: block;
-        margin-top: 12px;
-        color: #64748b;
-      }
+      body { font-family: system-ui, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+      .wrap { max-width: 480px; margin: 10vh auto; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 24px; }
+      h1 { margin: 0 0 12px; font-size: 1.25rem; }
+      p { margin: 0 0 16px; color: #334155; }
+      button { background: #0f766e; color: #fff; border: 0; border-radius: 8px; padding: 10px 14px; font-weight: 600; cursor: pointer; }
+      small { display: block; margin-top: 12px; color: #64748b; }
     </style>
   </head>
   <body>
@@ -102,8 +68,8 @@ async function createAdminSessionResponse(
   await createSession(userId, sessionToken);
 
   void captureServerEvent(userId, Events.USER_LOGGED_IN, {
-    login_surface: 'admin_web',
     auth_method: 'magic_link',
+    login_surface: 'admin_web',
   });
 
   const response = seeOther('/admin', request);
@@ -146,7 +112,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   const jar = await cookies();
-  const rawToken = jar.get(ADMIN_VERIFY_TOKEN_COOKIE)?.value?.trim() ?? '';
+  const rawToken = jar.get(ADMIN_VERIFY_TOKEN_COOKIE)?.value.trim() ?? '';
 
   if (!rawToken) {
     return redirectAndClearVerifyCookie(
