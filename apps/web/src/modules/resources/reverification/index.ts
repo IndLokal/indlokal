@@ -256,6 +256,22 @@ export async function resolveReverificationItem(params: {
     const queueStatus: ResourceReverificationStatus =
       params.action === 'DISMISSED' ? 'DISMISSED' : 'RESOLVED';
 
+    // Fetch existing resource metadata to preserve it
+    const resource = await tx.resource.findUnique({
+      where: { id: item.resourceId },
+      select: { metadata: true },
+    });
+    
+    const existingMetadata = (resource?.metadata as Record<string, unknown>) ?? {};
+    const updatedMetadata = {
+      ...existingMetadata,
+      reverification: {
+        action: params.action,
+        resolvedAt: now.toISOString(),
+        notes: params.notes,
+      },
+    };
+
     if (params.action === 'HIDDEN' || params.action === 'ARCHIVED') {
       await tx.resource.update({
         where: { id: item.resourceId },
@@ -265,13 +281,7 @@ export async function resolveReverificationItem(params: {
             params.action === 'ARCHIVED'
               ? 'Archived via reverification queue'
               : 'Hidden via reverification queue',
-          metadata: {
-            reverification: {
-              action: params.action,
-              resolvedAt: now.toISOString(),
-              notes: params.notes,
-            },
-          },
+          metadata: updatedMetadata,
         },
       });
     } else {
