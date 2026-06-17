@@ -202,3 +202,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   return createAdminSessionResponse(magicLink.user.id, request);
 }
+
