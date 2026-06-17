@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import Link from 'next/link';
 import {
   approveKeywordSuggestion,
   approvePipelineItem,
@@ -20,12 +21,27 @@ import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata = { title: 'Content Pipeline - Admin' };
 
+const ENTITY_FILTERS = ['ALL', 'COMMUNITY', 'EVENT', 'RESOURCE'] as const;
+const EVENT_REJECTION_REASONS = [
+  'POLICY_VIOLATION',
+  'UNVERIFIABLE',
+  'DUPLICATE',
+  'SPAM',
+  'OUTSIDE_COVERAGE',
+] as const;
+
 export default async function AdminPipelinePage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  const rawEntityFilter = (sp.entityType as string | undefined)?.toUpperCase();
+  const entityTypeFilter = ENTITY_FILTERS.includes(
+    rawEntityFilter as (typeof ENTITY_FILTERS)[number],
+  )
+    ? (rawEntityFilter as (typeof ENTITY_FILTERS)[number])
+    : 'ALL';
   const regions = await getRuntimeEnabledRegions();
   const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
   const enabledCities = await db.city.findMany({
@@ -40,15 +56,30 @@ export default async function AdminPipelinePage({
     defaultPageSize: 25,
     maxPageSize: 100,
   });
+  const pendingWhere =
+    entityTypeFilter === 'ALL'
+      ? {
+          status: 'PENDING' as const,
+          NOT: {
+            AND: [{ sourceType: 'EVENT_SUGGESTION' as const }, { createdEntityId: { not: null } }],
+          },
+        }
+      : {
+          status: 'PENDING' as const,
+          entityType: entityTypeFilter,
+          NOT: {
+            AND: [{ sourceType: 'EVENT_SUGGESTION' as const }, { createdEntityId: { not: null } }],
+          },
+        };
   const [items, totalCount] = await Promise.all([
     db.pipelineItem.findMany({
-      where: { status: 'PENDING' },
+      where: pendingWhere,
       include: { city: { select: { name: true, slug: true } } },
       orderBy: [{ confidence: 'desc' }, { createdAt: 'desc' }],
       skip,
       take,
     }),
-    db.pipelineItem.count({ where: { status: 'PENDING' } }),
+    db.pipelineItem.count({ where: pendingWhere }),
   ]);
 
   const autoApprovedItems = await db.pipelineItem.findMany({
@@ -115,6 +146,10 @@ export default async function AdminPipelinePage({
             <p className="text-muted mt-2 max-w-2xl text-sm leading-6">
               Regional runs mirror cron shards to make debugging and source quality review easier.
             </p>
+            <p className="text-muted mt-1 max-w-2xl text-xs leading-5">
+              Event contributions that already created a pending event are reviewed in Admin Events
+              to keep event moderation decisions in one queue.
+            </p>
 
             <div className="mt-4 flex flex-wrap gap-3">
               <StatusPill label="Pending review" value={items.length} />
@@ -137,6 +172,24 @@ export default async function AdminPipelinePage({
           <p className="text-muted text-xs">
             Review queue and source quality update automatically after each manual run.
           </p>
+        </div>
+        <div className="mt-5 flex flex-wrap gap-2">
+          {ENTITY_FILTERS.map((filter) => (
+            <Link
+              key={filter}
+              href={buildPageHref({
+                page: 1,
+                searchParams: { ...sp, entityType: filter === 'ALL' ? undefined : filter },
+              })}
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+                entityTypeFilter === filter
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              {filter === 'ALL' ? 'All types' : filter}
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -616,6 +669,27 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
           </form>
           <form action={rejectPipelineItem}>
             <input type="hidden" name="id" value={item.id} />
+            {isEvent ? (
+              <select
+                name="reason"
+                defaultValue="UNVERIFIABLE"
+                className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                aria-label="Event rejection reason"
+              >
+                {EVENT_REJECTION_REASONS.map((reason) => (
+                  <option key={reason} value={reason}>
+                    {reason.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                type="text"
+                name="reason"
+                placeholder="Rejection reason"
+                className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
+            )}
             <button
               type="submit"
               className="w-full rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"

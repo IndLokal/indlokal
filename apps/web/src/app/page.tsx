@@ -8,9 +8,7 @@ import {
   CITY_COMMUNITY_PROFILES,
   FLAGS,
 } from '@/lib/config';
-import { NavAuthWidget } from '@/components/NavAuthWidget';
-import { BrandLink } from '@/components/BrandLink';
-import { Footer } from '@/components/layout';
+import { Footer, SiteHeader } from '@/components/layout';
 import { CitySearch } from './CitySearch';
 import { PERSONA_DEFINITIONS } from '@/modules/journeys';
 import {
@@ -86,18 +84,10 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
       />
 
-      {/* Header */}
-      <header className="border-border/50 sticky top-0 z-40 w-full border-b bg-white/80 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <BrandLink hideNameOnMobile />
-          <div className="flex items-center gap-3 text-sm">
-            <Link href="/submit" className="btn-primary inline-flex px-4 py-2 text-sm">
-              List a Community
-            </Link>
-            <NavAuthWidget />
-          </div>
-        </div>
-      </header>
+      <SiteHeader
+        navLinks={[{ href: '/contribute', label: 'Contribute', highlight: true }]}
+        showMobileNav={false}
+      />
 
       <main className="flex-1">
         {/* Hero - indigo with single saffron accent */}
@@ -141,10 +131,10 @@ export default function HomePage() {
                 Explore Stuttgart →
               </Link>
               <Link
-                href="/submit"
+                href="/contribute"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition-all hover:-translate-y-0.5 hover:bg-white/20"
               >
-                List a Community
+                Contribute
               </Link>
             </div>
           </div>
@@ -300,7 +290,7 @@ export default function HomePage() {
             </p>
             <div className="mt-10 flex flex-wrap justify-center gap-4">
               <Link
-                href="/submit"
+                href="/contribute?type=community"
                 className="text-brand-700 hover:bg-brand-50 inline-flex items-center gap-2 rounded-xl bg-white px-8 py-3.5 text-sm font-bold shadow-2xl shadow-black/20 transition-all hover:-translate-y-0.5 active:scale-[0.98]"
               >
                 List your community →

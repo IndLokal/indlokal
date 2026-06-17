@@ -12,15 +12,21 @@ import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
 } from '@/lib/organizer/workspace';
+import {
+  communityDescriptionSchema,
+  communityLanguagesSchema,
+  communityNameSchema,
+  readCommunityCoreFormData,
+} from '@/lib/communities/form-input';
 
 const editProfileSchema = z.object({
-  name: z.string().min(2).max(200),
-  description: z.string().min(10).max(2000),
+  name: communityNameSchema,
+  description: communityDescriptionSchema,
   descriptionLong: z.string().max(10000).optional().or(z.literal('')),
   logoUrl: z.string().trim().url().optional().or(z.literal('')),
   organizationType: z.enum(communityOptions.ORGANIZATION_TYPE_VALUES).optional().or(z.literal('')),
   personaSegments: z.array(z.string()).default([]),
-  languages: z.array(z.string()).default([]),
+  languages: communityLanguagesSchema,
   foundedYear: z.coerce
     .number()
     .int()
@@ -87,17 +93,17 @@ export async function editCommunityProfile(
     };
   }
 
-  const languagesRaw = formData.getAll('languages') as string[];
+  const core = readCommunityCoreFormData(formData);
   const personaSegmentsRaw = formData.getAll('personaSegments') as string[];
 
   const raw = {
-    name: formData.get('name') as string,
-    description: formData.get('description') as string,
+    name: core.name,
+    description: core.description,
     descriptionLong: (formData.get('descriptionLong') as string) || undefined,
     logoUrl: (formData.get('logoUrl') as string) || undefined,
     organizationType: (formData.get('organizationType') as string) || undefined,
     personaSegments: personaSegmentsRaw,
-    languages: languagesRaw,
+    languages: core.languages,
     foundedYear: formData.get('foundedYear') ? Number(formData.get('foundedYear')) : undefined,
     memberCountApprox: formData.get('memberCountApprox')
       ? Number(formData.get('memberCountApprox'))

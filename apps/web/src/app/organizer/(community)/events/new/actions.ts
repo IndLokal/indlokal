@@ -2,7 +2,6 @@
 
 import { redirect } from 'next/navigation';
 import { revalidateTag } from 'next/cache';
-import { z } from 'zod';
 import { db } from '@/lib/db';
 import { getSessionUser, getCurrentCommunityId } from '@/lib/session';
 import { withAction } from '@/lib/api/handlers';
@@ -20,39 +19,19 @@ import {
   recurrencePresetToRule,
 } from '@/lib/events/recurrence';
 import {
+  baseEventFormSchema,
+  hasValidTimeRange,
+  normalizeCategorySlugs,
+  readBaseEventFormData,
+  toStructuredCostType,
+  validateOnlineOfflineRequirements,
+} from '@/lib/events/form-input';
+import {
   resolveActiveOrganizerCommunity,
   type OrganizerSessionCommunity,
 } from '@/lib/organizer/workspace';
 
-const addEventSchema = z.object({
-  title: z.string().min(3).max(200),
-  description: z.string().max(5000).optional().or(z.literal('')),
-  categorySlugs: z.array(z.string().min(1)).min(1, 'Select at least one category.'),
-  startsAt: z
-    .string()
-    .min(1, 'Start date is required')
-    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid start date' }),
-  endsAt: z
-    .string()
-    .min(1, 'End date is required')
-    .refine((v) => !isNaN(Date.parse(v)), { message: 'Invalid end date' }),
-  venueName: z.string().max(200).optional().or(z.literal('')),
-  venueAddress: z.string().max(500).optional().or(z.literal('')),
-  isOnline: z.coerce.boolean().default(false),
-  onlineLink: z.string().url().optional().or(z.literal('')),
-  imageUrl: z.string().url().optional().or(z.literal('')),
-  registrationUrl: z.string().url().optional().or(z.literal('')),
-  cost: z.enum(['free', 'paid', 'unclear']).default('free'),
-  accessType: z
-    .enum([
-      'OPEN_ENTRY',
-      'REGISTRATION_REQUIRED',
-      'APPROVAL_REQUIRED',
-      'INVITE_ONLY',
-      'MEMBERS_ONLY',
-      'UNCLEAR',
-    ])
-    .default('UNCLEAR'),
+const addEventSchema = baseEventFormSchema.extend({
   recurrencePreset: createRecurrencePresetSchema.default(DEFAULT_RECURRENCE_PRESET),
 });
 
@@ -84,22 +63,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
     };
   }
 
-  const raw = {
-    title: formData.get('title') as string,
-    description: (formData.get('description') as string) || '',
-    categorySlugs: formData.getAll('categorySlugs').map((value) => String(value)),
-    startsAt: formData.get('startsAt') as string,
-    endsAt: (formData.get('endsAt') as string) || '',
-    venueName: (formData.get('venueName') as string) || '',
-    venueAddress: (formData.get('venueAddress') as string) || '',
-    isOnline: formData.get('isOnline') === 'true',
-    onlineLink: (formData.get('onlineLink') as string) || '',
-    imageUrl: (formData.get('imageUrl') as string) || '',
-    registrationUrl: (formData.get('registrationUrl') as string) || '',
-    cost: (formData.get('cost') as string) || 'free',
-    accessType: (formData.get('accessType') as string) || 'UNCLEAR',
-    recurrencePreset: String(formData.get('recurrencePreset') ?? DEFAULT_RECURRENCE_PRESET),
-  };
+  const raw = readBaseEventFormData(formData);
 
   const parsed = addEventSchema.safeParse(raw);
   if (!parsed.success) {
@@ -110,24 +74,8 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   }
 
   const data = parsed.data;
-  if (data.isOnline && !data.onlineLink) {
-    return {
-      success: false,
-      errors: { onlineLink: ['Online events require an online link.'] },
-    };
-  }
-
-  if (!data.isOnline && (!data.venueName || !data.venueAddress)) {
-    return {
-      success: false,
-      errors: {
-        ...(data.venueName ? {} : { venueName: ['Venue name is required for offline events.'] }),
-        ...(data.venueAddress
-          ? {}
-          : { venueAddress: ['Venue address is required for offline events.'] }),
-      },
-    };
-  }
+  const locationErrors = validateOnlineOfflineRequirements(data);
+  if (locationErrors) return { success: false, errors: locationErrors };
 
   const timezoneRow = await db.community.findUnique({
     where: { id: community.id },
@@ -143,16 +91,14 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
   if (!endsAt) {
     return { success: false, errors: { endsAt: ['Invalid end date'] } };
   }
-  if (endsAt <= startsAt) {
+  if (!hasValidTimeRange(startsAt, endsAt)) {
     return {
       success: false,
       errors: { endsAt: ['End time must be after start time'] },
     };
   }
 
-  const categorySlugs = Array.from(new Set(data.categorySlugs.map((slug) => slug.trim()))).filter(
-    Boolean,
-  );
+  const categorySlugs = normalizeCategorySlugs(data.categorySlugs);
 
   const categories = await db.category.findMany({
     where: { type: 'CATEGORY', slug: { in: categorySlugs } },
@@ -195,7 +141,7 @@ export async function addEvent(_prev: AddEventResult, formData: FormData): Promi
           imageUrl: data.imageUrl || null,
           registrationUrl: data.registrationUrl || null,
           cost: data.cost,
-          costType: data.cost === 'free' ? 'FREE' : data.cost === 'paid' ? 'PAID' : 'UNCLEAR',
+          costType: toStructuredCostType(data.cost),
           accessType: data.accessType,
           requiresRegistration:
             data.accessType === 'REGISTRATION_REQUIRED' || data.accessType === 'APPROVAL_REQUIRED',

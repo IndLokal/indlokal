@@ -89,7 +89,7 @@ Authoritative table - every endpoint in TDDs above appears here.
 - `POST /api/v1/uploads/presign`
 - `POST /api/v1/submissions/event`
 - `POST /api/v1/submissions/community`
-- `POST /api/v1/submissions/suggest`
+- `POST /api/v1/submissions/contribute`
 
 ### Reports & Tracking
 

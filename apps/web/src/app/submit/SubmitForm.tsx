@@ -1,13 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { startTransition, useActionState, useMemo, useState } from 'react';
+import { startTransition, useActionState, useState } from 'react';
 import { communityOptions } from '@indlokal/shared';
+import { CitySearchSelect } from '@/components/ui';
+import { ConfirmationModal } from '@/components/contribute/ConfirmationModal';
+import { FormFieldError, FormGlobalError } from '@/components/forms/FormFeedback';
 import { submitCommunity, type SubmitResult } from './actions';
 
 type Props = {
   cities: { slug: string; name: string }[];
   categories: { slug: string; name: string; icon: string | null }[];
+  defaultCitySlug?: string;
+  successHref?: string;
+  successHrefTemplate?: string;
+  successLabel?: string;
+  cancelHref?: string;
+  cancelLabel?: string;
 };
 
 type ChannelDraft = {
@@ -21,28 +30,22 @@ type ChannelDraft = {
 const MAX_CHANNELS = 6;
 const INITIAL_CATEGORY_COUNT = 6;
 
-function FieldError({ errors }: { errors?: string[] }) {
-  if (!errors || errors.length === 0) return null;
-  return <p className="mt-1 text-sm text-red-600">{errors[0]}</p>;
-}
-
-function FormError({ errors }: { errors?: string[] }) {
-  if (!errors || errors.length === 0) return null;
-  return (
-    <div className="rounded-[var(--radius-button)] border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-      {errors[0]}
-    </div>
-  );
-}
-
-export function SubmitForm({ cities, categories }: Props) {
+export function SubmitForm({
+  cities,
+  categories,
+  defaultCitySlug,
+  successHref = '/submit',
+  successHrefTemplate,
+  successLabel = 'Submit another community',
+  cancelHref,
+  cancelLabel = 'Back',
+}: Props) {
   const [state, formAction, isPending] = useActionState<SubmitResult, FormData>(
     submitCommunity,
     null,
   );
-  const [cityQuery, setCityQuery] = useState('');
-  const [selectedCitySlug, setSelectedCitySlug] = useState('');
-  const [isCityMenuOpen, setIsCityMenuOpen] = useState(false);
+  const defaultCity = defaultCitySlug ? cities.find((city) => city.slug === defaultCitySlug) : null;
+  const [selectedCitySlug, setSelectedCitySlug] = useState(defaultCity?.slug ?? '');
   const [cityClientError, setCityClientError] = useState<string | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [expandedChannelLabelIds, setExpandedChannelLabelIds] = useState<number[]>([]);
@@ -93,52 +96,31 @@ export function SubmitForm({ cities, categories }: Props) {
     setChannels((prev) => prev.map((c) => ({ ...c, isPrimary: c.id === id })));
   };
 
-  const filteredCities = useMemo(() => {
-    const q = cityQuery.trim().toLowerCase();
-    if (!q) return cities.slice(0, 12);
-    return cities
-      .filter((city) => {
-        const name = city.name.toLowerCase();
-        const slug = city.slug.toLowerCase();
-        return name.includes(q) || slug.includes(q);
-      })
-      .slice(0, 12);
-  }, [cities, cityQuery]);
-
   const visibleCategories = showAllCategories
     ? categories
     : categories.slice(0, INITIAL_CATEGORY_COUNT);
 
-  const syncCitySelection = (value: string) => {
-    const normalized = value.trim().toLowerCase();
-    const exact = cities.find((city) => {
-      const cityName = city.name.toLowerCase();
-      const citySlug = city.slug.toLowerCase();
-      return cityName === normalized || citySlug === normalized;
-    });
-    setSelectedCitySlug(exact?.slug ?? '');
-  };
-
-  const handleCityPick = (city: { slug: string; name: string }) => {
-    setCityQuery(city.name);
-    setSelectedCitySlug(city.slug);
-    setCityClientError(null);
-    setIsCityMenuOpen(false);
-  };
-
   if (state?.success) {
+    const query = encodeURIComponent(state.communityName);
+    const dismissHref = selectedCitySlug ? `/${selectedCitySlug}/contribute` : '/contribute';
+    const resolvedSuccessHref = successHrefTemplate
+      ? successHrefTemplate
+          .replace('{communityName}', encodeURIComponent(state.communityName))
+          .replace('{citySlug}', encodeURIComponent(selectedCitySlug || ''))
+      : successHref;
     return (
-      <div className="rounded-xl border border-green-200 bg-green-50 p-8 text-center">
-        <div className="text-4xl">🎉</div>
-        <h2 className="mt-4 text-xl font-semibold text-green-800">Community submitted!</h2>
-        <p className="mt-2 text-green-700">
-          <strong>{state.communityName}</strong> has been submitted for review. Our team will review
-          it and make it live within a few days.
-        </p>
-        <Link href="/submit" className="btn-primary mt-6 inline-block px-5 py-2.5 text-sm">
-          Submit another community
-        </Link>
-      </div>
+      <ConfirmationModal
+        entityType="community"
+        entityName={state.communityName}
+        isOpen={true}
+        backHref={resolvedSuccessHref}
+        backLabel={successLabel}
+        dismissHref={dismissHref}
+        dismissLabel="Back to contribute"
+        similarHref={
+          selectedCitySlug ? `/${selectedCitySlug}/search?q=${query}` : `/search?q=${query}`
+        }
+      />
     );
   }
 
@@ -161,7 +143,7 @@ export function SubmitForm({ cities, categories }: Props) {
         });
       }}
     >
-      <FormError errors={errors._} />
+      <FormGlobalError errors={errors._} />
 
       {/* Community details */}
       <fieldset className="card-base space-y-4 p-4 sm:p-5">
@@ -180,53 +162,26 @@ export function SubmitForm({ cities, categories }: Props) {
               className="input-base mt-1"
               placeholder="e.g. Telugu Association Stuttgart"
             />
-            <FieldError errors={errors.name} />
+            <FormFieldError errors={errors.name} />
           </div>
 
           <div>
             <label htmlFor="citySlug" className="text-foreground block text-sm font-medium">
               City *
             </label>
-            <div className="relative mt-1">
-              <input
-                id="citySlug"
-                type="text"
-                value={cityQuery}
-                autoComplete="off"
-                placeholder="Search city by name"
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setCityQuery(value);
-                  syncCitySelection(value);
-                  setCityClientError(null);
-                }}
-                onFocus={() => setIsCityMenuOpen(true)}
-                onBlur={() => {
-                  setIsCityMenuOpen(false);
-                  syncCitySelection(cityQuery);
-                }}
-                className="input-base"
-              />
-
-              {isCityMenuOpen && filteredCities.length > 0 && (
-                <div className="border-border mt-1 max-h-56 w-full overflow-y-auto rounded-[var(--radius-button)] border bg-white shadow-sm">
-                  {filteredCities.map((city) => (
-                    <button
-                      key={city.slug}
-                      type="button"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => handleCityPick(city)}
-                      className="hover:bg-brand-50 block w-full px-3 py-2 text-left text-sm"
-                    >
-                      <span className="text-foreground">{city.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <input type="hidden" name="citySlug" value={selectedCitySlug} />
-            {cityClientError ? <FieldError errors={[cityClientError]} /> : null}
-            <FieldError errors={errors.citySlug} />
+            <CitySearchSelect
+              className="mt-1"
+              inputId="citySlug"
+              name="citySlug"
+              cities={cities.map((c) => ({ value: c.slug, name: c.name }))}
+              defaultValue={defaultCitySlug}
+              clientError={cityClientError}
+              error={errors.citySlug}
+              onSelectionChange={(value) => {
+                setSelectedCitySlug(value);
+                if (value) setCityClientError(null);
+              }}
+            />
           </div>
         </div>
 
@@ -242,7 +197,7 @@ export function SubmitForm({ cities, categories }: Props) {
             className="input-base mt-1"
             placeholder="What does your community do? Who is it for? How often do you meet?"
           />
-          <FieldError errors={errors.description} />
+          <FormFieldError errors={errors.description} />
         </div>
       </fieldset>
 
@@ -277,7 +232,7 @@ export function SubmitForm({ cities, categories }: Props) {
             {showAllCategories ? 'Show fewer categories' : 'Show all categories'}
           </button>
         )}
-        <FieldError errors={errors.categories} />
+        <FormFieldError errors={errors.categories} />
 
         <details className="group pt-1">
           <summary className="text-foreground cursor-pointer text-sm font-medium">
@@ -427,7 +382,7 @@ export function SubmitForm({ cities, categories }: Props) {
             })),
           )}
         />
-        <FieldError errors={errors.channels} />
+        <FormFieldError errors={errors.channels} />
       </fieldset>
 
       {/* Contact Information */}
@@ -469,7 +424,7 @@ export function SubmitForm({ cities, categories }: Props) {
               I am sharing a community I know about.
             </span>
           </label>
-          <FieldError errors={errors.relationship} />
+          <FormFieldError errors={errors.relationship} />
         </fieldset>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -484,7 +439,7 @@ export function SubmitForm({ cities, categories }: Props) {
               required
               className="input-base mt-1"
             />
-            <FieldError errors={errors.contactName} />
+            <FormFieldError errors={errors.contactName} />
           </div>
           <div>
             <label htmlFor="contactEmail" className="text-foreground block text-sm font-medium">
@@ -497,7 +452,7 @@ export function SubmitForm({ cities, categories }: Props) {
               required
               className="input-base mt-1"
             />
-            <FieldError errors={errors.contactEmail} />
+            <FormFieldError errors={errors.contactEmail} />
           </div>
         </div>
 
@@ -515,13 +470,20 @@ export function SubmitForm({ cities, categories }: Props) {
         </p>
       </fieldset>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="btn-primary w-full px-5 py-3 text-sm disabled:opacity-50"
-      >
-        {isPending ? 'Submitting...' : 'Submit Community for Review'}
-      </button>
+      <div className="flex gap-3 pt-2">
+        <button
+          type="submit"
+          disabled={isPending}
+          className="btn-primary flex-1 px-5 py-3 text-sm disabled:opacity-50"
+        >
+          {isPending ? 'Submitting...' : 'Submit Community for Review'}
+        </button>
+        {cancelHref ? (
+          <Link href={cancelHref} className="btn-secondary px-6 py-3 text-sm">
+            {cancelLabel}
+          </Link>
+        ) : null}
+      </div>
     </form>
   );
 }

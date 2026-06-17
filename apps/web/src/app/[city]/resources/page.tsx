@@ -610,10 +610,10 @@ export default async function ResourcesHubPage({ params, searchParams }: Props) 
             and more.
           </p>
           <Link
-            href={`/${city}/suggest`}
+            href={`/${city}/contribute`}
             className="btn-primary mt-3 inline-block px-4 py-2 text-sm"
           >
-            Suggest a service →
+            Contribute a service →
           </Link>
         </section>
 

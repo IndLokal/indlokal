@@ -43,6 +43,9 @@ vi.mock('@/lib/session', async (importOriginal) => {
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 vi.mock('@/lib/analytics/server', () => ({ captureServerEvent: vi.fn() }));
+vi.mock('@/lib/email', () => ({
+  sendCollaboratorInviteRequestedEmail: vi.fn().mockResolvedValue(undefined),
+}));
 
 import {
   withdrawCollaboratorInvite,

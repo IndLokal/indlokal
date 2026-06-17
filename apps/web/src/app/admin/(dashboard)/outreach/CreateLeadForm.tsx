@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CitySearchSelect } from '@/components/ui';
 import { createOutreachLead } from './actions';
 import type { OutreachResult } from './actions';
 
@@ -36,22 +37,17 @@ export function CreateLeadForm({ cities, defaultCityId, operators, currentUserId
         <div>
           <label className="text-muted mb-1 block text-xs font-medium">City *</label>
           {defaultCityId ? (
-            <input type="hidden" name="cityId" value={defaultCityId} />
+            <>
+              <input type="hidden" name="cityId" value={defaultCityId} />
+              <p className="text-muted text-xs">
+                {cities.find((c) => c.id === defaultCityId)?.name}
+              </p>
+            </>
           ) : (
-            <select
+            <CitySearchSelect
               name="cityId"
-              required
-              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
-            >
-              {cities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {defaultCityId && (
-            <p className="text-muted text-xs">{cities.find((c) => c.id === defaultCityId)?.name}</p>
+              cities={cities.map((c) => ({ value: c.id, name: c.name }))}
+            />
           )}
         </div>
         <div>

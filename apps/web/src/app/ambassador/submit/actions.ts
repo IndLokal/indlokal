@@ -2,8 +2,15 @@
 
 import { revalidatePath } from 'next/cache';
 import { db } from '@/lib/db';
+import { z } from 'zod';
 import { assertCan } from '@/lib/auth/permissions';
 import { getAuthorizedCityId } from '@/lib/auth/ambassador';
+import {
+  communityDescriptionSchema,
+  communityLanguagesSchema,
+  communityNameSchema,
+  readCommunityCoreFormData,
+} from '@/lib/communities/form-input';
 import type { SubmitResult } from '../lib/form-state';
 import {
   buildAmbassadorCommunityExtractedData,
@@ -31,14 +38,31 @@ export async function submitAmbassadorCommunity(
 ): Promise<SubmitResult> {
   const user = await assertCan('ambassador.submit');
 
-  const name = (formData.get('name') as string | null)?.trim();
-  const description = (formData.get('description') as string | null)?.trim();
+  const core = readCommunityCoreFormData(formData);
+  const coreParsed = z
+    .object({
+      name: communityNameSchema,
+      description: communityDescriptionSchema.optional().or(z.literal('')),
+      languages: communityLanguagesSchema,
+    })
+    .safeParse({
+      name: core.name,
+      description: core.description,
+      languages: core.languages,
+    });
+  if (!coreParsed.success) {
+    const firstMessage = coreParsed.error.issues[0]?.message ?? 'Invalid community details.';
+    return { success: false, error: firstMessage };
+  }
+
+  const name = coreParsed.data.name;
+  const description = coreParsed.data.description || undefined;
   const cityId = (formData.get('cityId') as string | null)?.trim();
   const channelValue = (formData.get('channelValue') as string | null)?.trim();
   const channelTypeRaw = (formData.get('channelType') as string | null)?.trim();
   const contactEmail = (formData.get('contactEmail') as string | null)?.trim();
   const categories = getStringValues(formData, 'categories');
-  const languages = sanitizeLanguages(getStringValues(formData, 'languages'));
+  const languages = sanitizeLanguages(coreParsed.data.languages);
   const notes = (formData.get('notes') as string | null)?.trim();
   const channelType = normalizeCommunityChannelType(channelTypeRaw);
 
@@ -47,8 +71,8 @@ export async function submitAmbassadorCommunity(
     return { success: false, error: 'Please select one of your assigned cities.' };
   }
 
-  if (!name || !authorizedCityId) {
-    return { success: false, error: 'Name and city are required.' };
+  if (!authorizedCityId) {
+    return { success: false, error: 'Please select one of your assigned cities.' };
   }
 
   // Resolve city

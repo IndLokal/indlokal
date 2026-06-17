@@ -20,7 +20,7 @@ const NAV_COLUMNS = [
   {
     title: 'Explore',
     links: [
-      { label: 'Suggest Community', href: '/submit' },
+      { label: 'Contribute', href: '/contribute' },
       { label: 'Organizer Dashboard', href: '/organizer/login' },
     ],
   },

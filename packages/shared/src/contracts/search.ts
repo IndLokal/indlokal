@@ -9,7 +9,7 @@ import { ResourceType } from './resources';
 export const SearchType = z.enum(['COMMUNITY', 'EVENT', 'RESOURCE', 'ALL']);
 export type SearchType = z.infer<typeof SearchType>;
 
-// ─── Suggest ───────────────────────────────────────────────────────────────
+// ─── Autocomplete suggestions ──────────────────────────────────────────────
 
 export const Suggestion = z.object({
   text: z.string(),

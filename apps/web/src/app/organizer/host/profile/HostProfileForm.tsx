@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { CitySearchSelect } from '@/components/ui';
 import { updateHostProfile, type UpdateHostProfileResult } from './actions';
 
 type City = { id: string; name: string };
@@ -48,19 +49,11 @@ export function HostProfileForm({
 
       <div>
         <label className="text-muted mb-1 block text-xs font-medium">Your city *</label>
-        <select
+        <CitySearchSelect
           name="cityId"
-          required
+          cities={cities.map((c) => ({ value: c.id, name: c.name }))}
           defaultValue={defaultCityId}
-          className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
-        >
-          <option value="">Select city…</option>
-          {cities.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        />
       </div>
 
       {[0, 1, 2].map((i) => (

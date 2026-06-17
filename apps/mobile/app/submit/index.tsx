@@ -1,15 +1,15 @@
 /**
  * Submit type chooser - PRD-0009.
- * Three entry points: Event, Community, Suggest a community.
+ * Three entry points: Event, Community, Contribute a community.
  */
 
-import { Link, Stack } from 'expo-router';
+import { Link, Stack, type Href } from 'expo-router';
 import { content } from '@indlokal/shared';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { palette, radius, spacing, typography } from '@/constants/theme';
 
 const TILES: Array<{
-  href: '/submit/event' | '/submit/community' | '/submit/suggest';
+  href: string;
   title: string;
   body: string;
 }> = [
@@ -24,8 +24,8 @@ const TILES: Array<{
     body: 'Add a brand-new community listing when it is not on IndLokal yet.',
   },
   {
-    href: '/submit/suggest',
-    title: 'Suggest a community',
+    href: '/submit/contribute',
+    title: 'Contribute a community',
     body: 'Point us to a missing group, service, or resource that should be listed.',
   },
 ];
@@ -38,7 +38,7 @@ export default function SubmitChooserScreen() {
         <Text style={styles.title}>What would you like to add?</Text>
         <Text style={styles.sub}>{content.COMMUNITY_ACTION_COPY.mobileSubmitChooserSub}</Text>
         {TILES.map((tile) => (
-          <Link key={tile.href} href={tile.href} asChild>
+          <Link key={tile.href} href={tile.href as Href} asChild>
             <Pressable style={styles.tile}>
               <Text style={styles.tileTitle}>{tile.title}</Text>
               <Text style={styles.tileBody}>{tile.body}</Text>

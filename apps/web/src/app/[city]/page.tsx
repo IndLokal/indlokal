@@ -8,6 +8,7 @@ import { getSessionUser } from '@/lib/session';
 import { SectionHeader } from '@/components/ui';
 import { UPCOMING_CITIES, getConfiguredCityName } from '@/lib/config';
 import { JourneyFeedStrip } from '@/components/journeys/JourneyFeedStrip';
+import { ScrollToTopOnMount } from './ScrollToTopOnMount';
 
 /**
  * City Feed - the primary discovery surface.
@@ -85,8 +86,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
 
   return (
     <div className="space-y-14">
+      <ScrollToTopOnMount />
+
       {/* Hero - dark, bold */}
-      <section className="relative -mx-4 -mt-8 overflow-hidden sm:-mx-6 sm:-mt-12 lg:-mx-8">
+      <section className="relative -mx-4 overflow-hidden sm:-mx-6 lg:-mx-8">
         <div className="from-brand-900 via-brand-800 to-brand-700 bg-gradient-to-br px-4 pt-10 pb-8 sm:px-6 lg:px-8">
           <div className="pointer-events-none absolute inset-0">
             <div className="bg-brand-500/10 absolute -top-20 -right-20 hidden h-80 w-80 rounded-full blur-3xl sm:block" />
@@ -125,12 +128,12 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
             label: noUpcomingEvents
               ? hasUpcomingLater
                 ? 'See upcoming events'
-                : 'Suggest a listing'
+                : 'Contribute a listing'
               : 'See all events',
             href: noUpcomingEvents
               ? hasUpcomingLater
                 ? `/${city}/events`
-                : `/${city}/suggest`
+                : `/${city}/contribute`
               : `/${city}/events`,
           }}
         />
@@ -157,10 +160,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
                     {hasUpcomingLater ? 'View upcoming events' : 'Browse communities'}
                   </Link>
                   <Link
-                    href={`/${city}/suggest`}
+                    href={`/${city}/contribute`}
                     className="text-brand-700 bg-white px-4 py-2 text-sm font-semibold ring-1 ring-black/[0.08] transition-colors hover:bg-black/[0.02]"
                   >
-                    {hasUpcomingLater ? 'Suggest another listing' : 'Suggest a listing'}
+                    {hasUpcomingLater ? 'Contribute another listing' : 'Contribute a listing'}
                   </Link>
                 </div>
               </div>
@@ -312,10 +315,10 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
         <p className="text-muted text-center text-sm">
           Don&apos;t see a community?{' '}
           <Link
-            href={`/${city}/suggest`}
+            href={`/${city}/contribute?type=community`}
             className="text-brand-600 hover:text-brand-700 font-semibold hover:underline"
           >
-            Suggest one →
+            Contribute one →
           </Link>
         </p>
       </section>

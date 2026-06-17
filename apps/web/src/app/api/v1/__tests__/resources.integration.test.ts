@@ -452,12 +452,12 @@ describe('POST /api/v1/reports', () => {
     expect(row?.reporterEmail).toBe('user@example.com');
   });
 
-  it('creates a SUGGEST_COMMUNITY report with citySlug', async () => {
+  it('creates a CONTRIBUTE_COMMUNITY report with citySlug', async () => {
     const res = await reportPOST(
       makePOST(
         '/api/v1/reports',
         {
-          reportType: 'SUGGEST_COMMUNITY',
+          reportType: 'CONTRIBUTE_COMMUNITY',
           suggestedName: 'Stuttgart Kabaddi League',
           citySlug,
           details: 'I met them at the park',
@@ -467,9 +467,10 @@ describe('POST /api/v1/reports', () => {
     );
     expect(res.status).toBe(201);
     const body = await res.json();
-    expect(body.reportType).toBe('SUGGEST_COMMUNITY');
+    expect(body.reportType).toBe('CONTRIBUTE_COMMUNITY');
 
     const row = await testDb.contentReport.findUnique({ where: { id: body.id } });
+    expect(row?.reportType).toBe('SUGGEST_COMMUNITY');
     expect(row?.suggestedName).toBe('Stuttgart Kabaddi League');
     expect(row?.cityId).toBe(cityId);
   });

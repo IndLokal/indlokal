@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import { CitySearchSelect } from '@/components/ui';
 import { hostSignUp } from './actions';
 import type { HostStartResult } from './actions';
 
@@ -75,18 +76,10 @@ export function HostStartForm({ cities }: { cities: City[] }) {
           </div>
           <div>
             <label className="text-muted mb-1 block text-xs font-medium">Your city *</label>
-            <select
+            <CitySearchSelect
               name="cityId"
-              required
-              className="border-border w-full rounded-lg border px-3 py-2.5 text-sm"
-            >
-              <option value="">Select city…</option>
-              {cities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
+              cities={cities.map((c) => ({ value: c.id, name: c.name }))}
+            />
           </div>
           <button
             type="button"

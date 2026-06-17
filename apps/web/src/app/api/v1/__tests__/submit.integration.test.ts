@@ -5,7 +5,7 @@
  *   POST /api/v1/uploads/presign        - presigned URL (S3 mocked)
  *   POST /api/v1/submissions/event      - event pipeline item
  *   POST /api/v1/submissions/community  - community pipeline item + dedup
- *   POST /api/v1/submissions/suggest    - community suggestion pipeline item
+ *   POST /api/v1/submissions/contribute - community contribution pipeline item
  *
  * @db - requires test database
  */
@@ -40,7 +40,7 @@ vi.mock('@/lib/storage', () => ({
 import { POST as presignPOST } from '@/app/api/v1/uploads/presign/route';
 import { POST as eventPOST } from '@/app/api/v1/submissions/event/route';
 import { POST as communityPOST } from '@/app/api/v1/submissions/community/route';
-import { POST as suggestPOST } from '@/app/api/v1/submissions/suggest/route';
+import { POST as contributePOST } from '@/app/api/v1/submissions/contribute/route';
 
 // ─── Setup ─────────────────────────────────────────────────────────────────
 
@@ -264,23 +264,25 @@ describe('POST /api/v1/submissions/community', () => {
   });
 });
 
-// ─── POST /api/v1/submissions/suggest ──────────────────────────────────────
+// ─── POST /api/v1/submissions/contribute ───────────────────────────────────
 
-describe('POST /api/v1/submissions/suggest', () => {
+describe('POST /api/v1/submissions/contribute', () => {
   it('returns 401 without token', async () => {
-    const res = await suggestPOST(makeReq('/api/v1/submissions/suggest', {}, {}));
+    const res = await contributePOST(makeReq('/api/v1/submissions/contribute', {}, {}));
     expect(res.status).toBe(401);
   });
 
   it('returns 400 for missing required fields', async () => {
-    const res = await suggestPOST(makeReq('/api/v1/submissions/suggest', { citySlug }, headers));
+    const res = await contributePOST(
+      makeReq('/api/v1/submissions/contribute', { citySlug }, headers),
+    );
     expect(res.status).toBe(400);
   });
 
   it('returns 404 for unknown citySlug', async () => {
-    const res = await suggestPOST(
+    const res = await contributePOST(
       makeReq(
-        '/api/v1/submissions/suggest',
+        '/api/v1/submissions/contribute',
         { name: 'Kabaddi Club', citySlug: 'nowhere' },
         headers,
       ),
@@ -289,9 +291,9 @@ describe('POST /api/v1/submissions/suggest', () => {
   });
 
   it('creates a COMMUNITY_SUGGESTION pipeline item and returns 201', async () => {
-    const res = await suggestPOST(
+    const res = await contributePOST(
       makeReq(
-        '/api/v1/submissions/suggest',
+        '/api/v1/submissions/contribute',
         {
           name: 'Stuttgart Kabaddi Club',
           description: 'Kabaddi enthusiasts in Stuttgart',
