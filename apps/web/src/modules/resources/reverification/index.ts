@@ -289,13 +289,7 @@ export async function resolveReverificationItem(params: {
         where: { id: item.resourceId },
         data: {
           lastReviewedAt: now,
-          metadata: {
-            reverification: {
-              action: params.action,
-              resolvedAt: now.toISOString(),
-              notes: params.notes,
-            },
-          },
+          metadata: updatedMetadata,
         },
       });
     }
