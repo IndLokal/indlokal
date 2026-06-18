@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
       auth_method: 'google',
     });
 
-    // Minimal first implementation: there is no web onboarding path yet, so
-    // every signed-in user lands on /me regardless of onboardingComplete.
+    // Web users land on /me where incomplete onboarding is surfaced
+    // prominently until profile preferences are saved.
     return response;
   } catch (err) {
     if (err instanceof GoogleAuthError) {

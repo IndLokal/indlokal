@@ -48,6 +48,8 @@ export default async function MePage() {
   const user = await getSessionUser();
   if (!user) redirect('/me/login');
 
+  const onboardingNeedsAttention = !user.onboardingComplete;
+
   const loadAccountLists = () =>
     Promise.all([
       db.savedCommunity.findMany({
@@ -207,6 +209,23 @@ export default async function MePage() {
         </form>
       </div>
 
+      {onboardingNeedsAttention && (
+        <section className="card-base border-brand-300 bg-brand-50 p-5">
+          <p className="text-brand-800 text-xs font-semibold tracking-[0.08em] uppercase">
+            Finish setup
+          </p>
+          <h2 className="text-foreground mt-2 text-xl font-semibold">Complete your profile</h2>
+          <p className="text-muted mt-1 text-sm">
+            Add your city, personas, and languages to personalize your feed and recommendations.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <a href="#preferences" className="btn-primary px-4 py-2 text-sm">
+              Complete profile now
+            </a>
+          </div>
+        </section>
+      )}
+
       {/* Quick links */}
       <section>
         <h2 className="text-xl font-semibold">Quick links</h2>
@@ -255,7 +274,7 @@ export default async function MePage() {
       </section>
 
       {/* Preferences */}
-      <section>
+      <section id="preferences">
         <h2 className="text-xl font-semibold">Preferences</h2>
         <p className="text-muted mt-1 text-sm">
           Personalise IndLokal to show content relevant to you.
