@@ -1,5 +1,11 @@
 # Flows → Authority Mapping (Product Blueprint)
 
+> Document type: Product flow-to-authority mapping (target behavior).
+>
+> For current as-built auth/authz architecture and implementation boundaries, use [AUTHENTICATION_AND_AUTHORIZATION_ARCHITECTURE.md](./AUTHENTICATION_AND_AUTHORIZATION_ARCHITECTURE.md).
+>
+> Last reviewed: 2026-06-18.
+
 ## 1. Purpose and Scope
 
 This document maps **every way a person gains or changes authority** — both over a

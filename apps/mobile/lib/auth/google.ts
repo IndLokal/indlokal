@@ -2,8 +2,12 @@ import * as AuthSession from 'expo-auth-session';
 import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import { Platform } from 'react-native';
-import { auth } from '@indlokal/shared';
-import type { AuthClient } from './client';
+
+// Re-export the pure exchange helpers so existing callers keep importing them
+// from `@/lib/auth/google`. The exchange + diagnostics live in a node-testable
+// module without Expo imports per the repo's platform-wrapper convention.
+export { signInWithGoogleCode, logGoogleSignInDiagnostics } from './google-exchange';
+export type { AuthClient } from './client';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -52,22 +56,4 @@ export function useGoogleCodeFlow() {
     redirectUri,
     enabled: Boolean(platformClientId),
   };
-}
-
-export async function signInWithGoogleCode(
-  client: AuthClient,
-  input: {
-    code: string;
-    redirectUri: string;
-    codeVerifier?: string;
-  },
-) {
-  const payload = auth.GoogleAuth.parse(input);
-  const tokens = await client.postPublic<typeof payload, auth.AuthTokens>(
-    '/api/v1/auth/google',
-    payload,
-  );
-  const parsed = auth.AuthTokens.parse(tokens);
-  await client.setTokens(parsed);
-  return parsed;
 }
