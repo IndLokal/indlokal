@@ -88,11 +88,11 @@ export default function PrivacyPolicyPage() {
               <li>
                 <strong>Usage data:</strong> Pages visited, time spent, and interactions - collected
                 via privacy-friendly analytics (Plausible Analytics). No cookies are used for
-                <li>
-                  Supporting cross-surface authenticated access (for example, app-to-web session
-                  hand-off) using short-lived, one-time tokens
-                </li>
                 analytics, and no personal data is collected.
+              </li>
+              <li>
+                <strong>Cross-surface auth hand-off:</strong> When applicable, we process
+                short-lived, one-time tokens to support app-to-web authenticated hand-off.
               </li>
               <li>
                 <strong>Technical data:</strong> Browser type, device type, and IP address
