@@ -62,8 +62,28 @@ const contributeEventSchema = z
 
 export type ContributeEventResult =
   | { success: true; title: string }
-  | { success: false; error: string }
+  | { success: false; error: string; fieldErrors?: Record<string, string[]> }
   | null;
+
+function mapEventFieldErrors(
+  input: Record<string, string[] | undefined>,
+): Record<string, string[]> {
+  const mapped: Record<string, string[]> = {};
+  const keyMap: Record<string, string> = {
+    eventTitle: 'title',
+    eventDate: 'startsAt',
+    eventEndDate: 'endsAt',
+    eventEndTime: 'endsAt',
+  };
+
+  for (const [key, errors] of Object.entries(input)) {
+    if (!errors || errors.length === 0) continue;
+    const targetKey = keyMap[key] ?? key;
+    mapped[targetKey] = errors;
+  }
+
+  return mapped;
+}
 
 // ─── Contribute an Event ─────────────────────────────────────────────────
 
@@ -141,9 +161,13 @@ export async function contributeEvent(
 
   const parsed = contributeEventSchema.safeParse(raw);
   if (!parsed.success) {
+    const fieldErrors = mapEventFieldErrors(
+      parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    );
     return {
       success: false,
-      error: parsed.error.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('; '),
+      error: 'Please review the highlighted fields and try again.',
+      fieldErrors,
     };
   }
 
@@ -182,8 +206,12 @@ export async function contributeEvent(
   if (usesManualVerification && (!verificationDetails || verificationDetails.length < 20)) {
     return {
       success: false,
-      error:
-        'Please tell us how to verify this event when no public event link is available. Add at least 20 characters with organizer, venue, flyer, or discovery details.',
+      error: 'Please add a bit more detail so we can verify this event.',
+      fieldErrors: {
+        verificationDetails: [
+          'Add at least 20 characters explaining how we can verify this event without a public link.',
+        ],
+      },
     };
   }
 
@@ -212,6 +240,9 @@ export async function contributeEvent(
           success: false,
           error:
             'Selected community is no longer available in this city. Clear it or choose another community.',
+          fieldErrors: {
+            communityId: ['Selected community is no longer available in this city.'],
+          },
         };
       }
     }
@@ -257,6 +288,10 @@ export async function contributeEvent(
     return {
       success: false,
       error: 'Online events need an online link or registration URL.',
+      fieldErrors: {
+        onlineLink: ['Add an online link or a registration URL for online events.'],
+        registrationUrl: ['Add an online link or a registration URL for online events.'],
+      },
     };
   }
 
@@ -264,6 +299,9 @@ export async function contributeEvent(
     return {
       success: false,
       error: 'Offline events need a venue name.',
+      fieldErrors: {
+        venueName: ['Venue name is required for offline events.'],
+      },
     };
   }
 
@@ -288,6 +326,9 @@ export async function contributeEvent(
     return {
       success: false,
       error: 'End time must be after start time.',
+      fieldErrors: {
+        endsAt: ['End time must be after start time.'],
+      },
     };
   }
 
