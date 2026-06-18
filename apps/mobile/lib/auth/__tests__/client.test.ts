@@ -22,6 +22,8 @@ function makeAuthTokens(accessToken: string, refreshToken: string) {
       personaSegments: [],
       preferredLanguages: [],
       onboardingComplete: false,
+      roleAssignments: [],
+      claimedCommunities: [],
       createdAt: new Date(NOW).toISOString(),
       lastActiveAt: null,
     },

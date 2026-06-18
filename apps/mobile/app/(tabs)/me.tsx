@@ -4,18 +4,123 @@
  * account links and a sign-out action.
  */
 
+import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { auth } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useWebHandoff } from '@/lib/auth/web-handoff.expo';
+import type { AuthUser } from '@/lib/auth/token-store';
 import { mobileFlags } from '@/lib/config/flags';
 import { palette, spacing, typography } from '@/constants/theme';
+
+type WorkspaceEntry = {
+  key: string;
+  title: string;
+  description: string;
+  next: string;
+};
+
+function getWorkspaceEntries(user: AuthUser): WorkspaceEntry[] {
+  const entries: WorkspaceEntry[] = [];
+
+  const activeAssignments = user.roleAssignments.filter((a) => !a.revokedAt);
+  const isAdminLike = user.role === 'PLATFORM_ADMIN' || user.role === 'OPS_LEAD';
+  const hasOrganizerAccess =
+    user.role === 'COMMUNITY_ADMIN' ||
+    user.role === 'PARTNER_ORG_ADMIN' ||
+    user.role === 'PLATFORM_ADMIN' ||
+    activeAssignments.some((a) => a.role === 'COMMUNITY_ADMIN' || a.role === 'PARTNER_ORG_ADMIN') ||
+    user.claimedCommunities.length > 0;
+  const hasHostAccess =
+    user.role === 'EVENT_HOST' ||
+    user.role === 'PLATFORM_ADMIN' ||
+    activeAssignments.some((a) => a.role === 'EVENT_HOST');
+  const hasAmbassadorAccess =
+    isAdminLike ||
+    user.role === 'CITY_AMBASSADOR' ||
+    activeAssignments.some((a) => a.role === 'CITY_AMBASSADOR');
+  const hasAdminAccess =
+    isAdminLike ||
+    user.role === 'PLATFORM_ADMIN' ||
+    user.role === 'PARTNERSHIPS_LEAD' ||
+    activeAssignments.some(
+      (a) => a.role === 'PLATFORM_ADMIN' || a.role === 'OPS_LEAD' || a.role === 'PARTNERSHIPS_LEAD',
+    );
+
+  if (hasOrganizerAccess) {
+    entries.push({
+      key: 'organizer',
+      title: 'Organizer workspace',
+      description: 'Manage community profile, events, and collaborators.',
+      next: '/organizer',
+    });
+  }
+
+  if (hasHostAccess) {
+    entries.push({
+      key: 'host',
+      title: 'Event Host workspace',
+      description: 'Manage host profile and event lifecycle.',
+      next: '/organizer/host',
+    });
+  }
+
+  if (hasAmbassadorAccess) {
+    entries.push({
+      key: 'ambassador',
+      title: 'Ambassador console',
+      description: 'Track city submissions and field operations.',
+      next: '/ambassador',
+    });
+  }
+
+  if (hasAdminAccess) {
+    entries.push({
+      key: 'admin',
+      title: 'Admin console',
+      description: 'Moderation, pipeline, and back-office operations.',
+      next: '/admin',
+    });
+  }
+
+  return entries;
+}
 
 export default function MeTabScreen() {
   const { user, signOut } = useAuth();
   const { open, isOpening, error } = useWebHandoff(authClient);
+  const [workspaceUser, setWorkspaceUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setWorkspaceUser(null);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setWorkspaceUser(user);
+
+    void (async () => {
+      try {
+        const profile = await authClient.getAuthed<auth.MeProfile>('/api/v1/me');
+        const parsed = auth.MeProfile.parse(profile);
+        if (!cancelled) {
+          setWorkspaceUser(parsed);
+        }
+      } catch {
+        // Fall back to token-stored user when /me refresh is unavailable.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   async function handleSignOut() {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -38,6 +143,18 @@ export default function MeTabScreen() {
     }
   }
 
+  async function handleWorkspaceOpen(next: string, title: string) {
+    if (!mobileFlags.auth.webHandoff.enabled) {
+      Alert.alert('Unavailable', 'Web workspace hand-off is not enabled in this environment.');
+      return;
+    }
+
+    const ok = await open({ next });
+    if (!ok) {
+      Alert.alert(`${title} unavailable`, error ?? 'Please try again.');
+    }
+  }
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -55,6 +172,11 @@ export default function MeTabScreen() {
     );
   }
 
+  const workspaces = useMemo(() => {
+    if (!workspaceUser) return [];
+    return getWorkspaceEntries(workspaceUser);
+  }, [workspaceUser]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
@@ -64,6 +186,30 @@ export default function MeTabScreen() {
         ) : (
           <Text style={styles.email}>{user.email}</Text>
         )}
+
+        {workspaces.length > 0 ? (
+          <View style={styles.workspaceSection}>
+            <Text style={styles.sectionLabel}>Workspaces</Text>
+            <Text style={styles.workspaceBody}>
+              Continue to role-specific surfaces. Web-only destinations open already signed in.
+            </Text>
+            <View style={styles.workspaceList}>
+              {workspaces.map((workspace) => (
+                <Pressable
+                  key={workspace.key}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${workspace.title}`}
+                  style={[styles.workspaceCard, isOpening && styles.buttonDisabled]}
+                  onPress={() => void handleWorkspaceOpen(workspace.next, workspace.title)}
+                  disabled={isOpening}
+                >
+                  <Text style={styles.workspaceTitle}>{workspace.title}</Text>
+                  <Text style={styles.workspaceDescription}>{workspace.description}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View style={styles.links}>
           <Link href="/me/profile" style={styles.link}>
@@ -86,7 +232,7 @@ export default function MeTabScreen() {
           </Link>
         </View>
 
-        {mobileFlags.auth.webHandoff.enabled ? (
+        {mobileFlags.auth.webHandoff.enabled && workspaces.length === 0 ? (
           <View style={styles.webHandoffCard}>
             <Text style={styles.sectionLabel}>Web-only surfaces</Text>
             <Text style={styles.webHandoffBody}>
@@ -141,6 +287,40 @@ const styles = StyleSheet.create({
   links: {
     flex: 1,
     gap: 0,
+  },
+  workspaceSection: {
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.neutral.surface,
+  },
+  workspaceBody: {
+    color: palette.neutral.muted,
+    fontSize: typography.small,
+    lineHeight: 20,
+  },
+  workspaceList: {
+    gap: spacing.sm,
+  },
+  workspaceCard: {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.neutral.background,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  workspaceTitle: {
+    color: palette.neutral.foreground,
+    fontSize: typography.body,
+    fontWeight: '700',
+  },
+  workspaceDescription: {
+    color: palette.neutral.muted,
+    fontSize: typography.small,
+    lineHeight: 20,
   },
   webHandoffCard: {
     gap: spacing.sm,

@@ -24,6 +24,20 @@ export const UserRole = z.enum([
 ]);
 export type UserRole = z.infer<typeof UserRole>;
 
+export const RoleAssignmentSummary = z.object({
+  role: UserRole,
+  cityId: Cuid.nullable(),
+  orgId: Cuid.nullable(),
+  revokedAt: IsoDateTime.nullable(),
+});
+export type RoleAssignmentSummary = z.infer<typeof RoleAssignmentSummary>;
+
+export const ClaimedCommunitySummary = z.object({
+  id: Cuid,
+  claimedByUserId: Cuid.nullable(),
+});
+export type ClaimedCommunitySummary = z.infer<typeof ClaimedCommunitySummary>;
+
 export const MeProfile = z.object({
   id: Cuid,
   email: z.string().email(),
@@ -35,6 +49,8 @@ export const MeProfile = z.object({
   personaSegments: z.array(z.string()),
   preferredLanguages: z.array(z.string()),
   onboardingComplete: z.boolean(),
+  roleAssignments: z.array(RoleAssignmentSummary),
+  claimedCommunities: z.array(ClaimedCommunitySummary),
   createdAt: IsoDateTime,
   lastActiveAt: IsoDateTime.nullable(),
 });

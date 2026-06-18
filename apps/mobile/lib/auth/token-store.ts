@@ -1,28 +1,8 @@
+import type { auth } from '@indlokal/shared';
+
 const STORAGE_KEY = 'indlokal.auth.tokens.v1';
 
-export type AuthUser = {
-  id: string;
-  email: string;
-  displayName: string | null;
-  avatarUrl: string | null;
-  role:
-    | 'USER'
-    | 'COMMUNITY_ADMIN'
-    | 'EVENT_HOST'
-    | 'PARTNER_ORG_ADMIN'
-    | 'CITY_AMBASSADOR'
-    | 'CONTENT_EDITOR'
-    | 'OPS_LEAD'
-    | 'PARTNERSHIPS_LEAD'
-    | 'PLATFORM_ADMIN';
-  cityId: string | null;
-  cityName: string | null;
-  personaSegments: string[];
-  preferredLanguages: string[];
-  onboardingComplete: boolean;
-  createdAt: string;
-  lastActiveAt: string | null;
-};
+export type AuthUser = auth.MeProfile;
 
 export type AuthTokens = {
   accessToken: string;
