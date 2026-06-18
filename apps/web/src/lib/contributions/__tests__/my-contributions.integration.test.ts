@@ -83,7 +83,7 @@ afterAll(async () => {
 
 describe('submitCommunity attribution (PRD/TDD-0060)', () => {
   it('binds createdByUserId to the session user and creates no ghost user from contact email', async () => {
-    const city = await createCity(testDb, { slug: 'attr-city-1', name: 'Attr City 1' });
+    await createCity(testDb, { slug: 'attr-city-1', name: 'Attr City 1' });
     await createCategory('professional');
     const actor = await createUser(testDb, {
       email: 'actor@account.test',
