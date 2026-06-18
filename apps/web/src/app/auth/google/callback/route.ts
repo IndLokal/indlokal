@@ -13,7 +13,11 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { createSession, generateSessionToken } from '@/lib/session';
+import {
+  generateSessionToken,
+  persistSessionInDb,
+  setSessionCookieOnResponse,
+} from '@/lib/session';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 import {
@@ -63,7 +67,10 @@ export async function GET(request: NextRequest) {
     const { user, isNewUser } = await upsertGoogleUser(profile);
 
     const sessionToken = generateSessionToken();
-    await createSession(user.id, sessionToken);
+    await persistSessionInDb(user.id, sessionToken);
+
+    const response = NextResponse.redirect(new URL('/me', request.url));
+    setSessionCookieOnResponse(response, sessionToken);
 
     void captureServerEvent(user.id, isNewUser ? Events.USER_SIGNED_UP : Events.USER_LOGGED_IN, {
       login_surface: 'web',
@@ -72,7 +79,7 @@ export async function GET(request: NextRequest) {
 
     // Minimal first implementation: there is no web onboarding path yet, so
     // every signed-in user lands on /me regardless of onboardingComplete.
-    return NextResponse.redirect(new URL('/me', request.url));
+    return response;
   } catch (err) {
     if (err instanceof GoogleAuthError) {
       console.error('[auth/google/callback] failed', {
