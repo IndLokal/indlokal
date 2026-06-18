@@ -148,6 +148,10 @@ export async function fetchGoogleProfile(accessToken: string): Promise<Normalize
 export async function upsertGoogleUser(
   profile: NormalizedGoogleProfile,
 ): Promise<{ user: UserWithCityName; isNewUser: boolean }> {
+  if (!profile.emailVerified) {
+    throw new GoogleAuthError('profile_incomplete', 'google email not verified');
+  }
+
   const existing = await db.user.findFirst({
     where: { OR: [{ googleId: profile.googleId }, { email: profile.email }] },
   });
