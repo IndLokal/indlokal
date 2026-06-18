@@ -76,8 +76,9 @@ Flag OFF → both return 404. Mint without a valid access token → 401.
 - Expo `apps/mobile/lib/auth/web-handoff.expo.ts`: `openWebHandoff(client, { next? })`
   → requests url → `WebBrowser.openBrowserAsync(url)`; `useWebHandoff()` hook
   returns `{ open, isOpening }`. Errors mapped via `describeAuthError(e, 'session')`.
-- No new route strings. Entry-point buttons land with the role-aware hub PR; the
-  hook is the drop-in mechanism.
+- Current app trigger: the Me tab exposes a minimal `Open web version` button
+  that calls the hook when the bridge flag is enabled. The role-aware workspace
+  hub remains separate and can reuse the same hook later.
 
 ## 5. Push / Email / Inbox triggers
 

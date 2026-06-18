@@ -7,11 +7,15 @@
 import { Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, Pressable, View } from 'react-native';
+import { authClient } from '@/lib/auth/client.expo';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useWebHandoff } from '@/lib/auth/web-handoff.expo';
+import { mobileFlags } from '@/lib/config/flags';
 import { palette, spacing, typography } from '@/constants/theme';
 
 export default function MeTabScreen() {
   const { user, signOut } = useAuth();
+  const { open, isOpening, error } = useWebHandoff(authClient);
 
   async function handleSignOut() {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -25,6 +29,13 @@ export default function MeTabScreen() {
         },
       },
     ]);
+  }
+
+  async function handleOpenWeb() {
+    const ok = await open({ next: '/me' });
+    if (!ok) {
+      Alert.alert('Open web failed', error ?? 'Please try again.');
+    }
   }
 
   if (!user) {
@@ -74,6 +85,20 @@ export default function MeTabScreen() {
             Delete account
           </Link>
         </View>
+
+        {mobileFlags.auth.webHandoff.enabled ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Open web version"
+            style={[styles.webButton, isOpening && styles.buttonDisabled]}
+            onPress={() => void handleOpenWeb()}
+            disabled={isOpening}
+          >
+            <Text style={styles.webButtonText}>
+              {isOpening ? 'Opening web...' : 'Open web version'}
+            </Text>
+          </Pressable>
+        ) : null}
 
         <Pressable style={styles.signOutButton} onPress={() => void handleSignOut()}>
           <Text style={styles.signOutText}>Sign out</Text>
@@ -134,6 +159,22 @@ const styles = StyleSheet.create({
     color: palette.status.destructive,
     fontWeight: '700',
     fontSize: typography.body,
+  },
+  webButton: {
+    marginTop: spacing.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: palette.brand[600],
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  webButtonText: {
+    color: palette.brand[700],
+    fontWeight: '700',
+    fontSize: typography.body,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   anonBody: {
     color: palette.neutral.muted,

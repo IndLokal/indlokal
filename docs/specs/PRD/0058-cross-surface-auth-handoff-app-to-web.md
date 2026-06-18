@@ -50,8 +50,7 @@ ever putting a long-lived secret in a URL.
 
 - **Web → app** hand-off (already served by magic links / universal links).
 - **Any UI redesign** of the mobile entry points or the destination web screens.
-- Role-aware mobile workspace hub and the specific in-app entry-point buttons
-  (separate follow-up; this PRD ships the reusable mechanism the hub will call).
+- Role-aware mobile workspace hub (separate follow-up). This PRD ships the reusable mechanism and the minimal Me-tab entry point that calls it.
 - **Any broad RBAC refactor** or permission-model rewrite. This PRD consumes the
   existing roles/scopes; it does not rework them.
 - Any new auth provider/framework, refresh-token-in-browser, or change to the
