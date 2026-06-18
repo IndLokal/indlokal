@@ -4,7 +4,7 @@
  * account links and a sign-out action.
  */
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, Pressable, View } from 'react-native';
@@ -26,14 +26,19 @@ type WorkspaceEntry = {
 function getWorkspaceEntries(user: AuthUser): WorkspaceEntry[] {
   const entries: WorkspaceEntry[] = [];
 
-  const activeAssignments = user.roleAssignments.filter((a) => !a.revokedAt);
+  // Backward-compat: older cached auth payloads may not have these fields
+  // until /api/v1/me refreshes the profile shape.
+  const roleAssignments = user.roleAssignments ?? [];
+  const claimedCommunities = user.claimedCommunities ?? [];
+
+  const activeAssignments = roleAssignments.filter((a) => !a.revokedAt);
   const isAdminLike = user.role === 'PLATFORM_ADMIN' || user.role === 'OPS_LEAD';
   const hasOrganizerAccess =
     user.role === 'COMMUNITY_ADMIN' ||
     user.role === 'PARTNER_ORG_ADMIN' ||
     user.role === 'PLATFORM_ADMIN' ||
     activeAssignments.some((a) => a.role === 'COMMUNITY_ADMIN' || a.role === 'PARTNER_ORG_ADMIN') ||
-    user.claimedCommunities.length > 0;
+    claimedCommunities.length > 0;
   const hasHostAccess =
     user.role === 'EVENT_HOST' ||
     user.role === 'PLATFORM_ADMIN' ||
@@ -155,6 +160,8 @@ export default function MeTabScreen() {
     }
   }
 
+  const workspaces = workspaceUser ? getWorkspaceEntries(workspaceUser) : [];
+
   if (!user) {
     return (
       <SafeAreaView style={styles.safeArea}>
@@ -171,11 +178,6 @@ export default function MeTabScreen() {
       </SafeAreaView>
     );
   }
-
-  const workspaces = useMemo(() => {
-    if (!workspaceUser) return [];
-    return getWorkspaceEntries(workspaceUser);
-  }, [workspaceUser]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
