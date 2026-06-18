@@ -68,6 +68,7 @@ export default async function EditHostEventPage({ params }: Props) {
 
       <EditHostEventForm
         categories={categories}
+        timeZone={timeZone}
         event={{
           slug: event.slug,
           title: event.title,

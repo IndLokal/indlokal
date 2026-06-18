@@ -52,6 +52,7 @@ type Props = {
   pendingLabel: string;
   cancelHref: string;
   cancelLabel?: string;
+  timeZone?: string;
   cityMode?: CityMode;
   cities?: City[];
   selectedCityId?: string;
@@ -86,6 +87,7 @@ export function EventFormFields({
   pendingLabel,
   cancelHref,
   cancelLabel,
+  timeZone,
   cityMode = 'none',
   cities = [],
   selectedCityId,
@@ -347,6 +349,7 @@ export function EventFormFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-foreground block text-sm font-medium">Start date & time *</label>
+          {timeZone && <p className="text-muted mt-1 text-xs">All times in {timeZone}</p>}
           <input
             name="startsAt"
             type="datetime-local"
@@ -358,6 +361,7 @@ export function EventFormFields({
         </div>
         <div>
           <label className="text-foreground block text-sm font-medium">End date & time *</label>
+          {timeZone && <p className="text-muted mt-1 text-xs">All times in {timeZone}</p>}
           <input
             name="endsAt"
             type="datetime-local"

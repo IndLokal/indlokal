@@ -69,6 +69,20 @@ describe('formatDateTimeLocalInTimeZone', () => {
     );
     expect(value).toBe('2026-06-15T10:30');
   });
+
+  it('uses 00-23 hour cycle so datetime-local values never emit 24:xx', () => {
+    const value = formatDateTimeLocalInTimeZone(
+      new Date('2026-06-21T22:30:00.000Z'),
+      'Europe/Berlin',
+    );
+    expect(value).toBe('2026-06-22T00:30');
+  });
+});
+
+describe('parseDateTimeLocalInTimeZone input guards', () => {
+  it('rejects hour 24 to avoid next-day rollover bugs', () => {
+    expect(parseDateTimeLocalInTimeZone('2026-06-22T24:00', 'Europe/Berlin')).toBeNull();
+  });
 });
 
 // ---------------------------------------------------------------------------

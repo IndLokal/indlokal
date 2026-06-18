@@ -5,7 +5,12 @@ import { db } from '@/lib/db';
 import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
 import { SATELLITE_TO_METRO } from '@/lib/config';
-import { formatEventDateShort, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
+import {
+  formatEventDateShort,
+  formatEventTime,
+  formatEventTimeZoneShort,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'My Events - Event Host' };
@@ -116,7 +121,18 @@ function EventTable({ events, dim }: { events: EventRow[]; dim?: boolean }) {
                 {formatEventDateShort(
                   new Date(ev.startsAt),
                   ev.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
-                )}
+                )}{' '}
+                ·{' '}
+                {formatEventTime(new Date(ev.startsAt), ev.city.timezone ?? DEFAULT_EVENT_TIMEZONE)}
+                <span className="text-muted/80">
+                  {' '}
+                  (
+                  {formatEventTimeZoneShort(
+                    new Date(ev.startsAt),
+                    ev.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                  )}
+                  )
+                </span>
               </td>
               <td className="px-4 py-3">
                 <EventModerationChip status={ev.status} moderationState={ev.moderationState} />

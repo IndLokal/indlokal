@@ -7,6 +7,7 @@ import { EventRegistrationLink } from '@/components/EventRegistrationLink';
 import {
   formatEventDateLong,
   formatEventTime,
+  formatEventTimeZoneShort,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
 import { formatCostBadge, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
@@ -146,7 +147,8 @@ export default function EventDetailServer({
               <p className="font-medium">{formatEventDateLong(startsAt, timeZone)}</p>
               <p className="text-muted text-sm">
                 {formatEventTime(startsAt, timeZone)}
-                {endsAt && ` - ${formatEventTime(endsAt, timeZone)}`}
+                {endsAt && ` - ${formatEventTime(endsAt, timeZone)}`}{' '}
+                <span>({formatEventTimeZoneShort(startsAt, timeZone)})</span>
               </p>
             </div>
           </div>

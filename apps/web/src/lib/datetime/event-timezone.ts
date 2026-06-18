@@ -47,6 +47,21 @@ export function parseDateTimeLocalInTimeZone(value: string, timeZone: string): D
     return null;
   }
 
+  // Guard against overflow inputs (e.g. 24:00 or month 13) that Date.UTC
+  // would otherwise normalize silently.
+  if (
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > 31 ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
   // Start with naive UTC and refine using zone offset. Two iterations are
   // sufficient for DST boundaries in IANA zones.
   let utcMs = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
@@ -91,6 +106,7 @@ export function formatDateTimeLocalInTimeZone(date: Date, timeZone: string): str
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    hourCycle: 'h23',
   }).formatToParts(date);
 
   const get = (type: Intl.DateTimeFormatPartTypes) =>
@@ -167,6 +183,18 @@ export function formatEventDateTimeMedium(date: Date, timeZone: string): string 
     year: 'numeric',
   }).format(date);
   return `${datePart}, ${formatEventTime(date, timeZone)}`;
+}
+
+/**
+ * Returns a short timezone label like "GMT+2" or "UTC" for the given date.
+ * Use this when UI should explicitly show which timezone a rendered time uses.
+ */
+export function formatEventTimeZoneShort(date: Date, timeZone: string): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    timeZoneName: 'short',
+  }).formatToParts(date);
+  return parts.find((part) => part.type === 'timeZoneName')?.value ?? timeZone;
 }
 
 /**

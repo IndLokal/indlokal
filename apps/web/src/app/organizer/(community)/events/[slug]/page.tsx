@@ -11,6 +11,7 @@ import { SATELLITE_TO_METRO } from '@/lib/config';
 import {
   formatEventDateTimeMedium,
   formatEventTime,
+  formatEventTimeZoneShort,
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
 import { formatCostBadge, formatAccessLabel } from '@indlokal/shared/content/event-pricing';
@@ -63,6 +64,7 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
     : null;
   const publicHref = canonicalCity ? `/${canonicalCity}/events/${event.slug}` : `/${event.slug}`;
   const archiveCurrentEvent = archiveEvent.bind(null, event.slug);
+  const timeZone = event.city.timezone ?? DEFAULT_EVENT_TIMEZONE;
 
   return (
     <div className="space-y-8">
@@ -77,14 +79,9 @@ export default async function OrganizerEventSummaryPage({ params }: Props) {
           <div>
             <h2 className="text-2xl font-semibold">{event.title}</h2>
             <p className="text-muted mt-1 text-sm">
-              {event.city.name} ·{' '}
-              {formatEventDateTimeMedium(
-                new Date(event.startsAt),
-                event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
-              )}
-              {event.endsAt
-                ? ` - ${formatEventTime(new Date(event.endsAt), event.city.timezone ?? DEFAULT_EVENT_TIMEZONE)}`
-                : ''}
+              {event.city.name} · {formatEventDateTimeMedium(new Date(event.startsAt), timeZone)}
+              {event.endsAt ? ` - ${formatEventTime(new Date(event.endsAt), timeZone)}` : ''} (
+              {formatEventTimeZoneShort(new Date(event.startsAt), timeZone)})
             </p>
           </div>
 
