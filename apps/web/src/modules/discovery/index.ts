@@ -8,7 +8,7 @@
  * Responsibilities:
  * - City feed composition (this week, active communities, categories)
  * - Sparse-content resilience
- * - Past events as "recently happened" proof of activity
+ * - Upcoming-focused event visibility
  * - Cross-module data aggregation
  */
 export { getCityFeed, getCitiesList, getCityDetail, getTrending } from './queries';

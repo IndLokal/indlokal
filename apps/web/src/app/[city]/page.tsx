@@ -53,21 +53,13 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
     user?.savedCommunities.map((s: { communityId: string }) => s.communityId) ?? [],
   );
 
-  const {
-    city: cityData,
-    thisWeek,
-    activeCommunities,
-    recentPastEvents,
-    categories,
-    counts,
-  } = feed;
+  const { city: cityData, thisWeek, activeCommunities, categories, counts } = feed;
   const cityName = cityData.name;
   const upcomingCount = thisWeek.events.length;
   const noUpcomingEvents = upcomingCount === 0;
   const lowUpcomingEvents = upcomingCount > 0 && upcomingCount <= 3;
   const hasUpcomingLater = noUpcomingEvents && counts.upcomingEvents > 0;
   type ThisWeekEvent = (typeof thisWeek.events)[number];
-  type RecentPastEvent = (typeof recentPastEvents)[number];
   type CategoryItem = (typeof categories)[number];
   type ActiveCommunity = (typeof activeCommunities)[number];
 
@@ -252,21 +244,6 @@ export default async function CityFeedPage({ params }: CityFeedPageProps) {
 
       {/* Guided paths (PRD/TDD-0052) — secondary to fresh events. */}
       <JourneyFeedStrip citySlug={city} cityName={cityName} />
-
-      {/* Recently Happened */}
-      {recentPastEvents.length > 0 && (
-        <section className="space-y-5">
-          <SectionHeader
-            title="Recently Happened"
-            subtitle={`Catch up on what's been active in ${cityName}`}
-          />
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {recentPastEvents.map((event: RecentPastEvent) => (
-              <EventCard key={event.id} event={event} city={city} past />
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Browse by Category - colorful grid */}
       {categories.length > 0 && (
