@@ -25,7 +25,16 @@ export const GET = apiHandler(async (req: NextRequest) => {
 
   const user = await db.user.findUnique({
     where: { id: auth.user.userId },
-    include: { city: { select: { name: true } } },
+    include: {
+      city: { select: { name: true } },
+      roleAssignments: {
+        select: { role: true, cityId: true, orgId: true, revokedAt: true },
+      },
+      claimedCommunities: {
+        where: { claimState: 'CLAIMED' },
+        select: { id: true, claimedByUserId: true },
+      },
+    },
   });
   if (!user) return apiError('NOT_FOUND', 'user not found');
 

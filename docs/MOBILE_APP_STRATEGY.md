@@ -15,7 +15,7 @@ IndLokal is **one product with two surfaces**, not a website plus a separate app
 - **Web** is the SEO + back-office + heavy-management surface (public landing pages, admin/ops consoles, deep organizer/host management).
 - **Mobile** is the recall + field + on-the-go surface (push, saved, "this week", and — uniquely — the **field tool for City Ambassadors**).
 
-The same `RoleAssignment` scopes (ADR-0005) drive **both** UIs; the same `/api/v1` contract and JWT identity back both. Mobile already carries the full role set in its token — it must start **using** it. Surfaces that mobile does not implement natively (notably the admin console) are reached by an **authenticated hand-off to web**, never a dead-end. See [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md) for the seam-by-seam contract.
+The same `RoleAssignment` scopes (ADR-0005) drive **both** UIs; the same `/api/v1` contract and JWT identity back both. Mobile already carries the full role set in its token — it must start **using** it. Surfaces that mobile does not implement natively (notably the admin console) are reached by an **authenticated hand-off to web**, never a dead-end; that hand-off is now implemented as the bridge in [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md). This work is intentionally limited to the bridge: no UI redesign, no role-aware workspace hub, and no broad RBAC refactor.
 
 ---
 
@@ -248,7 +248,7 @@ Must-have, each with its own spec:
 ### 4.2 Role-aware shell — App v1.1 (the realignment unlock)
 
 13. **Workspace hub in the `Me` tab** - reads `RoleAssignment` scopes and surfaces Organizer / Event Host / Ambassador entries only for entitled users, mirroring web `/me`. This is the keystone that makes every operator surface reachable.
-14. **Authenticated hand-off to web** - for admin/ops and any surface not yet native, open an in-app browser with a short-lived session exchange (no re-login).
+14. **Authenticated hand-off to web** - for admin/ops and any surface not yet native, open an in-app browser with a short-lived session exchange (no re-login). This is the bridge, not the UI layer or RBAC layer.
 
 ### 4.3 City Ambassador field mode — App v1.2 (app-first, highest leverage)
 
@@ -361,7 +361,7 @@ Each item below should ship behind its own TDD. Some are already in place; other
 
 - **Phase 0 - Foundations (in place):** monorepo split, `/api/v1`, JWT auth, OpenAPI contracts, Device/Preference tables, notification outbox baseline, image uploads endpoint, spec templates in `docs/specs/`.
 - **Phase 1 - App v1.0 (Member to parity):** §4.1 scope - finish the Member surface (image-enabled submissions, editable profile, parity public surfaces). Closed beta via TestFlight + Play Internal in 2 lighthouse cities (Stuttgart + a Bengaluru-diaspora target).
-- **Phase 2 - App v1.1 (Role-aware shell):** §4.2 - workspace hub driven by `RoleAssignment` scopes + authenticated web hand-off. This is the realignment keystone that ends the Member-only drift.
+- **Phase 2 - App v1.1 (Role-aware shell):** §4.2 - workspace hub driven by `RoleAssignment` scopes; the authenticated web hand-off is already implemented and serves as the bridge for admin/deep surfaces. This is the realignment keystone that ends the Member-only drift.
 - **Phase 3 - App v1.2 (Ambassador field mode):** §4.3 - the highest-leverage _new_ build; the app becomes the field tool for City Ambassadors (check-in, photo capture, fast-track submit, scoreboard).
 - **Phase 4 - App v1.3 (Organizer & Host lite):** §4.4 - on-the-go community/event management mirroring the web consoles, with deep features handed off to web.
 - **Phase 5 - Enrichment:** widgets, Live Activities, WhatsApp channel, referrals; then ticketing/RSVP + payments, in-app chat, recommendations from `modules/scoring`, AI agent surface from `docs/AI_PIPELINE_*`.

@@ -1,5 +1,11 @@
 # Roles, Permissions & Authorization (Product Blueprint)
 
+> Document type: Product blueprint (target model), not code-level implementation truth.
+>
+> For current as-built behavior across web, mobile, auth, and cross-surface session hand-off, use [AUTHENTICATION_AND_AUTHORIZATION_ARCHITECTURE.md](./AUTHENTICATION_AND_AUTHORIZATION_ARCHITECTURE.md).
+>
+> Last reviewed: 2026-06-18.
+
 ## 1. Purpose and Scope
 
 This document defines **who is allowed to do what** on IndLokal, and why. It is the

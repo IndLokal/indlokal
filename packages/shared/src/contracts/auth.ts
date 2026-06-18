@@ -24,6 +24,20 @@ export const UserRole = z.enum([
 ]);
 export type UserRole = z.infer<typeof UserRole>;
 
+export const RoleAssignmentSummary = z.object({
+  role: UserRole,
+  cityId: Cuid.nullable(),
+  orgId: Cuid.nullable(),
+  revokedAt: IsoDateTime.nullable(),
+});
+export type RoleAssignmentSummary = z.infer<typeof RoleAssignmentSummary>;
+
+export const ClaimedCommunitySummary = z.object({
+  id: Cuid,
+  claimedByUserId: Cuid.nullable(),
+});
+export type ClaimedCommunitySummary = z.infer<typeof ClaimedCommunitySummary>;
+
 export const MeProfile = z.object({
   id: Cuid,
   email: z.string().email(),
@@ -35,6 +49,8 @@ export const MeProfile = z.object({
   personaSegments: z.array(z.string()),
   preferredLanguages: z.array(z.string()),
   onboardingComplete: z.boolean(),
+  roleAssignments: z.array(RoleAssignmentSummary),
+  claimedCommunities: z.array(ClaimedCommunitySummary),
   createdAt: IsoDateTime,
   lastActiveAt: IsoDateTime.nullable(),
 });
@@ -113,6 +129,27 @@ export const RefreshRequest = z.object({
   refreshToken: z.string().min(1),
 });
 export type RefreshRequest = z.infer<typeof RefreshRequest>;
+
+// ─── POST /api/v1/auth/handoff - TDD-0058 (app → web hand-off) ───
+
+/**
+ * Request a one-time, short-lived URL that opens an authenticated web
+ * session in an in-app browser. `next` is the in-product path to land on
+ * after the web cookie session is established (server-validated; unsafe
+ * values fall back to a safe default). No long-lived secret is returned.
+ */
+export const WebHandoffRequest = z.object({
+  next: z.string().max(500).optional(),
+});
+export type WebHandoffRequest = z.infer<typeof WebHandoffRequest>;
+
+export const WebHandoffResponse = z.object({
+  /** Absolute https URL on the app origin, containing the one-time token. */
+  url: z.string().url(),
+  /** When the one-time token expires (clients should open promptly). */
+  expiresAt: IsoDateTime,
+});
+export type WebHandoffResponse = z.infer<typeof WebHandoffResponse>;
 
 // ─── Token claim shape (server-side, not exposed) ───
 // Documented here so that both the issuer (apps/web) and any future

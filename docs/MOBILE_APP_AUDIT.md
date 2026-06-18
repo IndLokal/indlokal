@@ -139,20 +139,20 @@ Prioritization rationale: Member finishing work is small and high-value; **Ambas
 
 ## 8. Prioritized gap backlog
 
-| Priority | Gap to close                                                                                     | Persona            | Size | Notes                                                        |
-| -------- | ------------------------------------------------------------------------------------------------ | ------------------ | ---- | ------------------------------------------------------------ |
-| **P0**   | Role-aware workspace hub in `Me` tab (read `RoleAssignment` scopes)                              | All                | S    | Unblocks every operator surface; plumbing already in token   |
-| **P0**   | Editable profile + preferences (parity with web `/me`)                                           | Member             | S    | Closes a basic parity gap                                    |
-| **P0**   | Image/camera upload in submissions (`uploads/presign`)                                           | Member, Ambassador | M    | Honors strategy §4.7; API exists (`/api/v1/uploads/presign`) |
-| **P1**   | **City Ambassador field mode** (dashboard, fast-track submit, check-in + photo, scoreboard)      | Ambassador         | M–L  | Highest-leverage new build; app-first persona                |
-| **P1**   | Organizer lite (multi-community switch, edit profile/links, event create/edit, moderation state) | Organizer          | M    | Mirrors `/organizer/(community)`                             |
-| **P1**   | Shared mobile UI kit (Button/Input/Card/EmptyState/Form)                                         | All                | S–M  | Prerequisite for the operator surfaces                       |
-| **P2**   | Event Host lite (home tiles, cap, event manage, host profile)                                    | Event Host         | M    | Mirrors `/organizer/host`                                    |
-| **P2**   | Collaborator management on mobile (invite/transfer/remove)                                       | Organizer          | S    | Extends organizer lite                                       |
-| **P2**   | Parity public surfaces (consular-services, indian-events-this-week) + event report               | Member             | S    | Closes public-surface lag                                    |
-| **P2**   | Authenticated hand-off to web for admin/deep surfaces                                            | Ops/Admin          | S    | See integration doc                                          |
-| **P3**   | Server-driven saved-event reminders via outbox                                                   | Member             | M    | Replace local-only reminders                                 |
-| **P3**   | Widgets / Live Activities ("next event near you", event-day countdown)                           | Member             | M    | Already in strategy Phase 2                                  |
+| Priority | Gap to close                                                                                     | Persona            | Size | Notes                                                                                              |
+| -------- | ------------------------------------------------------------------------------------------------ | ------------------ | ---- | -------------------------------------------------------------------------------------------------- |
+| **P0**   | Role-aware workspace hub in `Me` tab (read `RoleAssignment` scopes)                              | All                | S    | Unblocks every operator surface; plumbing already in token                                         |
+| **P0**   | Editable profile + preferences (parity with web `/me`)                                           | Member             | S    | Closes a basic parity gap                                                                          |
+| **P0**   | Image/camera upload in submissions (`uploads/presign`)                                           | Member, Ambassador | M    | Honors strategy §4.7; API exists (`/api/v1/uploads/presign`)                                       |
+| **P1**   | **City Ambassador field mode** (dashboard, fast-track submit, check-in + photo, scoreboard)      | Ambassador         | M–L  | Highest-leverage new build; app-first persona                                                      |
+| **P1**   | Organizer lite (multi-community switch, edit profile/links, event create/edit, moderation state) | Organizer          | M    | Mirrors `/organizer/(community)`                                                                   |
+| **P1**   | Shared mobile UI kit (Button/Input/Card/EmptyState/Form)                                         | All                | S–M  | Prerequisite for the operator surfaces                                                             |
+| **P2**   | Event Host lite (home tiles, cap, event manage, host profile)                                    | Event Host         | M    | Mirrors `/organizer/host`                                                                          |
+| **P2**   | Collaborator management on mobile (invite/transfer/remove)                                       | Organizer          | S    | Extends organizer lite                                                                             |
+| **P2**   | Parity public surfaces (consular-services, indian-events-this-week) + event report               | Member             | S    | Closes public-surface lag                                                                          |
+| **Done** | Authenticated hand-off to web for admin/deep surfaces                                            | Ops/Admin          | S    | Implemented behind `AUTH_WEB_HANDOFF_ENABLED`; bridge only, UI redesign and RBAC refactor deferred |
+| **P3**   | Server-driven saved-event reminders via outbox                                                   | Member             | M    | Replace local-only reminders                                                                       |
+| **P3**   | Widgets / Live Activities ("next event near you", event-day countdown)                           | Member             | M    | Already in strategy Phase 2                                                                        |
 
 ---
 

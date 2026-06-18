@@ -18,6 +18,8 @@ const TOKENS = {
     personaSegments: [],
     preferredLanguages: [],
     onboardingComplete: false,
+    roleAssignments: [],
+    claimedCommunities: [],
     createdAt: new Date().toISOString(),
     lastActiveAt: null,
   },

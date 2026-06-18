@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   SafeAreaView,
   StyleSheet,
@@ -14,7 +13,12 @@ import { router } from 'expo-router';
 import { authClient } from '@/lib/auth/client.expo';
 import { signInWithApple } from '@/lib/auth/apple';
 import { requestMagicLink } from '@/lib/auth/magic';
-import { signInWithGoogleCode, useGoogleCodeFlow } from '@/lib/auth/google';
+import {
+  logGoogleSignInDiagnostics,
+  signInWithGoogleCode,
+  useGoogleCodeFlow,
+} from '@/lib/auth/google';
+import { describeAuthError } from '@/lib/auth/auth-errors';
 import { authFlags } from '@/lib/config/flags';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { LogoMark } from '@/components/Logo';
@@ -29,6 +33,10 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{
+    tone: 'error' | 'warning' | 'success';
+    text: string;
+  } | null>(null);
 
   const { onSignIn } = useAuth();
   const googleFlow = useGoogleCodeFlow();
@@ -46,12 +54,15 @@ export default function SignInScreen() {
       codeVerifier: googleFlow.request?.codeVerifier,
     })
       .then((tokens) => {
+        setStatusMessage(null);
         onSignIn(tokens.user);
         routeAfterAuth(tokens);
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Google sign-in failed';
-        Alert.alert('Google sign-in failed', message);
+        setStatusMessage({
+          tone: 'error',
+          text: describeAuthError(error, 'google'),
+        });
       })
       .finally(() => {
         setGoogleLoading(false);
@@ -64,22 +75,34 @@ export default function SignInScreen() {
     if (!canSubmitMagicLink) return;
 
     setLoading(true);
+    setStatusMessage(null);
     try {
       await requestMagicLink(authClient, email.trim().toLowerCase());
       router.push({ pathname: '/auth/magic-link-sent', params: { email } });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unable to send magic link';
-      Alert.alert('Unable to send magic link', message);
+      setStatusMessage({
+        tone: 'warning',
+        text: describeAuthError(error, 'magic'),
+      });
     } finally {
       setLoading(false);
     }
   }
 
   async function onGooglePress() {
+    logGoogleSignInDiagnostics({
+      redirectUri: googleFlow.redirectUri,
+      apiBaseUrl: authClient.apiBaseUrl,
+      enabled: googleFlow.enabled,
+    });
     if (!googleFlow.enabled) {
-      Alert.alert('Google sign-in unavailable', 'Google OAuth client IDs are not configured.');
+      setStatusMessage({
+        tone: 'warning',
+        text: 'Google sign-in is not available right now. Please use email sign-in.',
+      });
       return;
     }
+    setStatusMessage(null);
     await googleFlow.promptAsync();
   }
 
@@ -87,17 +110,32 @@ export default function SignInScreen() {
     try {
       const isAvailable = await AppleAuthentication.isAvailableAsync();
       if (!isAvailable) {
-        Alert.alert('Apple sign-in unavailable', 'Apple sign-in is not available on this device.');
+        setStatusMessage({
+          tone: 'warning',
+          text: 'Apple sign-in is not available on this device.',
+        });
         return;
       }
 
       setLoading(true);
+      setStatusMessage(null);
       const tokens = await signInWithApple(authClient);
       onSignIn(tokens.user);
       routeAfterAuth(tokens);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Apple sign-in failed';
-      Alert.alert('Apple sign-in failed', message);
+      // expo-apple-authentication throws ERR_REQUEST_CANCELED on user cancel —
+      // stay silent in that case instead of showing a scary alert.
+      const canceled =
+        error != null &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error as { code?: string }).code === 'ERR_REQUEST_CANCELED';
+      if (!canceled) {
+        setStatusMessage({
+          tone: 'error',
+          text: describeAuthError(error, 'apple'),
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -116,6 +154,28 @@ export default function SignInScreen() {
           Sign in to save communities, follow events, and get reminders for what&apos;s happening in
           your city.
         </Text>
+
+        {statusMessage ? (
+          <View
+            style={[
+              styles.statusBanner,
+              statusMessage.tone === 'error' && styles.statusBannerError,
+              statusMessage.tone === 'warning' && styles.statusBannerWarning,
+              statusMessage.tone === 'success' && styles.statusBannerSuccess,
+            ]}
+          >
+            <Text
+              style={[
+                styles.statusBannerText,
+                statusMessage.tone === 'error' && styles.statusBannerTextError,
+                statusMessage.tone === 'warning' && styles.statusBannerTextWarning,
+                statusMessage.tone === 'success' && styles.statusBannerTextSuccess,
+              ]}
+            >
+              {statusMessage.text}
+            </Text>
+          </View>
+        ) : null}
 
         {authFlags.magic.enabled ? (
           <View style={styles.section}>
@@ -201,6 +261,37 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     lineHeight: 22,
     textAlign: 'center',
+  },
+  statusBanner: {
+    borderRadius: radius.button,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderWidth: 1,
+  },
+  statusBannerError: {
+    borderColor: '#fecaca',
+    backgroundColor: '#fef2f2',
+  },
+  statusBannerWarning: {
+    borderColor: '#fde68a',
+    backgroundColor: '#fffbeb',
+  },
+  statusBannerSuccess: {
+    borderColor: '#a7f3d0',
+    backgroundColor: '#ecfdf5',
+  },
+  statusBannerText: {
+    fontSize: typography.small,
+    fontWeight: '600',
+  },
+  statusBannerTextError: {
+    color: '#991b1b',
+  },
+  statusBannerTextWarning: {
+    color: '#92400e',
+  },
+  statusBannerTextSuccess: {
+    color: '#065f46',
   },
   section: {
     marginTop: spacing.sm,
