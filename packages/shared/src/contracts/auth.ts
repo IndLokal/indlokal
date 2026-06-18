@@ -114,6 +114,27 @@ export const RefreshRequest = z.object({
 });
 export type RefreshRequest = z.infer<typeof RefreshRequest>;
 
+// ─── POST /api/v1/auth/handoff - TDD-0058 (app → web hand-off) ───
+
+/**
+ * Request a one-time, short-lived URL that opens an authenticated web
+ * session in an in-app browser. `next` is the in-product path to land on
+ * after the web cookie session is established (server-validated; unsafe
+ * values fall back to a safe default). No long-lived secret is returned.
+ */
+export const WebHandoffRequest = z.object({
+  next: z.string().max(500).optional(),
+});
+export type WebHandoffRequest = z.infer<typeof WebHandoffRequest>;
+
+export const WebHandoffResponse = z.object({
+  /** Absolute https URL on the app origin, containing the one-time token. */
+  url: z.string().url(),
+  /** When the one-time token expires (clients should open promptly). */
+  expiresAt: IsoDateTime,
+});
+export type WebHandoffResponse = z.infer<typeof WebHandoffResponse>;
+
 // ─── Token claim shape (server-side, not exposed) ───
 // Documented here so that both the issuer (apps/web) and any future
 // consumer (mobile background workers) agree on the JWT payload.

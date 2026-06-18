@@ -45,6 +45,15 @@ export const FLAGS = {
    * Must only be enabled AFTER migration 20260610213000 has been applied.
    */
   pipelineResourceLaneEnabled: process.env.PIPELINE_RESOURCE_LANE_ENABLED === 'true',
+
+  /**
+   * Cross-surface auth hand-off (PRD/TDD-0058). When ON, a signed-in mobile
+   * user can mint a one-time token (`POST /api/v1/auth/handoff`) and land
+   * authenticated on web (`GET /auth/handoff`). Defaults to OFF — both routes
+   * 404 when disabled and the feature is inert. Enable with
+   * AUTH_WEB_HANDOFF_ENABLED=true.
+   */
+  authWebHandoffEnabled: process.env.AUTH_WEB_HANDOFF_ENABLED === 'true',
 } as const;
 
 /**

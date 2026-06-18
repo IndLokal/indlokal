@@ -751,6 +751,7 @@ model User {
   savedResources          SavedResource[]
   magicLinkTokens         MagicLinkToken[]
   refreshTokens           RefreshToken[]
+  webHandoffTokens        WebHandoffToken[]
   roleAssignments         RoleAssignment[]
   contentReports          ContentReport[]          @relation("ReporterUser")
   devices                 Device[]
@@ -812,6 +813,27 @@ model MagicLinkToken {
 
   @@index([userId])
   @@map("magic_link_tokens")
+}
+
+// ─────────────────────────────────────────────────
+// Web Handoff Token - TDD-0058
+// One-time, short-lived (90s) tokens that let a signed-in mobile user
+// (JWT) open an authenticated web cookie session in an in-app browser.
+// Hashed at rest; single-use via usedAt; never a long-lived secret.
+// ─────────────────────────────────────────────────
+
+model WebHandoffToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique @map("token_hash") // SHA-256 hash of the raw token
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  next      String? // validated relative path to land on after consume
+  expiresAt DateTime  @map("expires_at")
+  usedAt    DateTime? @map("used_at") // set when consumed - prevents replay
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("web_handoff_tokens")
 }
 
 // ─────────────────────────────────────────────────
