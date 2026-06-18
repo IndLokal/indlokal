@@ -10,7 +10,9 @@ import { Link, router } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { auth } from '@indlokal/shared';
 import { authClient } from '@/lib/auth/client.expo';
+import { describeAuthError } from '@/lib/auth/auth-errors';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { exportMeDataToFile } from '@/lib/auth/me-export.expo';
 import { useWebHandoff } from '@/lib/auth/web-handoff.expo';
 import type { AuthUser } from '@/lib/auth/token-store';
 import { mobileFlags } from '@/lib/config/flags';
@@ -98,6 +100,7 @@ export default function MeTabScreen() {
   const { user, signOut } = useAuth();
   const { open, isOpening, error } = useWebHandoff(authClient);
   const [workspaceUser, setWorkspaceUser] = useState<AuthUser | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -157,6 +160,23 @@ export default function MeTabScreen() {
     const ok = await open({ next });
     if (!ok) {
       Alert.alert(`${title} unavailable`, error ?? 'Please try again.');
+    }
+  }
+
+  async function handleExportData() {
+    if (isExporting) return;
+
+    setIsExporting(true);
+    try {
+      const file = await exportMeDataToFile(authClient);
+      Alert.alert(
+        'Data export ready',
+        `Saved ${file.fileName} (${file.sizeBytes} bytes) to local app storage.`,
+      );
+    } catch (err) {
+      Alert.alert('Data export failed', describeAuthError(err, 'session'));
+    } finally {
+      setIsExporting(false);
     }
   }
 
@@ -232,6 +252,17 @@ export default function MeTabScreen() {
           <Link href="/me/delete-account" style={[styles.link, styles.linkDestructive]}>
             Delete account
           </Link>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Export my data"
+            style={[styles.linkPressable, isExporting && styles.buttonDisabled]}
+            onPress={() => void handleExportData()}
+            disabled={isExporting}
+          >
+            <Text style={styles.linkButtonText}>
+              {isExporting ? 'Preparing data export...' : 'Export my data (JSON)'}
+            </Text>
+          </Pressable>
         </View>
 
         {mobileFlags.auth.webHandoff.enabled && workspaces.length === 0 ? (
@@ -354,6 +385,16 @@ const styles = StyleSheet.create({
   },
   linkDestructive: {
     color: palette.status.destructive,
+  },
+  linkPressable: {
+    paddingVertical: spacing.md,
+    borderBottomColor: palette.neutral.border,
+    borderBottomWidth: 1,
+  },
+  linkButtonText: {
+    color: palette.brand[700],
+    fontWeight: '600',
+    fontSize: typography.body,
   },
   signOutButton: {
     marginTop: spacing.md,
