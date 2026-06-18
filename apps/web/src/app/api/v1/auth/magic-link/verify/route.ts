@@ -15,7 +15,7 @@ import { apiHandler } from '@/lib/api/handlers';
 import { hashToken } from '@/lib/session';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { issueRefreshToken } from '@/lib/auth/refresh';
-import { toMeProfile } from '@/lib/auth/profile';
+import { meProfileInclude, toMeProfile } from '@/lib/auth/profile';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 
@@ -47,7 +47,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
 
   const row = await db.magicLinkToken.findUnique({
     where: { tokenHash },
-    include: { user: { include: { city: { select: { name: true } } } } },
+    include: { user: { include: meProfileInclude } },
   });
   if (!row?.user) {
     return apiError('TOKEN_INVALID', 'magic link no longer valid');

@@ -14,7 +14,7 @@ import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
 import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
-import { toMeProfile } from '@/lib/auth/profile';
+import { meProfileInclude, toMeProfile } from '@/lib/auth/profile';
 
 export const runtime = 'nodejs';
 
@@ -57,7 +57,7 @@ export const PATCH = apiHandler(async (req: NextRequest) => {
       onboardingComplete: true,
       lastActiveAt: new Date(),
     },
-    include: { city: { select: { name: true } } },
+    include: meProfileInclude,
   });
 
   return NextResponse.json(toMeProfile(user));

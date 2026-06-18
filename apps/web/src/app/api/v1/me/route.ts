@@ -15,7 +15,7 @@ import { db } from '@/lib/db';
 import { apiError } from '@/lib/api/error';
 import { apiHandler } from '@/lib/api/handlers';
 import { requireAccessToken } from '@/lib/auth/middleware';
-import { toMeProfile } from '@/lib/auth/profile';
+import { meProfileInclude, toMeProfile } from '@/lib/auth/profile';
 
 export const runtime = 'nodejs';
 
@@ -25,16 +25,7 @@ export const GET = apiHandler(async (req: NextRequest) => {
 
   const user = await db.user.findUnique({
     where: { id: auth.user.userId },
-    include: {
-      city: { select: { name: true } },
-      roleAssignments: {
-        select: { role: true, cityId: true, orgId: true, revokedAt: true },
-      },
-      claimedCommunities: {
-        where: { claimState: 'CLAIMED' },
-        select: { id: true, claimedByUserId: true },
-      },
-    },
+    include: meProfileInclude,
   });
   if (!user) return apiError('NOT_FOUND', 'user not found');
 

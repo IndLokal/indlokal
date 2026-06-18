@@ -17,6 +17,7 @@
 
 import type { City, User } from '@prisma/client';
 import { db } from '@/lib/db';
+import { meProfileInclude } from '@/lib/auth/profile';
 
 /** Classified failure reasons — safe to log and to map to user-facing errors. */
 export type GoogleAuthFailureReason =
@@ -165,7 +166,7 @@ export async function upsertGoogleUser(
         avatarUrl: existing.avatarUrl ?? profile.picture,
         lastActiveAt: new Date(),
       },
-      include: { city: { select: { name: true } } },
+      include: meProfileInclude,
     });
     return { user, isNewUser: false };
   }
@@ -178,7 +179,7 @@ export async function upsertGoogleUser(
       avatarUrl: profile.picture,
       lastActiveAt: new Date(),
     },
-    include: { city: { select: { name: true } } },
+    include: meProfileInclude,
   });
   return { user, isNewUser: true };
 }
