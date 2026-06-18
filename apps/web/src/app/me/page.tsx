@@ -134,6 +134,20 @@ export default async function MePage() {
       (a: { role: string; revokedAt: Date | null }) => a.role === 'CITY_AMBASSADOR' && !a.revokedAt,
     );
   const hasHostAccess = user.role === 'EVENT_HOST' || user.role === 'PLATFORM_ADMIN';
+  const hasInternalAccess =
+    hasOrganizerAccess || hasHostAccess || hasAmbassadorAccess || isAdminLike;
+
+  let toolsLabel = 'Team tools';
+  if (isAdminLike) {
+    toolsLabel = 'Admin tools';
+  } else if (hasOrganizerAccess && !hasHostAccess && !hasAmbassadorAccess) {
+    toolsLabel = 'Organizer tools';
+  } else if (hasHostAccess && !hasOrganizerAccess && !hasAmbassadorAccess) {
+    toolsLabel = 'Host tools';
+  } else if (hasAmbassadorAccess && !hasOrganizerAccess && !hasHostAccess) {
+    toolsLabel = 'Ambassador tools';
+  }
+
   const roleBadges: string[] = [];
   if (hasOrganizerAccess) roleBadges.push('Organizer');
   if (hasHostAccess) roleBadges.push('Event Host');
@@ -193,12 +207,9 @@ export default async function MePage() {
         </form>
       </div>
 
-      {/* Workspaces */}
+      {/* Quick links */}
       <section>
-        <h2 className="text-xl font-semibold">Workspaces</h2>
-        <p className="text-muted mt-1 text-sm">
-          Personal settings and internal consoles are both available from here.
-        </p>
+        <h2 className="text-xl font-semibold">Quick links</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="card-base p-4">
             <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
@@ -211,38 +222,35 @@ export default async function MePage() {
             </div>
           </div>
 
-          <div className="card-base p-4">
-            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
-              Internal
-            </p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              {hasOrganizerAccess && (
-                <Link href="/organizer" className="btn-secondary px-4 py-2 text-sm">
-                  Organizer Home →
-                </Link>
-              )}
-              {hasHostAccess && (
-                <Link href="/organizer/host" className="btn-secondary px-4 py-2 text-sm">
-                  Event Host Home →
-                </Link>
-              )}
-              {hasAmbassadorAccess && (
-                <Link href="/ambassador" className="btn-secondary px-4 py-2 text-sm">
-                  Ambassador Console →
-                </Link>
-              )}
-              {isAdminLike && (
-                <Link href="/admin" className="btn-secondary px-4 py-2 text-sm">
-                  IndLokal Admin →
-                </Link>
-              )}
-              {!hasOrganizerAccess && !hasHostAccess && !hasAmbassadorAccess && !isAdminLike && (
-                <p className="text-muted text-sm">
-                  No internal workspace is enabled for this account.
-                </p>
-              )}
+          {hasInternalAccess && (
+            <div className="card-base p-4">
+              <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
+                {toolsLabel}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {hasOrganizerAccess && (
+                  <Link href="/organizer" className="btn-secondary px-4 py-2 text-sm">
+                    Organizer Home →
+                  </Link>
+                )}
+                {hasHostAccess && (
+                  <Link href="/organizer/host" className="btn-secondary px-4 py-2 text-sm">
+                    Event Host Home →
+                  </Link>
+                )}
+                {hasAmbassadorAccess && (
+                  <Link href="/ambassador" className="btn-secondary px-4 py-2 text-sm">
+                    Ambassador Console →
+                  </Link>
+                )}
+                {isAdminLike && (
+                  <Link href="/admin" className="btn-secondary px-4 py-2 text-sm">
+                    IndLokal Admin →
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 

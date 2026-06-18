@@ -2,7 +2,6 @@
 
 import { useActionState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
 import { requestAdminMagicLink, type AdminLoginResult } from './actions';
 import { LoginAlert } from '@/components/auth/login-alert';
 import { LoginShell } from '@/components/auth/login-shell';
@@ -38,16 +37,8 @@ export default function AdminLoginPage() {
 
   return (
     <LoginShell
-      title="Admin access"
-      description="Enter your admin email to receive a secure login link. Ambassadors and ops users use the same secure access flow."
-      footer={
-        <Link
-          href="/"
-          className="text-brand-600 hover:text-brand-700 font-semibold transition-colors hover:underline"
-        >
-          ← Back to site
-        </Link>
-      }
+      title="Secure access"
+      description="Enter your authorized email to receive a secure one-time sign-in link."
     >
       <form action={formAction} className="mt-8 space-y-5 text-left">
         {signedOut && !urlErrorMessage && (
@@ -68,7 +59,7 @@ export default function AdminLoginPage() {
             required
             autoComplete="email"
             className="border-border text-foreground placeholder:text-muted focus:border-brand-500 focus:ring-brand-500 block w-full rounded-[var(--radius-button)] border bg-white px-3.5 py-2.5 text-sm transition-colors focus:ring-1 focus:outline-none"
-            placeholder="admin@indlokal.de"
+            placeholder="you@company.com"
           />
         </div>
 
