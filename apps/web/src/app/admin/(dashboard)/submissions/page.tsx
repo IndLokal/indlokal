@@ -107,7 +107,7 @@ export default async function AdminSubmissionsPage() {
                   <div className="flex shrink-0 gap-2">
                     <ApproveCommunityContributionForm
                       contributionId={c.id}
-                      defaultGrantOwnership={helpsRun}
+                      defaultGrantOrganizerAccess={helpsRun}
                       action={approveCommunityContribution}
                     />
                     <form action={rejectCommunityContribution}>

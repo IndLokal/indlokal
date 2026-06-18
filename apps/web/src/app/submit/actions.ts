@@ -204,7 +204,8 @@ export async function submitCommunity(
             name: data.contactName,
             email: data.contactEmail,
             relationship: data.relationship,
-            ownershipIntent: data.relationship === 'HELP_RUN',
+            // Legacy note: older rows may still include submitter.ownershipIntent.
+            // New submissions use relationship as the single source of intent.
             submittedAt: new Date().toISOString(),
             notice: {
               policyVersion: noticePolicyVersion,

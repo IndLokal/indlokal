@@ -43,7 +43,8 @@ function asObject(metadata: unknown): Record<string, unknown> {
 export async function approveCommunityContribution(formData: FormData) {
   await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
-  const grantOwnership = formData.has('grantOwnership');
+  const grantOrganizerAccess =
+    formData.has('grantOrganizerAccess') || formData.has('grantOwnership');
   if (!id) return;
 
   const existing = await db.community.findUnique({
@@ -65,7 +66,7 @@ export async function approveCommunityContribution(formData: FormData) {
   // relationship.
   let ownerUserId: string | null = null;
   if (
-    grantOwnership &&
+    grantOrganizerAccess &&
     submitter?.email &&
     existing.claimState === 'UNCLAIMED' &&
     !existing.claimedByUserId
