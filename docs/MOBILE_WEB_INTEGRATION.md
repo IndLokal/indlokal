@@ -2,7 +2,7 @@
 
 - **Date:** 2026-06-01
 - **Author:** Principal App Developer & Architect
-- **Status:** Blueprint v1 — companion to [`MOBILE_APP_STRATEGY.md`](./MOBILE_APP_STRATEGY.md) and [`MOBILE_APP_AUDIT.md`](./MOBILE_APP_AUDIT.md)
+- **Status:** Blueprint v1 — companion to [`MOBILE_APP_STRATEGY.md`](./MOBILE_APP_STRATEGY.md) and [`MOBILE_APP_AUDIT.md`](./MOBILE_APP_AUDIT.md); updated 2026-06-18 to reflect the implemented app → web auth hand-off
 - **Scope:** Define how the Expo app (`apps/mobile`) and the Next.js web (`apps/web`) stay **deeply integrated** so users experience **one product**, not two. This is the durable integration blueprint; individual seams are specified per-feature as PRD/TDD pairs.
 
 > **Principle.** IndLokal is **one product with two surfaces**. Web is the SEO + back-office + heavy-management surface; mobile is the recall + field + on-the-go surface. A user signs in once, and the product reshapes to _who they are_ and _which device they hold_ — never to _which codebase they happened to open_.
@@ -16,7 +16,7 @@ Two surfaces feel like one product only if they share the layers below. Each sea
 | #   | Seam                             | Source of truth                                            | Status today     | Target                                        |
 | --- | -------------------------------- | ---------------------------------------------------------- | ---------------- | --------------------------------------------- |
 | 1   | **Contract** (API shapes)        | `packages/shared` Zod → OpenAPI; `apps/web/src/app/api/v1` | ✅ shared        | Keep: every new field lands in `shared` first |
-| 2   | **Identity & session**           | `/api/v1/auth/*` JWT (web + mobile)                        | ✅ shared        | Keep + add cross-surface hand-off (§3)        |
+| 2   | **Identity & session**           | `/api/v1/auth/*` JWT (web + mobile)                        | ✅ shared        | Keep + implemented app → web hand-off (§3)    |
 | 3   | **Authorization** (roles/scopes) | `RoleAssignment` + `prisma` enum + ADR-0005                | ◑ web-only UI    | Drive **both** UIs from the same scopes (§4)  |
 | 4   | **Deep links** (URL ⇄ route)     | `indlokal.com/[city]/...` universal/app links              | ◑ partial        | Full URL⇄screen map + hand-off (§5)           |
 | 5   | **Design tokens**                | web theme ↔ `apps/mobile/constants/theme.ts`               | ◑ mirrored copy  | Promote to shared `ui-tokens` (§6)            |
@@ -38,9 +38,8 @@ Two surfaces feel like one product only if they share the layers below. Each sea
 
 - **Same auth, same tokens.** Web and mobile both authenticate against `/api/v1/auth/{apple,google,magic-link,refresh}` and receive the same JWT (access + refresh). The JWT already carries the full role set.
 - **Magic link is the bridge.** A magic link opened on a phone should resolve into the app (via universal/app link) and into web otherwise — same token, same account, no re-login.
-- **Cross-surface hand-off (target).** When a surface hands the user to the other (e.g. app → web admin, web → "open in app"):
-  - Web → App: deep link carries enough to resume; app exchanges/refreshes its own session — **never** put long-lived secrets in a URL.
-  - App → Web: open an in-app browser with a **short-lived, single-use** session-exchange token so the user lands authenticated, not at a login wall.
+- **Cross-surface hand-off (implemented for app → web).** The app now mints a short-lived, single-use hand-off token through `/api/v1/auth/handoff`, opens `/auth/handoff` in an in-app browser, and lands on web already authenticated via the standard `lp_session` cookie. Unsafe or reused tokens fall back to `/me/login?error=handoff`. Web → App remains the existing deep-link flow: the URL carries enough to resume; app exchanges or refreshes its own session — **never** put long-lived secrets in a URL.
+- **Explicit non-goals for this change.** No UI redesign, no role-aware workspace hub, and no broad RBAC refactor ship as part of the hand-off bridge. The implementation only makes the cross-surface session exchange reusable.
 - **Single account model.** Onboarding (city/persona/languages), saves, follows, and preferences live on the server (`/api/v1/me`), so they are identical the moment a user switches device.
 
 ---

@@ -25,6 +25,10 @@ The hand-off reuses **existing** building blocks: the mobile `AuthClient`
 single-use token table and two thin route handlers. The mobile JWT contract is
 unchanged.
 
+This TDD is intentionally narrow: it does **not** introduce a UI redesign, a
+role-aware workspace hub, or a broad RBAC refactor. Those are separate follow-up
+efforts; this work only makes the authenticated bridge reusable.
+
 ## 2. Data model changes
 
 New table mirroring `MagicLinkToken` (hash at rest, single-use via `usedAt`):

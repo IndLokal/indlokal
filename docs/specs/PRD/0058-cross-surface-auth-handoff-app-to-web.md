@@ -49,8 +49,11 @@ ever putting a long-lived secret in a URL.
 ## 5. Out of Scope
 
 - **Web → app** hand-off (already served by magic links / universal links).
+- **Any UI redesign** of the mobile entry points or the destination web screens.
 - Role-aware mobile workspace hub and the specific in-app entry-point buttons
   (separate follow-up; this PRD ships the reusable mechanism the hub will call).
+- **Any broad RBAC refactor** or permission-model rewrite. This PRD consumes the
+  existing roles/scopes; it does not rework them.
 - Any new auth provider/framework, refresh-token-in-browser, or change to the
   mobile JWT contract.
 
