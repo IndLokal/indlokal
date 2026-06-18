@@ -5,7 +5,12 @@ import { OrganizerPageHeader } from '@/components/organizer/page-shell';
 import { SATELLITE_TO_METRO } from '@/lib/config';
 import { OrganizerWorkspaceBanner } from '@/components/organizer/workspace-banner';
 import { EventModerationChip } from '@/components/organizer/event-moderation-chip';
-import { formatEventDateShort, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
+import {
+  formatEventDateShort,
+  formatEventTime,
+  formatEventTimeZoneShort,
+  DEFAULT_EVENT_TIMEZONE,
+} from '@/lib/datetime/event-timezone';
 
 export const metadata = { title: 'Community Events - Organizer' };
 export const dynamic = 'force-dynamic';
@@ -124,7 +129,21 @@ function OrganizerEventsTable({ events, dim }: { events: OrganizerEventRow[]; di
                 {formatEventDateShort(
                   new Date(event.startsAt),
                   event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                )}{' '}
+                ·{' '}
+                {formatEventTime(
+                  new Date(event.startsAt),
+                  event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
                 )}
+                <span className="text-muted/80">
+                  {' '}
+                  (
+                  {formatEventTimeZoneShort(
+                    new Date(event.startsAt),
+                    event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                  )}
+                  )
+                </span>
               </td>
               <td className="px-4 py-3">
                 <EventModerationChip

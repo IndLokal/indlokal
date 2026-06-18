@@ -69,6 +69,7 @@ export default async function EditCommunityEventPage({ params }: Props) {
 
       <EditEventForm
         communityName={community.name}
+        timeZone={timeZone}
         categories={categories}
         event={{
           slug: event.slug,

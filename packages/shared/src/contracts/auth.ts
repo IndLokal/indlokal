@@ -182,3 +182,92 @@ export const OnboardingUpdate = z.object({
   preferredLanguages: z.array(z.string().min(2).max(10)).max(10).optional(),
 });
 export type OnboardingUpdate = z.infer<typeof OnboardingUpdate>;
+
+// ─── GET /api/v1/me/export - GDPR portability payload ───
+
+const ExportCitySummary = z.object({
+  id: Cuid,
+  slug: z.string(),
+  name: z.string(),
+});
+
+const ExportCommunitySummary = z.object({
+  id: Cuid,
+  slug: z.string(),
+  name: z.string(),
+  city: ExportCitySummary.nullable(),
+});
+
+const ExportEventSummary = z.object({
+  id: Cuid,
+  slug: z.string(),
+  title: z.string(),
+  startsAt: IsoDateTime,
+  status: z.string(),
+  moderationState: z.string(),
+  city: ExportCitySummary.nullable(),
+});
+
+const ExportResourceSummary = z.object({
+  id: Cuid,
+  slug: z.string().nullable(),
+  title: z.string(),
+  city: ExportCitySummary.nullable(),
+});
+
+export const MeDataExport = z.object({
+  exportedAt: IsoDateTime,
+  user: MeProfile,
+  createdCommunities: z.array(
+    z.object({
+      community: ExportCommunitySummary,
+      createdAt: IsoDateTime,
+    }),
+  ),
+  createdEvents: z.array(
+    z.object({
+      event: ExportEventSummary,
+      createdAt: IsoDateTime,
+    }),
+  ),
+  savedCommunities: z.array(
+    z.object({
+      community: ExportCommunitySummary,
+      savedAt: IsoDateTime,
+    }),
+  ),
+  savedEvents: z.array(
+    z.object({
+      event: ExportEventSummary,
+      savedAt: IsoDateTime,
+    }),
+  ),
+  savedResources: z.array(
+    z.object({
+      resource: ExportResourceSummary,
+      savedAt: IsoDateTime,
+    }),
+  ),
+  contentReports: z.array(
+    z.object({
+      id: Cuid,
+      reportType: z.string(),
+      status: z.string(),
+      details: z.string().nullable(),
+      reporterEmail: z.string().email().nullable(),
+      communityId: Cuid.nullable(),
+      eventId: Cuid.nullable(),
+      suggestedName: z.string().nullable(),
+      cityId: Cuid.nullable(),
+      createdAt: IsoDateTime,
+    }),
+  ),
+  notificationPreferences: z.array(
+    z.object({
+      topic: z.string(),
+      channel: z.string(),
+      enabled: z.boolean(),
+    }),
+  ),
+});
+export type MeDataExport = z.infer<typeof MeDataExport>;

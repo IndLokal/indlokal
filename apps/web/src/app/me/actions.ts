@@ -1,10 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { communityOptions } from '@indlokal/shared';
 import { getSessionUser } from '@/lib/session';
 import { db } from '@/lib/db';
 import { withAction } from '@/lib/api/handlers';
+import { clearSessionCookie } from '@/lib/session';
 
 export type PreferencesResult = { success: true } | { success: false; error: string } | null;
 
@@ -51,4 +53,41 @@ export async function updatePreferences(
     },
     () => ({ success: false, error: 'Something went wrong. Please try again.' }),
   );
+}
+
+export async function deleteMyAccount() {
+  const user = await getSessionUser();
+  if (!user) redirect('/me/login');
+
+  const userId = user.id;
+
+  const revoked = await db.refreshToken.updateMany({
+    where: { userId, revokedAt: null },
+    data: { revokedAt: new Date() },
+  });
+
+  await db.user.delete({ where: { id: userId } });
+
+  try {
+    await db.contentLog.create({
+      data: {
+        entityType: 'privacy_request',
+        entityId: userId,
+        action: 'ARCHIVED',
+        changedBy: userId,
+        metadata: {
+          requestType: 'GDPR_DELETE_ACCOUNT_SELF_SERVICE',
+          source: 'WEB_ME_PAGE',
+          revokedRefreshTokenCount: revoked.count,
+          completedAt: new Date().toISOString(),
+        },
+      },
+    });
+  } catch (err) {
+    // Account deletion should not fail if audit logging is temporarily unavailable.
+    console.warn('[GDPR] Failed to record web delete-account audit entry:', String(err));
+  }
+
+  await clearSessionCookie();
+  redirect('/?account_deleted=1');
 }

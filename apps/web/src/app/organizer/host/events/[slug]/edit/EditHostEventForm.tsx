@@ -26,10 +26,12 @@ type EventDefaults = {
 export default function EditHostEventForm({
   event,
   city,
+  timeZone,
   categories,
 }: {
   event: EventDefaults;
   city: City;
+  timeZone: string;
   categories: { slug: string; name: string; icon: string | null }[];
 }) {
   return (
@@ -53,6 +55,7 @@ export default function EditHostEventForm({
       submitLabel="Save changes"
       pendingLabel="Saving..."
       cancelHref="/organizer/host/events"
+      timeZone={timeZone}
       cityMode="readonly"
       selectedCityId={event.cityId}
       cityName={city.name}

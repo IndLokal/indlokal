@@ -19,9 +19,6 @@ export type CityFeedData = {
   /** Top communities by activity score */
   activeCommunities: CommunityListItem[];
 
-  /** Recently happened events - proves the city is active */
-  recentPastEvents: EventListItem[];
-
   /** Browse by category with counts */
   categories: {
     name: string;

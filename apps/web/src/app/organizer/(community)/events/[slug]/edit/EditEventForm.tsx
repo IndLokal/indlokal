@@ -24,10 +24,12 @@ type EventDefaults = {
 export default function EditEventForm({
   event,
   communityName,
+  timeZone,
   categories,
 }: {
   event: EventDefaults;
   communityName: string;
+  timeZone: string;
   categories: { slug: string; name: string; icon: string | null }[];
 }) {
   return (
@@ -52,6 +54,7 @@ export default function EditEventForm({
       submitLabel="Save changes"
       pendingLabel="Saving..."
       cancelHref="/organizer/events"
+      timeZone={timeZone}
       categories={categories}
       showImageUrl
       surfaceContributionRequirements

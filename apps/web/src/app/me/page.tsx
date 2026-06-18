@@ -34,65 +34,88 @@ const RESOURCE_CATEGORY_BY_TYPE = {
 
 type ResourceTypeKey = keyof typeof RESOURCE_CATEGORY_BY_TYPE;
 
+function resolveEventTimezone(value: string | null | undefined): string {
+  if (!value) return DEFAULT_EVENT_TIMEZONE;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: value }).format(new Date());
+    return value;
+  } catch {
+    return DEFAULT_EVENT_TIMEZONE;
+  }
+}
+
 export default async function MePage() {
   const user = await getSessionUser();
   if (!user) redirect('/me/login');
 
-  const [savedCommunities, savedEvents, savedResources, activeCities] = await Promise.all([
-    db.savedCommunity.findMany({
-      where: { userId: user.id },
-      orderBy: { savedAt: 'desc' },
-      include: {
-        community: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            description: true,
-            logoUrl: true,
-            city: { select: { name: true, slug: true } },
+  const loadAccountLists = () =>
+    Promise.all([
+      db.savedCommunity.findMany({
+        where: { userId: user.id },
+        orderBy: { savedAt: 'desc' },
+        include: {
+          community: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              description: true,
+              logoUrl: true,
+              city: { select: { name: true, slug: true } },
+            },
           },
         },
-      },
-    }),
-    db.savedEvent.findMany({
-      where: { userId: user.id, event: { moderationState: 'PUBLISHED' } },
-      orderBy: { savedAt: 'desc' },
-      include: {
-        event: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            startsAt: true,
-            venueName: true,
-            isOnline: true,
-            city: { select: { name: true, slug: true, timezone: true } },
+      }),
+      db.savedEvent.findMany({
+        where: { userId: user.id, event: { moderationState: 'PUBLISHED' } },
+        orderBy: { savedAt: 'desc' },
+        include: {
+          event: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              startsAt: true,
+              venueName: true,
+              isOnline: true,
+              city: { select: { name: true, slug: true, timezone: true } },
+            },
           },
         },
-      },
-    }),
-    db.savedResource.findMany({
-      where: { userId: user.id },
-      orderBy: { savedAt: 'desc' },
-      include: {
-        resource: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            resourceType: true,
-            city: { select: { name: true, slug: true } },
+      }),
+      db.savedResource.findMany({
+        where: { userId: user.id },
+        orderBy: { savedAt: 'desc' },
+        include: {
+          resource: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              resourceType: true,
+              city: { select: { name: true, slug: true } },
+            },
           },
         },
-      },
-    }),
-    db.city.findMany({
-      where: { isActive: true },
-      select: { id: true, name: true, slug: true },
-      orderBy: { name: 'asc' },
-    }),
-  ]);
+      }),
+      db.city.findMany({
+        where: { isActive: true },
+        select: { id: true, name: true, slug: true },
+        orderBy: { name: 'asc' },
+      }),
+    ]);
+
+  type AccountLists = Awaited<ReturnType<typeof loadAccountLists>>;
+  let accountLists: AccountLists;
+
+  try {
+    accountLists = await loadAccountLists();
+  } catch (err) {
+    console.error('[MePage] Failed to load account lists; rendering with empty fallbacks.', err);
+    accountLists = [[], [], [], []] as AccountLists;
+  }
+
+  const [savedCommunities, savedEvents, savedResources, activeCities] = accountLists;
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
   const fallbackCitySlug =
@@ -117,35 +140,11 @@ export default async function MePage() {
   if (hasAmbassadorAccess) roleBadges.push('Ambassador');
   if (isAdminLike) roleBadges.push('Admin');
 
-  type SavedCommunityItem = {
-    community: {
-      id: string;
-      name: string;
-      slug: string;
-      description: string | null;
-      logoUrl: string | null;
-      city: { name: string; slug: string };
-    };
-  };
-
-  type SavedEventItem = {
-    event: {
-      id: string;
-      title: string;
-      slug: string;
-      startsAt: Date;
-      venueName: string | null;
-      isOnline: boolean;
-      city: { name: string; slug: string; timezone: string };
-    };
-  };
-
   const now = new Date();
-  const savedEventItems = savedEvents as SavedEventItem[];
-  const upcomingSavedEvents = savedEventItems
+  const upcomingSavedEvents = savedEvents
     .filter(({ event }) => new Date(event.startsAt) >= now)
     .sort((a, b) => new Date(a.event.startsAt).getTime() - new Date(b.event.startsAt).getTime());
-  const pastSavedEvents = savedEventItems
+  const pastSavedEvents = savedEvents
     .filter(({ event }) => new Date(event.startsAt) < now)
     .sort((a, b) => new Date(b.event.startsAt).getTime() - new Date(a.event.startsAt).getTime());
 
@@ -263,8 +262,6 @@ export default async function MePage() {
         </div>
       </section>
 
-      <LocalDeviceSavesCard fallbackCitySlug={fallbackCitySlug} />
-
       {/* Following */}
       <section>
         <h2 className="text-xl font-semibold">Following</h2>
@@ -280,7 +277,7 @@ export default async function MePage() {
           </p>
         ) : (
           <div className="mt-4 space-y-3">
-            {savedCommunities.map(({ community }: SavedCommunityItem) => (
+            {savedCommunities.map(({ community }) => (
               <Link
                 key={community.id}
                 href={`/${community.city.slug}/communities/${community.slug}`}
@@ -344,7 +341,7 @@ export default async function MePage() {
                         <p className="text-muted mt-0.5 text-sm">
                           {formatEventCardDate(
                             new Date(event.startsAt),
-                            event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                            resolveEventTimezone(event.city.timezone),
                           )}
                           {event.isOnline
                             ? ' · Online'
@@ -378,7 +375,7 @@ export default async function MePage() {
                         <p className="text-muted mt-0.5 text-sm">
                           {formatEventCardDate(
                             new Date(event.startsAt),
-                            event.city.timezone ?? DEFAULT_EVENT_TIMEZONE,
+                            resolveEventTimezone(event.city.timezone),
                           )}
                           {event.isOnline
                             ? ' · Online'
@@ -438,6 +435,59 @@ export default async function MePage() {
             })}
           </div>
         )}
+      </section>
+
+      <LocalDeviceSavesCard fallbackCitySlug={fallbackCitySlug} />
+
+      <section className="border-border/70 space-y-4 border-t pt-8">
+        <div>
+          <h2 className="text-xl font-semibold">Account and Privacy</h2>
+          <p className="text-muted mt-1 text-sm">
+            Manage your data rights and legal information in one place.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="card-base p-4">
+            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
+              Data rights
+            </p>
+            <p className="text-muted mt-2 text-sm">
+              Export your account data or permanently delete your account.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href="/me/export" className="btn-secondary px-4 py-2 text-sm">
+                Export my data (JSON)
+              </Link>
+              <Link
+                href="/me/delete-account"
+                className="rounded-[var(--radius-button)] border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-100"
+              >
+                Delete account
+              </Link>
+            </div>
+          </div>
+
+          <div className="card-base p-4">
+            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
+              Legal
+            </p>
+            <p className="text-muted mt-2 text-sm">
+              Review how your data is processed and the governing terms.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              <Link href="/privacy" className="btn-secondary px-4 py-2 text-sm">
+                Privacy Policy
+              </Link>
+              <Link href="/terms" className="btn-secondary px-4 py-2 text-sm">
+                Terms of Service
+              </Link>
+              <Link href="/impressum" className="btn-secondary px-4 py-2 text-sm">
+                Impressum
+              </Link>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   );

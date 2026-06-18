@@ -15,7 +15,7 @@ IndLokal is **one product with two surfaces**, not a website plus a separate app
 - **Web** is the SEO + back-office + heavy-management surface (public landing pages, admin/ops consoles, deep organizer/host management).
 - **Mobile** is the recall + field + on-the-go surface (push, saved, "this week", and — uniquely — the **field tool for City Ambassadors**).
 
-The same `RoleAssignment` scopes (ADR-0005) drive **both** UIs; the same `/api/v1` contract and JWT identity back both. Mobile already carries the full role set in its token — it must start **using** it. Surfaces that mobile does not implement natively (notably the admin console) are reached by an **authenticated hand-off to web**, never a dead-end; that hand-off is now implemented as the bridge in [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md). This work is intentionally limited to the bridge: no UI redesign, no role-aware workspace hub, and no broad RBAC refactor.
+The same `RoleAssignment` scopes (ADR-0005) drive **both** UIs; the same `/api/v1` contract and identity model back both. Mobile carries the full role set in JWT tokens, while web uses the server-managed cookie session (`lp_session`) for browser auth. Mobile must start **using** the roles it already receives. Surfaces that mobile does not implement natively (notably the admin console) are reached by an **authenticated hand-off to web**, never a dead-end; that hand-off is now implemented as the bridge in [`MOBILE_WEB_INTEGRATION.md`](./MOBILE_WEB_INTEGRATION.md). This work is intentionally limited to the bridge: no UI redesign, no role-aware workspace hub, and no broad RBAC refactor.
 
 ---
 

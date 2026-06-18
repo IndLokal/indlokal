@@ -63,8 +63,9 @@ export default function PrivacyPolicyPage() {
             <h3>3.1 Information you provide</h3>
             <ul>
               <li>
-                <strong>Account data:</strong> When sign-in is available (currently in the mobile
-                app and for organizer/admin access on web), we process your name and email address.
+                <strong>Account data:</strong> When you sign in, we process your account identifiers
+                (such as name, email address, and provider identifiers where applicable) to
+                authenticate your access and operate your account.
               </li>
               <li>
                 <strong>Community submissions:</strong> Name, description, contact details, and
@@ -88,6 +89,10 @@ export default function PrivacyPolicyPage() {
                 <strong>Usage data:</strong> Pages visited, time spent, and interactions - collected
                 via privacy-friendly analytics (Plausible Analytics). No cookies are used for
                 analytics, and no personal data is collected.
+              </li>
+              <li>
+                <strong>Cross-surface auth hand-off:</strong> When applicable, we process
+                short-lived, one-time tokens to support app-to-web authenticated hand-off.
               </li>
               <li>
                 <strong>Technical data:</strong> Browser type, device type, and IP address
@@ -145,8 +150,8 @@ export default function PrivacyPolicyPage() {
                 within the EU.
               </li>
               <li>
-                <strong>Authentication providers:</strong> Social sign-in providers such as Google
-                (where enabled) and our email delivery provider for magic-link sign-in.
+                <strong>Authentication providers:</strong> Sign-in providers such as Google and
+                Apple (where enabled), and our email delivery provider for magic-link sign-in.
               </li>
               <li>
                 <strong>Legal authorities:</strong> If required by law or to protect our rights.
@@ -212,8 +217,9 @@ export default function PrivacyPolicyPage() {
             <h2>9. Cookies</h2>
             <p>
               We use only essential cookies required for the Service to function (e.g., session
-              cookies for authentication). We do not use tracking cookies or third-party advertising
-              cookies. Our analytics solution (Plausible) is cookie-free.
+              cookies for authentication, including the primary web session cookie and short-lived
+              OAuth state/PKCE helper cookies during sign-in). We do not use tracking cookies or
+              third-party advertising cookies. Our analytics solution (Plausible) is cookie-free.
             </p>
           </section>
 

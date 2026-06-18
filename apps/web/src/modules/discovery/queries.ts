@@ -2,7 +2,6 @@ import { db, resolveCityIds } from '@/lib/db';
 import { getEventsThisWeek } from '@/modules/event/queries';
 import { getCommunitiesByCity } from '@/modules/community/queries';
 import { eventListSelect } from '@/modules/event/queries';
-import { subDays } from 'date-fns';
 import { unstable_cache } from 'next/cache';
 import type { CityFeedData } from './types';
 
@@ -38,46 +37,10 @@ async function _getCityFeed(citySlug: string): Promise<CityFeedData | null> {
   const cityIds = [city.id, ...city.satelliteCities.map((s) => s.id)];
 
   // Parallel data fetching
-  const [thisWeek, activeCommunities, recentPastEvents, categoryRows, counts] = await Promise.all([
+  const [thisWeek, activeCommunities, categoryRows, counts] = await Promise.all([
     getEventsThisWeek(citySlug),
 
     getCommunitiesByCity(citySlug, { limit: 8 }),
-
-    // Past events from last 30 days - "recently happened"
-    db.event.findMany({
-      where: {
-        cityId: { in: cityIds },
-        startsAt: { lt: new Date(), gte: subDays(new Date(), 30) },
-        status: 'PAST',
-      },
-      select: {
-        id: true,
-        title: true,
-        slug: true,
-        startsAt: true,
-        endsAt: true,
-        venueName: true,
-        isOnline: true,
-        cost: true,
-        costType: true,
-        priceAmount: true,
-        priceCurrency: true,
-        costNote: true,
-        accessType: true,
-        requiresRegistration: true,
-        requiresApproval: true,
-        entryNote: true,
-        imageUrl: true,
-        isRecurring: true,
-        community: { select: { name: true, slug: true } },
-        city: { select: { name: true, slug: true, timezone: true } },
-        categories: {
-          select: { category: { select: { name: true, slug: true, icon: true } } },
-        },
-      },
-      orderBy: { startsAt: 'desc' },
-      take: 6,
-    }),
 
     // Categories with community counts for "Browse by Category" grid
     db.category.findMany({
@@ -127,7 +90,6 @@ async function _getCityFeed(citySlug: string): Promise<CityFeedData | null> {
     },
     thisWeek,
     activeCommunities,
-    recentPastEvents,
     categories: categoryRows.map((c) => ({
       name: c.name,
       slug: c.slug,
