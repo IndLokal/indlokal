@@ -35,6 +35,7 @@ vi.mock('@/lib/email', () => ({ sendSubmissionReceivedEmail: vi.fn() }));
 
 import { submitCommunity } from '@/app/submit/actions';
 import { suggestCommunity } from '@/app/actions/reports';
+import { contributeEvent } from '@/app/actions/contributions';
 import { getMyContributions } from '@/lib/contributions/my-contributions';
 
 async function createCategory(slug: string) {
@@ -313,5 +314,50 @@ describe('getMyContributions read model (PRD/TDD-0060)', () => {
     });
     // No leakage of the other user's contribution.
     expect(contributions.some((c) => c.title === 'Other Submission')).toBe(false);
+  });
+
+  it('links event suggestions to eventId so published suggestions get href + status', async () => {
+    const city = await createCity(testDb, { slug: 'attr-city-5', name: 'Attr City 5' });
+    await createCategory('professional');
+    const actor = await createUser(testDb, { email: 'event-suggester@account.test' });
+    currentSession = { id: actor.id, email: actor.email };
+
+    const fd = new FormData();
+    fd.set('title', 'Linked Suggestion Event');
+    fd.set('description', 'Event suggested from contribution form.');
+    fd.append('categorySlugs', 'professional');
+    fd.set('startsAt', '2026-07-10T18:00');
+    fd.set('endsAt', '2026-07-10T20:00');
+    fd.set('cityId', city.id);
+    fd.set('venueName', 'Community Hall');
+    fd.set('verificationMode', 'manual_context');
+    fd.set(
+      'verificationDetails',
+      'Organizer shared this in the local group and venue confirmed booking for this date.',
+    );
+
+    const result = await contributeEvent(null, fd);
+    expect(result).toEqual({ success: true, title: 'Linked Suggestion Event' });
+
+    const report = await testDb.contentReport.findFirstOrThrow({
+      where: {
+        reportType: 'SUGGEST_EVENT',
+        suggestedName: 'Linked Suggestion Event',
+        reporterUserId: actor.id,
+      },
+      select: { id: true, eventId: true },
+    });
+    expect(report.eventId).toBeTruthy();
+
+    await testDb.event.update({
+      where: { id: report.eventId! },
+      data: { moderationState: 'PUBLISHED' },
+    });
+
+    const contributions = await getMyContributions(actor.id);
+    const suggested = contributions.find((c) => c.id === `report:${report.id}`);
+    expect(suggested).toBeDefined();
+    expect(suggested?.status).toBe('PUBLISHED');
+    expect(suggested?.href).toMatch(/^\/attr-city-5\/events\//);
   });
 });

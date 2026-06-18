@@ -415,6 +415,13 @@ export async function contributeEvent(
         },
       });
 
+      // Back-link the report to the placeholder event so contributor read models
+      // can reflect moderation status and published URLs.
+      await tx.contentReport.update({
+        where: { id: report.id },
+        data: { eventId: event.id },
+      });
+
       // Create PipelineItem
       await tx.pipelineItem.create({
         data: {
