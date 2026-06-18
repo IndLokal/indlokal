@@ -49,13 +49,32 @@ export const DELETE = apiHandler(async (req: NextRequest) => {
 
   // Revoke all active refresh tokens first so any concurrent sessions
   // are immediately invalidated (belt-and-suspenders before cascade delete).
-  await db.refreshToken.updateMany({
+  const revoked = await db.refreshToken.updateMany({
     where: { userId, revokedAt: null },
     data: { revokedAt: new Date() },
   });
 
   // Delete the user - Prisma cascades to all related tables.
   await db.user.delete({ where: { id: userId } });
+
+  try {
+    await db.contentLog.create({
+      data: {
+        entityType: 'privacy_request',
+        entityId: userId,
+        action: 'ARCHIVED',
+        changedBy: userId,
+        metadata: {
+          requestType: 'GDPR_DELETE_ACCOUNT_SELF_SERVICE',
+          revokedRefreshTokenCount: revoked.count,
+          completedAt: new Date().toISOString(),
+        },
+      },
+    });
+  } catch (err) {
+    // Deletion should complete even if audit persistence is temporarily unavailable.
+    console.warn('[GDPR] Failed to record delete-account audit entry:', String(err));
+  }
 
   return NextResponse.json({ ok: true });
 });

@@ -214,5 +214,24 @@ export const GET = apiHandler(async (req: NextRequest) => {
   };
 
   const parsed = auth.MeDataExport.parse(payload);
+
+  try {
+    await db.contentLog.create({
+      data: {
+        entityType: 'privacy_request',
+        entityId: userId,
+        action: 'CREATED',
+        changedBy: userId,
+        metadata: {
+          requestType: 'GDPR_EXPORT_SELF_SERVICE',
+          exportedAt: parsed.exportedAt,
+        },
+      },
+    });
+  } catch (err) {
+    // Export must stay available even if audit write fails.
+    console.warn('[GDPR] Failed to record export audit entry:', String(err));
+  }
+
   return NextResponse.json(parsed);
 });

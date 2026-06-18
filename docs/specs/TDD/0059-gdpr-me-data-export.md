@@ -30,10 +30,11 @@ Implementation notes:
 - Reuse `toMeProfile` mapper to avoid profile drift/leaks.
 - Parse response through `auth.MeDataExport.parse(...)` before returning.
 - Exclude token/session secret fields by design (never selected in queries).
+- After a successful export, write a non-blocking `privacy_request` row to `ContentLog` (`action=CREATED`, `metadata.requestType=GDPR_EXPORT_SELF_SERVICE`) for DSAR auditability. Audit failures must not block the response.
 
 ## 4. Mobile screens & navigation
 
-No mobile route changes in this increment.
+No new mobile route in this increment. The Me tab exposes the `Export my data (JSON)` action and in-app Privacy/Terms/Imprint links (opening the web legal pages) for GDPR transparency.
 
 ## 5. Push / Email / Inbox triggers
 
@@ -59,6 +60,7 @@ None for this baseline endpoint.
 - Integration: unauthenticated request returns 401.
 - Integration: authenticated request returns 200 and includes expected user-owned slices.
 - Integration: ensure data from another user is not included.
+- Integration: authenticated export writes a `privacy_request` audit row (`requestType=GDPR_EXPORT_SELF_SERVICE`).
 
 ## 10. Rollout plan
 

@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Linking } from 'react-native';
 import { Link, router } from 'expo-router';
 import { SafeAreaView, StyleSheet, Text, Pressable, View } from 'react-native';
 import { auth } from '@indlokal/shared';
@@ -15,8 +15,25 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { exportMeDataToFile } from '@/lib/auth/me-export.expo';
 import { useWebHandoff } from '@/lib/auth/web-handoff.expo';
 import type { AuthUser } from '@/lib/auth/token-store';
+import { getApiBaseUrl } from '@/lib/config/api-base-url';
 import { mobileFlags } from '@/lib/config/flags';
 import { palette, spacing, typography } from '@/constants/theme';
+
+const LEGAL_LINKS: { key: string; label: string; path: string }[] = [
+  { key: 'privacy', label: 'Privacy Policy', path: '/privacy' },
+  { key: 'terms', label: 'Terms of Service', path: '/terms' },
+  { key: 'impressum', label: 'Imprint (Impressum)', path: '/impressum' },
+];
+
+async function openLegalLink(path: string): Promise<void> {
+  const base = getApiBaseUrl().replace(/\/$/, '');
+  const url = `${base}${path}`;
+  try {
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert('Could not open link', 'Please try again later.');
+  }
+}
 
 type WorkspaceEntry = {
   key: string;
@@ -194,6 +211,19 @@ export default function MeTabScreen() {
           <Pressable style={styles.signInButton} onPress={() => router.push('/auth/sign-in')}>
             <Text style={styles.signInButtonText}>Sign in</Text>
           </Pressable>
+          <View style={styles.legalSection}>
+            {LEGAL_LINKS.map((item) => (
+              <Pressable
+                key={item.key}
+                accessibilityRole="link"
+                accessibilityLabel={item.label}
+                style={styles.legalLinkPressable}
+                onPress={() => void openLegalLink(item.path)}
+              >
+                <Text style={styles.legalLinkText}>{item.label}</Text>
+              </Pressable>
+            ))}
+          </View>
         </View>
       </SafeAreaView>
     );
@@ -263,6 +293,17 @@ export default function MeTabScreen() {
               {isExporting ? 'Preparing data export...' : 'Export my data (JSON)'}
             </Text>
           </Pressable>
+          {LEGAL_LINKS.map((item) => (
+            <Pressable
+              key={item.key}
+              accessibilityRole="link"
+              accessibilityLabel={item.label}
+              style={styles.linkPressable}
+              onPress={() => void openLegalLink(item.path)}
+            >
+              <Text style={styles.linkButtonText}>{item.label}</Text>
+            </Pressable>
+          ))}
         </View>
 
         {mobileFlags.auth.webHandoff.enabled && workspaces.length === 0 ? (
@@ -424,6 +465,18 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.6,
+  },
+  legalSection: {
+    marginTop: spacing.lg,
+    gap: 0,
+  },
+  legalLinkPressable: {
+    paddingVertical: spacing.sm,
+  },
+  legalLinkText: {
+    color: palette.neutral.muted,
+    fontWeight: '600',
+    fontSize: typography.small,
   },
   anonBody: {
     color: palette.neutral.muted,

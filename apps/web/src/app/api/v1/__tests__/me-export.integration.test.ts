@@ -166,5 +166,20 @@ describe('GET /api/v1/me/export', () => {
         enabled: true,
       },
     ]);
+
+    const log = await testDb.contentLog.findFirst({
+      where: {
+        entityType: 'privacy_request',
+        entityId: USER_ID,
+        action: 'CREATED',
+        changedBy: USER_ID,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    expect(log).not.toBeNull();
+    expect(log?.metadata).toMatchObject({
+      requestType: 'GDPR_EXPORT_SELF_SERVICE',
+    });
   });
 });
