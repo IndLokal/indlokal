@@ -115,7 +115,8 @@ export function formatDateTimeLocalInTimeZone(date: Date, timeZone: string): str
   const year = get('year');
   const month = get('month');
   const day = get('day');
-  const hour = get('hour');
+  const hourRaw = get('hour');
+  const hour = hourRaw === '24' ? '00' : hourRaw;
   const minute = get('minute');
 
   if (!year || !month || !day || !hour || !minute) return '';
