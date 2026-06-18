@@ -9,16 +9,18 @@ locally."_ and the three pillars (Communities · Events · Resources).
 
 Every SVG uses **1 user unit = 1 mm** with an explicit physical `width`/`height`
 in millimetres, so a print house gets exact sizing with no scaling guesswork.
-The QR code (to `https://indlokal.de`) is baked into each file as vector
+The QR code (to `https://indlokal.com`) is baked into each file as vector
 rectangles - the SVGs are fully self-contained and need no external build step.
 
 ## Files
 
-| Collateral              | Source SVG                                             | Print file                                             | Size (portrait)    | Use at the stall                          |
-| ----------------------- | ------------------------------------------------------ | ------------------------------------------------------ | ------------------ | ----------------------------------------- |
-| **A0 banner / roll-up** | [`event-banner-a0.svg`](./event-banner-a0.svg)         | [`event-banner-a0.pdf`](./event-banner-a0.pdf)         | 841 × 1189 mm (A0) | Backdrop / pull-up stand behind the table |
-| **A5 flyer**            | [`event-flyer-a5.svg`](./event-flyer-a5.svg)           | [`event-flyer-a5.pdf`](./event-flyer-a5.pdf)           | 148 × 210 mm (A5)  | Handout for visitors                      |
-| **A6 table tent**       | [`event-table-tent-a6.svg`](./event-table-tent-a6.svg) | [`event-table-tent-a6.pdf`](./event-table-tent-a6.pdf) | 105 × 148 mm (A6)  | Folded card on the table; QR to scan      |
+| Collateral                 | Source SVG                                                                           | Print file                                                                           | Size (portrait)    | Use at the stall                          |
+| -------------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------- |
+| **A0 banner / roll-up**    | [`event-banner-a0.svg`](./event-banner-a0.svg)                                       | [`event-banner-a0.pdf`](./event-banner-a0.pdf)                                       | 841 × 1189 mm (A0) | Backdrop / pull-up stand behind the table |
+| **A5 flyer**               | [`event-flyer-a5.svg`](./event-flyer-a5.svg)                                         | [`event-flyer-a5.pdf`](./event-flyer-a5.pdf)                                         | 148 × 210 mm (A5)  | Handout for visitors                      |
+| **A6 table tent**          | [`event-table-tent-a6.svg`](./event-table-tent-a6.svg)                               | [`event-table-tent-a6.pdf`](./event-table-tent-a6.pdf)                               | 105 × 148 mm (A6)  | Folded card on the table; QR to scan      |
+| **Visiting card**          | [`event-visiting-card-85x55.svg`](./event-visiting-card-85x55.svg)                   | [`event-visiting-card-85x55.pdf`](./event-visiting-card-85x55.pdf)                   | 85 × 55 mm         | Minimal contact card for 1:1 follow-up    |
+| **Personal visiting card** | [`event-visiting-card-personal-85x55.svg`](./event-visiting-card-personal-85x55.svg) | [`event-visiting-card-personal-85x55.pdf`](./event-visiting-card-personal-85x55.pdf) | 85 × 55 mm         | Name/role/email/phone variant             |
 
 `*-preview.png` files (≈150 dpi) are for on-screen proofing only - **send the
 PDF or the SVG to the printer**, not the PNG.
@@ -43,7 +45,7 @@ PDF or the SVG to the printer**, not the PNG.
 
 ## Regenerating / editing
 
-All three pieces are produced by [`build.py`](./build.py), which also re-bakes
+All five pieces are produced by [`build.py`](./build.py), which also re-bakes
 the QR codes and re-exports the PDFs and preview PNGs:
 
 ```bash
@@ -54,6 +56,18 @@ python3 build.py
 Edit copy, sizes or colours in `build.py` (tokens mirror the design guidelines),
 then re-run. To point the QR somewhere else (e.g. a city landing page), change
 `URL` at the top of the script.
+
+For the personal card variant, edit `CARD_NAME`, `CARD_ROLE`, `CARD_EMAIL`, and
+`CARD_PHONE` near the top of `build.py`, then re-run.
+
+**Reusing this kit at another event:** the collateral is event-agnostic. The
+**only** event-specific line is `EVENT_TAG` (default: `INDIAN LIFE IN GERMANY`)
+at the top of `build.py` — change that one string and re-run. The A0 banner is
+deliberately minimal (logo → one line → one big QR → "Scan to find your city.")
+so it stops people and drives a scan; the A5 flyer and A6 table tent are the
+close-range pieces that add context while keeping the same clear CTA to scan
+and find the local city experience. The visiting card stays intentionally clean
+for hand-to-hand follow-ups (brand lockup + compact QR + key contact line).
 
 ## Brand guardrails honoured here
 
