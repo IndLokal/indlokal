@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getSessionUser } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { deleteMyAccount } from '@/app/me/actions';
+import { ConfirmSubmitButton } from '@/components/ui';
 
 export const metadata: Metadata = {
   title: 'Delete account - IndLokal',
@@ -40,12 +41,14 @@ export default async function DeleteAccountPage() {
         </div>
 
         <form action={deleteMyAccount} className="pt-2">
-          <button
-            type="submit"
-            className="w-full rounded-[var(--radius-button)] border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
-          >
-            Permanently delete my account
-          </button>
+          <ConfirmSubmitButton
+            triggerLabel="Permanently delete my account"
+            title="Permanently delete your account?"
+            description="This action cannot be undone. Your profile and account-linked data will be deleted and you will be signed out."
+            confirmLabel="Yes, delete permanently"
+            tone="danger"
+            triggerClassName="w-full rounded-[var(--radius-button)] border border-red-300 bg-red-50 px-4 py-2.5 text-sm font-semibold text-red-700 transition-colors hover:bg-red-100"
+          />
         </form>
 
         <Link href="/me" className="text-muted hover:text-foreground inline-block text-sm">
