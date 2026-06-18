@@ -32,7 +32,7 @@ export default async function DeleteAccountPage() {
           <p className="text-foreground text-sm font-medium">Recommended first step</p>
           <p className="text-muted mt-1 text-sm">If needed, export your data before deletion.</p>
           <Link
-            href="/api/v1/me/export"
+            href="/me/export"
             className="text-brand-600 mt-2 inline-block text-sm font-medium hover:underline"
           >
             Export my data (JSON)

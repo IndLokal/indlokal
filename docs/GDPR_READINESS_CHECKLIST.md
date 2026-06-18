@@ -54,6 +54,7 @@ This is the smallest practical set to complete now.
 3. Portability path (must support)
 
 - Endpoint implemented: `GET /api/v1/me/export` (authenticated JSON export).
+- Web session download route implemented: `GET /me/export` (cookie-authenticated export from web Me page).
 - Mobile action implemented: Me tab includes `Export my data (JSON)` and writes a local export file.
 - Coverage includes profile, role/claim context, created content, saved items, reports, and notification preferences.
 - Each export request is logged as a `privacy_request` audit row for traceability.
@@ -120,6 +121,7 @@ The following are useful but not blocking for the immediate compliance baseline:
 - Terms page: [apps/web/src/app/(info)/terms/page.tsx](<../apps/web/src/app/(info)/terms/page.tsx>)
 - Account deletion API (with privacy audit row): [apps/web/src/app/api/v1/me/route.ts](../apps/web/src/app/api/v1/me/route.ts)
 - Account data export API (with privacy audit row): [apps/web/src/app/api/v1/me/export/route.ts](../apps/web/src/app/api/v1/me/export/route.ts)
+- Web account export route: [apps/web/src/app/me/export/route.ts](../apps/web/src/app/me/export/route.ts)
 - Web Me page GDPR controls: [apps/web/src/app/me/page.tsx](../apps/web/src/app/me/page.tsx)
 - Web delete-account screen: [apps/web/src/app/me/delete-account/page.tsx](../apps/web/src/app/me/delete-account/page.tsx)
 - Mobile delete-account screen: [apps/mobile/app/me/delete-account.tsx](../apps/mobile/app/me/delete-account.tsx)

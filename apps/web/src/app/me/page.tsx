@@ -456,7 +456,7 @@ export default async function MePage() {
               Export your account data or permanently delete your account.
             </p>
             <div className="mt-3 flex flex-wrap gap-3">
-              <Link href="/api/v1/me/export" className="btn-secondary px-4 py-2 text-sm">
+              <Link href="/me/export" className="btn-secondary px-4 py-2 text-sm">
                 Export my data (JSON)
               </Link>
               <Link
