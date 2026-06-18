@@ -14,7 +14,12 @@ import { router } from 'expo-router';
 import { authClient } from '@/lib/auth/client.expo';
 import { signInWithApple } from '@/lib/auth/apple';
 import { requestMagicLink } from '@/lib/auth/magic';
-import { signInWithGoogleCode, useGoogleCodeFlow } from '@/lib/auth/google';
+import {
+  logGoogleSignInDiagnostics,
+  signInWithGoogleCode,
+  useGoogleCodeFlow,
+} from '@/lib/auth/google';
+import { describeAuthError } from '@/lib/auth/auth-errors';
 import { authFlags } from '@/lib/config/flags';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { LogoMark } from '@/components/Logo';
@@ -50,8 +55,7 @@ export default function SignInScreen() {
         routeAfterAuth(tokens);
       })
       .catch((error: unknown) => {
-        const message = error instanceof Error ? error.message : 'Google sign-in failed';
-        Alert.alert('Google sign-in failed', message);
+        Alert.alert('Google sign-in failed', describeAuthError(error, 'google'));
       })
       .finally(() => {
         setGoogleLoading(false);
@@ -68,14 +72,18 @@ export default function SignInScreen() {
       await requestMagicLink(authClient, email.trim().toLowerCase());
       router.push({ pathname: '/auth/magic-link-sent', params: { email } });
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Unable to send magic link';
-      Alert.alert('Unable to send magic link', message);
+      Alert.alert('Unable to send magic link', describeAuthError(error, 'magic'));
     } finally {
       setLoading(false);
     }
   }
 
   async function onGooglePress() {
+    logGoogleSignInDiagnostics({
+      redirectUri: googleFlow.redirectUri,
+      apiBaseUrl: authClient.apiBaseUrl,
+      enabled: googleFlow.enabled,
+    });
     if (!googleFlow.enabled) {
       Alert.alert('Google sign-in unavailable', 'Google OAuth client IDs are not configured.');
       return;
@@ -96,8 +104,16 @@ export default function SignInScreen() {
       onSignIn(tokens.user);
       routeAfterAuth(tokens);
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : 'Apple sign-in failed';
-      Alert.alert('Apple sign-in failed', message);
+      // expo-apple-authentication throws ERR_REQUEST_CANCELED on user cancel —
+      // stay silent in that case instead of showing a scary alert.
+      const canceled =
+        error != null &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error as { code?: string }).code === 'ERR_REQUEST_CANCELED';
+      if (!canceled) {
+        Alert.alert('Apple sign-in failed', describeAuthError(error, 'apple'));
+      }
     } finally {
       setLoading(false);
     }
