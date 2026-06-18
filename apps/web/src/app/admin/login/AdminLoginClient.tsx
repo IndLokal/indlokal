@@ -20,16 +20,17 @@ export default function AdminLoginClient() {
     null,
   );
   const searchParams = useSearchParams();
+  const restartLogin = searchParams.get('restart') === '1';
   const urlError = searchParams.get('error');
   const urlErrorMessage = urlError ? ERROR_MESSAGES[urlError] : null;
   const signedOut = searchParams.get('signed_out') === '1';
 
-  if (state?.success) {
+  if (state?.success && !restartLogin) {
     return (
       <LoginSuccess
         body="We've sent a secure login link to your email. Click it to continue to internal tools."
         hint="Secure link expires in 24 hours. Check your spam folder if you don't see it."
-        backHref="/admin/login"
+        backHref="/admin/login?restart=1"
         backLabel="Back to internal login"
       />
     );
