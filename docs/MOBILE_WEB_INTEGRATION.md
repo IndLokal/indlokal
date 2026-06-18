@@ -13,15 +13,15 @@
 
 Two surfaces feel like one product only if they share the layers below. Each seam has a single source of truth.
 
-| #   | Seam                             | Source of truth                                            | Status today     | Target                                        |
-| --- | -------------------------------- | ---------------------------------------------------------- | ---------------- | --------------------------------------------- |
-| 1   | **Contract** (API shapes)        | `packages/shared` Zod → OpenAPI; `apps/web/src/app/api/v1` | ✅ shared        | Keep: every new field lands in `shared` first |
-| 2   | **Identity & session**           | `/api/v1/auth/*` JWT (web + mobile)                        | ✅ shared        | Keep + implemented app → web hand-off (§3)    |
-| 3   | **Authorization** (roles/scopes) | `RoleAssignment` + `prisma` enum + ADR-0005                | ◑ web-only UI    | Drive **both** UIs from the same scopes (§4)  |
-| 4   | **Deep links** (URL ⇄ route)     | `indlokal.com/[city]/...` universal/app links              | ◑ partial        | Full URL⇄screen map + hand-off (§5)           |
-| 5   | **Design tokens**                | web theme ↔ `apps/mobile/constants/theme.ts`               | ◑ mirrored copy  | Promote to shared `ui-tokens` (§6)            |
-| 6   | **Notifications & inbox**        | `/api/v1/notifications/*` + outbox                         | ✅ server-driven | Keep; reconcile local reminders (§7)          |
-| 7   | **Analytics events**             | `docs/specs/EVENTS/analytics.md`                           | ◑ partial        | One typed catalog, same names both sides (§8) |
+| #   | Seam                             | Source of truth                                                     | Status today     | Target                                        |
+| --- | -------------------------------- | ------------------------------------------------------------------- | ---------------- | --------------------------------------------- |
+| 1   | **Contract** (API shapes)        | `packages/shared` Zod → OpenAPI; `apps/web/src/app/api/v1`          | ✅ shared        | Keep: every new field lands in `shared` first |
+| 2   | **Identity & session**           | `/api/v1/auth/*` + web cookie session (`lp_session`) and mobile JWT | ✅ shared        | Keep + implemented app → web hand-off (§3)    |
+| 3   | **Authorization** (roles/scopes) | `RoleAssignment` + `prisma` enum + ADR-0005                         | ◑ web-only UI    | Drive **both** UIs from the same scopes (§4)  |
+| 4   | **Deep links** (URL ⇄ route)     | `indlokal.com/[city]/...` universal/app links                       | ◑ partial        | Full URL⇄screen map + hand-off (§5)           |
+| 5   | **Design tokens**                | web theme ↔ `apps/mobile/constants/theme.ts`                        | ◑ mirrored copy  | Promote to shared `ui-tokens` (§6)            |
+| 6   | **Notifications & inbox**        | `/api/v1/notifications/*` + outbox                                  | ✅ server-driven | Keep; reconcile local reminders (§7)          |
+| 7   | **Analytics events**             | `docs/specs/EVENTS/analytics.md`                                    | ◑ partial        | One typed catalog, same names both sides (§8) |
 
 ---
 
@@ -36,7 +36,7 @@ Two surfaces feel like one product only if they share the layers below. Each sea
 
 ## 3. Identity & session: sign in once
 
-- **Same auth, same tokens.** Web and mobile both authenticate against `/api/v1/auth/{apple,google,magic-link,refresh}` and receive the same JWT (access + refresh). The JWT already carries the full role set.
+- **Shared auth backend, surface-appropriate sessions.** Both surfaces use `/api/v1/auth/{apple,google,magic-link,refresh}` for identity and account linking. Mobile uses JWT (access + refresh), while web uses the server-managed cookie session (`lp_session`).
 - **Magic link is the bridge.** A magic link opened on a phone should resolve into the app (via universal/app link) and into web otherwise — same token, same account, no re-login.
 - **Cross-surface hand-off (implemented for app → web).** The app now mints a short-lived, single-use hand-off token through `/api/v1/auth/handoff`, opens `/auth/handoff` in an in-app browser, and lands on web already authenticated via the standard `lp_session` cookie. Unsafe or reused tokens fall back to `/me/login?error=handoff`. Web → App remains the existing deep-link flow: the URL carries enough to resume; app exchanges or refreshes its own session — **never** put long-lived secrets in a URL.
 - **Explicit non-goals for this change.** No UI redesign, no role-aware workspace hub, and no broad RBAC refactor ship as part of the hand-off bridge. The implementation only makes the cross-surface session exchange reusable.

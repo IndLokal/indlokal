@@ -58,9 +58,9 @@ export default function TermsPage() {
           <section>
             <h2>3. User Accounts</h2>
             <p>
-              Some features require account access. User sign-in is currently available in the
-              mobile app, while organizer and admin access on web uses email-based magic links. By
-              creating an account, you agree to:
+              Some features require account access. Sign-in is available on web and mobile.
+              Depending on surface and role, access may use Google/Apple sign-in and/or email-based
+              magic links. By creating or using an account, you agree to:
             </p>
             <ul>
               <li>Provide accurate information</li>
@@ -106,6 +106,8 @@ export default function TermsPage() {
             <p>
               If you use organizer or admin account access, you also agree to receive essential
               account communications such as magic-link login emails and security-related notices.
+              Where applicable, we may also use secure, short-lived session exchange links for
+              authenticated cross-surface access.
             </p>
           </section>
 
