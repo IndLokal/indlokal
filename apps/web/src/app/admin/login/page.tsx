@@ -27,17 +27,17 @@ export default function AdminLoginPage() {
   if (state?.success) {
     return (
       <LoginSuccess
-        body="We've sent a secure login link to your email. Click it to access the admin dashboard."
+        body="We've sent a secure login link to your email. Click it to continue to internal tools."
         hint="Secure link expires in 24 hours. Check your spam folder if you don't see it."
         backHref="/admin/login"
-        backLabel="Back to admin login"
+        backLabel="Back to internal login"
       />
     );
   }
 
   return (
     <LoginShell
-      title="Secure access"
+      title="Internal access"
       description="Enter your authorized email to receive a secure one-time sign-in link."
     >
       <form action={formAction} className="mt-8 space-y-5 text-left">
