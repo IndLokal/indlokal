@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { SubmitForm } from '@/app/submit/SubmitForm';
 import { ContributeEventForm } from './ContributeEventForm';
 import { SuggestHub } from './SuggestHub';
+import { getSessionUser } from '@/lib/session';
 
 type Props = {
   type?: string;
@@ -56,6 +57,11 @@ export async function ContributePageContent({ type, citySlug, returnType, commun
       orderBy: { name: 'asc' },
     }),
   ]);
+
+  // PRD/TDD-0060: signed-in viewers contribute as their account; forms swap the
+  // contact name/email inputs for a "Submitting as" line.
+  const viewer = await getSessionUser();
+  const viewerEmail = viewer?.email ?? null;
 
   const baseHref = cityData ? `/${cityData.slug}/contribute` : '/contribute';
   const selectedTypeLabel = contributionTypeLabel(selectedType);
@@ -110,6 +116,7 @@ export async function ContributePageContent({ type, citySlug, returnType, commun
             }
             cancelHref={baseHref}
             cancelLabel="Back to contribute"
+            viewerEmail={viewerEmail}
           />
         </div>
       ) : (
@@ -123,6 +130,7 @@ export async function ContributePageContent({ type, citySlug, returnType, commun
             communities={communities}
             prefillCommunityName={communityName}
             categories={categories}
+            viewerEmail={viewerEmail}
           />
         </div>
       )}

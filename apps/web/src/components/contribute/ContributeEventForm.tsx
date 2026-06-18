@@ -24,6 +24,7 @@ export function ContributeEventForm({
   communities,
   prefillCommunityName,
   categories,
+  viewerEmail,
 }: {
   citySlug?: string;
   cityId?: string;
@@ -32,6 +33,12 @@ export function ContributeEventForm({
   communities?: ContributeEventCommunity[];
   prefillCommunityName?: string;
   categories: ContributeEventCategory[];
+  /**
+   * PRD/TDD-0060: when present, the viewer is signed in and contributes as their
+   * account. The optional contact email input is replaced with a "Submitting as"
+   * line; the server attributes the suggestion to the account regardless.
+   */
+  viewerEmail?: string | null;
 }) {
   const [state, formAction, isPending] = useActionState<ContributeEventResult, FormData>(
     contributeEvent,
@@ -148,18 +155,29 @@ export function ContributeEventForm({
       preserveValuesOnError
       extraFields={
         <>
-          <div>
-            <label htmlFor="reporterEmail" className="text-foreground block text-sm font-medium">
-              Your email <span className="text-muted">(optional)</span>
-            </label>
-            <input
-              id="reporterEmail"
-              name="reporterEmail"
-              type="email"
-              placeholder="We'll notify you after review"
-              className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
-            />
-          </div>
+          {viewerEmail ? (
+            <div className="border-border bg-muted-bg rounded-[var(--radius-button)] border px-4 py-3">
+              <p className="text-foreground text-sm">
+                Submitting as <span className="font-medium">{viewerEmail}</span>
+              </p>
+              <p className="text-muted mt-1 text-xs leading-relaxed">
+                This suggestion is tied to your account. We&apos;ll notify you here after review.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label htmlFor="reporterEmail" className="text-foreground block text-sm font-medium">
+                Your email <span className="text-muted">(optional)</span>
+              </label>
+              <input
+                id="reporterEmail"
+                name="reporterEmail"
+                type="email"
+                placeholder="We'll notify you after review"
+                className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
+              />
+            </div>
+          )}
         </>
       }
     />

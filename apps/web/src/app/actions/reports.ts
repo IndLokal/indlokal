@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { headers } from 'next/headers';
 import { checkRateLimit, reportLimiter } from '@/lib/rate-limit';
 import { computeSimilarity } from '@/modules/pipeline';
+import { getSessionUser } from '@/lib/session';
 
 // ─── Report an issue ─────────────────────────────────────────────────────────
 
@@ -37,6 +38,9 @@ export async function reportIssue(_prev: ReportResult, formData: FormData): Prom
 
   const { communityId, reportType, details, reporterEmail } = parsed.data;
 
+  // PRD/TDD-0060: attribute to the authenticated actor when signed in.
+  const sessionUser = await getSessionUser();
+
   const community = await db.community.findUnique({
     where: { id: communityId },
     select: { id: true },
@@ -52,6 +56,7 @@ export async function reportIssue(_prev: ReportResult, formData: FormData): Prom
         communityId,
         details: details || null,
         reporterEmail: reporterEmail || null,
+        reporterUserId: sessionUser?.id ?? null,
       },
     });
   } catch {
@@ -98,6 +103,9 @@ export async function suggestCommunity(
 
   const { suggestedName, citySlug, details, reporterEmail } = parsed.data;
 
+  // PRD/TDD-0060: attribute to the authenticated actor when signed in.
+  const sessionUser = await getSessionUser();
+
   let city: { id: string } | null;
   try {
     city = await db.city.findUnique({ where: { slug: citySlug }, select: { id: true } });
@@ -128,6 +136,7 @@ export async function suggestCommunity(
         cityId: city.id,
         details: details || null,
         reporterEmail: reporterEmail || null,
+        reporterUserId: sessionUser?.id ?? null,
       },
     });
   } catch {
@@ -167,6 +176,7 @@ export async function suggestCommunity(
       },
       confidence: 0.6,
       cityId: city.id,
+      submittedBy: sessionUser?.id ?? null,
     },
   });
 

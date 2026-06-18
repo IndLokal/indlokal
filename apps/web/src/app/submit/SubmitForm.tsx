@@ -17,6 +17,12 @@ type Props = {
   successLabel?: string;
   cancelHref?: string;
   cancelLabel?: string;
+  /**
+   * PRD/TDD-0060: when present, the viewer is signed in and contributes as their
+   * account. The contact name/email inputs are replaced with a "Submitting as"
+   * line; the server uses the account email for the receipt.
+   */
+  viewerEmail?: string | null;
 };
 
 type ChannelDraft = {
@@ -39,6 +45,7 @@ export function SubmitForm({
   successLabel = 'Submit another community',
   cancelHref,
   cancelLabel = 'Back',
+  viewerEmail,
 }: Props) {
   const [state, formAction, isPending] = useActionState<SubmitResult, FormData>(
     submitCommunity,
@@ -427,47 +434,68 @@ export function SubmitForm({
           <FormFieldError errors={errors.relationship} />
         </fieldset>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="contactName" className="text-foreground block text-sm font-medium">
-              Your Name *
-            </label>
-            <input
-              id="contactName"
-              name="contactName"
-              type="text"
-              required
-              className="input-base mt-1"
-            />
-            <FormFieldError errors={errors.contactName} />
+        {viewerEmail ? (
+          <div className="border-border bg-muted-bg rounded-[var(--radius-button)] border px-4 py-3">
+            <p className="text-foreground text-sm">
+              Submitting as <span className="font-medium">{viewerEmail}</span>
+            </p>
+            <p className="text-muted mt-1 text-xs leading-relaxed">
+              This contribution is tied to your account. We&apos;ll send review updates to this
+              email. See our{' '}
+              <Link href="/privacy" className="text-brand-600 hover:underline">
+                Privacy Policy
+              </Link>{' '}
+              and{' '}
+              <Link href="/terms" className="text-brand-600 hover:underline">
+                Terms
+              </Link>
+              .
+            </p>
           </div>
-          <div>
-            <label htmlFor="contactEmail" className="text-foreground block text-sm font-medium">
-              Your Email *
-            </label>
-            <input
-              id="contactEmail"
-              name="contactEmail"
-              type="email"
-              required
-              className="input-base mt-1"
-            />
-            <FormFieldError errors={errors.contactEmail} />
-          </div>
-        </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="contactName" className="text-foreground block text-sm font-medium">
+                  Your Name <span className="text-muted">(optional)</span>
+                </label>
+                <input
+                  id="contactName"
+                  name="contactName"
+                  type="text"
+                  className="input-base mt-1"
+                />
+                <FormFieldError errors={errors.contactName} />
+              </div>
+              <div>
+                <label htmlFor="contactEmail" className="text-foreground block text-sm font-medium">
+                  Your Email *
+                </label>
+                <input
+                  id="contactEmail"
+                  name="contactEmail"
+                  type="email"
+                  required
+                  className="input-base mt-1"
+                />
+                <FormFieldError errors={errors.contactEmail} />
+              </div>
+            </div>
 
-        <p className="text-muted text-xs leading-relaxed">
-          By submitting, you agree that IndLokal may process your submitted name and email to review
-          this request, as described in our{' '}
-          <Link href="/privacy" className="text-brand-600 hover:underline">
-            Privacy Policy
-          </Link>{' '}
-          and{' '}
-          <Link href="/terms" className="text-brand-600 hover:underline">
-            Terms
-          </Link>
-          .
-        </p>
+            <p className="text-muted text-xs leading-relaxed">
+              By submitting, you agree that IndLokal may process your submitted name and email to
+              review this request, as described in our{' '}
+              <Link href="/privacy" className="text-brand-600 hover:underline">
+                Privacy Policy
+              </Link>{' '}
+              and{' '}
+              <Link href="/terms" className="text-brand-600 hover:underline">
+                Terms
+              </Link>
+              .
+            </p>
+          </>
+        )}
       </fieldset>
 
       <div className="flex gap-3 pt-2">

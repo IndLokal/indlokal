@@ -9,6 +9,7 @@ import { can, type SessionUser } from '@/lib/auth/permissions';
 import { PreferencesForm } from './PreferencesForm';
 import { formatEventCardDate, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 import { LocalDeviceSavesCard } from './LocalDeviceSavesCard';
+import { getMyContributions } from '@/lib/contributions/my-contributions';
 
 export const metadata: Metadata = {
   title: 'My Account - IndLokal',
@@ -115,6 +116,15 @@ export default async function MePage() {
   } catch (err) {
     console.error('[MePage] Failed to load account lists; rendering with empty fallbacks.', err);
     accountLists = [[], [], [], []] as AccountLists;
+  }
+
+  // PRD/TDD-0060: things this user has contributed (submissions + suggestions).
+  // Best-effort; never blocks the page.
+  let myContributions: Awaited<ReturnType<typeof getMyContributions>> = [];
+  try {
+    myContributions = await getMyContributions(user.id);
+  } catch (err) {
+    console.error('[MePage] Failed to load contributions; rendering empty.', err);
   }
 
   const [savedCommunities, savedEvents, savedResources, activeCities] = accountLists;
@@ -287,6 +297,77 @@ export default async function MePage() {
             currentLanguages={user.preferredLanguages ?? []}
           />
         </div>
+      </section>
+
+      {/* Your contributions (PRD/TDD-0060) */}
+      <section>
+        <h2 className="text-xl font-semibold">Your contributions</h2>
+        {myContributions.length === 0 ? (
+          <p className="text-muted mt-3 text-sm">
+            You haven&apos;t added anything yet.{' '}
+            <Link
+              href="/submit"
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
+              Add a community
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="/"
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
+              suggest an event →
+            </Link>
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {myContributions.map((item) => {
+              const statusLabel =
+                item.status === 'PUBLISHED'
+                  ? 'Published'
+                  : item.status === 'NEEDS_CHANGES'
+                    ? 'Needs changes'
+                    : 'Under review';
+              const statusClass =
+                item.status === 'PUBLISHED'
+                  ? 'bg-green-50 text-green-700'
+                  : item.status === 'NEEDS_CHANGES'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-muted-bg text-muted';
+              const Row = (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-muted-bg text-muted rounded-[var(--radius-badge)] border px-2 py-0.5 text-[11px] font-medium">
+                        {item.kind === 'COMMUNITY' ? 'Community' : 'Event'}
+                      </span>
+                      <span
+                        className={`rounded-[var(--radius-badge)] px-2 py-0.5 text-[11px] font-medium ${statusClass}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <p className="text-foreground mt-1 truncate font-medium">{item.title}</p>
+                  </div>
+                  {item.href && <span className="text-muted shrink-0">→</span>}
+                </div>
+              );
+              return item.href ? (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="card-base block p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  {Row}
+                </Link>
+              ) : (
+                <div key={item.id} className="card-base p-4">
+                  {Row}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Following */}
