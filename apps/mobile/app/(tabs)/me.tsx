@@ -87,17 +87,23 @@ export default function MeTabScreen() {
         </View>
 
         {mobileFlags.auth.webHandoff.enabled ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Open web version"
-            style={[styles.webButton, isOpening && styles.buttonDisabled]}
-            onPress={() => void handleOpenWeb()}
-            disabled={isOpening}
-          >
-            <Text style={styles.webButtonText}>
-              {isOpening ? 'Opening web...' : 'Open web version'}
+          <View style={styles.webHandoffCard}>
+            <Text style={styles.sectionLabel}>Web-only surfaces</Text>
+            <Text style={styles.webHandoffBody}>
+              Organizer and admin tools that are not native on mobile open in web already signed in.
             </Text>
-          </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open web version"
+              style={[styles.webButton, isOpening && styles.buttonDisabled]}
+              onPress={() => void handleOpenWeb()}
+              disabled={isOpening}
+            >
+              <Text style={styles.webButtonText}>
+                {isOpening ? 'Opening web...' : 'Open web version'}
+              </Text>
+            </Pressable>
+          </View>
         ) : null}
 
         <Pressable style={styles.signOutButton} onPress={() => void handleSignOut()}>
@@ -136,6 +142,26 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 0,
   },
+  webHandoffCard: {
+    gap: spacing.sm,
+    padding: spacing.md,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: palette.neutral.border,
+    backgroundColor: palette.neutral.surface,
+  },
+  sectionLabel: {
+    fontSize: typography.small,
+    fontWeight: '700',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+    color: palette.neutral.muted,
+  },
+  webHandoffBody: {
+    color: palette.neutral.muted,
+    fontSize: typography.body,
+    lineHeight: 24,
+  },
   link: {
     paddingVertical: spacing.md,
     borderBottomColor: palette.neutral.border,
@@ -161,12 +187,12 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
   },
   webButton: {
-    marginTop: spacing.sm,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: palette.brand[600],
     paddingVertical: spacing.md,
     alignItems: 'center',
+    backgroundColor: palette.brand[50],
   },
   webButtonText: {
     color: palette.brand[700],
