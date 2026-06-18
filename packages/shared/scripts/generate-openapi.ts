@@ -53,6 +53,7 @@ registry.register('MagicLinkVerify', authContracts.MagicLinkVerify);
 registry.register('GoogleAuth', authContracts.GoogleAuth);
 registry.register('AppleAuth', authContracts.AppleAuth);
 registry.register('RefreshRequest', authContracts.RefreshRequest);
+registry.register('MeDataExport', authContracts.MeDataExport);
 
 // ─── Paths ───
 
@@ -181,6 +182,21 @@ registry.registerPath({
     200: {
       description: 'User profile',
       content: { 'application/json': { schema: authContracts.MeProfile } },
+    },
+    401: errorResponse,
+    404: errorResponse,
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/api/v1/me/export',
+  summary: 'Return a GDPR portability export for the authenticated user',
+  security: [{ BearerAuth: [] }],
+  responses: {
+    200: {
+      description: 'User data export payload',
+      content: { 'application/json': { schema: authContracts.MeDataExport } },
     },
     401: errorResponse,
     404: errorResponse,

@@ -114,6 +114,54 @@ components:
             type: string
         onboardingComplete:
           type: boolean
+        roleAssignments:
+          type: array
+          items:
+            type: object
+            properties:
+              role:
+                type: string
+                enum: *a2
+              cityId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+              orgId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+              revokedAt:
+                type:
+                  - string
+                  - "null"
+                format: date-time
+            required:
+              - role
+              - cityId
+              - orgId
+              - revokedAt
+        claimedCommunities:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              claimedByUserId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+            required:
+              - id
+              - claimedByUserId
         createdAt:
           type: string
           format: date-time
@@ -133,6 +181,8 @@ components:
         - personaSegments
         - preferredLanguages
         - onboardingComplete
+        - roleAssignments
+        - claimedCommunities
         - createdAt
         - lastActiveAt
     AuthTokens:
@@ -190,6 +240,54 @@ components:
                 type: string
             onboardingComplete:
               type: boolean
+            roleAssignments:
+              type: array
+              items:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    enum: *a2
+                  cityId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                  orgId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                  revokedAt:
+                    type:
+                      - string
+                      - "null"
+                    format: date-time
+                required:
+                  - role
+                  - cityId
+                  - orgId
+                  - revokedAt
+            claimedCommunities:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  claimedByUserId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                required:
+                  - id
+                  - claimedByUserId
             createdAt:
               type: string
               format: date-time
@@ -209,6 +307,8 @@ components:
             - personaSegments
             - preferredLanguages
             - onboardingComplete
+            - roleAssignments
+            - claimedCommunities
             - createdAt
             - lastActiveAt
       required:
@@ -286,6 +386,450 @@ components:
           minLength: 1
       required:
         - refreshToken
+    MeDataExport:
+      type: object
+      properties:
+        exportedAt:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            id:
+              type: string
+              minLength: 20
+              maxLength: 40
+            email:
+              type: string
+              format: email
+            displayName:
+              type:
+                - string
+                - "null"
+            avatarUrl:
+              type:
+                - string
+                - "null"
+              format: uri
+            role:
+              type: string
+              enum: *a2
+            cityId:
+              type:
+                - string
+                - "null"
+              minLength: 20
+              maxLength: 40
+            cityName:
+              type:
+                - string
+                - "null"
+            personaSegments:
+              type: array
+              items:
+                type: string
+            preferredLanguages:
+              type: array
+              items:
+                type: string
+            onboardingComplete:
+              type: boolean
+            roleAssignments:
+              type: array
+              items:
+                type: object
+                properties:
+                  role:
+                    type: string
+                    enum: *a2
+                  cityId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                  orgId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                  revokedAt:
+                    type:
+                      - string
+                      - "null"
+                    format: date-time
+                required:
+                  - role
+                  - cityId
+                  - orgId
+                  - revokedAt
+            claimedCommunities:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  claimedByUserId:
+                    type:
+                      - string
+                      - "null"
+                    minLength: 20
+                    maxLength: 40
+                required:
+                  - id
+                  - claimedByUserId
+            createdAt:
+              type: string
+              format: date-time
+            lastActiveAt:
+              type:
+                - string
+                - "null"
+              format: date-time
+          required:
+            - id
+            - email
+            - displayName
+            - avatarUrl
+            - role
+            - cityId
+            - cityName
+            - personaSegments
+            - preferredLanguages
+            - onboardingComplete
+            - roleAssignments
+            - claimedCommunities
+            - createdAt
+            - lastActiveAt
+        createdCommunities:
+          type: array
+          items:
+            type: object
+            properties:
+              community:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  slug:
+                    type: string
+                  name:
+                    type: string
+                  city:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - slug
+                      - name
+                required:
+                  - id
+                  - slug
+                  - name
+                  - city
+              createdAt:
+                type: string
+                format: date-time
+            required:
+              - community
+              - createdAt
+        createdEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              event:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  slug:
+                    type: string
+                  title:
+                    type: string
+                  startsAt:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                  moderationState:
+                    type: string
+                  city:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - slug
+                      - name
+                required:
+                  - id
+                  - slug
+                  - title
+                  - startsAt
+                  - status
+                  - moderationState
+                  - city
+              createdAt:
+                type: string
+                format: date-time
+            required:
+              - event
+              - createdAt
+        savedCommunities:
+          type: array
+          items:
+            type: object
+            properties:
+              community:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  slug:
+                    type: string
+                  name:
+                    type: string
+                  city:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - slug
+                      - name
+                required:
+                  - id
+                  - slug
+                  - name
+                  - city
+              savedAt:
+                type: string
+                format: date-time
+            required:
+              - community
+              - savedAt
+        savedEvents:
+          type: array
+          items:
+            type: object
+            properties:
+              event:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  slug:
+                    type: string
+                  title:
+                    type: string
+                  startsAt:
+                    type: string
+                    format: date-time
+                  status:
+                    type: string
+                  moderationState:
+                    type: string
+                  city:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - slug
+                      - name
+                required:
+                  - id
+                  - slug
+                  - title
+                  - startsAt
+                  - status
+                  - moderationState
+                  - city
+              savedAt:
+                type: string
+                format: date-time
+            required:
+              - event
+              - savedAt
+        savedResources:
+          type: array
+          items:
+            type: object
+            properties:
+              resource:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 20
+                    maxLength: 40
+                  slug:
+                    type:
+                      - string
+                      - "null"
+                  title:
+                    type: string
+                  city:
+                    type:
+                      - object
+                      - "null"
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      slug:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                      - id
+                      - slug
+                      - name
+                required:
+                  - id
+                  - slug
+                  - title
+                  - city
+              savedAt:
+                type: string
+                format: date-time
+            required:
+              - resource
+              - savedAt
+        contentReports:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                minLength: 20
+                maxLength: 40
+              reportType:
+                type: string
+              status:
+                type: string
+              details:
+                type:
+                  - string
+                  - "null"
+              reporterEmail:
+                type:
+                  - string
+                  - "null"
+                format: email
+              communityId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+              eventId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+              suggestedName:
+                type:
+                  - string
+                  - "null"
+              cityId:
+                type:
+                  - string
+                  - "null"
+                minLength: 20
+                maxLength: 40
+              createdAt:
+                type: string
+                format: date-time
+            required:
+              - id
+              - reportType
+              - status
+              - details
+              - reporterEmail
+              - communityId
+              - eventId
+              - suggestedName
+              - cityId
+              - createdAt
+        notificationPreferences:
+          type: array
+          items:
+            type: object
+            properties:
+              topic:
+                type: string
+              channel:
+                type: string
+              enabled:
+                type: boolean
+            required:
+              - topic
+              - channel
+              - enabled
+      required:
+        - exportedAt
+        - user
+        - createdCommunities
+        - createdEvents
+        - savedCommunities
+        - savedEvents
+        - savedResources
+        - contentReports
+        - notificationPreferences
     DevicePlatform:
       type: string
       enum: &a3
@@ -3555,6 +4099,54 @@ paths:
                           type: string
                       onboardingComplete:
                         type: boolean
+                      roleAssignments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: *a2
+                            cityId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            orgId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            revokedAt:
+                              type:
+                                - string
+                                - "null"
+                              format: date-time
+                          required:
+                            - role
+                            - cityId
+                            - orgId
+                            - revokedAt
+                      claimedCommunities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            claimedByUserId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                          required:
+                            - id
+                            - claimedByUserId
                       createdAt:
                         type: string
                         format: date-time
@@ -3574,6 +4166,8 @@ paths:
                       - personaSegments
                       - preferredLanguages
                       - onboardingComplete
+                      - roleAssignments
+                      - claimedCommunities
                       - createdAt
                       - lastActiveAt
                 required:
@@ -3671,6 +4265,54 @@ paths:
                           type: string
                       onboardingComplete:
                         type: boolean
+                      roleAssignments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: *a2
+                            cityId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            orgId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            revokedAt:
+                              type:
+                                - string
+                                - "null"
+                              format: date-time
+                          required:
+                            - role
+                            - cityId
+                            - orgId
+                            - revokedAt
+                      claimedCommunities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            claimedByUserId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                          required:
+                            - id
+                            - claimedByUserId
                       createdAt:
                         type: string
                         format: date-time
@@ -3690,6 +4332,8 @@ paths:
                       - personaSegments
                       - preferredLanguages
                       - onboardingComplete
+                      - roleAssignments
+                      - claimedCommunities
                       - createdAt
                       - lastActiveAt
                 required:
@@ -3801,6 +4445,54 @@ paths:
                           type: string
                       onboardingComplete:
                         type: boolean
+                      roleAssignments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: *a2
+                            cityId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            orgId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            revokedAt:
+                              type:
+                                - string
+                                - "null"
+                              format: date-time
+                          required:
+                            - role
+                            - cityId
+                            - orgId
+                            - revokedAt
+                      claimedCommunities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            claimedByUserId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                          required:
+                            - id
+                            - claimedByUserId
                       createdAt:
                         type: string
                         format: date-time
@@ -3820,6 +4512,8 @@ paths:
                       - personaSegments
                       - preferredLanguages
                       - onboardingComplete
+                      - roleAssignments
+                      - claimedCommunities
                       - createdAt
                       - lastActiveAt
                 required:
@@ -3914,6 +4608,54 @@ paths:
                           type: string
                       onboardingComplete:
                         type: boolean
+                      roleAssignments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: *a2
+                            cityId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            orgId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            revokedAt:
+                              type:
+                                - string
+                                - "null"
+                              format: date-time
+                          required:
+                            - role
+                            - cityId
+                            - orgId
+                            - revokedAt
+                      claimedCommunities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            claimedByUserId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                          required:
+                            - id
+                            - claimedByUserId
                       createdAt:
                         type: string
                         format: date-time
@@ -3933,6 +4675,8 @@ paths:
                       - personaSegments
                       - preferredLanguages
                       - onboardingComplete
+                      - roleAssignments
+                      - claimedCommunities
                       - createdAt
                       - lastActiveAt
                 required:
@@ -4033,6 +4777,54 @@ paths:
                       type: string
                   onboardingComplete:
                     type: boolean
+                  roleAssignments:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        role:
+                          type: string
+                          enum: *a2
+                        cityId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                        orgId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                        revokedAt:
+                          type:
+                            - string
+                            - "null"
+                          format: date-time
+                      required:
+                        - role
+                        - cityId
+                        - orgId
+                        - revokedAt
+                  claimedCommunities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        claimedByUserId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                      required:
+                        - id
+                        - claimedByUserId
                   createdAt:
                     type: string
                     format: date-time
@@ -4052,8 +4844,472 @@ paths:
                   - personaSegments
                   - preferredLanguages
                   - onboardingComplete
+                  - roleAssignments
+                  - claimedCommunities
                   - createdAt
                   - lastActiveAt
+        "401":
+          description: Error envelope
+          content:
+            application/json: *a19
+        "404":
+          description: Error envelope
+          content:
+            application/json: *a19
+  /api/v1/me/export:
+    get:
+      summary: Return a GDPR portability export for the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: User data export payload
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exportedAt:
+                    type: string
+                    format: date-time
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 20
+                        maxLength: 40
+                      email:
+                        type: string
+                        format: email
+                      displayName:
+                        type:
+                          - string
+                          - "null"
+                      avatarUrl:
+                        type:
+                          - string
+                          - "null"
+                        format: uri
+                      role:
+                        type: string
+                        enum: *a2
+                      cityId:
+                        type:
+                          - string
+                          - "null"
+                        minLength: 20
+                        maxLength: 40
+                      cityName:
+                        type:
+                          - string
+                          - "null"
+                      personaSegments:
+                        type: array
+                        items:
+                          type: string
+                      preferredLanguages:
+                        type: array
+                        items:
+                          type: string
+                      onboardingComplete:
+                        type: boolean
+                      roleAssignments:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            role:
+                              type: string
+                              enum: *a2
+                            cityId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            orgId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                            revokedAt:
+                              type:
+                                - string
+                                - "null"
+                              format: date-time
+                          required:
+                            - role
+                            - cityId
+                            - orgId
+                            - revokedAt
+                      claimedCommunities:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            claimedByUserId:
+                              type:
+                                - string
+                                - "null"
+                              minLength: 20
+                              maxLength: 40
+                          required:
+                            - id
+                            - claimedByUserId
+                      createdAt:
+                        type: string
+                        format: date-time
+                      lastActiveAt:
+                        type:
+                          - string
+                          - "null"
+                        format: date-time
+                    required:
+                      - id
+                      - email
+                      - displayName
+                      - avatarUrl
+                      - role
+                      - cityId
+                      - cityName
+                      - personaSegments
+                      - preferredLanguages
+                      - onboardingComplete
+                      - roleAssignments
+                      - claimedCommunities
+                      - createdAt
+                      - lastActiveAt
+                  createdCommunities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        community:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            slug:
+                              type: string
+                            name:
+                              type: string
+                            city:
+                              type:
+                                - object
+                                - "null"
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                slug:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - id
+                                - slug
+                                - name
+                          required:
+                            - id
+                            - slug
+                            - name
+                            - city
+                        createdAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - community
+                        - createdAt
+                  createdEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            slug:
+                              type: string
+                            title:
+                              type: string
+                            startsAt:
+                              type: string
+                              format: date-time
+                            status:
+                              type: string
+                            moderationState:
+                              type: string
+                            city:
+                              type:
+                                - object
+                                - "null"
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                slug:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - id
+                                - slug
+                                - name
+                          required:
+                            - id
+                            - slug
+                            - title
+                            - startsAt
+                            - status
+                            - moderationState
+                            - city
+                        createdAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - event
+                        - createdAt
+                  savedCommunities:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        community:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            slug:
+                              type: string
+                            name:
+                              type: string
+                            city:
+                              type:
+                                - object
+                                - "null"
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                slug:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - id
+                                - slug
+                                - name
+                          required:
+                            - id
+                            - slug
+                            - name
+                            - city
+                        savedAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - community
+                        - savedAt
+                  savedEvents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            slug:
+                              type: string
+                            title:
+                              type: string
+                            startsAt:
+                              type: string
+                              format: date-time
+                            status:
+                              type: string
+                            moderationState:
+                              type: string
+                            city:
+                              type:
+                                - object
+                                - "null"
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                slug:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - id
+                                - slug
+                                - name
+                          required:
+                            - id
+                            - slug
+                            - title
+                            - startsAt
+                            - status
+                            - moderationState
+                            - city
+                        savedAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - event
+                        - savedAt
+                  savedResources:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        resource:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 20
+                              maxLength: 40
+                            slug:
+                              type:
+                                - string
+                                - "null"
+                            title:
+                              type: string
+                            city:
+                              type:
+                                - object
+                                - "null"
+                              properties:
+                                id:
+                                  type: string
+                                  minLength: 20
+                                  maxLength: 40
+                                slug:
+                                  type: string
+                                name:
+                                  type: string
+                              required:
+                                - id
+                                - slug
+                                - name
+                          required:
+                            - id
+                            - slug
+                            - title
+                            - city
+                        savedAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - resource
+                        - savedAt
+                  contentReports:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 20
+                          maxLength: 40
+                        reportType:
+                          type: string
+                        status:
+                          type: string
+                        details:
+                          type:
+                            - string
+                            - "null"
+                        reporterEmail:
+                          type:
+                            - string
+                            - "null"
+                          format: email
+                        communityId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                        eventId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                        suggestedName:
+                          type:
+                            - string
+                            - "null"
+                        cityId:
+                          type:
+                            - string
+                            - "null"
+                          minLength: 20
+                          maxLength: 40
+                        createdAt:
+                          type: string
+                          format: date-time
+                      required:
+                        - id
+                        - reportType
+                        - status
+                        - details
+                        - reporterEmail
+                        - communityId
+                        - eventId
+                        - suggestedName
+                        - cityId
+                        - createdAt
+                  notificationPreferences:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        topic:
+                          type: string
+                        channel:
+                          type: string
+                        enabled:
+                          type: boolean
+                      required:
+                        - topic
+                        - channel
+                        - enabled
+                required:
+                  - exportedAt
+                  - user
+                  - createdCommunities
+                  - createdEvents
+                  - savedCommunities
+                  - savedEvents
+                  - savedResources
+                  - contentReports
+                  - notificationPreferences
         "401":
           description: Error envelope
           content:
