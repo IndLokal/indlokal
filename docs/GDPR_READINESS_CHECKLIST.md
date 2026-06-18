@@ -10,6 +10,7 @@ The following controls are already present in product/code:
 
 - Privacy and Terms include auth-provider, session-cookie, and app -> web hand-off language.
 - Privacy/Terms/Imprint are reachable in-app on mobile (Me tab) and on web, for both signed-in and anonymous users.
+- Web Me page now exposes direct GDPR actions (export + delete-account entry) for signed-in users.
 - Account deletion API exists: `DELETE /api/v1/me` (deletes user and revokes active refresh tokens first).
 - Mobile has a user-facing delete-account flow wired to that API.
 - Self-service privacy requests are auditable: export and account-deletion both write a `privacy_request` row to `ContentLog` (non-blocking).
@@ -119,5 +120,7 @@ The following are useful but not blocking for the immediate compliance baseline:
 - Terms page: [apps/web/src/app/(info)/terms/page.tsx](<../apps/web/src/app/(info)/terms/page.tsx>)
 - Account deletion API (with privacy audit row): [apps/web/src/app/api/v1/me/route.ts](../apps/web/src/app/api/v1/me/route.ts)
 - Account data export API (with privacy audit row): [apps/web/src/app/api/v1/me/export/route.ts](../apps/web/src/app/api/v1/me/export/route.ts)
+- Web Me page GDPR controls: [apps/web/src/app/me/page.tsx](../apps/web/src/app/me/page.tsx)
+- Web delete-account screen: [apps/web/src/app/me/delete-account/page.tsx](../apps/web/src/app/me/delete-account/page.tsx)
 - Mobile delete-account screen: [apps/mobile/app/me/delete-account.tsx](../apps/mobile/app/me/delete-account.tsx)
 - Mobile data-export + legal links: [apps/mobile/app/(tabs)/me.tsx](<../apps/mobile/app/(tabs)/me.tsx>)
