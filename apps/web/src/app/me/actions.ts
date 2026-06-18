@@ -45,6 +45,7 @@ export async function updatePreferences(
           cityId: cityId ?? null,
           personaSegments,
           preferredLanguages,
+          onboardingComplete: true,
         },
       });
 

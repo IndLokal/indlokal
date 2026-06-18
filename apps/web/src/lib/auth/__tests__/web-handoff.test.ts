@@ -59,7 +59,9 @@ beforeEach(() => {
 
 describe('safeNextPath', () => {
   it('keeps a safe in-product path', () => {
+    expect(safeNextPath('/admin')).toBe('/admin');
     expect(safeNextPath('/organizer/host')).toBe('/organizer/host');
+    expect(safeNextPath('/ambassador')).toBe('/ambassador');
     expect(safeNextPath('/me?tab=saved')).toBe('/me?tab=saved');
   });
 
@@ -125,5 +127,12 @@ describe('consumeWebHandoffToken', () => {
     (store.rows as Row[])[0].expiresAt = new Date(Date.now() - 1000);
 
     expect(await consumeWebHandoffToken('raw-token-fixture')).toBeNull();
+  });
+
+  it('preserves a role-scoped next path for internal surfaces', async () => {
+    await mintWebHandoffToken({ userId: 'user_1', next: '/admin' });
+
+    const result = await consumeWebHandoffToken('raw-token-fixture');
+    expect(result).toEqual({ userId: 'user_1', next: '/admin' });
   });
 });

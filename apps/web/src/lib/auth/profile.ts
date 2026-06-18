@@ -4,9 +4,21 @@
  */
 
 import type { City, User } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import type { auth } from '@indlokal/shared';
 
-type UserWithCity = User & {
+export const meProfileInclude = {
+  city: { select: { name: true } },
+  roleAssignments: {
+    select: { role: true, cityId: true, orgId: true, revokedAt: true },
+  },
+  claimedCommunities: {
+    where: { claimState: 'CLAIMED' },
+    select: { id: true, claimedByUserId: true },
+  },
+} as const satisfies Prisma.UserInclude;
+
+type UserWithMeProfileRelations = User & {
   city?: Pick<City, 'name'> | null;
   roleAssignments?: Array<{
     role: auth.UserRole;
@@ -17,7 +29,7 @@ type UserWithCity = User & {
   claimedCommunities?: Array<{ id: string; claimedByUserId: string | null }>;
 };
 
-export function toMeProfile(user: UserWithCity): auth.MeProfile {
+export function toMeProfile(user: UserWithMeProfileRelations): auth.MeProfile {
   return {
     id: user.id,
     email: user.email,

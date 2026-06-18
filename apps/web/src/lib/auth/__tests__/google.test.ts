@@ -60,6 +60,19 @@ describe('getGoogleOAuthConfig', () => {
 });
 
 describe('upsertGoogleUser', () => {
+  it('rejects unverified Google email before any lookup/linking', async () => {
+    await expect(
+      upsertGoogleUser({
+        ...PROFILE,
+        emailVerified: false,
+      }),
+    ).rejects.toMatchObject({ reason: 'profile_incomplete' });
+
+    expect(findFirstMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
   it('creates a new user WITHOUT any role / RoleAssignment / community authority', async () => {
     findFirstMock.mockResolvedValue(null);
     createMock.mockResolvedValue({ id: 'u1', email: PROFILE.email, role: 'USER', city: null });

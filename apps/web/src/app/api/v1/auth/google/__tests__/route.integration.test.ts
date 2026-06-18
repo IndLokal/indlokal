@@ -49,6 +49,31 @@ function mockGoogleHappy(profile: { sub: string; email: string; name?: string; p
       });
     }
     if (url.includes('googleapis.com/oauth2/v3/userinfo')) {
+      return new Response(
+        JSON.stringify({
+          ...profile,
+          email_verified: true,
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    }
+    throw new Error(`unexpected fetch ${url}`);
+  }) as typeof fetch;
+}
+
+function mockGoogleProfile(profile: Record<string, unknown>) {
+  globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+    const url = typeof input === 'string' ? input : input.toString();
+    if (url.includes('oauth2.googleapis.com/token')) {
+      return new Response(JSON.stringify({ access_token: 'g-access' }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    }
+    if (url.includes('googleapis.com/oauth2/v3/userinfo')) {
       return new Response(JSON.stringify(profile), {
         status: 200,
         headers: { 'content-type': 'application/json' },
@@ -105,6 +130,26 @@ describe('POST /api/v1/auth/google', () => {
     expect(after!.googleId).toBe('google-sub-2');
     // existing displayName preserved over Google's value
     expect(after!.displayName).toBe('Existing');
+  });
+
+  it('401 when Google email is unverified', async () => {
+    mockGoogleProfile({
+      sub: 'google-sub-unverified',
+      email: 'existing@example.com',
+      email_verified: false,
+      name: 'Unverified User',
+    });
+
+    const res = await POST(
+      makeRequest({ code: 'c', redirectUri: 'https://indlokal.com/cb' }) as never,
+    );
+
+    expect(res.status).toBe(401);
+    const json = await res.json();
+    expect(json.error.code).toBe('UNAUTHENTICATED');
+
+    const existing = await testDb.user.findUnique({ where: { email: 'existing@example.com' } });
+    expect(existing).toBeNull();
   });
 
   it('401 when Google rejects the code', async () => {

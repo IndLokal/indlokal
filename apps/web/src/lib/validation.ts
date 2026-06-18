@@ -32,8 +32,11 @@ export const submitCommunitySchema = z
     // HELP_RUN -> eligible for organizer ownership on approval; JUST_ADDING ->
     // listing only, no ownership.
     relationship: z.enum(['HELP_RUN', 'JUST_ADDING']).default('JUST_ADDING'),
-    contactEmail: z.string().email('Please enter a valid email'),
-    contactName: z.string().min(1, 'Please enter your name'),
+    // PRD/TDD-0060: contact name/email are communication metadata, not identity.
+    // Optional at the schema level; the action requires an email only for
+    // anonymous submitters (authenticated users contribute as their account).
+    contactEmail: z.string().email('Please enter a valid email').optional().or(z.literal('')),
+    contactName: z.string().max(120).optional(),
   })
   .superRefine((data, ctx) => {
     const primaryCount = data.channels.filter((channel) => channel.isPrimary).length;

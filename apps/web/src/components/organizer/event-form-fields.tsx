@@ -144,9 +144,7 @@ export function EventFormFields({
     errors.accessType?.length ||
     errors.priceAmount?.length ||
     errors.priceCurrency?.length ||
-    (showSourceUrl && errors.sourceUrl?.length) ||
-    errors.reporterEmail?.length ||
-    errors._?.length,
+    errors.reporterEmail?.length,
   );
 
   // Open the advanced section automatically when it contains errors, unless the
@@ -406,6 +404,9 @@ export function EventFormFields({
                 placeholder="e.g. Kulturhaus Stuttgart"
                 className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               />
+              {errors.venueName && (
+                <p className="mt-1 text-sm text-red-600">{errors.venueName[0]}</p>
+              )}
             </div>
             <div>
               <label className="text-foreground block text-sm font-medium">
@@ -434,6 +435,9 @@ export function EventFormFields({
                 placeholder="https://meet.google.com/..."
                 className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
               />
+              {errors.onlineLink && (
+                <p className="mt-1 text-sm text-red-600">{errors.onlineLink[0]}</p>
+              )}
               <p className="text-muted mt-1 text-xs">
                 Add the direct event link if this event is fully online.
               </p>
@@ -493,6 +497,9 @@ export function EventFormFields({
                       placeholder="https://eventbrite.com/... or official event page"
                       className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                     />
+                    {errors.sourceUrl && (
+                      <p className="mt-1 text-sm text-red-600">{errors.sourceUrl[0]}</p>
+                    )}
                     <p className="text-muted mt-1 text-xs">
                       Use any public event page, organizer site, social post, or listing we can
                       check.
@@ -513,6 +520,9 @@ export function EventFormFields({
                       placeholder="Explain how we can verify this event: organizer name, where it is being shared, venue contact, flyer source, WhatsApp group context, or anything else useful."
                       className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                     />
+                    {errors.verificationDetails && (
+                      <p className="mt-1 text-sm text-red-600">{errors.verificationDetails[0]}</p>
+                    )}
                     <p className="text-muted mt-1 text-xs">
                       No public link is fine, but we need enough context to manually verify the
                       event before review.
@@ -664,6 +674,9 @@ export function EventFormFields({
                   placeholder="https://eventbrite.com/..."
                   className="border-border focus:border-brand-500 mt-1 block w-full rounded-[var(--radius-button)] border px-3 py-2 text-sm shadow-sm"
                 />
+                {errors.registrationUrl && (
+                  <p className="mt-1 text-sm text-red-600">{errors.registrationUrl[0]}</p>
+                )}
                 <p className="text-muted mt-1 text-xs">
                   Use this if people need to register, apply, or RSVP before joining.
                 </p>

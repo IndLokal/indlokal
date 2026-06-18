@@ -88,12 +88,20 @@ export async function createMagicLinkToken(userId: string): Promise<string> {
  * Persist a session: hash the raw token and store it in the DB, then set the raw token as a cookie.
  * Call this instead of writing sessionToken to the DB directly.
  */
-export async function createSession(userId: string, rawToken: string) {
+export async function persistSessionInDb(userId: string, rawToken: string) {
   const hashed = await hashToken(rawToken);
   await db.user.update({
     where: { id: userId },
     data: { sessionToken: hashed, sessionTokenExpiry: sessionExpiry() },
   });
+}
+
+/**
+ * Backward-compatible helper that persists session state and sets the cookie
+ * on the current request context.
+ */
+export async function createSession(userId: string, rawToken: string) {
+  await persistSessionInDb(userId, rawToken);
   await setSessionCookie(rawToken);
 }
 

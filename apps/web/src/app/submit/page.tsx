@@ -4,6 +4,7 @@ import { content } from '@indlokal/shared';
 import { db } from '@/lib/db';
 import { SubmitForm } from './SubmitForm';
 import { ContentCallout } from '@/components/content/community-actions';
+import { getSessionUser } from '@/lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function SubmitPage() {
-  const [cities, categories] = await Promise.all([
+  const [cities, categories, viewer] = await Promise.all([
     db.city.findMany({
       where: {
         OR: [{ isActive: true }, { metroRegionId: { not: null } }],
@@ -30,6 +31,7 @@ export default async function SubmitPage() {
       select: { slug: true, name: true, icon: true },
       orderBy: { sortOrder: 'asc' },
     }),
+    getSessionUser(),
   ]);
 
   return (
@@ -60,6 +62,7 @@ export default async function SubmitPage() {
             name: city.name,
           }))}
           categories={categories}
+          viewerEmail={viewer?.email ?? null}
         />
       </div>
     </div>

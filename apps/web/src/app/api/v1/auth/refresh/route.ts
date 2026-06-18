@@ -11,7 +11,7 @@ import { apiError } from '@/lib/api/error';
 import { apiHandler } from '@/lib/api/handlers';
 import { issueAccessToken } from '@/lib/auth/jwt';
 import { rotateRefreshToken, RefreshTokenError } from '@/lib/auth/refresh';
-import { toMeProfile } from '@/lib/auth/profile';
+import { meProfileInclude, toMeProfile } from '@/lib/auth/profile';
 
 export const runtime = 'nodejs';
 
@@ -44,7 +44,7 @@ export const POST = apiHandler(async (req: NextRequest) => {
 
   const user = await db.user.findUnique({
     where: { id: result.userId },
-    include: { city: { select: { name: true } } },
+    include: meProfileInclude,
   });
   if (!user) {
     return apiError('TOKEN_INVALID', 'user no longer exists');

@@ -12,6 +12,7 @@ import { checkRateLimit, submitLimiter } from '@/lib/rate-limit';
 import { computeSimilarity } from '@/modules/pipeline';
 import { buildStoredEvidence } from '@/lib/community-trust';
 import { readCommunityCoreFormData } from '@/lib/communities/form-input';
+import { getSessionUser } from '@/lib/session';
 
 export type SubmitResult =
   | { success: true; communityName: string }
@@ -28,6 +29,11 @@ export async function submitCommunity(
   if (!checkRateLimit(submitLimiter, ip).allowed) {
     return { success: false, errors: { _: ['Too many submissions. Please try again later.'] } };
   }
+
+  // PRD/TDD-0060: attribution is session-first. When a user is signed in, the
+  // contribution binds to their account; the typed contact email is communication
+  // metadata only and is never used to derive (or create) the actor account.
+  const sessionUser = await getSessionUser();
 
   const channelsJson = (formData.get('channelsJson') as string) || '[]';
   let parsedChannels: Array<{
@@ -60,8 +66,10 @@ export async function submitCommunity(
     languages: core.languages,
     channels: parsedChannels,
     relationship: (formData.get('relationship') as string) || 'JUST_ADDING',
-    contactEmail: formData.get('contactEmail') as string,
-    contactName: formData.get('contactName') as string,
+    // Logged-in UI omits contact inputs entirely; normalize missing values so
+    // schema parsing remains stable and session-first contact resolution runs.
+    contactEmail: (formData.get('contactEmail') as string | null) ?? '',
+    contactName: (formData.get('contactName') as string | null) ?? '',
   };
 
   const parsed = submitCommunitySchema.safeParse(raw);
@@ -73,6 +81,20 @@ export async function submitCommunity(
   }
 
   const data = parsed.data;
+
+  // PRD/TDD-0060: contact is session-first. Authenticated users contribute as
+  // their account (contact = account email, name = account display name) and the
+  // form never asks for a separate contact. Anonymous submitters must provide an
+  // email so we can send the receipt and follow up. The typed contact email is
+  // never used to attribute the contribution (that is `submitterUserId` below).
+  const resolvedContactEmail = (sessionUser?.email ?? data.contactEmail ?? '').trim();
+  const resolvedContactName = (sessionUser?.displayName ?? data.contactName ?? '').trim();
+  if (!resolvedContactEmail) {
+    return {
+      success: false,
+      errors: { contactEmail: ['Please enter your email so we can follow up.'] },
+    };
+  }
 
   // Resolve city, dedup-check, and resolve categories - all DB reads that
   // must run before the write. Wrapped together so a cold-start DB error
@@ -163,26 +185,11 @@ export async function submitCommunity(
   // write — summarizeEvidence is pure and total.
   const sourceEvidence = buildStoredEvidence(channels.map((c) => c.url));
 
-  // Create or resolve a submitter user so createdByUserId is tracked
-  let submitterUserId: string | null = null;
-  try {
-    const email = data.contactEmail.trim().toLowerCase();
-    const submitter = await db.user.upsert({
-      where: { email },
-      update: {
-        ...(data.contactName ? { displayName: data.contactName } : {}),
-      },
-      create: {
-        email,
-        ...(data.contactName ? { displayName: data.contactName } : {}),
-        role: 'USER',
-      },
-      select: { id: true },
-    });
-    submitterUserId = submitter.id;
-  } catch {
-    // best-effort; submission should still proceed even if user upsert fails
-  }
+  // PRD/TDD-0060: attribute to the authenticated actor only. Anonymous
+  // submissions stay unattributed (createdByUserId: null) and rely on the
+  // contact email retained in metadata.submitter for follow-up — we no longer
+  // create ghost User rows from a typed contact email.
+  const submitterUserId: string | null = sessionUser?.id ?? null;
 
   // Create community as UNVERIFIED
   try {
@@ -201,8 +208,8 @@ export async function submitCommunity(
         source: 'COMMUNITY_SUBMITTED',
         metadata: {
           submitter: {
-            name: data.contactName,
-            email: data.contactEmail,
+            name: resolvedContactName || null,
+            email: resolvedContactEmail,
             relationship: data.relationship,
             // Legacy note: older rows may still include submitter.ownershipIntent.
             // New submissions use relationship as the single source of intent.
@@ -235,14 +242,15 @@ export async function submitCommunity(
 
   // Email is best-effort - don't fail the submission if it doesn't send
   try {
-    await sendSubmissionReceivedEmail(data.contactEmail, data.contactName, data.name);
+    await sendSubmissionReceivedEmail(resolvedContactEmail, resolvedContactName, data.name);
   } catch {
     // silently ignore email failure
   }
 
   // Analytics - fire-and-forget, non-critical
-  // Use 'anonymous' as distinctId for unauthenticated submissions to avoid PII in PostHog
-  await captureServerEvent('anonymous-submitter', Events.COMMUNITY_SUBMITTED, {
+  // Attribute to the session user when signed in; otherwise 'anonymous-submitter'
+  // to avoid PII in PostHog.
+  await captureServerEvent(sessionUser?.id ?? 'anonymous-submitter', Events.COMMUNITY_SUBMITTED, {
     city: city.slug,
     normalized_city_slug: normalizedCitySlug,
     channel_types: channels.map((c) => c.channelType.toLowerCase()),

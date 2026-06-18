@@ -55,22 +55,23 @@ export async function requestAdminMagicLink(
     };
   }
 
-  const user = await db.user.findUnique({
-    where: { email },
-    select: { id: true, role: true },
-  });
-
-  if (!user || user.role !== 'PLATFORM_ADMIN') {
-    // Vague message to prevent email enumeration
-    return { success: false, error: 'No admin account found for that email.' };
-  }
-
   const rl = checkRateLimit(magicLinkLimiter, email);
   if (!rl.allowed) {
     return {
       success: false,
       error: 'Too many login requests. Please check your email or wait before retrying.',
     };
+  }
+
+  const user = await db.user.findUnique({
+    where: { email },
+    select: { id: true, role: true },
+  });
+
+  // Always return success-shape for non-authorized addresses to avoid
+  // revealing whether an account exists or has admin permissions.
+  if (!user || user.role !== 'PLATFORM_ADMIN') {
+    return { success: true };
   }
 
   const rawToken = await createMagicLinkToken(user.id);
@@ -82,7 +83,9 @@ export async function requestAdminMagicLink(
   try {
     await sendAdminMagicLinkEmail(email, rawToken, verifyUrlOverride);
   } catch {
-    return { success: false, error: 'Failed to send login email. Please try again.' };
+    // Keep the same outward response shape to avoid account enumeration via
+    // downstream mail-provider behavior.
+    console.error('[admin/login] Failed to send admin magic link email.');
   }
 
   return { success: true };

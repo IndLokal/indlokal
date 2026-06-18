@@ -44,6 +44,18 @@ test('requestWebHandoffUrl posts next and returns the https url', async () => {
   assert.equal(url, 'https://indlokal.com/auth/handoff?token=tok');
 });
 
+test('requestWebHandoffUrl supports role-scoped web destinations', async () => {
+  const calls: StubCalls = {};
+  const client = makeClient(calls, async () =>
+    makeResponse('https://indlokal.com/auth/handoff?token=tok'),
+  );
+
+  await requestWebHandoffUrl(client, { next: '/admin' });
+
+  assert.equal(calls.path, '/api/v1/auth/handoff');
+  assert.deepEqual(calls.body, { next: '/admin' });
+});
+
 test('requestWebHandoffUrl omits next when not provided', async () => {
   const calls: StubCalls = {};
   const client = makeClient(calls, async () =>

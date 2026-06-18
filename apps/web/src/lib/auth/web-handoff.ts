@@ -7,6 +7,10 @@
  * the user lands authenticated in an in-app browser — never a long-lived
  * secret in a URL.
  *
+ * The `next` path can target any safe in-product route, including role-scoped
+ * surfaces such as `/admin`, `/organizer`, and `/ambassador`; authorization is
+ * still enforced server-side after the cookie session is established.
+ *
  * The raw token lives only in the returned URL; the DB stores its SHA-256 hash.
  * Single-use is enforced atomically via an `usedAt`-guarded update.
  */

@@ -9,6 +9,7 @@ import { can, type SessionUser } from '@/lib/auth/permissions';
 import { PreferencesForm } from './PreferencesForm';
 import { formatEventCardDate, DEFAULT_EVENT_TIMEZONE } from '@/lib/datetime/event-timezone';
 import { LocalDeviceSavesCard } from './LocalDeviceSavesCard';
+import { getMyContributions } from '@/lib/contributions/my-contributions';
 
 export const metadata: Metadata = {
   title: 'My Account - IndLokal',
@@ -47,6 +48,8 @@ function resolveEventTimezone(value: string | null | undefined): string {
 export default async function MePage() {
   const user = await getSessionUser();
   if (!user) redirect('/me/login');
+
+  const onboardingNeedsAttention = !user.onboardingComplete;
 
   const loadAccountLists = () =>
     Promise.all([
@@ -115,6 +118,15 @@ export default async function MePage() {
     accountLists = [[], [], [], []] as AccountLists;
   }
 
+  // PRD/TDD-0060: things this user has contributed (submissions + suggestions).
+  // Best-effort; never blocks the page.
+  let myContributions: Awaited<ReturnType<typeof getMyContributions>> = [];
+  try {
+    myContributions = await getMyContributions(user.id);
+  } catch (err) {
+    console.error('[MePage] Failed to load contributions; rendering empty.', err);
+  }
+
   const [savedCommunities, savedEvents, savedResources, activeCities] = accountLists;
 
   const initial = user.displayName?.charAt(0) ?? user.email.charAt(0).toUpperCase();
@@ -134,6 +146,20 @@ export default async function MePage() {
       (a: { role: string; revokedAt: Date | null }) => a.role === 'CITY_AMBASSADOR' && !a.revokedAt,
     );
   const hasHostAccess = user.role === 'EVENT_HOST' || user.role === 'PLATFORM_ADMIN';
+  const hasInternalAccess =
+    hasOrganizerAccess || hasHostAccess || hasAmbassadorAccess || isAdminLike;
+
+  let toolsLabel = 'Team tools';
+  if (isAdminLike) {
+    toolsLabel = 'Admin tools';
+  } else if (hasOrganizerAccess && !hasHostAccess && !hasAmbassadorAccess) {
+    toolsLabel = 'Organizer tools';
+  } else if (hasHostAccess && !hasOrganizerAccess && !hasAmbassadorAccess) {
+    toolsLabel = 'Host tools';
+  } else if (hasAmbassadorAccess && !hasOrganizerAccess && !hasHostAccess) {
+    toolsLabel = 'Ambassador tools';
+  }
+
   const roleBadges: string[] = [];
   if (hasOrganizerAccess) roleBadges.push('Organizer');
   if (hasHostAccess) roleBadges.push('Event Host');
@@ -193,12 +219,26 @@ export default async function MePage() {
         </form>
       </div>
 
-      {/* Workspaces */}
+      {onboardingNeedsAttention && (
+        <section className="card-base border-brand-300 bg-brand-50 p-5">
+          <p className="text-brand-800 text-xs font-semibold tracking-[0.08em] uppercase">
+            Finish setup
+          </p>
+          <h2 className="text-foreground mt-2 text-xl font-semibold">Complete your profile</h2>
+          <p className="text-muted mt-1 text-sm">
+            Add your city, personas, and languages to personalize your feed and recommendations.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-3">
+            <a href="#preferences" className="btn-primary px-4 py-2 text-sm">
+              Complete profile now
+            </a>
+          </div>
+        </section>
+      )}
+
+      {/* Quick links */}
       <section>
-        <h2 className="text-xl font-semibold">Workspaces</h2>
-        <p className="text-muted mt-1 text-sm">
-          Personal settings and internal consoles are both available from here.
-        </p>
+        <h2 className="text-xl font-semibold">Quick links</h2>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <div className="card-base p-4">
             <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
@@ -211,43 +251,40 @@ export default async function MePage() {
             </div>
           </div>
 
-          <div className="card-base p-4">
-            <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
-              Internal
-            </p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              {hasOrganizerAccess && (
-                <Link href="/organizer" className="btn-secondary px-4 py-2 text-sm">
-                  Organizer Home →
-                </Link>
-              )}
-              {hasHostAccess && (
-                <Link href="/organizer/host" className="btn-secondary px-4 py-2 text-sm">
-                  Event Host Home →
-                </Link>
-              )}
-              {hasAmbassadorAccess && (
-                <Link href="/ambassador" className="btn-secondary px-4 py-2 text-sm">
-                  Ambassador Console →
-                </Link>
-              )}
-              {isAdminLike && (
-                <Link href="/admin" className="btn-secondary px-4 py-2 text-sm">
-                  IndLokal Admin →
-                </Link>
-              )}
-              {!hasOrganizerAccess && !hasHostAccess && !hasAmbassadorAccess && !isAdminLike && (
-                <p className="text-muted text-sm">
-                  No internal workspace is enabled for this account.
-                </p>
-              )}
+          {hasInternalAccess && (
+            <div className="card-base p-4">
+              <p className="text-muted text-[11px] font-semibold tracking-[0.08em] uppercase">
+                {toolsLabel}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {hasOrganizerAccess && (
+                  <Link href="/organizer" className="btn-secondary px-4 py-2 text-sm">
+                    Organizer Home →
+                  </Link>
+                )}
+                {hasHostAccess && (
+                  <Link href="/organizer/host" className="btn-secondary px-4 py-2 text-sm">
+                    Event Host Home →
+                  </Link>
+                )}
+                {hasAmbassadorAccess && (
+                  <Link href="/ambassador" className="btn-secondary px-4 py-2 text-sm">
+                    Ambassador Console →
+                  </Link>
+                )}
+                {isAdminLike && (
+                  <Link href="/admin" className="btn-secondary px-4 py-2 text-sm">
+                    IndLokal Admin →
+                  </Link>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* Preferences */}
-      <section>
+      <section id="preferences">
         <h2 className="text-xl font-semibold">Preferences</h2>
         <p className="text-muted mt-1 text-sm">
           Personalise IndLokal to show content relevant to you.
@@ -260,6 +297,77 @@ export default async function MePage() {
             currentLanguages={user.preferredLanguages ?? []}
           />
         </div>
+      </section>
+
+      {/* Your contributions (PRD/TDD-0060) */}
+      <section>
+        <h2 className="text-xl font-semibold">Your contributions</h2>
+        {myContributions.length === 0 ? (
+          <p className="text-muted mt-3 text-sm">
+            You haven&apos;t added anything yet.{' '}
+            <Link
+              href="/submit"
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
+              Add a community
+            </Link>{' '}
+            or{' '}
+            <Link
+              href="/"
+              className="text-brand-600 hover:text-brand-700 font-medium hover:underline"
+            >
+              suggest an event →
+            </Link>
+          </p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {myContributions.map((item) => {
+              const statusLabel =
+                item.status === 'PUBLISHED'
+                  ? 'Published'
+                  : item.status === 'NEEDS_CHANGES'
+                    ? 'Needs changes'
+                    : 'Under review';
+              const statusClass =
+                item.status === 'PUBLISHED'
+                  ? 'bg-green-50 text-green-700'
+                  : item.status === 'NEEDS_CHANGES'
+                    ? 'bg-amber-50 text-amber-700'
+                    : 'bg-muted-bg text-muted';
+              const Row = (
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-muted-bg text-muted rounded-[var(--radius-badge)] border px-2 py-0.5 text-[11px] font-medium">
+                        {item.kind === 'COMMUNITY' ? 'Community' : 'Event'}
+                      </span>
+                      <span
+                        className={`rounded-[var(--radius-badge)] px-2 py-0.5 text-[11px] font-medium ${statusClass}`}
+                      >
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <p className="text-foreground mt-1 truncate font-medium">{item.title}</p>
+                  </div>
+                  {item.href && <span className="text-muted shrink-0">→</span>}
+                </div>
+              );
+              return item.href ? (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="card-base block p-4 transition-all hover:-translate-y-0.5 hover:shadow-md"
+                >
+                  {Row}
+                </Link>
+              ) : (
+                <div key={item.id} className="card-base p-4">
+                  {Row}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </section>
 
       {/* Following */}
