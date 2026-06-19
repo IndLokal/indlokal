@@ -20,7 +20,7 @@ import {
   STALE_EVENT_MARKERS,
   getYearSignalScore,
 } from './freshness';
-import { PIPELINE_USER_AGENT } from './http';
+import { PIPELINE_USER_AGENT } from './fetch/http';
 
 // Fallback list used only when homepage anchor discovery finds nothing for a
 // site (typically because the nav is rendered client-side). Each candidate is

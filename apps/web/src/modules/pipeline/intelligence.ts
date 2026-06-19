@@ -4,7 +4,7 @@ import { Prisma, type RelationshipType } from '@prisma/client';
 import { callOpenAI } from './extraction';
 import { getRuntimeLaneKeywordSeeds } from './config/runtime-config';
 import { htmlToText } from './text';
-import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './fetch/http';
 import type { ExtractedCommunity, SourceLane } from './types';
 
 export type ApprovedDynamicKeywordsByLane = {

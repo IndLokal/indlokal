@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
-import { decodeHtmlEntities } from './text';
-import type { ExtractedEvent, RawContent } from './types';
+import { decodeHtmlEntities } from '../text';
+import type { ExtractedEvent, RawContent } from '../types';
 
 type IcsParsedDate = {
   date: string;

@@ -8,15 +8,15 @@
  * Adapters never assign a city. That's the LLM's job.
  */
 
-import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
-import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
+import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from '../types';
+import { collapseWhitespace, decodeHtmlEntities, htmlToText } from '../text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
 import {
   GOOGLE_CSE_ENV_BY_LANE,
   getGoogleCseApiKey,
   resolveGoogleCseIdForLane,
-} from './config/env-config';
+} from '../config/env-config';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {

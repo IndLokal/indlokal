@@ -25,8 +25,11 @@ import {
   fetchPinnedUrl,
   fetchGoogleSearch,
   fetchDuckDuckGoSearch,
-} from './sources';
-import { extractCalendarEventFromRawContent, isEmbeddedCalendarEventRawContent } from './calendar';
+} from './fetch/sources';
+import {
+  extractCalendarEventFromRawContent,
+  isEmbeddedCalendarEventRawContent,
+} from './fetch/calendar';
 import { scorePinnedEventUrl } from './db-sources';
 import {
   STALE_EVENT_MARKERS,

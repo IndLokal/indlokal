@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const fetchTextWithFallbackMock = vi.fn();
 const fetchEmbeddedGoogleCalendarEventsMock = vi.fn(async () => ({ items: [], errors: [] }));
 
-vi.mock('../http', () => ({
+vi.mock('../fetch/http', () => ({
   PIPELINE_USER_AGENT: 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
   fetchTextWithFallback: fetchTextWithFallbackMock,
 }));
 
-vi.mock('../calendar', () => ({
+vi.mock('../fetch/calendar', () => ({
   fetchEmbeddedGoogleCalendarEvents: fetchEmbeddedGoogleCalendarEventsMock,
 }));
 
@@ -22,7 +22,7 @@ describe('fetchPinnedUrl', () => {
   });
 
   it('expands internal event links for DB community pages', async () => {
-    const { fetchPinnedUrl } = await import('../sources');
+    const { fetchPinnedUrl } = await import('../fetch/sources');
 
     fetchTextWithFallbackMock.mockImplementation(async (url: string) => {
       if (url.endsWith('/events/') || url.endsWith('/events')) {
