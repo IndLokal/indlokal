@@ -463,12 +463,32 @@ async function filterBatch(
       { maxTokens: 1000, batchSize: batch.length },
     );
 
-    const parsed = JSON.parse(response) as { results?: RelevanceResult[] };
-    return (parsed.results ?? []).map((r) => ({
-      index: batch[r.index]?.absoluteIndex ?? r.index,
-      isRelevant: Boolean(r.isRelevant),
-      reason: String(r.reason ?? ''),
-    }));
+    const parsed = safeParseLlmJson<{ results?: RelevanceResult[] }>(response);
+    const llmResults = Array.isArray(parsed?.results) ? parsed.results : [];
+    const byBatchIndex = new Map<number, RelevanceResult>();
+
+    for (const result of llmResults) {
+      if (!Number.isInteger(result.index)) continue;
+      if (result.index < 0 || result.index >= batch.length) continue;
+      byBatchIndex.set(result.index, {
+        index: batch[result.index]?.absoluteIndex ?? result.index,
+        isRelevant: Boolean(result.isRelevant),
+        reason: String(result.reason ?? ''),
+      });
+    }
+
+    // Keep false negatives low: if the model omits a batch index entirely,
+    // promote it to extraction instead of silently dropping it.
+    for (let batchIndex = 0; batchIndex < batch.length; batchIndex += 1) {
+      if (byBatchIndex.has(batchIndex)) continue;
+      byBatchIndex.set(batchIndex, {
+        index: batch[batchIndex]?.absoluteIndex ?? batchIndex,
+        isRelevant: true,
+        reason: 'missing-index-fallback',
+      });
+    }
+
+    return [...byBatchIndex.entries()].sort((a, b) => a[0] - b[0]).map(([, result]) => result);
   } catch (err) {
     // PRD/TDD-0028: budget / circuit trips must abort the run, not be swallowed.
     if (isGuardError(err)) throw err;
@@ -696,11 +716,11 @@ async function extractBatchCallOnce(
     { maxTokens: 4000, timeoutMs: 120_000, batchSize: batch.length },
   );
 
-  const parsed = JSON.parse(response) as {
+  const parsed = safeParseLlmJson<{
     items?: Array<Record<string, unknown> & { index?: number; type?: string }>;
-  };
+  }>(response);
 
-  if (!Array.isArray(parsed.items)) return [];
+  if (!Array.isArray(parsed?.items)) return [];
 
   const normalized = parsed.items
     .filter(
@@ -892,12 +912,12 @@ function derivePricingAccess(
       const priceMatch = costLower.match(currencyPrefixRe);
       if (priceMatch) {
         priceCurrency = priceMatch[1];
-        priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
+        priceAmount = normalizePriceAmount(priceMatch[2]);
       } else {
         const numMatch = costLower.match(currencySuffixRe);
         if (numMatch) {
           priceCurrency = '€';
-          priceAmount = parseFloat(numMatch[1].replace(',', '.'));
+          priceAmount = normalizePriceAmount(numMatch[1]);
         } else {
           costNote = cost;
         }
@@ -909,13 +929,13 @@ function derivePricingAccess(
     if (priceMatch) {
       costType = 'PAID';
       priceCurrency = priceMatch[1];
-      priceAmount = parseFloat(priceMatch[2].replace(',', '.'));
+      priceAmount = normalizePriceAmount(priceMatch[2]);
     } else {
       const numMatch = costLower.match(currencySuffixRe);
       if (numMatch) {
         costType = 'PAID';
         priceCurrency = '€';
-        priceAmount = parseFloat(numMatch[1].replace(',', '.'));
+        priceAmount = normalizePriceAmount(numMatch[1]);
       } else if (/price|fee|ticket|eintritt|€|\$|£/.test(costLower)) {
         costType = 'PAID';
         costNote = cost;
@@ -1013,6 +1033,30 @@ function normalizeStringArray(val: unknown): string[] {
   return [];
 }
 
+/**
+ * Parse LLM JSON output defensively (empty/fenced/malformed -> null).
+ * `callOpenAI` requests JSON object mode, but truncated completions can still
+ * return invalid payloads.
+ */
+function safeParseLlmJson<T>(raw: string): T | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const unfenced = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(unfenced) as T;
+  } catch {
+    return null;
+  }
+}
+
+function normalizePriceAmount(value: string): number | null {
+  const parsed = Number.parseFloat(value.replace(',', '.'));
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 function normalizeConfidence(val: unknown): number {
   if (typeof val === 'number' && val >= 0 && val <= 1) return Math.round(val * 100) / 100;
   return 0.5;
@@ -1022,7 +1066,8 @@ function normalizeFieldConfidence(val: unknown): Record<string, number> {
   if (val && typeof val === 'object' && !Array.isArray(val)) {
     const result: Record<string, number> = {};
     for (const [k, v] of Object.entries(val as Record<string, unknown>)) {
-      if (typeof v === 'number') result[k] = Math.round(v * 100) / 100;
+      if (typeof v !== 'number' || !Number.isFinite(v)) continue;
+      result[k] = Math.round(Math.min(1, Math.max(0, v)) * 100) / 100;
     }
     return result;
   }
