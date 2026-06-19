@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PipelineRunResult, PipelineRunScope } from '@/modules/pipeline';
 
@@ -94,18 +94,20 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [resultExpanded, setResultExpanded] = useState(false);
-  const [lastRunStatus, setLastRunStatus] = useState<LastRunStatus | null>(() => {
-    if (typeof window === 'undefined') return null;
+  const [lastRunStatus, setLastRunStatus] = useState<LastRunStatus | null>(null);
+
+  useEffect(() => {
     try {
       const raw = window.localStorage.getItem(LAST_RUN_STATUS_KEY);
-      if (!raw) return null;
+      if (!raw) return;
       const parsed = JSON.parse(raw) as LastRunStatus;
-      if (parsed && parsed.completedAt && parsed.mode) return parsed;
-      return null;
+      if (!parsed || !parsed.completedAt || !parsed.mode) return;
+      // Hydrate persisted status after mount so refresh always restores UI state.
+      setTimeout(() => setLastRunStatus(parsed), 0);
     } catch {
-      return null;
+      // Ignore malformed local state.
     }
-  });
+  }, []);
   const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
   const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
