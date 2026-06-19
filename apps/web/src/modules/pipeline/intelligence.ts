@@ -570,15 +570,6 @@ export async function refreshKeywordSuggestions() {
   return { created, updated, candidates: candidates.length };
 }
 
-export async function getApprovedDynamicKeywords(): Promise<string[]> {
-  const rows = await db.keywordSuggestion.findMany({
-    where: { status: 'APPROVED' },
-    select: { keyword: true },
-    orderBy: { confidence: 'desc' },
-  });
-  return rows.map((row) => row.keyword);
-}
-
 export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynamicKeywordsByLane> {
   const rows = await db.keywordSuggestion.findMany({
     where: { status: 'APPROVED' },
