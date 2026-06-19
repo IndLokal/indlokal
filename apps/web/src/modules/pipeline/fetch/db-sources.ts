@@ -320,6 +320,7 @@ export async function getDbCommunityStrategies(): Promise<
           hintCommunityName: community.name,
           enabled: true,
           lane: 'EVENT',
+          sourceIntent: 'dated_activity_discovery',
         });
       } else {
         // Homepage: always include (useful for community discovery)
@@ -334,6 +335,7 @@ export async function getDbCommunityStrategies(): Promise<
           hintCommunityName: community.name,
           enabled: true,
           lane: 'EVENT',
+          sourceIntent: 'dated_activity_discovery',
         });
 
         // Queue this channel for parallel event-link discovery below.
@@ -385,6 +387,7 @@ export async function getDbCommunityStrategies(): Promise<
         hintCommunityName: job.community.name,
         enabled: true,
         lane: 'EVENT',
+        sourceIntent: 'dated_activity_discovery',
       });
     }
   }

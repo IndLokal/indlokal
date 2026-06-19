@@ -179,9 +179,10 @@ function buildLaneBreakdown(
 function filterPinnedStrategiesForRun(
   strategies: PinnedStrategy[],
   triggeredBy: string,
+  runModeDefaulted: boolean,
   notes: string[],
 ): PinnedStrategy[] {
-  if (triggeredBy !== 'cron') return strategies;
+  if (triggeredBy !== 'cron' || !runModeDefaulted) return strategies;
 
   const kept = strategies.filter(
     (strategy) => strategy.lane !== 'RESOURCE' && strategy.lane !== 'COMMUNITY',
@@ -209,9 +210,10 @@ function filterPinnedStrategiesForRun(
 function filterKeywordStrategiesForRun(
   strategies: KeywordStrategy[],
   triggeredBy: string,
+  runModeDefaulted: boolean,
   notes: string[],
 ): KeywordStrategy[] {
-  if (triggeredBy !== 'cron') return strategies;
+  if (triggeredBy !== 'cron' || !runModeDefaulted) return strategies;
 
   const kept = strategies.filter(
     (strategy) => strategy.lane !== 'RESOURCE' && strategy.lane !== 'COMMUNITY',
@@ -693,6 +695,7 @@ export async function buildPipelineSourcePlan(
   const triggerFilteredKeywordStrategies = filterKeywordStrategiesForRun(
     keywordStrategies,
     triggeredBy,
+    runModeDefaulted,
     notes,
   );
   const modeFilteredKeywordStrategies = applyRunModeFilter(
@@ -720,6 +723,7 @@ export async function buildPipelineSourcePlan(
   const triggerFilteredPinnedStrategies = filterPinnedStrategiesForRun(
     allPinnedStrategies,
     triggeredBy,
+    runModeDefaulted,
     notes,
   );
   const modeFilteredPinnedStrategies = applyRunModeFilter(

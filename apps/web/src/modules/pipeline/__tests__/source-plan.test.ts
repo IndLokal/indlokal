@@ -802,6 +802,90 @@ describe('buildPipelineSourcePlan', () => {
     ]);
   });
 
+  it('honors explicit cron run mode before trigger-only lane filtering', async () => {
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
+
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_COMMUNITY_ID = 'community-cse';
+    process.env.GOOGLE_CSE_RESOURCE_ID = 'resource-cse';
+    process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
+    mocks.groupEvents.mockResolvedValue([]);
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'google-community-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Community',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'COMMUNITY',
+        sourceIntent: 'org_group_discovery',
+      },
+      {
+        id: 'google-resource-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Resource',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'RESOURCE',
+        sourceIntent: 'official_service_info_discovery',
+      },
+    ]);
+    mocks.getRuntimePinnedStrategies.mockResolvedValue([
+      {
+        id: 'community-pinned',
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        label: 'Community pinned',
+        enabled: true,
+        url: 'https://example.org/community',
+        lane: 'COMMUNITY',
+        sourceIntent: 'org_group_discovery',
+      },
+      {
+        id: 'resource-pinned',
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        label: 'Resource pinned',
+        enabled: true,
+        url: 'https://example.org/resource',
+        lane: 'RESOURCE',
+        sourceIntent: 'official_service_info_discovery',
+      },
+    ]);
+
+    const cronCommunityPlan = await buildPipelineSourcePlan({
+      regions,
+      triggeredBy: 'cron',
+      runMode: 'community_discovery',
+    });
+    const cronResourcePlan = await buildPipelineSourcePlan({
+      regions,
+      triggeredBy: 'cron',
+      runMode: 'resource_discovery',
+    });
+
+    expect(cronCommunityPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'google-community-keyword',
+    ]);
+    expect(cronCommunityPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'community-pinned',
+    ]);
+    expect(cronCommunityPlan.notes.some((note) => note.startsWith('cron run: skipped'))).toBe(
+      false,
+    );
+
+    expect(cronResourcePlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'google-resource-keyword',
+    ]);
+    expect(cronResourcePlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'resource-pinned',
+    ]);
+  });
+
   it('runs EVENT Google CSE only for cron runs', async () => {
     const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 

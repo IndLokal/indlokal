@@ -99,4 +99,52 @@ describe('runtime-config JSON fallback', () => {
     expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');
     expect(pinnedStrategies[0]?.sourceIntent).toBe('official_service_info_discovery');
   });
+
+  it('infers legacy lane metadata for DB rows missing payload.lane', async () => {
+    dbMock.$queryRaw.mockResolvedValue([
+      {
+        configType: 'REGION',
+        key: 'test-region',
+        label: 'Test Region',
+        enabled: true,
+        sourceType: null,
+        kind: null,
+        payload: { searchCenter: 'Berlin, Germany', citySlugs: ['berlin'] },
+      },
+      {
+        configType: 'STRATEGY',
+        key: 'legacy-event-keyword',
+        label: 'Legacy Event Keyword',
+        enabled: true,
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        payload: { radiusKm: 50, contentScope: 'community_events' },
+      },
+      {
+        configType: 'STRATEGY',
+        key: 'legacy-resource-pinned',
+        label: 'Legacy Resource Pinned',
+        enabled: true,
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        payload: {
+          url: 'https://www.cgimunich.gov.in/',
+          contentScope: 'official_portal',
+        },
+      },
+    ]);
+
+    const mod = await import('../config/runtime-config');
+    mod.resetRuntimeConfigCache();
+
+    const keywordStrategies = await mod.getRuntimeKeywordStrategies();
+    const pinnedStrategies = await mod.getRuntimePinnedStrategies();
+
+    expect(keywordStrategies).toHaveLength(1);
+    expect(keywordStrategies[0]?.lane).toBe('EVENT');
+    expect(keywordStrategies[0]?.sourceIntent).toBe('dated_activity_discovery');
+    expect(pinnedStrategies).toHaveLength(1);
+    expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');
+    expect(pinnedStrategies[0]?.sourceIntent).toBe('official_service_info_discovery');
+  });
 });

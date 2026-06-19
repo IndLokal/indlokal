@@ -135,6 +135,35 @@ function deriveSourceIntent(
   return undefined;
 }
 
+function inferLaneFromIntent(intent: PipelineSourceIntent | undefined): PipelineLane | undefined {
+  if (intent === 'dated_activity_discovery') return 'EVENT';
+  if (intent === 'org_group_discovery') return 'COMMUNITY';
+  if (intent === 'official_service_info_discovery') return 'RESOURCE';
+  return undefined;
+}
+
+function inferLegacyLane(row: ConfigRow): PipelineLane | undefined {
+  if (!isObject(row.payload)) return undefined;
+
+  const lane = normalizeSourceLane(row.payload.lane);
+  if (lane) return lane;
+
+  const inferredFromScope = inferLaneFromIntent(
+    deriveSourceIntent(undefined, row.payload.contentScope),
+  );
+  if (inferredFromScope) return inferredFromScope;
+
+  if (
+    row.sourceType === 'EVENTBRITE' ||
+    row.sourceType === 'MEETUP' ||
+    row.sourceType === 'DB_COMMUNITY'
+  ) {
+    return 'EVENT';
+  }
+
+  return undefined;
+}
+
 /**
  * Read source configuration from the database table `pipeline_source_configs`.
  * Used as the primary config source when available and populated.
@@ -458,7 +487,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
     const radiusKm =
       typeof radiusRaw === 'number' && Number.isFinite(radiusRaw) && radiusRaw > 0 ? radiusRaw : 50;
 
-    const lane = normalizeSourceLane(row.payload.lane);
+    const lane = inferLegacyLane(row);
     if (!lane) continue;
     const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
@@ -500,7 +529,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       parsedScope ?? (hintCitySlug ? 'CITY' : hintState ? 'REGION' : 'GENERIC');
     if (!url) continue;
 
-    const lane = normalizeSourceLane(row.payload.lane);
+    const lane = inferLegacyLane(row);
     if (!lane) continue;
     const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
 
