@@ -104,34 +104,6 @@ function normalizeSourceLane(value: unknown): SourceLane | undefined {
 }
 
 /**
- * Conservative lane inference for source types with built-in content intent.
- * Returns undefined for ambiguous types (GOOGLE_SEARCH, WEBSITE_SCRAPE, etc.) that
- * must carry an explicit lane annotation in config payloads.
- *
- * Unambiguous inference:
- *   - EVENTBRITE, MEETUP → EVENT
- *   - DB_COMMUNITY → EVENT
- *   - CGI_MUNICH → RESOURCE
- *   - COMMUNITY_SUGGESTION → COMMUNITY
- */
-function inferLaneFromSourceType(sourceType: SourceType): SourceLane | undefined {
-  switch (sourceType) {
-    case 'EVENTBRITE':
-    case 'MEETUP':
-    case 'DB_COMMUNITY':
-      return 'EVENT';
-    case 'CGI_MUNICH':
-      return 'RESOURCE';
-    case 'COMMUNITY_SUGGESTION':
-      return 'COMMUNITY';
-    default:
-      // GOOGLE_SEARCH, DUCKDUCKGO, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM,
-      // INDOEUROPEAN, GOOGLE_ALERT — require explicit lane in config payload.
-      return undefined;
-  }
-}
-
-/**
  * Derive pipeline source intent from lane and content scope metadata.
  * SourceIntent shapes LLM extraction instructions and filtering behavior.
  *
@@ -384,8 +356,7 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
       if (scope) payload.scope = scope;
     }
 
-    // Carry explicit lane from config; falls back to sourceType inference at
-    // parse time (normalizeSourceLane / inferLaneFromSourceType).
+    // Carry explicit lane from config. Fresh configs must declare lane directly.
     if (typeof strategy.lane === 'string' && strategy.lane.trim().length > 0) {
       payload.lane = strategy.lane.trim().toUpperCase();
     }
@@ -515,7 +486,8 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
     const radiusKm =
       typeof radiusRaw === 'number' && Number.isFinite(radiusRaw) && radiusRaw > 0 ? radiusRaw : 50;
 
-    const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
+    const lane = normalizeSourceLane(row.payload.lane);
+    if (!lane) continue;
     const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
       id: row.key,
@@ -573,7 +545,8 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       continue;
     }
 
-    const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
+    const lane = normalizeSourceLane(row.payload.lane);
+    if (!lane) continue;
     const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
       id: row.key,
