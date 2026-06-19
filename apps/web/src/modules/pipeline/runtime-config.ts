@@ -1,22 +1,13 @@
 /**
- * Runtime pipeline source configuration.
+ * Runtime source configuration loader for pipeline planning.
  *
- * Single source of truth for keywords, regions, and strategies:
+ * Configuration precedence:
+ * 1) DB table pipeline_source_configs (primary)
+ * 2) Bundled JSON defaults in prisma/data/pipeline-source-defaults.json (fallback)
  *
- *   1. The DB table `pipeline_source_configs` (managed via
- *      `pnpm pipeline:sources:sync`, which upserts from JSON), OR
- *   2. The bundled JSON defaults at
- *      `apps/web/prisma/data/pipeline-source-defaults.json` (fallback
- *      when the table is missing or empty - keeps fresh deployments and
- *      test environments working without a manual sync step).
- *
- * The DB row is always preferred when present, so admins can disable or
- * tweak entries without redeploying. The bundled JSON is the canonical
- * baseline that bootstrap seeds and that runtime falls back to.
- *
- * All four getters share a single per-process read of the underlying
- * config rows so a pipeline run never hits the DB more than once for
- * planning data.
+ * DB-backed rows are preferred when present so operators can adjust strategy
+ * behavior without redeploying. The JSON file remains the bootstrap baseline
+ * and runtime safety net for fresh/test environments.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -32,7 +23,10 @@ type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
 export type KeywordStrategyTemplate = Omit<KeywordStrategy, 'keywords'>;
 
+/** Canonical lane vocabulary used across runtime parsing and planner routing. */
 export const SOURCE_LANES = ['EVENT', 'COMMUNITY', 'RESOURCE'] as const;
+
+/** Canonical lifecycle stages for RESOURCE journey hints. */
 export const JOURNEY_RESOURCE_STAGES = [
   'PRE_ARRIVAL',
   'FIRST_30_DAYS',
@@ -43,6 +37,7 @@ export const JOURNEY_RESOURCE_STAGES = [
 
 export type JourneyResourceStage = (typeof JOURNEY_RESOURCE_STAGES)[number];
 
+/** Lane-specific keyword seed payload used by source planning. */
 export type RuntimeLaneKeywordSeeds = {
   byLane: Partial<Record<SourceLane, string[]>>;
   journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>>;
@@ -98,7 +93,7 @@ function normalizePinnedScope(value: unknown): PinnedScope | null {
   return null;
 }
 
-// ── Lane helpers ────────────────────────────────────────────────────
+/** Normalization sets for lane and journey stage parsing. */
 
 const VALID_LANES = new Set<SourceLane>(SOURCE_LANES);
 const VALID_JOURNEY_STAGES = new Set<JourneyResourceStage>(JOURNEY_RESOURCE_STAGES);
@@ -214,6 +209,7 @@ function normalizeJourneyStage(value: unknown): JourneyResourceStage | undefined
   return VALID_JOURNEY_STAGES.has(upper) ? upper : undefined;
 }
 
+/** Parse lane-seeded keyword hints from JSON defaults. */
 function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
   const byLane: Partial<Record<SourceLane, string[]>> = {};
   const journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>> = {};
@@ -239,8 +235,8 @@ function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
 }
 
 function resolveDefaultsJsonPath(): string {
-  // runtime-config.ts lives in `apps/web/src/modules/pipeline/`.
-  // The bundled defaults live in `apps/web/prisma/data/`.
+  // runtime-config.ts lives in apps/web/src/modules/pipeline/.
+  // The bundled defaults live in apps/web/prisma/data/.
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(moduleDir, '../../../prisma/data/pipeline-source-defaults.json');
 }
@@ -354,10 +350,10 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
   return rows;
 }
 
-// ── Cached loader ──────────────────────────────────────
-// In-process cache ensures each request loads config only once.
-// Prevents repeated DB queries or file I/O during a single pipeline run.
-// Can be reset for tests or long-running workers.
+/**
+ * In-process cache for parsed config rows.
+ * Prevents repeated DB/file reads during a planner execution window.
+ */
 
 let cachedRows: { rows: ConfigRow[]; source: ConfigSource } | null = null;
 let inflight: Promise<{ rows: ConfigRow[]; source: ConfigSource }> | null = null;
@@ -417,7 +413,7 @@ export function resetRuntimeConfigCache(): void {
   inflight = null;
 }
 
-// ── Parsers (operate on either source) ────────────────
+/** Parsers operate uniformly on rows from DB or JSON fallback. */
 
 /**
  * Parse regions from config rows into SearchRegion contracts.
@@ -485,7 +481,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
 
 /**
  * Parse pinned URL strategies from config rows.
- * Validates URL presence, scope, and lane metadata.
+ * Validates URL presence, scope, lane metadata, and source-policy qualification.
  * Skips disabled rows and entries without required fields.
  */
 function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
@@ -540,6 +536,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
  * Fetch all enabled regions for the current pipeline context.
  * Cached per-process; clears only on resetRuntimeConfigCache().
  * Used during source planning to scope keyword and pinned searches.
+ * Throws when neither DB nor JSON fallback yields any enabled regions.
  */
 export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
   const { rows } = await loadConfigRows();
@@ -556,6 +553,7 @@ export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
  * Fetch all enabled keyword search strategies.
  * Cached per-process; clears only on resetRuntimeConfigCache().
  * Includes lane metadata and source intent for lane-aware orchestration.
+ * Throws when neither DB nor JSON fallback yields any keyword strategies.
  */
 export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemplate[]> {
   const { rows } = await loadConfigRows();
@@ -572,6 +570,7 @@ export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemp
  * Fetch lane-specific keyword seeds and journey resource stage hints.
  * Loaded directly from bundled JSON defaults to keep planning hints independent
  * of DB-managed REGION and STRATEGY rows.
+ * Returns empty maps when sections are absent or malformed.
  */
 export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSeeds> {
   const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
@@ -583,6 +582,7 @@ export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSe
  * Fetch all enabled pinned URL strategies.
  * Cached per-process; clears only on resetRuntimeConfigCache().
  * Includes lane metadata and hints for city/origin bucketing during execution.
+ * Throws when neither DB nor JSON fallback yields any pinned strategies.
  */
 export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
   const { rows } = await loadConfigRows();
@@ -597,7 +597,7 @@ export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
 
 /**
  * Report the current config source (DB or JSON fallback).
- * Useful for debugging and observability: determines whether config is DB-managed or using defaults.
+ * Useful for diagnostics when validating migration/seed state.
  */
 export async function getRuntimeConfigSource(): Promise<ConfigSource> {
   const { source } = await loadConfigRows();

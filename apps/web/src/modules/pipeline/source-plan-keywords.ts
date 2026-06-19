@@ -1,3 +1,17 @@
+/**
+ * Keyword shaping helpers for source-plan.
+ *
+ * Converts canonical planner keywords into source-ready query payloads and
+ * builds lane-specific gap keyword pools used during strategy expansion.
+ *
+ * Responsibilities:
+ * - render Google Search OR-batched keyword queries
+ * - flatten RESOURCE journey-stage hints for admin discovery runs
+ * - expand event/community city-gap templates into concrete phrases
+ * - route prebuilt gap keyword pools by strategy lane
+ *
+ * This module intentionally contains no DB or runtime-config row loading.
+ */
 import type {
   JourneyResourceStage,
   KeywordStrategyTemplate,

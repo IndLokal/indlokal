@@ -1,3 +1,19 @@
+/**
+ * Pipeline source planner.
+ *
+ * Builds an executable source plan by combining runtime-configured keyword
+ * and pinned strategies with live DB coverage signals.
+ *
+ * Responsibilities:
+ * - detect event/community coverage gaps for requested region cities
+ * - decide whether keyword discovery should run for this trigger context
+ * - apply lane-aware filtering for cron/admin execution modes
+ * - prioritize and cap DB-pinned sources for balanced coverage
+ * - return lane breakdown and planner notes for observability
+ *
+ * Keyword shaping (Google batching, gap template expansion, journey-stage
+ * resource hint flattening) is delegated to source-plan-keywords.ts.
+ */
 import { db } from '@/lib/db';
 import {
   getRuntimeLaneKeywordSeeds,
