@@ -22,6 +22,10 @@ type CityGap = {
 
 type PipelineSourcePlanLaneKey = SourceLane | 'UNKNOWN';
 
+/**
+ * Lane breakdown counts strategies by EVENT, COMMUNITY, RESOURCE, and UNKNOWN lanes.
+ * Used to report what sources the planner decided to run in this execution.
+ */
 type PipelineSourcePlanLaneBreakdown = Record<
   PipelineSourcePlanLaneKey,
   {
@@ -30,6 +34,10 @@ type PipelineSourcePlanLaneBreakdown = Record<
   }
 >;
 
+/**
+ * Full execution plan for a pipeline run.
+ * Contains all keyword and pinned strategies to execute, city gaps, and lane distribution.
+ */
 export type PipelineSourcePlan = {
   keywordStrategies: KeywordStrategy[];
   pinnedStrategies: PinnedStrategy[];
@@ -74,12 +82,20 @@ function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
+/**
+ * Normalize a keyword for Google Custom Search by wrapping it in quotes if not already quoted.
+ * Quoted keywords enforce exact phrase matching.
+ */
 function quoteGoogleKeyword(keyword: string): string {
   const trimmed = keyword.trim();
   if (!trimmed) return trimmed;
   return trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed : `"${trimmed}"`;
 }
 
+/**
+ * Group keywords into batches for Google Custom Search.
+ * Each batch joins 3 keywords with OR to expand the search within one query.
+ */
 function renderGoogleKeywordQueries(keywords: string[]): string[] {
   const groupSize = 3;
   const rendered: string[] = [];
@@ -92,6 +108,10 @@ function renderGoogleKeywordQueries(keywords: string[]): string[] {
   return rendered;
 }
 
+/**
+ * Format keywords for a specific source type.
+ * Google Search requires batching with OR operators; other sources use keywords as-is.
+ */
 function renderKeywordsForSource(
   sourceType: SearchStrategy['sourceType'],
   keywords: string[],
@@ -103,6 +123,10 @@ function renderKeywordsForSource(
   return keywords;
 }
 
+/**
+ * Expand keyword templates by substituting city names and deduplicating results.
+ * E.g., 'Indian event {city}' → 'Indian event Stuttgart', 'Indian event Munich', ...
+ */
 function expandTemplates(templates: readonly string[], cities: Array<{ name: string }>): string[] {
   return unique(
     cities.flatMap((city) => templates.map((template) => template.replace('{city}', city.name))),
@@ -139,6 +163,10 @@ function getLaneSeedKeywords(
   return laneSeeds != null && laneSeeds.length > 0 ? laneSeeds : fallback;
 }
 
+/**
+ * Count strategies by lane for observability.
+ * Returns a summary of how many keyword and pinned strategies target each lane.
+ */
 function buildLaneBreakdown(
   keywordStrategies: KeywordStrategy[],
   pinnedStrategies: PinnedStrategy[],
@@ -160,6 +188,11 @@ function buildLaneBreakdown(
   return breakdown;
 }
 
+/**
+ * Apply lane-based filtering for cron-triggered runs.
+ * Cron runs only execute EVENT pinned strategies; RESOURCE and COMMUNITY are admin/city scoped.
+ * Logs skipped strategies in the notes array for observability.
+ */
 function filterPinnedStrategiesForRun(
   strategies: PinnedStrategy[],
   triggeredBy: string,
@@ -185,6 +218,11 @@ function filterPinnedStrategiesForRun(
   return kept;
 }
 
+/**
+ * Apply lane-based filtering for cron-triggered runs.
+ * Cron runs only execute EVENT keyword strategies; RESOURCE and COMMUNITY require admin/city scoping.
+ * Logs skipped strategies in the notes array for observability.
+ */
 function filterKeywordStrategiesForRun(
   strategies: KeywordStrategy[],
   triggeredBy: string,
@@ -210,6 +248,10 @@ function filterKeywordStrategiesForRun(
   return kept;
 }
 
+/**
+ * Sort pinned strategies by scored priority, preserving relative order for ties.
+ * Higher priority URLs (official sources, strong domains) run first in a batch.
+ */
 function prioritizeDbPinnedSources(strategies: PinnedStrategy[]): PinnedStrategy[] {
   return strategies
     .map((strategy, index) => ({
@@ -224,6 +266,11 @@ function prioritizeDbPinnedSources(strategies: PinnedStrategy[]): PinnedStrategy
     .map(({ strategy }) => strategy);
 }
 
+/**
+ * Compute the grouping key for a pinned source.
+ * Used to ensure balanced distribution across cities and origins when limiting results.
+ * Returns 'city:slug' if a city hint is present, or 'origin:hostname' if the URL is valid.
+ */
 function getDbPinnedBucketKey(strategy: PinnedStrategy): string {
   if (strategy.hintCitySlug) {
     return `city:${strategy.hintCitySlug.toLowerCase()}`;
@@ -244,6 +291,11 @@ function getDbPinnedBucketKey(strategy: PinnedStrategy): string {
   return `city:${strategy.hintCitySlug ?? '__unknown__'}`;
 }
 
+/**
+ * Cap pinned sources to a limit while balancing across buckets (cities/origins).
+ * Round-robin picks one source per bucket in each pass, ensuring diverse coverage.
+ * Prevents any single city or origin from monopolizing the execution budget.
+ */
 function limitDbPinnedSources(strategies: PinnedStrategy[], limit: number): PinnedStrategy[] {
   if (limit >= strategies.length) return strategies;
 
@@ -281,6 +333,10 @@ function limitDbPinnedSources(strategies: PinnedStrategy[], limit: number): Pinn
   return selected;
 }
 
+/**
+ * Check if a strategy has required credentials/configuration to run.
+ * Certain source types (EVENTBRITE, GOOGLE_SEARCH) require API keys; others are always available.
+ */
 function isConfigured(strategy: KeywordStrategyTemplate): boolean {
   if (strategy.sourceType === 'EVENTBRITE') return Boolean(process.env.EVENTBRITE_API_KEY);
   if (strategy.sourceType === 'GOOGLE_SEARCH') {
@@ -381,6 +437,23 @@ async function getLowCoverageCities(
     .slice(0, limit);
 }
 
+/**
+ * Build the complete source plan for a pipeline run.
+ *
+ * Fetches runtime-configured keyword and pinned strategies, filters by lane and run context,
+ * identifies cities with content gaps, and returns a breakdown for execution.
+ *
+ * Key behaviors:
+ *   - Cron runs filter out COMMUNITY and RESOURCE lanes (event-first only)
+ *   - Admin/manual runs include all lanes
+ *   - Pinned strategies are prioritized by scored domain strength
+ *   - Keyword strategies are expanded with gap-analysis templates for low-coverage cities
+ *   - Lane metrics track how many strategies target each content lane
+ *
+ * @param regions - enabled search regions (from runtime config)
+ * @param triggeredBy - execution context: 'cron', 'admin', or 'cli'
+ * @returns Plan containing strategies, city gaps, and lane breakdown
+n */
 export async function buildPipelineSourcePlan(
   regions: SearchRegion[],
   triggeredBy: string,
