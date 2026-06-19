@@ -9,6 +9,7 @@ import {
   getApprovedDynamicKeywordsByLane,
   type ApprovedDynamicKeywordsByLane,
 } from './intelligence';
+import { getAdminResourceJourneyKeywords, renderKeywordsForSource } from './source-plan-keywords';
 import type { SearchRegion, SearchStrategy, SourceLane } from './types';
 import type { KeywordStrategyTemplate } from './runtime-config';
 
@@ -70,14 +71,6 @@ const COMMUNITY_GAP_TEMPLATES = [
   'indischer Verein {city}',
 ] as const;
 
-const JOURNEY_RESOURCE_STAGE_ORDER = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-] as const;
-
 function getPositiveIntEnv(name: string, fallback: number): number {
   const parsed = Number.parseInt(process.env[name] ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -85,47 +78,6 @@ function getPositiveIntEnv(name: string, fallback: number): number {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-}
-
-/**
- * Normalize a keyword for Google Custom Search by wrapping it in quotes if not already quoted.
- * Quoted keywords enforce exact phrase matching.
- */
-function quoteGoogleKeyword(keyword: string): string {
-  const trimmed = keyword.trim();
-  if (!trimmed) return trimmed;
-  return trimmed.startsWith('"') && trimmed.endsWith('"') ? trimmed : `"${trimmed}"`;
-}
-
-/**
- * Group keywords into batches for Google Custom Search.
- * Each batch joins 3 keywords with OR to expand the search within one query.
- */
-function renderGoogleKeywordQueries(keywords: string[]): string[] {
-  const groupSize = 3;
-  const rendered: string[] = [];
-
-  for (let index = 0; index < keywords.length; index += groupSize) {
-    const group = keywords.slice(index, index + groupSize).map(quoteGoogleKeyword);
-    if (group.length > 0) rendered.push(group.join(' OR '));
-  }
-
-  return rendered;
-}
-
-/**
- * Format keywords for a specific source type.
- * Google Search requires batching with OR operators; other sources use keywords as-is.
- */
-function renderKeywordsForSource(
-  sourceType: SearchStrategy['sourceType'],
-  keywords: string[],
-): string[] {
-  if (sourceType === 'GOOGLE_SEARCH') {
-    return renderGoogleKeywordQueries(keywords);
-  }
-
-  return keywords;
 }
 
 /**
@@ -534,14 +486,7 @@ export async function buildPipelineSourcePlan(
       };
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
-  const resourceJourneyGapKeywords =
-    triggeredBy === 'admin' && laneKeywordSeeds
-      ? unique(
-          JOURNEY_RESOURCE_STAGE_ORDER.flatMap(
-            (stage) => laneKeywordSeeds.journeyResourceByStage[stage] ?? [],
-          ),
-        )
-      : [];
+  const resourceJourneyGapKeywords = getAdminResourceJourneyKeywords(triggeredBy, laneKeywordSeeds);
 
   // Use union gap cities for community-discovery searches so community lanes can
   // still probe organizer discovery in event-starved cities.
