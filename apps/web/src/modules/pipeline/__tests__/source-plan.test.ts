@@ -614,13 +614,17 @@ describe('buildPipelineSourcePlan', () => {
     const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
 
     expect(cronPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
-      'community-directory',
+      // explicit COMMUNITY lane discovery is also excluded in event-first cron
     ]);
+    expect(cronPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([]);
     expect(cronPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
       'eventbrite-keyword',
     ]);
     expect(cronPlan.notes).toContain(
       'cron run: skipped 1 RESOURCE pinned strategies (admin/city scoped only)',
+    );
+    expect(cronPlan.notes).toContain(
+      'cron run: skipped 1 COMMUNITY pinned strategies (event-first cron)',
     );
     expect(cronPlan.notes).toContain(
       'cron run: skipped 1 RESOURCE keyword strategies (admin/city scoped only)',
@@ -633,6 +637,40 @@ describe('buildPipelineSourcePlan', () => {
     expect(adminPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
       'eventbrite-keyword',
       'resource-keyword',
+    ]);
+  });
+
+  it('excludes explicit COMMUNITY lane keyword strategies from cron but keeps them for admin', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
+    mocks.groupEvents.mockResolvedValue([]);
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'google-community-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Community',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'COMMUNITY',
+      },
+    ]);
+
+    const cronPlan = await buildPipelineSourcePlan(regions, 'cron');
+    const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
+
+    expect(cronPlan.keywordStrategies).toEqual([]);
+    expect(cronPlan.notes).toContain(
+      'cron run: skipped 1 COMMUNITY keyword strategies (event-first cron)',
+    );
+
+    expect(adminPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'google-community-keyword',
     ]);
   });
 

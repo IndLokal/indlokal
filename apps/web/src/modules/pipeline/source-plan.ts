@@ -147,10 +147,20 @@ function filterPinnedStrategiesForRun(
 ): PinnedStrategy[] {
   if (triggeredBy !== 'cron') return strategies;
 
-  const kept = strategies.filter((strategy) => strategy.lane !== 'RESOURCE');
-  const dropped = strategies.length - kept.length;
-  if (dropped > 0) {
-    notes.push(`cron run: skipped ${dropped} RESOURCE pinned strategies (admin/city scoped only)`);
+  const kept = strategies.filter(
+    (strategy) => strategy.lane !== 'RESOURCE' && strategy.lane !== 'COMMUNITY',
+  );
+  const resourceDropped = strategies.filter((strategy) => strategy.lane === 'RESOURCE').length;
+  const communityDropped = strategies.filter((strategy) => strategy.lane === 'COMMUNITY').length;
+  if (resourceDropped > 0) {
+    notes.push(
+      `cron run: skipped ${resourceDropped} RESOURCE pinned strategies (admin/city scoped only)`,
+    );
+  }
+  if (communityDropped > 0) {
+    notes.push(
+      `cron run: skipped ${communityDropped} COMMUNITY pinned strategies (event-first cron)`,
+    );
   }
   return kept;
 }
@@ -162,10 +172,20 @@ function filterKeywordStrategiesForRun(
 ): KeywordStrategy[] {
   if (triggeredBy !== 'cron') return strategies;
 
-  const kept = strategies.filter((strategy) => strategy.lane !== 'RESOURCE');
-  const dropped = strategies.length - kept.length;
-  if (dropped > 0) {
-    notes.push(`cron run: skipped ${dropped} RESOURCE keyword strategies (admin/city scoped only)`);
+  const kept = strategies.filter(
+    (strategy) => strategy.lane !== 'RESOURCE' && strategy.lane !== 'COMMUNITY',
+  );
+  const resourceDropped = strategies.filter((strategy) => strategy.lane === 'RESOURCE').length;
+  const communityDropped = strategies.filter((strategy) => strategy.lane === 'COMMUNITY').length;
+  if (resourceDropped > 0) {
+    notes.push(
+      `cron run: skipped ${resourceDropped} RESOURCE keyword strategies (admin/city scoped only)`,
+    );
+  }
+  if (communityDropped > 0) {
+    notes.push(
+      `cron run: skipped ${communityDropped} COMMUNITY keyword strategies (event-first cron)`,
+    );
   }
   return kept;
 }
