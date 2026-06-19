@@ -1,14 +1,69 @@
+/**
+ * Enrichment intelligence helpers for post-discovery quality improvements.
+ *
+ * Responsibilities:
+ * - Semantic duplicate tie-break checks for borderline community matches
+ * - Community enrichment suggestion generation from canonical source pages
+ * - Relationship graph inference (same organizer, sister chapter)
+ * - Dynamic keyword mining from approved pipeline outcomes
+ *
+ * This module intentionally stays lightweight: schema/domain values come from
+ * Prisma enums where available, and only local heuristics stay file-local.
+ */
+
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
-import { Prisma, type RelationshipType } from '@prisma/client';
+import {
+  CommunityStatus,
+  KeywordSuggestionStatus,
+  PipelineEntityType,
+  PipelineItemStatus,
+  PipelineReviewKind,
+  PipelineSourceType,
+  Prisma,
+  RelationshipType,
+} from '@prisma/client';
 import { callOpenAI, htmlToText } from '../llm';
-import { getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
+import { SOURCE_LANES, getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from '../fetch/http';
 import type { ExtractedCommunity, SourceLane } from '../types';
 
 export type ApprovedDynamicKeywordsByLane = {
   byLane: Record<SourceLane, string[]>;
 };
+
+const SOURCE_LANE_SET = new Set<SourceLane>(SOURCE_LANES);
+
+/** Minimum confidence required to accept an LLM semantic duplicate match. */
+const SEMANTIC_DUPLICATE_MIN_CONFIDENCE = 0.8;
+
+/** Max bytes of fetched source text to keep for enrichment prompts. */
+const ENRICHMENT_SOURCE_TEXT_MAX_CHARS = 12_000;
+
+/** HTTP timeout for enrichment source fetches. */
+const ENRICHMENT_SOURCE_FETCH_TIMEOUT_MS = 15_000;
+
+/** Re-enrich stale communities no more often than this many days. */
+const ENRICHMENT_LOOKBACK_DAYS = 30;
+
+/** Candidate pool size for keyword mining from reviewed items. */
+const KEYWORD_MINING_APPROVED_SAMPLE_SIZE = 200;
+
+/** Default confidence applied when keyword-eval LLM omits confidence. */
+const KEYWORD_CONFIDENCE_FALLBACK = 0.6;
+
+/** Number of evidence snippets to store per candidate phrase. */
+const KEYWORD_EVIDENCE_SNIPPET_LIMIT = 3;
+
+/** Candidate phrases must appear at least this many times to be evaluated. */
+const KEYWORD_MIN_OCCURRENCE_COUNT = 2;
+
+/** Max candidate phrases sent to keyword evaluation LLM. */
+const KEYWORD_CANDIDATE_LIMIT = 30;
+
+/** Lower/upper tokenized phrase lengths for candidate extraction. */
+const KEYWORD_PHRASE_MIN_LENGTH = 4;
+const KEYWORD_PHRASE_MAX_LENGTH = 32;
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
 
@@ -46,21 +101,20 @@ function normalizeKeyword(keyword: string): string {
 }
 
 function isSourceLane(value: string | null | undefined): value is SourceLane {
-  return value === 'EVENT' || value === 'COMMUNITY' || value === 'RESOURCE';
+  return typeof value === 'string' && SOURCE_LANE_SET.has(value as SourceLane);
 }
 
 function getKeywordLaneFromEntityType(entityType: string): SourceLane | null {
-  if (entityType === 'EVENT') return 'EVENT';
-  if (entityType === 'COMMUNITY') return 'COMMUNITY';
-  if (entityType === 'RESOURCE') return 'RESOURCE';
+  if (entityType === PipelineEntityType.EVENT) return 'EVENT';
+  if (entityType === PipelineEntityType.COMMUNITY) return 'COMMUNITY';
+  if (entityType === PipelineEntityType.RESOURCE) return 'RESOURCE';
   return null;
 }
 
 function resolveDominantKeywordLane(
   laneCounts: Partial<Record<SourceLane, number>>,
 ): SourceLane | null {
-  const ranked = (['EVENT', 'COMMUNITY', 'RESOURCE'] as const)
-    .map((lane) => ({ lane, count: laneCounts[lane] ?? 0 }))
+  const ranked = SOURCE_LANES.map((lane) => ({ lane, count: laneCounts[lane] ?? 0 }))
     .filter((entry) => entry.count > 0)
     .sort((a, b) => b.count - a.count);
 
@@ -134,7 +188,7 @@ export async function semanticCommunityDuplicateCheck(
       .filter((match) => match.sameEntity && typeof match.id === 'string')
       .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0];
 
-    if (!best || (best.confidence ?? 0) < 0.8) return null;
+    if (!best || (best.confidence ?? 0) < SEMANTIC_DUPLICATE_MIN_CONFIDENCE) return null;
 
     return {
       matchedId: best.id as string,
@@ -155,27 +209,25 @@ async function fetchSourceText(url: string): Promise<string | null> {
   try {
     const response = await fetchTextWithFallback(url, {
       headers: { 'User-Agent': PIPELINE_USER_AGENT },
-      timeoutMs: 15_000,
+      timeoutMs: ENRICHMENT_SOURCE_FETCH_TIMEOUT_MS,
     });
     if (!response.ok) return null;
     const text = response.text;
     const cleaned = stripHtml(text);
-    return cleaned.slice(0, 12_000);
+    return cleaned.slice(0, ENRICHMENT_SOURCE_TEXT_MAX_CHARS);
   } catch {
     return null;
   }
 }
 
 export async function enrichSparseCommunities(limit = 10) {
+  const staleThreshold = new Date(Date.now() - ENRICHMENT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
   const communities = await db.community.findMany({
     where: {
-      status: { in: ['ACTIVE', 'CLAIMED', 'UNVERIFIED'] },
+      status: { in: [CommunityStatus.ACTIVE, CommunityStatus.CLAIMED, CommunityStatus.UNVERIFIED] },
       mergedIntoId: null,
       completenessScore: { lt: 40 },
-      OR: [
-        { lastEnrichedAt: null },
-        { lastEnrichedAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
-      ],
+      OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: staleThreshold } }],
     },
     select: {
       id: true,
@@ -197,8 +249,8 @@ export async function enrichSparseCommunities(limit = 10) {
   for (const community of communities) {
     const existingPending = await db.pipelineItem.findFirst({
       where: {
-        reviewKind: 'ENRICHMENT',
-        status: 'PENDING',
+        reviewKind: PipelineReviewKind.ENRICHMENT,
+        status: PipelineItemStatus.PENDING,
         targetEntityId: community.id,
       },
       select: { id: true },
@@ -282,9 +334,9 @@ export async function enrichSparseCommunities(limit = 10) {
 
       await db.pipelineItem.create({
         data: {
-          entityType: 'COMMUNITY',
-          reviewKind: 'ENRICHMENT',
-          sourceType: 'DB_COMMUNITY',
+          entityType: PipelineEntityType.COMMUNITY,
+          reviewKind: PipelineReviewKind.ENRICHMENT,
+          sourceType: PipelineSourceType.DB_COMMUNITY,
           sourceUrl: source.url,
           rawContent: sourceText,
           extractedData: suggestion as unknown as Prisma.InputJsonValue,
@@ -314,9 +366,11 @@ function normalizeFamilyName(name: string, cityNames: string[]): string {
   const cityPattern = cityNames
     .map((city) => city.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
-  return name
-    .toLowerCase()
-    .replace(new RegExp(`\\b(${cityPattern})\\b`, 'g'), ' ')
+  const withoutCityTerms = cityPattern
+    ? name.toLowerCase().replace(new RegExp(`\\b(${cityPattern})\\b`, 'g'), ' ')
+    : name.toLowerCase();
+
+  return withoutCityTerms
     .replace(
       /\b(e\.v\.|ev|verein|chapter|group|community|association|samaj|sangam|sangha|mandal|sabha)\b/g,
       ' ',
@@ -328,7 +382,7 @@ function normalizeFamilyName(name: string, cityNames: string[]): string {
 
 export async function inferCommunityRelationships() {
   const communities = await db.community.findMany({
-    where: { mergedIntoId: null, status: { not: 'INACTIVE' } },
+    where: { mergedIntoId: null, status: { not: CommunityStatus.INACTIVE } },
     select: {
       id: true,
       name: true,
@@ -385,7 +439,7 @@ export async function inferCommunityRelationships() {
     for (const source of group) {
       for (const target of group) {
         if (source.id === target.id) continue;
-        await upsertEdge(source.id, target.id, 'SAME_ORGANIZER', 0.95, {
+        await upsertEdge(source.id, target.id, RelationshipType.SAME_ORGANIZER, 0.95, {
           inferred: true,
           source: 'claimedByUserId',
         });
@@ -403,7 +457,7 @@ export async function inferCommunityRelationships() {
       const targetFamily = normalizeFamilyName(target.name, cityNames);
       if (!targetFamily || sourceFamily !== targetFamily) continue;
 
-      await upsertEdge(source.id, target.id, 'SISTER_CHAPTER', 0.75, {
+      await upsertEdge(source.id, target.id, RelationshipType.SISTER_CHAPTER, 0.75, {
         inferred: true,
         source: 'normalized-name',
         normalizedFamily: sourceFamily,
@@ -441,13 +495,16 @@ function extractCandidateKeywords(
           .join(' ')
           .trim();
         const normalized = normalizeKeyword(phrase);
-        if (normalized.length < 4 || normalized.length > 32) continue;
+        if (normalized.length < KEYWORD_PHRASE_MIN_LENGTH) continue;
+        if (normalized.length > KEYWORD_PHRASE_MAX_LENGTH) continue;
         if (blockedTerms.has(normalized)) continue;
         if (/^\d+$/.test(normalized)) continue;
 
         const entry = counts.get(normalized) ?? { count: 0, evidence: [], laneCounts: {} };
         entry.count += 1;
-        if (entry.evidence.length < 3) entry.evidence.push(item.text.slice(0, 120));
+        if (entry.evidence.length < KEYWORD_EVIDENCE_SNIPPET_LIMIT) {
+          entry.evidence.push(item.text.slice(0, 120));
+        }
         if (item.lane) {
           entry.laneCounts[item.lane] = (entry.laneCounts[item.lane] ?? 0) + 1;
         }
@@ -457,7 +514,7 @@ function extractCandidateKeywords(
   }
 
   return [...counts.entries()]
-    .filter(([, entry]) => entry.count >= 2)
+    .filter(([, entry]) => entry.count >= KEYWORD_MIN_OCCURRENCE_COUNT)
     .map(([keyword, entry]) => ({
       keyword,
       count: entry.count,
@@ -465,7 +522,7 @@ function extractCandidateKeywords(
       lane: resolveDominantKeywordLane(entry.laneCounts),
     }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 30);
+    .slice(0, KEYWORD_CANDIDATE_LIMIT);
 }
 
 export async function refreshKeywordSuggestions() {
@@ -482,9 +539,9 @@ export async function refreshKeywordSuggestions() {
   );
 
   const approvedItems = await db.pipelineItem.findMany({
-    where: { status: 'APPROVED' },
+    where: { status: PipelineItemStatus.APPROVED },
     select: { extractedData: true, entityType: true },
-    take: 200,
+    take: KEYWORD_MINING_APPROVED_SAMPLE_SIZE,
     orderBy: { reviewedAt: 'desc' },
   });
 
@@ -543,7 +600,7 @@ export async function refreshKeywordSuggestions() {
         keyword: suggestion.keyword,
         normalizedKeyword: normalized,
         lane,
-        confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
+        confidence: Math.round((suggestion.confidence ?? KEYWORD_CONFIDENCE_FALLBACK) * 100) / 100,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
@@ -553,7 +610,7 @@ export async function refreshKeywordSuggestions() {
       update: {
         keyword: suggestion.keyword,
         lane,
-        confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
+        confidence: Math.round((suggestion.confidence ?? KEYWORD_CONFIDENCE_FALLBACK) * 100) / 100,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
@@ -571,7 +628,7 @@ export async function refreshKeywordSuggestions() {
 
 export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynamicKeywordsByLane> {
   const rows = await db.keywordSuggestion.findMany({
-    where: { status: 'APPROVED' },
+    where: { status: KeywordSuggestionStatus.APPROVED },
     select: { keyword: true, lane: true },
     orderBy: { confidence: 'desc' },
   });

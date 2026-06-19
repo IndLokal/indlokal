@@ -38,6 +38,15 @@ describe('suggestCommunityPersonaSegments', () => {
     );
   });
 
+  it('maps newcomer language to the newcomer segment', () => {
+    expect(
+      suggestCommunityPersonaSegments({
+        name: 'Indians New in Germany Circle',
+        description: 'Support group for newcomers just moved to Stuttgart.',
+      }),
+    ).toContain('newcomer');
+  });
+
   it('returns an empty array when nothing matches (prefers no suggestion over a wrong one)', () => {
     expect(suggestCommunityPersonaSegments({ name: 'Generic Meetup', description: null })).toEqual(
       [],
