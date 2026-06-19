@@ -31,13 +31,22 @@ export default async function AdminPipelinePage({
     ? (rawEntityFilter as (typeof ENTITY_FILTERS)[number])
     : 'ALL';
 
-  const regions = await getRuntimeEnabledRegions();
-  const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
-  const enabledCities = await db.city.findMany({
-    where: { slug: { in: enabledCitySlugs } },
-    select: { slug: true, name: true },
-    orderBy: { name: 'asc' },
-  });
+  let regions: Awaited<ReturnType<typeof getRuntimeEnabledRegions>> = [];
+  let enabledCities: Array<{ slug: string; name: string }> = [];
+  let regionsLoadError: string | null = null;
+
+  try {
+    regions = await getRuntimeEnabledRegions();
+    const enabledCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
+    enabledCities = await db.city.findMany({
+      where: { slug: { in: enabledCitySlugs } },
+      select: { slug: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+  } catch (error) {
+    regionsLoadError = error instanceof Error ? error.message : String(error);
+    console.error('[admin/pipeline] failed to load runtime regions', error);
+  }
   const sourceStats = await getSourceReliabilityStats();
   const llmAuditSince = new Date();
   llmAuditSince.setDate(llmAuditSince.getDate() - 7);
@@ -184,6 +193,12 @@ export default async function AdminPipelinePage({
         Event contributions that already created a pending event are reviewed in Admin Events to
         keep event moderation decisions in one queue.
       </p>
+      {regionsLoadError ? (
+        <p className="mt-3 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          Pipeline region config is unavailable right now. Review actions still work, but &quot;Run
+          pipeline&quot; city/region scope may be limited until config is restored.
+        </p>
+      ) : null}
 
       {/* ─── Review queue (primary task) ─── */}
       <section className="mt-8">
