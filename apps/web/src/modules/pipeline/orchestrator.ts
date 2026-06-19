@@ -19,7 +19,7 @@ import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { CITY_NAME_ALIASES } from '@/lib/config/cities';
 import { normalizeCityLookupKey, resolveCityMatch } from '@/lib/city-resolution';
 import { assessEvidenceUrl } from '@/lib/source-policy';
-import { getRuntimeEnabledRegions } from './runtime-config';
+import { getRuntimeEnabledRegions } from './config/runtime-config';
 import {
   fetchEventbriteKeywords,
   fetchPinnedUrl,
@@ -34,7 +34,7 @@ import {
   FRESH_EVENT_MARKERS,
   extractMentionedYears,
 } from './freshness';
-import { buildPipelineSourcePlan } from './source-plan';
+import { buildPipelineSourcePlan } from './planning/source-plan';
 import {
   filterRelevance,
   extractBatch,

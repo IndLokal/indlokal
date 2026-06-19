@@ -17,7 +17,7 @@ import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
-import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent } from './types';
+import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent } from '../types';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
@@ -235,10 +235,10 @@ function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
 }
 
 function resolveDefaultsJsonPath(): string {
-  // runtime-config.ts lives in apps/web/src/modules/pipeline/.
+  // runtime-config.ts lives in apps/web/src/modules/pipeline/config/.
   // The bundled defaults live in apps/web/prisma/data/.
   const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(moduleDir, '../../../prisma/data/pipeline-source-defaults.json');
+  return path.resolve(moduleDir, '../../../../prisma/data/pipeline-source-defaults.json');
 }
 
 /**

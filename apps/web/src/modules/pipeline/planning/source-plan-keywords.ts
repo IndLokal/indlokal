@@ -16,9 +16,9 @@ import type {
   JourneyResourceStage,
   KeywordStrategyTemplate,
   RuntimeLaneKeywordSeeds,
-} from './runtime-config';
-import { JOURNEY_RESOURCE_STAGES } from './runtime-config';
-import type { SearchStrategy, SourceLane } from './types';
+} from '../config/runtime-config';
+import { JOURNEY_RESOURCE_STAGES } from '../config/runtime-config';
+import type { SearchStrategy, SourceLane } from '../types';
 
 type GapKeywordCity = {
   slug: string;

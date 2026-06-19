@@ -16,7 +16,7 @@ import {
   GOOGLE_CSE_ENV_BY_LANE,
   getGoogleCseApiKey,
   resolveGoogleCseIdForLane,
-} from './env-config';
+} from './config/env-config';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {

@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { SearchRegion } from '../types';
-import type { KeywordStrategyTemplate } from '../runtime-config';
+import type { KeywordStrategyTemplate } from '../config/runtime-config';
 
 const mocks = vi.hoisted(() => ({
   findCities: vi.fn(),
@@ -21,7 +21,7 @@ vi.mock('@/lib/db', () => ({
   },
 }));
 
-vi.mock('../runtime-config', () => ({
+vi.mock('../config/runtime-config', () => ({
   JOURNEY_RESOURCE_STAGES: ['PRE_ARRIVAL', 'FIRST_30_DAYS', 'FIRST_90_DAYS', 'SETTLED', 'ANYTIME'],
   getRuntimeKeywordStrategies: mocks.getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies: mocks.getRuntimePinnedStrategies,
@@ -122,7 +122,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('skips keyword search when DB coverage has no city gaps', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     mocks.findCities.mockResolvedValue([
       { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
@@ -144,7 +144,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('targets low-coverage cities and skips unconfigured API sources', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_ENABLE_DDG = '1';
     mocks.findCities.mockResolvedValue([
@@ -183,7 +183,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('skips DuckDuckGo unless explicitly enabled', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     mocks.findCities.mockResolvedValue([
       { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
@@ -201,7 +201,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('uses explicit lane intent when selecting gap keywords', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
@@ -266,7 +266,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('keeps approved dynamic keywords lane-safe for explicit strategies', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
@@ -368,7 +368,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('returns additive lane breakdown metadata for the built plan', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.PIPELINE_ENABLE_DDG = '1';
@@ -425,7 +425,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('prioritizes DB event pages when pinned sources are capped', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_DB_PINNED_LIMIT = '2';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
@@ -468,7 +468,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('de-prioritizes stale event pages behind upcoming ones when pinned sources are capped', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_DB_PINNED_LIMIT = '3';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
@@ -519,7 +519,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('spreads capped DB pinned sources across cities instead of letting one city dominate', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_DB_PINNED_LIMIT = '3';
     mocks.findCities.mockResolvedValue([
@@ -583,7 +583,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('spreads capped DB pinned sources across communities within the same city', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_DB_PINNED_LIMIT = '2';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
@@ -628,7 +628,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('prefers future event detail pages over generic event listings for the same community', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.PIPELINE_DB_PINNED_LIMIT = '1';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
@@ -663,7 +663,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('caps DB pinned sources for admin-triggered runs like cron', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 6 } }]);
@@ -688,7 +688,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('excludes explicit RESOURCE lane strategies from normal cron plans only', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
@@ -769,7 +769,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('excludes explicit COMMUNITY lane keyword strategies from cron but keeps them for admin', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_COMMUNITY_ID = 'community-cse';
@@ -803,7 +803,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('runs EVENT Google CSE only for cron runs', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_EVENT_ID = 'event-cse';
@@ -836,7 +836,7 @@ describe('buildPipelineSourcePlan', () => {
   });
 
   it('prioritizes event-starved metro cities ahead of empty satellites in the gap list', async () => {
-    const { buildPipelineSourcePlan } = await import('../source-plan');
+    const { buildPipelineSourcePlan } = await import('../planning/source-plan');
 
     const broaderRegions: SearchRegion[] = [
       {

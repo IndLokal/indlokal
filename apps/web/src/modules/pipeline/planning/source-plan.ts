@@ -19,12 +19,12 @@ import {
   getRuntimeLaneKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
-} from './runtime-config';
-import { getDbCommunityStrategies, scorePinnedEventUrl } from './db-sources';
+} from '../config/runtime-config';
+import { getDbCommunityStrategies, scorePinnedEventUrl } from '../db-sources';
 import {
   getApprovedDynamicKeywordsByLane,
   type ApprovedDynamicKeywordsByLane,
-} from './intelligence';
+} from '../intelligence';
 import {
   buildGapKeywordsByLane,
   getAdminResourceJourneyKeywords,
@@ -40,9 +40,9 @@ import {
   isForceKeywordSearchEnabled,
   isGoogleCseRunModeAllowed,
   readPositiveIntEnv,
-} from './env-config';
-import type { SearchRegion, SearchStrategy, SourceLane } from './types';
-import type { KeywordStrategyTemplate } from './runtime-config';
+} from '../config/env-config';
+import type { SearchRegion, SearchStrategy, SourceLane } from '../types';
+import type { KeywordStrategyTemplate } from '../config/runtime-config';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };

@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/modules/pipeline/runtime-config', () => ({
+vi.mock('@/modules/pipeline/config/runtime-config', () => ({
   getRuntimeEnabledRegions: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock('@/lib/analytics/server', () => ({
 }));
 
 import { POST } from '@/app/api/cron/pipeline/dispatch/route';
-import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-config';
 
 const SECRET = 'test-secret';
 

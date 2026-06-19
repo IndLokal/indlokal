@@ -21,7 +21,7 @@ import {
   getRuntimeLaneKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
-} from './runtime-config';
+} from './config/runtime-config';
 import type { SearchRegion } from './types';
 
 function parseListArg(args: string[], key: '--city' | '--region'): string[] {

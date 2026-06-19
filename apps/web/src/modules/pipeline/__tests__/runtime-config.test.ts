@@ -13,7 +13,7 @@ describe('runtime-config JSON fallback', () => {
   it('falls back to bundled defaults when DB query throws', async () => {
     dbMock.$queryRaw.mockRejectedValue(new Error('relation does not exist'));
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
@@ -35,7 +35,7 @@ describe('runtime-config JSON fallback', () => {
   it('falls back when DB returns zero rows', async () => {
     dbMock.$queryRaw.mockResolvedValue([]);
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
@@ -81,7 +81,7 @@ describe('runtime-config JSON fallback', () => {
       },
     ]);
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();

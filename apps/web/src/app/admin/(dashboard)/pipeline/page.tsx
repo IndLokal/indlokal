@@ -13,7 +13,7 @@ import {
 } from './actions';
 import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
-import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity, ExtractedResource } from '@/modules/pipeline';
 import { assessResourceApprovalEligibility } from '@/modules/pipeline/review';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';

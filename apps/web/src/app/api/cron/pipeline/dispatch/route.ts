@@ -25,7 +25,7 @@
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
-import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-config';
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 

@@ -13,7 +13,7 @@
  * This module is intentionally env-only. DB/JSON strategy metadata remains in
  * runtime-config.ts.
  */
-import type { SourceLane } from './types';
+import type { SourceLane } from '../types';
 
 /** Canonical env var mapping for lane-specific Google CSE engines. */
 export const GOOGLE_CSE_ENV_BY_LANE: Record<SourceLane, string> = {
