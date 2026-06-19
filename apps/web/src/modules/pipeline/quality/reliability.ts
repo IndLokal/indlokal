@@ -1,3 +1,9 @@
+/**
+ * Source reliability metrics for pipeline quality gates.
+ *
+ * Aggregates review outcomes by source type and lane so planner/orchestrator
+ * can apply lightweight confidence adjustments from observed approval history.
+ */
 import { db } from '@/lib/db';
 import type { PipelineEntityType, PipelineSourceType, PipelineItemStatus } from '@prisma/client';
 import type { SourceLane } from '../types';
@@ -24,16 +30,19 @@ function computeConfidenceAdjustment(approvalRate: number, totalReviewed: number
   return 0;
 }
 
+/** Apply bounded confidence adjustment and round to two decimals. */
 export function applySourceConfidenceAdjustment(confidence: number, adjustment: number): number {
   return Math.max(0, Math.min(1, Math.round((confidence + adjustment) * 100) / 100));
 }
 
+/** Map entity types to canonical source lanes. */
 export function getSourceLaneFromEntityType(entityType: PipelineEntityType): SourceLane {
   if (entityType === 'EVENT') return 'EVENT';
   if (entityType === 'COMMUNITY') return 'COMMUNITY';
   return 'RESOURCE';
 }
 
+/** Build stable map keys for per-source and per-lane reliability stats. */
 export function buildSourceReliabilityKey(
   sourceType: PipelineSourceType,
   lane: SourceLane,
@@ -48,6 +57,7 @@ type SourceReliabilityGroupRow = {
   _count: { _all: number };
 };
 
+/** Convert grouped DB rows into per-source, per-lane reliability stats. */
 export function buildSourceReliabilityStatsFromRows(
   grouped: SourceReliabilityGroupRow[],
 ): SourceReliabilityStat[] {
@@ -97,6 +107,7 @@ export function buildSourceReliabilityStatsFromRows(
     );
 }
 
+/** Query grouped review outcomes and return normalized reliability stats. */
 export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat[]> {
   const grouped = await db.pipelineItem.groupBy({
     by: ['sourceType', 'entityType', 'status'],
@@ -106,6 +117,7 @@ export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat
   return buildSourceReliabilityStatsFromRows(grouped);
 }
 
+/** Convenience map view of source reliability keyed by sourceType:lane. */
 export async function getSourceReliabilityMap(): Promise<
   Map<SourceReliabilityKey, SourceReliabilityStat>
 > {

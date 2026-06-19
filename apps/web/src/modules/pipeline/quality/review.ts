@@ -1,13 +1,22 @@
+/**
+ * Pipeline review and approval gates.
+ *
+ * Responsibilities:
+ * - evaluate auto-approval eligibility for extracted items
+ * - run approval-time duplicate checks before persistence
+ * - materialize EVENT/COMMUNITY/RESOURCE entities from approved items
+ * - support rollback of previously auto-approved items
+ */
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { refreshCommunityScore } from '@/modules/scoring';
 import {
   Prisma,
   type PipelineSourceType,
-  type ResourceAudience,
-  type ResourceScope,
-  type ResourceStage,
-  type ResourceType,
+  ResourceAudience,
+  ResourceScope,
+  ResourceStage,
+  ResourceType,
 } from '@prisma/client';
 import slugify from 'slugify';
 import {
@@ -32,53 +41,19 @@ import {
   normalizeSourceUrlForDedup,
   parseEventStart,
 } from './dedup';
+import { EVENT_DATE_WINDOW_DAYS } from './dedup';
 
 type EventDuplicateMatch = {
   eventId: string;
   reason: 'source-url' | 'registration-url' | 'title-date';
 };
 
-const RESOURCE_TYPE_VALUES: ReadonlySet<ResourceType> = new Set([
-  'CONSULAR_SERVICE',
-  'OFFICIAL_EVENT',
-  'GOVERNMENT_INFO',
-  'VISA_SERVICE',
-  'CITY_REGISTRATION',
-  'DRIVING',
-  'HOUSING',
-  'HEALTH_DOCTORS',
-  'FAMILY_CHILDREN',
-  'JOBS_CAREERS',
-  'TAX_FINANCE',
-  'BUSINESS_SETUP',
-  'GROCERY_FOOD',
-  'COMMUNITY_RESOURCE',
-]);
-const RESOURCE_SCOPE_VALUES: ReadonlySet<ResourceScope> = new Set([
-  'GLOBAL',
-  'COUNTRY',
-  'STATE',
-  'METRO',
-  'CITY',
-  'DISTRICT',
-]);
-const RESOURCE_AUDIENCE_VALUES: ReadonlySet<ResourceAudience> = new Set([
-  'NEWCOMER',
-  'FAMILY',
-  'FOUNDER',
-  'EMPLOYEE',
-  'STUDENT',
-  'STUDENT_VISA',
-  'SENIOR',
-  'RETURNEE',
-]);
-const RESOURCE_STAGE_VALUES: ReadonlySet<ResourceStage> = new Set([
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-]);
+const RESOURCE_TYPE_VALUES: ReadonlySet<ResourceType> = new Set(Object.values(ResourceType));
+const RESOURCE_SCOPE_VALUES: ReadonlySet<ResourceScope> = new Set(Object.values(ResourceScope));
+const RESOURCE_AUDIENCE_VALUES: ReadonlySet<ResourceAudience> = new Set(
+  Object.values(ResourceAudience),
+);
+const RESOURCE_STAGE_VALUES: ReadonlySet<ResourceStage> = new Set(Object.values(ResourceStage));
 const RESOURCE_TRUST_SUPPORTED_TIERS = new Set([
   'official_registry',
   'government_consular',
@@ -104,10 +79,26 @@ const COMMUNITY_MATCH_STOPWORDS = new Set([
   'verein',
   'association',
   'group',
-  'community',
 ]);
 
+const AUTO_APPROVAL_MIN_RESOLUTION_CONFIDENCE = 0.85;
+const AUTO_APPROVAL_MIN_REVIEWED_COUNT = 5;
+const AUTO_APPROVAL_MIN_APPROVAL_RATE = 0.8;
+const AUTO_APPROVAL_MIN_ITEM_CONFIDENCE = 0.9;
+
+const COMMUNITY_MATCH_TOKEN_MIN_LENGTH = 2;
+const COMMUNITY_MATCH_STRONG_CONTAINMENT_SCORE = 6;
+const COMMUNITY_MATCH_TOKEN_OVERLAP_WEIGHT = 2;
+const COMMUNITY_MATCH_HOST_BONUS = 4;
 const MIN_EVENT_COMMUNITY_MATCH_SCORE = 4;
+
+const EVENT_DEFAULT_START_TIME = '00:00';
+const EVENT_DEFAULT_END_TIME = '23:59';
+
+const RESOURCE_PRIORITY_OFFICIAL = 75;
+const RESOURCE_PRIORITY_DEFAULT = 55;
+const RESOURCE_REVIEW_CADENCE_DAYS = 120;
+const RESOURCE_DEFAULT_COUNTRY_SCOPE_REGION = 'DE';
 
 function normalizeMatchText(value: string): string {
   return value
@@ -129,7 +120,10 @@ function tokenizeMatchText(value: string): string[] {
   return normalizeMatchText(value)
     .split(' ')
     .map((token) => token.trim())
-    .filter((token) => token.length > 2 && !COMMUNITY_MATCH_STOPWORDS.has(token));
+    .filter(
+      (token) =>
+        token.length > COMMUNITY_MATCH_TOKEN_MIN_LENGTH && !COMMUNITY_MATCH_STOPWORDS.has(token),
+    );
 }
 
 function scoreCommunityMatch(event: ExtractedEvent, communityName: string): number {
@@ -140,7 +134,7 @@ function scoreCommunityMatch(event: ExtractedEvent, communityName: string): numb
 
   let score = 0;
   if (eventCompact.includes(communityCompact) || communityCompact.includes(eventCompact)) {
-    score += 6;
+    score += COMMUNITY_MATCH_STRONG_CONTAINMENT_SCORE;
   }
 
   const eventTokens = new Set(tokenizeMatchText(eventText));
@@ -150,12 +144,12 @@ function scoreCommunityMatch(event: ExtractedEvent, communityName: string): numb
     if (eventTokens.has(token)) overlap += 1;
   }
 
-  score += overlap * 2;
+  score += overlap * COMMUNITY_MATCH_TOKEN_OVERLAP_WEIGHT;
 
   if (event.hostCommunity) {
     const hostCompact = compactMatchText(event.hostCommunity);
-    if (hostCompact && communityCompact.includes(hostCompact)) score += 4;
-    if (hostCompact && hostCompact.includes(communityCompact)) score += 4;
+    if (hostCompact && communityCompact.includes(hostCompact)) score += COMMUNITY_MATCH_HOST_BONUS;
+    if (hostCompact && hostCompact.includes(communityCompact)) score += COMMUNITY_MATCH_HOST_BONUS;
   }
 
   return score;
@@ -222,7 +216,8 @@ async function findDuplicateEventForApproval(input: {
       const previousStart = parseEventStart(previous.date ?? null, previous.time ?? null, timeZone);
       const closeDate =
         incomingStart && previousStart
-          ? Math.abs(incomingStart.getTime() - previousStart.getTime()) / (1000 * 60 * 60 * 24) <= 1
+          ? Math.abs(incomingStart.getTime() - previousStart.getTime()) / (1000 * 60 * 60 * 24) <=
+            EVENT_DATE_WINDOW_DAYS
           : false;
 
       return sameNormalizedTitle || closeDate;
@@ -298,6 +293,11 @@ async function findDuplicateEventForApproval(input: {
   return null;
 }
 
+/**
+ * Decide whether a pending extracted item can bypass manual review.
+ * Uses match signals, city resolution confidence, source reliability, and
+ * item-type-specific completeness checks.
+ */
 export function shouldAutoApprovePipelineItem(input: {
   item: ExtractedData;
   sourceType: PipelineSourceType;
@@ -313,13 +313,20 @@ export function shouldAutoApprovePipelineItem(input: {
   if (resolutionProvenance?.cityConflict) {
     return { eligible: false, reason: 'city-conflict-admin-review-required' };
   }
-  if (resolutionProvenance && resolutionProvenance.resolutionConfidence < 0.85) {
+  if (
+    resolutionProvenance &&
+    resolutionProvenance.resolutionConfidence < AUTO_APPROVAL_MIN_RESOLUTION_CONFIDENCE
+  ) {
     return { eligible: false, reason: 'resolution-confidence-below-threshold' };
   }
-  if (!reliability || reliability.totalReviewed < 5 || reliability.approvalRate < 0.8) {
+  if (
+    !reliability ||
+    reliability.totalReviewed < AUTO_APPROVAL_MIN_REVIEWED_COUNT ||
+    reliability.approvalRate < AUTO_APPROVAL_MIN_APPROVAL_RATE
+  ) {
     return { eligible: false, reason: 'source-not-trusted-yet' };
   }
-  if (item.confidence < 0.9) {
+  if (item.confidence < AUTO_APPROVAL_MIN_ITEM_CONFIDENCE) {
     return { eligible: false, reason: 'confidence-below-threshold' };
   }
 
@@ -420,14 +427,14 @@ async function createEventFromExtraction(
 
   let startsAt = new Date();
   if (safeDate) {
-    const parsedStart = parseDateTime(safeDate, safeTime || '00:00');
+    const parsedStart = parseDateTime(safeDate, safeTime || EVENT_DEFAULT_START_TIME);
     if (parsedStart) startsAt = parsedStart;
   }
 
   let endsAt: Date | undefined;
   if (safeEndDate || safeEndTime) {
     const endDateStr = safeEndDate || safeDate || today;
-    const endTimeStr = safeEndTime || '23:59';
+    const endTimeStr = safeEndTime || EVENT_DEFAULT_END_TIME;
     const parsedEnd = parseDateTime(endDateStr, endTimeStr);
     if (parsedEnd && parsedEnd >= startsAt) {
       endsAt = parsedEnd;
@@ -587,6 +594,7 @@ function parseDateOnly(value: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+/** Validate whether a RESOURCE has enough trusted URL evidence for approval. */
 export function assessResourceApprovalEligibility(input: {
   resource: ExtractedResource;
   sourceUrl?: string | null;
@@ -643,7 +651,11 @@ async function createResourceFromExtraction(
   const lifecycleStage = normalizeResourceStages(resource.lifecycleStage);
   const scopeRegion =
     resource.scopeRegion?.trim() ||
-    (scope === 'CITY' || scope === 'METRO' ? city.slug : scope === 'COUNTRY' ? 'DE' : null);
+    (scope === 'CITY' || scope === 'METRO'
+      ? city.slug
+      : scope === 'COUNTRY'
+        ? RESOURCE_DEFAULT_COUNTRY_SCOPE_REGION
+        : null);
   const cityId = scope === 'CITY' ? city.id : null;
   const baseSlug = slugify(resource.title, { lower: true, strict: true }) || 'resource';
   const slug = `${baseSlug}-${Date.now().toString(36)}`;
@@ -658,13 +670,13 @@ async function createResourceFromExtraction(
       scopeRegion,
       audiences,
       lifecycleStage,
-      priority: resource.isOfficialSource ? 75 : 55,
+      priority: resource.isOfficialSource ? RESOURCE_PRIORITY_OFFICIAL : RESOURCE_PRIORITY_DEFAULT,
       isEssential: resourceType === 'CONSULAR_SERVICE' || resourceType === 'VISA_SERVICE',
       url: approvalEligibility.canonicalUrl,
       description: resource.description,
       validUntil: parseDateOnly(resource.validUntil),
       source: 'IMPORTED',
-      reviewCadenceDays: 120,
+      reviewCadenceDays: RESOURCE_REVIEW_CADENCE_DAYS,
       lastReviewedAt: new Date(),
       metadata: {
         pipelineExtracted: true,
@@ -747,6 +759,10 @@ async function applyCommunityEnrichmentSuggestion(
   return communityId;
 }
 
+/**
+ * Approve a pending pipeline item and create/merge the target entity.
+ * Returns null when the item is missing or no longer pending.
+ */
 export async function approvePipelineItemRecord(
   id: string,
   options: { reviewedBy?: string; autoApproved?: boolean; autoApprovalReason?: string } = {},
@@ -920,6 +936,10 @@ export async function approvePipelineItemRecord(
   return { itemId: id, createdEntityId, entityType: item.entityType, citySlug: item.city.slug };
 }
 
+/**
+ * Revert auto-approved discovery items by deleting imported entities and
+ * resetting pipeline items back to pending for manual review.
+ */
 export async function revertAutoApprovedPipelineItems(ids: string[], reviewedBy = 'admin') {
   const items = await db.pipelineItem.findMany({
     where: {
