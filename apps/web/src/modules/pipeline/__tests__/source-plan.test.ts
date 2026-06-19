@@ -36,7 +36,7 @@ vi.mock('../fetch/db-sources', async (importOriginal) => {
   };
 });
 
-vi.mock('../intelligence', () => ({
+vi.mock('../enrichment/intelligence', () => ({
   getApprovedDynamicKeywordsByLane: mocks.getApprovedDynamicKeywordsByLane,
 }));
 

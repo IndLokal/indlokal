@@ -31,7 +31,7 @@ import type {
   RawContent,
   RelevanceResult,
   SourceLane,
-} from './types';
+} from '../types';
 
 // ─── Config ────────────────────────────────────────────
 

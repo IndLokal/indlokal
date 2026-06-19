@@ -1,11 +1,11 @@
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
 import { Prisma, type RelationshipType } from '@prisma/client';
-import { callOpenAI } from './extraction';
-import { getRuntimeLaneKeywordSeeds } from './config/runtime-config';
-import { htmlToText } from './text';
-import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './fetch/http';
-import type { ExtractedCommunity, SourceLane } from './types';
+import { callOpenAI } from '../llm/extraction';
+import { getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
+import { htmlToText } from '../llm/text';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from '../fetch/http';
+import type { ExtractedCommunity, SourceLane } from '../types';
 
 export type ApprovedDynamicKeywordsByLane = {
   byLane: Record<SourceLane, string[]>;

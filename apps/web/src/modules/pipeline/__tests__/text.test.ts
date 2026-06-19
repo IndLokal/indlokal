@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { htmlToText } from '../text';
+import { htmlToText } from '../llm/text';
 
 describe('htmlToText', () => {
   it('drops oversized real html tags instead of leaking srcset noise into text', () => {

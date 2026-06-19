@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeParsedItemForTest } from '../extraction';
+import { normalizeParsedItemForTest } from '../llm/extraction';
 
 describe('pipeline pricing/access derivation', () => {
   const base = {

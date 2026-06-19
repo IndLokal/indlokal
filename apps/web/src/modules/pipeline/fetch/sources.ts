@@ -15,7 +15,7 @@
  */
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from '../types';
-import { collapseWhitespace, decodeHtmlEntities, htmlToText } from '../text';
+import { collapseWhitespace, decodeHtmlEntities, htmlToText } from '../llm/text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
 import {

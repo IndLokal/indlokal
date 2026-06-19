@@ -9,7 +9,7 @@
  */
 import { db } from '@/lib/db';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
-import { decodeHtmlEntities } from '../text';
+import { decodeHtmlEntities } from '../llm/text';
 import type { ExtractedEvent, RawContent } from '../types';
 
 type IcsParsedDate = {

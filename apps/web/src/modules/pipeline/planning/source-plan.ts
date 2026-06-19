@@ -25,7 +25,7 @@ import { getDbCommunityStrategies, scorePinnedEventUrl } from '../fetch/db-sourc
 import {
   getApprovedDynamicKeywordsByLane,
   type ApprovedDynamicKeywordsByLane,
-} from '../intelligence';
+} from '../enrichment/intelligence';
 import {
   buildGapKeywordsByLane,
   getAdminResourceJourneyKeywords,
