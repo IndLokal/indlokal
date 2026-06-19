@@ -500,15 +500,18 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       parsedScope ?? (hintCitySlug ? 'CITY' : hintState ? 'REGION' : 'GENERIC');
     if (!url) continue;
 
+    const lane = normalizeSourceLane(row.payload.lane);
+    if (!lane) continue;
+    const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
+
     const evidence = assessEvidenceUrl(url);
-    if (!evidence.isQualifying) {
+    const allowEventPlatformPinned =
+      evidence.tier === 'event_platform' && (lane === 'EVENT' || lane === 'COMMUNITY');
+    if (!evidence.isQualifying && !allowEventPlatformPinned) {
       console.warn(`[Pipeline] Disabled DB pinned URL ${row.key}: ${evidence.label} (${url})`);
       continue;
     }
 
-    const lane = normalizeSourceLane(row.payload.lane);
-    if (!lane) continue;
-    const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
       id: row.key,
       sourceType,
