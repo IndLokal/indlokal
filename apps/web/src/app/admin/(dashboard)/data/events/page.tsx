@@ -1,4 +1,5 @@
-import { db } from '@/lib/db';
+import { db, resolveMetroScopeCityIds } from '@/lib/db';
+import type { Prisma } from '@prisma/client';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteEventAction, setEventStatusAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
@@ -18,11 +19,11 @@ export default async function AdminEventsPage({
 }) {
   const sp = await searchParams;
   const pagination = parseOffsetPagination(sp);
-  const where: {
-    city?: { slug: string };
-    status?: 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED';
-  } = {};
-  if (sp.city) where.city = { slug: sp.city };
+  const where: Prisma.EventWhereInput = {};
+  if (sp.city) {
+    const cityIds = await resolveMetroScopeCityIds(sp.city);
+    where.cityId = { in: cityIds };
+  }
   if (sp.status && ['UPCOMING', 'ONGOING', 'PAST', 'CANCELLED'].includes(sp.status)) {
     where.status = sp.status as 'UPCOMING' | 'ONGOING' | 'PAST' | 'CANCELLED';
   }

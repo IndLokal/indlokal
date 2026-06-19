@@ -24,6 +24,46 @@ export async function resolveCityIds(citySlug: string): Promise<string[]> {
 }
 
 /**
+ * Resolve a city slug to its metro scope city IDs.
+ *
+ * Scope rules:
+ * - Metro primary selection => metro primary + all satellites
+ * - Satellite selection => satellite + metro primary + sibling satellites
+ * - Standalone city => just that city
+ */
+export async function resolveMetroScopeCityIds(citySlug: string): Promise<string[]> {
+  const city = await db.city.findUnique({
+    where: { slug: citySlug },
+    select: {
+      id: true,
+      metroRegion: {
+        select: {
+          id: true,
+          satelliteCities: { select: { id: true } },
+        },
+      },
+      satelliteCities: { select: { id: true } },
+    },
+  });
+
+  if (!city) return [];
+
+  const cityIds = new Set<string>([city.id]);
+  if (city.metroRegion) {
+    cityIds.add(city.metroRegion.id);
+    for (const satellite of city.metroRegion.satelliteCities) {
+      cityIds.add(satellite.id);
+    }
+  } else {
+    for (const satellite of city.satelliteCities) {
+      cityIds.add(satellite.id);
+    }
+  }
+
+  return [...cityIds];
+}
+
+/**
  * Resolve city scope parameters used by resource resolution and search.
  * Returns `null` when the city slug is unknown.
  */
