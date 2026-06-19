@@ -74,9 +74,12 @@ export async function fetchTextWithFallback(
   options: FetchTextOptions = {},
 ): Promise<FetchedTextResult> {
   try {
+    const timeoutMs = options.timeoutMs ?? PIPELINE_FETCH_TIMEOUT_MS;
+    const hasAbortTimeout =
+      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function';
     const response = await fetch(url, {
       headers: options.headers,
-      signal: AbortSignal.timeout(options.timeoutMs ?? PIPELINE_FETCH_TIMEOUT_MS),
+      signal: hasAbortTimeout ? AbortSignal.timeout(timeoutMs) : undefined,
     });
     return {
       ok: response.ok,

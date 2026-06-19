@@ -122,7 +122,7 @@ async function checkSchemaReadiness(): Promise<void> {
       WHERE table_name = 'keyword_suggestions' AND column_name = 'lane'
       LIMIT 1
     `;
-  } catch (err) {
+  } catch {
     console.error('\n❌ Database schema is not in sync with Prisma schema.');
     console.error('   Run: pnpm -F web db:push');
     console.error('   Then: pnpm -F web pipeline\n');
