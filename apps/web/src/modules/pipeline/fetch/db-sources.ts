@@ -21,6 +21,11 @@ import {
   getYearSignalScore,
 } from '../freshness';
 import { PIPELINE_USER_AGENT } from './http';
+import {
+  getDbSourceDiscoveryTopK,
+  getDbSourceProbeConcurrency,
+  getDbSourceProbeTimeoutMs,
+} from '../config/env-config';
 
 // Fallback list used only when homepage anchor discovery finds nothing for a
 // site (typically because the nav is rendered client-side). Each candidate is
@@ -37,9 +42,6 @@ const WEBSITE_EVENT_PATH_FALLBACK_CANDIDATES = [
   'veranstaltungen',
   'termine',
 ] as const;
-
-const CANDIDATE_PROBE_TIMEOUT_MS = 4_000;
-const CANDIDATE_PROBE_CONCURRENCY = 5;
 
 function getDetailPageScore(url: string, labelOrText = ''): number {
   const combined = `${url} ${labelOrText}`;
@@ -146,8 +148,9 @@ function buildFallbackCandidatePaths(websiteUrl: string): string[] {
  * only for 2xx and final-redirected 2xx.
  */
 async function probeUrlExists(url: string): Promise<boolean> {
+  const probeTimeoutMs = getDbSourceProbeTimeoutMs();
   const headers = { 'User-Agent': PIPELINE_USER_AGENT };
-  const signal = AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS);
+  const signal = AbortSignal.timeout(probeTimeoutMs);
   try {
     const res = await fetch(url, { method: 'HEAD', headers, signal, redirect: 'follow' });
     if (res.ok) return true;
@@ -156,7 +159,7 @@ async function probeUrlExists(url: string): Promise<boolean> {
       const getRes = await fetch(url, {
         method: 'GET',
         headers,
-        signal: AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS),
+        signal: AbortSignal.timeout(probeTimeoutMs),
         redirect: 'follow',
       });
       // Abort body read; we only care about the status.
@@ -174,9 +177,10 @@ async function probeUrlExists(url: string): Promise<boolean> {
 }
 
 async function probeCandidatesInParallel(urls: string[]): Promise<string[]> {
+  const probeConcurrency = getDbSourceProbeConcurrency();
   const survivors: string[] = [];
-  for (let i = 0; i < urls.length; i += CANDIDATE_PROBE_CONCURRENCY) {
-    const batch = urls.slice(i, i + CANDIDATE_PROBE_CONCURRENCY);
+  for (let i = 0; i < urls.length; i += probeConcurrency) {
+    const batch = urls.slice(i, i + probeConcurrency);
     const results = await Promise.all(
       batch.map((u) => probeUrlExists(u).then((ok) => ({ u, ok }))),
     );
@@ -240,7 +244,7 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
 
     return [...scored.entries()]
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
+      .slice(0, getDbSourceDiscoveryTopK())
       .map(([url]) => url);
   } catch {
     return [];

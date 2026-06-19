@@ -115,6 +115,21 @@ export function getPinnedExpansionSourceTypes(): Set<string> {
   );
 }
 
+/** Timeout for DB-source URL probes in milliseconds. */
+export function getDbSourceProbeTimeoutMs(): number {
+  return readPositiveIntEnv('PIPELINE_DB_SOURCE_PROBE_TIMEOUT_MS', 4_000);
+}
+
+/** Parallelism for DB-source URL existence probes. */
+export function getDbSourceProbeConcurrency(): number {
+  return readPositiveIntEnv('PIPELINE_DB_SOURCE_PROBE_CONCURRENCY', 5);
+}
+
+/** Max homepage-discovered event links kept per community website. */
+export function getDbSourceDiscoveryTopK(): number {
+  return readPositiveIntEnv('PIPELINE_DB_SOURCE_DISCOVERY_TOP_K', 5);
+}
+
 export function isForceKeywordSearchEnabled(): boolean {
   return process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
 }
