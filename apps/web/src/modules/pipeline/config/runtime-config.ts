@@ -17,7 +17,13 @@ import { PipelineSourceType, Prisma, ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
-import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent } from '../types';
+import type {
+  PipelineLane,
+  PipelineSourceIntent,
+  PipelineSourceKind,
+  SearchRegion,
+  SearchStrategy,
+} from '../types';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
@@ -33,7 +39,7 @@ export type JourneyResourceStage = ResourceStage;
 
 /** Lane-specific keyword seed payload used by source planning. */
 export type RuntimeLaneKeywordSeeds = {
-  byLane: Partial<Record<SourceLane, string[]>>;
+  byLane: Partial<Record<PipelineLane, string[]>>;
   journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>>;
 };
 
@@ -55,9 +61,10 @@ const UNSUPPORTED_PIPELINE_SOURCE_TYPES = new Set<PipelineSourceType>([
   PipelineSourceType.USER_SUBMITTED,
 ]);
 
-const VALID_SOURCE_TYPES = new Set<SourceType>(
+const VALID_SOURCE_TYPES = new Set<PipelineSourceKind>(
   Object.values(PipelineSourceType).filter(
-    (sourceType): sourceType is SourceType => !UNSUPPORTED_PIPELINE_SOURCE_TYPES.has(sourceType),
+    (sourceType): sourceType is PipelineSourceKind =>
+      !UNSUPPORTED_PIPELINE_SOURCE_TYPES.has(sourceType),
   ),
 );
 
@@ -72,9 +79,9 @@ function normalizeStringArray(value: unknown): string[] {
   );
 }
 
-function normalizeSourceType(value: PipelineSourceType | string | null): SourceType | null {
+function normalizeSourceType(value: PipelineSourceType | string | null): PipelineSourceKind | null {
   if (!value) return null;
-  return VALID_SOURCE_TYPES.has(value as SourceType) ? (value as SourceType) : null;
+  return VALID_SOURCE_TYPES.has(value as PipelineSourceKind) ? (value as PipelineSourceKind) : null;
 }
 
 function normalizePinnedScope(value: unknown): PinnedScope | null {
@@ -85,18 +92,18 @@ function normalizePinnedScope(value: unknown): PinnedScope | null {
 
 /** Normalization sets for lane and journey stage parsing. */
 
-const VALID_LANES = new Set<SourceLane>(SOURCE_LANES);
+const VALID_LANES = new Set<PipelineLane>(SOURCE_LANES);
 const VALID_JOURNEY_STAGES = new Set<JourneyResourceStage>(JOURNEY_RESOURCE_STAGES);
 
-function normalizeSourceLane(value: unknown): SourceLane | undefined {
+function normalizeSourceLane(value: unknown): PipelineLane | undefined {
   if (typeof value !== 'string') return undefined;
-  const upper = value.trim().toUpperCase() as SourceLane;
+  const upper = value.trim().toUpperCase() as PipelineLane;
   return VALID_LANES.has(upper) ? upper : undefined;
 }
 
 /**
  * Derive pipeline source intent from lane and content scope metadata.
- * SourceIntent shapes LLM extraction instructions and filtering behavior.
+ * PipelineSourceIntent shapes LLM extraction instructions and filtering behavior.
  *
  * Examples:
  *   - EVENT lane → 'dated_activity_discovery'
@@ -105,9 +112,9 @@ function normalizeSourceLane(value: unknown): SourceLane | undefined {
  *   - scope 'official_portal' → 'official_service_info_discovery'
  */
 function deriveSourceIntent(
-  lane: SourceLane | undefined,
+  lane: PipelineLane | undefined,
   contentScope: unknown,
-): SourceIntent | undefined {
+): PipelineSourceIntent | undefined {
   if (typeof contentScope === 'string') {
     if (contentScope === 'official_portal') return 'official_service_info_discovery';
     if (contentScope === 'community_events' || contentScope === 'official_events') {
@@ -201,7 +208,7 @@ function normalizeJourneyStage(value: unknown): JourneyResourceStage | undefined
 
 /** Parse lane-seeded keyword hints from JSON defaults. */
 function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
-  const byLane: Partial<Record<SourceLane, string[]>> = {};
+  const byLane: Partial<Record<PipelineLane, string[]>> = {};
   const journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>> = {};
 
   if (isObject(parsed.baselineKeywordsByLane)) {
@@ -435,7 +442,7 @@ function parseRegions(rows: ConfigRow[]): SearchRegion[] {
 
 /**
  * Parse keyword strategy templates from config rows.
- * Normalizes source types, radius, lane, and source intent.
+ * Normalizes source kinds, radius, lane, and source intent.
  * Skips disabled rows and entries without required fields.
  */
 function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {

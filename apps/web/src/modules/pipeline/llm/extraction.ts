@@ -30,7 +30,7 @@ import type {
   ExtractedCommunity,
   RawContent,
   RelevanceResult,
-  SourceLane,
+  PipelineLane,
 } from '../types';
 
 // ─── Config ────────────────────────────────────────────
@@ -155,7 +155,7 @@ function isGuardError(err: unknown): boolean {
 // ─── OpenAI client ─────────────────────────────────────
 
 type ChatMessage = { role: 'system' | 'user'; content: string };
-type LanePromptKey = SourceLane | 'DEFAULT';
+type LanePromptKey = PipelineLane | 'DEFAULT';
 type IndexedRawContent = { item: RawContent; absoluteIndex: number };
 
 function classifyLlmError(err: unknown): string {

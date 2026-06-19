@@ -26,13 +26,13 @@ import {
 import { callOpenAI, htmlToText } from '../llm';
 import { SOURCE_LANES, getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from '../fetch/http';
-import type { ExtractedCommunity, SourceLane } from '../types';
+import type { ExtractedCommunity, PipelineLane } from '../types';
 
 export type ApprovedDynamicKeywordsByLane = {
-  byLane: Record<SourceLane, string[]>;
+  byLane: Record<PipelineLane, string[]>;
 };
 
-const SOURCE_LANE_SET = new Set<SourceLane>(SOURCE_LANES);
+const SOURCE_LANE_SET = new Set<PipelineLane>(SOURCE_LANES);
 
 /** Minimum confidence required to accept an LLM semantic duplicate match. */
 const SEMANTIC_DUPLICATE_MIN_CONFIDENCE = 0.8;
@@ -134,11 +134,11 @@ function normalizeConfidence(value: unknown, fallback: number): number {
   return Math.round(Math.min(1, Math.max(0, raw)) * 100) / 100;
 }
 
-function isSourceLane(value: string | null | undefined): value is SourceLane {
-  return typeof value === 'string' && SOURCE_LANE_SET.has(value as SourceLane);
+function isSourceLane(value: string | null | undefined): value is PipelineLane {
+  return typeof value === 'string' && SOURCE_LANE_SET.has(value as PipelineLane);
 }
 
-function getKeywordLaneFromEntityType(entityType: string): SourceLane | null {
+function getKeywordLaneFromEntityType(entityType: string): PipelineLane | null {
   if (entityType === PipelineEntityType.EVENT) return 'EVENT';
   if (entityType === PipelineEntityType.COMMUNITY) return 'COMMUNITY';
   if (entityType === PipelineEntityType.RESOURCE) return 'RESOURCE';
@@ -146,8 +146,8 @@ function getKeywordLaneFromEntityType(entityType: string): SourceLane | null {
 }
 
 function resolveDominantKeywordLane(
-  laneCounts: Partial<Record<SourceLane, number>>,
-): SourceLane | null {
+  laneCounts: Partial<Record<PipelineLane, number>>,
+): PipelineLane | null {
   const ranked = SOURCE_LANES.map((lane) => ({ lane, count: laneCounts[lane] ?? 0 }))
     .filter((entry) => entry.count > 0)
     .sort((a, b) => b.count - a.count);
@@ -507,15 +507,15 @@ export async function inferCommunityRelationships() {
 }
 
 function extractCandidateKeywords(
-  items: Array<{ text: string; lane: SourceLane | null }>,
+  items: Array<{ text: string; lane: PipelineLane | null }>,
   blockedTerms: ReadonlySet<string>,
-): Array<{ keyword: string; count: number; evidence: string[]; lane: SourceLane | null }> {
+): Array<{ keyword: string; count: number; evidence: string[]; lane: PipelineLane | null }> {
   const counts = new Map<
     string,
     {
       count: number;
       evidence: string[];
-      laneCounts: Partial<Record<SourceLane, number>>;
+      laneCounts: Partial<Record<PipelineLane, number>>;
     }
   >();
 
@@ -674,7 +674,7 @@ export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynami
     orderBy: { confidence: 'desc' },
   });
 
-  const byLane: Record<SourceLane, string[]> = {
+  const byLane: Record<PipelineLane, string[]> = {
     EVENT: [],
     COMMUNITY: [],
     RESOURCE: [],

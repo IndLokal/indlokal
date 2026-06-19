@@ -18,7 +18,7 @@ import type {
   RuntimeLaneKeywordSeeds,
 } from '../config/runtime-config';
 import { JOURNEY_RESOURCE_STAGES } from '../config/runtime-config';
-import type { SearchStrategy, SourceLane } from '../types';
+import type { PipelineLane, SearchStrategy } from '../types';
 
 type GapKeywordCity = {
   slug: string;
@@ -136,7 +136,7 @@ export function buildGapKeywordsByLane(
   eventGaps: GapKeywordCity[],
   communityGaps: GapKeywordCity[],
   resourceGapKeywords: string[],
-): Record<SourceLane, string[]> {
+): Record<PipelineLane, string[]> {
   return {
     EVENT: expandTemplates(EVENT_GAP_TEMPLATES, eventGaps),
     COMMUNITY: expandTemplates(
@@ -153,7 +153,7 @@ export function buildGapKeywordsByLane(
  */
 export function getGapKeywordsForStrategy(
   strategy: KeywordStrategyTemplate,
-  gapKeywordsByLane: Record<SourceLane, string[]>,
+  gapKeywordsByLane: Record<PipelineLane, string[]>,
 ): string[] {
   if (!strategy.lane) return [];
   return gapKeywordsByLane[strategy.lane] ?? [];

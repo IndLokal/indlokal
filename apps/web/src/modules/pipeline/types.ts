@@ -11,50 +11,54 @@
  *  5. Region config, not city config - add a country by adding keywords + search region
  */
 
-// ─── Source types ──────────────────────────────────────
+import type {
+  PipelineEntityType,
+  PipelineSourceType as PrismaPipelineSourceType,
+} from '@prisma/client';
 
-/** Every source type the pipeline knows how to fetch */
-export type SourceType =
-  | 'EVENTBRITE'
-  | 'FACEBOOK'
-  | 'INSTAGRAM'
-  | 'WEBSITE_SCRAPE'
-  | 'CGI_MUNICH'
-  | 'INDOEUROPEAN'
-  | 'GOOGLE_ALERT'
-  | 'GOOGLE_SEARCH'
-  | 'DUCKDUCKGO'
-  | 'MEETUP'
-  | 'COMMUNITY_SUGGESTION'
-  | 'DB_COMMUNITY';
-
-// ─── Lane types (AI_PIPELINE_LANE_AWARE_SOURCING.md §2, §4) ────────────
+// ─── Source Kinds ─────────────────────────────────────
 
 /**
- * Primary sourcing lane — governs source selection, caps, prompts, and review
- * policy. Set explicitly on each strategy; sourceType is only a last-resort
- * fallback for legacy rows where a single sourceType serves multiple lanes
- * (GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
+ * Pipeline-ingest source kinds backed by Prisma's PipelineSourceType enum.
+ * Keep EVENT_SUGGESTION/USER_SUBMITTED out of ingest planning.
  */
-export type SourceLane = 'EVENT' | 'COMMUNITY' | 'RESOURCE';
+type UnsupportedPipelineSourceType = 'EVENT_SUGGESTION' | 'USER_SUBMITTED';
+export type PipelineSourceKind = Exclude<PrismaPipelineSourceType, UnsupportedPipelineSourceType>;
+
+// ─── Pipeline Lanes (AI_PIPELINE_LANE_AWARE_SOURCING.md §2, §4) ───────
+
+/**
+ * Primary lane for sourcing/extraction/review.
+ * Mirrors Prisma PipelineEntityType to avoid local string drift.
+ */
+export type PipelineLane = PipelineEntityType;
 
 /**
  * High-level strategy intent derived from lane/content scope. Lightweight
  * planning metadata only — not a separate runtime policy engine.
  */
-export type SourceIntent =
+export type PipelineSourceIntent =
   | 'dated_activity_discovery'
   | 'org_group_discovery'
   | 'official_service_info_discovery';
+
+// ─── Backward-Compatible Aliases ───────────────────────
+
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceType = PipelineSourceKind;
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceLane = PipelineLane;
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceIntent = PipelineSourceIntent;
 
 /**
  * Per-lane policy constraints — lightweight static table, not a runtime engine.
  * Defines the boundaries used by prefilters (Phase 4), prompts (Phase 6),
  * and auto-approval gating (Phase 7).
  */
-export type SourcePolicy = {
-  lane: SourceLane;
-  sourceIntent: SourceIntent;
+export type PipelineSourcePolicy = {
+  lane: PipelineLane;
+  sourceIntent: PipelineSourceIntent;
   /** Minimum EvidenceStrength tier required for sources in this lane. */
   minTrustStrength: 'strong' | 'medium' | 'weak';
   llmAllowed: boolean;
@@ -64,6 +68,9 @@ export type SourcePolicy = {
   freshnessRequired: boolean;
   officialDomainRequired: boolean;
 };
+
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourcePolicy = PipelineSourcePolicy;
 
 /**
  * Resolution provenance — records how city and community were resolved.
@@ -84,15 +91,15 @@ export type ResolutionProvenance = {
 
 /** Raw content fetched from any source adapter */
 export type RawContent = {
-  sourceType: SourceType;
+  sourceType: PipelineSourceKind;
   sourceUrl: string;
   text: string;
   imageUrls?: string[];
   fetchedAt: string; // ISO 8601
   // Internal pipeline hints (not persisted by source adapters):
   // propagated from strategy planning to enable deterministic prefilters.
-  _lane?: SourceLane;
-  _sourceIntent?: SourceIntent;
+  _lane?: PipelineLane;
+  _sourceIntent?: PipelineSourceIntent;
   // propagated from pinned strategy to improve city/community resolution.
   _hintCitySlug?: string;
   _hintCommunityId?: string;
@@ -115,7 +122,7 @@ export type FetchResult = {
 export type SearchStrategy = {
   /** Unique identifier */
   id: string;
-  sourceType: SourceType;
+  sourceType: PipelineSourceKind;
   /** Human label */
   label: string;
   enabled: boolean;
@@ -124,12 +131,12 @@ export type SearchStrategy = {
    * Undefined for legacy rows where sourceType alone is ambiguous
    * (e.g. GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
    */
-  lane?: SourceLane;
+  lane?: PipelineLane;
   /**
    * Lightweight planning intent derived from lane/contentScope.
    * Optional for legacy rows lacking explicit lane/contentScope metadata.
    */
-  sourceIntent?: SourceIntent;
+  sourceIntent?: PipelineSourceIntent;
 } & (
   | {
       /** Keyword-based search (Eventbrite, Meetup) - searches region-wide */
@@ -274,7 +281,7 @@ export type PipelineCityBreakdown = {
   pastEvents: number;
 };
 
-export type PipelineLaneMetricKey = 'EVENT' | 'COMMUNITY' | 'RESOURCE' | 'UNKNOWN';
+export type PipelineLaneMetricKey = PipelineLane | 'UNKNOWN';
 
 export type PipelineLaneMetrics = {
   fetched: number;

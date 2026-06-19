@@ -13,10 +13,10 @@
  * This module is intentionally env-only. DB/JSON strategy metadata remains in
  * runtime-config.ts.
  */
-import type { SourceLane } from '../types';
+import type { PipelineLane } from '../types';
 
 /** Canonical env var mapping for lane-specific Google CSE engines. */
-export const GOOGLE_CSE_ENV_BY_LANE: Record<SourceLane, string> = {
+export const GOOGLE_CSE_ENV_BY_LANE: Record<PipelineLane, string> = {
   COMMUNITY: 'GOOGLE_CSE_COMMUNITY_ID',
   EVENT: 'GOOGLE_CSE_EVENT_ID',
   RESOURCE: 'GOOGLE_CSE_RESOURCE_ID',
@@ -49,14 +49,14 @@ export function getGoogleCseApiKey(): string | undefined {
 }
 
 /** Resolve lane-specific Google CSE ID with legacy GOOGLE_CSE_ID fallback. */
-export function resolveGoogleCseIdForLane(lane: SourceLane | undefined): string | undefined {
+export function resolveGoogleCseIdForLane(lane: PipelineLane | undefined): string | undefined {
   const legacy = readEnv('GOOGLE_CSE_ID');
   if (!lane) return legacy;
   return readEnv(GOOGLE_CSE_ENV_BY_LANE[lane]) ?? legacy;
 }
 
 /** Whether both API key and lane-appropriate CSE ID are configured. */
-export function hasGoogleCseCredentialsForLane(lane: SourceLane | undefined): boolean {
+export function hasGoogleCseCredentialsForLane(lane: PipelineLane | undefined): boolean {
   return Boolean(getGoogleCseApiKey() && resolveGoogleCseIdForLane(lane));
 }
 
@@ -67,7 +67,7 @@ export function hasGoogleCseCredentialsForLane(lane: SourceLane | undefined): bo
  * - COMMUNITY/unknown: allowed for both
  */
 export function isGoogleCseRunModeAllowed(
-  lane: SourceLane | undefined,
+  lane: PipelineLane | undefined,
   triggeredBy: string,
 ): boolean {
   if (lane === 'EVENT') return triggeredBy === 'cron';

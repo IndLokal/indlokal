@@ -42,7 +42,7 @@ import {
   isGoogleCseRunModeAllowed,
   readPositiveIntEnv,
 } from '../config/env-config';
-import type { SearchRegion, SearchStrategy, SourceLane } from '../types';
+import type { PipelineLane, SearchRegion, SearchStrategy } from '../types';
 import type { KeywordStrategyTemplate } from '../config/runtime-config';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
@@ -57,7 +57,7 @@ type CityGap = {
   hasCommunityGap: boolean;
 };
 
-type PipelineSourcePlanLaneKey = SourceLane | 'UNKNOWN';
+type PipelineSourcePlanLaneKey = PipelineLane | 'UNKNOWN';
 
 /**
  * Lane breakdown counts strategies by EVENT, COMMUNITY, RESOURCE, and UNKNOWN lanes.
@@ -91,7 +91,7 @@ function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
 
-function getLaneKey(lane: SourceLane | undefined): PipelineSourcePlanLaneKey {
+function getLaneKey(lane: PipelineLane | undefined): PipelineSourcePlanLaneKey {
   return lane ?? 'UNKNOWN';
 }
 
@@ -108,7 +108,7 @@ function formatGapReasonSummary(city: CityGap): string {
 
 function getLaneSeedKeywords(
   strategy: KeywordStrategyTemplate,
-  laneSeedMap: Partial<Record<SourceLane, string[]>>,
+  laneSeedMap: Partial<Record<PipelineLane, string[]>>,
 ): string[] {
   if (!strategy.lane) return [];
   const laneSeeds = laneSeedMap[strategy.lane];
@@ -295,7 +295,7 @@ function limitDbPinnedSources(strategies: PinnedStrategy[], limit: number): Pinn
 
 /**
  * Check if a strategy has required credentials/configuration to run.
- * Certain source types (EVENTBRITE, GOOGLE_SEARCH) require API keys; others are always available.
+ * Certain source kinds (EVENTBRITE, GOOGLE_SEARCH) require API keys; others are always available.
  */
 function isConfigured(strategy: KeywordStrategyTemplate): boolean {
   if (strategy.sourceType === 'EVENTBRITE') return hasEventbriteApiKey();

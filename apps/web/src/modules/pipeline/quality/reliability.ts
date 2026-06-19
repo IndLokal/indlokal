@@ -6,14 +6,14 @@
  */
 import { db } from '@/lib/db';
 import type { PipelineEntityType, PipelineSourceType, PipelineItemStatus } from '@prisma/client';
-import type { SourceLane } from '../types';
+import type { PipelineLane } from '../types';
 
-export type SourceReliabilityKey = `${PipelineSourceType}:${SourceLane}`;
+export type SourceReliabilityKey = `${PipelineSourceType}:${PipelineLane}`;
 
 export type SourceReliabilityStat = {
   key: SourceReliabilityKey;
   sourceType: PipelineSourceType;
-  lane: SourceLane;
+  lane: PipelineLane;
   pending: number;
   approved: number;
   rejected: number;
@@ -36,7 +36,7 @@ export function applySourceConfidenceAdjustment(confidence: number, adjustment: 
 }
 
 /** Map entity types to canonical source lanes. */
-export function getSourceLaneFromEntityType(entityType: PipelineEntityType): SourceLane {
+export function getSourceLaneFromEntityType(entityType: PipelineEntityType): PipelineLane {
   if (entityType === 'EVENT') return 'EVENT';
   if (entityType === 'COMMUNITY') return 'COMMUNITY';
   return 'RESOURCE';
@@ -45,7 +45,7 @@ export function getSourceLaneFromEntityType(entityType: PipelineEntityType): Sou
 /** Build stable map keys for per-source and per-lane reliability stats. */
 export function buildSourceReliabilityKey(
   sourceType: PipelineSourceType,
-  lane: SourceLane,
+  lane: PipelineLane,
 ): SourceReliabilityKey {
   return `${sourceType}:${lane}`;
 }
