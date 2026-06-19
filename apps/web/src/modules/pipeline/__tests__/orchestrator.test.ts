@@ -3,6 +3,7 @@ import {
   computeSimilarity,
   isLikelyStaleEventPage,
   normalizeEventTitleForDedup,
+  prefilterLaneAwareItems,
   prefilterLikelyCurrentItems,
 } from '../orchestrator';
 
@@ -136,5 +137,91 @@ describe('prefilterLikelyCurrentItems', () => {
 
     expect(kept).toHaveLength(1);
     expect(kept[0]?.sourceUrl).toBe('https://example.org/upcoming-events/');
+  });
+});
+
+describe('prefilterLaneAwareItems', () => {
+  it('drops EVENT lane items without event/date signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/about-us',
+        text: 'About our community and mission statement.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'EVENT',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps EVENT lane items with clear event signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/upcoming-events/',
+        text: 'Upcoming events for 2026. Join us on 15.08.2026.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'EVENT',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+  });
+
+  it('drops COMMUNITY lane items without organization/community signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'GOOGLE_SEARCH',
+        sourceUrl: 'https://example.org/random-page',
+        text: 'Welcome to our landing page.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'COMMUNITY',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps COMMUNITY lane items with community signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'GOOGLE_SEARCH',
+        sourceUrl: 'https://example.org/association',
+        text: 'Indian Association community network for students and professionals.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'COMMUNITY',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+  });
+
+  it('drops RESOURCE lane items from non-strong evidence domains', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/resource-guide',
+        text: 'Helpful relocation information.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'RESOURCE',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps RESOURCE lane items from strong official domains', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://www.cgimunich.gov.in/',
+        text: 'Official consular services portal.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'RESOURCE',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
   });
 });

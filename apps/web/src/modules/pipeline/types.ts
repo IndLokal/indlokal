@@ -90,6 +90,9 @@ export type RawContent = {
   imageUrls?: string[];
   fetchedAt: string; // ISO 8601
   // Internal pipeline hints (not persisted by source adapters):
+  // propagated from strategy planning to enable deterministic prefilters.
+  _lane?: SourceLane;
+  _sourceIntent?: SourceIntent;
   // propagated from pinned strategy to improve city/community resolution.
   _hintCitySlug?: string;
   _hintCommunityId?: string;

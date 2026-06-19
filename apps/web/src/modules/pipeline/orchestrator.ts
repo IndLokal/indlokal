@@ -18,6 +18,7 @@ import { db } from '@/lib/db';
 import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { CITY_NAME_ALIASES } from '@/lib/config/cities';
 import { normalizeCityLookupKey, resolveCityMatch } from '@/lib/city-resolution';
+import { assessEvidenceUrl } from '@/lib/source-policy';
 import { getRuntimeEnabledRegions } from './runtime-config';
 import {
   fetchEventbriteKeywords,
@@ -130,6 +131,53 @@ export function isLikelyStaleEventPage(item: RawContent): boolean {
 
 export function prefilterLikelyCurrentItems(items: RawContent[]): RawContent[] {
   return items.filter((item) => !isLikelyStaleEventPage(item));
+}
+
+const COMMUNITY_SIGNAL_MARKERS =
+  /community|verein|association|network|group|club|chapter|society|organisation|organization|members?|join|student|professionals?|diaspora/i;
+
+function hasLikelyEventSignals(item: RawContent): boolean {
+  const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`.toLowerCase();
+  const years = extractMentionedYears(preview);
+  const currentYear = new Date().getFullYear();
+  const hasDateLikePattern =
+    /\b\d{1,2}[./-]\d{1,2}(?:[./-]\d{2,4})?\b/.test(preview) ||
+    /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec|january|february|march|april|june|july|august|september|october|november|december)\b/i.test(
+      preview,
+    );
+  return (
+    EVENT_PAGE_MARKERS.test(preview) ||
+    FRESH_EVENT_MARKERS.test(preview) ||
+    hasDateLikePattern ||
+    years.some((year) => year >= currentYear)
+  );
+}
+
+function hasLikelyCommunitySignals(item: RawContent): boolean {
+  const preview = `${item.sourceUrl} ${item.text.slice(0, 1200)}`;
+  return (
+    COMMUNITY_SIGNAL_MARKERS.test(preview) ||
+    Boolean(item._hintCommunityId) ||
+    Boolean(item._hintCommunityName)
+  );
+}
+
+function isLikelyTrustedResourceSource(item: RawContent): boolean {
+  const assessment = assessEvidenceUrl(item.sourceUrl);
+  return (
+    assessment.tier === 'official_registry' ||
+    assessment.tier === 'government_consular' ||
+    assessment.tier === 'institutional_directory'
+  );
+}
+
+export function prefilterLaneAwareItems(items: RawContent[]): RawContent[] {
+  return items.filter((item) => {
+    if (item._lane === 'EVENT') return hasLikelyEventSignals(item) && !isLikelyStaleEventPage(item);
+    if (item._lane === 'COMMUNITY') return hasLikelyCommunitySignals(item);
+    if (item._lane === 'RESOURCE') return isLikelyTrustedResourceSource(item);
+    return !isLikelyStaleEventPage(item);
+  });
 }
 
 async function timePipelineStage<T>(
@@ -426,6 +474,8 @@ async function fetchAllSources(
     pinnedStrategies.map(async (strategy) => {
       const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
       for (const item of fetchResult.items) {
+        item._lane = strategy.lane;
+        item._sourceIntent = strategy.sourceIntent;
         item._hintCitySlug = strategy.hintCitySlug;
         item._hintCommunityId = strategy.hintCommunityId;
         item._hintCommunityName = strategy.hintCommunityName;
@@ -460,6 +510,10 @@ async function fetchAllSources(
           fetchResult = await fetchDuckDuckGoSearch(strategy, region);
         } else {
           fetchResult = await fetchEventbriteKeywords(strategy, region);
+        }
+        for (const item of fetchResult.items) {
+          item._lane = strategy.lane;
+          item._sourceIntent = strategy.sourceIntent;
         }
         console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
         return fetchResult;
@@ -509,8 +563,14 @@ async function filterRelevantItems(
   result: PipelineRunResult,
 ): Promise<RawContent[]> {
   console.log('[Pipeline] Stage 1: Relevance filter...');
-  const directCalendarItems = uniqueRaw.filter(isEmbeddedCalendarEventRawContent);
-  const llmCandidates = uniqueRaw.filter((item) => !isEmbeddedCalendarEventRawContent(item));
+  const prefiltered = prefilterLaneAwareItems(uniqueRaw);
+  const deterministicDropped = uniqueRaw.length - prefiltered.length;
+  if (deterministicDropped > 0) {
+    console.log(`[Pipeline] Deterministic lane prefilter dropped ${deterministicDropped} items`);
+  }
+
+  const directCalendarItems = prefiltered.filter(isEmbeddedCalendarEventRawContent);
+  const llmCandidates = prefiltered.filter((item) => !isEmbeddedCalendarEventRawContent(item));
 
   const relevanceResults = await filterRelevance(llmCandidates);
   const llmRelevantItems = relevanceResults
@@ -521,7 +581,9 @@ async function filterRelevantItems(
   const relevantItems = [...directCalendarItems, ...llmRelevantItems];
 
   result.itemsPassedFilter = relevantItems.length;
-  console.log(`[Pipeline] Passed filter: ${relevantItems.length}/${uniqueRaw.length}`);
+  console.log(
+    `[Pipeline] Passed filter: ${relevantItems.length}/${prefiltered.length} (from ${uniqueRaw.length} raw)`,
+  );
 
   return relevantItems;
 }
