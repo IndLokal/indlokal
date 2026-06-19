@@ -24,6 +24,7 @@ import { ConfirmSubmitButton } from '@/components/ui';
 export const metadata = { title: 'Content Pipeline - Admin' };
 
 const ENTITY_FILTERS = ['ALL', 'COMMUNITY', 'EVENT', 'RESOURCE'] as const;
+const KEYWORD_SUGGESTION_LANES = ['EVENT', 'COMMUNITY', 'RESOURCE'] as const;
 const EVENT_REJECTION_REASONS = [
   'POLICY_VIOLATION',
   'UNVERIFIABLE',
@@ -492,6 +493,9 @@ export default async function AdminPipelinePage({
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
                       {Math.round(suggestion.confidence * 100)}%
                     </span>
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">
+                      {suggestion.lane ?? 'UNSET'}
+                    </span>
                   </div>
                   <p className="text-muted mt-1 text-sm">
                     Seen in {suggestion.sourceCount} approved items
@@ -500,6 +504,24 @@ export default async function AdminPipelinePage({
                 <div className="flex gap-2">
                   <form action={approveKeywordSuggestion}>
                     <input type="hidden" name="id" value={suggestion.id} />
+                    <label className="sr-only" htmlFor={`lane-${suggestion.id}`}>
+                      Lane
+                    </label>
+                    <select
+                      id={`lane-${suggestion.id}`}
+                      name="lane"
+                      defaultValue={suggestion.lane ?? ''}
+                      className="mr-2 rounded-lg border border-slate-300 bg-white px-2 py-2 text-sm text-slate-700"
+                    >
+                      <option value="" disabled>
+                        Select lane
+                      </option>
+                      {KEYWORD_SUGGESTION_LANES.map((lane) => (
+                        <option key={lane} value={lane}>
+                          {lane}
+                        </option>
+                      ))}
+                    </select>
                     <button
                       type="submit"
                       className="rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700"

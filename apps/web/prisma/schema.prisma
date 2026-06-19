@@ -1336,6 +1336,7 @@ model KeywordSuggestion {
   id                String                  @id @default(cuid())
   keyword           String                  @unique
   normalizedKeyword String                  @unique @map("normalized_keyword")
+  lane              String
   status            KeywordSuggestionStatus @default(PENDING)
   confidence        Float                   @default(0)
   sourceCount       Int                     @default(0) @map("source_count")
@@ -1345,6 +1346,7 @@ model KeywordSuggestion {
   updatedAt         DateTime                @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
+  @@index([status, lane])
   @@map("keyword_suggestions")
 }
 

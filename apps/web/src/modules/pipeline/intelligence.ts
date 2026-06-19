@@ -5,7 +5,12 @@ import { callOpenAI } from './extraction';
 import { getRuntimeKeywordSeeds } from './runtime-config';
 import { htmlToText } from './text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
-import type { ExtractedCommunity } from './types';
+import type { ExtractedCommunity, SourceLane } from './types';
+
+export type ApprovedDynamicKeywordsByLane = {
+  byLane: Record<SourceLane, string[]>;
+  unclassified: string[];
+};
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
 
@@ -32,13 +37,38 @@ Rules:
 const KEYWORD_EVAL_PROMPT = `You evaluate keyword candidates for IndLokal, a platform for Indian/South Asian diaspora discovery.
 
 Return JSON:
-{"suggestions": [{"keyword": "Tamil New Year", "accepted": true, "confidence": 0.9, "reason": "high-signal festival/community term"}]}
+{"suggestions": [{"keyword": "Tamil New Year", "accepted": true, "lane": "EVENT", "confidence": 0.9, "reason": "high-signal festival/community term"}]}
 
 Accept terms that are strong diaspora search intents: regional communities, festivals, organization forms, diaspora events, consular services, or high-signal cultural phrases.
+For accepted suggestions, always assign exactly one lane: EVENT, COMMUNITY, or RESOURCE.
 Reject generic words, cities, person names, and low-signal noise.`;
 
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function isSourceLane(value: string | null | undefined): value is SourceLane {
+  return value === 'EVENT' || value === 'COMMUNITY' || value === 'RESOURCE';
+}
+
+function getKeywordLaneFromEntityType(entityType: string): SourceLane | null {
+  if (entityType === 'EVENT') return 'EVENT';
+  if (entityType === 'COMMUNITY') return 'COMMUNITY';
+  if (entityType === 'RESOURCE') return 'RESOURCE';
+  return null;
+}
+
+function resolveDominantKeywordLane(
+  laneCounts: Partial<Record<SourceLane, number>>,
+): SourceLane | null {
+  const ranked = (['EVENT', 'COMMUNITY', 'RESOURCE'] as const)
+    .map((lane) => ({ lane, count: laneCounts[lane] ?? 0 }))
+    .filter((entry) => entry.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  if (ranked.length === 0) return null;
+  if (ranked.length > 1 && ranked[0]?.count === ranked[1]?.count) return null;
+  return ranked[0]?.lane ?? null;
 }
 
 const BASE_STOPWORDS = new Set([
@@ -388,10 +418,17 @@ export async function inferCommunityRelationships() {
 }
 
 function extractCandidateKeywords(
-  items: Array<{ text: string }>,
+  items: Array<{ text: string; lane: SourceLane | null }>,
   blockedTerms: ReadonlySet<string>,
-): Array<{ keyword: string; count: number; evidence: string[] }> {
-  const counts = new Map<string, { count: number; evidence: string[] }>();
+): Array<{ keyword: string; count: number; evidence: string[]; lane: SourceLane | null }> {
+  const counts = new Map<
+    string,
+    {
+      count: number;
+      evidence: string[];
+      laneCounts: Partial<Record<SourceLane, number>>;
+    }
+  >();
 
   for (const item of items) {
     const tokens = item.text
@@ -410,9 +447,12 @@ function extractCandidateKeywords(
         if (blockedTerms.has(normalized)) continue;
         if (/^\d+$/.test(normalized)) continue;
 
-        const entry = counts.get(normalized) ?? { count: 0, evidence: [] };
+        const entry = counts.get(normalized) ?? { count: 0, evidence: [], laneCounts: {} };
         entry.count += 1;
         if (entry.evidence.length < 3) entry.evidence.push(item.text.slice(0, 120));
+        if (item.lane) {
+          entry.laneCounts[item.lane] = (entry.laneCounts[item.lane] ?? 0) + 1;
+        }
         counts.set(normalized, entry);
       }
     }
@@ -420,7 +460,12 @@ function extractCandidateKeywords(
 
   return [...counts.entries()]
     .filter(([, entry]) => entry.count >= 2)
-    .map(([keyword, entry]) => ({ keyword, count: entry.count, evidence: entry.evidence }))
+    .map(([keyword, entry]) => ({
+      keyword,
+      count: entry.count,
+      evidence: entry.evidence,
+      lane: resolveDominantKeywordLane(entry.laneCounts),
+    }))
     .sort((a, b) => b.count - a.count)
     .slice(0, 30);
 }
@@ -436,7 +481,7 @@ export async function refreshKeywordSuggestions() {
 
   const approvedItems = await db.pipelineItem.findMany({
     where: { status: 'APPROVED' },
-    select: { extractedData: true },
+    select: { extractedData: true, entityType: true },
     take: 200,
     orderBy: { reviewedAt: 'desc' },
   });
@@ -452,7 +497,7 @@ export async function refreshKeywordSuggestions() {
       ]
         .filter((value): value is string => typeof value === 'string')
         .join(' ');
-      return { text };
+      return { text, lane: getKeywordLaneFromEntityType(item.entityType) };
     })
     .filter((item) => item.text.trim().length > 0);
 
@@ -473,6 +518,7 @@ export async function refreshKeywordSuggestions() {
     suggestions?: Array<{
       keyword?: string;
       accepted?: boolean;
+      lane?: string;
       confidence?: number;
       reason?: string;
     }>;
@@ -486,12 +532,15 @@ export async function refreshKeywordSuggestions() {
     const normalized = normalizeKeyword(suggestion.keyword);
     const candidate = candidates.find((entry) => normalizeKeyword(entry.keyword) === normalized);
     if (!candidate) continue;
+    const lane = isSourceLane(suggestion.lane) ? suggestion.lane : candidate.lane;
+    if (!lane) continue;
 
     const upserted = await db.keywordSuggestion.upsert({
       where: { normalizedKeyword: normalized },
       create: {
         keyword: suggestion.keyword,
         normalizedKeyword: normalized,
+        lane,
         confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
         sourceCount: candidate.count,
         evidence: {
@@ -501,6 +550,7 @@ export async function refreshKeywordSuggestions() {
       },
       update: {
         keyword: suggestion.keyword,
+        lane,
         confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
         sourceCount: candidate.count,
         evidence: {
@@ -524,4 +574,37 @@ export async function getApprovedDynamicKeywords(): Promise<string[]> {
     orderBy: { confidence: 'desc' },
   });
   return rows.map((row) => row.keyword);
+}
+
+export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynamicKeywordsByLane> {
+  const rows = await db.keywordSuggestion.findMany({
+    where: { status: 'APPROVED' },
+    select: { keyword: true, lane: true },
+    orderBy: { confidence: 'desc' },
+  });
+
+  const byLane: Record<SourceLane, string[]> = {
+    EVENT: [],
+    COMMUNITY: [],
+    RESOURCE: [],
+  };
+  const unclassified: string[] = [];
+
+  for (const row of rows) {
+    if (!isSourceLane(row.lane)) {
+      unclassified.push(row.keyword);
+      continue;
+    }
+
+    byLane[row.lane].push(row.keyword);
+  }
+
+  return {
+    byLane: {
+      EVENT: [...new Set(byLane.EVENT)],
+      COMMUNITY: [...new Set(byLane.COMMUNITY)],
+      RESOURCE: [...new Set(byLane.RESOURCE)],
+    },
+    unclassified: [...new Set(unclassified)],
+  };
 }

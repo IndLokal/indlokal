@@ -11,7 +11,7 @@ const mocks = vi.hoisted(() => ({
   getRuntimePinnedStrategies: vi.fn(),
   getRuntimeLaneKeywordSeeds: vi.fn(),
   getDbCommunityStrategies: vi.fn(),
-  getApprovedDynamicKeywords: vi.fn(),
+  getApprovedDynamicKeywordsByLane: vi.fn(),
 }));
 
 vi.mock('@/lib/db', () => ({
@@ -38,7 +38,7 @@ vi.mock('../db-sources', async (importOriginal) => {
 });
 
 vi.mock('../intelligence', () => ({
-  getApprovedDynamicKeywords: mocks.getApprovedDynamicKeywords,
+  getApprovedDynamicKeywordsByLane: mocks.getApprovedDynamicKeywordsByLane,
 }));
 
 const originalEnv = process.env;
@@ -107,7 +107,10 @@ describe('buildPipelineSourcePlan', () => {
     mocks.getRuntimeKeywordStrategies.mockResolvedValue(keywordStrategies);
     mocks.getRuntimePinnedStrategies.mockResolvedValue([]);
     mocks.getDbCommunityStrategies.mockResolvedValue([]);
-    mocks.getApprovedDynamicKeywords.mockResolvedValue([]);
+    mocks.getApprovedDynamicKeywordsByLane.mockResolvedValue({
+      byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
+      unclassified: [],
+    });
     mocks.groupEvents.mockResolvedValue([]);
   });
 
@@ -255,6 +258,113 @@ describe('buildPipelineSourcePlan', () => {
     expect(communityGoogle?.keywords.join(' ')).not.toContain('Indian event Karlsruhe');
     expect(duckduckgo?.keywords).toContain('Indian event Karlsruhe');
     expect(duckduckgo?.keywords).toContain('Indian community group Karlsruhe');
+  });
+
+  it('keeps approved dynamic keywords lane-safe for explicit strategies', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.EVENTBRITE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.PIPELINE_ENABLE_DDG = '1';
+    process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
+    mocks.getRuntimeKeywordSeeds.mockResolvedValue([]);
+    mocks.getRuntimeLaneKeywordSeeds.mockResolvedValue({
+      byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
+      journeyResourceByStage: {},
+    });
+    mocks.getApprovedDynamicKeywordsByLane.mockResolvedValue({
+      byLane: {
+        EVENT: ['Diwali festival'],
+        COMMUNITY: ['Tamil Sangam association'],
+        RESOURCE: ['Passport renewal'],
+      },
+      unclassified: ['Cricket'],
+    });
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'eventbrite-keyword',
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        label: 'Eventbrite',
+        enabled: true,
+        radiusKm: 50,
+        lane: 'EVENT',
+      },
+      {
+        id: 'google-community-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Community',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'COMMUNITY',
+      },
+      {
+        id: 'google-resource-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Resource',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'RESOURCE',
+      },
+      {
+        id: 'duckduckgo-keyword',
+        sourceType: 'DUCKDUCKGO',
+        kind: 'keyword_search',
+        label: 'DuckDuckGo',
+        enabled: true,
+        radiusKm: 100,
+      },
+    ]);
+    mocks.findCities.mockResolvedValue([
+      { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+      { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+    ]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 5 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 3 } },
+      { cityId: 'city-2', _count: { _all: 3 } },
+    ]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    const eventbrite = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'eventbrite-keyword',
+    );
+    const communityGoogle = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'google-community-keyword',
+    );
+    const resourceGoogle = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'google-resource-keyword',
+    );
+    const duckduckgo = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'duckduckgo-keyword',
+    );
+
+    expect(eventbrite?.keywords).toContain('Diwali festival');
+    expect(eventbrite?.keywords).not.toContain('Tamil Sangam association');
+    expect(eventbrite?.keywords).not.toContain('Passport renewal');
+    expect(eventbrite?.keywords).not.toContain('Cricket');
+
+    expect(communityGoogle?.keywords.join(' ')).toContain('Tamil Sangam association');
+    expect(communityGoogle?.keywords.join(' ')).not.toContain('Diwali festival');
+    expect(communityGoogle?.keywords.join(' ')).not.toContain('Passport renewal');
+    expect(communityGoogle?.keywords.join(' ')).not.toContain('Cricket');
+
+    expect(resourceGoogle?.keywords.join(' ')).toContain('Passport renewal');
+    expect(resourceGoogle?.keywords.join(' ')).not.toContain('Diwali festival');
+    expect(resourceGoogle?.keywords.join(' ')).not.toContain('Tamil Sangam association');
+    expect(resourceGoogle?.keywords.join(' ')).not.toContain('Cricket');
+
+    expect(duckduckgo?.keywords).toContain('Diwali festival');
+    expect(duckduckgo?.keywords).toContain('Tamil Sangam association');
+    expect(duckduckgo?.keywords).toContain('Passport renewal');
+    expect(duckduckgo?.keywords).toContain('Cricket');
   });
 
   it('returns additive lane breakdown metadata for the built plan', async () => {

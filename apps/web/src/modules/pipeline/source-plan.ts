@@ -6,7 +6,10 @@ import {
   getRuntimePinnedStrategies,
 } from './runtime-config';
 import { getDbCommunityStrategies, scorePinnedEventUrl } from './db-sources';
-import { getApprovedDynamicKeywords } from './intelligence';
+import {
+  getApprovedDynamicKeywordsByLane,
+  type ApprovedDynamicKeywordsByLane,
+} from './intelligence';
 import type { SearchRegion, SearchStrategy, SourceLane } from './types';
 import type { KeywordStrategyTemplate } from './runtime-config';
 
@@ -162,6 +165,20 @@ function getLaneSeedKeywords(
   if (!strategy.lane) return fallback;
   const laneSeeds = laneSeedMap[strategy.lane];
   return laneSeeds != null && laneSeeds.length > 0 ? laneSeeds : fallback;
+}
+
+function getApprovedKeywordsForStrategy(
+  strategy: KeywordStrategyTemplate,
+  approvedKeywords: ApprovedDynamicKeywordsByLane,
+): string[] {
+  if (strategy.lane) return approvedKeywords.byLane[strategy.lane] ?? [];
+
+  return unique([
+    ...approvedKeywords.byLane.EVENT,
+    ...approvedKeywords.byLane.COMMUNITY,
+    ...approvedKeywords.byLane.RESOURCE,
+    ...approvedKeywords.unclassified,
+  ]);
 }
 
 /**
@@ -462,7 +479,7 @@ async function getLowCoverageCities(
  * @param regions - enabled search regions (from runtime config)
  * @param triggeredBy - execution context: 'cron', 'admin', or 'cli'
  * @returns Plan containing strategies, city gaps, and lane breakdown
-n */
+ */
 export async function buildPipelineSourcePlan(
   regions: SearchRegion[],
   triggeredBy: string,
@@ -506,7 +523,12 @@ export async function buildPipelineSourcePlan(
     notes.push('admin run: forcing keyword search for wider discovery coverage');
   }
 
-  const approvedKeywords = shouldRunKeywords ? await getApprovedDynamicKeywords() : [];
+  const approvedKeywords = shouldRunKeywords
+    ? await getApprovedDynamicKeywordsByLane()
+    : {
+        byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
+        unclassified: [],
+      };
   const baselineKeywordSeeds = shouldRunKeywords ? await getRuntimeKeywordSeeds() : [];
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
@@ -557,10 +579,13 @@ export async function buildPipelineSourcePlan(
           : baselineKeywordSeeds;
         const baselineKeywords =
           forceKeywordSearch || forceAdminKeywordSearch ? laneSeedsForStrategy : [];
-        // Approved keywords are lane-agnostic; include them for all strategies.
+        const approvedKeywordsForStrategy = getApprovedKeywordsForStrategy(
+          strategy,
+          approvedKeywords,
+        );
         const canonicalKeywords = unique([
           ...gapKeywords,
-          ...approvedKeywords,
+          ...approvedKeywordsForStrategy,
           ...baselineKeywords,
         ]);
         const renderedKeywords = renderKeywordsForSource(strategy.sourceType, canonicalKeywords);
