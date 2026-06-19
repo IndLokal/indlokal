@@ -22,6 +22,7 @@ vi.mock('@/lib/db', () => ({
 }));
 
 vi.mock('../runtime-config', () => ({
+  JOURNEY_RESOURCE_STAGES: ['PRE_ARRIVAL', 'FIRST_30_DAYS', 'FIRST_90_DAYS', 'SETTLED', 'ANYTIME'],
   getRuntimeKeywordStrategies: mocks.getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies: mocks.getRuntimePinnedStrategies,
   getRuntimeLaneKeywordSeeds: mocks.getRuntimeLaneKeywordSeeds,

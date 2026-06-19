@@ -3,6 +3,7 @@ import type {
   KeywordStrategyTemplate,
   RuntimeLaneKeywordSeeds,
 } from './runtime-config';
+import { JOURNEY_RESOURCE_STAGES } from './runtime-config';
 import type { SearchStrategy, SourceLane } from './types';
 
 type GapKeywordCity = {
@@ -26,13 +27,7 @@ const COMMUNITY_GAP_TEMPLATES = [
   'indischer Verein {city}',
 ] as const;
 
-const RESOURCE_JOURNEY_STAGE_ORDER: JourneyResourceStage[] = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-];
+const RESOURCE_JOURNEY_STAGE_ORDER: JourneyResourceStage[] = [...JOURNEY_RESOURCE_STAGES];
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];

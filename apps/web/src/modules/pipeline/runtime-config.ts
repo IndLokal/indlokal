@@ -31,12 +31,17 @@ import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
 export type KeywordStrategyTemplate = Omit<KeywordStrategy, 'keywords'>;
-export type JourneyResourceStage =
-  | 'PRE_ARRIVAL'
-  | 'FIRST_30_DAYS'
-  | 'FIRST_90_DAYS'
-  | 'SETTLED'
-  | 'ANYTIME';
+
+export const SOURCE_LANES = ['EVENT', 'COMMUNITY', 'RESOURCE'] as const;
+export const JOURNEY_RESOURCE_STAGES = [
+  'PRE_ARRIVAL',
+  'FIRST_30_DAYS',
+  'FIRST_90_DAYS',
+  'SETTLED',
+  'ANYTIME',
+] as const;
+
+export type JourneyResourceStage = (typeof JOURNEY_RESOURCE_STAGES)[number];
 
 export type RuntimeLaneKeywordSeeds = {
   byLane: Partial<Record<SourceLane, string[]>>;
@@ -95,7 +100,8 @@ function normalizePinnedScope(value: unknown): PinnedScope | null {
 
 // ── Lane helpers ────────────────────────────────────────────────────
 
-const VALID_LANES = new Set<SourceLane>(['EVENT', 'COMMUNITY', 'RESOURCE']);
+const VALID_LANES = new Set<SourceLane>(SOURCE_LANES);
+const VALID_JOURNEY_STAGES = new Set<JourneyResourceStage>(JOURNEY_RESOURCE_STAGES);
 
 function normalizeSourceLane(value: unknown): SourceLane | undefined {
   if (typeof value !== 'string') return undefined;
@@ -204,17 +210,8 @@ type JsonDefaults = {
 
 function normalizeJourneyStage(value: unknown): JourneyResourceStage | undefined {
   if (typeof value !== 'string') return undefined;
-  const upper = value.trim().toUpperCase();
-  switch (upper) {
-    case 'PRE_ARRIVAL':
-    case 'FIRST_30_DAYS':
-    case 'FIRST_90_DAYS':
-    case 'SETTLED':
-    case 'ANYTIME':
-      return upper;
-    default:
-      return undefined;
-  }
+  const upper = value.trim().toUpperCase() as JourneyResourceStage;
+  return VALID_JOURNEY_STAGES.has(upper) ? upper : undefined;
 }
 
 function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
@@ -222,7 +219,7 @@ function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
   const journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>> = {};
 
   if (isObject(parsed.baselineKeywordsByLane)) {
-    for (const lane of ['EVENT', 'COMMUNITY', 'RESOURCE'] as const) {
+    for (const lane of SOURCE_LANES) {
       byLane[lane] = normalizeStringArray(parsed.baselineKeywordsByLane[lane]);
     }
   }
@@ -239,10 +236,6 @@ function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
   }
 
   return { byLane, journeyResourceByStage };
-}
-
-function normalizeKeyword(keyword: string): string {
-  return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
 function resolveDefaultsJsonPath(): string {
@@ -548,11 +541,6 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
  * Cached per-process; clears only on resetRuntimeConfigCache().
  * Used during source planning to scope keyword and pinned searches.
  */
-/**
- * Fetch all enabled regions for the current pipeline context.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Used during source planning to scope keyword and pinned searches.
- */
 export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
   const { rows } = await loadConfigRows();
   const parsed = parseRegions(rows);
@@ -564,11 +552,6 @@ export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
   return parsed;
 }
 
-/**
- * Fetch all enabled keyword search strategies.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Includes lane metadata and source intent for lane-aware orchestration.
- */
 /**
  * Fetch all enabled keyword search strategies.
  * Cached per-process; clears only on resetRuntimeConfigCache().
@@ -586,19 +569,9 @@ export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemp
 }
 
 /**
- * Additional lane-aware keyword hints from the bundled JSON defaults.
- * These are additive planning hints used by source-plan and remain
- * independent of any generic KEYWORD rows.
- */
-/**
  * Fetch lane-specific keyword seeds and journey resource stage hints.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Used for lane-aware keyword expansion and RESOURCE discovery by lifecycle stage.
- */
-/**
- * Fetch lane-specific keyword seeds and journey resource stage hints.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Used for lane-aware keyword expansion and RESOURCE discovery by lifecycle stage.
+ * Loaded directly from bundled JSON defaults to keep planning hints independent
+ * of DB-managed REGION and STRATEGY rows.
  */
 export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSeeds> {
   const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
@@ -606,11 +579,6 @@ export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSe
   return parseLaneKeywordSeeds(parsed);
 }
 
-/**
- * Fetch all enabled pinned URL strategies.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Includes lane metadata and hints for city/origin bucketing during execution.
- */
 /**
  * Fetch all enabled pinned URL strategies.
  * Cached per-process; clears only on resetRuntimeConfigCache().
@@ -627,11 +595,6 @@ export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
   return parsed;
 }
 
-/** Diagnostic: which source the runtime loader is currently serving from. */
-/**
- * Report the current config source (DB or JSON fallback).
- * Useful for debugging and observability: determines whether config is DB-managed or using defaults.
- */
 /**
  * Report the current config source (DB or JSON fallback).
  * Useful for debugging and observability: determines whether config is DB-managed or using defaults.
