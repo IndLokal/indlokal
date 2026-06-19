@@ -148,6 +148,19 @@ function normalizeStringArray(value: unknown): string[] {
   );
 }
 
+function parseBaselineKeywords(raw: Record<string, unknown>): string[] {
+  const direct = normalizeStringArray(raw.baselineKeywords);
+  if (direct.length > 0) return direct;
+
+  const byLaneRaw = raw.baselineKeywordsByLane;
+  if (!isObject(byLaneRaw)) return [];
+
+  const laneKeywords = Object.values(byLaneRaw).flatMap((laneValue) =>
+    normalizeStringArray(laneValue),
+  );
+  return Array.from(new Set(laneKeywords));
+}
+
 function parseSourceDefaults(raw: unknown): SourceDefaults {
   if (!isObject(raw)) {
     throw new Error('[Pipeline] pipeline-source-defaults.json must contain an object');
@@ -155,7 +168,7 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
 
   const regionsRaw = Array.isArray(raw.regions) ? raw.regions : [];
   const strategiesRaw = Array.isArray(raw.strategies) ? raw.strategies : [];
-  const baselineKeywords = normalizeStringArray(raw.baselineKeywords);
+  const baselineKeywords = parseBaselineKeywords(raw);
   const normalizedBaselineKeywords = baselineKeywords.map(normalizeKeyword);
   const parseErrors: string[] = [];
 
