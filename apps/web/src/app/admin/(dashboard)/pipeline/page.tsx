@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import Link from 'next/link';
-import type { PipelineLaneBreakdown, PipelineLaneMetricKey } from '@/modules/pipeline/types';
+import type { PipelineLaneBreakdown } from '@/modules/pipeline/types';
 import {
   approveKeywordSuggestion,
   approvePipelineItem,
@@ -108,7 +108,8 @@ export default async function AdminPipelinePage({
     orderBy: { name: 'asc' },
   });
   const sourceStats = await getSourceReliabilityStats();
-  const llmAuditSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const llmAuditSince = new Date();
+  llmAuditSince.setDate(llmAuditSince.getDate() - 7);
 
   // Pagination for pipeline items
   const { page, pageSize, skip, take } = parseOffsetPagination(sp, {

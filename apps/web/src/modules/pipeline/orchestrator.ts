@@ -1427,13 +1427,6 @@ export function resolveEventCityDecision(
   };
 }
 
-function inferCityFromEventSignals(
-  event: ExtractedEvent,
-  cities: Array<{ id: string; slug: string; name: string }>,
-): { id: string; slug: string; name: string } | null {
-  return summarizeEventSignalCities(event, cities).city;
-}
-
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {
   if (!event.date) {
     return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
