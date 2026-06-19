@@ -31,6 +31,16 @@ import {
   getGapKeywordsForStrategy,
   renderKeywordsForSource,
 } from './source-plan-keywords';
+import {
+  getDuckDuckGoKeywordLimit,
+  hasEventbriteApiKey,
+  hasGoogleCseCredentialsForLane,
+  isAdminForceKeywordSearchEnabled,
+  isDuckDuckGoEnabled,
+  isForceKeywordSearchEnabled,
+  isGoogleCseRunModeAllowed,
+  readPositiveIntEnv,
+} from './env-config';
 import type { SearchRegion, SearchStrategy, SourceLane } from './types';
 import type { KeywordStrategyTemplate } from './runtime-config';
 
@@ -75,11 +85,6 @@ export type PipelineSourcePlan = {
   laneBreakdown: PipelineSourcePlanLaneBreakdown;
   notes: string[];
 };
-
-function getPositiveIntEnv(name: string, fallback: number): number {
-  const parsed = Number.parseInt(process.env[name] ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
-}
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
@@ -292,21 +297,15 @@ function limitDbPinnedSources(strategies: PinnedStrategy[], limit: number): Pinn
  * Certain source types (EVENTBRITE, GOOGLE_SEARCH) require API keys; others are always available.
  */
 function isConfigured(strategy: KeywordStrategyTemplate): boolean {
-  if (strategy.sourceType === 'EVENTBRITE') return Boolean(process.env.EVENTBRITE_API_KEY);
+  if (strategy.sourceType === 'EVENTBRITE') return hasEventbriteApiKey();
   if (strategy.sourceType === 'GOOGLE_SEARCH') {
-    return Boolean(process.env.GOOGLE_CSE_API_KEY && process.env.GOOGLE_CSE_ID);
+    return hasGoogleCseCredentialsForLane(strategy.lane);
   }
   return true;
 }
 
-function isDuckDuckGoEnabled(): boolean {
-  return process.env.PIPELINE_ENABLE_DDG === '1';
-}
-
 function limitDuckDuckGoKeywords(keywords: string[], triggeredBy: string): string[] {
-  const limitFromEnv = Number.parseInt(process.env.PIPELINE_DDG_KEYWORD_LIMIT ?? '', 10);
-  const defaultLimit = triggeredBy === 'cron' ? 8 : triggeredBy === 'admin' ? 16 : 12;
-  const limit = Number.isFinite(limitFromEnv) && limitFromEnv > 0 ? limitFromEnv : defaultLimit;
+  const limit = getDuckDuckGoKeywordLimit(triggeredBy);
   return keywords.slice(0, limit);
 }
 
@@ -347,9 +346,12 @@ async function getLowCoverageCities(
   const upcomingEventCountByCityId = new Map(
     upcomingEventsByCity.map((row) => [row.cityId, row._count._all]),
   );
-  const communityThreshold = getPositiveIntEnv('PIPELINE_DB_GAP_CITY_THRESHOLD', isCronRun ? 2 : 3);
-  const eventThreshold = getPositiveIntEnv('PIPELINE_DB_GAP_EVENT_THRESHOLD', isCronRun ? 1 : 2);
-  const limit = getPositiveIntEnv('PIPELINE_DB_GAP_CITY_LIMIT', isCronRun ? 4 : 6);
+  const communityThreshold = readPositiveIntEnv(
+    'PIPELINE_DB_GAP_CITY_THRESHOLD',
+    isCronRun ? 2 : 3,
+  );
+  const eventThreshold = readPositiveIntEnv('PIPELINE_DB_GAP_EVENT_THRESHOLD', isCronRun ? 1 : 2);
+  const limit = readPositiveIntEnv('PIPELINE_DB_GAP_CITY_LIMIT', isCronRun ? 4 : 6);
 
   const allGapCities = cities
     .map((city) => ({
@@ -424,13 +426,12 @@ export async function buildPipelineSourcePlan(
 ): Promise<PipelineSourcePlan> {
   const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';
   const notes: string[] = [];
-  const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
-  const forceAdminKeywordSearch =
-    triggeredBy === 'admin' && process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
+  const forceKeywordSearch = isForceKeywordSearchEnabled();
+  const forceAdminKeywordSearch = isAdminForceKeywordSearchEnabled(triggeredBy);
 
   const staticPinned = await getRuntimePinnedStrategies();
   const dbPinnedAll = await getDbCommunityStrategies();
-  const dbPinnedLimit = getPositiveIntEnv(
+  const dbPinnedLimit = readPositiveIntEnv(
     'PIPELINE_DB_PINNED_LIMIT',
     isTimeBoundRun ? 40 : dbPinnedAll.length,
   );
@@ -477,6 +478,16 @@ export async function buildPipelineSourcePlan(
 
   const keywordStrategies = shouldRunKeywords
     ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
+        if (
+          strategy.sourceType === 'GOOGLE_SEARCH' &&
+          !isGoogleCseRunModeAllowed(strategy.lane, triggeredBy)
+        ) {
+          notes.push(
+            `skipping ${strategy.id}: GOOGLE_SEARCH lane ${strategy.lane ?? 'UNKNOWN'} is not enabled for ${triggeredBy} runs`,
+          );
+          return [];
+        }
+
         if (strategy.sourceType === 'DUCKDUCKGO' && !isDuckDuckGoEnabled()) {
           notes.push(
             `skipping ${strategy.id}: disabled by default; set PIPELINE_ENABLE_DDG=1 to enable`,

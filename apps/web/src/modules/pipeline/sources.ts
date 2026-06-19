@@ -12,6 +12,11 @@ import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './ty
 import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
+import {
+  GOOGLE_CSE_ENV_BY_LANE,
+  getGoogleCseApiKey,
+  resolveGoogleCseIdForLane,
+} from './env-config';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {
@@ -474,23 +479,26 @@ export async function fetchPinnedUrl(
  * Finds groups that only exist as mentions on blogs, university pages,
  * directories, or community boards - no dedicated website needed.
  *
- * Requires: GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID environment variables.
+ * Requires: GOOGLE_CSE_API_KEY + lane-specific CSE ID env var.
+ * Preferred lane vars: GOOGLE_CSE_COMMUNITY_ID, GOOGLE_CSE_EVENT_ID,
+ * GOOGLE_CSE_RESOURCE_ID. Legacy GOOGLE_CSE_ID is accepted as fallback.
  * Free tier: 100 queries/day. Each keyword search = 1 query.
  */
 export async function fetchGoogleSearch(
   strategy: SearchStrategy & { kind: 'keyword_search' },
   region: SearchRegion,
 ): Promise<FetchResult> {
-  const apiKey = process.env.GOOGLE_CSE_API_KEY;
-  const cseId = process.env.GOOGLE_CSE_ID;
+  const apiKey = getGoogleCseApiKey();
+  const cseId = resolveGoogleCseIdForLane(strategy.lane);
   const items: RawContent[] = [];
   const errors: string[] = [];
 
   if (!apiKey || !cseId) {
+    const laneEnv = strategy.lane ? GOOGLE_CSE_ENV_BY_LANE[strategy.lane] : 'GOOGLE_CSE_ID';
     return {
       sourceId: `${strategy.id}:${region.id}`,
       items,
-      errors: ['GOOGLE_CSE_API_KEY or GOOGLE_CSE_ID not configured'],
+      errors: [`GOOGLE_CSE_API_KEY or ${laneEnv} (fallback: GOOGLE_CSE_ID) not configured`],
     };
   }
 

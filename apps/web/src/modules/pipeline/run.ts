@@ -9,6 +9,9 @@
  *   OPENAI_API_KEY     - for LLM extraction
  *   DATABASE_URL       - PostgreSQL connection
  *   EVENTBRITE_API_KEY - (optional) for Eventbrite source
+ *   GOOGLE_CSE_API_KEY - (optional) for Google Custom Search
+ *   GOOGLE_CSE_COMMUNITY_ID / GOOGLE_CSE_EVENT_ID / GOOGLE_CSE_RESOURCE_ID
+ *                      - (optional) lane-specific Google CSE IDs
  */
 
 import { runPipeline } from './orchestrator';

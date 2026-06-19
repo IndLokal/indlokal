@@ -89,6 +89,9 @@ describe('buildPipelineSourcePlan', () => {
     delete process.env.EVENTBRITE_API_KEY;
     delete process.env.GOOGLE_CSE_API_KEY;
     delete process.env.GOOGLE_CSE_ID;
+    delete process.env.GOOGLE_CSE_COMMUNITY_ID;
+    delete process.env.GOOGLE_CSE_EVENT_ID;
+    delete process.env.GOOGLE_CSE_RESOURCE_ID;
     delete process.env.PIPELINE_FORCE_KEYWORD_SEARCH;
     delete process.env.PIPELINE_ENABLE_DDG;
 
@@ -202,7 +205,7 @@ describe('buildPipelineSourcePlan', () => {
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
-    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.GOOGLE_CSE_COMMUNITY_ID = 'community-cse';
     process.env.PIPELINE_ENABLE_DDG = '1';
     mocks.getRuntimeKeywordStrategies.mockResolvedValue([
       {
@@ -267,7 +270,8 @@ describe('buildPipelineSourcePlan', () => {
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
-    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.GOOGLE_CSE_COMMUNITY_ID = 'community-cse';
+    process.env.GOOGLE_CSE_RESOURCE_ID = 'resource-cse';
     process.env.PIPELINE_ENABLE_DDG = '1';
     process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
     mocks.getRuntimeLaneKeywordSeeds.mockResolvedValue({
@@ -332,7 +336,7 @@ describe('buildPipelineSourcePlan', () => {
       { cityId: 'city-2', _count: { _all: 3 } },
     ]);
 
-    const plan = await buildPipelineSourcePlan(regions, 'cli');
+    const plan = await buildPipelineSourcePlan(regions, 'admin');
 
     const eventbrite = plan.keywordStrategies.find(
       (strategy) => strategy.id === 'eventbrite-keyword',
@@ -688,7 +692,7 @@ describe('buildPipelineSourcePlan', () => {
 
     process.env.EVENTBRITE_API_KEY = 'test-key';
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
-    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.GOOGLE_CSE_RESOURCE_ID = 'resource-cse';
     process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
@@ -751,7 +755,7 @@ describe('buildPipelineSourcePlan', () => {
       'cron run: skipped 1 COMMUNITY pinned strategies (event-first cron)',
     );
     expect(cronPlan.notes).toContain(
-      'cron run: skipped 1 RESOURCE keyword strategies (admin/city scoped only)',
+      'skipping resource-keyword: GOOGLE_SEARCH lane RESOURCE is not enabled for cron runs',
     );
 
     expect(adminPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
@@ -768,7 +772,7 @@ describe('buildPipelineSourcePlan', () => {
     const { buildPipelineSourcePlan } = await import('../source-plan');
 
     process.env.GOOGLE_CSE_API_KEY = 'test-key';
-    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.GOOGLE_CSE_COMMUNITY_ID = 'community-cse';
     process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
     mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
     mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
@@ -796,6 +800,39 @@ describe('buildPipelineSourcePlan', () => {
     expect(adminPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
       'google-community-keyword',
     ]);
+  });
+
+  it('runs EVENT Google CSE only for cron runs', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_EVENT_ID = 'event-cse';
+    process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
+    mocks.groupEvents.mockResolvedValue([]);
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'google-event-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Event',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'EVENT',
+      },
+    ]);
+
+    const cronPlan = await buildPipelineSourcePlan(regions, 'cron');
+    const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
+
+    expect(cronPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'google-event-keyword',
+    ]);
+    expect(adminPlan.keywordStrategies).toEqual([]);
+    expect(adminPlan.notes).toContain(
+      'skipping google-event-keyword: GOOGLE_SEARCH lane EVENT is not enabled for admin runs',
+    );
   });
 
   it('prioritizes event-starved metro cities ahead of empty satellites in the gap list', async () => {
