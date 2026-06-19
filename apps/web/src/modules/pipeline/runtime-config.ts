@@ -104,9 +104,15 @@ function normalizeSourceLane(value: unknown): SourceLane | undefined {
 }
 
 /**
- * Conservative lane inference for clearly unambiguous source types.
- * Returns undefined for ambiguous types (GOOGLE_SEARCH, WEBSITE_SCRAPE,
- * FACEBOOK, INSTAGRAM, DUCKDUCKGO) — those must carry an explicit lane.
+ * Conservative lane inference for source types with built-in content intent.
+ * Returns undefined for ambiguous types (GOOGLE_SEARCH, WEBSITE_SCRAPE, etc.) that
+ * must carry an explicit lane annotation in config payloads.
+ *
+ * Unambiguous inference:
+ *   - EVENTBRITE, MEETUP → EVENT
+ *   - DB_COMMUNITY → EVENT
+ *   - CGI_MUNICH → RESOURCE
+ *   - COMMUNITY_SUGGESTION → COMMUNITY
  */
 function inferLaneFromSourceType(sourceType: SourceType): SourceLane | undefined {
   switch (sourceType) {
@@ -125,6 +131,16 @@ function inferLaneFromSourceType(sourceType: SourceType): SourceLane | undefined
   }
 }
 
+/**
+ * Derive pipeline source intent from lane and content scope metadata.
+ * SourceIntent shapes LLM extraction instructions and filtering behavior.
+ *
+ * Examples:
+ *   - EVENT lane → 'dated_activity_discovery'
+ *   - COMMUNITY lane → 'org_group_discovery'
+ *   - RESOURCE lane → 'official_service_info_discovery'
+ *   - scope 'official_portal' → 'official_service_info_discovery'
+ */
 function deriveSourceIntent(
   lane: SourceLane | undefined,
   contentScope: unknown,
@@ -149,8 +165,11 @@ function deriveSourceIntent(
   return undefined;
 }
 
-// ── DB read ────────────────────────────────────────────
-
+/**
+ * Read source configuration from the database table `pipeline_source_configs`.
+ * Used as the primary config source when available and populated.
+ * Ordered by config type and key for consistent output.
+ */
 async function readConfigRowsFromDb(): Promise<ConfigRow[]> {
   return db.$queryRaw<ConfigRow[]>(Prisma.sql`
     SELECT
@@ -171,6 +190,17 @@ async function readConfigRowsFromDb(): Promise<ConfigRow[]> {
 // but applies only the lightweight checks runtime needs (full validation
 // stays in the bootstrap script so bad data fails the seed, not requests).
 
+/**
+ * Load source config from the bundled JSON fallback file at
+ * `apps/web/prisma/data/pipeline-source-defaults.json`.
+ *
+ * Fallback behavior:
+ *   - Used when DB table is missing or empty (fresh deployments, test environments)
+ *   - Applies lightweight validation only (full validation is in the bootstrap seeder)
+ *   - Keeps the system functional without manual seed/migration steps
+ *
+ * Format: { baselineKeywords, regions, strategies, journeyKeywordHintsByLane }
+ */
 type JsonRegion = {
   id?: unknown;
   label?: unknown;
@@ -252,9 +282,9 @@ function resolveDefaultsJsonPath(): string {
 }
 
 /**
- * Derive city slugs for a region by state. Mirrors the bootstrap loader so
- * runtime fallback matches what `pnpm pipeline:sources:sync` would have
- * written to the DB.
+ * Derive city slugs for a region by state name.
+ * Mirrors the bootstrap logic so runtime fallback matches DB-seeded values.
+ * Includes ACTIVE_CITY_DATA, SATELLITE_CITY_DATA (satellites for metros), and UPCOMING_CITIES.
  */
 function getCitySlugsForState(state: string): string[] {
   const slugs: string[] = [];
@@ -375,10 +405,18 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
 }
 
 // ── Cached loader ──────────────────────────────────────
+// In-process cache ensures each request loads config only once.
+// Prevents repeated DB queries or file I/O during a single pipeline run.
+// Can be reset for tests or long-running workers.
 
 let cachedRows: { rows: ConfigRow[]; source: ConfigSource } | null = null;
 let inflight: Promise<{ rows: ConfigRow[]; source: ConfigSource }> | null = null;
 
+/**
+ * Load config rows from DB or JSON fallback, with single-process caching.
+ * Tries DB first; if empty or unavailable, falls back to bundled JSON and logs a warning.
+ * Concurrent callers share the same inflight promise.
+ */
 async function loadConfigRows(): Promise<{ rows: ConfigRow[]; source: ConfigSource }> {
   if (cachedRows) return cachedRows;
   if (inflight) return inflight;
@@ -420,7 +458,10 @@ async function loadConfigRows(): Promise<{ rows: ConfigRow[]; source: ConfigSour
   }
 }
 
-/** Clear the in-process cache. Intended for tests and long-lived workers. */
+/**
+ * Clear the in-process config cache. Intended for tests and long-lived worker processes.
+ * Forces the next config getter to reload from DB or JSON.
+ */
 export function resetRuntimeConfigCache(): void {
   cachedRows = null;
   inflight = null;
@@ -428,6 +469,10 @@ export function resetRuntimeConfigCache(): void {
 
 // ── Parsers (operate on either source) ────────────────
 
+/**
+ * Parse regions from config rows into SearchRegion contracts.
+ * Filters disabled rows and validates required fields (searchCenter, citySlugs).
+ */
 function parseRegions(rows: ConfigRow[]): SearchRegion[] {
   const regions: SearchRegion[] = [];
   for (const row of rows) {
@@ -452,6 +497,11 @@ function parseRegions(rows: ConfigRow[]): SearchRegion[] {
   return regions;
 }
 
+/**
+ * Parse keyword strategy templates from config rows.
+ * Normalizes source types, radius, lane, and source intent.
+ * Skips disabled rows and entries without required fields.
+ */
 function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
   const strategies: KeywordStrategyTemplate[] = [];
 
@@ -482,6 +532,10 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
   return strategies;
 }
 
+/**
+ * Extract baseline keyword seeds from config rows.
+ * These are shared keywords used across multiple strategies as semantic anchors.
+ */
 function parseKeywordSeeds(rows: ConfigRow[]): string[] {
   return rows
     .filter((row) => row.configType === 'KEYWORD' && row.enabled)
@@ -489,6 +543,11 @@ function parseKeywordSeeds(rows: ConfigRow[]): string[] {
     .filter(Boolean);
 }
 
+/**
+ * Parse pinned URL strategies from config rows.
+ * Validates URL presence, scope, and lane metadata.
+ * Skips disabled rows and entries without required fields.
+ */
 function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
   const strategies: PinnedStrategy[] = [];
 
@@ -536,6 +595,16 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
 
 // ── Public API ─────────────────────────────────────────
 
+/**
+ * Fetch all enabled regions for the current pipeline context.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Used during source planning to scope keyword and pinned searches.
+ */
+/**
+ * Fetch all enabled regions for the current pipeline context.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Used during source planning to scope keyword and pinned searches.
+ */
 export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
   const { rows } = await loadConfigRows();
   const parsed = parseRegions(rows);
@@ -547,6 +616,16 @@ export async function getRuntimeEnabledRegions(): Promise<SearchRegion[]> {
   return parsed;
 }
 
+/**
+ * Fetch all enabled keyword search strategies.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Includes lane metadata and source intent for lane-aware orchestration.
+ */
+/**
+ * Fetch all enabled keyword search strategies.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Includes lane metadata and source intent for lane-aware orchestration.
+ */
 export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemplate[]> {
   const { rows } = await loadConfigRows();
   const parsed = parseKeywordStrategies(rows);
@@ -558,6 +637,16 @@ export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemp
   return parsed;
 }
 
+/**
+ * Fetch baseline keyword seeds used across multiple sources.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Serves as semantic anchors for gap analysis and strategy planning.
+ */
+/**
+ * Fetch baseline keyword seeds used across multiple sources.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Serves as semantic anchors for gap analysis and strategy planning.
+ */
 export async function getRuntimeKeywordSeeds(): Promise<string[]> {
   const { rows } = await loadConfigRows();
   const parsed = parseKeywordSeeds(rows);
@@ -574,12 +663,32 @@ export async function getRuntimeKeywordSeeds(): Promise<string[]> {
  * These are additive planning hints used by source-plan and remain
  * backward compatible with DB-managed KEYWORD rows.
  */
+/**
+ * Fetch lane-specific keyword seeds and journey resource stage hints.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Used for lane-aware keyword expansion and RESOURCE discovery by lifecycle stage.
+ */
+/**
+ * Fetch lane-specific keyword seeds and journey resource stage hints.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Used for lane-aware keyword expansion and RESOURCE discovery by lifecycle stage.
+ */
 export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSeeds> {
   const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
   const parsed = JSON.parse(raw) as JsonDefaults;
   return parseLaneKeywordSeeds(parsed);
 }
 
+/**
+ * Fetch all enabled pinned URL strategies.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Includes lane metadata and hints for city/origin bucketing during execution.
+ */
+/**
+ * Fetch all enabled pinned URL strategies.
+ * Cached per-process; clears only on resetRuntimeConfigCache().
+ * Includes lane metadata and hints for city/origin bucketing during execution.
+ */
 export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
   const { rows } = await loadConfigRows();
   const parsed = parsePinnedStrategies(rows);
@@ -592,6 +701,14 @@ export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
 }
 
 /** Diagnostic: which source the runtime loader is currently serving from. */
+/**
+ * Report the current config source (DB or JSON fallback).
+ * Useful for debugging and observability: determines whether config is DB-managed or using defaults.
+ */
+/**
+ * Report the current config source (DB or JSON fallback).
+ * Useful for debugging and observability: determines whether config is DB-managed or using defaults.
+ */
 export async function getRuntimeConfigSource(): Promise<ConfigSource> {
   const { source } = await loadConfigRows();
   return source;
