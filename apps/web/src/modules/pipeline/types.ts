@@ -39,13 +39,22 @@ export type SourceType =
 export type SourceLane = 'EVENT' | 'COMMUNITY' | 'RESOURCE';
 
 /**
+ * High-level strategy intent derived from lane/content scope. Lightweight
+ * planning metadata only — not a separate runtime policy engine.
+ */
+export type SourceIntent =
+  | 'dated_activity_discovery'
+  | 'org_group_discovery'
+  | 'official_service_info_discovery';
+
+/**
  * Per-lane policy constraints — lightweight static table, not a runtime engine.
  * Defines the boundaries used by prefilters (Phase 4), prompts (Phase 6),
  * and auto-approval gating (Phase 7).
  */
 export type SourcePolicy = {
   lane: SourceLane;
-  sourceIntent: string;
+  sourceIntent: SourceIntent;
   /** Minimum EvidenceStrength tier required for sources in this lane. */
   minTrustStrength: 'strong' | 'medium' | 'weak';
   llmAllowed: boolean;
@@ -113,6 +122,11 @@ export type SearchStrategy = {
    * (e.g. GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
    */
   lane?: SourceLane;
+  /**
+   * Lightweight planning intent derived from lane/contentScope.
+   * Optional for legacy rows lacking explicit lane/contentScope metadata.
+   */
+  sourceIntent?: SourceIntent;
 } & (
   | {
       /** Keyword-based search (Eventbrite, Meetup) - searches region-wide */

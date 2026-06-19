@@ -559,6 +559,83 @@ describe('buildPipelineSourcePlan', () => {
     expect(cliPlan.dbPinnedCount).toBe(55);
   });
 
+  it('excludes explicit RESOURCE lane strategies from normal cron plans only', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.EVENTBRITE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
+    mocks.findCities.mockResolvedValue([{ id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' }]);
+    mocks.groupCommunities.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 1 } }]);
+    mocks.groupEvents.mockResolvedValue([]);
+    mocks.getRuntimePinnedStrategies.mockResolvedValue([
+      {
+        id: 'resource-portal',
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        label: 'Resource portal',
+        enabled: true,
+        url: 'https://example.org/resource',
+        lane: 'RESOURCE',
+      },
+      {
+        id: 'community-directory',
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        label: 'Community directory',
+        enabled: true,
+        url: 'https://example.org/community',
+        lane: 'COMMUNITY',
+      },
+    ]);
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'eventbrite-keyword',
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        label: 'Eventbrite',
+        enabled: true,
+        radiusKm: 50,
+        lane: 'EVENT',
+      },
+      {
+        id: 'resource-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Resource keyword',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'RESOURCE',
+      },
+    ]);
+
+    const cronPlan = await buildPipelineSourcePlan(regions, 'cron');
+    const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
+
+    expect(cronPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'community-directory',
+    ]);
+    expect(cronPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'eventbrite-keyword',
+    ]);
+    expect(cronPlan.notes).toContain(
+      'cron run: skipped 1 RESOURCE pinned strategies (admin/city scoped only)',
+    );
+    expect(cronPlan.notes).toContain(
+      'cron run: skipped 1 RESOURCE keyword strategies (admin/city scoped only)',
+    );
+
+    expect(adminPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
+      'resource-portal',
+      'community-directory',
+    ]);
+    expect(adminPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
+      'eventbrite-keyword',
+      'resource-keyword',
+    ]);
+  });
+
   it('prioritizes event-starved metro cities ahead of empty satellites in the gap list', async () => {
     const { buildPipelineSourcePlan } = await import('../source-plan');
 

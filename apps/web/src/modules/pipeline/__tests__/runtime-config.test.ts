@@ -73,7 +73,7 @@ describe('runtime-config JSON fallback', () => {
         enabled: true,
         sourceType: 'EVENTBRITE',
         kind: 'keyword_search',
-        payload: { radiusKm: 50 },
+        payload: { radiusKm: 50, lane: 'EVENT', contentScope: 'community_events' },
       },
       {
         configType: 'STRATEGY',
@@ -82,7 +82,11 @@ describe('runtime-config JSON fallback', () => {
         enabled: true,
         sourceType: 'WEBSITE_SCRAPE',
         kind: 'pinned_url',
-        payload: { url: 'https://www.cgimunich.gov.in/' },
+        payload: {
+          url: 'https://www.cgimunich.gov.in/',
+          lane: 'RESOURCE',
+          contentScope: 'official_portal',
+        },
       },
     ]);
 
@@ -91,11 +95,17 @@ describe('runtime-config JSON fallback', () => {
 
     const regions = await mod.getRuntimeEnabledRegions();
     const seeds = await mod.getRuntimeKeywordSeeds();
+    const keywordStrategies = await mod.getRuntimeKeywordStrategies();
+    const pinnedStrategies = await mod.getRuntimePinnedStrategies();
     const source = await mod.getRuntimeConfigSource();
 
     expect(source).toBe('db');
     expect(regions).toHaveLength(1);
     expect(regions[0].id).toBe('test-region');
     expect(seeds).toEqual(['Indian community Berlin']);
+    expect(keywordStrategies[0]?.lane).toBe('EVENT');
+    expect(keywordStrategies[0]?.sourceIntent).toBe('dated_activity_discovery');
+    expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');
+    expect(pinnedStrategies[0]?.sourceIntent).toBe('official_service_info_discovery');
   });
 });

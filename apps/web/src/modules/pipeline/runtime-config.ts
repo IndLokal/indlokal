@@ -26,7 +26,7 @@ import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
-import type { SearchRegion, SearchStrategy, SourceType, SourceLane } from './types';
+import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent } from './types';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
@@ -112,6 +112,30 @@ function inferLaneFromSourceType(sourceType: SourceType): SourceLane | undefined
       // INDOEUROPEAN, GOOGLE_ALERT — require explicit lane in config payload.
       return undefined;
   }
+}
+
+function deriveSourceIntent(
+  lane: SourceLane | undefined,
+  contentScope: unknown,
+): SourceIntent | undefined {
+  if (typeof contentScope === 'string') {
+    if (contentScope === 'official_portal') return 'official_service_info_discovery';
+    if (contentScope === 'community_events' || contentScope === 'official_events') {
+      return 'dated_activity_discovery';
+    }
+    if (
+      contentScope === 'keyword_discovery' ||
+      contentScope === 'directory_listing' ||
+      contentScope === 'community_portal'
+    ) {
+      return 'org_group_discovery';
+    }
+  }
+
+  if (lane === 'EVENT') return 'dated_activity_discovery';
+  if (lane === 'COMMUNITY') return 'org_group_discovery';
+  if (lane === 'RESOURCE') return 'official_service_info_discovery';
+  return undefined;
 }
 
 // ── DB read ────────────────────────────────────────────
@@ -390,6 +414,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
       typeof radiusRaw === 'number' && Number.isFinite(radiusRaw) && radiusRaw > 0 ? radiusRaw : 50;
 
     const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
+    const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
       id: row.key,
       sourceType,
@@ -398,6 +423,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
       radiusKm,
       enabled: true,
       lane,
+      sourceIntent,
     });
   }
 
@@ -437,6 +463,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
     }
 
     const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
+    const sourceIntent = deriveSourceIntent(lane, row.payload.contentScope);
     strategies.push({
       id: row.key,
       sourceType,
@@ -448,6 +475,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       hintState: hintState || undefined,
       enabled: true,
       lane,
+      sourceIntent,
     });
   }
 

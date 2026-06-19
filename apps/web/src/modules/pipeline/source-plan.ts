@@ -140,6 +140,36 @@ function buildLaneBreakdown(
   return breakdown;
 }
 
+function filterPinnedStrategiesForRun(
+  strategies: PinnedStrategy[],
+  triggeredBy: string,
+  notes: string[],
+): PinnedStrategy[] {
+  if (triggeredBy !== 'cron') return strategies;
+
+  const kept = strategies.filter((strategy) => strategy.lane !== 'RESOURCE');
+  const dropped = strategies.length - kept.length;
+  if (dropped > 0) {
+    notes.push(`cron run: skipped ${dropped} RESOURCE pinned strategies (admin/city scoped only)`);
+  }
+  return kept;
+}
+
+function filterKeywordStrategiesForRun(
+  strategies: KeywordStrategy[],
+  triggeredBy: string,
+  notes: string[],
+): KeywordStrategy[] {
+  if (triggeredBy !== 'cron') return strategies;
+
+  const kept = strategies.filter((strategy) => strategy.lane !== 'RESOURCE');
+  const dropped = strategies.length - kept.length;
+  if (dropped > 0) {
+    notes.push(`cron run: skipped ${dropped} RESOURCE keyword strategies (admin/city scoped only)`);
+  }
+  return kept;
+}
+
 function prioritizeDbPinnedSources(strategies: PinnedStrategy[]): PinnedStrategy[] {
   return strategies
     .map((strategy, index) => ({
@@ -320,7 +350,11 @@ export async function buildPipelineSourcePlan(
   const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
   const forceAdminKeywordSearch = process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
 
-  const staticPinned = await getRuntimePinnedStrategies();
+  const staticPinned = filterPinnedStrategiesForRun(
+    await getRuntimePinnedStrategies(),
+    triggeredBy,
+    notes,
+  );
   const dbPinnedAll = await getDbCommunityStrategies();
   const dbPinnedLimit = getPositiveIntEnv(
     'PIPELINE_DB_PINNED_LIMIT',
@@ -389,9 +423,14 @@ export async function buildPipelineSourcePlan(
         return [{ ...strategy, keywords: limitedKeywords }];
       })
     : [];
+  const filteredKeywordStrategies = filterKeywordStrategiesForRun(
+    keywordStrategies,
+    triggeredBy,
+    notes,
+  );
 
   const pinnedStrategies = [...staticPinned, ...dbPinned];
-  const laneBreakdown = buildLaneBreakdown(keywordStrategies, pinnedStrategies);
+  const laneBreakdown = buildLaneBreakdown(filteredKeywordStrategies, pinnedStrategies);
   notes.push(
     `lane distribution: ${Object.entries(laneBreakdown)
       .map(([lane, counts]) => `${lane}:k${counts.keywordStrategies}/p${counts.pinnedStrategies}`)
@@ -399,7 +438,7 @@ export async function buildPipelineSourcePlan(
   );
 
   return {
-    keywordStrategies,
+    keywordStrategies: filteredKeywordStrategies,
     pinnedStrategies,
     staticPinnedCount: staticPinned.length,
     dbPinnedCount: dbPinned.length,

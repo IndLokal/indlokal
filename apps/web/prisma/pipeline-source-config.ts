@@ -16,6 +16,7 @@ type SourceDefaultsStrategy = {
   id: string;
   sourceType: string;
   kind: 'keyword_search' | 'pinned_url';
+  lane: 'EVENT' | 'COMMUNITY' | 'RESOURCE';
   contentScope:
     | 'keyword_discovery'
     | 'official_portal'
@@ -56,6 +57,8 @@ const ALLOWED_CONTENT_SCOPES = new Set<SourceDefaultsStrategy['contentScope']>([
   'community_events',
   'community_portal',
 ]);
+
+const ALLOWED_LANES = new Set<SourceDefaultsStrategy['lane']>(['EVENT', 'COMMUNITY', 'RESOURCE']);
 
 const ALLOWED_SOURCE_TYPES = new Set<string>([
   'EVENTBRITE',
@@ -198,6 +201,10 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
       id: typeof rawStrategy.id === 'string' ? rawStrategy.id : '',
       sourceType: typeof rawStrategy.sourceType === 'string' ? rawStrategy.sourceType : '',
       kind: kindRaw,
+      lane:
+        typeof rawStrategy.lane === 'string'
+          ? (rawStrategy.lane as SourceDefaultsStrategy['lane'])
+          : ('' as SourceDefaultsStrategy['lane']),
       contentScope:
         typeof rawStrategy.contentScope === 'string'
           ? (rawStrategy.contentScope as SourceDefaultsStrategy['contentScope'])
@@ -234,6 +241,13 @@ function parseSourceDefaults(raw: unknown): SourceDefaults {
     if (!ALLOWED_CONTENT_SCOPES.has(candidate.contentScope)) {
       parseErrors.push(
         `[Pipeline] Strategy ${candidate.id || '<unknown>'} has missing/invalid contentScope`,
+      );
+      continue;
+    }
+
+    if (!ALLOWED_LANES.has(candidate.lane)) {
+      parseErrors.push(
+        `[Pipeline] Strategy ${candidate.id || '<unknown>'} has missing/invalid lane`,
       );
       continue;
     }
@@ -398,6 +412,7 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
         sourceType: strategy.sourceType as PipelineSourceType,
         kind: strategy.kind,
         payload: {
+          lane: strategy.lane,
           radiusKm: strategy.radiusKm ?? 50,
           contentScope: strategy.contentScope,
         },
@@ -412,6 +427,7 @@ function buildConfigRows(defaults: SourceDefaults): PipelineConfigRow[] {
       sourceType: strategy.sourceType as PipelineSourceType,
       kind: strategy.kind,
       payload: {
+        lane: strategy.lane,
         url: strategy.url ?? null,
         scope: strategy.scope ?? null,
         hintCitySlug: strategy.hintCitySlug ?? null,
