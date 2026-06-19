@@ -122,6 +122,9 @@ export type RawContent = {
   // propagated from strategy planning to enable deterministic prefilters.
   _lane?: PipelineLane;
   _sourceIntent?: PipelineSourceIntent;
+  _strategyId?: string;
+  _evidenceTier?: string;
+  _evidenceStrength?: 'strong' | 'medium' | 'weak' | 'none';
   // propagated from pinned strategy to improve city/community resolution.
   _hintCitySlug?: string;
   _hintCommunityId?: string;

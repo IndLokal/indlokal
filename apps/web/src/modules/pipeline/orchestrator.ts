@@ -102,6 +102,91 @@ export type { PipelineRunResult } from './types';
 
 type Region = SearchRegion;
 
+type SourceOutcomeKey = string;
+
+type SourceOutcomeStats = {
+  strategyId: string;
+  sourceType: RawContent['sourceType'];
+  intent: RawContent['_sourceIntent'] | 'unknown';
+  evidenceTier: string;
+  evidenceStrength: RawContent['_evidenceStrength'] | 'none';
+  lane: 'EVENT' | 'COMMUNITY' | 'RESOURCE';
+  queued: number;
+  duplicates: number;
+  noCity: number;
+  rejectedSuppressed: number;
+  past: number;
+};
+
+function readPositiveIntEnv(name: string, fallback: number): number {
+  const parsed = Number.parseInt(process.env[name] ?? '', 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function buildSourceOutcomeKey(item: ExtractedData, sourceRaw: RawContent): SourceOutcomeKey {
+  return [
+    sourceRaw._strategyId ?? `source:${sourceRaw.sourceType}`,
+    sourceRaw.sourceType,
+    sourceRaw._sourceIntent ?? 'unknown',
+    sourceRaw._evidenceTier ?? 'unknown',
+    sourceRaw._evidenceStrength ?? 'none',
+    item.type,
+  ].join('|');
+}
+
+function collectSourceOutcome(
+  map: Map<SourceOutcomeKey, SourceOutcomeStats>,
+  item: ExtractedData,
+  sourceRaw: RawContent,
+  outcome: keyof Pick<
+    SourceOutcomeStats,
+    'queued' | 'duplicates' | 'noCity' | 'rejectedSuppressed' | 'past'
+  >,
+): void {
+  const key = buildSourceOutcomeKey(item, sourceRaw);
+  const existing = map.get(key) ?? {
+    strategyId: sourceRaw._strategyId ?? `source:${sourceRaw.sourceType}`,
+    sourceType: sourceRaw.sourceType,
+    intent: sourceRaw._sourceIntent ?? 'unknown',
+    evidenceTier: sourceRaw._evidenceTier ?? 'unknown',
+    evidenceStrength: sourceRaw._evidenceStrength ?? 'none',
+    lane: item.type,
+    queued: 0,
+    duplicates: 0,
+    noCity: 0,
+    rejectedSuppressed: 0,
+    past: 0,
+  };
+  existing[outcome] += 1;
+  map.set(key, existing);
+}
+
+async function runWithConcurrency<T>(
+  jobs: Array<() => Promise<T>>,
+  concurrency: number,
+): Promise<Array<PromiseSettledResult<T>>> {
+  if (jobs.length === 0) return [];
+  const bounded = Math.max(1, Math.min(concurrency, jobs.length));
+  const results: Array<PromiseSettledResult<T>> = new Array(jobs.length);
+  let nextIndex = 0;
+
+  const worker = async () => {
+    while (nextIndex < jobs.length) {
+      const current = nextIndex;
+      nextIndex += 1;
+      try {
+        const value = await jobs[current]();
+        results[current] = { status: 'fulfilled', value };
+      } catch (reason) {
+        results[current] = { status: 'rejected', reason };
+      }
+    }
+  };
+
+  await Promise.all(Array.from({ length: bounded }, () => worker()));
+  return results;
+}
+
 /**
  * Raw pipeline items use `PipelineSourceKind` (ingest-safe subset).
  * Queue persistence/reliability APIs are typed against Prisma's broader enum.
@@ -588,6 +673,8 @@ async function fetchAllSources(
   options: PipelineRunOptions = {},
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
+  const pinnedConcurrency = readPositiveIntEnv('PIPELINE_FETCH_PINNED_CONCURRENCY', 10);
+  const keywordConcurrency = readPositiveIntEnv('PIPELINE_FETCH_KEYWORD_CONCURRENCY', 12);
   const sourcePlan = await buildPipelineSourcePlan({
     regions,
     triggeredBy,
@@ -627,22 +714,27 @@ async function fetchAllSources(
   console.log(
     `[Pipeline] Regions: ${regions.length}, Keyword strategies: ${sourcePlan.keywordStrategies.length}, Pinned: ${sourcePlan.staticPinnedCount} static + ${sourcePlan.dbPinnedCount} DB = ${pinnedStrategies.length} total`,
   );
-
-  // Pinned URLs - all run in parallel (each is an independent HTTP fetch)
-  const pinnedOutcomes = await Promise.allSettled(
-    pinnedStrategies.map(async (strategy) => {
-      const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
-      for (const item of fetchResult.items) {
-        item._lane = strategy.lane;
-        item._sourceIntent = strategy.sourceIntent;
-        item._hintCitySlug = strategy.hintCitySlug;
-        item._hintCommunityId = strategy.hintCommunityId;
-        item._hintCommunityName = strategy.hintCommunityName;
-      }
-      console.log(`[Pipeline] ${strategy.id} → ${fetchResult.items.length} items`);
-      return { strategy, fetchResult };
-    }),
+  console.log(
+    `[Pipeline] Source execution concurrency: pinned=${pinnedConcurrency}, keyword=${keywordConcurrency}`,
   );
+
+  const pinnedJobs = pinnedStrategies.map((strategy) => async () => {
+    const fetchResult = await fetchPinnedUrl(strategy, triggeredBy);
+    const evidence = assessEvidenceUrl(strategy.url);
+    for (const item of fetchResult.items) {
+      item._lane = strategy.lane;
+      item._sourceIntent = strategy.sourceIntent;
+      item._strategyId = strategy.id;
+      item._evidenceTier = evidence.tier;
+      item._evidenceStrength = evidence.strength;
+      item._hintCitySlug = strategy.hintCitySlug;
+      item._hintCommunityId = strategy.hintCommunityId;
+      item._hintCommunityName = strategy.hintCommunityName;
+    }
+    console.log(`[Pipeline] ${strategy.id} → ${fetchResult.items.length} items`);
+    return { strategy, fetchResult };
+  });
+  const pinnedOutcomes = await runWithConcurrency(pinnedJobs, pinnedConcurrency);
   for (const outcome of pinnedOutcomes) {
     result.sourcesProcessed++;
     if (outcome.status === 'fulfilled') {
@@ -658,8 +750,6 @@ async function fetchAllSources(
   }
 
   if (sourcePlan.keywordStrategies.length > 0) {
-    // Keyword strategies × regions - all combinations run in parallel.
-    // Avoids serial wait: 3 regions × 3 strategies × ~7s each ≈ 63s serial → ~7s parallel.
     const keywordJobs = regions.flatMap((region) =>
       sourcePlan.keywordStrategies.map((strategy) => async () => {
         let fetchResult;
@@ -671,15 +761,19 @@ async function fetchAllSources(
           fetchResult = await fetchEventbriteKeywords(strategy, region);
         }
         for (const item of fetchResult.items) {
+          const evidence = assessEvidenceUrl(item.sourceUrl);
           item._lane = strategy.lane;
           item._sourceIntent = strategy.sourceIntent;
+          item._strategyId = strategy.id;
+          item._evidenceTier = evidence.tier;
+          item._evidenceStrength = evidence.strength;
         }
         console.log(`[Pipeline] ${strategy.id}:${region.id} → ${fetchResult.items.length} items`);
         return fetchResult;
       }),
     );
 
-    const keywordOutcomes = await Promise.allSettled(keywordJobs.map((fn) => fn()));
+    const keywordOutcomes = await runWithConcurrency(keywordJobs, keywordConcurrency);
     for (const outcome of keywordOutcomes) {
       result.sourcesProcessed++;
       if (outcome.status === 'fulfilled') {
@@ -831,6 +925,7 @@ async function resolveAndQueue(
   regions: Region[],
   result: PipelineRunResult,
 ): Promise<void> {
+  const sourceOutcomeMap = new Map<SourceOutcomeKey, SourceOutcomeStats>();
   const allCitySlugs = regions.flatMap((r) => r.citySlugs);
   const hintedCitySlugs = [
     ...new Set(
@@ -978,6 +1073,7 @@ async function resolveAndQueue(
     }
 
     if (!cityId) {
+      collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'noCity');
       result.itemsSkippedNoCity++;
       if (item.type === 'EVENT') {
         decisionCounts.noCityEvents++;
@@ -1003,6 +1099,7 @@ async function resolveAndQueue(
       const eventDate = new Date(`${item.date}T23:59:59`);
       const startOfCurrentYear = new Date(new Date().getFullYear(), 0, 1);
       if (!Number.isNaN(eventDate.getTime()) && eventDate < startOfCurrentYear) {
+        collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'past');
         result.itemsSkippedPast++;
         decisionCounts.pastEvents++;
         cityCounter.pastEvents++;
@@ -1018,6 +1115,7 @@ async function resolveAndQueue(
         await mergeIntoPendingEventPipelineItem(isDupe.matchedId, item, sourceRaw);
       }
       result.itemsSkippedDuplicate++;
+      collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'duplicates');
       decisionCounts.duplicateEvents++;
       cityCounter.duplicateEvents++;
       incrementLaneMetric(result.laneBreakdown, 'EVENT', 'duplicates');
@@ -1026,6 +1124,7 @@ async function resolveAndQueue(
 
     if (isDupe.isDuplicate) {
       result.itemsSkippedDuplicate++;
+      collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'duplicates');
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
         cityCounter.duplicateEvents++;
@@ -1064,6 +1163,7 @@ async function resolveAndQueue(
       // Counted under the duplicate bucket for run-history persistence (no new
       // schema column), but logged distinctly for diagnosis.
       result.itemsSkippedDuplicate++;
+      collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'rejectedSuppressed');
       decisionCounts.rejectedSuppressed++;
       console.log(
         `[Pipeline] Skipped (previously rejected: ${rejectedMatch.reason}): ${getExtractedItemLabel(item)}`,
@@ -1101,6 +1201,31 @@ async function resolveAndQueue(
       continue;
     }
 
+    const autoApprove =
+      queuedItem.type === 'EVENT'
+        ? sourceRaw.sourceType === 'DB_COMMUNITY' &&
+          !isCityPending &&
+          !cityConflict &&
+          resolutionProvenance.resolutionConfidence >= 0.85
+          ? { eligible: true, reason: 'trusted-db-community-event' }
+          : { eligible: false, reason: 'event-admin-approval-required' }
+        : shouldAutoApprovePipelineItem({
+            item: { ...queuedItem, confidence },
+            sourceType: prismaSourceType,
+            reliability,
+            matchedEntityId: isDupe.matchedId,
+            matchScore: isDupe.matchScore,
+            resolutionProvenance,
+          });
+
+    const candidateState = isCityPending
+      ? 'CITY_PENDING_REVIEW'
+      : cityConflict
+        ? 'CITY_CONFLICT_REVIEW'
+        : autoApprove.eligible
+          ? 'AUTO_APPROVE_CANDIDATE'
+          : 'REVIEW_REQUIRED';
+
     const createdItem = await db.pipelineItem.create({
       data: {
         entityType: toPipelineEntityType(queuedItem.type),
@@ -1133,6 +1258,13 @@ async function resolveAndQueue(
                 },
               }
             : {}),
+          sourcePolicy: {
+            strategyId: sourceRaw._strategyId ?? null,
+            sourceIntent: sourceRaw._sourceIntent ?? null,
+            evidenceTier: sourceRaw._evidenceTier ?? null,
+            evidenceStrength: sourceRaw._evidenceStrength ?? null,
+          },
+          candidateState,
           ...(sourceRaw._hintCommunityId || sourceRaw._hintCommunityName
             ? {
                 sourceHints: {
@@ -1159,6 +1291,7 @@ async function resolveAndQueue(
     });
 
     result.itemsQueued++;
+    collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'queued');
     if (queuedItem.type === 'EVENT') {
       decisionCounts.queuedEvents++;
       cityCounter.queuedEvents++;
@@ -1176,22 +1309,6 @@ async function resolveAndQueue(
       incrementLaneMetric(result.laneBreakdown, 'RESOURCE', 'queued');
     }
 
-    const autoApprove =
-      queuedItem.type === 'EVENT'
-        ? sourceRaw.sourceType === 'DB_COMMUNITY' &&
-          !isCityPending &&
-          !cityConflict &&
-          resolutionProvenance.resolutionConfidence >= 0.85
-          ? { eligible: true, reason: 'trusted-db-community-event' }
-          : { eligible: false, reason: 'event-admin-approval-required' }
-        : shouldAutoApprovePipelineItem({
-            item: { ...queuedItem, confidence },
-            sourceType: prismaSourceType,
-            reliability,
-            matchedEntityId: isDupe.matchedId,
-            matchScore: isDupe.matchScore,
-            resolutionProvenance,
-          });
     if (autoApprove.eligible && !isCityPending && !cityConflict) {
       await approvePipelineItemRecord(createdItem.id, {
         reviewedBy: 'system',
@@ -1204,6 +1321,27 @@ async function resolveAndQueue(
   console.log(
     `[Pipeline] Queue decisions: queued ${decisionCounts.queuedEvents} events/${decisionCounts.queuedCommunities} communities/${decisionCounts.queuedResources} resources (city-pending ${decisionCounts.queuedPendingCityEvents} events/${decisionCounts.queuedPendingCityCommunities} communities/${decisionCounts.queuedPendingCityResources} resources); duplicates ${decisionCounts.duplicateEvents} events/${decisionCounts.duplicateCommunities} communities/${decisionCounts.duplicateResources} resources; previously-rejected suppressed ${decisionCounts.rejectedSuppressed}; no-city ${decisionCounts.noCityEvents} events/${decisionCounts.noCityCommunities} communities/${decisionCounts.noCityResources} resources; past events ${decisionCounts.pastEvents}`,
   );
+
+  const sourceOutcomeSummary = [...sourceOutcomeMap.values()]
+    .sort(
+      (a, b) =>
+        b.queued +
+        b.duplicates +
+        b.rejectedSuppressed +
+        b.noCity +
+        b.past -
+        (a.queued + a.duplicates + a.rejectedSuppressed + a.noCity + a.past),
+    )
+    .slice(0, 12)
+    .map(
+      (row) =>
+        `${row.strategyId}:${row.intent}:${row.lane} q=${row.queued} d=${row.duplicates} r=${row.rejectedSuppressed} n=${row.noCity} p=${row.past}`,
+    );
+  if (sourceOutcomeSummary.length > 0) {
+    console.log(
+      `[Pipeline] Reliability updates (strategy+intent): ${sourceOutcomeSummary.join(' | ')}`,
+    );
+  }
 
   result.cityBreakdown = [...cityDecisionMap.values()].sort((a, b) => {
     const queuedDelta =
