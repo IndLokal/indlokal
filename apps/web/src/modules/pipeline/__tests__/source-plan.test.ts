@@ -6,7 +6,6 @@ const mocks = vi.hoisted(() => ({
   findCities: vi.fn(),
   groupCommunities: vi.fn(),
   groupEvents: vi.fn(),
-  getRuntimeKeywordSeeds: vi.fn(),
   getRuntimeKeywordStrategies: vi.fn(),
   getRuntimePinnedStrategies: vi.fn(),
   getRuntimeLaneKeywordSeeds: vi.fn(),
@@ -23,7 +22,6 @@ vi.mock('@/lib/db', () => ({
 }));
 
 vi.mock('../runtime-config', () => ({
-  getRuntimeKeywordSeeds: mocks.getRuntimeKeywordSeeds,
   getRuntimeKeywordStrategies: mocks.getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies: mocks.getRuntimePinnedStrategies,
   getRuntimeLaneKeywordSeeds: mocks.getRuntimeLaneKeywordSeeds,
@@ -90,7 +88,6 @@ describe('buildPipelineSourcePlan', () => {
     delete process.env.PIPELINE_FORCE_KEYWORD_SEARCH;
     delete process.env.PIPELINE_ENABLE_DDG;
 
-    mocks.getRuntimeKeywordSeeds.mockResolvedValue(['Indian community meetup']);
     mocks.getRuntimeLaneKeywordSeeds.mockResolvedValue({
       byLane: {
         EVENT: ['festival', 'conference'],
@@ -268,7 +265,6 @@ describe('buildPipelineSourcePlan', () => {
     process.env.GOOGLE_CSE_ID = 'test-cse';
     process.env.PIPELINE_ENABLE_DDG = '1';
     process.env.PIPELINE_FORCE_KEYWORD_SEARCH = '1';
-    mocks.getRuntimeKeywordSeeds.mockResolvedValue([]);
     mocks.getRuntimeLaneKeywordSeeds.mockResolvedValue({
       byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
       journeyResourceByStage: {},

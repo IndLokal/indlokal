@@ -17,7 +17,7 @@ describe('runtime-config JSON fallback', () => {
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
-    const seeds = await mod.getRuntimeKeywordSeeds();
+    const laneSeeds = await mod.getRuntimeLaneKeywordSeeds();
     const keyword = await mod.getRuntimeKeywordStrategies();
     const pinned = await mod.getRuntimePinnedStrategies();
     const source = await mod.getRuntimeConfigSource();
@@ -25,7 +25,7 @@ describe('runtime-config JSON fallback', () => {
     expect(source).toBe('json-fallback');
     expect(regions.length).toBeGreaterThan(0);
     expect(regions[0].citySlugs.length).toBeGreaterThan(0);
-    expect(seeds.length).toBeGreaterThan(0);
+    expect((laneSeeds.byLane.EVENT ?? []).length).toBeGreaterThan(0);
     expect(keyword.some((k) => k.sourceType === 'EVENTBRITE')).toBe(true);
     expect(pinned.length).toBeGreaterThan(0);
     // DB was queried exactly once across all four getters (shared cache).
@@ -58,15 +58,6 @@ describe('runtime-config JSON fallback', () => {
         payload: { searchCenter: 'Berlin, Germany', citySlugs: ['berlin'] },
       },
       {
-        configType: 'KEYWORD',
-        key: 'seed',
-        label: 'Indian community Berlin',
-        enabled: true,
-        sourceType: null,
-        kind: null,
-        payload: {},
-      },
-      {
         configType: 'STRATEGY',
         key: 'eventbrite-keyword',
         label: 'Eventbrite',
@@ -94,7 +85,7 @@ describe('runtime-config JSON fallback', () => {
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
-    const seeds = await mod.getRuntimeKeywordSeeds();
+    const laneSeeds = await mod.getRuntimeLaneKeywordSeeds();
     const keywordStrategies = await mod.getRuntimeKeywordStrategies();
     const pinnedStrategies = await mod.getRuntimePinnedStrategies();
     const source = await mod.getRuntimeConfigSource();
@@ -102,7 +93,7 @@ describe('runtime-config JSON fallback', () => {
     expect(source).toBe('db');
     expect(regions).toHaveLength(1);
     expect(regions[0].id).toBe('test-region');
-    expect(seeds).toEqual(['Indian community Berlin']);
+    expect(laneSeeds.byLane.COMMUNITY).toBeDefined();
     expect(keywordStrategies[0]?.lane).toBe('EVENT');
     expect(keywordStrategies[0]?.sourceIntent).toBe('dated_activity_discovery');
     expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');

@@ -171,7 +171,7 @@ async function readConfigRowsFromDb(): Promise<ConfigRow[]> {
  *   - Applies lightweight validation only (full validation is in the bootstrap seeder)
  *   - Keeps the system functional without manual seed/migration steps
  *
- * Format: { baselineKeywords, regions, strategies, journeyKeywordHintsByLane }
+ * Format: { regions, strategies, baselineKeywordsByLane, journeyKeywordHintsByLane }
  */
 type JsonRegion = {
   id?: unknown;
@@ -196,7 +196,6 @@ type JsonStrategy = {
 };
 
 type JsonDefaults = {
-  baselineKeywords?: unknown;
   baselineKeywordsByLane?: unknown;
   journeyKeywordHintsByLane?: unknown;
   regions?: unknown;
@@ -284,19 +283,6 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
   const parsed = JSON.parse(raw) as JsonDefaults;
 
   const rows: ConfigRow[] = [];
-
-  const baselineKeywords = normalizeStringArray(parsed.baselineKeywords);
-  for (const keyword of baselineKeywords) {
-    rows.push({
-      configType: 'KEYWORD',
-      key: normalizeKeyword(keyword),
-      label: keyword,
-      enabled: true,
-      sourceType: null,
-      kind: null,
-      payload: { origin: 'json-fallback' },
-    });
-  }
 
   const regionsRaw = Array.isArray(parsed.regions) ? (parsed.regions as JsonRegion[]) : [];
   for (const region of regionsRaw) {
@@ -505,17 +491,6 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
 }
 
 /**
- * Extract baseline keyword seeds from config rows.
- * These are shared keywords used across multiple strategies as semantic anchors.
- */
-function parseKeywordSeeds(rows: ConfigRow[]): string[] {
-  return rows
-    .filter((row) => row.configType === 'KEYWORD' && row.enabled)
-    .map((row) => row.label.trim())
-    .filter(Boolean);
-}
-
-/**
  * Parse pinned URL strategies from config rows.
  * Validates URL presence, scope, and lane metadata.
  * Skips disabled rows and entries without required fields.
@@ -611,30 +586,9 @@ export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemp
 }
 
 /**
- * Fetch baseline keyword seeds used across multiple sources.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Serves as semantic anchors for gap analysis and strategy planning.
- */
-/**
- * Fetch baseline keyword seeds used across multiple sources.
- * Cached per-process; clears only on resetRuntimeConfigCache().
- * Serves as semantic anchors for gap analysis and strategy planning.
- */
-export async function getRuntimeKeywordSeeds(): Promise<string[]> {
-  const { rows } = await loadConfigRows();
-  const parsed = parseKeywordSeeds(rows);
-  if (parsed.length === 0) {
-    throw new Error(
-      '[Pipeline] No enabled KEYWORD rows in pipeline_source_configs and no fallback baselineKeywords found in pipeline-source-defaults.json.',
-    );
-  }
-  return parsed;
-}
-
-/**
  * Additional lane-aware keyword hints from the bundled JSON defaults.
  * These are additive planning hints used by source-plan and remain
- * backward compatible with DB-managed KEYWORD rows.
+ * independent of any generic KEYWORD rows.
  */
 /**
  * Fetch lane-specific keyword seeds and journey resource stage hints.

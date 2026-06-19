@@ -1,7 +1,6 @@
 import { db } from '@/lib/db';
 import {
   getRuntimeLaneKeywordSeeds,
-  getRuntimeKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
 } from './runtime-config';
@@ -160,11 +159,10 @@ function getGapKeywordsForStrategy(
 function getLaneSeedKeywords(
   strategy: KeywordStrategyTemplate,
   laneSeedMap: Partial<Record<SourceLane, string[]>>,
-  fallback: string[],
 ): string[] {
-  if (!strategy.lane) return fallback;
+  if (!strategy.lane) return [];
   const laneSeeds = laneSeedMap[strategy.lane];
-  return laneSeeds != null && laneSeeds.length > 0 ? laneSeeds : fallback;
+  return laneSeeds != null && laneSeeds.length > 0 ? laneSeeds : [];
 }
 
 function getApprovedKeywordsForStrategy(
@@ -529,7 +527,6 @@ export async function buildPipelineSourcePlan(
         byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
         unclassified: [],
       };
-  const baselineKeywordSeeds = shouldRunKeywords ? await getRuntimeKeywordSeeds() : [];
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
   const resourceJourneyGapKeywords =
@@ -573,10 +570,9 @@ export async function buildPipelineSourcePlan(
           resourceJourneyGapKeywords,
           allLaneGapKeywords,
         );
-        // Use lane-specific seeds as primary fallback if available, then baseline seeds.
         const laneSeedsForStrategy = laneKeywordSeeds
-          ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane, baselineKeywordSeeds)
-          : baselineKeywordSeeds;
+          ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane)
+          : [];
         const baselineKeywords =
           forceKeywordSearch || forceAdminKeywordSearch ? laneSeedsForStrategy : [];
         const approvedKeywordsForStrategy = getApprovedKeywordsForStrategy(

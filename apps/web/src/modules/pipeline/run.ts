@@ -15,7 +15,7 @@ import { runPipeline } from './orchestrator';
 import { getDbCommunityStrategies } from './db-sources';
 import {
   getRuntimeEnabledRegions,
-  getRuntimeKeywordSeeds,
+  getRuntimeLaneKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
 } from './runtime-config';
@@ -104,7 +104,7 @@ async function main() {
     console.error('\n❌ No regions matched the requested --city/--region scope.');
     process.exit(1);
   }
-  const keywordSeeds = await getRuntimeKeywordSeeds();
+  const laneKeywordSeeds = await getRuntimeLaneKeywordSeeds();
   const keywordStrategies = await getRuntimeKeywordStrategies();
   const pinnedStrategies = await getRuntimePinnedStrategies();
 
@@ -113,9 +113,11 @@ async function main() {
     console.log(`   • ${r.label} - cities: ${r.citySlugs.join(', ')}`);
   }
 
-  console.log(
-    `\n🔍 Keyword templates (${keywordStrategies.length}) · canonical seeds (${keywordSeeds.length}):`,
+  const seedCount = Object.values(laneKeywordSeeds.byLane).reduce(
+    (total, keywords) => total + (keywords?.length ?? 0),
+    0,
   );
+  console.log(`\n🔍 Keyword templates (${keywordStrategies.length}) · lane seeds (${seedCount}):`);
   for (const s of keywordStrategies) {
     console.log(`   • ${s.label} - ${s.radiusKm}km radius`);
   }

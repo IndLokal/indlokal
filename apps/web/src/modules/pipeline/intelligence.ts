@@ -2,7 +2,7 @@ import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
 import { Prisma, type RelationshipType } from '@prisma/client';
 import { callOpenAI } from './extraction';
-import { getRuntimeKeywordSeeds } from './runtime-config';
+import { getRuntimeLaneKeywordSeeds } from './runtime-config';
 import { htmlToText } from './text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import type { ExtractedCommunity, SourceLane } from './types';
@@ -471,8 +471,12 @@ function extractCandidateKeywords(
 }
 
 export async function refreshKeywordSuggestions() {
-  const baselineKeywords = await getRuntimeKeywordSeeds();
-  const baselineKeywordSet = new Set(baselineKeywords.map(normalizeKeyword));
+  const laneKeywordSeeds = await getRuntimeLaneKeywordSeeds();
+  const baselineKeywordSet = new Set(
+    Object.values(laneKeywordSeeds.byLane)
+      .flatMap((keywords) => keywords ?? [])
+      .map(normalizeKeyword),
+  );
   const cityRows = await db.city.findMany({ select: { name: true } });
   const blockedTerms = buildDynamicBlockedTerms(
     cityRows.map((city) => city.name),
