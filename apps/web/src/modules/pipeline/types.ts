@@ -73,7 +73,7 @@ export type SourcePolicy = {
  */
 export type ResolutionProvenance = {
   /** Which evidence source determined the resolved city. */
-  citySource: 'signal' | 'llm' | 'hint' | 'fallback' | 'pending';
+  citySource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved';
   /** True when a strong location signal disagreed with the LLM cityName. */
   cityConflict: boolean;
   /** Which evidence source determined the attached community (if any). */

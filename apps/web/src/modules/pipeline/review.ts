@@ -15,7 +15,13 @@ import {
   DEFAULT_EVENT_TIMEZONE,
 } from '@/lib/datetime/event-timezone';
 import type { SourceReliabilityStat } from './reliability';
-import type { ExtractedCommunity, ExtractedData, ExtractedEvent, ExtractedResource } from './types';
+import type {
+  ExtractedCommunity,
+  ExtractedData,
+  ExtractedEvent,
+  ExtractedResource,
+  ResolutionProvenance,
+} from './types';
 import {
   DEDUP_QUEUE_SCAN_LIMIT,
   hasStrongEventIdentityEvidence,
@@ -292,10 +298,17 @@ export function shouldAutoApprovePipelineItem(input: {
   reliability: SourceReliabilityStat | undefined;
   matchedEntityId: string | null;
   matchScore: number | null;
+  resolutionProvenance?: ResolutionProvenance;
 }): { eligible: boolean; reason: string } {
-  const { item, reliability, matchedEntityId, matchScore } = input;
+  const { item, reliability, matchedEntityId, matchScore, resolutionProvenance } = input;
   if (matchedEntityId || (matchScore ?? 0) > 0) {
     return { eligible: false, reason: 'matched-existing-entity' };
+  }
+  if (resolutionProvenance?.cityConflict) {
+    return { eligible: false, reason: 'city-conflict-admin-review-required' };
+  }
+  if (resolutionProvenance && resolutionProvenance.resolutionConfidence < 0.85) {
+    return { eligible: false, reason: 'resolution-confidence-below-threshold' };
   }
   if (!reliability || reliability.totalReviewed < 5 || reliability.approvalRate < 0.8) {
     return { eligible: false, reason: 'source-not-trusted-yet' };

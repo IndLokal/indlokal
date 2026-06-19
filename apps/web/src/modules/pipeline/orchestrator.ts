@@ -75,6 +75,7 @@ import type {
   ExtractedResource,
   RawContent,
   PipelineRunResult,
+  ResolutionProvenance,
   SearchRegion,
 } from './types';
 
@@ -883,6 +884,13 @@ async function resolveAndQueue(
       : null;
     const queuedItem =
       !item.cityName && resolvedCity ? { ...item, cityName: resolvedCity.name } : item;
+    const resolutionProvenance = buildResolutionProvenance(
+      queuedItem,
+      sourceRaw,
+      cityResolutionSource,
+      cityConflict,
+      isCityPending,
+    );
 
     // Queue for review
     // Winston/ADR: RESOURCE lane is flag-gated. Drop resource items silently
@@ -914,6 +922,7 @@ async function resolveAndQueue(
             ? cityConflictReason
             : undefined,
         metadata: {
+          resolutionProvenance,
           ...(isCityPending || cityConflict
             ? {
                 cityResolution: {
@@ -969,7 +978,10 @@ async function resolveAndQueue(
 
     const autoApprove =
       queuedItem.type === 'EVENT'
-        ? sourceRaw.sourceType === 'DB_COMMUNITY' && !isCityPending && !cityConflict
+        ? sourceRaw.sourceType === 'DB_COMMUNITY' &&
+          !isCityPending &&
+          !cityConflict &&
+          resolutionProvenance.resolutionConfidence >= 0.85
           ? { eligible: true, reason: 'trusted-db-community-event' }
           : { eligible: false, reason: 'event-admin-approval-required' }
         : shouldAutoApprovePipelineItem({
@@ -978,6 +990,7 @@ async function resolveAndQueue(
             reliability,
             matchedEntityId: isDupe.matchedId,
             matchScore: isDupe.matchScore,
+            resolutionProvenance,
           });
     if (autoApprove.eligible && !isCityPending && !cityConflict) {
       await approvePipelineItemRecord(createdItem.id, {
@@ -1185,6 +1198,47 @@ function doesEventHostAgreeWithHint(event: ExtractedEvent, hintedCommunityName?:
     normalizedHost.includes(normalizedHint) ||
     normalizedHint.includes(normalizedHost)
   );
+}
+
+function buildResolutionProvenance(
+  item: ExtractedData,
+  sourceRaw: RawContent,
+  citySource: ResolutionProvenance['citySource'],
+  cityConflict: boolean,
+  isCityPending: boolean,
+): ResolutionProvenance {
+  let communitySource: ResolutionProvenance['communitySource'] = 'unattached';
+  if (
+    item.type === 'EVENT' &&
+    (sourceRaw._hintCommunityId || sourceRaw._hintCommunityName) &&
+    doesEventHostAgreeWithHint(item, sourceRaw._hintCommunityName)
+  ) {
+    communitySource = 'hint';
+  }
+
+  let resolutionConfidence =
+    citySource === 'signal'
+      ? 0.98
+      : citySource === 'llm'
+        ? 0.88
+        : citySource === 'hint'
+          ? 0.82
+          : citySource === 'fallback'
+            ? 0.45
+            : 0.2;
+
+  if (cityConflict) resolutionConfidence -= 0.2;
+  if (isCityPending) resolutionConfidence = Math.min(resolutionConfidence, 0.45);
+  if (item.type === 'EVENT' && item.hostCommunity && communitySource === 'unattached') {
+    resolutionConfidence -= 0.1;
+  }
+
+  return {
+    citySource,
+    cityConflict,
+    communitySource,
+    resolutionConfidence: Math.max(0, Math.min(1, resolutionConfidence)),
+  };
 }
 
 export function resolveEventCityDecision(
