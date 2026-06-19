@@ -3,12 +3,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 const fetchTextWithFallbackMock = vi.fn();
 const fetchEmbeddedGoogleCalendarEventsMock = vi.fn(async () => ({ items: [], errors: [] }));
 
-vi.mock('../http', () => ({
+vi.mock('../fetch/http', () => ({
   PIPELINE_USER_AGENT: 'IndLokal-ContentBot/1.0 (+https://indlokal.de)',
   fetchTextWithFallback: fetchTextWithFallbackMock,
 }));
 
-vi.mock('../calendar', () => ({
+vi.mock('../fetch/calendar', () => ({
   fetchEmbeddedGoogleCalendarEvents: fetchEmbeddedGoogleCalendarEventsMock,
 }));
 
@@ -22,7 +22,7 @@ describe('fetchPinnedUrl', () => {
   });
 
   it('expands internal event links for DB community pages', async () => {
-    const { fetchPinnedUrl } = await import('../sources');
+    const { fetchPinnedUrl } = await import('../fetch/sources');
 
     fetchTextWithFallbackMock.mockImplementation(async (url: string) => {
       if (url.endsWith('/events/') || url.endsWith('/events')) {
@@ -57,5 +57,46 @@ describe('fetchPinnedUrl', () => {
       'https://indiacultureforum.de/',
       'https://indiacultureforum.de/events/',
     ]);
+  });
+
+  it('skips malformed quoted and nested-scheme expansion links', async () => {
+    const { fetchPinnedUrl } = await import('../fetch/sources');
+
+    fetchTextWithFallbackMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/events/') || url.endsWith('/events')) {
+        return {
+          ok: true,
+          status: 200,
+          text: '<html><body><a href="/%22https:////stvgermany.de//stv-archived-activities///%22">Bad</a><a href="/program/">Program</a></body></html>',
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: '<html><body><a href="/%22https:////stvgermany.de//organization-objectives///%22">Bad 2</a><a href="/events/">Events</a></body></html>',
+      };
+    });
+
+    const result = await fetchPinnedUrl(
+      {
+        id: 'db-stv',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'STV',
+        url: 'https://stvgermany.de/',
+        enabled: true,
+      },
+      'cli',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.items.map((item) => item.sourceUrl)).toEqual([
+      'https://stvgermany.de/',
+      'https://stvgermany.de/events/',
+    ]);
+    const fetchedUrls = fetchTextWithFallbackMock.mock.calls.map((call) => call[0] as string);
+    expect(fetchedUrls.some((url) => url.includes('%22https:'))).toBe(false);
+    expect(fetchedUrls.some((url) => url.includes('https:////stvgermany.de'))).toBe(false);
   });
 });

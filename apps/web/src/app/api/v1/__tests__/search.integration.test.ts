@@ -228,6 +228,7 @@ describe('GET /api/v1/search/suggest', () => {
       data: {
         keyword: 'Garba',
         normalizedKeyword: 'garba',
+        lane: 'EVENT',
         status: 'APPROVED',
         confidence: 0.9,
       },
@@ -244,6 +245,7 @@ describe('GET /api/v1/search/suggest', () => {
       data: {
         keyword: 'Spammer',
         normalizedKeyword: 'spammer',
+        lane: 'COMMUNITY',
         status: 'REJECTED',
         confidence: 0.1,
       },
@@ -269,11 +271,24 @@ describe('GET /api/v1/search/trending', () => {
   it('returns approved keywords ordered by confidence', async () => {
     await testDb.keywordSuggestion.createMany({
       data: [
-        { keyword: 'Cricket', normalizedKeyword: 'cricket', status: 'APPROVED', confidence: 0.8 },
-        { keyword: 'Kabaddi', normalizedKeyword: 'kabaddi', status: 'APPROVED', confidence: 0.5 },
+        {
+          keyword: 'Cricket',
+          normalizedKeyword: 'cricket',
+          lane: 'EVENT',
+          status: 'APPROVED',
+          confidence: 0.8,
+        },
+        {
+          keyword: 'Kabaddi',
+          normalizedKeyword: 'kabaddi',
+          lane: 'EVENT',
+          status: 'APPROVED',
+          confidence: 0.5,
+        },
         {
           keyword: 'Badminton',
           normalizedKeyword: 'badminton',
+          lane: 'EVENT',
           status: 'APPROVED',
           confidence: 0.95,
         },
@@ -306,6 +321,7 @@ describe('GET /api/v1/search/trending', () => {
       data: {
         keyword: 'BadKeyword',
         normalizedKeyword: 'badkeyword',
+        lane: 'COMMUNITY',
         status: 'REJECTED',
         confidence: 0.9,
       },

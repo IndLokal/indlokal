@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { communityOptions } from '@indlokal/shared';
-import { suggestCommunityPersonaSegments } from '../journey-tags';
+import { suggestCommunityPersonaSegments } from '../enrichment';
 
 describe('suggestCommunityPersonaSegments', () => {
   it('infers segments from the community name', () => {
@@ -36,6 +36,15 @@ describe('suggestCommunityPersonaSegments', () => {
     expect(suggestCommunityPersonaSegments({ name: 'Stuttgart Hindu Temple & Satsang' })).toContain(
       'religious',
     );
+  });
+
+  it('maps newcomer language to the newcomer segment', () => {
+    expect(
+      suggestCommunityPersonaSegments({
+        name: 'Indians New in Germany Circle',
+        description: 'Support group for newcomers just moved to Stuttgart.',
+      }),
+    ).toContain('newcomer');
   });
 
   it('returns an empty array when nothing matches (prefers no suggestion over a wrong one)', () => {

@@ -1,8 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PipelineRunResult, PipelineRunScope } from '@/modules/pipeline';
+
+type PipelineRunMode =
+  | 'balanced'
+  | 'event_refresh'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
 
 type RegionOption = {
   id: string;
@@ -17,6 +32,38 @@ type CityOption = {
 type RunPipelineButtonProps = {
   regions: RegionOption[];
   cities: CityOption[];
+};
+
+const RUN_MODE_OPTIONS: Array<{ value: PipelineRunMode; label: string }> = [
+  { value: 'balanced', label: 'Balanced (default)' },
+  { value: 'event_refresh', label: 'Event refresh' },
+  { value: 'community_discovery', label: 'Community discovery' },
+  { value: 'resource_discovery', label: 'Resource discovery' },
+  { value: 'evidence_verification', label: 'Evidence verification' },
+];
+
+const INTENT_PROFILE_OPTIONS: Array<{ value: PipelineSourceIntentProfile; label: string }> = [
+  { value: 'all', label: 'All intents (default)' },
+  { value: 'activity_only', label: 'Activity only' },
+  { value: 'community_only', label: 'Community only' },
+  { value: 'service_only', label: 'Service only' },
+  { value: 'evidence_only', label: 'Evidence only' },
+  { value: 'channel_only', label: 'Channel only' },
+];
+
+const LAST_RUN_STATUS_KEY = 'admin:pipeline:last-run-status';
+
+type LastRunStatus = {
+  completedAt: string;
+  mode: 'direct' | 'dispatch';
+  runMode: PipelineRunMode;
+  sourceIntentProfile: PipelineSourceIntentProfile;
+  scopeLabel?: string;
+  durationMs?: number;
+  itemsFetched?: number;
+  itemsQueued?: number;
+  errorsCount?: number;
+  message?: string;
 };
 
 function getScopeLabel(
@@ -41,15 +88,52 @@ function getScopeLabel(
 
 export default function RunPipelineButton({ regions, cities }: RunPipelineButtonProps) {
   const router = useRouter();
+  const [runMode, setRunMode] = useState<PipelineRunMode>('balanced');
+  const [sourceIntentProfile, setSourceIntentProfile] =
+    useState<PipelineSourceIntentProfile>('all');
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
+  const [resultExpanded, setResultExpanded] = useState(false);
+  const [lastRunStatus, setLastRunStatus] = useState<LastRunStatus | null>(null);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(LAST_RUN_STATUS_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as LastRunStatus;
+      if (!parsed || !parsed.completedAt || !parsed.mode) return;
+      // Hydrate persisted status after mount so refresh always restores UI state.
+      setTimeout(() => setLastRunStatus(parsed), 0);
+    } catch {
+      // Ignore malformed local state.
+    }
+  }, []);
   const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
   const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function persistLastRunStatus(status: LastRunStatus) {
+    setLastRunStatus(status);
+    try {
+      window.localStorage.setItem(LAST_RUN_STATUS_KEY, JSON.stringify(status));
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
+  function clearLastRunStatus() {
+    setLastRunStatus(null);
+    try {
+      window.localStorage.removeItem(LAST_RUN_STATUS_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
   async function handleRun(nextScope?: PipelineRunScope, scopeKey = 'all') {
     setRunningKey(scopeKey);
     setResult(null);
+    setResultExpanded(false);
     setDispatchMessage(null);
     setScope(null);
     setError(null);
@@ -58,7 +142,11 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
       const response = await fetch('/api/admin/pipeline/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nextScope ?? {}),
+        body: JSON.stringify({
+          ...(nextScope ?? {}),
+          runMode,
+          sourceIntentProfile,
+        }),
       });
 
       const payload = (await response.json()) as
@@ -67,6 +155,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
             mode: 'direct';
             scope: PipelineRunScope | null;
             result: PipelineRunResult;
+            note?: string;
           }
         | {
             ok: true;
@@ -88,16 +177,40 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
 
       if (payload.ok && payload.mode === 'dispatch') {
         const failedCount = payload.dispatch.failed?.length ?? 0;
-        setDispatchMessage(
+        const message =
           failedCount === 0
-            ? `Dispatched ${payload.dispatch.dispatched.length} regional cron shards.`
-            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`,
-        );
+            ? `Dispatched ${payload.dispatch.dispatched.length} regional shards.`
+            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`;
+        setDispatchMessage(message);
+        persistLastRunStatus({
+          completedAt: new Date().toISOString(),
+          mode: 'dispatch',
+          runMode,
+          sourceIntentProfile,
+          message,
+          errorsCount: failedCount,
+        });
         setScope(null);
         setResult(null);
       } else if (payload.ok && payload.mode === 'direct') {
         setResult(payload.result);
+        setResultExpanded(false);
         setScope(payload.scope);
+        const scopeLabel = getScopeLabel(payload.scope, regions, cities);
+        persistLastRunStatus({
+          completedAt: new Date().toISOString(),
+          mode: 'direct',
+          runMode,
+          sourceIntentProfile,
+          scopeLabel,
+          durationMs: payload.result.duration,
+          itemsFetched: payload.result.itemsFetched,
+          itemsQueued: payload.result.itemsQueued,
+          errorsCount: payload.result.errors.length,
+        });
+        if (payload.note) {
+          setDispatchMessage(payload.note);
+        }
       }
       router.refresh();
     } catch (err) {
@@ -108,37 +221,64 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
   }
 
   return (
-    <div className="card-base w-full max-w-2xl p-5">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-brand-700 text-xs font-semibold tracking-[0.18em] uppercase">
-              Manual Run Controls
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Run pipeline by shard</h2>
-            <p className="text-muted mt-1 max-w-xl text-sm">
-              Manual runs now follow the same regional scope model as cron. Run one region to debug
-              yield, or run all enabled regions for a full pass.
-            </p>
-          </div>
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            {regions.length} enabled regions
-          </div>
-        </div>
+    <div className="w-full">
+      <div className="flex flex-col items-stretch gap-2 sm:items-end">
+        <button
+          onClick={() => handleRun(undefined, 'all')}
+          disabled={runningKey != null}
+          className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {runningKey === 'all' ? 'Running all regions...' : 'Run all regions'}
+        </button>
+        <span className="text-muted text-xs sm:text-right">
+          Runs all {regions.length} enabled regions. Tries async shard dispatch first, then falls
+          back to direct execution if dispatch is unavailable.
+        </span>
 
-        <div className="rounded-[var(--radius-card)] border border-slate-200 bg-slate-50/80 p-3">
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => handleRun(undefined, 'all')}
-              disabled={runningKey != null}
-              className="btn-primary w-full px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {runningKey === 'all' ? '⏳ Running all regions…' : 'Run all enabled regions'}
-            </button>
-            <p className="text-muted text-xs">
-              Runs via cron-style regional dispatch (asynchronous). Use city/region shards below for
-              immediate per-run metrics.
-            </p>
+        <details className="w-full rounded-[var(--radius-button)] border border-slate-200 bg-white">
+          <summary className="cursor-pointer px-3 py-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
+            Advanced · run a single region or city
+          </summary>
+          <div className="flex flex-col gap-3 px-3 pt-1 pb-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  Run mode
+                </span>
+                <select
+                  value={runMode}
+                  onChange={(event) => setRunMode(event.target.value as PipelineRunMode)}
+                  disabled={runningKey != null}
+                  className="rounded-[var(--radius-button)] border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {RUN_MODE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  Intent profile
+                </span>
+                <select
+                  value={sourceIntentProfile}
+                  onChange={(event) =>
+                    setSourceIntentProfile(event.target.value as PipelineSourceIntentProfile)
+                  }
+                  disabled={runningKey != null}
+                  className="rounded-[var(--radius-button)] border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {INTENT_PROFILE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
             <div>
               <p className="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
@@ -178,8 +318,42 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
               </div>
             )}
           </div>
-        </div>
+        </details>
       </div>
+
+      {lastRunStatus && (
+        <div className="mt-3 rounded-[var(--radius-button)] border border-slate-200 bg-white p-3 text-xs text-slate-700">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="font-medium text-slate-900">Last run status</p>
+              <p>
+                {new Date(lastRunStatus.completedAt).toLocaleString()} · {lastRunStatus.mode} · mode{' '}
+                {lastRunStatus.runMode} · profile {lastRunStatus.sourceIntentProfile}
+              </p>
+              {lastRunStatus.scopeLabel && <p>Scope: {lastRunStatus.scopeLabel}</p>}
+              {lastRunStatus.mode === 'direct' && (
+                <p>
+                  Fetched {lastRunStatus.itemsFetched ?? 0}, queued {lastRunStatus.itemsQueued ?? 0}
+                  {typeof lastRunStatus.durationMs === 'number'
+                    ? `, ${(lastRunStatus.durationMs / 1000).toFixed(1)}s`
+                    : ''}
+                  {typeof lastRunStatus.errorsCount === 'number'
+                    ? `, ${lastRunStatus.errorsCount} issues`
+                    : ''}
+                </p>
+              )}
+              {lastRunStatus.message && <p>{lastRunStatus.message}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={clearLastRunStatus}
+              className="text-muted hover:text-slate-900"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
 
       {result && (
         <div className="mt-4 rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50/70 p-4 text-sm">
@@ -192,111 +366,169 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                 Scope: {getScopeLabel(scope, regions, cities)}
               </p>
             </div>
-            <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
-              {result.errors.length === 0
-                ? 'No fetch errors'
-                : `${result.errors.length} issues logged`}
-            </div>
-          </div>
-
-          {(result.budgetExceeded || result.circuitBreakerTripped) && (
-            <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
-              <p className="font-semibold tracking-wide uppercase">Cost guard tripped</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                {result.budgetExceeded && (
-                  <li>
-                    Token budget exceeded - LLM stages bailed out. Tune
-                    <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
-                  </li>
-                )}
-                {result.circuitBreakerTripped && (
-                  <li>
-                    Circuit breaker opened after consecutive LLM failures. Check upstream provider
-                    health before re-running.
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
-            <MetricCard label="Fetched" value={result.itemsFetched} />
-            <MetricCard label="Extracted" value={result.itemsExtracted} />
-            <MetricCard label="LLM calls" value={result.llmCalls} />
-          </div>
-
-          <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
-            <StatLine label="Sources processed" value={result.sourcesProcessed} />
-            <StatLine label="Passed filter" value={result.itemsPassedFilter} />
-            <StatLine label="Duplicates skipped" value={result.itemsSkippedDuplicate} />
-            <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
-            <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
-            <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
-            <StatLine
-              label="Filter batches dropped"
-              value={result.filterFailures}
-              tone={result.filterFailures > 0 ? 'warn' : 'default'}
-            />
-            <StatLine
-              label="Extract retries exhausted"
-              value={result.extractRetriesExhausted}
-              tone={result.extractRetriesExhausted > 0 ? 'warn' : 'default'}
-            />
-            <StatLine
-              label="Items dropped (bad index)"
-              value={result.itemsDroppedBadIndex}
-              tone={result.itemsDroppedBadIndex > 0 ? 'warn' : 'default'}
-            />
-          </div>
-
-          {result.errors.length > 0 && (
-            <details className="mt-4 rounded-[var(--radius-button)] border border-amber-200 bg-white/70 p-3">
-              <summary className="cursor-pointer text-xs font-medium text-amber-700">
-                View {result.errors.length} logged fetch/runtime issues
-              </summary>
-              <ul className="text-muted mt-2 max-h-48 space-y-1 overflow-auto text-xs">
-                {result.errors.map((e, i) => (
-                  <li key={i}>• {e}</li>
-                ))}
-              </ul>
-            </details>
-          )}
-
-          {result.cityBreakdown.length > 0 && (
-            <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
-              <summary className="cursor-pointer text-xs font-medium text-slate-700">
-                View city-level outcomes
-              </summary>
-              <div className="mt-3 overflow-x-auto">
-                <table className="min-w-full text-left text-xs">
-                  <thead className="text-slate-500">
-                    <tr>
-                      <th className="px-2 py-1 font-medium">City</th>
-                      <th className="px-2 py-1 font-medium">Extracted</th>
-                      <th className="px-2 py-1 font-medium">Queued (E/C)</th>
-                      <th className="px-2 py-1 font-medium">Duplicates (E/C)</th>
-                      <th className="px-2 py-1 font-medium">Past events</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.cityBreakdown.map((city) => (
-                      <tr key={city.citySlug} className="border-t border-slate-100 text-slate-700">
-                        <td className="px-2 py-1.5">{city.cityName}</td>
-                        <td className="px-2 py-1.5">{city.extracted}</td>
-                        <td className="px-2 py-1.5">
-                          {city.queuedEvents}/{city.queuedCommunities}
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {city.duplicateEvents}/{city.duplicateCommunities}
-                        </td>
-                        <td className="px-2 py-1.5">{city.pastEvents}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
+                {result.errors.length === 0
+                  ? 'No fetch errors'
+                  : `${result.errors.length} issues logged`}
               </div>
-            </details>
+              <button
+                onClick={() => setResultExpanded((value) => !value)}
+                className="btn-secondary px-3 py-1.5 text-xs"
+                aria-expanded={resultExpanded}
+              >
+                {resultExpanded ? 'Hide details' : 'Show details'}
+              </button>
+            </div>
+          </div>
+
+          {resultExpanded && (
+            <>
+              {(result.budgetExceeded || result.circuitBreakerTripped) && (
+                <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
+                  <p className="font-semibold tracking-wide uppercase">Cost guard tripped</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                    {result.budgetExceeded && (
+                      <li>
+                        Token budget exceeded - LLM stages bailed out. Tune
+                        <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
+                      </li>
+                    )}
+                    {result.circuitBreakerTripped && (
+                      <li>
+                        Circuit breaker opened after consecutive LLM failures. Check upstream
+                        provider health before re-running.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
+                <MetricCard label="Fetched" value={result.itemsFetched} />
+                <MetricCard label="Extracted" value={result.itemsExtracted} />
+                <MetricCard label="LLM calls" value={result.llmCalls} />
+              </div>
+
+              <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+                <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                  View lane-level outcomes
+                </summary>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-left text-xs">
+                    <thead className="text-slate-500">
+                      <tr>
+                        <th className="px-2 py-1 font-medium">Lane</th>
+                        <th className="px-2 py-1 font-medium">Fetched</th>
+                        <th className="px-2 py-1 font-medium">Passed filter</th>
+                        <th className="px-2 py-1 font-medium">Extracted</th>
+                        <th className="px-2 py-1 font-medium">Queued</th>
+                        <th className="px-2 py-1 font-medium">Duplicates</th>
+                        <th className="px-2 py-1 font-medium">No city</th>
+                        <th className="px-2 py-1 font-medium">Past</th>
+                        <th className="px-2 py-1 font-medium">Conflicts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const).map((lane) => {
+                        const metrics = result.laneBreakdown[lane];
+                        return (
+                          <tr key={lane} className="border-t border-slate-100 text-slate-700">
+                            <td className="px-2 py-1.5 font-medium">{lane}</td>
+                            <td className="px-2 py-1.5">{metrics.fetched}</td>
+                            <td className="px-2 py-1.5">{metrics.passedFilter}</td>
+                            <td className="px-2 py-1.5">{metrics.extracted}</td>
+                            <td className="px-2 py-1.5">{metrics.queued}</td>
+                            <td className="px-2 py-1.5">{metrics.duplicates}</td>
+                            <td className="px-2 py-1.5">{metrics.noCity}</td>
+                            <td className="px-2 py-1.5">{metrics.past}</td>
+                            <td className="px-2 py-1.5">{metrics.cityConflicts}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                <StatLine label="Sources processed" value={result.sourcesProcessed} />
+                <StatLine label="Passed filter" value={result.itemsPassedFilter} />
+                <StatLine label="Duplicates skipped" value={result.itemsSkippedDuplicate} />
+                <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
+                <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
+                <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
+                <StatLine
+                  label="Filter batches dropped"
+                  value={result.filterFailures}
+                  tone={result.filterFailures > 0 ? 'warn' : 'default'}
+                />
+                <StatLine
+                  label="Extract retries exhausted"
+                  value={result.extractRetriesExhausted}
+                  tone={result.extractRetriesExhausted > 0 ? 'warn' : 'default'}
+                />
+                <StatLine
+                  label="Items dropped (bad index)"
+                  value={result.itemsDroppedBadIndex}
+                  tone={result.itemsDroppedBadIndex > 0 ? 'warn' : 'default'}
+                />
+              </div>
+
+              {result.errors.length > 0 && (
+                <details className="mt-4 rounded-[var(--radius-button)] border border-amber-200 bg-white/70 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-amber-700">
+                    View {result.errors.length} logged fetch/runtime issues
+                  </summary>
+                  <ul className="text-muted mt-2 max-h-48 space-y-1 overflow-auto text-xs">
+                    {result.errors.map((e, i) => (
+                      <li key={i}>• {e}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {result.cityBreakdown.length > 0 && (
+                <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                    View city-level outcomes
+                  </summary>
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="text-slate-500">
+                        <tr>
+                          <th className="px-2 py-1 font-medium">City</th>
+                          <th className="px-2 py-1 font-medium">Extracted</th>
+                          <th className="px-2 py-1 font-medium">Queued (E/C/R)</th>
+                          <th className="px-2 py-1 font-medium">Duplicates (E/C/R)</th>
+                          <th className="px-2 py-1 font-medium">Past events</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.cityBreakdown.map((city) => (
+                          <tr
+                            key={city.citySlug}
+                            className="border-t border-slate-100 text-slate-700"
+                          >
+                            <td className="px-2 py-1.5">{city.cityName}</td>
+                            <td className="px-2 py-1.5">{city.extracted}</td>
+                            <td className="px-2 py-1.5">
+                              {city.queuedEvents}/{city.queuedCommunities}/{city.queuedResources}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              {city.duplicateEvents}/{city.duplicateCommunities}/
+                              {city.duplicateResources}
+                            </td>
+                            <td className="px-2 py-1.5">{city.pastEvents}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
+            </>
           )}
         </div>
       )}

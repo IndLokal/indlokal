@@ -1,3 +1,12 @@
+/**
+ * Lightweight text helpers used by the pipeline's fetch + LLM stages.
+ *
+ * Scope:
+ * - whitespace normalization
+ * - small HTML entity decoding pass
+ * - resilient HTML-to-text conversion for messy/real-world markup
+ */
+
 export function collapseWhitespace(input: string): string {
   return input.trim().split(/\s+/).join(' ');
 }

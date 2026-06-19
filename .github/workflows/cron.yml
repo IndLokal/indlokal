@@ -2,17 +2,13 @@ name: Cron Jobs
 
 # Simple MVP cron runner. GitHub Actions is good enough until these jobs become
 # user-visible or business-critical. Requires repository secrets:
-#   APP_URL      - production base URL, e.g. https://indlokal.de
+#   APP_URL      - production base URL, e.g. https://indlokal.com
 #   CRON_SECRET  - shared secret matching CRON_SECRET env var on Vercel
 
 on:
   schedule:
-    # Keep scores fresh enough for MVP demos.
-    - cron: '0 */6 * * *'
-    # Daily maintenance jobs.
+    # Single daily run for all scheduled jobs.
     - cron: '0 3 * * *'
-    # Pipeline dispatcher fans out per-region (PRD/TDD-0029).
-    - cron: '5 2 * * *'
   workflow_dispatch:
     inputs:
       job:
@@ -29,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'scores' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '0 */6 * * *')
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/scores
         run: |
@@ -45,17 +41,21 @@ jobs:
     runs-on: ubuntu-latest
     if: >
       (github.event_name == 'workflow_dispatch' && (inputs.job == 'pipeline' || inputs.job == 'all')) ||
-      (github.event_name == 'schedule' && github.event.schedule == '5 2 * * *')
+      (github.event_name == 'schedule' && github.event.schedule == '0 3 * * *')
     steps:
       - name: POST /api/cron/pipeline/dispatch
         run: |
           STATUS=$(curl -s -o /tmp/pipeline-dispatch.json -w "%{http_code}" \
             --max-time 90 \
+            --retry 3 \
+            --retry-delay 5 \
+            --retry-all-errors \
             -X POST "${{ secrets.APP_URL }}/api/cron/pipeline/dispatch" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
           cat /tmp/pipeline-dispatch.json
           [ "$STATUS" -eq 200 ] || (echo "pipeline dispatch returned HTTP $STATUS" && exit 1)
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('/tmp/pipeline-dispatch.json','utf8'));if(!p.ok){console.error('pipeline dispatch reported failed shards', p.failed);process.exit(1)}console.log('pipeline dispatch ok', {dispatched:(p.dispatched||[]).length,locked:(p.locked||[]).length})"
 
   links:
     name: Verify join links

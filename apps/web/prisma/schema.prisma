@@ -1271,6 +1271,7 @@ model PipelineRun {
   itemsDroppedBadIndex    Int               @default(0) @map("items_dropped_bad_index")
   budgetExceeded          Boolean           @default(false) @map("budget_exceeded")
   circuitBreakerTripped   Boolean           @default(false) @map("circuit_breaker_tripped")
+  laneBreakdown           Json?             @map("lane_breakdown")
   createdAt               DateTime          @default(now()) @map("created_at")
   llmCallAudits           PipelineLlmCall[]
 
@@ -1291,6 +1292,7 @@ model PipelineLlmCall {
   runId            String           @map("run_id")
   run              PipelineRun      @relation(fields: [runId], references: [id], onDelete: Cascade)
   stage            PipelineLlmStage
+  lane             String?
   model            String
   promptTokens     Int              @default(0) @map("prompt_tokens")
   completionTokens Int              @default(0) @map("completion_tokens")
@@ -1302,6 +1304,7 @@ model PipelineLlmCall {
   createdAt        DateTime         @default(now()) @map("created_at")
 
   @@index([runId])
+  @@index([runId, lane])
   @@index([createdAt, stage])
   @@map("pipeline_llm_calls")
 }
@@ -1333,6 +1336,7 @@ model KeywordSuggestion {
   id                String                  @id @default(cuid())
   keyword           String                  @unique
   normalizedKeyword String                  @unique @map("normalized_keyword")
+  lane              String
   status            KeywordSuggestionStatus @default(PENDING)
   confidence        Float                   @default(0)
   sourceCount       Int                     @default(0) @map("source_count")
@@ -1342,6 +1346,7 @@ model KeywordSuggestion {
   updatedAt         DateTime                @updatedAt @map("updated_at")
 
   @@index([status, createdAt])
+  @@index([status, lane])
   @@map("keyword_suggestions")
 }
 

@@ -6,7 +6,7 @@ import {
   getLlmStats,
   PipelineBudgetExceededError,
   PipelineCircuitOpenError,
-} from '../extraction';
+} from '../llm';
 
 describe('normalizeParsedItemForTest', () => {
   it('coerces mixed community-shaped event payloads into events', () => {
@@ -180,6 +180,75 @@ describe('getClampedIntEnv (PRD-0026)', () => {
     process.env.PIPELINE_TEST_KNOB = '0';
     expect(getClampedIntEnv('PIPELINE_TEST_KNOB', 10, 1, 50)).toBe(1);
     expect(warn).toHaveBeenCalled();
+  });
+});
+
+describe('lane-aware prompt helpers (Phase 6)', () => {
+  const { getPromptLane, getExtractCharLimit } = __testing;
+
+  it('returns a specific lane when all items in a batch share that lane', () => {
+    expect(
+      getPromptLane([
+        {
+          sourceType: 'DB_COMMUNITY',
+          sourceUrl: 'https://example.org/events',
+          text: 'Upcoming event',
+          fetchedAt: new Date().toISOString(),
+          _lane: 'EVENT',
+        },
+      ]),
+    ).toBe('EVENT');
+  });
+
+  it('falls back to DEFAULT when a batch mixes lanes', () => {
+    expect(
+      getPromptLane([
+        {
+          sourceType: 'DB_COMMUNITY',
+          sourceUrl: 'https://example.org/events',
+          text: 'Upcoming event',
+          fetchedAt: new Date().toISOString(),
+          _lane: 'EVENT',
+        },
+        {
+          sourceType: 'WEBSITE_SCRAPE',
+          sourceUrl: 'https://example.org/community',
+          text: 'Association page',
+          fetchedAt: new Date().toISOString(),
+          _lane: 'COMMUNITY',
+        },
+      ]),
+    ).toBe('DEFAULT');
+  });
+
+  it('uses smaller extract char limits for EVENT and RESOURCE lanes', () => {
+    expect(
+      getExtractCharLimit({
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'x',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'EVENT',
+      }),
+    ).toBe(2000);
+    expect(
+      getExtractCharLimit({
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://www.cgimunich.gov.in/',
+        text: 'x',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'RESOURCE',
+      }),
+    ).toBe(2200);
+    expect(
+      getExtractCharLimit({
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/community',
+        text: 'x',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'COMMUNITY',
+      }),
+    ).toBe(3000);
   });
 });
 

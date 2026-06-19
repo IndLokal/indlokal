@@ -1,11 +1,75 @@
+/**
+ * Enrichment intelligence helpers for post-discovery quality improvements.
+ *
+ * Responsibilities:
+ * - Semantic duplicate tie-break checks for borderline community matches
+ * - Community enrichment suggestion generation from canonical source pages
+ * - Relationship graph inference (same organizer, sister chapter)
+ * - Dynamic keyword mining from approved pipeline outcomes
+ *
+ * This module intentionally stays lightweight: schema/domain values come from
+ * Prisma enums where available, and only local heuristics stay file-local.
+ */
+
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
-import { Prisma, type RelationshipType } from '@prisma/client';
-import { callOpenAI } from './extraction';
-import { getRuntimeKeywordSeeds } from './runtime-config';
-import { htmlToText } from './text';
-import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
-import type { ExtractedCommunity } from './types';
+import {
+  CommunityStatus,
+  KeywordSuggestionStatus,
+  PipelineEntityType,
+  PipelineItemStatus,
+  PipelineReviewKind,
+  PipelineSourceType,
+  Prisma,
+  RelationshipType,
+} from '@prisma/client';
+import { callOpenAI, htmlToText } from '../llm';
+import { SOURCE_LANES, getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
+import { PIPELINE_USER_AGENT, fetchTextWithFallback } from '../fetch/http';
+import type { ExtractedCommunity, PipelineLane } from '../types';
+
+export type ApprovedDynamicKeywordsByLane = {
+  byLane: Record<PipelineLane, string[]>;
+};
+
+const SOURCE_LANE_SET = new Set<PipelineLane>(SOURCE_LANES);
+
+/** Minimum confidence required to accept an LLM semantic duplicate match. */
+const SEMANTIC_DUPLICATE_MIN_CONFIDENCE = 0.8;
+
+/** Max bytes of fetched source text to keep for enrichment prompts. */
+const ENRICHMENT_SOURCE_TEXT_MAX_CHARS = 12_000;
+
+/** HTTP timeout for enrichment source fetches. */
+const ENRICHMENT_SOURCE_FETCH_TIMEOUT_MS = 15_000;
+
+/** Re-enrich stale communities no more often than this many days. */
+const ENRICHMENT_LOOKBACK_DAYS = 30;
+
+/** Candidate pool size for keyword mining from reviewed items. */
+const KEYWORD_MINING_APPROVED_SAMPLE_SIZE = 200;
+
+/** Default confidence applied when keyword-eval LLM omits confidence. */
+const KEYWORD_CONFIDENCE_FALLBACK = 0.6;
+
+/** Number of evidence snippets to store per candidate phrase. */
+const KEYWORD_EVIDENCE_SNIPPET_LIMIT = 3;
+
+/** Candidate phrases must appear at least this many times to be evaluated. */
+const KEYWORD_MIN_OCCURRENCE_COUNT = 2;
+
+/** Max candidate phrases sent to keyword evaluation LLM. */
+const KEYWORD_CANDIDATE_LIMIT = 30;
+
+/** Lower/upper tokenized phrase lengths for candidate extraction. */
+const KEYWORD_PHRASE_MIN_LENGTH = 4;
+const KEYWORD_PHRASE_MAX_LENGTH = 32;
+
+/** Confidence used when the enrichment LLM omits a community-level score. */
+const ENRICHMENT_CONFIDENCE_FALLBACK = 0.75;
+
+/** Field-confidence fallback stored when the enrichment LLM omits per-field scores. */
+const ENRICHMENT_FIELD_CONFIDENCE_FALLBACK: Record<string, number> = { description: 0.8 };
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
 
@@ -32,13 +96,65 @@ Rules:
 const KEYWORD_EVAL_PROMPT = `You evaluate keyword candidates for IndLokal, a platform for Indian/South Asian diaspora discovery.
 
 Return JSON:
-{"suggestions": [{"keyword": "Tamil New Year", "accepted": true, "confidence": 0.9, "reason": "high-signal festival/community term"}]}
+{"suggestions": [{"keyword": "Tamil New Year", "accepted": true, "lane": "EVENT", "confidence": 0.9, "reason": "high-signal festival/community term"}]}
 
 Accept terms that are strong diaspora search intents: regional communities, festivals, organization forms, diaspora events, consular services, or high-signal cultural phrases.
+For accepted suggestions, always assign exactly one lane: EVENT, COMMUNITY, or RESOURCE.
 Reject generic words, cities, person names, and low-signal noise.`;
 
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
+ * Parse a JSON object response from the LLM, tolerating empty, truncated, or
+ * accidentally fenced output. Returns null instead of throwing so a single bad
+ * completion never aborts a cron job — callers decide the fallback behavior.
+ *
+ * `callOpenAI` requests `response_format: json_object`, but a truncated
+ * completion (max_tokens hit) still returns an empty/partial string.
+ */
+function safeParseLlmJson<T>(raw: string): T | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const unfenced = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(unfenced) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Clamp a model-provided confidence into [0,1] and round to 2 decimals. */
+function normalizeConfidence(value: unknown, fallback: number): number {
+  const raw = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.round(Math.min(1, Math.max(0, raw)) * 100) / 100;
+}
+
+function isSourceLane(value: string | null | undefined): value is PipelineLane {
+  return typeof value === 'string' && SOURCE_LANE_SET.has(value as PipelineLane);
+}
+
+function getKeywordLaneFromEntityType(entityType: string): PipelineLane | null {
+  if (entityType === PipelineEntityType.EVENT) return 'EVENT';
+  if (entityType === PipelineEntityType.COMMUNITY) return 'COMMUNITY';
+  if (entityType === PipelineEntityType.RESOURCE) return 'RESOURCE';
+  return null;
+}
+
+function resolveDominantKeywordLane(
+  laneCounts: Partial<Record<PipelineLane, number>>,
+): PipelineLane | null {
+  const ranked = SOURCE_LANES.map((lane) => ({ lane, count: laneCounts[lane] ?? 0 }))
+    .filter((entry) => entry.count > 0)
+    .sort((a, b) => b.count - a.count);
+
+  if (ranked.length === 0) return null;
+  if (ranked.length > 1 && ranked[0]?.count === ranked[1]?.count) return null;
+  return ranked[0]?.lane ?? null;
 }
 
 const BASE_STOPWORDS = new Set([
@@ -98,19 +214,20 @@ export async function semanticCommunityDuplicateCheck(
       ],
       { maxTokens: 900 },
     );
-    const parsed = JSON.parse(response) as {
+    const parsed = safeParseLlmJson<{
       matches?: Array<{ id?: string; sameEntity?: boolean; confidence?: number; reason?: string }>;
-    };
+    }>(response);
+    if (!parsed) return null;
 
     const best = (parsed.matches ?? [])
       .filter((match) => match.sameEntity && typeof match.id === 'string')
       .sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0];
 
-    if (!best || (best.confidence ?? 0) < 0.8) return null;
+    if (!best || (best.confidence ?? 0) < SEMANTIC_DUPLICATE_MIN_CONFIDENCE) return null;
 
     return {
       matchedId: best.id as string,
-      confidence: Math.round((best.confidence ?? 0) * 100) / 100,
+      confidence: normalizeConfidence(best.confidence, 0),
       reason: String(best.reason ?? 'semantic-match'),
     };
   } catch (error) {
@@ -127,27 +244,25 @@ async function fetchSourceText(url: string): Promise<string | null> {
   try {
     const response = await fetchTextWithFallback(url, {
       headers: { 'User-Agent': PIPELINE_USER_AGENT },
-      timeoutMs: 15_000,
+      timeoutMs: ENRICHMENT_SOURCE_FETCH_TIMEOUT_MS,
     });
     if (!response.ok) return null;
     const text = response.text;
     const cleaned = stripHtml(text);
-    return cleaned.slice(0, 12_000);
+    return cleaned.slice(0, ENRICHMENT_SOURCE_TEXT_MAX_CHARS);
   } catch {
     return null;
   }
 }
 
 export async function enrichSparseCommunities(limit = 10) {
+  const staleThreshold = new Date(Date.now() - ENRICHMENT_LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
   const communities = await db.community.findMany({
     where: {
-      status: { in: ['ACTIVE', 'CLAIMED', 'UNVERIFIED'] },
+      status: { in: [CommunityStatus.ACTIVE, CommunityStatus.CLAIMED, CommunityStatus.UNVERIFIED] },
       mergedIntoId: null,
       completenessScore: { lt: 40 },
-      OR: [
-        { lastEnrichedAt: null },
-        { lastEnrichedAt: { lt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } },
-      ],
+      OR: [{ lastEnrichedAt: null }, { lastEnrichedAt: { lt: staleThreshold } }],
     },
     select: {
       id: true,
@@ -169,8 +284,8 @@ export async function enrichSparseCommunities(limit = 10) {
   for (const community of communities) {
     const existingPending = await db.pipelineItem.findFirst({
       where: {
-        reviewKind: 'ENRICHMENT',
-        status: 'PENDING',
+        reviewKind: PipelineReviewKind.ENRICHMENT,
+        status: PipelineItemStatus.PENDING,
         targetEntityId: community.id,
       },
       select: { id: true },
@@ -219,8 +334,8 @@ export async function enrichSparseCommunities(limit = 10) {
         ],
         { maxTokens: 1600 },
       );
-      const parsed = JSON.parse(response) as { community?: Record<string, unknown> };
-      if (!parsed.community) {
+      const parsed = safeParseLlmJson<{ community?: Record<string, unknown> }>(response);
+      if (!parsed?.community) {
         skipped++;
         continue;
       }
@@ -244,19 +359,21 @@ export async function enrichSparseCommunities(limit = 10) {
         whatsappUrl: parsed.community.whatsappUrl ? String(parsed.community.whatsappUrl) : null,
         telegramUrl: parsed.community.telegramUrl ? String(parsed.community.telegramUrl) : null,
         contactEmail: parsed.community.contactEmail ? String(parsed.community.contactEmail) : null,
-        confidence:
-          typeof parsed.community.confidence === 'number' ? parsed.community.confidence : 0.75,
+        confidence: normalizeConfidence(
+          parsed.community.confidence,
+          ENRICHMENT_CONFIDENCE_FALLBACK,
+        ),
         fieldConfidence:
           parsed.community.fieldConfidence && typeof parsed.community.fieldConfidence === 'object'
             ? (parsed.community.fieldConfidence as Record<string, number>)
-            : { description: 0.8 },
+            : ENRICHMENT_FIELD_CONFIDENCE_FALLBACK,
       };
 
       await db.pipelineItem.create({
         data: {
-          entityType: 'COMMUNITY',
-          reviewKind: 'ENRICHMENT',
-          sourceType: 'DB_COMMUNITY',
+          entityType: PipelineEntityType.COMMUNITY,
+          reviewKind: PipelineReviewKind.ENRICHMENT,
+          sourceType: PipelineSourceType.DB_COMMUNITY,
           sourceUrl: source.url,
           rawContent: sourceText,
           extractedData: suggestion as unknown as Prisma.InputJsonValue,
@@ -286,9 +403,11 @@ function normalizeFamilyName(name: string, cityNames: string[]): string {
   const cityPattern = cityNames
     .map((city) => city.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|');
-  return name
-    .toLowerCase()
-    .replace(new RegExp(`\\b(${cityPattern})\\b`, 'g'), ' ')
+  const withoutCityTerms = cityPattern
+    ? name.toLowerCase().replace(new RegExp(`\\b(${cityPattern})\\b`, 'g'), ' ')
+    : name.toLowerCase();
+
+  return withoutCityTerms
     .replace(
       /\b(e\.v\.|ev|verein|chapter|group|community|association|samaj|sangam|sangha|mandal|sabha)\b/g,
       ' ',
@@ -300,7 +419,7 @@ function normalizeFamilyName(name: string, cityNames: string[]): string {
 
 export async function inferCommunityRelationships() {
   const communities = await db.community.findMany({
-    where: { mergedIntoId: null, status: { not: 'INACTIVE' } },
+    where: { mergedIntoId: null, status: { not: CommunityStatus.INACTIVE } },
     select: {
       id: true,
       name: true,
@@ -357,7 +476,7 @@ export async function inferCommunityRelationships() {
     for (const source of group) {
       for (const target of group) {
         if (source.id === target.id) continue;
-        await upsertEdge(source.id, target.id, 'SAME_ORGANIZER', 0.95, {
+        await upsertEdge(source.id, target.id, RelationshipType.SAME_ORGANIZER, 0.95, {
           inferred: true,
           source: 'claimedByUserId',
         });
@@ -375,7 +494,7 @@ export async function inferCommunityRelationships() {
       const targetFamily = normalizeFamilyName(target.name, cityNames);
       if (!targetFamily || sourceFamily !== targetFamily) continue;
 
-      await upsertEdge(source.id, target.id, 'SISTER_CHAPTER', 0.75, {
+      await upsertEdge(source.id, target.id, RelationshipType.SISTER_CHAPTER, 0.75, {
         inferred: true,
         source: 'normalized-name',
         normalizedFamily: sourceFamily,
@@ -388,10 +507,17 @@ export async function inferCommunityRelationships() {
 }
 
 function extractCandidateKeywords(
-  items: Array<{ text: string }>,
+  items: Array<{ text: string; lane: PipelineLane | null }>,
   blockedTerms: ReadonlySet<string>,
-): Array<{ keyword: string; count: number; evidence: string[] }> {
-  const counts = new Map<string, { count: number; evidence: string[] }>();
+): Array<{ keyword: string; count: number; evidence: string[]; lane: PipelineLane | null }> {
+  const counts = new Map<
+    string,
+    {
+      count: number;
+      evidence: string[];
+      laneCounts: Partial<Record<PipelineLane, number>>;
+    }
+  >();
 
   for (const item of items) {
     const tokens = item.text
@@ -406,28 +532,43 @@ function extractCandidateKeywords(
           .join(' ')
           .trim();
         const normalized = normalizeKeyword(phrase);
-        if (normalized.length < 4 || normalized.length > 32) continue;
+        if (normalized.length < KEYWORD_PHRASE_MIN_LENGTH) continue;
+        if (normalized.length > KEYWORD_PHRASE_MAX_LENGTH) continue;
         if (blockedTerms.has(normalized)) continue;
         if (/^\d+$/.test(normalized)) continue;
 
-        const entry = counts.get(normalized) ?? { count: 0, evidence: [] };
+        const entry = counts.get(normalized) ?? { count: 0, evidence: [], laneCounts: {} };
         entry.count += 1;
-        if (entry.evidence.length < 3) entry.evidence.push(item.text.slice(0, 120));
+        if (entry.evidence.length < KEYWORD_EVIDENCE_SNIPPET_LIMIT) {
+          entry.evidence.push(item.text.slice(0, 120));
+        }
+        if (item.lane) {
+          entry.laneCounts[item.lane] = (entry.laneCounts[item.lane] ?? 0) + 1;
+        }
         counts.set(normalized, entry);
       }
     }
   }
 
   return [...counts.entries()]
-    .filter(([, entry]) => entry.count >= 2)
-    .map(([keyword, entry]) => ({ keyword, count: entry.count, evidence: entry.evidence }))
+    .filter(([, entry]) => entry.count >= KEYWORD_MIN_OCCURRENCE_COUNT)
+    .map(([keyword, entry]) => ({
+      keyword,
+      count: entry.count,
+      evidence: entry.evidence,
+      lane: resolveDominantKeywordLane(entry.laneCounts),
+    }))
     .sort((a, b) => b.count - a.count)
-    .slice(0, 30);
+    .slice(0, KEYWORD_CANDIDATE_LIMIT);
 }
 
 export async function refreshKeywordSuggestions() {
-  const baselineKeywords = await getRuntimeKeywordSeeds();
-  const baselineKeywordSet = new Set(baselineKeywords.map(normalizeKeyword));
+  const laneKeywordSeeds = await getRuntimeLaneKeywordSeeds();
+  const baselineKeywordSet = new Set(
+    Object.values(laneKeywordSeeds.byLane)
+      .flatMap((keywords) => keywords ?? [])
+      .map(normalizeKeyword),
+  );
   const cityRows = await db.city.findMany({ select: { name: true } });
   const blockedTerms = buildDynamicBlockedTerms(
     cityRows.map((city) => city.name),
@@ -435,9 +576,9 @@ export async function refreshKeywordSuggestions() {
   );
 
   const approvedItems = await db.pipelineItem.findMany({
-    where: { status: 'APPROVED' },
-    select: { extractedData: true },
-    take: 200,
+    where: { status: PipelineItemStatus.APPROVED },
+    select: { extractedData: true, entityType: true },
+    take: KEYWORD_MINING_APPROVED_SAMPLE_SIZE,
     orderBy: { reviewedAt: 'desc' },
   });
 
@@ -452,7 +593,7 @@ export async function refreshKeywordSuggestions() {
       ]
         .filter((value): value is string => typeof value === 'string')
         .join(' ');
-      return { text };
+      return { text, lane: getKeywordLaneFromEntityType(item.entityType) };
     })
     .filter((item) => item.text.trim().length > 0);
 
@@ -469,14 +610,18 @@ export async function refreshKeywordSuggestions() {
     { maxTokens: 1200 },
   );
 
-  const parsed = JSON.parse(response) as {
+  const parsed = safeParseLlmJson<{
     suggestions?: Array<{
       keyword?: string;
       accepted?: boolean;
+      lane?: string;
       confidence?: number;
       reason?: string;
     }>;
-  };
+  }>(response);
+  if (!parsed) {
+    return { created: 0, updated: 0, candidates: candidates.length };
+  }
 
   let created = 0;
   let updated = 0;
@@ -486,13 +631,17 @@ export async function refreshKeywordSuggestions() {
     const normalized = normalizeKeyword(suggestion.keyword);
     const candidate = candidates.find((entry) => normalizeKeyword(entry.keyword) === normalized);
     if (!candidate) continue;
+    const lane = isSourceLane(suggestion.lane) ? suggestion.lane : candidate.lane;
+    if (!lane) continue;
+    const confidence = normalizeConfidence(suggestion.confidence, KEYWORD_CONFIDENCE_FALLBACK);
 
     const upserted = await db.keywordSuggestion.upsert({
       where: { normalizedKeyword: normalized },
       create: {
         keyword: suggestion.keyword,
         normalizedKeyword: normalized,
-        confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
+        lane,
+        confidence,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
@@ -501,7 +650,8 @@ export async function refreshKeywordSuggestions() {
       },
       update: {
         keyword: suggestion.keyword,
-        confidence: Math.round((suggestion.confidence ?? 0.6) * 100) / 100,
+        lane,
+        confidence,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
@@ -517,11 +667,30 @@ export async function refreshKeywordSuggestions() {
   return { created, updated, candidates: candidates.length };
 }
 
-export async function getApprovedDynamicKeywords(): Promise<string[]> {
+export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynamicKeywordsByLane> {
   const rows = await db.keywordSuggestion.findMany({
-    where: { status: 'APPROVED' },
-    select: { keyword: true },
+    where: { status: KeywordSuggestionStatus.APPROVED },
+    select: { keyword: true, lane: true },
     orderBy: { confidence: 'desc' },
   });
-  return rows.map((row) => row.keyword);
+
+  const byLane: Record<PipelineLane, string[]> = {
+    EVENT: [],
+    COMMUNITY: [],
+    RESOURCE: [],
+  };
+
+  for (const row of rows) {
+    if (!isSourceLane(row.lane)) continue;
+
+    byLane[row.lane].push(row.keyword);
+  }
+
+  return {
+    byLane: {
+      EVENT: [...new Set(byLane.EVENT)],
+      COMMUNITY: [...new Set(byLane.COMMUNITY)],
+      RESOURCE: [...new Set(byLane.RESOURCE)],
+    },
+  };
 }

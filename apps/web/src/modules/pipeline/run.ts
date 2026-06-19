@@ -9,17 +9,38 @@
  *   OPENAI_API_KEY     - for LLM extraction
  *   DATABASE_URL       - PostgreSQL connection
  *   EVENTBRITE_API_KEY - (optional) for Eventbrite source
+ *   GOOGLE_CSE_API_KEY - (optional) for Google Custom Search
+ *   GOOGLE_CSE_COMMUNITY_ID / GOOGLE_CSE_EVENT_ID / GOOGLE_CSE_RESOURCE_ID
+ *                      - (optional) lane-specific Google CSE IDs
  */
 
+import { db } from '@/lib/db';
 import { runPipeline } from './orchestrator';
-import { getDbCommunityStrategies } from './db-sources';
+import { getDbCommunityStrategies } from './fetch/db-sources';
 import {
   getRuntimeEnabledRegions,
-  getRuntimeKeywordSeeds,
+  getRuntimeLaneKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
-} from './runtime-config';
-import type { SearchRegion } from './types';
+} from './config/runtime-config';
+import type { PipelineRunMode, PipelineSourceIntentProfile, SearchRegion } from './types';
+
+const VALID_RUN_MODES: readonly PipelineRunMode[] = [
+  'balanced',
+  'event_refresh',
+  'community_discovery',
+  'resource_discovery',
+  'evidence_verification',
+];
+
+const VALID_SOURCE_INTENT_PROFILES: readonly PipelineSourceIntentProfile[] = [
+  'all',
+  'activity_only',
+  'community_only',
+  'service_only',
+  'evidence_only',
+  'channel_only',
+];
 
 function parseListArg(args: string[], key: '--city' | '--region'): string[] {
   const values: string[] = [];
@@ -36,6 +57,36 @@ function parseListArg(args: string[], key: '--city' | '--region'): string[] {
     .flatMap((raw) => raw.split(','))
     .map((v) => v.trim())
     .filter(Boolean);
+}
+
+function parseSingleArg(
+  args: string[],
+  key: '--run-mode' | '--intent-profile',
+): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === key) {
+      const next = args[i + 1];
+      if (next && !next.startsWith('--')) return next.trim();
+      continue;
+    }
+    if (arg.startsWith(`${key}=`)) return arg.slice(key.length + 1).trim();
+  }
+  return undefined;
+}
+
+function parseRunMode(raw: string | undefined): PipelineRunMode | undefined {
+  if (!raw) return undefined;
+  const normalized = raw.trim().toLowerCase() as PipelineRunMode;
+  return VALID_RUN_MODES.includes(normalized) ? normalized : undefined;
+}
+
+function parseSourceIntentProfile(
+  raw: string | undefined,
+): PipelineSourceIntentProfile | undefined {
+  if (!raw) return undefined;
+  const normalized = raw.trim().toLowerCase() as PipelineSourceIntentProfile;
+  return VALID_SOURCE_INTENT_PROFILES.includes(normalized) ? normalized : undefined;
 }
 
 function filterRegionsForPreview(
@@ -62,12 +113,46 @@ function filterRegionsForPreview(
     .filter((region) => region.citySlugs.length > 0);
 }
 
+/** Verify schema readiness before pipeline execution. */
+async function checkSchemaReadiness(): Promise<void> {
+  try {
+    // Test critical pipeline tables and columns exist
+    await db.$queryRaw`
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_name = 'keyword_suggestions' AND column_name = 'lane'
+      LIMIT 1
+    `;
+  } catch {
+    console.error('\n❌ Database schema is not in sync with Prisma schema.');
+    console.error('   Run: pnpm -F web db:push');
+    console.error('   Then: pnpm -F web pipeline\n');
+    process.exit(1);
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
   const strictMode = args.includes('--strict') || process.env.PIPELINE_STRICT === '1';
   const citySlugs = parseListArg(args, '--city');
   const regionIds = parseListArg(args, '--region');
+  const runModeRaw = parseSingleArg(args, '--run-mode');
+  const sourceIntentProfileRaw = parseSingleArg(args, '--intent-profile');
+  const runMode = parseRunMode(runModeRaw);
+  const sourceIntentProfile = parseSourceIntentProfile(sourceIntentProfileRaw);
+
+  if (runModeRaw && !runMode) {
+    console.error(
+      `\n❌ Invalid --run-mode '${runModeRaw}'. Allowed: ${VALID_RUN_MODES.join(', ')}`,
+    );
+    process.exit(1);
+  }
+  if (sourceIntentProfileRaw && !sourceIntentProfile) {
+    console.error(
+      `\n❌ Invalid --intent-profile '${sourceIntentProfileRaw}'. Allowed: ${VALID_SOURCE_INTENT_PROFILES.join(', ')}`,
+    );
+    process.exit(1);
+  }
 
   console.log('╔══════════════════════════════════════════╗');
   console.log('║  IndLokal AI Content Pipeline          ║');
@@ -83,6 +168,8 @@ async function main() {
     console.log(
       `Exit behavior: ${strictMode ? 'STRICT (non-zero on pipeline errors)' : 'TOLERANT (warnings do not fail run)'}`,
     );
+    console.log(`Run mode: ${runMode ?? 'default (by trigger)'}`);
+    console.log(`Source intent profile: ${sourceIntentProfile ?? 'default (all)'}`);
   }
 
   // Check required env vars
@@ -96,6 +183,9 @@ async function main() {
     process.exit(1);
   }
 
+  // Check schema readiness before proceeding
+  await checkSchemaReadiness();
+
   const regions = filterRegionsForPreview(await getRuntimeEnabledRegions(), {
     citySlugs,
     regionIds,
@@ -104,7 +194,7 @@ async function main() {
     console.error('\n❌ No regions matched the requested --city/--region scope.');
     process.exit(1);
   }
-  const keywordSeeds = await getRuntimeKeywordSeeds();
+  const laneKeywordSeeds = await getRuntimeLaneKeywordSeeds();
   const keywordStrategies = await getRuntimeKeywordStrategies();
   const pinnedStrategies = await getRuntimePinnedStrategies();
 
@@ -113,9 +203,11 @@ async function main() {
     console.log(`   • ${r.label} - cities: ${r.citySlugs.join(', ')}`);
   }
 
-  console.log(
-    `\n🔍 Keyword templates (${keywordStrategies.length}) · canonical seeds (${keywordSeeds.length}):`,
+  const seedCount = Object.values(laneKeywordSeeds.byLane).reduce(
+    (total, keywords) => total + (keywords?.length ?? 0),
+    0,
   );
+  console.log(`\n🔍 Keyword templates (${keywordStrategies.length}) · lane seeds (${seedCount}):`);
   for (const s of keywordStrategies) {
     console.log(`   • ${s.label} - ${s.radiusKm}km radius`);
   }
@@ -137,15 +229,18 @@ async function main() {
   }
 
   console.log('\n🚀 Running pipeline...\n');
-  const result = await runPipeline(
-    'cli',
-    citySlugs.length > 0 || regionIds.length > 0
-      ? {
-          citySlugs: citySlugs.length > 0 ? citySlugs : undefined,
-          regionIds: regionIds.length > 0 ? regionIds : undefined,
-        }
-      : undefined,
-  );
+  const result = await runPipeline({
+    triggeredBy: 'cli',
+    scope:
+      citySlugs.length > 0 || regionIds.length > 0
+        ? {
+            citySlugs: citySlugs.length > 0 ? citySlugs : undefined,
+            regionIds: regionIds.length > 0 ? regionIds : undefined,
+          }
+        : undefined,
+    runMode,
+    sourceIntentProfile,
+  });
 
   console.log('\n═══════════════════════════════════════');
   console.log('Pipeline Run Summary');
@@ -162,6 +257,14 @@ async function main() {
   console.log(`  Est. tokens:          ${result.llmTokensEstimate}`);
   console.log(`  Errors:               ${result.errors.length}`);
   console.log(`  Duration:             ${result.duration}ms`);
+
+  console.log('\nLane outcomes:');
+  for (const lane of ['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const) {
+    const metrics = result.laneBreakdown[lane];
+    console.log(
+      `  ${lane.padEnd(10)} fetched ${String(metrics.fetched).padStart(3)} | filter ${String(metrics.passedFilter).padStart(3)} | extracted ${String(metrics.extracted).padStart(3)} | queued ${String(metrics.queued).padStart(3)} | dupes ${String(metrics.duplicates).padStart(3)} | no-city ${String(metrics.noCity).padStart(3)} | past ${String(metrics.past).padStart(3)}`,
+    );
+  }
 
   if (result.stageTimings && Object.keys(result.stageTimings).length > 0) {
     console.log('\nStage timings:');

@@ -36,7 +36,7 @@ const { computeCityCoverage } = await import('@/modules/journeys');
 const { composeJourney } = await import('@/modules/journeys/compose');
 const { meetsDensityGate } = await import('@/modules/journeys/density');
 const { invalidateResolver } = await import('@/modules/resources/resolver');
-const { approvePipelineItemRecord } = await import('@/modules/pipeline/review');
+const { approvePipelineItemRecord } = await import('@/modules/pipeline/quality/review');
 
 let cityId: string;
 

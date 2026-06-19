@@ -6,7 +6,7 @@ import {
   isHolidayCalendarId,
   isEmbeddedCalendarEventRawContent,
   parseGoogleCalendarIcsEvents,
-} from '../calendar';
+} from '../fetch/calendar';
 
 describe('embedded calendar helpers', () => {
   it('extracts Google Calendar IDs from iframe embeds', () => {

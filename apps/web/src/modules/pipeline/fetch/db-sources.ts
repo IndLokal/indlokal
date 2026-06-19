@@ -1,26 +1,34 @@
 /**
- * DB-driven source generation - reads community access channels from the
- * database and generates pinned_url strategies automatically.
+ * DB-driven pinned source generation for the fetch layer.
  *
- * Instead of hardcoding community website URLs in runtime pipeline code, this module
- * queries all active communities that have scrapeable channels (WEBSITE, MEETUP)
- * and turns each into a SearchStrategy the orchestrator can fetch.
+ * Instead of hardcoding community website URLs in runtime pipeline code, this
+ * module queries active communities with scrapeable channels (WEBSITE, MEETUP)
+ * and emits pinned-url strategies for planner execution.
  *
  * Benefits:
  *  - New communities added via admin/submit automatically become pipeline sources
  *  - No manual URL maintenance
  *  - Community city is known → hintCitySlug is always accurate
+ *
+ * Lane model:
+ * - Outputs here are EVENT-lane candidates (homepages + event subpages)
+ * - Planner remains responsible for trigger-based lane filtering and caps
  */
 
 import { db } from '@/lib/db';
-import type { SearchStrategy } from './types';
+import type { SearchStrategy } from '../types';
 import {
   EVENT_PAGE_MARKERS,
   STRONG_FRESH_MARKERS,
   STALE_EVENT_MARKERS,
   getYearSignalScore,
-} from './freshness';
+} from '../freshness';
 import { PIPELINE_USER_AGENT } from './http';
+import {
+  getDbSourceDiscoveryTopK,
+  getDbSourceProbeConcurrency,
+  getDbSourceProbeTimeoutMs,
+} from '../config/env-config';
 
 // Fallback list used only when homepage anchor discovery finds nothing for a
 // site (typically because the nav is rendered client-side). Each candidate is
@@ -37,9 +45,6 @@ const WEBSITE_EVENT_PATH_FALLBACK_CANDIDATES = [
   'veranstaltungen',
   'termine',
 ] as const;
-
-const CANDIDATE_PROBE_TIMEOUT_MS = 4_000;
-const CANDIDATE_PROBE_CONCURRENCY = 5;
 
 function getDetailPageScore(url: string, labelOrText = ''): number {
   const combined = `${url} ${labelOrText}`;
@@ -63,6 +68,7 @@ function getDetailPageScore(url: string, labelOrText = ''): number {
   return hasDescriptiveDetailSlug || hasRegistrationSignal ? 3 : 0;
 }
 
+/** Score whether a URL/text pair looks like a fresh, event-focused destination. */
 export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
   const urlScore = EVENT_PAGE_MARKERS.test(url) ? 2 : 0;
   const labelScore = EVENT_PAGE_MARKERS.test(labelOrText) ? 1 : 0;
@@ -146,8 +152,9 @@ function buildFallbackCandidatePaths(websiteUrl: string): string[] {
  * only for 2xx and final-redirected 2xx.
  */
 async function probeUrlExists(url: string): Promise<boolean> {
+  const probeTimeoutMs = getDbSourceProbeTimeoutMs();
   const headers = { 'User-Agent': PIPELINE_USER_AGENT };
-  const signal = AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS);
+  const signal = AbortSignal.timeout(probeTimeoutMs);
   try {
     const res = await fetch(url, { method: 'HEAD', headers, signal, redirect: 'follow' });
     if (res.ok) return true;
@@ -156,7 +163,7 @@ async function probeUrlExists(url: string): Promise<boolean> {
       const getRes = await fetch(url, {
         method: 'GET',
         headers,
-        signal: AbortSignal.timeout(CANDIDATE_PROBE_TIMEOUT_MS),
+        signal: AbortSignal.timeout(probeTimeoutMs),
         redirect: 'follow',
       });
       // Abort body read; we only care about the status.
@@ -174,9 +181,10 @@ async function probeUrlExists(url: string): Promise<boolean> {
 }
 
 async function probeCandidatesInParallel(urls: string[]): Promise<string[]> {
+  const probeConcurrency = getDbSourceProbeConcurrency();
   const survivors: string[] = [];
-  for (let i = 0; i < urls.length; i += CANDIDATE_PROBE_CONCURRENCY) {
-    const batch = urls.slice(i, i + CANDIDATE_PROBE_CONCURRENCY);
+  for (let i = 0; i < urls.length; i += probeConcurrency) {
+    const batch = urls.slice(i, i + probeConcurrency);
     const results = await Promise.all(
       batch.map((u) => probeUrlExists(u).then((ok) => ({ u, ok }))),
     );
@@ -193,7 +201,7 @@ async function probeCandidatesInParallel(urls: string[]): Promise<string[]> {
  *  - Parse all <a href> tags from the HTML
  *  - Keep only same-host links (not external)
  *  - Score each by whether the URL path and/or link text matches event keywords
- *  - Return the top 5 highest-scored URLs
+ *  - Return the top K highest-scored URLs (configurable via env-config)
  *
  * Returns [] on any fetch/parse failure - caller must handle gracefully.
  */
@@ -240,7 +248,7 @@ async function discoverEventLinks(websiteUrl: string): Promise<string[]> {
 
     return [...scored.entries()]
       .sort(([, a], [, b]) => b - a)
-      .slice(0, 5)
+      .slice(0, getDbSourceDiscoveryTopK())
       .map(([url]) => url);
   } catch {
     return [];
@@ -311,6 +319,7 @@ export async function getDbCommunityStrategies(): Promise<
           hintCommunityId: community.id,
           hintCommunityName: community.name,
           enabled: true,
+          lane: 'EVENT',
         });
       } else {
         // Homepage: always include (useful for community discovery)
@@ -324,6 +333,7 @@ export async function getDbCommunityStrategies(): Promise<
           hintCommunityId: community.id,
           hintCommunityName: community.name,
           enabled: true,
+          lane: 'EVENT',
         });
 
         // Queue this channel for parallel event-link discovery below.
@@ -374,6 +384,7 @@ export async function getDbCommunityStrategies(): Promise<
         hintCommunityId: job.community.id,
         hintCommunityName: job.community.name,
         enabled: true,
+        lane: 'EVENT',
       });
     }
   }
