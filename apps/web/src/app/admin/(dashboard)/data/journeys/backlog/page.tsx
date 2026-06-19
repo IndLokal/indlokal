@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
-import { db } from '@/lib/db';
+import { db, resolveMetroScopeCityIds } from '@/lib/db';
 import {
   assignJourneyGapBacklogAction,
   ingestJourneyGapBacklogAction,
@@ -39,11 +39,12 @@ export default async function JourneyGapBacklogPage({
 }) {
   const sp = await searchParams;
   const now = new Date();
+  const scopedCityIds = sp.city ? await resolveMetroScopeCityIds(sp.city) : [];
 
   const where: Prisma.JourneyGapBacklogWhereInput = {};
   if (sp.status) where.status = sp.status as Prisma.JourneyGapBacklogWhereInput['status'];
   if (sp.owner) where.ownerUserId = sp.owner;
-  if (sp.city) where.city = { slug: sp.city };
+  if (sp.city) where.cityId = { in: scopedCityIds };
   if (sp.overdue === 'true') {
     where.slaDueAt = { lt: now };
     where.status = { in: ['OPEN', 'ASSIGNED', 'IN_PROGRESS'] };

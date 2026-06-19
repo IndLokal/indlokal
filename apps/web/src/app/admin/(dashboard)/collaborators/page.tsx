@@ -1,5 +1,5 @@
 import type { Prisma } from '@prisma/client';
-import { db } from '@/lib/db';
+import { db, resolveMetroScopeCityIds } from '@/lib/db';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { AdminFilterActions, AdminFilterBar, AdminFilterItem } from '@/components/admin/filter-bar';
@@ -31,6 +31,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   const source = ['ALL', 'PUBLIC_REQUEST'].includes(sp.source ?? '')
     ? (sp.source as 'ALL' | 'PUBLIC_REQUEST')
     : 'ALL';
+  const scopedCityIds = citySlug ? await resolveMetroScopeCityIds(citySlug) : [];
 
   const communityWhere: Prisma.CommunityWhereInput = {
     OR:
@@ -42,7 +43,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   };
 
   if (citySlug) {
-    communityWhere.city = { slug: citySlug };
+    communityWhere.cityId = { in: scopedCityIds };
   }
 
   if (query) {
@@ -76,7 +77,7 @@ export default async function AdminCollaboratorRequestsPage({ searchParams }: Pr
   };
 
   if (citySlug) {
-    requestWhere.community = { city: { slug: citySlug } };
+    requestWhere.community = { cityId: { in: scopedCityIds } };
   }
   if (source !== 'ALL') {
     requestWhere.source = source;

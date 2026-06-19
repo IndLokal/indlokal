@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
 import { resources as resourceContract } from '@indlokal/shared';
-import { db } from '@/lib/db';
+import { db, resolveMetroScopeCityIds } from '@/lib/db';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import { deleteResourceAction } from '../actions';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
@@ -31,7 +31,10 @@ export default async function AdminResourcesPage({
   const types = resourceContract.ResourceType.options;
 
   const where: Prisma.ResourceWhereInput = {};
-  if (sp.city) where.city = { slug: sp.city };
+  if (sp.city) {
+    const cityIds = await resolveMetroScopeCityIds(sp.city);
+    where.cityId = { in: cityIds };
+  }
   if (sp.type && types.includes(sp.type as (typeof types)[number])) {
     where.resourceType = sp.type as (typeof types)[number];
   }
