@@ -21,7 +21,7 @@ export {
   enrichSparseCommunities,
   inferCommunityRelationships,
   refreshKeywordSuggestions,
-} from './enrichment/intelligence';
+} from './enrichment';
 
 // ─── Reliability stats (admin UI) ───────────────────────────────────────
 export { getSourceReliabilityStats } from './quality/reliability';

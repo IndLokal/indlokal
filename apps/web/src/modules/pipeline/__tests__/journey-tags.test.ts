@@ -6,7 +6,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import { communityOptions } from '@indlokal/shared';
-import { suggestCommunityPersonaSegments } from '../enrichment/journey-tags';
+import { suggestCommunityPersonaSegments } from '../enrichment';
 
 describe('suggestCommunityPersonaSegments', () => {
   it('infers segments from the community name', () => {

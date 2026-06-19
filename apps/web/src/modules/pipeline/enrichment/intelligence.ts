@@ -1,9 +1,8 @@
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
 import { Prisma, type RelationshipType } from '@prisma/client';
-import { callOpenAI } from '../llm/extraction';
+import { callOpenAI, htmlToText } from '../llm';
 import { getRuntimeLaneKeywordSeeds } from '../config/runtime-config';
-import { htmlToText } from '../llm/text';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from '../fetch/http';
 import type { ExtractedCommunity, SourceLane } from '../types';
 

@@ -45,16 +45,16 @@ import {
   getLlmStats,
   PipelineBudgetExceededError,
   PipelineCircuitOpenError,
-} from './llm/extraction';
-import { currentLlmContext, withLlmContext } from './llm/llm-context';
+  currentLlmContext,
+  withLlmContext,
+} from './llm';
 import {
   applySourceConfidenceAdjustment,
   buildSourceReliabilityKey,
   getSourceReliabilityMap,
 } from './quality/reliability';
-import { semanticCommunityDuplicateCheck } from './enrichment/intelligence';
+import { semanticCommunityDuplicateCheck, suggestCommunityPersonaSegments } from './enrichment';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './quality/review';
-import { suggestCommunityPersonaSegments } from './enrichment/journey-tags';
 import { FLAGS } from '@/lib/config/flags';
 import {
   COMMUNITY_DUPLICATE_SEMANTIC_THRESHOLD,

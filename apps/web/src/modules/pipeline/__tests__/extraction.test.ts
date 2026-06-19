@@ -6,7 +6,7 @@ import {
   getLlmStats,
   PipelineBudgetExceededError,
   PipelineCircuitOpenError,
-} from '../llm/extraction';
+} from '../llm';
 
 describe('normalizeParsedItemForTest', () => {
   it('coerces mixed community-shaped event payloads into events', () => {
