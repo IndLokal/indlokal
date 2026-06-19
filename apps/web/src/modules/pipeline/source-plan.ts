@@ -44,7 +44,8 @@ export type PipelineSourcePlan = {
   staticPinnedCount: number;
   dbPinnedCount: number;
   totalDbPinnedCount: number;
-  cityGaps: CityGap[];
+  eventGaps: CityGap[];
+  communityGaps: CityGap[];
   laneBreakdown: PipelineSourcePlanLaneBreakdown;
   notes: string[];
 };
@@ -142,15 +143,15 @@ function getGapKeywordsForStrategy(
   eventGapKeywords: string[],
   communityGapKeywords: string[],
   resourceGapKeywords: string[],
+  allLaneGapKeywords: string[],
 ): string[] {
   if (strategy.lane === 'EVENT') return eventGapKeywords;
   if (strategy.lane === 'COMMUNITY') return communityGapKeywords;
   if (strategy.lane === 'RESOURCE') return resourceGapKeywords;
 
-  // Back-compat for legacy rows without explicit lane metadata.
-  return strategy.sourceType === 'EVENTBRITE'
-    ? eventGapKeywords
-    : [...eventGapKeywords, ...communityGapKeywords];
+  // Back-compat for lane-unaware strategies: use all gap cities (union of event + community).
+  // This ensures comprehensive discovery coverage for multi-lane sources like DuckDuckGo.
+  return allLaneGapKeywords;
 }
 
 function getLaneSeedKeywords(
@@ -359,15 +360,15 @@ function limitDuckDuckGoKeywords(keywords: string[], triggeredBy: string): strin
 async function getLowCoverageCities(
   regions: SearchRegion[],
   isCronRun: boolean,
-): Promise<CityGap[]> {
+): Promise<{ eventGaps: CityGap[]; communityGaps: CityGap[] }> {
   const regionCitySlugs = Array.from(new Set(regions.flatMap((region) => region.citySlugs)));
-  if (regionCitySlugs.length === 0) return [];
+  if (regionCitySlugs.length === 0) return { eventGaps: [], communityGaps: [] };
 
   const cities = await db.city.findMany({
     where: { slug: { in: regionCitySlugs } },
     select: { id: true, slug: true, name: true, isMetroPrimary: true },
   });
-  if (cities.length === 0) return [];
+  if (cities.length === 0) return { eventGaps: [], communityGaps: [] };
 
   const communitiesByCity = await db.community.groupBy({
     by: ['cityId'],
@@ -397,7 +398,7 @@ async function getLowCoverageCities(
   const eventThreshold = getPositiveIntEnv('PIPELINE_DB_GAP_EVENT_THRESHOLD', isCronRun ? 1 : 2);
   const limit = getPositiveIntEnv('PIPELINE_DB_GAP_CITY_LIMIT', isCronRun ? 4 : 6);
 
-  return cities
+  const allGapCities = cities
     .map((city) => ({
       slug: city.slug,
       name: city.name,
@@ -405,10 +406,6 @@ async function getLowCoverageCities(
       upcomingEventCount: upcomingEventCountByCityId.get(city.id) ?? 0,
       isMetroPrimary: city.isMetroPrimary,
     }))
-    .filter(
-      (city) =>
-        city.communityCount <= communityThreshold || city.upcomingEventCount <= eventThreshold,
-    )
     .sort((a, b) => {
       const aHasCommunityBase = a.communityCount > 0 ? 1 : 0;
       const bHasCommunityBase = b.communityCount > 0 ? 1 : 0;
@@ -427,7 +424,13 @@ async function getLowCoverageCities(
       }
 
       return a.communityCount - b.communityCount || a.name.localeCompare(b.name);
-    })
+    });
+
+  const gapCities = allGapCities
+    .filter(
+      (city) =>
+        city.communityCount <= communityThreshold || city.upcomingEventCount <= eventThreshold,
+    )
     .map((city) => ({
       slug: city.slug,
       name: city.name,
@@ -435,6 +438,12 @@ async function getLowCoverageCities(
       upcomingEventCount: city.upcomingEventCount,
     }))
     .slice(0, limit);
+
+  // Split gap cities by gap type for lane-specific keyword expansion.
+  const eventGaps = gapCities.filter((city) => city.upcomingEventCount <= eventThreshold);
+  const communityGaps = gapCities.filter((city) => city.communityCount <= communityThreshold);
+
+  return { eventGaps, communityGaps };
 }
 
 /**
@@ -461,13 +470,10 @@ export async function buildPipelineSourcePlan(
   const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';
   const notes: string[] = [];
   const forceKeywordSearch = process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
-  const forceAdminKeywordSearch = process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
+  const forceAdminKeywordSearch =
+    triggeredBy === 'admin' && process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
 
-  const staticPinned = filterPinnedStrategiesForRun(
-    await getRuntimePinnedStrategies(),
-    triggeredBy,
-    notes,
-  );
+  const staticPinned = await getRuntimePinnedStrategies();
   const dbPinnedAll = await getDbCommunityStrategies();
   const dbPinnedLimit = getPositiveIntEnv(
     'PIPELINE_DB_PINNED_LIMIT',
@@ -475,31 +481,35 @@ export async function buildPipelineSourcePlan(
   );
   const prioritizedDbPinned = prioritizeDbPinnedSources(dbPinnedAll);
   const dbPinned = limitDbPinnedSources(prioritizedDbPinned, dbPinnedLimit);
-  const cityGaps = await getLowCoverageCities(regions, isTimeBoundRun);
+  const { eventGaps, communityGaps } = await getLowCoverageCities(regions, isTimeBoundRun);
 
   if (dbPinned.length < dbPinnedAll.length) {
     notes.push(`limited DB pinned sources to ${dbPinned.length}/${dbPinnedAll.length}`);
   }
 
-  if (cityGaps.length > 0) {
+  const allGapCities = [...eventGaps, ...communityGaps];
+  if (allGapCities.length > 0) {
     notes.push(
-      `DB-gap cities: ${cityGaps.map((city) => `${city.slug}:c${city.communityCount}/e${city.upcomingEventCount}`).join(', ')}`,
+      `DB-gap cities: ${allGapCities.map((city) => `${city.slug}:c${city.communityCount}/e${city.upcomingEventCount}`).join(', ')}`,
     );
   }
 
-  const shouldRunKeywords = forceKeywordSearch || forceAdminKeywordSearch || cityGaps.length > 0;
+  const shouldRunKeywords =
+    forceKeywordSearch ||
+    forceAdminKeywordSearch ||
+    eventGaps.length > 0 ||
+    communityGaps.length > 0;
   if (!shouldRunKeywords) {
     notes.push('skipping keyword search: no low-coverage DB city gaps');
   }
-  if (triggeredBy === 'admin' && forceAdminKeywordSearch && !forceKeywordSearch) {
+  if (forceAdminKeywordSearch && !forceKeywordSearch) {
     notes.push('admin run: forcing keyword search for wider discovery coverage');
   }
 
   const approvedKeywords = shouldRunKeywords ? await getApprovedDynamicKeywords() : [];
   const baselineKeywordSeeds = shouldRunKeywords ? await getRuntimeKeywordSeeds() : [];
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
-  const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, cityGaps);
-  const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, cityGaps);
+  const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
   const resourceJourneyGapKeywords =
     triggeredBy === 'admin' && laneKeywordSeeds
       ? unique(
@@ -508,6 +518,17 @@ export async function buildPipelineSourcePlan(
           ),
         )
       : [];
+
+  // For lane-unaware strategies, use all gap cities (union of event and community gaps)
+  // to generate keywords covering both gap types.
+  const unionGapCities = [...new Set([...eventGaps, ...communityGaps].map((g) => g.slug))].map(
+    (slug) => eventGaps.find((g) => g.slug === slug) || communityGaps.find((g) => g.slug === slug),
+  ) as CityGap[];
+  const allLaneGapKeywords = unique([
+    ...expandTemplates(EVENT_GAP_TEMPLATES, unionGapCities),
+    ...expandTemplates(COMMUNITY_GAP_TEMPLATES, unionGapCities),
+  ]);
+  const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, unionGapCities);
 
   const keywordStrategies = shouldRunKeywords
     ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
@@ -528,13 +549,15 @@ export async function buildPipelineSourcePlan(
           eventGapKeywords,
           communityGapKeywords,
           resourceJourneyGapKeywords,
+          allLaneGapKeywords,
         );
+        // Use lane-specific seeds as primary fallback if available, then baseline seeds.
+        const laneSeedsForStrategy = laneKeywordSeeds
+          ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane, baselineKeywordSeeds)
+          : baselineKeywordSeeds;
         const baselineKeywords =
-          forceKeywordSearch || forceAdminKeywordSearch
-            ? laneKeywordSeeds
-              ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane, baselineKeywordSeeds)
-              : baselineKeywordSeeds
-            : [];
+          forceKeywordSearch || forceAdminKeywordSearch ? laneSeedsForStrategy : [];
+        // Approved keywords are lane-agnostic; include them for all strategies.
         const canonicalKeywords = unique([
           ...gapKeywords,
           ...approvedKeywords,
@@ -556,7 +579,17 @@ export async function buildPipelineSourcePlan(
     notes,
   );
 
-  const pinnedStrategies = [...staticPinned, ...dbPinned];
+  // Debug note if keyword search was planned but all strategies were filtered.
+  if (shouldRunKeywords && keywordStrategies.length > 0 && filteredKeywordStrategies.length === 0) {
+    notes.push(
+      'warning: keyword search was requested but all strategies were filtered by lane context',
+    );
+  }
+
+  // Combine pinned strategies and apply lane filtering consistently.
+  const allPinnedStrategies = [...staticPinned, ...dbPinned];
+  const pinnedStrategies = filterPinnedStrategiesForRun(allPinnedStrategies, triggeredBy, notes);
+
   const laneBreakdown = buildLaneBreakdown(filteredKeywordStrategies, pinnedStrategies);
   notes.push(
     `lane distribution: ${Object.entries(laneBreakdown)
@@ -570,7 +603,8 @@ export async function buildPipelineSourcePlan(
     staticPinnedCount: staticPinned.length,
     dbPinnedCount: dbPinned.length,
     totalDbPinnedCount: dbPinnedAll.length,
-    cityGaps,
+    eventGaps,
+    communityGaps,
     laneBreakdown,
     notes,
   };

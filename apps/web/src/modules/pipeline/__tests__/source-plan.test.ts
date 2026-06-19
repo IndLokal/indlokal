@@ -153,7 +153,8 @@ describe('buildPipelineSourcePlan', () => {
 
     const plan = await buildPipelineSourcePlan(regions, 'cli');
 
-    expect(plan.cityGaps).toEqual([
+    const allGapCities = [...plan.eventGaps, ...plan.communityGaps];
+    expect(allGapCities).toEqual([
       {
         slug: 'karlsruhe',
         name: 'Karlsruhe',
@@ -717,7 +718,8 @@ describe('buildPipelineSourcePlan', () => {
 
     const plan = await buildPipelineSourcePlan(broaderRegions, 'cron');
 
-    expect(plan.cityGaps.slice(0, 3).map((city) => city.slug)).toEqual([
+    const allGapCitiesForPriority = [...plan.eventGaps, ...plan.communityGaps];
+    expect(allGapCitiesForPriority.slice(0, 3).map((city) => city.slug)).toEqual([
       'frankfurt',
       'munich',
       'bad-homburg',
