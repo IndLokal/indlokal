@@ -11,16 +11,17 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 /**
- * Resolve a city slug to an array of city IDs (primary + satellites).
+ * Resolve a city slug to an array of city IDs in metro scope.
+ *
+ * Scope rules:
+ * - Metro primary selection => metro primary + all satellites
+ * - Satellite selection => satellite + metro primary + sibling satellites
+ * - Standalone city => just that city
+ *
  * Used across modules for metro-area scoped queries.
  */
 export async function resolveCityIds(citySlug: string): Promise<string[]> {
-  const city = await db.city.findUnique({
-    where: { slug: citySlug },
-    select: { id: true, satelliteCities: { select: { id: true } } },
-  });
-  if (!city) return [];
-  return [city.id, ...city.satelliteCities.map((s: { id: string }) => s.id)];
+  return resolveMetroScopeCityIds(citySlug);
 }
 
 /**
