@@ -197,7 +197,7 @@ async function probeCandidatesInParallel(urls: string[]): Promise<string[]> {
  *  - Parse all <a href> tags from the HTML
  *  - Keep only same-host links (not external)
  *  - Score each by whether the URL path and/or link text matches event keywords
- *  - Return the top 5 highest-scored URLs
+ *  - Return the top K highest-scored URLs (configurable via env-config)
  *
  * Returns [] on any fetch/parse failure - caller must handle gracefully.
  */

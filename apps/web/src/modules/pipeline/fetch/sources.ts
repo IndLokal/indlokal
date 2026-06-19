@@ -5,8 +5,13 @@
  * 1) keyword search adapters (Eventbrite, Google CSE, DuckDuckGo)
  * 2) pinned URL adapters (known pages and DB-discovered community sites)
  *
- * Adapters return raw items only. City/community assignment and extraction are
- * downstream concerns handled by planner/orchestrator/extraction stages.
+ * Scope boundaries:
+ * - Transport mechanics (timeouts + curl fallback) live in http.ts
+ * - Env toggles/limits/credentials live in config/env-config.ts
+ * - Planner decides whether these adapters are called for a run
+ *
+ * Adapters return raw items only. City/community assignment and extraction stay
+ * downstream in planner/orchestrator/extraction stages.
  */
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from '../types';
@@ -156,26 +161,23 @@ function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
   return output;
 }
 
-function getExpansionLimit(): number {
-  return getPinnedExpansionLimit();
-}
-
-function getSecondHopExpansionLimit(): number {
-  return getPinnedSecondHopLimit();
-}
-
 function supportsSecondHopExpansion(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
   return isPinnedSecondHopEnabled() && shouldExpandPinnedUrl(strategy);
 }
 
-function getExpansionSourceTypes(): Set<string> {
-  return getPinnedExpansionSourceTypes();
+function dedupeRawContentBySourceUrl(items: RawContent[]): RawContent[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.sourceUrl)) return false;
+    seen.add(item.sourceUrl);
+    return true;
+  });
 }
 
 function shouldExpandPinnedUrl(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
   if (strategy.sourceType === 'DB_COMMUNITY') return true;
   if (!isPinnedLinkExpansionEnabled()) return false;
-  const allowedSourceTypes = getExpansionSourceTypes();
+  const allowedSourceTypes = getPinnedExpansionSourceTypes();
   if (allowedSourceTypes.size === 0) return false;
   return (
     allowedSourceTypes.has('*') || allowedSourceTypes.has(String(strategy.sourceType).toUpperCase())
@@ -219,7 +221,7 @@ function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
     unique.add(canonical);
   }
 
-  return [...unique].slice(0, getExpansionLimit());
+  return [...unique].slice(0, getPinnedExpansionLimit());
 }
 
 async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url: string) {
@@ -322,15 +324,11 @@ export async function fetchEventbriteKeywords(
     }
   }
 
-  // Deduplicate by sourceUrl
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: unique, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }
 
 // ─── Pinned URL: generic website / scrape ──────────────
@@ -443,7 +441,7 @@ export async function fetchPinnedUrl(
         }
 
         if (supportsSecondHopExpansion(strategy) && secondHopCandidates.length > 0) {
-          const secondHopLinks = secondHopCandidates.slice(0, getSecondHopExpansionLimit());
+          const secondHopLinks = secondHopCandidates.slice(0, getPinnedSecondHopLimit());
           const secondHop = await Promise.allSettled(
             secondHopLinks.map((url) => fetchExpandedPinnedPage(strategy.sourceType, url)),
           );
@@ -462,14 +460,7 @@ export async function fetchPinnedUrl(
     errors.push(`Fetch ${strategy.url}: ${String(err)}`);
   }
 
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: strategy.id, items: unique, errors };
+  return { sourceId: strategy.id, items: dedupeRawContentBySourceUrl(items), errors };
 }
 
 // ─── Google Custom Search: discover scattered mentions ──
@@ -545,15 +536,11 @@ export async function fetchGoogleSearch(
     }
   }
 
-  // Deduplicate by URL
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: unique, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }
 
 // ─── DuckDuckGo HTML Search: free web search ───────────
@@ -630,13 +617,9 @@ export async function fetchDuckDuckGoSearch(
     }
   }
 
-  // Deduplicate by URL
-  const seenDdg = new Set<string>();
-  const uniqueDdg = items.filter((item) => {
-    if (seenDdg.has(item.sourceUrl)) return false;
-    seenDdg.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: uniqueDdg, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }
