@@ -15,6 +15,7 @@ import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity, ExtractedResource } from '@/modules/pipeline';
+import { assessResourceApprovalEligibility } from '@/modules/pipeline/review';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
 import { PaginationControls } from '@/components/ui/PaginationControls';
@@ -31,6 +32,19 @@ const EVENT_REJECTION_REASONS = [
   'OUTSIDE_COVERAGE',
 ] as const;
 const RUN_LANE_KEYS = ['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const;
+
+function formatResourceApprovalReason(reason: string): string {
+  switch (reason) {
+    case 'resource-approval-requires-public-url':
+      return 'Approval needs a public source URL.';
+    case 'resource-url-is-not-public-evidence':
+      return 'The source URL is not valid public evidence.';
+    case 'resource-approval-requires-official-or-institutional-domain':
+      return 'Approval is limited to official registry, government, or institutional domains.';
+    default:
+      return 'This resource needs manual source-policy review.';
+  }
+}
 
 function emptyLaneMetrics() {
   return {
@@ -672,6 +686,13 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
   const community = isCommunity ? (data as ExtractedCommunity) : null;
   const resource = isResource ? (data as ExtractedResource) : null;
   const calendarSource = isEvent ? getCalendarSourceMeta(item.sourceUrl) : null;
+  const resourceApproval = resource
+    ? assessResourceApprovalEligibility({ resource, sourceUrl: item.sourceUrl })
+    : null;
+  const resourceApprovalHint =
+    resourceApproval && !resourceApproval.eligible
+      ? formatResourceApprovalReason(resourceApproval.reason)
+      : null;
 
   const confidenceColor =
     item.confidence >= 0.85
@@ -758,6 +779,14 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
               {resource.lifecycleStage.length > 0 && <p>🧭 {resource.lifecycleStage.join(', ')}</p>}
               {resource.validUntil && <p>⏳ Valid until {resource.validUntil}</p>}
               {resource.isOfficialSource && <p>🏛️ Official source</p>}
+              {resourceApprovalHint && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                  <p className="text-xs font-semibold tracking-[0.16em] uppercase">
+                    Resource approval policy
+                  </p>
+                  <p className="mt-1 text-sm">{resourceApprovalHint}</p>
+                </div>
+              )}
               {resource.url && (
                 <p>
                   🔗{' '}
@@ -847,9 +876,15 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
             <input type="hidden" name="id" value={item.id} />
             <button
               type="submit"
-              className="w-full rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
+              disabled={Boolean(resourceApprovalHint)}
+              className={`w-full rounded-lg px-4 py-2 text-sm font-medium text-white ${
+                resourceApprovalHint
+                  ? 'cursor-not-allowed bg-slate-300'
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
+              title={resourceApprovalHint ?? undefined}
             >
-              Approve
+              {resourceApprovalHint ? 'Approval blocked' : 'Approve'}
             </button>
           </form>
           <form action={rejectPipelineItem}>
