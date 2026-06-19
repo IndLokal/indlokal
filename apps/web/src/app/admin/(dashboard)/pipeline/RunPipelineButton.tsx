@@ -242,6 +242,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                     <th className="px-2 py-1 font-medium">Duplicates</th>
                     <th className="px-2 py-1 font-medium">No city</th>
                     <th className="px-2 py-1 font-medium">Past</th>
+                    <th className="px-2 py-1 font-medium">Conflicts</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -257,6 +258,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                         <td className="px-2 py-1.5">{metrics.duplicates}</td>
                         <td className="px-2 py-1.5">{metrics.noCity}</td>
                         <td className="px-2 py-1.5">{metrics.past}</td>
+                        <td className="px-2 py-1.5">{metrics.cityConflicts}</td>
                       </tr>
                     );
                   })}

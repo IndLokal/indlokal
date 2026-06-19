@@ -43,7 +43,7 @@ import {
   PipelineBudgetExceededError,
   PipelineCircuitOpenError,
 } from './extraction';
-import { withLlmContext } from './llm-context';
+import { currentLlmContext, withLlmContext } from './llm-context';
 import {
   applySourceConfidenceAdjustment,
   buildSourceReliabilityKey,
@@ -100,6 +100,7 @@ function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     COMMUNITY: {
       fetched: 0,
@@ -109,6 +110,7 @@ function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     RESOURCE: {
       fetched: 0,
@@ -118,6 +120,7 @@ function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     UNKNOWN: {
       fetched: 0,
@@ -127,6 +130,7 @@ function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
   };
 }
@@ -455,6 +459,7 @@ export async function runPipeline(
           itemsDroppedBadIndex: result.itemsDroppedBadIndex,
           budgetExceeded: result.budgetExceeded,
           circuitBreakerTripped: result.circuitBreakerTripped,
+          laneBreakdown: result.laneBreakdown as Prisma.InputJsonValue,
         },
       });
     } else {
@@ -481,6 +486,7 @@ export async function runPipeline(
           itemsDroppedBadIndex: result.itemsDroppedBadIndex,
           budgetExceeded: result.budgetExceeded,
           circuitBreakerTripped: result.circuitBreakerTripped,
+          laneBreakdown: result.laneBreakdown as Prisma.InputJsonValue,
         },
       });
     }
@@ -492,7 +498,7 @@ export async function runPipeline(
     `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
   );
   console.log(
-    `[Pipeline] Lane outcomes: fetched E/C/R/U=${result.laneBreakdown.EVENT.fetched}/${result.laneBreakdown.COMMUNITY.fetched}/${result.laneBreakdown.RESOURCE.fetched}/${result.laneBreakdown.UNKNOWN.fetched}; queued E/C/R=${result.laneBreakdown.EVENT.queued}/${result.laneBreakdown.COMMUNITY.queued}/${result.laneBreakdown.RESOURCE.queued}; dupes E/C/R=${result.laneBreakdown.EVENT.duplicates}/${result.laneBreakdown.COMMUNITY.duplicates}/${result.laneBreakdown.RESOURCE.duplicates}; no-city E/C/R=${result.laneBreakdown.EVENT.noCity}/${result.laneBreakdown.COMMUNITY.noCity}/${result.laneBreakdown.RESOURCE.noCity}`,
+    `[Pipeline] Lane outcomes: fetched E/C/R/U=${result.laneBreakdown.EVENT.fetched}/${result.laneBreakdown.COMMUNITY.fetched}/${result.laneBreakdown.RESOURCE.fetched}/${result.laneBreakdown.UNKNOWN.fetched}; queued E/C/R=${result.laneBreakdown.EVENT.queued}/${result.laneBreakdown.COMMUNITY.queued}/${result.laneBreakdown.RESOURCE.queued}; dupes E/C/R=${result.laneBreakdown.EVENT.duplicates}/${result.laneBreakdown.COMMUNITY.duplicates}/${result.laneBreakdown.RESOURCE.duplicates}; no-city E/C/R=${result.laneBreakdown.EVENT.noCity}/${result.laneBreakdown.COMMUNITY.noCity}/${result.laneBreakdown.RESOURCE.noCity}; conflicts E/C/R=${result.laneBreakdown.EVENT.cityConflicts}/${result.laneBreakdown.COMMUNITY.cityConflicts}/${result.laneBreakdown.RESOURCE.cityConflicts}`,
   );
 
   return result;
@@ -829,6 +835,7 @@ async function resolveAndQueue(
         );
       }
       if (cityConflict && cityConflictReason) {
+        incrementLaneMetric(result.laneBreakdown, 'EVENT', 'cityConflicts');
         console.warn(`[Pipeline] ${cityConflictReason}`);
       }
     } else {
@@ -1583,10 +1590,15 @@ async function checkCommunityDuplicate(
     }
   }
 
-  const semanticMatch = await semanticCommunityDuplicateCheck(
-    community,
-    borderlineCandidates.slice(0, 5),
-  );
+  const semanticMatch = await (() => {
+    const ctx = currentLlmContext();
+    if (!ctx) {
+      return semanticCommunityDuplicateCheck(community, borderlineCandidates.slice(0, 5));
+    }
+    return withLlmContext({ ...ctx, lane: 'COMMUNITY' }, () =>
+      semanticCommunityDuplicateCheck(community, borderlineCandidates.slice(0, 5)),
+    );
+  })();
   if (semanticMatch) {
     return {
       isDuplicate: true,

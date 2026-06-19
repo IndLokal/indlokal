@@ -22,7 +22,7 @@
 
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
-import { currentLlmContext } from './llm-context';
+import { currentLlmContext, withLlmContext, type LlmAuditLane } from './llm-context';
 import type {
   ExtractedData,
   ExtractedEvent,
@@ -191,6 +191,7 @@ function recordLlmCall(input: LlmAuditInput): void {
       data: {
         runId: ctx.runId,
         stage: ctx.stage,
+        lane: ctx.lane ?? null,
         model: input.model,
         promptTokens: input.promptTokens,
         completionTokens: input.completionTokens,
@@ -373,6 +374,16 @@ function getFilterSystemPrompt(lane: LanePromptKey): string {
   return `${FILTER_SYSTEM_PROMPT_BASE}\n\nLANE FOCUS: ${lane}\n${FILTER_LANE_INSTRUCTIONS[lane]}`;
 }
 
+function getAuditLane(lane: LanePromptKey): LlmAuditLane {
+  return lane === 'EVENT' || lane === 'COMMUNITY' || lane === 'RESOURCE' ? lane : 'DEFAULT';
+}
+
+async function withBatchLaneContext<T>(lane: LanePromptKey, fn: () => Promise<T>): Promise<T> {
+  const ctx = currentLlmContext();
+  if (!ctx) return fn();
+  return withLlmContext({ ...ctx, lane: getAuditLane(lane) }, fn);
+}
+
 function groupItemsByLane(
   items: RawContent[],
 ): Array<{ lane: LanePromptKey; entries: IndexedRawContent[] }> {
@@ -417,7 +428,9 @@ export async function filterRelevance(items: RawContent[]): Promise<RelevanceRes
       console.log(
         `[Pipeline] Filter batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batch.length} items starting`,
       );
-      const batchResults = await filterBatch(batch, group.lane);
+      const batchResults = await withBatchLaneContext(group.lane, () =>
+        filterBatch(batch, group.lane),
+      );
       console.log(
         `[Pipeline] Filter batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
       );
@@ -625,7 +638,9 @@ export async function extractBatch(
       console.log(
         `[Pipeline] Extract batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batch.length} items starting`,
       );
-      const batchResults = await extractBatchCall(batch, group.lane);
+      const batchResults = await withBatchLaneContext(group.lane, () =>
+        extractBatchCall(batch, group.lane),
+      );
       console.log(
         `[Pipeline] Extract batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
       );

@@ -11,7 +11,9 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { PipelineLlmStage } from '@prisma/client';
 
-export type LlmCallContext = { runId: string; stage: PipelineLlmStage };
+export type LlmAuditLane = 'EVENT' | 'COMMUNITY' | 'RESOURCE' | 'DEFAULT';
+
+export type LlmCallContext = { runId: string; stage: PipelineLlmStage; lane?: LlmAuditLane };
 
 const storage = new AsyncLocalStorage<LlmCallContext>();
 

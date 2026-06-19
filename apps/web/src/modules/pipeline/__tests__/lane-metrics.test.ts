@@ -11,6 +11,7 @@ function buildEmptyLaneBreakdown() {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     COMMUNITY: {
       fetched: 0,
@@ -20,6 +21,7 @@ function buildEmptyLaneBreakdown() {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     RESOURCE: {
       fetched: 0,
@@ -29,6 +31,7 @@ function buildEmptyLaneBreakdown() {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
     UNKNOWN: {
       fetched: 0,
@@ -38,6 +41,7 @@ function buildEmptyLaneBreakdown() {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     },
   };
 }
@@ -98,6 +102,7 @@ describe('lane metric helpers shape', () => {
       duplicates: 0,
       noCity: 0,
       past: 0,
+      cityConflicts: 0,
     });
     expect(breakdown.UNKNOWN.fetched).toBe(0);
     expect(breakdown.RESOURCE.queued).toBe(0);

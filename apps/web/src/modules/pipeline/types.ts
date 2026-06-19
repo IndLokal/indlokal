@@ -284,6 +284,7 @@ export type PipelineLaneMetrics = {
   duplicates: number;
   noCity: number;
   past: number;
+  cityConflicts: number;
 };
 
 export type PipelineLaneBreakdown = Record<PipelineLaneMetricKey, PipelineLaneMetrics>;
