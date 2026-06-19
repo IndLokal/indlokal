@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { shouldAutoApprovePipelineItem } from '../review';
+import { assessResourceApprovalEligibility, shouldAutoApprovePipelineItem } from '../review';
 
 describe('shouldAutoApprovePipelineItem', () => {
   const trustedReliability = {
@@ -93,5 +93,62 @@ describe('shouldAutoApprovePipelineItem', () => {
     });
 
     expect(result).toEqual({ eligible: false, reason: 'resolution-confidence-below-threshold' });
+  });
+});
+
+describe('assessResourceApprovalEligibility', () => {
+  it('rejects weak non-official resource urls', () => {
+    const result = assessResourceApprovalEligibility({
+      resource: {
+        type: 'RESOURCE',
+        title: 'Visa tips roundup',
+        description: 'Helpful tips',
+        cityName: 'Stuttgart',
+        resourceType: 'VISA_SERVICE',
+        scope: 'CITY',
+        scopeRegion: 'stuttgart',
+        audiences: ['NEWCOMER'],
+        lifecycleStage: ['PRE_ARRIVAL'],
+        url: 'https://eventbrite.com/e/some-resource',
+        validUntil: null,
+        isOfficialSource: false,
+        confidence: 0.92,
+        fieldConfidence: {},
+      },
+      sourceUrl: 'https://eventbrite.com/e/some-resource',
+    });
+
+    expect(result).toEqual({
+      eligible: false,
+      reason: 'resource-approval-requires-official-or-institutional-domain',
+    });
+  });
+
+  it('accepts institutional urls and falls back to sourceUrl when resource url is missing', () => {
+    const result = assessResourceApprovalEligibility({
+      resource: {
+        type: 'RESOURCE',
+        title: 'House of Resources guide',
+        description: 'Support information',
+        cityName: 'Stuttgart',
+        resourceType: 'COMMUNITY_RESOURCE',
+        scope: 'CITY',
+        scopeRegion: 'stuttgart',
+        audiences: ['FOUNDER'],
+        lifecycleStage: ['ANYTIME'],
+        url: null,
+        validUntil: null,
+        isOfficialSource: true,
+        confidence: 0.95,
+        fieldConfidence: {},
+      },
+      sourceUrl: 'https://house-of-resources-stuttgart.de/support',
+    });
+
+    expect(result.eligible).toBe(true);
+    if (result.eligible) {
+      expect(result.canonicalUrl).toBe('https://house-of-resources-stuttgart.de/support');
+      expect(result.assessment.tier).toBe('institutional_directory');
+    }
   });
 });

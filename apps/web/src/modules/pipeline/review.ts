@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { assessEvidenceUrl } from '@/lib/source-policy';
 import { refreshCommunityScore } from '@/modules/scoring';
 import {
   Prisma,
@@ -77,6 +78,11 @@ const RESOURCE_STAGE_VALUES: ReadonlySet<ResourceStage> = new Set([
   'FIRST_90_DAYS',
   'SETTLED',
   'ANYTIME',
+]);
+const RESOURCE_TRUST_SUPPORTED_TIERS = new Set([
+  'official_registry',
+  'government_consular',
+  'institutional_directory',
 ]);
 
 const COMMUNITY_MATCH_STOPWORDS = new Set([
@@ -581,10 +587,56 @@ function parseDateOnly(value: string | null): Date | null {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+export function assessResourceApprovalEligibility(input: {
+  resource: ExtractedResource;
+  sourceUrl?: string | null;
+}):
+  | {
+      eligible: true;
+      canonicalUrl: string;
+      assessment: ReturnType<typeof assessEvidenceUrl>;
+    }
+  | {
+      eligible: false;
+      reason: string;
+    } {
+  const resourceUrl = input.resource.url?.trim() || null;
+  const sourceUrl = input.sourceUrl?.trim() || null;
+  const effectiveUrl = resourceUrl || sourceUrl;
+
+  if (!effectiveUrl) {
+    return { eligible: false, reason: 'resource-approval-requires-public-url' };
+  }
+
+  const assessment = assessEvidenceUrl(effectiveUrl);
+  if (!assessment.supportsDiscovery) {
+    return { eligible: false, reason: 'resource-url-is-not-public-evidence' };
+  }
+
+  if (!RESOURCE_TRUST_SUPPORTED_TIERS.has(assessment.tier)) {
+    return {
+      eligible: false,
+      reason: 'resource-approval-requires-official-or-institutional-domain',
+    };
+  }
+
+  return {
+    eligible: true,
+    canonicalUrl: effectiveUrl,
+    assessment,
+  };
+}
+
 async function createResourceFromExtraction(
   resource: ExtractedResource,
   city: { id: string; slug: string },
+  sourceUrl?: string | null,
 ): Promise<string> {
+  const approvalEligibility = assessResourceApprovalEligibility({ resource, sourceUrl });
+  if (!approvalEligibility.eligible) {
+    throw new Error(approvalEligibility.reason);
+  }
+
   const resourceType = normalizeResourceType(resource.resourceType);
   const scope = normalizeResourceScope(resource.scope);
   const audiences = normalizeResourceAudiences(resource.audiences);
@@ -608,16 +660,24 @@ async function createResourceFromExtraction(
       lifecycleStage,
       priority: resource.isOfficialSource ? 75 : 55,
       isEssential: resourceType === 'CONSULAR_SERVICE' || resourceType === 'VISA_SERVICE',
-      url: resource.url,
+      url: approvalEligibility.canonicalUrl,
       description: resource.description,
       validUntil: parseDateOnly(resource.validUntil),
       source: 'IMPORTED',
-      reviewCadenceDays: resource.isOfficialSource ? 120 : 180,
+      reviewCadenceDays: 120,
       lastReviewedAt: new Date(),
       metadata: {
         pipelineExtracted: true,
         confidence: resource.confidence,
         isOfficialSource: resource.isOfficialSource,
+        sourceEvidence: {
+          tier: approvalEligibility.assessment.tier,
+          label: approvalEligibility.assessment.label,
+          reason: approvalEligibility.assessment.reason,
+          normalizedUrl: approvalEligibility.assessment.normalizedUrl,
+          hostname: approvalEligibility.assessment.hostname,
+          confidence: approvalEligibility.assessment.confidence,
+        },
       },
     },
   });
@@ -780,7 +840,11 @@ export async function approvePipelineItemRecord(
     }
   } else {
     if (item.entityType === 'RESOURCE') {
-      createdEntityId = await createResourceFromExtraction(data as ExtractedResource, item.city);
+      createdEntityId = await createResourceFromExtraction(
+        data as ExtractedResource,
+        item.city,
+        item.sourceUrl,
+      );
     } else {
       // Admin-approved pipeline items go straight to ACTIVE - they've already
       // been reviewed here. Auto-approved items stay UNVERIFIED so a human
