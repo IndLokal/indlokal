@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import {
+  getRuntimeLaneKeywordSeeds,
   getRuntimeKeywordSeeds,
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
@@ -56,6 +57,14 @@ const COMMUNITY_GAP_TEMPLATES = [
   'indischer Verein {city}',
 ] as const;
 
+const JOURNEY_RESOURCE_STAGE_ORDER = [
+  'PRE_ARRIVAL',
+  'FIRST_30_DAYS',
+  'FIRST_90_DAYS',
+  'SETTLED',
+  'ANYTIME',
+] as const;
+
 function getPositiveIntEnv(name: string, fallback: number): number {
   const parsed = Number.parseInt(process.env[name] ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -108,15 +117,26 @@ function getGapKeywordsForStrategy(
   strategy: KeywordStrategyTemplate,
   eventGapKeywords: string[],
   communityGapKeywords: string[],
+  resourceGapKeywords: string[],
 ): string[] {
   if (strategy.lane === 'EVENT') return eventGapKeywords;
   if (strategy.lane === 'COMMUNITY') return communityGapKeywords;
-  if (strategy.lane === 'RESOURCE') return [];
+  if (strategy.lane === 'RESOURCE') return resourceGapKeywords;
 
   // Back-compat for legacy rows without explicit lane metadata.
   return strategy.sourceType === 'EVENTBRITE'
     ? eventGapKeywords
     : [...eventGapKeywords, ...communityGapKeywords];
+}
+
+function getLaneSeedKeywords(
+  strategy: KeywordStrategyTemplate,
+  laneSeedMap: Partial<Record<SourceLane, string[]>>,
+  fallback: string[],
+): string[] {
+  if (!strategy.lane) return fallback;
+  const laneSeeds = laneSeedMap[strategy.lane];
+  return laneSeeds != null && laneSeeds.length > 0 ? laneSeeds : fallback;
 }
 
 function buildLaneBreakdown(
@@ -404,8 +424,17 @@ export async function buildPipelineSourcePlan(
 
   const approvedKeywords = shouldRunKeywords ? await getApprovedDynamicKeywords() : [];
   const baselineKeywordSeeds = shouldRunKeywords ? await getRuntimeKeywordSeeds() : [];
+  const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, cityGaps);
   const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, cityGaps);
+  const resourceJourneyGapKeywords =
+    triggeredBy === 'admin' && laneKeywordSeeds
+      ? unique(
+          JOURNEY_RESOURCE_STAGE_ORDER.flatMap(
+            (stage) => laneKeywordSeeds.journeyResourceByStage[stage] ?? [],
+          ),
+        )
+      : [];
 
   const keywordStrategies = shouldRunKeywords
     ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
@@ -425,9 +454,14 @@ export async function buildPipelineSourcePlan(
           strategy,
           eventGapKeywords,
           communityGapKeywords,
+          resourceJourneyGapKeywords,
         );
         const baselineKeywords =
-          forceKeywordSearch || forceAdminKeywordSearch ? baselineKeywordSeeds : [];
+          forceKeywordSearch || forceAdminKeywordSearch
+            ? laneKeywordSeeds
+              ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane, baselineKeywordSeeds)
+              : baselineKeywordSeeds
+            : [];
         const canonicalKeywords = unique([
           ...gapKeywords,
           ...approvedKeywords,

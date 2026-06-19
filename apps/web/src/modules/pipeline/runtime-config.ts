@@ -31,6 +31,17 @@ import type { SearchRegion, SearchStrategy, SourceType, SourceLane, SourceIntent
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
 export type KeywordStrategyTemplate = Omit<KeywordStrategy, 'keywords'>;
+export type JourneyResourceStage =
+  | 'PRE_ARRIVAL'
+  | 'FIRST_30_DAYS'
+  | 'FIRST_90_DAYS'
+  | 'SETTLED'
+  | 'ANYTIME';
+
+export type RuntimeLaneKeywordSeeds = {
+  byLane: Partial<Record<SourceLane, string[]>>;
+  journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>>;
+};
 
 type ConfigRow = {
   configType: 'REGION' | 'STRATEGY' | 'KEYWORD';
@@ -184,9 +195,50 @@ type JsonStrategy = {
 
 type JsonDefaults = {
   baselineKeywords?: unknown;
+  baselineKeywordsByLane?: unknown;
+  journeyKeywordHintsByLane?: unknown;
   regions?: unknown;
   strategies?: unknown;
 };
+
+function normalizeJourneyStage(value: unknown): JourneyResourceStage | undefined {
+  if (typeof value !== 'string') return undefined;
+  const upper = value.trim().toUpperCase();
+  switch (upper) {
+    case 'PRE_ARRIVAL':
+    case 'FIRST_30_DAYS':
+    case 'FIRST_90_DAYS':
+    case 'SETTLED':
+    case 'ANYTIME':
+      return upper;
+    default:
+      return undefined;
+  }
+}
+
+function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
+  const byLane: Partial<Record<SourceLane, string[]>> = {};
+  const journeyResourceByStage: Partial<Record<JourneyResourceStage, string[]>> = {};
+
+  if (isObject(parsed.baselineKeywordsByLane)) {
+    for (const lane of ['EVENT', 'COMMUNITY', 'RESOURCE'] as const) {
+      byLane[lane] = normalizeStringArray(parsed.baselineKeywordsByLane[lane]);
+    }
+  }
+
+  if (
+    isObject(parsed.journeyKeywordHintsByLane) &&
+    isObject(parsed.journeyKeywordHintsByLane.RESOURCE)
+  ) {
+    for (const [rawStage, value] of Object.entries(parsed.journeyKeywordHintsByLane.RESOURCE)) {
+      const stage = normalizeJourneyStage(rawStage);
+      if (!stage) continue;
+      journeyResourceByStage[stage] = normalizeStringArray(value);
+    }
+  }
+
+  return { byLane, journeyResourceByStage };
+}
 
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
@@ -515,6 +567,17 @@ export async function getRuntimeKeywordSeeds(): Promise<string[]> {
     );
   }
   return parsed;
+}
+
+/**
+ * Additional lane-aware keyword hints from the bundled JSON defaults.
+ * These are additive planning hints used by source-plan and remain
+ * backward compatible with DB-managed KEYWORD rows.
+ */
+export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSeeds> {
+  const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
+  const parsed = JSON.parse(raw) as JsonDefaults;
+  return parseLaneKeywordSeeds(parsed);
 }
 
 export async function getRuntimePinnedStrategies(): Promise<PinnedStrategy[]> {
