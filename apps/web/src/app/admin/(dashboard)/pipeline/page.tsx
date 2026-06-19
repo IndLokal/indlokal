@@ -693,6 +693,9 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
     resourceApproval && !resourceApproval.eligible
       ? formatResourceApprovalReason(resourceApproval.reason)
       : null;
+  const resourceRejectionSuggestion = resourceApprovalHint
+    ? `UNVERIFIABLE: ${resourceApprovalHint}`
+    : '';
 
   const confidenceColor =
     item.confidence >= 0.85
@@ -906,6 +909,7 @@ function PipelineItemCard({ item }: { item: PipelineItemWithCity }) {
               <input
                 type="text"
                 name="reason"
+                defaultValue={resourceRejectionSuggestion}
                 placeholder="Rejection reason"
                 className="mb-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
