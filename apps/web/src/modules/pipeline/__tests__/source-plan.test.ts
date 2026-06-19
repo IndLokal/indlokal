@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   getRuntimeKeywordSeeds: vi.fn(),
   getRuntimeKeywordStrategies: vi.fn(),
   getRuntimePinnedStrategies: vi.fn(),
+  getRuntimeLaneKeywordSeeds: vi.fn(),
   getDbCommunityStrategies: vi.fn(),
   getApprovedDynamicKeywords: vi.fn(),
 }));
@@ -25,6 +26,7 @@ vi.mock('../runtime-config', () => ({
   getRuntimeKeywordSeeds: mocks.getRuntimeKeywordSeeds,
   getRuntimeKeywordStrategies: mocks.getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies: mocks.getRuntimePinnedStrategies,
+  getRuntimeLaneKeywordSeeds: mocks.getRuntimeLaneKeywordSeeds,
 }));
 
 vi.mock('../db-sources', async (importOriginal) => {
@@ -89,6 +91,19 @@ describe('buildPipelineSourcePlan', () => {
     delete process.env.PIPELINE_ENABLE_DDG;
 
     mocks.getRuntimeKeywordSeeds.mockResolvedValue(['Indian community meetup']);
+    mocks.getRuntimeLaneKeywordSeeds.mockResolvedValue({
+      byLane: {
+        EVENT: ['festival', 'conference'],
+        COMMUNITY: ['association', 'club'],
+        RESOURCE: ['service', 'support'],
+      },
+      journeyResourceByStage: {
+        SEEKING: ['help center'],
+        DECIDING: ['comparison'],
+        SETTLED: ['maintenance'],
+        ANYTIME: ['general info'],
+      },
+    });
     mocks.getRuntimeKeywordStrategies.mockResolvedValue(keywordStrategies);
     mocks.getRuntimePinnedStrategies.mockResolvedValue([]);
     mocks.getDbCommunityStrategies.mockResolvedValue([]);
