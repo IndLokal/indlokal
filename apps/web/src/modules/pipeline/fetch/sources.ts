@@ -190,6 +190,36 @@ function shouldSkipExpansionPath(pathname: string): boolean {
   );
 }
 
+function normalizeExpansionHref(rawHref: string): string | null {
+  const decoded = rawHref
+    .trim()
+    .replace(/&quot;|&#34;|&#x22;/gi, '"')
+    .replace(/&apos;|&#39;|&#x27;/gi, "'");
+  if (!decoded) return null;
+
+  let normalized = decoded;
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  if (!normalized) return null;
+  if (/javascript:|mailto:|tel:|data:/i.test(normalized)) return null;
+  if (/[<>]/.test(normalized)) return null;
+  if (/%22|%27/i.test(normalized)) return null;
+  return normalized;
+}
+
+function isMalformedExpansionHref(rawHref: string, resolved: URL): boolean {
+  const decodedHref = rawHref.replace(/&quot;|&#34;|&#x22;/gi, '"');
+  if (/["'<>]/.test(decodedHref)) return true;
+  if (/%22|%27/i.test(resolved.href)) return true;
+  if (/https?:/i.test(resolved.pathname)) return true;
+  return false;
+}
+
 function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
   const base = parseHttpUrl(baseUrl);
   if (!base) return [];
@@ -200,15 +230,18 @@ function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
 
   const unique = new Set<string>();
   for (const match of html.matchAll(linkPattern)) {
-    const rawHref = match[1] ?? match[2] ?? match[3];
-    if (!rawHref) continue;
+    const rawHref = match[1] ?? match[2] ?? match[3] ?? '';
+    const normalizedHref = normalizeExpansionHref(rawHref);
+    if (!normalizedHref) continue;
 
     let resolved: URL;
     try {
-      resolved = new URL(rawHref, baseUrl);
+      resolved = new URL(normalizedHref, baseUrl);
     } catch {
       continue;
     }
+
+    if (isMalformedExpansionHref(rawHref, resolved)) continue;
 
     const parsed = parseHttpUrl(resolved.toString());
     if (!parsed) continue;
