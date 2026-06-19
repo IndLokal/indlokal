@@ -1,5 +1,5 @@
 /**
- * Pipeline orchestrator - known-source-first content discovery pipeline.
+ * Pipeline orchestrator for the modular known-source-first discovery pipeline.
  *
  * Flow:
  *   1. PLAN - DB + pinned sources first, keyword search only for DB coverage gaps
@@ -10,8 +10,15 @@
  *   6. DEDUP - semantic/name similarity check against existing DB entities + queue
  *   7. QUEUE - store in PipelineItem for admin review
  *
- * Adding a new country: add region + strategy defaults in source-defaults.json,
- * sync them into DB, and rerun the pipeline. No orchestrator changes needed.
+ * This file coordinates modules under:
+ * - config/   runtime source + region configuration
+ * - fetch/    source adapters and pre-LLM normalization
+ * - llm/      relevance filtering + structured extraction
+ * - quality/  dedup, reliability, and review policy
+ * - enrichment/ semantic tie-break checks and tag suggestions
+ *
+ * Adding a new country should stay configuration-only:
+ * update source defaults + DB runtime config, then rerun the pipeline.
  */
 
 import { db } from '@/lib/db';
@@ -93,6 +100,16 @@ export type { PipelineRunResult } from './types';
 
 type Region = SearchRegion;
 
+/**
+ * Raw pipeline items use `PipelineSourceKind` (ingest-safe subset).
+ * Queue persistence/reliability APIs are typed against Prisma's broader enum.
+ * Centralize this cast to keep call-sites clean and consistent.
+ */
+function toPrismaPipelineSourceType(sourceType: RawContent['sourceType']): PipelineSourceType {
+  return sourceType as PipelineSourceType;
+}
+
+/** Build zeroed lane metrics so every run persists a stable shape. */
 function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
   return {
     EVENT: {
@@ -156,11 +173,23 @@ function incrementLaneMetric(
   breakdown[lane][field] += 1;
 }
 
+function formatLaneOutcomesSummary(result: PipelineRunResult): string {
+  const lanes = result.laneBreakdown;
+  return (
+    `[Pipeline] Lane outcomes: fetched E/C/R/U=${lanes.EVENT.fetched}/${lanes.COMMUNITY.fetched}/${lanes.RESOURCE.fetched}/${lanes.UNKNOWN.fetched}; ` +
+    `queued E/C/R=${lanes.EVENT.queued}/${lanes.COMMUNITY.queued}/${lanes.RESOURCE.queued}; ` +
+    `dupes E/C/R=${lanes.EVENT.duplicates}/${lanes.COMMUNITY.duplicates}/${lanes.RESOURCE.duplicates}; ` +
+    `no-city E/C/R=${lanes.EVENT.noCity}/${lanes.COMMUNITY.noCity}/${lanes.RESOURCE.noCity}; ` +
+    `conflicts E/C/R=${lanes.EVENT.cityConflicts}/${lanes.COMMUNITY.cityConflicts}/${lanes.RESOURCE.cityConflicts}`
+  );
+}
+
 export type PipelineRunScope = {
   citySlugs?: string[];
   regionIds?: string[];
 };
 
+/** Restrict enabled regions to optional city/region scope filters. */
 function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
   if (!scope) return regions;
 
@@ -253,6 +282,7 @@ export function prefilterLaneAwareItems(items: RawContent[]): RawContent[] {
   });
 }
 
+/** Measure stage duration and persist it into `result.stageTimings`. */
 async function timePipelineStage<T>(
   result: PipelineRunResult,
   name: string,
@@ -269,8 +299,8 @@ async function timePipelineStage<T>(
 }
 
 /**
- * Run the full known-source-first pipeline.
- * No arguments needed - reads pipeline source config from the database.
+ * Run the full pipeline for a trigger context (`cron`/`admin`) with optional scope.
+ * Runtime source/region config is loaded from DB with JSON fallback.
  */
 export async function runPipeline(
   triggeredBy = 'cron',
@@ -438,7 +468,7 @@ export async function runPipeline(
   result.duration = Date.now() - start;
 
   // Persist run history for observability.
-  // If the up-front row exists, patch it; otherwise create one (migration not yet applied path).
+  // If the up-front row exists, patch it; otherwise create one (migration-lag fallback path).
   try {
     if (pipelineRunId) {
       await db.pipelineRun.update({
@@ -500,15 +530,17 @@ export async function runPipeline(
   console.log(
     `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
   );
-  console.log(
-    `[Pipeline] Lane outcomes: fetched E/C/R/U=${result.laneBreakdown.EVENT.fetched}/${result.laneBreakdown.COMMUNITY.fetched}/${result.laneBreakdown.RESOURCE.fetched}/${result.laneBreakdown.UNKNOWN.fetched}; queued E/C/R=${result.laneBreakdown.EVENT.queued}/${result.laneBreakdown.COMMUNITY.queued}/${result.laneBreakdown.RESOURCE.queued}; dupes E/C/R=${result.laneBreakdown.EVENT.duplicates}/${result.laneBreakdown.COMMUNITY.duplicates}/${result.laneBreakdown.RESOURCE.duplicates}; no-city E/C/R=${result.laneBreakdown.EVENT.noCity}/${result.laneBreakdown.COMMUNITY.noCity}/${result.laneBreakdown.RESOURCE.noCity}; conflicts E/C/R=${result.laneBreakdown.EVENT.cityConflicts}/${result.laneBreakdown.COMMUNITY.cityConflicts}/${result.laneBreakdown.RESOURCE.cityConflicts}`,
-  );
+  console.log(formatLaneOutcomesSummary(result));
 
   return result;
 }
 
-// ─── Phase 1: Fetch ────────────────────────────────────
+// ─── Phase 1: Plan + Fetch ─────────────────────────────
 
+/**
+ * Build source plan and fetch all candidate raw content from pinned + keyword
+ * strategies, then deduplicate by `sourceUrl`.
+ */
 async function fetchAllSources(
   regions: Region[],
   result: PipelineRunResult,
@@ -633,13 +665,29 @@ async function fetchAllSources(
 type ExtractedItem = ExtractedData & { sourceIndex: number };
 
 function getExtractedItemLabel(item: ExtractedData): string {
-  if (item.type === 'EVENT') return item.title;
-  if (item.type === 'COMMUNITY') return item.name;
-  return item.title;
+  switch (item.type) {
+    case 'EVENT':
+      return item.title;
+    case 'COMMUNITY':
+      return item.name;
+    case 'RESOURCE':
+      return item.title;
+  }
 }
 
-// ─── Phase 2: Filter & Extract ─────────────────────────
+/** Map extracted discriminator to Prisma `PipelineEntityType` string literal. */
+function toPipelineEntityType(itemType: ExtractedData['type']): 'EVENT' | 'COMMUNITY' | 'RESOURCE' {
+  if (itemType === 'EVENT') return 'EVENT';
+  if (itemType === 'COMMUNITY') return 'COMMUNITY';
+  return 'RESOURCE';
+}
 
+// ─── Phase 2: Filter ────────────────────────────────────
+
+/**
+ * Lane-aware prefilter + LLM relevance gate.
+ * Calendar-embedded raw items bypass LLM filtering and remain candidates.
+ */
 async function filterRelevantItems(
   uniqueRaw: RawContent[],
   result: PipelineRunResult,
@@ -673,6 +721,12 @@ async function filterRelevantItems(
   return relevantItems;
 }
 
+// ─── Phase 3: Extract ───────────────────────────────────
+
+/**
+ * Extract structured EVENT/COMMUNITY/RESOURCE data from relevant raw items.
+ * Calendar payloads are converted directly; remaining items go through LLM.
+ */
 async function extractRelevantItems(
   relevantItems: RawContent[],
   result: PipelineRunResult,
@@ -717,8 +771,12 @@ async function extractRelevantItems(
   return extracted;
 }
 
-// ─── Phase 3: Resolve, Dedup & Queue ───────────────────
+// ─── Phase 4: Resolve + Dedup + Queue ──────────────────
 
+/**
+ * Resolve city identity, run dedup/rejection-memory checks, and queue items
+ * for review (or auto-approve where policy allows).
+ */
 async function resolveAndQueue(
   extracted: ExtractedItem[],
   relevantItems: RawContent[],
@@ -965,8 +1023,9 @@ async function resolveAndQueue(
       continue;
     }
 
+    const prismaSourceType = toPrismaPipelineSourceType(sourceRaw.sourceType);
     const reliability = sourceReliabilityByKey.get(
-      buildSourceReliabilityKey(sourceRaw.sourceType as PipelineSourceType, item.type),
+      buildSourceReliabilityKey(prismaSourceType, item.type),
     );
     const confidence = applySourceConfidenceAdjustment(
       item.confidence,
@@ -988,25 +1047,19 @@ async function resolveAndQueue(
       isCityPending,
     );
 
-    // Queue for review
-    // Winston/ADR: RESOURCE lane is flag-gated. Drop resource items silently
-    // when lane is not yet enabled so deployments can precede migration.
+    // Queue for review.
+    // RESOURCE lane is feature-flag gated so deployment can precede migration.
     if (queuedItem.type === 'RESOURCE' && !FLAGS.pipelineResourceLaneEnabled) {
       continue;
     }
 
     const createdItem = await db.pipelineItem.create({
       data: {
-        entityType:
-          queuedItem.type === 'EVENT'
-            ? 'EVENT'
-            : queuedItem.type === 'COMMUNITY'
-              ? 'COMMUNITY'
-              : 'RESOURCE',
-        sourceType: sourceRaw.sourceType as import('@prisma/client').PipelineSourceType,
+        entityType: toPipelineEntityType(queuedItem.type),
+        sourceType: prismaSourceType,
         sourceUrl: sourceRaw.sourceUrl,
         rawContent: sourceRaw.text.slice(0, 50_000),
-        extractedData: queuedItem as unknown as import('@prisma/client').Prisma.InputJsonValue,
+        extractedData: queuedItem as unknown as Prisma.InputJsonValue,
         confidence,
         cityId,
         matchedEntityId: isDupe.matchedId ?? undefined,
@@ -1085,7 +1138,7 @@ async function resolveAndQueue(
           : { eligible: false, reason: 'event-admin-approval-required' }
         : shouldAutoApprovePipelineItem({
             item: { ...queuedItem, confidence },
-            sourceType: sourceRaw.sourceType as PipelineSourceType,
+            sourceType: prismaSourceType,
             reliability,
             matchedEntityId: isDupe.matchedId,
             matchScore: isDupe.matchScore,
@@ -1115,7 +1168,7 @@ async function resolveAndQueue(
   });
 }
 
-// ─── Deduplication ─────────────────────────────────────
+// ─── Deduplication Helpers ──────────────────────────────
 
 type DedupResult = {
   isDuplicate: boolean;
@@ -1124,6 +1177,11 @@ type DedupResult = {
   matchKind: 'PIPELINE_ITEM' | 'ENTITY' | null;
 };
 
+/**
+ * Run dedup checks in strict order:
+ * 1) queue/source duplicate
+ * 2) entity-type specific duplicate logic
+ */
 async function checkDuplicate(
   item: ExtractedData,
   cityId: string,
@@ -1143,13 +1201,16 @@ async function checkDuplicate(
   return checkCommunityDuplicate(item, cityId);
 }
 
+/**
+ * Cheap URL-level duplicate check against active queue items, then normalized
+ * URL scan over a recent queue window to catch equivalent tracking variants.
+ */
 async function checkSourceUrlDuplicate(
   sourceUrl: string,
   cityId: string,
   itemType: ExtractedData['type'],
 ): Promise<DedupResult> {
-  const entityType =
-    itemType === 'EVENT' ? 'EVENT' : itemType === 'COMMUNITY' ? 'COMMUNITY' : 'RESOURCE';
+  const entityType = toPipelineEntityType(itemType);
   const existingQueueItem = await db.pipelineItem.findFirst({
     where: {
       sourceUrl,
@@ -1219,6 +1280,10 @@ function hasHyphenBoundedToken(haystack: string, token: string): boolean {
   );
 }
 
+/**
+ * Find all configured cities mentioned in free text via normalized keys + aliases.
+ * Matching is token-bounded to avoid accidental substring collisions.
+ */
 function findCitiesMentionedInText(
   text: string | null | undefined,
   cities: Array<{ id: string; slug: string; name: string }>,
@@ -1255,6 +1320,10 @@ type EventSignalCitySummary = {
   ambiguous: boolean;
 };
 
+/**
+ * Summarize city signals from event fields in precedence-neutral form.
+ * Returns a single city when unambiguous, or `ambiguous=true` when conflicting.
+ */
 function summarizeEventSignalCities(
   event: ExtractedEvent,
   cities: Array<{ id: string; slug: string; name: string }>,
@@ -1285,6 +1354,10 @@ type EventCityResolution = {
   resolutionSource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved';
 };
 
+/**
+ * Verify whether extracted organizer/host appears to match the hinted community.
+ * Used to avoid attaching unrelated city hints to online or ambiguous events.
+ */
 function doesEventHostAgreeWithHint(event: ExtractedEvent, hintedCommunityName?: string): boolean {
   if (!event.hostCommunity) return true;
   if (!hintedCommunityName) return false;
@@ -1340,6 +1413,10 @@ function buildResolutionProvenance(
   };
 }
 
+/**
+ * Resolve final city decision for an extracted EVENT using the policy order:
+ * signal city > llm city > strategy hint > fallback city.
+ */
 export function resolveEventCityDecision(
   event: ExtractedEvent,
   sourceRaw: RawContent,
@@ -1427,6 +1504,10 @@ export function resolveEventCityDecision(
   };
 }
 
+/**
+ * Event dedup against canonical entities first, then active queue entries.
+ * Uses registration URL + title/date identity checks.
+ */
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {
   if (!event.date) {
     return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
@@ -1551,6 +1632,10 @@ async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promi
   return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
 }
 
+/**
+ * Community dedup using exact/normalized name match, semantic tie-break for
+ * borderline candidates, merged aliases, then active queue checks.
+ */
 async function checkCommunityDuplicate(
   community: ExtractedData & { type: 'COMMUNITY' },
   cityId: string,
@@ -1661,6 +1746,7 @@ function normalizeScopeRegionForDedup(value: string | null | undefined): string 
   return v && v.length > 0 ? v : null;
 }
 
+/** Scope compatibility guard for resource dedup (scope + scopeRegion). */
 function isResourceScopeCompatible(
   incoming: { scope: string | null; scopeRegion: string | null },
   candidate: { scope: string | null; scopeRegion: string | null },
@@ -1676,6 +1762,10 @@ function isResourceScopeCompatible(
   return incomingRegion === candidateRegion;
 }
 
+/**
+ * Resource dedup checks canonical resources and active queue using URL and
+ * title/scope compatibility.
+ */
 async function checkResourceDuplicate(
   resource: ExtractedResource,
   cityId: string,
@@ -1777,6 +1867,10 @@ async function checkResourceDuplicate(
   return { isDuplicate: false, matchedId: null, matchScore: null, matchKind: null };
 }
 
+/**
+ * Merge additional evidence into an existing pending event queue item when
+ * dedup detects a queue-level event duplicate.
+ */
 async function mergeIntoPendingEventPipelineItem(
   pipelineItemId: string,
   incomingEvent: ExtractedEvent,
@@ -1809,6 +1903,10 @@ async function mergeIntoPendingEventPipelineItem(
   });
 }
 
+/**
+ * Field-aware event merge preferring values with higher field-confidence while
+ * preserving useful unions (categories/languages).
+ */
 function mergeExtractedEvents(base: ExtractedEvent, incoming: ExtractedEvent): ExtractedEvent {
   const mergedFieldConfidence: Record<string, number> = {
     ...base.fieldConfidence,
