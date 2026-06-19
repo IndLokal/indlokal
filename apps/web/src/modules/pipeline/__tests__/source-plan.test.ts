@@ -28,8 +28,8 @@ vi.mock('../config/runtime-config', () => ({
   getRuntimeLaneKeywordSeeds: mocks.getRuntimeLaneKeywordSeeds,
 }));
 
-vi.mock('../db-sources', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../db-sources')>();
+vi.mock('../fetch/db-sources', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../fetch/db-sources')>();
   return {
     ...actual,
     getDbCommunityStrategies: mocks.getDbCommunityStrategies,

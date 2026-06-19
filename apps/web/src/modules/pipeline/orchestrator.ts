@@ -30,7 +30,7 @@ import {
   extractCalendarEventFromRawContent,
   isEmbeddedCalendarEventRawContent,
 } from './fetch/calendar';
-import { scorePinnedEventUrl } from './db-sources';
+import { scorePinnedEventUrl } from './fetch/db-sources';
 import {
   STALE_EVENT_MARKERS,
   EVENT_PAGE_MARKERS,

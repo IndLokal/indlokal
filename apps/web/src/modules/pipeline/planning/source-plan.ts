@@ -20,7 +20,7 @@ import {
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
 } from '../config/runtime-config';
-import { getDbCommunityStrategies, scorePinnedEventUrl } from '../db-sources';
+import { getDbCommunityStrategies, scorePinnedEventUrl } from '../fetch/db-sources';
 import {
   getApprovedDynamicKeywordsByLane,
   type ApprovedDynamicKeywordsByLane,

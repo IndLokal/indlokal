@@ -15,7 +15,7 @@
  */
 
 import { runPipeline } from './orchestrator';
-import { getDbCommunityStrategies } from './db-sources';
+import { getDbCommunityStrategies } from './fetch/db-sources';
 import {
   getRuntimeEnabledRegions,
   getRuntimeLaneKeywordSeeds,

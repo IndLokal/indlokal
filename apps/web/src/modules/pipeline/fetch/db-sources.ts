@@ -13,14 +13,14 @@
  */
 
 import { db } from '@/lib/db';
-import type { SearchStrategy } from './types';
+import type { SearchStrategy } from '../types';
 import {
   EVENT_PAGE_MARKERS,
   STRONG_FRESH_MARKERS,
   STALE_EVENT_MARKERS,
   getYearSignalScore,
-} from './freshness';
-import { PIPELINE_USER_AGENT } from './fetch/http';
+} from '../freshness';
+import { PIPELINE_USER_AGENT } from './http';
 
 // Fallback list used only when homepage anchor discovery finds nothing for a
 // site (typically because the nav is rendered client-side). Each candidate is
