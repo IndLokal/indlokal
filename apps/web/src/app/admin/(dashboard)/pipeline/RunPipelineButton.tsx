@@ -51,6 +51,21 @@ const INTENT_PROFILE_OPTIONS: Array<{ value: PipelineSourceIntentProfile; label:
   { value: 'channel_only', label: 'Channel only' },
 ];
 
+const LAST_RUN_STATUS_KEY = 'admin:pipeline:last-run-status';
+
+type LastRunStatus = {
+  completedAt: string;
+  mode: 'direct' | 'dispatch';
+  runMode: PipelineRunMode;
+  sourceIntentProfile: PipelineSourceIntentProfile;
+  scopeLabel?: string;
+  durationMs?: number;
+  itemsFetched?: number;
+  itemsQueued?: number;
+  errorsCount?: number;
+  message?: string;
+};
+
 function getScopeLabel(
   scope: PipelineRunScope | null,
   regions: RegionOption[],
@@ -78,13 +93,45 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
     useState<PipelineSourceIntentProfile>('all');
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
+  const [resultExpanded, setResultExpanded] = useState(false);
+  const [lastRunStatus, setLastRunStatus] = useState<LastRunStatus | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const raw = window.localStorage.getItem(LAST_RUN_STATUS_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as LastRunStatus;
+      if (parsed && parsed.completedAt && parsed.mode) return parsed;
+      return null;
+    } catch {
+      return null;
+    }
+  });
   const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
   const [scope, setScope] = useState<PipelineRunScope | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  function persistLastRunStatus(status: LastRunStatus) {
+    setLastRunStatus(status);
+    try {
+      window.localStorage.setItem(LAST_RUN_STATUS_KEY, JSON.stringify(status));
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
+  function clearLastRunStatus() {
+    setLastRunStatus(null);
+    try {
+      window.localStorage.removeItem(LAST_RUN_STATUS_KEY);
+    } catch {
+      // Ignore storage errors.
+    }
+  }
+
   async function handleRun(nextScope?: PipelineRunScope, scopeKey = 'all') {
     setRunningKey(scopeKey);
     setResult(null);
+    setResultExpanded(false);
     setDispatchMessage(null);
     setScope(null);
     setError(null);
@@ -128,16 +175,37 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
 
       if (payload.ok && payload.mode === 'dispatch') {
         const failedCount = payload.dispatch.failed?.length ?? 0;
-        setDispatchMessage(
+        const message =
           failedCount === 0
             ? `Dispatched ${payload.dispatch.dispatched.length} regional shards.`
-            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`,
-        );
+            : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`;
+        setDispatchMessage(message);
+        persistLastRunStatus({
+          completedAt: new Date().toISOString(),
+          mode: 'dispatch',
+          runMode,
+          sourceIntentProfile,
+          message,
+          errorsCount: failedCount,
+        });
         setScope(null);
         setResult(null);
       } else if (payload.ok && payload.mode === 'direct') {
         setResult(payload.result);
+        setResultExpanded(false);
         setScope(payload.scope);
+        const scopeLabel = getScopeLabel(payload.scope, regions, cities);
+        persistLastRunStatus({
+          completedAt: new Date().toISOString(),
+          mode: 'direct',
+          runMode,
+          sourceIntentProfile,
+          scopeLabel,
+          durationMs: payload.result.duration,
+          itemsFetched: payload.result.itemsFetched,
+          itemsQueued: payload.result.itemsQueued,
+          errorsCount: payload.result.errors.length,
+        });
         if (payload.note) {
           setDispatchMessage(payload.note);
         }
@@ -251,6 +319,40 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
         </details>
       </div>
 
+      {lastRunStatus && (
+        <div className="mt-3 rounded-[var(--radius-button)] border border-slate-200 bg-white p-3 text-xs text-slate-700">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <p className="font-medium text-slate-900">Last run status</p>
+              <p>
+                {new Date(lastRunStatus.completedAt).toLocaleString()} · {lastRunStatus.mode} · mode{' '}
+                {lastRunStatus.runMode} · profile {lastRunStatus.sourceIntentProfile}
+              </p>
+              {lastRunStatus.scopeLabel && <p>Scope: {lastRunStatus.scopeLabel}</p>}
+              {lastRunStatus.mode === 'direct' && (
+                <p>
+                  Fetched {lastRunStatus.itemsFetched ?? 0}, queued {lastRunStatus.itemsQueued ?? 0}
+                  {typeof lastRunStatus.durationMs === 'number'
+                    ? `, ${(lastRunStatus.durationMs / 1000).toFixed(1)}s`
+                    : ''}
+                  {typeof lastRunStatus.errorsCount === 'number'
+                    ? `, ${lastRunStatus.errorsCount} issues`
+                    : ''}
+                </p>
+              )}
+              {lastRunStatus.message && <p>{lastRunStatus.message}</p>}
+            </div>
+            <button
+              type="button"
+              onClick={clearLastRunStatus}
+              className="text-muted hover:text-slate-900"
+            >
+              Clear
+            </button>
+          </div>
+        </div>
+      )}
+
       {result && (
         <div className="mt-4 rounded-[var(--radius-card)] border border-emerald-200 bg-emerald-50/70 p-4 text-sm">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -262,153 +364,169 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                 Scope: {getScopeLabel(scope, regions, cities)}
               </p>
             </div>
-            <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
-              {result.errors.length === 0
-                ? 'No fetch errors'
-                : `${result.errors.length} issues logged`}
-            </div>
-          </div>
-
-          {(result.budgetExceeded || result.circuitBreakerTripped) && (
-            <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
-              <p className="font-semibold tracking-wide uppercase">Cost guard tripped</p>
-              <ul className="mt-1 list-disc space-y-0.5 pl-5">
-                {result.budgetExceeded && (
-                  <li>
-                    Token budget exceeded - LLM stages bailed out. Tune
-                    <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
-                  </li>
-                )}
-                {result.circuitBreakerTripped && (
-                  <li>
-                    Circuit breaker opened after consecutive LLM failures. Check upstream provider
-                    health before re-running.
-                  </li>
-                )}
-              </ul>
-            </div>
-          )}
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
-            <MetricCard label="Fetched" value={result.itemsFetched} />
-            <MetricCard label="Extracted" value={result.itemsExtracted} />
-            <MetricCard label="LLM calls" value={result.llmCalls} />
-          </div>
-
-          <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
-            <summary className="cursor-pointer text-xs font-medium text-slate-700">
-              View lane-level outcomes
-            </summary>
-            <div className="mt-3 overflow-x-auto">
-              <table className="min-w-full text-left text-xs">
-                <thead className="text-slate-500">
-                  <tr>
-                    <th className="px-2 py-1 font-medium">Lane</th>
-                    <th className="px-2 py-1 font-medium">Fetched</th>
-                    <th className="px-2 py-1 font-medium">Passed filter</th>
-                    <th className="px-2 py-1 font-medium">Extracted</th>
-                    <th className="px-2 py-1 font-medium">Queued</th>
-                    <th className="px-2 py-1 font-medium">Duplicates</th>
-                    <th className="px-2 py-1 font-medium">No city</th>
-                    <th className="px-2 py-1 font-medium">Past</th>
-                    <th className="px-2 py-1 font-medium">Conflicts</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const).map((lane) => {
-                    const metrics = result.laneBreakdown[lane];
-                    return (
-                      <tr key={lane} className="border-t border-slate-100 text-slate-700">
-                        <td className="px-2 py-1.5 font-medium">{lane}</td>
-                        <td className="px-2 py-1.5">{metrics.fetched}</td>
-                        <td className="px-2 py-1.5">{metrics.passedFilter}</td>
-                        <td className="px-2 py-1.5">{metrics.extracted}</td>
-                        <td className="px-2 py-1.5">{metrics.queued}</td>
-                        <td className="px-2 py-1.5">{metrics.duplicates}</td>
-                        <td className="px-2 py-1.5">{metrics.noCity}</td>
-                        <td className="px-2 py-1.5">{metrics.past}</td>
-                        <td className="px-2 py-1.5">{metrics.cityConflicts}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </details>
-
-          <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
-            <StatLine label="Sources processed" value={result.sourcesProcessed} />
-            <StatLine label="Passed filter" value={result.itemsPassedFilter} />
-            <StatLine label="Duplicates skipped" value={result.itemsSkippedDuplicate} />
-            <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
-            <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
-            <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
-            <StatLine
-              label="Filter batches dropped"
-              value={result.filterFailures}
-              tone={result.filterFailures > 0 ? 'warn' : 'default'}
-            />
-            <StatLine
-              label="Extract retries exhausted"
-              value={result.extractRetriesExhausted}
-              tone={result.extractRetriesExhausted > 0 ? 'warn' : 'default'}
-            />
-            <StatLine
-              label="Items dropped (bad index)"
-              value={result.itemsDroppedBadIndex}
-              tone={result.itemsDroppedBadIndex > 0 ? 'warn' : 'default'}
-            />
-          </div>
-
-          {result.errors.length > 0 && (
-            <details className="mt-4 rounded-[var(--radius-button)] border border-amber-200 bg-white/70 p-3">
-              <summary className="cursor-pointer text-xs font-medium text-amber-700">
-                View {result.errors.length} logged fetch/runtime issues
-              </summary>
-              <ul className="text-muted mt-2 max-h-48 space-y-1 overflow-auto text-xs">
-                {result.errors.map((e, i) => (
-                  <li key={i}>• {e}</li>
-                ))}
-              </ul>
-            </details>
-          )}
-
-          {result.cityBreakdown.length > 0 && (
-            <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
-              <summary className="cursor-pointer text-xs font-medium text-slate-700">
-                View city-level outcomes
-              </summary>
-              <div className="mt-3 overflow-x-auto">
-                <table className="min-w-full text-left text-xs">
-                  <thead className="text-slate-500">
-                    <tr>
-                      <th className="px-2 py-1 font-medium">City</th>
-                      <th className="px-2 py-1 font-medium">Extracted</th>
-                      <th className="px-2 py-1 font-medium">Queued (E/C/R)</th>
-                      <th className="px-2 py-1 font-medium">Duplicates (E/C/R)</th>
-                      <th className="px-2 py-1 font-medium">Past events</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {result.cityBreakdown.map((city) => (
-                      <tr key={city.citySlug} className="border-t border-slate-100 text-slate-700">
-                        <td className="px-2 py-1.5">{city.cityName}</td>
-                        <td className="px-2 py-1.5">{city.extracted}</td>
-                        <td className="px-2 py-1.5">
-                          {city.queuedEvents}/{city.queuedCommunities}/{city.queuedResources}
-                        </td>
-                        <td className="px-2 py-1.5">
-                          {city.duplicateEvents}/{city.duplicateCommunities}/
-                          {city.duplicateResources}
-                        </td>
-                        <td className="px-2 py-1.5">{city.pastEvents}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex items-center gap-2">
+              <div className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-emerald-700 shadow-sm ring-1 ring-emerald-200">
+                {result.errors.length === 0
+                  ? 'No fetch errors'
+                  : `${result.errors.length} issues logged`}
               </div>
-            </details>
+              <button
+                onClick={() => setResultExpanded((value) => !value)}
+                className="btn-secondary px-3 py-1.5 text-xs"
+                aria-expanded={resultExpanded}
+              >
+                {resultExpanded ? 'Hide details' : 'Show details'}
+              </button>
+            </div>
+          </div>
+
+          {resultExpanded && (
+            <>
+              {(result.budgetExceeded || result.circuitBreakerTripped) && (
+                <div className="mt-3 rounded-[var(--radius-button)] border border-red-300 bg-red-50 p-3 text-xs text-red-800">
+                  <p className="font-semibold tracking-wide uppercase">Cost guard tripped</p>
+                  <ul className="mt-1 list-disc space-y-0.5 pl-5">
+                    {result.budgetExceeded && (
+                      <li>
+                        Token budget exceeded - LLM stages bailed out. Tune
+                        <code className="mx-1">PIPELINE_RUN_TOKEN_BUDGET</code>or reduce scope.
+                      </li>
+                    )}
+                    {result.circuitBreakerTripped && (
+                      <li>
+                        Circuit breaker opened after consecutive LLM failures. Check upstream
+                        provider health before re-running.
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+                <MetricCard label="Queued" value={result.itemsQueued} tone="success" />
+                <MetricCard label="Fetched" value={result.itemsFetched} />
+                <MetricCard label="Extracted" value={result.itemsExtracted} />
+                <MetricCard label="LLM calls" value={result.llmCalls} />
+              </div>
+
+              <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+                <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                  View lane-level outcomes
+                </summary>
+                <div className="mt-3 overflow-x-auto">
+                  <table className="min-w-full text-left text-xs">
+                    <thead className="text-slate-500">
+                      <tr>
+                        <th className="px-2 py-1 font-medium">Lane</th>
+                        <th className="px-2 py-1 font-medium">Fetched</th>
+                        <th className="px-2 py-1 font-medium">Passed filter</th>
+                        <th className="px-2 py-1 font-medium">Extracted</th>
+                        <th className="px-2 py-1 font-medium">Queued</th>
+                        <th className="px-2 py-1 font-medium">Duplicates</th>
+                        <th className="px-2 py-1 font-medium">No city</th>
+                        <th className="px-2 py-1 font-medium">Past</th>
+                        <th className="px-2 py-1 font-medium">Conflicts</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {(['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const).map((lane) => {
+                        const metrics = result.laneBreakdown[lane];
+                        return (
+                          <tr key={lane} className="border-t border-slate-100 text-slate-700">
+                            <td className="px-2 py-1.5 font-medium">{lane}</td>
+                            <td className="px-2 py-1.5">{metrics.fetched}</td>
+                            <td className="px-2 py-1.5">{metrics.passedFilter}</td>
+                            <td className="px-2 py-1.5">{metrics.extracted}</td>
+                            <td className="px-2 py-1.5">{metrics.queued}</td>
+                            <td className="px-2 py-1.5">{metrics.duplicates}</td>
+                            <td className="px-2 py-1.5">{metrics.noCity}</td>
+                            <td className="px-2 py-1.5">{metrics.past}</td>
+                            <td className="px-2 py-1.5">{metrics.cityConflicts}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+
+              <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
+                <StatLine label="Sources processed" value={result.sourcesProcessed} />
+                <StatLine label="Passed filter" value={result.itemsPassedFilter} />
+                <StatLine label="Duplicates skipped" value={result.itemsSkippedDuplicate} />
+                <StatLine label="No city skipped" value={result.itemsSkippedNoCity} />
+                <StatLine label="Estimated tokens" value={`~${result.llmTokensEstimate}`} />
+                <StatLine label="Duration" value={`${(result.duration / 1000).toFixed(1)}s`} />
+                <StatLine
+                  label="Filter batches dropped"
+                  value={result.filterFailures}
+                  tone={result.filterFailures > 0 ? 'warn' : 'default'}
+                />
+                <StatLine
+                  label="Extract retries exhausted"
+                  value={result.extractRetriesExhausted}
+                  tone={result.extractRetriesExhausted > 0 ? 'warn' : 'default'}
+                />
+                <StatLine
+                  label="Items dropped (bad index)"
+                  value={result.itemsDroppedBadIndex}
+                  tone={result.itemsDroppedBadIndex > 0 ? 'warn' : 'default'}
+                />
+              </div>
+
+              {result.errors.length > 0 && (
+                <details className="mt-4 rounded-[var(--radius-button)] border border-amber-200 bg-white/70 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-amber-700">
+                    View {result.errors.length} logged fetch/runtime issues
+                  </summary>
+                  <ul className="text-muted mt-2 max-h-48 space-y-1 overflow-auto text-xs">
+                    {result.errors.map((e, i) => (
+                      <li key={i}>• {e}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+
+              {result.cityBreakdown.length > 0 && (
+                <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+                  <summary className="cursor-pointer text-xs font-medium text-slate-700">
+                    View city-level outcomes
+                  </summary>
+                  <div className="mt-3 overflow-x-auto">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="text-slate-500">
+                        <tr>
+                          <th className="px-2 py-1 font-medium">City</th>
+                          <th className="px-2 py-1 font-medium">Extracted</th>
+                          <th className="px-2 py-1 font-medium">Queued (E/C/R)</th>
+                          <th className="px-2 py-1 font-medium">Duplicates (E/C/R)</th>
+                          <th className="px-2 py-1 font-medium">Past events</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {result.cityBreakdown.map((city) => (
+                          <tr
+                            key={city.citySlug}
+                            className="border-t border-slate-100 text-slate-700"
+                          >
+                            <td className="px-2 py-1.5">{city.cityName}</td>
+                            <td className="px-2 py-1.5">{city.extracted}</td>
+                            <td className="px-2 py-1.5">
+                              {city.queuedEvents}/{city.queuedCommunities}/{city.queuedResources}
+                            </td>
+                            <td className="px-2 py-1.5">
+                              {city.duplicateEvents}/{city.duplicateCommunities}/
+                              {city.duplicateResources}
+                            </td>
+                            <td className="px-2 py-1.5">{city.pastEvents}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </details>
+              )}
+            </>
           )}
         </div>
       )}
