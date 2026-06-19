@@ -176,6 +176,126 @@ describe('buildPipelineSourcePlan', () => {
     );
   });
 
+  it('uses explicit lane intent when selecting gap keywords', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.EVENTBRITE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_API_KEY = 'test-key';
+    process.env.GOOGLE_CSE_ID = 'test-cse';
+    process.env.PIPELINE_ENABLE_DDG = '1';
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'eventbrite-keyword',
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        label: 'Eventbrite',
+        enabled: true,
+        radiusKm: 50,
+        lane: 'EVENT',
+      },
+      {
+        id: 'google-community-keyword',
+        sourceType: 'GOOGLE_SEARCH',
+        kind: 'keyword_search',
+        label: 'Google Community',
+        enabled: true,
+        radiusKm: 100,
+        lane: 'COMMUNITY',
+      },
+      {
+        id: 'duckduckgo-keyword',
+        sourceType: 'DUCKDUCKGO',
+        kind: 'keyword_search',
+        label: 'DuckDuckGo',
+        enabled: true,
+        radiusKm: 100,
+      },
+    ]);
+    mocks.findCities.mockResolvedValue([
+      { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+      { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+    ]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 4 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    const eventbrite = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'eventbrite-keyword',
+    );
+    const communityGoogle = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'google-community-keyword',
+    );
+    const duckduckgo = plan.keywordStrategies.find(
+      (strategy) => strategy.id === 'duckduckgo-keyword',
+    );
+
+    expect(eventbrite?.keywords).toContain('Indian event Karlsruhe');
+    expect(eventbrite?.keywords).not.toContain('Indian community group Karlsruhe');
+    expect(communityGoogle?.keywords.join(' ')).toContain('Indian community group Karlsruhe');
+    expect(communityGoogle?.keywords.join(' ')).not.toContain('Indian event Karlsruhe');
+    expect(duckduckgo?.keywords).toContain('Indian event Karlsruhe');
+    expect(duckduckgo?.keywords).toContain('Indian community group Karlsruhe');
+  });
+
+  it('returns additive lane breakdown metadata for the built plan', async () => {
+    const { buildPipelineSourcePlan } = await import('../source-plan');
+
+    process.env.EVENTBRITE_API_KEY = 'test-key';
+    process.env.PIPELINE_ENABLE_DDG = '1';
+    mocks.getRuntimeKeywordStrategies.mockResolvedValue([
+      {
+        id: 'eventbrite-keyword',
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        label: 'Eventbrite',
+        enabled: true,
+        radiusKm: 50,
+        lane: 'EVENT',
+      },
+      {
+        id: 'duckduckgo-keyword',
+        sourceType: 'DUCKDUCKGO',
+        kind: 'keyword_search',
+        label: 'DuckDuckGo',
+        enabled: true,
+        radiusKm: 100,
+      },
+    ]);
+    mocks.getRuntimePinnedStrategies.mockResolvedValue([
+      {
+        id: 'community-directory',
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        label: 'Community directory',
+        enabled: true,
+        url: 'https://example.org/community-directory',
+        lane: 'COMMUNITY',
+      },
+    ]);
+    mocks.findCities.mockResolvedValue([
+      { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+      { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+    ]);
+    mocks.groupCommunities.mockResolvedValue([
+      { cityId: 'city-1', _count: { _all: 6 } },
+      { cityId: 'city-2', _count: { _all: 4 } },
+    ]);
+    mocks.groupEvents.mockResolvedValue([{ cityId: 'city-1', _count: { _all: 3 } }]);
+
+    const plan = await buildPipelineSourcePlan(regions, 'cli');
+
+    expect(plan.laneBreakdown.EVENT.keywordStrategies).toBe(1);
+    expect(plan.laneBreakdown.COMMUNITY.pinnedStrategies).toBe(1);
+    expect(plan.laneBreakdown.UNKNOWN.keywordStrategies).toBe(1);
+    expect(plan.notes).toContain(
+      'lane distribution: COMMUNITY:k0/p1 EVENT:k1/p0 RESOURCE:k0/p0 UNKNOWN:k1/p0',
+    );
+  });
+
   it('prioritizes DB event pages when pinned sources are capped', async () => {
     const { buildPipelineSourcePlan } = await import('../source-plan');
 

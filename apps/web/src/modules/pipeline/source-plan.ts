@@ -6,7 +6,7 @@ import {
 } from './runtime-config';
 import { getDbCommunityStrategies, scorePinnedEventUrl } from './db-sources';
 import { getApprovedDynamicKeywords } from './intelligence';
-import type { SearchRegion, SearchStrategy } from './types';
+import type { SearchRegion, SearchStrategy, SourceLane } from './types';
 import type { KeywordStrategyTemplate } from './runtime-config';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
@@ -19,6 +19,16 @@ type CityGap = {
   upcomingEventCount: number;
 };
 
+type PipelineSourcePlanLaneKey = SourceLane | 'UNKNOWN';
+
+type PipelineSourcePlanLaneBreakdown = Record<
+  PipelineSourcePlanLaneKey,
+  {
+    keywordStrategies: number;
+    pinnedStrategies: number;
+  }
+>;
+
 export type PipelineSourcePlan = {
   keywordStrategies: KeywordStrategy[];
   pinnedStrategies: PinnedStrategy[];
@@ -26,6 +36,7 @@ export type PipelineSourcePlan = {
   dbPinnedCount: number;
   totalDbPinnedCount: number;
   cityGaps: CityGap[];
+  laneBreakdown: PipelineSourcePlanLaneBreakdown;
   notes: string[];
 };
 
@@ -87,6 +98,46 @@ function expandTemplates(templates: readonly string[], cities: Array<{ name: str
   return unique(
     cities.flatMap((city) => templates.map((template) => template.replace('{city}', city.name))),
   );
+}
+
+function getLaneKey(lane: SourceLane | undefined): PipelineSourcePlanLaneKey {
+  return lane ?? 'UNKNOWN';
+}
+
+function getGapKeywordsForStrategy(
+  strategy: KeywordStrategyTemplate,
+  eventGapKeywords: string[],
+  communityGapKeywords: string[],
+): string[] {
+  if (strategy.lane === 'EVENT') return eventGapKeywords;
+  if (strategy.lane === 'COMMUNITY') return communityGapKeywords;
+  if (strategy.lane === 'RESOURCE') return [];
+
+  // Back-compat for legacy rows without explicit lane metadata.
+  return strategy.sourceType === 'EVENTBRITE'
+    ? eventGapKeywords
+    : [...eventGapKeywords, ...communityGapKeywords];
+}
+
+function buildLaneBreakdown(
+  keywordStrategies: KeywordStrategy[],
+  pinnedStrategies: PinnedStrategy[],
+): PipelineSourcePlanLaneBreakdown {
+  const breakdown: PipelineSourcePlanLaneBreakdown = {
+    COMMUNITY: { keywordStrategies: 0, pinnedStrategies: 0 },
+    EVENT: { keywordStrategies: 0, pinnedStrategies: 0 },
+    RESOURCE: { keywordStrategies: 0, pinnedStrategies: 0 },
+    UNKNOWN: { keywordStrategies: 0, pinnedStrategies: 0 },
+  };
+
+  for (const strategy of keywordStrategies) {
+    breakdown[getLaneKey(strategy.lane)].keywordStrategies += 1;
+  }
+  for (const strategy of pinnedStrategies) {
+    breakdown[getLaneKey(strategy.lane)].pinnedStrategies += 1;
+  }
+
+  return breakdown;
 }
 
 function prioritizeDbPinnedSources(strategies: PinnedStrategy[]): PinnedStrategy[] {
@@ -316,10 +367,11 @@ export async function buildPipelineSourcePlan(
           return [];
         }
 
-        const gapKeywords =
-          strategy.sourceType === 'EVENTBRITE'
-            ? eventGapKeywords
-            : [...eventGapKeywords, ...communityGapKeywords];
+        const gapKeywords = getGapKeywordsForStrategy(
+          strategy,
+          eventGapKeywords,
+          communityGapKeywords,
+        );
         const baselineKeywords =
           forceKeywordSearch || forceAdminKeywordSearch ? baselineKeywordSeeds : [];
         const canonicalKeywords = unique([
@@ -338,26 +390,22 @@ export async function buildPipelineSourcePlan(
       })
     : [];
 
-  // Phase 1 baseline: log lane distribution for observability (no behavior change).
-  const laneCount: Record<string, number> = {};
-  for (const s of [...staticPinned, ...dbPinned, ...keywordStrategies]) {
-    const key = s.lane ?? 'unknown';
-    laneCount[key] = (laneCount[key] ?? 0) + 1;
-  }
+  const pinnedStrategies = [...staticPinned, ...dbPinned];
+  const laneBreakdown = buildLaneBreakdown(keywordStrategies, pinnedStrategies);
   notes.push(
-    `lane distribution: ${Object.entries(laneCount)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([lane, count]) => `${lane}:${count}`)
+    `lane distribution: ${Object.entries(laneBreakdown)
+      .map(([lane, counts]) => `${lane}:k${counts.keywordStrategies}/p${counts.pinnedStrategies}`)
       .join(' ')}`,
   );
 
   return {
     keywordStrategies,
-    pinnedStrategies: [...staticPinned, ...dbPinned],
+    pinnedStrategies,
     staticPinnedCount: staticPinned.length,
     dbPinnedCount: dbPinned.length,
     totalDbPinnedCount: dbPinnedAll.length,
     cityGaps,
+    laneBreakdown,
     notes,
   };
 }
