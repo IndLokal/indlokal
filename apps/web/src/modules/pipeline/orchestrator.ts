@@ -196,6 +196,13 @@ export type PipelineRunOptions = {
   sourceIntentProfile?: PipelineSourceIntentProfile;
 };
 
+export type PipelineRunInput = {
+  triggeredBy?: string;
+  scope?: PipelineRunScope;
+  runMode?: PipelineRunMode;
+  sourceIntentProfile?: PipelineSourceIntentProfile;
+};
+
 /** Restrict enabled regions to optional city/region scope filters. */
 function filterRegionsByScope(regions: Region[], scope?: PipelineRunScope): Region[] {
   if (!scope) return regions;
@@ -309,11 +316,34 @@ async function timePipelineStage<T>(
  * Run the full pipeline for a trigger context (`cron`/`admin`) with optional scope.
  * Runtime source/region config is loaded from DB with JSON fallback.
  */
+export async function runPipeline(input: PipelineRunInput): Promise<PipelineRunResult>;
 export async function runPipeline(
-  triggeredBy = 'cron',
+  triggeredBy?: string,
   scope?: PipelineRunScope,
-  options: PipelineRunOptions = {},
+  options?: PipelineRunOptions,
+): Promise<PipelineRunResult>;
+export async function runPipeline(
+  inputOrTriggeredBy: PipelineRunInput | string = 'cron',
+  scopeArg?: PipelineRunScope,
+  optionsArg: PipelineRunOptions = {},
 ): Promise<PipelineRunResult> {
+  const normalizedInput: PipelineRunInput =
+    typeof inputOrTriggeredBy === 'string'
+      ? {
+          triggeredBy: inputOrTriggeredBy,
+          scope: scopeArg,
+          runMode: optionsArg.runMode,
+          sourceIntentProfile: optionsArg.sourceIntentProfile,
+        }
+      : inputOrTriggeredBy;
+
+  const triggeredBy = normalizedInput.triggeredBy ?? 'cron';
+  const scope = normalizedInput.scope;
+  const options: PipelineRunOptions = {
+    runMode: normalizedInput.runMode,
+    sourceIntentProfile: normalizedInput.sourceIntentProfile,
+  };
+
   const start = Date.now();
   resetLlmStats();
 
@@ -558,7 +588,13 @@ async function fetchAllSources(
   options: PipelineRunOptions = {},
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
-  const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy, {
+  const sourcePlan = await buildPipelineSourcePlan({
+    regions,
+    triggeredBy,
+    scope: {
+      citySlugs: scopedCitySlugs,
+      regionIds: undefined,
+    },
     runMode: options.runMode,
     sourceIntentProfile: options.sourceIntentProfile,
   });

@@ -99,6 +99,17 @@ export type PipelineSourcePlanOptions = {
   sourceIntentProfile?: PipelineSourceIntentProfile;
 };
 
+export type BuildPipelineSourcePlanInput = {
+  regions: SearchRegion[];
+  triggeredBy: string;
+  scope?: {
+    citySlugs?: string[];
+    regionIds?: string[];
+  };
+  runMode?: PipelineRunMode;
+  sourceIntentProfile?: PipelineSourceIntentProfile;
+};
+
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
 }
@@ -528,16 +539,36 @@ async function getLowCoverageCities(
  * @returns Plan containing strategies, city gaps, and lane breakdown
  */
 export async function buildPipelineSourcePlan(
+  input: BuildPipelineSourcePlanInput,
+): Promise<PipelineSourcePlan>;
+export async function buildPipelineSourcePlan(
   regions: SearchRegion[],
   triggeredBy: string,
-  options: PipelineSourcePlanOptions = {},
+  options?: PipelineSourcePlanOptions,
+): Promise<PipelineSourcePlan>;
+export async function buildPipelineSourcePlan(
+  inputOrRegions: BuildPipelineSourcePlanInput | SearchRegion[],
+  triggeredByArg?: string,
+  optionsArg: PipelineSourcePlanOptions = {},
 ): Promise<PipelineSourcePlan> {
+  const normalizedInput: BuildPipelineSourcePlanInput = Array.isArray(inputOrRegions)
+    ? {
+        regions: inputOrRegions,
+        triggeredBy: triggeredByArg ?? 'cron',
+        runMode: optionsArg.runMode,
+        sourceIntentProfile: optionsArg.sourceIntentProfile,
+      }
+    : inputOrRegions;
+
+  const regions = normalizedInput.regions;
+  const triggeredBy = normalizedInput.triggeredBy;
+
   const { effectiveMode, fromDefault: runModeDefaulted } = resolveRunMode(
     triggeredBy,
-    options.runMode,
+    normalizedInput.runMode,
   );
   const { effectiveProfile, fromDefault: intentProfileDefaulted } = resolveIntentProfile(
-    options.sourceIntentProfile,
+    normalizedInput.sourceIntentProfile,
   );
 
   const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';

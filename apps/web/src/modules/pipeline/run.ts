@@ -229,19 +229,18 @@ async function main() {
   }
 
   console.log('\n🚀 Running pipeline...\n');
-  const result = await runPipeline(
-    'cli',
-    citySlugs.length > 0 || regionIds.length > 0
-      ? {
-          citySlugs: citySlugs.length > 0 ? citySlugs : undefined,
-          regionIds: regionIds.length > 0 ? regionIds : undefined,
-        }
-      : undefined,
-    {
-      runMode,
-      sourceIntentProfile,
-    },
-  );
+  const result = await runPipeline({
+    triggeredBy: 'cli',
+    scope:
+      citySlugs.length > 0 || regionIds.length > 0
+        ? {
+            citySlugs: citySlugs.length > 0 ? citySlugs : undefined,
+            regionIds: regionIds.length > 0 ? regionIds : undefined,
+          }
+        : undefined,
+    runMode,
+    sourceIntentProfile,
+  });
 
   console.log('\n═══════════════════════════════════════');
   console.log('Pipeline Run Summary');
