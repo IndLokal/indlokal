@@ -392,7 +392,7 @@ function profileAllowsIntent(
   if (profile === 'activity_only') return sourceIntent === 'dated_activity_discovery';
   if (profile === 'community_only') return sourceIntent === 'org_group_discovery';
   if (profile === 'service_only') return sourceIntent === 'official_service_info_discovery';
-  if (profile === 'evidence_only') return sourceIntent !== undefined;
+  if (profile === 'evidence_only') return true;
   // channel_only currently maps to community-source channels and event channel pages.
   return sourceIntent === 'org_group_discovery' || sourceIntent === 'dated_activity_discovery';
 }
