@@ -68,6 +68,7 @@ function getDetailPageScore(url: string, labelOrText = ''): number {
   return hasDescriptiveDetailSlug || hasRegistrationSignal ? 3 : 0;
 }
 
+/** Score whether a URL/text pair looks like a fresh, event-focused destination. */
 export function scorePinnedEventUrl(url: string, labelOrText = ''): number {
   const urlScore = EVENT_PAGE_MARKERS.test(url) ? 2 : 0;
   const labelScore = EVENT_PAGE_MARKERS.test(labelOrText) ? 1 : 0;

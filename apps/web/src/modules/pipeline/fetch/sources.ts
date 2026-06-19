@@ -250,6 +250,11 @@ async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url
 
 // ─── Keyword search: Eventbrite ────────────────────────
 
+/**
+ * Query Eventbrite for keyword + region matches and normalize events as raw items.
+ * Eventbrite naturally biases toward EVENT-lane discovery payloads.
+ */
+
 export async function fetchEventbriteKeywords(
   strategy: SearchStrategy & { kind: 'keyword_search' },
   region: SearchRegion,
@@ -472,7 +477,7 @@ export async function fetchPinnedUrl(
   return { sourceId: strategy.id, items: dedupeRawContentBySourceUrl(items), errors };
 }
 
-// ─── Google Custom Search: discover scattered mentions ──
+// ─── Google Custom Search: lane-scoped discovery ─────────
 
 /**
  * Search Google Custom Search API for lane-scoped discovery candidates.

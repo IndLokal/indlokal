@@ -48,12 +48,14 @@ export function getGoogleCseApiKey(): string | undefined {
   return readEnv('GOOGLE_CSE_API_KEY');
 }
 
+/** Resolve lane-specific Google CSE ID with legacy GOOGLE_CSE_ID fallback. */
 export function resolveGoogleCseIdForLane(lane: SourceLane | undefined): string | undefined {
   const legacy = readEnv('GOOGLE_CSE_ID');
   if (!lane) return legacy;
   return readEnv(GOOGLE_CSE_ENV_BY_LANE[lane]) ?? legacy;
 }
 
+/** Whether both API key and lane-appropriate CSE ID are configured. */
 export function hasGoogleCseCredentialsForLane(lane: SourceLane | undefined): boolean {
   return Boolean(getGoogleCseApiKey() && resolveGoogleCseIdForLane(lane));
 }

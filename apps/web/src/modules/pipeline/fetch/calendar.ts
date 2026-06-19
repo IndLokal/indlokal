@@ -28,6 +28,7 @@ type IcsEvent = {
   endsAt: IcsParsedDate | null;
 };
 
+/** Filter out known holiday calendars to avoid non-community event noise. */
 export function isHolidayCalendarId(calendarId: string): boolean {
   const normalized = calendarId.trim().toLowerCase();
   return normalized.includes('holiday@group.v.calendar.google.com');
@@ -52,6 +53,7 @@ function decodeEmbeddedGoogleCalendarId(value: string): string {
   }
 }
 
+/** Extract embedded Google Calendar IDs from iframe embed markup. */
 export function extractGoogleCalendarIdsFromHtml(html: string): string[] {
   const iframePattern = /<iframe\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi;
   const calendarIds = new Set<string>();
@@ -126,6 +128,7 @@ function parseIcsDate(value: string, valueType: string | null): IcsParsedDate | 
   };
 }
 
+/** Parse ICS payload text into normalized calendar event records. */
 export function parseGoogleCalendarIcsEvents(ics: string): IcsEvent[] {
   const lines = unfoldIcsLines(ics);
   const events: IcsEvent[] = [];
@@ -270,6 +273,7 @@ function toCalendarEventRawContent(
   };
 }
 
+/** Detect raw items that originated from embedded calendar ICS feeds. */
 export function isEmbeddedCalendarEventRawContent(
   item: Pick<RawContent, 'sourceUrl' | 'text'>,
 ): boolean {
@@ -286,6 +290,7 @@ function getCalendarRawField(text: string, label: string): string | null {
   return match?.[1]?.trim() || null;
 }
 
+/** Rehydrate calendar-derived raw content into a high-confidence event payload. */
 export function extractCalendarEventFromRawContent(item: RawContent): ExtractedEvent | null {
   if (!isEmbeddedCalendarEventRawContent(item)) return null;
 
@@ -337,6 +342,10 @@ export function extractCalendarEventFromRawContent(item: RawContent): ExtractedE
   };
 }
 
+/**
+ * Fetch embedded Google Calendar ICS feeds from page HTML and emit raw items.
+ * Applies cadence gating for cron runs to avoid re-ingesting the same feed too often.
+ */
 export async function fetchEmbeddedGoogleCalendarEvents(
   sourceType: RawContent['sourceType'],
   rawHtml: string,

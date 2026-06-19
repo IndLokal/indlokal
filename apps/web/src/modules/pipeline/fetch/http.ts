@@ -65,6 +65,10 @@ async function fetchTextViaCurl(
   };
 }
 
+/**
+ * Fetch text content with native fetch first, then curl fallback on transport failure.
+ * Keeps adapter behavior resilient on hosts where Node fetch intermittently fails.
+ */
 export async function fetchTextWithFallback(
   url: string,
   options: FetchTextOptions = {},
