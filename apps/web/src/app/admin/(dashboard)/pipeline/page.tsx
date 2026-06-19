@@ -247,9 +247,12 @@ export default async function AdminPipelinePage({
           <h2 className="text-lg font-semibold">Source Reliability</h2>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {sourceStats.map((stat) => (
-              <div key={stat.sourceType} className="card-base p-4">
+              <div key={stat.key} className="card-base p-4">
                 <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold">{stat.sourceType}</h3>
+                  <div>
+                    <h3 className="text-sm font-semibold">{stat.sourceType}</h3>
+                    <p className="text-muted mt-0.5 text-xs">Lane: {stat.lane}</p>
+                  </div>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                       stat.confidenceAdjustment > 0

@@ -3,7 +3,9 @@ import { shouldAutoApprovePipelineItem } from '../review';
 
 describe('shouldAutoApprovePipelineItem', () => {
   const trustedReliability = {
+    key: 'WEBSITE_SCRAPE:COMMUNITY' as const,
     sourceType: 'WEBSITE_SCRAPE' as const,
+    lane: 'COMMUNITY' as const,
     pending: 0,
     approved: 9,
     rejected: 1,

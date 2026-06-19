@@ -1,8 +1,13 @@
 import { db } from '@/lib/db';
-import type { PipelineSourceType } from '@prisma/client';
+import type { PipelineEntityType, PipelineSourceType, PipelineItemStatus } from '@prisma/client';
+import type { SourceLane } from './types';
+
+export type SourceReliabilityKey = `${PipelineSourceType}:${SourceLane}`;
 
 export type SourceReliabilityStat = {
+  key: SourceReliabilityKey;
   sourceType: PipelineSourceType;
+  lane: SourceLane;
   pending: number;
   approved: number;
   rejected: number;
@@ -23,20 +28,41 @@ export function applySourceConfidenceAdjustment(confidence: number, adjustment: 
   return Math.max(0, Math.min(1, Math.round((confidence + adjustment) * 100) / 100));
 }
 
-export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat[]> {
-  const grouped = await db.pipelineItem.groupBy({
-    by: ['sourceType', 'status'],
-    _count: { _all: true },
-  });
+export function getSourceLaneFromEntityType(entityType: PipelineEntityType): SourceLane {
+  if (entityType === 'EVENT') return 'EVENT';
+  if (entityType === 'COMMUNITY') return 'COMMUNITY';
+  return 'RESOURCE';
+}
 
+export function buildSourceReliabilityKey(
+  sourceType: PipelineSourceType,
+  lane: SourceLane,
+): SourceReliabilityKey {
+  return `${sourceType}:${lane}`;
+}
+
+type SourceReliabilityGroupRow = {
+  sourceType: PipelineSourceType;
+  entityType: PipelineEntityType;
+  status: PipelineItemStatus;
+  _count: { _all: number };
+};
+
+export function buildSourceReliabilityStatsFromRows(
+  grouped: SourceReliabilityGroupRow[],
+): SourceReliabilityStat[] {
   const statsMap = new Map<
-    PipelineSourceType,
+    SourceReliabilityKey,
     Omit<SourceReliabilityStat, 'approvalRate' | 'confidenceAdjustment'>
   >();
 
   for (const row of grouped) {
-    const existing = statsMap.get(row.sourceType) ?? {
+    const lane = getSourceLaneFromEntityType(row.entityType);
+    const key = buildSourceReliabilityKey(row.sourceType, lane);
+    const existing = statsMap.get(key) ?? {
+      key,
       sourceType: row.sourceType,
+      lane,
       pending: 0,
       approved: 0,
       rejected: 0,
@@ -50,7 +76,7 @@ export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat
     if (row.status === 'MERGED') existing.merged += row._count._all;
 
     existing.totalReviewed = existing.approved + existing.rejected + existing.merged;
-    statsMap.set(row.sourceType, existing);
+    statsMap.set(key, existing);
   }
 
   return [...statsMap.values()]
@@ -63,12 +89,26 @@ export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat
         confidenceAdjustment: computeConfidenceAdjustment(approvalRate, stat.totalReviewed),
       };
     })
-    .sort((a, b) => b.totalReviewed - a.totalReviewed || a.sourceType.localeCompare(b.sourceType));
+    .sort(
+      (a, b) =>
+        b.totalReviewed - a.totalReviewed ||
+        a.sourceType.localeCompare(b.sourceType) ||
+        a.lane.localeCompare(b.lane),
+    );
+}
+
+export async function getSourceReliabilityStats(): Promise<SourceReliabilityStat[]> {
+  const grouped = await db.pipelineItem.groupBy({
+    by: ['sourceType', 'entityType', 'status'],
+    _count: { _all: true },
+  });
+
+  return buildSourceReliabilityStatsFromRows(grouped);
 }
 
 export async function getSourceReliabilityMap(): Promise<
-  Map<PipelineSourceType, SourceReliabilityStat>
+  Map<SourceReliabilityKey, SourceReliabilityStat>
 > {
   const stats = await getSourceReliabilityStats();
-  return new Map(stats.map((stat) => [stat.sourceType, stat]));
+  return new Map(stats.map((stat) => [stat.key, stat]));
 }

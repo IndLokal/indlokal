@@ -44,7 +44,11 @@ import {
   PipelineCircuitOpenError,
 } from './extraction';
 import { withLlmContext } from './llm-context';
-import { applySourceConfidenceAdjustment, getSourceReliabilityMap } from './reliability';
+import {
+  applySourceConfidenceAdjustment,
+  buildSourceReliabilityKey,
+  getSourceReliabilityMap,
+} from './reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
 import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
 import { suggestCommunityPersonaSegments } from './journey-tags';
@@ -656,7 +660,7 @@ async function resolveAndQueue(
     },
     select: { id: true, slug: true, name: true },
   });
-  const sourceReliabilityByType = await getSourceReliabilityMap();
+  const sourceReliabilityByKey = await getSourceReliabilityMap();
   const cityBySlug = new Map<string, { id: string; name: string }>();
   const cityById = new Map<string, { slug: string; name: string }>();
 
@@ -871,7 +875,9 @@ async function resolveAndQueue(
       continue;
     }
 
-    const reliability = sourceReliabilityByType.get(sourceRaw.sourceType as PipelineSourceType);
+    const reliability = sourceReliabilityByKey.get(
+      buildSourceReliabilityKey(sourceRaw.sourceType as PipelineSourceType, item.type),
+    );
     const confidence = applySourceConfidenceAdjustment(
       item.confidence,
       reliability?.confidenceAdjustment ?? 0,
