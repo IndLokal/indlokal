@@ -29,6 +29,7 @@ import type {
   ExtractedCommunity,
   RawContent,
   RelevanceResult,
+  SourceLane,
 } from './types';
 
 // ─── Config ────────────────────────────────────────────
@@ -153,6 +154,8 @@ function isGuardError(err: unknown): boolean {
 // ─── OpenAI client ─────────────────────────────────────
 
 type ChatMessage = { role: 'system' | 'user'; content: string };
+type LanePromptKey = SourceLane | 'DEFAULT';
+type IndexedRawContent = { item: RawContent; absoluteIndex: number };
 
 function classifyLlmError(err: unknown): string {
   const msg = String((err as { message?: unknown })?.message ?? err ?? '');
@@ -336,7 +339,7 @@ function recordBadIndexDrop() {
 
 // ─── Stage 1: Batch relevance filter ───────────────────
 
-const FILTER_SYSTEM_PROMPT = `You are a content relevance filter for IndLokal, a platform for Indian/South Asian diaspora communities in Europe.
+const FILTER_SYSTEM_PROMPT_BASE = `You are a content relevance filter for IndLokal, a platform for Indian/South Asian diaspora communities in Europe.
 
 You will receive a numbered list of content snippets from various sources (Eventbrite, Facebook, websites).
 
@@ -349,6 +352,47 @@ NOT RELEVANT: Indian restaurants (commercial), generic "curry" cooking classes n
 Return JSON: {"results": [{"index": 0, "isRelevant": true, "reason": "Diwali event by Tamil Sangam"}, ...]}
 Include every item index. Be inclusive - when in doubt, mark relevant. False positives are cheap (human reviews later). False negatives lose content.`;
 
+const FILTER_LANE_INSTRUCTIONS: Record<LanePromptKey, string> = {
+  DEFAULT:
+    'Use general diaspora relevance judgment across events, communities, and practical diaspora resources.',
+  EVENT:
+    'Focus on upcoming dated activities. Relevant items are events, registrations, agendas, calendars, or event landing pages with clear diaspora/community context. Ignore general community about-pages unless they clearly advertise an upcoming event.',
+  COMMUNITY:
+    'Focus on organisations, associations, networks, clubs, student groups, religious/cultural groups, and public directories of such groups. Ignore one-off event listings unless they clearly reveal a stable organiser/community.',
+  RESOURCE:
+    'Focus on official or institutional practical service/info pages for diaspora outcomes such as consular tasks, registration, tax, health, housing, driving, jobs, and business setup. Ignore generic blogs, commercial services, and community marketing pages.',
+};
+
+function getPromptLane(items: RawContent[]): LanePromptKey {
+  const firstLane = items[0]?._lane;
+  if (!firstLane) return 'DEFAULT';
+  return items.every((item) => item._lane === firstLane) ? firstLane : 'DEFAULT';
+}
+
+function getFilterSystemPrompt(lane: LanePromptKey): string {
+  return `${FILTER_SYSTEM_PROMPT_BASE}\n\nLANE FOCUS: ${lane}\n${FILTER_LANE_INSTRUCTIONS[lane]}`;
+}
+
+function groupItemsByLane(
+  items: RawContent[],
+): Array<{ lane: LanePromptKey; entries: IndexedRawContent[] }> {
+  const order: LanePromptKey[] = ['EVENT', 'COMMUNITY', 'RESOURCE', 'DEFAULT'];
+  const grouped = new Map<LanePromptKey, IndexedRawContent[]>();
+
+  items.forEach((item, absoluteIndex) => {
+    const lane = (item._lane ?? 'DEFAULT') as LanePromptKey;
+    const key: LanePromptKey =
+      lane === 'EVENT' || lane === 'COMMUNITY' || lane === 'RESOURCE' ? lane : 'DEFAULT';
+    const existing = grouped.get(key) ?? [];
+    existing.push({ item, absoluteIndex });
+    grouped.set(key, existing);
+  });
+
+  return order
+    .map((lane) => ({ lane, entries: grouped.get(lane) ?? [] }))
+    .filter((group) => group.entries.length > 0);
+}
+
 /**
  * Stage 1: Filter a batch of raw items for Indian diaspora relevance.
  * Cheap call - short prompt, short output, amortised across batch.
@@ -358,38 +402,48 @@ export async function filterRelevance(items: RawContent[]): Promise<RelevanceRes
 
   const allResults: RelevanceResult[] = [];
 
-  // Process in batches
-  for (let i = 0; i < items.length; i += FILTER_BATCH_SIZE) {
-    const batch = items.slice(i, i + FILTER_BATCH_SIZE);
-    const batchNumber = Math.floor(i / FILTER_BATCH_SIZE) + 1;
-    const totalBatches = Math.ceil(items.length / FILTER_BATCH_SIZE);
-    const startedAt = Date.now();
-    console.log(
-      `[Pipeline] Filter batch ${batchNumber}/${totalBatches}: ${batch.length} items starting`,
-    );
-    const batchResults = await filterBatch(batch, i);
-    console.log(
-      `[Pipeline] Filter batch ${batchNumber}/${totalBatches}: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
-    );
-    allResults.push(...batchResults);
+  const grouped = groupItemsByLane(items);
+  const totalBatches = grouped.reduce(
+    (sum, group) => sum + Math.ceil(group.entries.length / FILTER_BATCH_SIZE),
+    0,
+  );
+  let batchNumber = 0;
+
+  for (const group of grouped) {
+    for (let i = 0; i < group.entries.length; i += FILTER_BATCH_SIZE) {
+      const batch = group.entries.slice(i, i + FILTER_BATCH_SIZE);
+      batchNumber += 1;
+      const startedAt = Date.now();
+      console.log(
+        `[Pipeline] Filter batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batch.length} items starting`,
+      );
+      const batchResults = await filterBatch(batch, group.lane);
+      console.log(
+        `[Pipeline] Filter batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
+      );
+      allResults.push(...batchResults);
+    }
   }
 
   return allResults;
 }
 
-async function filterBatch(batch: RawContent[], startIndex: number): Promise<RelevanceResult[]> {
+async function filterBatch(
+  batch: IndexedRawContent[],
+  lane: LanePromptKey,
+): Promise<RelevanceResult[]> {
   // Build numbered list - keep text SHORT to save tokens
   const userMessage = batch
-    .map((item, i) => {
+    .map(({ item }, i) => {
       const preview = item.text.slice(0, 500); // 500 chars is enough for relevance
-      return `[${startIndex + i}] (${item.sourceType}) ${preview}`;
+      return `[${i}] (${item.sourceType}) ${preview}`;
     })
     .join('\n\n---\n\n');
 
   try {
     const response = await callOpenAI(
       [
-        { role: 'system', content: FILTER_SYSTEM_PROMPT },
+        { role: 'system', content: getFilterSystemPrompt(lane) },
         { role: 'user', content: userMessage },
       ],
       { maxTokens: 1000, batchSize: batch.length },
@@ -397,7 +451,7 @@ async function filterBatch(batch: RawContent[], startIndex: number): Promise<Rel
 
     const parsed = JSON.parse(response) as { results?: RelevanceResult[] };
     return (parsed.results ?? []).map((r) => ({
-      index: r.index,
+      index: batch[r.index]?.absoluteIndex ?? r.index,
       isRelevant: Boolean(r.isRelevant),
       reason: String(r.reason ?? ''),
     }));
@@ -453,7 +507,7 @@ const RESOURCE_STAGE_LIST = [
   'ANYTIME',
 ] as const;
 
-const EXTRACT_SYSTEM_PROMPT = `You are a data extraction assistant for IndLokal, a platform for Indian/South Asian diaspora communities across Europe.
+const EXTRACT_SYSTEM_PROMPT_BASE = `You are a data extraction assistant for IndLokal, a platform for Indian/South Asian diaspora communities across Europe.
 
 You will receive a numbered list of content items (pre-filtered as diaspora-relevant).
 
@@ -524,6 +578,27 @@ CRITICAL RULES:
 - Extract WhatsApp/Telegram links if present, but do not treat them as sufficient proof for a community. Prefer websiteUrl, registry/institutional listing, or a public organiser page as the evidence anchor.
 - Recognize organisation suffixes: Sangam, Sangh, Samaj, Mandal, Sabha, Verein, e.V., gUG, UG (haftungsbeschränkt), gGmbH - these are community organisers, not just event names.`;
 
+const EXTRACT_LANE_INSTRUCTIONS: Record<LanePromptKey, string> = {
+  DEFAULT:
+    'Extract whichever valid entity types are clearly present. If an item contains both event and community data, return separate entries.',
+  EVENT:
+    'Primary target is EVENT. Prefer extracting one or more dated activities, registration pages, agendas, or event landing pages. Only emit COMMUNITY if the page also clearly contains stable organiser data.',
+  COMMUNITY:
+    'Primary target is COMMUNITY. Prefer extracting the organisation/group/network itself, its city, channels, and categories. Emit EVENT only when the page clearly contains a concrete upcoming dated activity.',
+  RESOURCE:
+    'Primary target is RESOURCE. Prefer extracting practical official/institutional service or information pages. Only emit EVENT or COMMUNITY if the page clearly contains that entity and it is not just incidental chrome/navigation.',
+};
+
+function getExtractSystemPrompt(lane: LanePromptKey): string {
+  return `${EXTRACT_SYSTEM_PROMPT_BASE}\n\nLANE FOCUS: ${lane}\n${EXTRACT_LANE_INSTRUCTIONS[lane]}`;
+}
+
+function getExtractCharLimit(item: RawContent): number {
+  if (item._lane === 'EVENT') return 2000;
+  if (item._lane === 'RESOURCE') return 2200;
+  return 3000;
+}
+
 /**
  * Stage 2: Extract structured data from pre-filtered relevant items.
  * Returns extracted items with LLM-assigned city names.
@@ -535,19 +610,27 @@ export async function extractBatch(
 
   const allResults: (ExtractedData & { sourceIndex: number })[] = [];
 
-  for (let i = 0; i < items.length; i += EXTRACT_BATCH_SIZE) {
-    const batch = items.slice(i, i + EXTRACT_BATCH_SIZE);
-    const batchNumber = Math.floor(i / EXTRACT_BATCH_SIZE) + 1;
-    const totalBatches = Math.ceil(items.length / EXTRACT_BATCH_SIZE);
-    const startedAt = Date.now();
-    console.log(
-      `[Pipeline] Extract batch ${batchNumber}/${totalBatches}: ${batch.length} items starting`,
-    );
-    const batchResults = await extractBatchCall(batch, i);
-    console.log(
-      `[Pipeline] Extract batch ${batchNumber}/${totalBatches}: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
-    );
-    allResults.push(...batchResults);
+  const grouped = groupItemsByLane(items);
+  const totalBatches = grouped.reduce(
+    (sum, group) => sum + Math.ceil(group.entries.length / EXTRACT_BATCH_SIZE),
+    0,
+  );
+  let batchNumber = 0;
+
+  for (const group of grouped) {
+    for (let i = 0; i < group.entries.length; i += EXTRACT_BATCH_SIZE) {
+      const batch = group.entries.slice(i, i + EXTRACT_BATCH_SIZE);
+      batchNumber += 1;
+      const startedAt = Date.now();
+      console.log(
+        `[Pipeline] Extract batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batch.length} items starting`,
+      );
+      const batchResults = await extractBatchCall(batch, group.lane);
+      console.log(
+        `[Pipeline] Extract batch ${batchNumber}/${totalBatches} [${group.lane}]: ${batchResults.length} results in ${Date.now() - startedAt}ms`,
+      );
+      allResults.push(...batchResults);
+    }
   }
 
   return allResults;
@@ -569,17 +652,17 @@ function defaultExtractBudget(): RetryBudget {
 }
 
 async function extractBatchCall(
-  batch: RawContent[],
-  startIndex: number,
+  batch: IndexedRawContent[],
+  lane: LanePromptKey,
   budget: RetryBudget = defaultExtractBudget(),
 ): Promise<(ExtractedData & { sourceIndex: number })[]> {
   try {
-    return await extractBatchCallOnce(batch, startIndex);
+    return await extractBatchCallOnce(batch, lane);
   } catch (err) {
     // PRD/TDD-0028: budget / circuit trips must abort the run; do not split-retry.
     if (isGuardError(err)) throw err;
     console.error(
-      `[Pipeline] Extract batch failed (size=${batch.length}, start=${startIndex}): ${String(err)}`,
+      `[Pipeline] Extract batch failed (lane=${lane}, size=${batch.length}): ${String(err)}`,
     );
 
     // Single-item batch already failed - give up on this item.
@@ -601,31 +684,27 @@ async function extractBatchCall(
       deadlineMs: budget.deadlineMs,
     };
     const midpoint = Math.ceil(batch.length / 2);
-    const firstResults = await extractBatchCall(batch.slice(0, midpoint), startIndex, nextBudget);
-    const secondResults = await extractBatchCall(
-      batch.slice(midpoint),
-      startIndex + midpoint,
-      nextBudget,
-    );
+    const firstResults = await extractBatchCall(batch.slice(0, midpoint), lane, nextBudget);
+    const secondResults = await extractBatchCall(batch.slice(midpoint), lane, nextBudget);
     return [...firstResults, ...secondResults];
   }
 }
 
 async function extractBatchCallOnce(
-  batch: RawContent[],
-  startIndex: number,
+  batch: IndexedRawContent[],
+  lane: LanePromptKey,
 ): Promise<(ExtractedData & { sourceIndex: number })[]> {
   const userMessage = batch
-    .map((item, i) => {
+    .map(({ item }, i) => {
       // Give more text for extraction than for filtering
-      const content = item.text.slice(0, 3000);
-      return `[${startIndex + i}] Source: ${item.sourceType}\nURL: ${item.sourceUrl}\n${item.imageUrls?.length ? `Images: ${item.imageUrls.join(', ')}\n` : ''}Content:\n${content}`;
+      const content = item.text.slice(0, getExtractCharLimit(item));
+      return `[${i}] Source: ${item.sourceType}\nURL: ${item.sourceUrl}\n${item.imageUrls?.length ? `Images: ${item.imageUrls.join(', ')}\n` : ''}Content:\n${content}`;
     })
     .join('\n\n════════════════════\n\n');
 
   const response = await callOpenAI(
     [
-      { role: 'system', content: EXTRACT_SYSTEM_PROMPT },
+      { role: 'system', content: getExtractSystemPrompt(lane) },
       { role: 'user', content: userMessage },
     ],
     { maxTokens: 4000, timeoutMs: 120_000, batchSize: batch.length },
@@ -641,7 +720,13 @@ async function extractBatchCallOnce(
     .filter(
       (item) => item.type === 'EVENT' || item.type === 'COMMUNITY' || item.type === 'RESOURCE',
     )
-    .map((item) => normalizeParsedItem(item, startIndex, batch.length));
+    .map((item) => {
+      const normalizedItem = normalizeParsedItem(item, 0, batch.length);
+      if (!normalizedItem) return null;
+      const batchEntry = batch[normalizedItem.sourceIndex];
+      if (!batchEntry) return null;
+      return { ...normalizedItem, sourceIndex: batchEntry.absoluteIndex };
+    });
 
   // Drop items the LLM tagged with an out-of-range index - silent mis-attribution
   // would link extracted content to the wrong RawContent source.
@@ -725,6 +810,8 @@ export const __testing = {
   assertBudgetAvailable,
   recordCallSuccess,
   recordCallFailure,
+  getPromptLane,
+  getExtractCharLimit,
 };
 
 function normalizeEvent(raw: Record<string, unknown>): ExtractedEvent {
