@@ -163,6 +163,14 @@ async function main() {
   console.log(`  Errors:               ${result.errors.length}`);
   console.log(`  Duration:             ${result.duration}ms`);
 
+  console.log('\nLane outcomes:');
+  for (const lane of ['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const) {
+    const metrics = result.laneBreakdown[lane];
+    console.log(
+      `  ${lane.padEnd(10)} fetched ${String(metrics.fetched).padStart(3)} | filter ${String(metrics.passedFilter).padStart(3)} | extracted ${String(metrics.extracted).padStart(3)} | queued ${String(metrics.queued).padStart(3)} | dupes ${String(metrics.duplicates).padStart(3)} | no-city ${String(metrics.noCity).padStart(3)} | past ${String(metrics.past).padStart(3)}`,
+    );
+  }
+
   if (result.stageTimings && Object.keys(result.stageTimings).length > 0) {
     console.log('\nStage timings:');
     for (const [stage, duration] of Object.entries(result.stageTimings)) {

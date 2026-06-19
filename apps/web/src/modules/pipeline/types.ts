@@ -274,6 +274,20 @@ export type PipelineCityBreakdown = {
   pastEvents: number;
 };
 
+export type PipelineLaneMetricKey = 'EVENT' | 'COMMUNITY' | 'RESOURCE' | 'UNKNOWN';
+
+export type PipelineLaneMetrics = {
+  fetched: number;
+  passedFilter: number;
+  extracted: number;
+  queued: number;
+  duplicates: number;
+  noCity: number;
+  past: number;
+};
+
+export type PipelineLaneBreakdown = Record<PipelineLaneMetricKey, PipelineLaneMetrics>;
+
 export type PipelineRunResult = {
   regionsScanned: number;
   sourcesProcessed: number;
@@ -299,6 +313,8 @@ export type PipelineRunResult = {
   budgetExceeded: boolean;
   /** PRD-0028: consecutive LLM failures tripped the circuit breaker. */
   circuitBreakerTripped: boolean;
+  /** Lane-level run outcomes for event/community/resource visibility. */
+  laneBreakdown: PipelineLaneBreakdown;
   /** City-level queue outcomes for scoped diagnosis (Berlin/Stuttgart etc.). */
   cityBreakdown: PipelineCityBreakdown[];
 };

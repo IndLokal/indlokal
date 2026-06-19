@@ -77,6 +77,8 @@ import type {
   ExtractedData,
   ExtractedEvent,
   ExtractedResource,
+  PipelineLaneBreakdown,
+  PipelineLaneMetricKey,
   RawContent,
   PipelineRunResult,
   ResolutionProvenance,
@@ -87,6 +89,65 @@ import type {
 export type { PipelineRunResult } from './types';
 
 type Region = SearchRegion;
+
+function buildEmptyLaneBreakdown(): PipelineLaneBreakdown {
+  return {
+    EVENT: {
+      fetched: 0,
+      passedFilter: 0,
+      extracted: 0,
+      queued: 0,
+      duplicates: 0,
+      noCity: 0,
+      past: 0,
+    },
+    COMMUNITY: {
+      fetched: 0,
+      passedFilter: 0,
+      extracted: 0,
+      queued: 0,
+      duplicates: 0,
+      noCity: 0,
+      past: 0,
+    },
+    RESOURCE: {
+      fetched: 0,
+      passedFilter: 0,
+      extracted: 0,
+      queued: 0,
+      duplicates: 0,
+      noCity: 0,
+      past: 0,
+    },
+    UNKNOWN: {
+      fetched: 0,
+      passedFilter: 0,
+      extracted: 0,
+      queued: 0,
+      duplicates: 0,
+      noCity: 0,
+      past: 0,
+    },
+  };
+}
+
+function getLaneMetricKeyForRaw(item: RawContent): PipelineLaneMetricKey {
+  return item._lane ?? 'UNKNOWN';
+}
+
+function getLaneMetricKeyForExtracted(
+  item: ExtractedData,
+): Exclude<PipelineLaneMetricKey, 'UNKNOWN'> {
+  return item.type;
+}
+
+function incrementLaneMetric(
+  breakdown: PipelineLaneBreakdown,
+  lane: PipelineLaneMetricKey,
+  field: keyof PipelineLaneBreakdown[PipelineLaneMetricKey],
+): void {
+  breakdown[lane][field] += 1;
+}
 
 export type PipelineRunScope = {
   citySlugs?: string[];
@@ -231,6 +292,7 @@ export async function runPipeline(
     itemsDroppedBadIndex: 0,
     budgetExceeded: false,
     circuitBreakerTripped: false,
+    laneBreakdown: buildEmptyLaneBreakdown(),
     cityBreakdown: [],
   };
 
@@ -429,6 +491,9 @@ export async function runPipeline(
   console.log(
     `[Pipeline] Done: ${result.itemsQueued} queued, ${result.itemsSkippedDuplicate} dupes, ${result.itemsSkippedNoCity} no-city, ${result.llmCalls} LLM calls (~${result.llmTokensEstimate} tokens) in ${result.duration}ms`,
   );
+  console.log(
+    `[Pipeline] Lane outcomes: fetched E/C/R/U=${result.laneBreakdown.EVENT.fetched}/${result.laneBreakdown.COMMUNITY.fetched}/${result.laneBreakdown.RESOURCE.fetched}/${result.laneBreakdown.UNKNOWN.fetched}; queued E/C/R=${result.laneBreakdown.EVENT.queued}/${result.laneBreakdown.COMMUNITY.queued}/${result.laneBreakdown.RESOURCE.queued}; dupes E/C/R=${result.laneBreakdown.EVENT.duplicates}/${result.laneBreakdown.COMMUNITY.duplicates}/${result.laneBreakdown.RESOURCE.duplicates}; no-city E/C/R=${result.laneBreakdown.EVENT.noCity}/${result.laneBreakdown.COMMUNITY.noCity}/${result.laneBreakdown.RESOURCE.noCity}`,
+  );
 
   return result;
 }
@@ -540,6 +605,9 @@ async function fetchAllSources(
   result.regionsScanned = regions.length;
 
   result.itemsFetched = allRaw.length;
+  for (const item of allRaw) {
+    incrementLaneMetric(result.laneBreakdown, getLaneMetricKeyForRaw(item), 'fetched');
+  }
   console.log(`[Pipeline] Total fetched: ${allRaw.length} raw items`);
 
   // Deduplicate by sourceUrl
@@ -586,6 +654,9 @@ async function filterRelevantItems(
   const relevantItems = [...directCalendarItems, ...llmRelevantItems];
 
   result.itemsPassedFilter = relevantItems.length;
+  for (const item of relevantItems) {
+    incrementLaneMetric(result.laneBreakdown, getLaneMetricKeyForRaw(item), 'passedFilter');
+  }
   console.log(
     `[Pipeline] Passed filter: ${relevantItems.length}/${prefiltered.length} (from ${uniqueRaw.length} raw)`,
   );
@@ -624,6 +695,9 @@ async function extractRelevantItems(
   ];
 
   result.itemsExtracted = extracted.length;
+  for (const item of extracted) {
+    incrementLaneMetric(result.laneBreakdown, getLaneMetricKeyForExtracted(item), 'extracted');
+  }
   const eventCount = extracted.filter((item) => item.type === 'EVENT').length;
   const communityCount = extracted.filter((item) => item.type === 'COMMUNITY').length;
   const resourceCount = extracted.filter((item) => item.type === 'RESOURCE').length;
@@ -796,6 +870,7 @@ async function resolveAndQueue(
       } else {
         decisionCounts.noCityResources++;
       }
+      incrementLaneMetric(result.laneBreakdown, getLaneMetricKeyForExtracted(item), 'noCity');
       console.log(
         `[Pipeline] Skipped (no city): ${getExtractedItemLabel(item)} - cityName: ${item.cityName}`,
       );
@@ -815,6 +890,7 @@ async function resolveAndQueue(
         result.itemsSkippedPast++;
         decisionCounts.pastEvents++;
         cityCounter.pastEvents++;
+        incrementLaneMetric(result.laneBreakdown, 'EVENT', 'past');
         continue;
       }
     }
@@ -828,6 +904,7 @@ async function resolveAndQueue(
       result.itemsSkippedDuplicate++;
       decisionCounts.duplicateEvents++;
       cityCounter.duplicateEvents++;
+      incrementLaneMetric(result.laneBreakdown, 'EVENT', 'duplicates');
       continue;
     }
 
@@ -836,12 +913,15 @@ async function resolveAndQueue(
       if (item.type === 'EVENT') {
         decisionCounts.duplicateEvents++;
         cityCounter.duplicateEvents++;
+        incrementLaneMetric(result.laneBreakdown, 'EVENT', 'duplicates');
       } else if (item.type === 'COMMUNITY') {
         decisionCounts.duplicateCommunities++;
         cityCounter.duplicateCommunities++;
+        incrementLaneMetric(result.laneBreakdown, 'COMMUNITY', 'duplicates');
       } else {
         decisionCounts.duplicateResources++;
         cityCounter.duplicateResources++;
+        incrementLaneMetric(result.laneBreakdown, 'RESOURCE', 'duplicates');
       }
       continue;
     }
@@ -972,14 +1052,17 @@ async function resolveAndQueue(
       decisionCounts.queuedEvents++;
       cityCounter.queuedEvents++;
       if (isCityPending) decisionCounts.queuedPendingCityEvents++;
+      incrementLaneMetric(result.laneBreakdown, 'EVENT', 'queued');
     } else if (queuedItem.type === 'COMMUNITY') {
       decisionCounts.queuedCommunities++;
       cityCounter.queuedCommunities++;
       if (isCityPending) decisionCounts.queuedPendingCityCommunities++;
+      incrementLaneMetric(result.laneBreakdown, 'COMMUNITY', 'queued');
     } else {
       decisionCounts.queuedResources++;
       cityCounter.queuedResources++;
       if (isCityPending) decisionCounts.queuedPendingCityResources++;
+      incrementLaneMetric(result.laneBreakdown, 'RESOURCE', 'queued');
     }
 
     const autoApprove =

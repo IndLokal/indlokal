@@ -226,6 +226,45 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
             <MetricCard label="LLM calls" value={result.llmCalls} />
           </div>
 
+          <details className="mt-4 rounded-[var(--radius-button)] border border-slate-200 bg-white/80 p-3">
+            <summary className="cursor-pointer text-xs font-medium text-slate-700">
+              View lane-level outcomes
+            </summary>
+            <div className="mt-3 overflow-x-auto">
+              <table className="min-w-full text-left text-xs">
+                <thead className="text-slate-500">
+                  <tr>
+                    <th className="px-2 py-1 font-medium">Lane</th>
+                    <th className="px-2 py-1 font-medium">Fetched</th>
+                    <th className="px-2 py-1 font-medium">Passed filter</th>
+                    <th className="px-2 py-1 font-medium">Extracted</th>
+                    <th className="px-2 py-1 font-medium">Queued</th>
+                    <th className="px-2 py-1 font-medium">Duplicates</th>
+                    <th className="px-2 py-1 font-medium">No city</th>
+                    <th className="px-2 py-1 font-medium">Past</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(['EVENT', 'COMMUNITY', 'RESOURCE', 'UNKNOWN'] as const).map((lane) => {
+                    const metrics = result.laneBreakdown[lane];
+                    return (
+                      <tr key={lane} className="border-t border-slate-100 text-slate-700">
+                        <td className="px-2 py-1.5 font-medium">{lane}</td>
+                        <td className="px-2 py-1.5">{metrics.fetched}</td>
+                        <td className="px-2 py-1.5">{metrics.passedFilter}</td>
+                        <td className="px-2 py-1.5">{metrics.extracted}</td>
+                        <td className="px-2 py-1.5">{metrics.queued}</td>
+                        <td className="px-2 py-1.5">{metrics.duplicates}</td>
+                        <td className="px-2 py-1.5">{metrics.noCity}</td>
+                        <td className="px-2 py-1.5">{metrics.past}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </details>
+
           <div className="text-muted mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
             <StatLine label="Sources processed" value={result.sourcesProcessed} />
             <StatLine label="Passed filter" value={result.itemsPassedFilter} />
@@ -274,8 +313,8 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                     <tr>
                       <th className="px-2 py-1 font-medium">City</th>
                       <th className="px-2 py-1 font-medium">Extracted</th>
-                      <th className="px-2 py-1 font-medium">Queued (E/C)</th>
-                      <th className="px-2 py-1 font-medium">Duplicates (E/C)</th>
+                      <th className="px-2 py-1 font-medium">Queued (E/C/R)</th>
+                      <th className="px-2 py-1 font-medium">Duplicates (E/C/R)</th>
                       <th className="px-2 py-1 font-medium">Past events</th>
                     </tr>
                   </thead>
@@ -285,10 +324,11 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
                         <td className="px-2 py-1.5">{city.cityName}</td>
                         <td className="px-2 py-1.5">{city.extracted}</td>
                         <td className="px-2 py-1.5">
-                          {city.queuedEvents}/{city.queuedCommunities}
+                          {city.queuedEvents}/{city.queuedCommunities}/{city.queuedResources}
                         </td>
                         <td className="px-2 py-1.5">
-                          {city.duplicateEvents}/{city.duplicateCommunities}
+                          {city.duplicateEvents}/{city.duplicateCommunities}/
+                          {city.duplicateResources}
                         </td>
                         <td className="px-2 py-1.5">{city.pastEvents}</td>
                       </tr>
