@@ -4,6 +4,21 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { PipelineRunResult, PipelineRunScope } from '@/modules/pipeline';
 
+type PipelineRunMode =
+  | 'balanced'
+  | 'event_refresh'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
+
 type RegionOption = {
   id: string;
   label: string;
@@ -18,6 +33,23 @@ type RunPipelineButtonProps = {
   regions: RegionOption[];
   cities: CityOption[];
 };
+
+const RUN_MODE_OPTIONS: Array<{ value: PipelineRunMode; label: string }> = [
+  { value: 'balanced', label: 'Balanced (default)' },
+  { value: 'event_refresh', label: 'Event refresh' },
+  { value: 'community_discovery', label: 'Community discovery' },
+  { value: 'resource_discovery', label: 'Resource discovery' },
+  { value: 'evidence_verification', label: 'Evidence verification' },
+];
+
+const INTENT_PROFILE_OPTIONS: Array<{ value: PipelineSourceIntentProfile; label: string }> = [
+  { value: 'all', label: 'All intents (default)' },
+  { value: 'activity_only', label: 'Activity only' },
+  { value: 'community_only', label: 'Community only' },
+  { value: 'service_only', label: 'Service only' },
+  { value: 'evidence_only', label: 'Evidence only' },
+  { value: 'channel_only', label: 'Channel only' },
+];
 
 function getScopeLabel(
   scope: PipelineRunScope | null,
@@ -41,6 +73,9 @@ function getScopeLabel(
 
 export default function RunPipelineButton({ regions, cities }: RunPipelineButtonProps) {
   const router = useRouter();
+  const [runMode, setRunMode] = useState<PipelineRunMode>('balanced');
+  const [sourceIntentProfile, setSourceIntentProfile] =
+    useState<PipelineSourceIntentProfile>('all');
   const [runningKey, setRunningKey] = useState<string | null>(null);
   const [result, setResult] = useState<PipelineRunResult | null>(null);
   const [dispatchMessage, setDispatchMessage] = useState<string | null>(null);
@@ -58,7 +93,11 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
       const response = await fetch('/api/admin/pipeline/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(nextScope ?? {}),
+        body: JSON.stringify({
+          ...(nextScope ?? {}),
+          runMode,
+          sourceIntentProfile,
+        }),
       });
 
       const payload = (await response.json()) as
@@ -67,6 +106,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
             mode: 'direct';
             scope: PipelineRunScope | null;
             result: PipelineRunResult;
+            note?: string;
           }
         | {
             ok: true;
@@ -90,7 +130,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
         const failedCount = payload.dispatch.failed?.length ?? 0;
         setDispatchMessage(
           failedCount === 0
-            ? `Dispatched ${payload.dispatch.dispatched.length} regional cron shards.`
+            ? `Dispatched ${payload.dispatch.dispatched.length} regional shards.`
             : `Dispatched ${payload.dispatch.dispatched.length} shards, ${failedCount} failed to dispatch.`,
         );
         setScope(null);
@@ -98,6 +138,9 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
       } else if (payload.ok && payload.mode === 'direct') {
         setResult(payload.result);
         setScope(payload.scope);
+        if (payload.note) {
+          setDispatchMessage(payload.note);
+        }
       }
       router.refresh();
     } catch (err) {
@@ -108,37 +151,64 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
   }
 
   return (
-    <div className="card-base w-full max-w-2xl p-5">
-      <div className="flex flex-col gap-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <p className="text-brand-700 text-xs font-semibold tracking-[0.18em] uppercase">
-              Manual Run Controls
-            </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-900">Run pipeline by shard</h2>
-            <p className="text-muted mt-1 max-w-xl text-sm">
-              Manual runs now follow the same regional scope model as cron. Run one region to debug
-              yield, or run all enabled regions for a full pass.
-            </p>
-          </div>
-          <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">
-            {regions.length} enabled regions
-          </div>
-        </div>
+    <div className="w-full">
+      <div className="flex flex-col items-stretch gap-2 sm:items-end">
+        <button
+          onClick={() => handleRun(undefined, 'all')}
+          disabled={runningKey != null}
+          className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {runningKey === 'all' ? 'Running all regions...' : 'Run all regions'}
+        </button>
+        <span className="text-muted text-xs sm:text-right">
+          Runs all {regions.length} enabled regions. Tries async shard dispatch first, then falls
+          back to direct execution if dispatch is unavailable.
+        </span>
 
-        <div className="rounded-[var(--radius-card)] border border-slate-200 bg-slate-50/80 p-3">
-          <div className="flex flex-col gap-3">
-            <button
-              onClick={() => handleRun(undefined, 'all')}
-              disabled={runningKey != null}
-              className="btn-primary w-full px-4 py-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {runningKey === 'all' ? '⏳ Running all regions…' : 'Run all enabled regions'}
-            </button>
-            <p className="text-muted text-xs">
-              Runs via cron-style regional dispatch (asynchronous). Use city/region shards below for
-              immediate per-run metrics.
-            </p>
+        <details className="w-full rounded-[var(--radius-button)] border border-slate-200 bg-white">
+          <summary className="cursor-pointer px-3 py-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
+            Advanced · run a single region or city
+          </summary>
+          <div className="flex flex-col gap-3 px-3 pt-1 pb-3">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  Run mode
+                </span>
+                <select
+                  value={runMode}
+                  onChange={(event) => setRunMode(event.target.value as PipelineRunMode)}
+                  disabled={runningKey != null}
+                  className="rounded-[var(--radius-button)] border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {RUN_MODE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-xs font-medium tracking-wide text-slate-500 uppercase">
+                  Intent profile
+                </span>
+                <select
+                  value={sourceIntentProfile}
+                  onChange={(event) =>
+                    setSourceIntentProfile(event.target.value as PipelineSourceIntentProfile)
+                  }
+                  disabled={runningKey != null}
+                  className="rounded-[var(--radius-button)] border border-slate-200 bg-white px-2 py-2 text-sm text-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {INTENT_PROFILE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
 
             <div>
               <p className="mb-2 text-xs font-medium tracking-wide text-slate-500 uppercase">
@@ -178,7 +248,7 @@ export default function RunPipelineButton({ regions, cities }: RunPipelineButton
               </div>
             )}
           </div>
-        </div>
+        </details>
       </div>
 
       {result && (

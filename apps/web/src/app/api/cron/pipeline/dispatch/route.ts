@@ -52,6 +52,11 @@ type DispatchOutcome = {
   error?: string;
 };
 
+type DispatchRunOptions = {
+  runMode?: string;
+  sourceIntentProfile?: string;
+};
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('authorization')?.replace('Bearer ', '');
   if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
@@ -71,6 +76,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, dispatched: [], reason: 'no enabled regions' });
   }
 
+  const requestBody = ((await req.json().catch(() => null)) ?? {}) as DispatchRunOptions;
+  const runMode = typeof requestBody.runMode === 'string' ? requestBody.runMode.trim() : '';
+  const sourceIntentProfile =
+    typeof requestBody.sourceIntentProfile === 'string'
+      ? requestBody.sourceIntentProfile.trim()
+      : '';
+
   const concurrency = getConcurrency();
   const outcomes: DispatchOutcome[] = [];
   let cursor = 0;
@@ -79,7 +91,13 @@ export async function POST(req: NextRequest) {
     while (cursor < regions.length) {
       const idx = cursor++;
       const region = regions[idx];
-      const url = `${baseUrl}/api/cron/pipeline?region=${encodeURIComponent(region.id)}`;
+      const shardUrl = new URL(`${baseUrl}/api/cron/pipeline`);
+      shardUrl.searchParams.set('region', region.id);
+      if (runMode) shardUrl.searchParams.set('runMode', runMode);
+      if (sourceIntentProfile) {
+        shardUrl.searchParams.set('sourceIntentProfile', sourceIntentProfile);
+      }
+      const url = shardUrl.toString();
       try {
         // Per-region runs can take up to 300s, but we don't await the body -
         // we only need to know the dispatch succeeded. The downstream
