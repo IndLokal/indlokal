@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   computeSimilarity,
+  isCityWithinCommunityCoverage,
   isLikelyStaleEventPage,
   normalizeEventTitleForDedup,
   prefilterLaneAwareItems,
@@ -334,5 +335,21 @@ describe('resolveEventCityDecision', () => {
     expect(resolution.cityId).toBe('city-1');
     expect(resolution.isCityPending).toBe(true);
     expect(resolution.resolutionSource).toBe('fallback');
+  });
+});
+
+describe('isCityWithinCommunityCoverage', () => {
+  it('allows events when community coverage is unavailable', () => {
+    expect(isCityWithinCommunityCoverage('city-1', undefined)).toBe(true);
+  });
+
+  it('allows events within metro/satellite community coverage', () => {
+    const allowed = new Set(['city-1', 'city-2', 'city-3']);
+    expect(isCityWithinCommunityCoverage('city-2', allowed)).toBe(true);
+  });
+
+  it('rejects events outside community coverage', () => {
+    const allowed = new Set(['city-1', 'city-2']);
+    expect(isCityWithinCommunityCoverage('city-4', allowed)).toBe(false);
   });
 });

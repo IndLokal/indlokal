@@ -953,6 +953,50 @@ async function resolveAndQueue(
     cityById.set(c.id, { slug: c.slug, name: c.name });
   }
 
+  const hintedCommunityIds = [
+    ...new Set(
+      relevantItems
+        .map((item) => item._hintCommunityId)
+        .filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+    ),
+  ];
+  const communityCityCoverageById = new Map<string, Set<string>>();
+  if (hintedCommunityIds.length > 0) {
+    const communities = await db.community.findMany({
+      where: { id: { in: hintedCommunityIds } },
+      select: {
+        id: true,
+        city: {
+          select: {
+            id: true,
+            metroRegion: {
+              select: {
+                id: true,
+                satelliteCities: { select: { id: true } },
+              },
+            },
+            satelliteCities: { select: { id: true } },
+          },
+        },
+      },
+    });
+
+    for (const community of communities) {
+      const coveredCityIds = new Set<string>([community.city.id]);
+      if (community.city.metroRegion) {
+        coveredCityIds.add(community.city.metroRegion.id);
+        for (const satellite of community.city.metroRegion.satelliteCities) {
+          coveredCityIds.add(satellite.id);
+        }
+      } else {
+        for (const satellite of community.city.satelliteCities) {
+          coveredCityIds.add(satellite.id);
+        }
+      }
+      communityCityCoverageById.set(community.id, coveredCityIds);
+    }
+  }
+
   const decisionCounts = {
     queuedEvents: 0,
     queuedCommunities: 0,
@@ -1087,6 +1131,22 @@ async function resolveAndQueue(
         `[Pipeline] Skipped (no city): ${getExtractedItemLabel(item)} - cityName: ${item.cityName}`,
       );
       continue;
+    }
+
+    if (item.type === 'EVENT' && sourceRaw._hintCommunityId) {
+      const allowedCityIds = communityCityCoverageById.get(sourceRaw._hintCommunityId);
+      if (!isCityWithinCommunityCoverage(cityId, allowedCityIds)) {
+        collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'noCity');
+        result.itemsSkippedNoCity++;
+        decisionCounts.noCityEvents++;
+        incrementLaneMetric(result.laneBreakdown, 'EVENT', 'noCity');
+        incrementLaneMetric(result.laneBreakdown, 'EVENT', 'cityConflicts');
+        const resolvedCityName = cityById.get(cityId)?.name ?? cityId;
+        console.warn(
+          `[Pipeline] Skipped event due to community-city mismatch: ${getExtractedItemLabel(item)} resolved city "${resolvedCityName}" is outside hinted community scope (${sourceRaw._hintCommunityId}).`,
+        );
+        continue;
+      }
     }
 
     const cityCounter = getCityDecisionCounter(cityId);
@@ -1539,6 +1599,16 @@ type EventCityResolution = {
   cityConflictReason?: string;
   resolutionSource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved';
 };
+
+export function isCityWithinCommunityCoverage(
+  cityId: string,
+  allowedCityIds: Set<string> | undefined,
+): boolean {
+  // Fail-open when no coverage is available so we do not drop events solely due
+  // to missing community metadata.
+  if (!allowedCityIds || allowedCityIds.size === 0) return true;
+  return allowedCityIds.has(cityId);
+}
 
 /**
  * Verify whether extracted organizer/host appears to match the hinted community.
