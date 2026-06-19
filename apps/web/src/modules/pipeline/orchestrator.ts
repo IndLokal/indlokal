@@ -725,47 +725,60 @@ async function resolveAndQueue(
     const sourceRaw = relevantItems[item.sourceIndex];
     if (!sourceRaw) continue;
 
-    // Resolve city: LLM cityName → DB lookup
-    // Fallback chain: LLM cityName → hintCitySlug from pinned URL → skip
     let cityId: string | null = null;
-
-    if (item.cityName) {
-      const match = resolveCityMatch(item.cityName, cities, CITY_NAME_ALIASES);
-      if (match) cityId = match.id;
-    }
-
-    if (!cityId) {
-      const hint = sourceRaw._hintCitySlug;
-      if (hint) {
-        const match = cityBySlug.get(hint);
-        if (match) cityId = match.id;
-      }
-    }
-
     let isCityPending = false;
-    if (!cityId && fallbackCity && fallbackCitySlug) {
-      cityId = fallbackCity.id;
-      isCityPending = true;
-      console.log(
-        `[Pipeline] Pending city fallback: ${getExtractedItemLabel(item)} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
-      );
-    }
-
     let cityConflict = false;
     let cityConflictReason: string | undefined;
+    let cityResolutionSource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved' = 'unresolved';
     if (item.type === 'EVENT') {
-      const signalCity = inferCityFromEventSignals(item, cities);
-      if (signalCity) {
-        if (!cityId) {
-          cityId = signalCity.id;
-        } else if (cityId !== signalCity.id) {
-          cityConflict = true;
-          cityId = signalCity.id;
-          cityConflictReason = `City conflict: LLM city "${item.cityName ?? 'unknown'}" disagreed with event location signals; assigned "${signalCity.name}".`;
-          console.warn(
-            `[Pipeline] City conflict corrected for event "${item.title}": llm="${item.cityName ?? 'unknown'}" signal="${signalCity.name}"`,
-          );
+      const resolution = resolveEventCityDecision(
+        item,
+        sourceRaw,
+        cities,
+        cityBySlug,
+        fallbackCity,
+        fallbackCitySlug,
+      );
+      cityId = resolution.cityId;
+      isCityPending = resolution.isCityPending;
+      cityConflict = resolution.cityConflict;
+      cityConflictReason = resolution.cityConflictReason;
+      cityResolutionSource = resolution.resolutionSource;
+      if (isCityPending && fallbackCitySlug) {
+        console.log(
+          `[Pipeline] Pending city fallback: ${getExtractedItemLabel(item)} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+        );
+      }
+      if (cityConflict && cityConflictReason) {
+        console.warn(`[Pipeline] ${cityConflictReason}`);
+      }
+    } else {
+      if (item.cityName) {
+        const match = resolveCityMatch(item.cityName, cities, CITY_NAME_ALIASES);
+        if (match) {
+          cityId = match.id;
+          cityResolutionSource = 'llm';
         }
+      }
+
+      if (!cityId) {
+        const hint = sourceRaw._hintCitySlug;
+        if (hint) {
+          const match = cityBySlug.get(hint);
+          if (match) {
+            cityId = match.id;
+            cityResolutionSource = 'hint';
+          }
+        }
+      }
+
+      if (!cityId && fallbackCity && fallbackCitySlug) {
+        cityId = fallbackCity.id;
+        isCityPending = true;
+        cityResolutionSource = 'fallback';
+        console.log(
+          `[Pipeline] Pending city fallback: ${getExtractedItemLabel(item)} - cityName: ${item.cityName ?? 'n/a'} => ${fallbackCitySlug}`,
+        );
       }
     }
 
@@ -895,7 +908,8 @@ async function resolveAndQueue(
         matchedEntityId: isDupe.matchedId ?? undefined,
         matchScore: isDupe.matchScore ?? undefined,
         reviewNotes: isCityPending
-          ? `CITY_PENDING: extracted city "${item.cityName ?? 'unknown'}" did not match configured cities; queued with fallback city "${fallbackCitySlug}" for admin review.`
+          ? (cityConflictReason ??
+            `CITY_PENDING: extracted city "${item.cityName ?? 'unknown'}" did not match configured cities; queued with fallback city "${fallbackCitySlug}" for admin review.`)
           : cityConflict
             ? cityConflictReason
             : undefined,
@@ -904,10 +918,11 @@ async function resolveAndQueue(
             ? {
                 cityResolution: {
                   status: isCityPending ? 'PENDING' : 'CORRECTED',
+                  source: cityResolutionSource,
                   extractedCityName: item.cityName ?? null,
                   fallbackCitySlug: isCityPending ? fallbackCitySlug : null,
                   reason: isCityPending
-                    ? 'No city match found in configured cities/aliases.'
+                    ? (cityConflictReason ?? 'No city match found in configured cities/aliases.')
                     : (cityConflictReason ?? 'City conflict corrected from event signals.'),
                 },
               }
@@ -1123,21 +1138,147 @@ function findCitiesMentionedInText(
   return [...found.values()];
 }
 
+type EventSignalCitySummary = {
+  city: { id: string; slug: string; name: string } | null;
+  ambiguous: boolean;
+};
+
+function summarizeEventSignalCities(
+  event: ExtractedEvent,
+  cities: Array<{ id: string; slug: string; name: string }>,
+): EventSignalCitySummary {
+  const signalTexts = [event.venueAddress, event.venueName, event.hostCommunity, event.title];
+  const found = new Map<string, { id: string; slug: string; name: string }>();
+
+  for (const signal of signalTexts) {
+    for (const city of findCitiesMentionedInText(signal, cities, CITY_NAME_ALIASES)) {
+      found.set(city.id, city);
+    }
+  }
+
+  if (found.size === 1) {
+    return { city: [...found.values()][0] ?? null, ambiguous: false };
+  }
+  if (found.size > 1) {
+    return { city: null, ambiguous: true };
+  }
+  return { city: null, ambiguous: false };
+}
+
+type EventCityResolution = {
+  cityId: string | null;
+  isCityPending: boolean;
+  cityConflict: boolean;
+  cityConflictReason?: string;
+  resolutionSource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved';
+};
+
+function doesEventHostAgreeWithHint(event: ExtractedEvent, hintedCommunityName?: string): boolean {
+  if (!event.hostCommunity) return true;
+  if (!hintedCommunityName) return false;
+
+  const normalizedHost = normalizeCommunityName(event.hostCommunity);
+  const normalizedHint = normalizeCommunityName(hintedCommunityName);
+  if (!normalizedHost || !normalizedHint) return false;
+  return (
+    normalizedHost === normalizedHint ||
+    normalizedHost.includes(normalizedHint) ||
+    normalizedHint.includes(normalizedHost)
+  );
+}
+
+export function resolveEventCityDecision(
+  event: ExtractedEvent,
+  sourceRaw: RawContent,
+  cities: Array<{ id: string; slug: string; name: string }>,
+  cityBySlug: Map<string, { id: string; name: string }>,
+  fallbackCity: { id: string; name: string } | null,
+  fallbackCitySlug?: string,
+): EventCityResolution {
+  const llmMatch = event.cityName
+    ? resolveCityMatch(event.cityName, cities, CITY_NAME_ALIASES)
+    : null;
+  const hintedCity = sourceRaw._hintCitySlug
+    ? (cityBySlug.get(sourceRaw._hintCitySlug) ?? null)
+    : null;
+  const signalSummary = summarizeEventSignalCities(event, cities);
+
+  if (signalSummary.ambiguous) {
+    if (fallbackCity && fallbackCitySlug) {
+      return {
+        cityId: fallbackCity.id,
+        isCityPending: true,
+        cityConflict: false,
+        cityConflictReason: `City conflict: multiple city signals found for event "${event.title}"; queued with fallback city "${fallbackCitySlug}" for review.`,
+        resolutionSource: 'fallback',
+      };
+    }
+    return {
+      cityId: null,
+      isCityPending: false,
+      cityConflict: false,
+      cityConflictReason: `City conflict: multiple city signals found for event "${event.title}".`,
+      resolutionSource: 'unresolved',
+    };
+  }
+
+  if (signalSummary.city) {
+    const llmConflict = llmMatch && llmMatch.id !== signalSummary.city.id;
+    return {
+      cityId: signalSummary.city.id,
+      isCityPending: false,
+      cityConflict: Boolean(llmConflict),
+      cityConflictReason: llmConflict
+        ? `City conflict: LLM city "${event.cityName ?? 'unknown'}" disagreed with event location signals; assigned "${signalSummary.city.name}".`
+        : undefined,
+      resolutionSource: 'signal',
+    };
+  }
+
+  if (llmMatch) {
+    return {
+      cityId: llmMatch.id,
+      isCityPending: false,
+      cityConflict: false,
+      resolutionSource: 'llm',
+    };
+  }
+
+  if (
+    hintedCity &&
+    (!event.isOnline || doesEventHostAgreeWithHint(event, sourceRaw._hintCommunityName))
+  ) {
+    return {
+      cityId: hintedCity.id,
+      isCityPending: false,
+      cityConflict: false,
+      resolutionSource: 'hint',
+    };
+  }
+
+  if (fallbackCity && fallbackCitySlug) {
+    return {
+      cityId: fallbackCity.id,
+      isCityPending: true,
+      cityConflict: false,
+      cityConflictReason: `CITY_PENDING: extracted city "${event.cityName ?? 'unknown'}" did not match configured cities; queued with fallback city "${fallbackCitySlug}" for admin review.`,
+      resolutionSource: 'fallback',
+    };
+  }
+
+  return {
+    cityId: null,
+    isCityPending: false,
+    cityConflict: false,
+    resolutionSource: 'unresolved',
+  };
+}
+
 function inferCityFromEventSignals(
   event: ExtractedEvent,
   cities: Array<{ id: string; slug: string; name: string }>,
 ): { id: string; slug: string; name: string } | null {
-  const strongSignals = [event.venueAddress, event.venueName, event.hostCommunity];
-
-  for (const signal of strongSignals) {
-    const matches = findCitiesMentionedInText(signal, cities, CITY_NAME_ALIASES);
-    if (matches.length === 1) return matches[0] ?? null;
-  }
-
-  const titleMatches = findCitiesMentionedInText(event.title, cities, CITY_NAME_ALIASES);
-  if (titleMatches.length === 1) return titleMatches[0] ?? null;
-
-  return null;
+  return summarizeEventSignalCities(event, cities).city;
 }
 
 async function checkEventDuplicate(event: ExtractedEvent, cityId: string): Promise<DedupResult> {

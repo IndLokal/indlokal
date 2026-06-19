@@ -95,6 +95,8 @@ const COMMUNITY_MATCH_STOPWORDS = new Set([
   'community',
 ]);
 
+const MIN_EVENT_COMMUNITY_MATCH_SCORE = 4;
+
 function normalizeMatchText(value: string): string {
   return value
     .toLowerCase()
@@ -145,6 +147,24 @@ function scoreCommunityMatch(event: ExtractedEvent, communityName: string): numb
   }
 
   return score;
+}
+
+function shouldTrustPreferredCommunityHint(
+  event: ExtractedEvent,
+  preferredCommunityName?: string,
+): boolean {
+  if (!event.hostCommunity) return true;
+  if (!preferredCommunityName) return false;
+
+  const hostCompact = compactMatchText(event.hostCommunity);
+  const preferredCompact = compactMatchText(preferredCommunityName);
+  if (!hostCompact || !preferredCompact) return false;
+
+  return (
+    hostCompact === preferredCompact ||
+    hostCompact.includes(preferredCompact) ||
+    preferredCompact.includes(hostCompact)
+  );
 }
 
 async function findDuplicateEventForApproval(input: {
@@ -357,6 +377,7 @@ async function createEventFromExtraction(
   event: ExtractedEvent,
   cityId: string,
   preferredCommunityId?: string,
+  preferredCommunityName?: string,
   provenance?: {
     sourceUrl?: string | null;
     sourceType?: PipelineSourceType;
@@ -409,24 +430,20 @@ async function createEventFromExtraction(
     }
   }
 
-  if (!communityId && preferredCommunityId) {
+  if (bestCommunityScore < MIN_EVENT_COMMUNITY_MATCH_SCORE) {
+    communityId = undefined;
+  }
+
+  if (
+    !communityId &&
+    preferredCommunityId &&
+    shouldTrustPreferredCommunityHint(event, preferredCommunityName)
+  ) {
     const preferred = await db.community.findFirst({
       where: { id: preferredCommunityId, cityId, mergedIntoId: null },
       select: { id: true },
     });
     communityId = preferred?.id;
-  }
-
-  if (!communityId && event.hostCommunity) {
-    const match = await db.community.findFirst({
-      where: {
-        cityId,
-        name: { contains: event.hostCommunity, mode: 'insensitive' },
-        mergedIntoId: null,
-      },
-      select: { id: true },
-    });
-    communityId = match?.id;
   }
 
   const categoryRecords = await db.category.findMany({
@@ -691,6 +708,10 @@ export async function approvePipelineItemRecord(
     sourceHints && typeof sourceHints.communityId === 'string'
       ? sourceHints.communityId.trim() || undefined
       : undefined;
+  const hintedCommunityName =
+    sourceHints && typeof sourceHints.communityName === 'string'
+      ? sourceHints.communityName.trim() || undefined
+      : undefined;
   // PRD/TDD-0053: persona tags the pipeline suggested at extraction time are
   // applied now, on human approval (suggest-only; ADR-0006 L0 gate).
   const suggestedTags =
@@ -728,6 +749,7 @@ export async function approvePipelineItemRecord(
         extractedEvent,
         item.cityId,
         hintedCommunityId,
+        hintedCommunityName,
         {
           sourceUrl: item.sourceUrl,
           sourceType: item.sourceType,

@@ -5,6 +5,7 @@ import {
   normalizeEventTitleForDedup,
   prefilterLaneAwareItems,
   prefilterLikelyCurrentItems,
+  resolveEventCityDecision,
 } from '../orchestrator';
 
 describe('computeSimilarity', () => {
@@ -223,5 +224,115 @@ describe('prefilterLaneAwareItems', () => {
     ]);
 
     expect(kept).toHaveLength(1);
+  });
+});
+
+describe('resolveEventCityDecision', () => {
+  const cities = [
+    { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+    { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+  ];
+  const cityBySlug = new Map([
+    ['stuttgart', { id: 'city-1', name: 'Stuttgart' }],
+    ['karlsruhe', { id: 'city-2', name: 'Karlsruhe' }],
+  ]);
+
+  it('prefers deterministic event location signals over conflicting llm and hint cities', () => {
+    const resolution = resolveEventCityDecision(
+      {
+        type: 'EVENT',
+        title: 'Summer meetup',
+        description: null,
+        date: '2026-08-15',
+        time: '18:00',
+        endDate: null,
+        endTime: null,
+        venueName: 'Stuttgart Hall',
+        venueAddress: 'Stuttgart, Germany',
+        cityName: 'Karlsruhe',
+        isOnline: false,
+        isFree: true,
+        cost: null,
+        costType: 'FREE',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+        entryNote: null,
+        registrationUrl: null,
+        imageUrl: null,
+        hostCommunity: null,
+        categories: [],
+        languages: [],
+        confidence: 0.9,
+        fieldConfidence: {},
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'Event details',
+        fetchedAt: new Date().toISOString(),
+        _hintCitySlug: 'karlsruhe',
+      },
+      cities,
+      cityBySlug,
+      null,
+      undefined,
+    );
+
+    expect(resolution.cityId).toBe('city-1');
+    expect(resolution.resolutionSource).toBe('signal');
+    expect(resolution.cityConflict).toBe(true);
+  });
+
+  it('marks ambiguous multi-city signals as pending with fallback city', () => {
+    const resolution = resolveEventCityDecision(
+      {
+        type: 'EVENT',
+        title: 'Stuttgart and Karlsruhe cultural exchange',
+        description: null,
+        date: '2026-09-01',
+        time: '19:00',
+        endDate: null,
+        endTime: null,
+        venueName: 'Community Hall',
+        venueAddress: 'Stuttgart and Karlsruhe',
+        cityName: null,
+        isOnline: false,
+        isFree: true,
+        cost: null,
+        costType: 'FREE',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+        entryNote: null,
+        registrationUrl: null,
+        imageUrl: null,
+        hostCommunity: null,
+        categories: [],
+        languages: [],
+        confidence: 0.9,
+        fieldConfidence: {},
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'Event details',
+        fetchedAt: new Date().toISOString(),
+      },
+      cities,
+      cityBySlug,
+      { id: 'city-1', name: 'Stuttgart' },
+      'stuttgart',
+    );
+
+    expect(resolution.cityId).toBe('city-1');
+    expect(resolution.isCityPending).toBe(true);
+    expect(resolution.resolutionSource).toBe('fallback');
   });
 });
