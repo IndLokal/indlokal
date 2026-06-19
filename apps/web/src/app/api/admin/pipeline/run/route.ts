@@ -141,25 +141,42 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      const dispatchRes = await fetch(`${baseUrl}/api/cron/pipeline/dispatch`, {
-        method: 'POST',
-        headers: {
-          authorization: `Bearer ${process.env.CRON_SECRET}`,
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(runOptions),
-      });
+      try {
+        const dispatchRes = await fetch(`${baseUrl}/api/cron/pipeline/dispatch`, {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${process.env.CRON_SECRET}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify(runOptions),
+        });
 
-      const dispatchPayload = await dispatchRes.json().catch(() => null);
-      if (!dispatchRes.ok || !dispatchPayload?.ok) {
-        throw new Error(
-          `cron dispatch failed: ${
-            dispatchPayload?.error ?? dispatchPayload?.reason ?? dispatchRes.statusText
-          }`,
-        );
+        const dispatchResTextClone = dispatchRes.clone();
+        const dispatchPayload = await dispatchRes.json().catch(() => null);
+        if (!dispatchRes.ok || !dispatchPayload?.ok) {
+          const responseText = await dispatchResTextClone.text().catch(() => '');
+          const detail =
+            dispatchPayload?.error ??
+            dispatchPayload?.reason ??
+            (responseText.trim().length > 0 ? responseText.trim().slice(0, 240) : undefined) ??
+            `${dispatchRes.status} ${dispatchRes.statusText}`.trim();
+          throw new Error(`cron dispatch failed: ${detail}`);
+        }
+
+        return NextResponse.json({ ok: true, mode: 'dispatch', dispatch: dispatchPayload });
+      } catch (dispatchErr) {
+        console.warn('[admin/pipeline/run] cron dispatch failed; falling back to direct run', {
+          error: dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr),
+        });
+        const result = await runPipeline('admin', undefined, runOptions);
+        return NextResponse.json({
+          ok: true,
+          mode: 'direct-fallback',
+          scope: null,
+          result,
+          note: 'Cron dispatch failed; ran direct fallback.',
+        });
       }
-
-      return NextResponse.json({ ok: true, mode: 'dispatch', dispatch: dispatchPayload });
     }
 
     const result = await runPipeline('admin', scope, runOptions);
