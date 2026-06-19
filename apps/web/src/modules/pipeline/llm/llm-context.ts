@@ -10,8 +10,10 @@
 
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { PipelineLlmStage } from '@prisma/client';
+import type { PipelineLane } from '../types';
 
-export type LlmAuditLane = 'EVENT' | 'COMMUNITY' | 'RESOURCE' | 'DEFAULT';
+/** LLM audit lane tags mirror pipeline lanes, with DEFAULT for mixed/unknown batches. */
+export type LlmAuditLane = PipelineLane | 'DEFAULT';
 
 export type LlmCallContext = { runId: string; stage: PipelineLlmStage; lane?: LlmAuditLane };
 
