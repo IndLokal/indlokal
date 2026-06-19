@@ -26,7 +26,7 @@ import { Prisma, type PipelineSourceType } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
-import type { SearchRegion, SearchStrategy, SourceType } from './types';
+import type { SearchRegion, SearchStrategy, SourceType, SourceLane } from './types';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
 type PinnedStrategy = SearchStrategy & { kind: 'pinned_url' };
@@ -82,6 +82,38 @@ function normalizePinnedScope(value: unknown): PinnedScope | null {
   return null;
 }
 
+// ── Lane helpers ────────────────────────────────────────────────────
+
+const VALID_LANES = new Set<SourceLane>(['EVENT', 'COMMUNITY', 'RESOURCE']);
+
+function normalizeSourceLane(value: unknown): SourceLane | undefined {
+  if (typeof value !== 'string') return undefined;
+  const upper = value.trim().toUpperCase() as SourceLane;
+  return VALID_LANES.has(upper) ? upper : undefined;
+}
+
+/**
+ * Conservative lane inference for clearly unambiguous source types.
+ * Returns undefined for ambiguous types (GOOGLE_SEARCH, WEBSITE_SCRAPE,
+ * FACEBOOK, INSTAGRAM, DUCKDUCKGO) — those must carry an explicit lane.
+ */
+function inferLaneFromSourceType(sourceType: SourceType): SourceLane | undefined {
+  switch (sourceType) {
+    case 'EVENTBRITE':
+    case 'MEETUP':
+    case 'DB_COMMUNITY':
+      return 'EVENT';
+    case 'CGI_MUNICH':
+      return 'RESOURCE';
+    case 'COMMUNITY_SUGGESTION':
+      return 'COMMUNITY';
+    default:
+      // GOOGLE_SEARCH, DUCKDUCKGO, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM,
+      // INDOEUROPEAN, GOOGLE_ALERT — require explicit lane in config payload.
+      return undefined;
+  }
+}
+
 // ── DB read ────────────────────────────────────────────
 
 async function readConfigRowsFromDb(): Promise<ConfigRow[]> {
@@ -123,6 +155,7 @@ type JsonStrategy = {
   hintCitySlug?: unknown;
   hintState?: unknown;
   scope?: unknown;
+  lane?: unknown;
 };
 
 type JsonDefaults = {
@@ -245,6 +278,12 @@ async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
       if (scope) payload.scope = scope;
     }
 
+    // Carry explicit lane from config; falls back to sourceType inference at
+    // parse time (normalizeSourceLane / inferLaneFromSourceType).
+    if (typeof strategy.lane === 'string' && strategy.lane.trim().length > 0) {
+      payload.lane = strategy.lane.trim().toUpperCase();
+    }
+
     rows.push({
       configType: 'STRATEGY',
       key: id,
@@ -350,6 +389,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
     const radiusKm =
       typeof radiusRaw === 'number' && Number.isFinite(radiusRaw) && radiusRaw > 0 ? radiusRaw : 50;
 
+    const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
     strategies.push({
       id: row.key,
       sourceType,
@@ -357,6 +397,7 @@ function parseKeywordStrategies(rows: ConfigRow[]): KeywordStrategyTemplate[] {
       label: row.label,
       radiusKm,
       enabled: true,
+      lane,
     });
   }
 
@@ -395,6 +436,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       continue;
     }
 
+    const lane = normalizeSourceLane(row.payload.lane) ?? inferLaneFromSourceType(sourceType);
     strategies.push({
       id: row.key,
       sourceType,
@@ -405,6 +447,7 @@ function parsePinnedStrategies(rows: ConfigRow[]): PinnedStrategy[] {
       hintCitySlug: hintCitySlug || undefined,
       hintState: hintState || undefined,
       enabled: true,
+      lane,
     });
   }
 

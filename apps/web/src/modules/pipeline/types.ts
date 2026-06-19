@@ -28,6 +28,51 @@ export type SourceType =
   | 'COMMUNITY_SUGGESTION'
   | 'DB_COMMUNITY';
 
+// ─── Lane types (AI_PIPELINE_LANE_AWARE_SOURCING.md §2, §4) ────────────
+
+/**
+ * Primary sourcing lane — governs source selection, caps, prompts, and review
+ * policy. Set explicitly on each strategy; sourceType is only a last-resort
+ * fallback for legacy rows where a single sourceType serves multiple lanes
+ * (GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
+ */
+export type SourceLane = 'EVENT' | 'COMMUNITY' | 'RESOURCE';
+
+/**
+ * Per-lane policy constraints — lightweight static table, not a runtime engine.
+ * Defines the boundaries used by prefilters (Phase 4), prompts (Phase 6),
+ * and auto-approval gating (Phase 7).
+ */
+export type SourcePolicy = {
+  lane: SourceLane;
+  sourceIntent: string;
+  /** Minimum EvidenceStrength tier required for sources in this lane. */
+  minTrustStrength: 'strong' | 'medium' | 'weak';
+  llmAllowed: boolean;
+  autoApproveAllowed: boolean;
+  /** Max raw text chars per item before LLM batching. */
+  maxCharsPerItem: number;
+  freshnessRequired: boolean;
+  officialDomainRequired: boolean;
+};
+
+/**
+ * Resolution provenance — records how city and community were resolved.
+ * Persisted to PipelineItem in Phase 5 for auditability, review ordering,
+ * and auto-approval gating (AI_PIPELINE_LANE_AWARE_SOURCING.md §5.4).
+ * Not yet written by the orchestrator; defined here so Phase 5 can add it.
+ */
+export type ResolutionProvenance = {
+  /** Which evidence source determined the resolved city. */
+  citySource: 'signal' | 'llm' | 'hint' | 'fallback' | 'pending';
+  /** True when a strong location signal disagreed with the LLM cityName. */
+  cityConflict: boolean;
+  /** Which evidence source determined the attached community (if any). */
+  communitySource: 'hint' | 'scored_match' | 'unattached';
+  /** Aggregate resolution confidence 0–1; gates auto-approval in Phase 7. */
+  resolutionConfidence: number;
+};
+
 /** Raw content fetched from any source adapter */
 export type RawContent = {
   sourceType: SourceType;
@@ -62,6 +107,12 @@ export type SearchStrategy = {
   /** Human label */
   label: string;
   enabled: boolean;
+  /**
+   * Primary sourcing lane — explicit per strategy (Phase 2).
+   * Undefined for legacy rows where sourceType alone is ambiguous
+   * (e.g. GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
+   */
+  lane?: SourceLane;
 } & (
   | {
       /** Keyword-based search (Eventbrite, Meetup) - searches region-wide */

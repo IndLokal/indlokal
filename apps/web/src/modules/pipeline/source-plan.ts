@@ -338,6 +338,19 @@ export async function buildPipelineSourcePlan(
       })
     : [];
 
+  // Phase 1 baseline: log lane distribution for observability (no behavior change).
+  const laneCount: Record<string, number> = {};
+  for (const s of [...staticPinned, ...dbPinned, ...keywordStrategies]) {
+    const key = s.lane ?? 'unknown';
+    laneCount[key] = (laneCount[key] ?? 0) + 1;
+  }
+  notes.push(
+    `lane distribution: ${Object.entries(laneCount)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([lane, count]) => `${lane}:${count}`)
+      .join(' ')}`,
+  );
+
   return {
     keywordStrategies,
     pinnedStrategies: [...staticPinned, ...dbPinned],
