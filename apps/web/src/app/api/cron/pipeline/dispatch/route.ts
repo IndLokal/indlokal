@@ -26,7 +26,7 @@ import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-conf
 import { captureServerEvent } from '@/lib/analytics/server';
 import { Events } from '@/lib/analytics/events';
 
-export const maxDuration = 60; // dispatch is HTTP fan-out only
+export const maxDuration = 300; // dispatch can await shard responses in large runs
 
 const VALID_RUN_MODES = [
   'balanced',
@@ -80,6 +80,7 @@ type DispatchOutcome = {
   ok: boolean;
   locked: boolean;
   status: number | null;
+  statusText?: string;
   error?: string;
 };
 
@@ -257,12 +258,33 @@ export async function POST(req: NextRequest) {
           // on Vercel without blocking the dispatcher response.
           keepalive: true,
         });
+        const resTextClone = res.clone();
         const locked = res.status === 409;
+        let error: string | undefined;
+        if (!res.ok && !locked) {
+          const payload = await res.json().catch(() => null);
+          if (payload && typeof payload === 'object') {
+            const data = payload as { error?: unknown; reason?: unknown };
+            if (typeof data.error === 'string' && data.error.trim().length > 0) {
+              error = data.error;
+            } else if (typeof data.reason === 'string' && data.reason.trim().length > 0) {
+              error = data.reason;
+            }
+          }
+          if (!error) {
+            const text = await resTextClone.text().catch(() => '');
+            if (text.trim().length > 0) {
+              error = text.trim().slice(0, 240);
+            }
+          }
+        }
         outcomes.push({
           regionId: region.id,
           ok: res.ok || locked,
           locked,
           status: res.status,
+          statusText: res.statusText,
+          error,
         });
       } catch (err) {
         outcomes.push({

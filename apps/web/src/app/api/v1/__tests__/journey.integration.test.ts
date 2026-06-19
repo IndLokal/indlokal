@@ -13,6 +13,7 @@ import { NextRequest } from 'next/server';
 // The Journey Layer is flag-gated; enable it (and the default allowlist covers
 // stuttgart:young-family) BEFORE the route/flags modules are imported.
 process.env.JOURNEY_LAYER_ENABLED = 'true';
+process.env.JOURNEY_CITY_PERSONA_ALLOWLIST = 'stuttgart:young-family';
 
 import { testDb, cleanDb } from '@/test/db-helpers';
 import { createCity, createCommunity, createEvent, createResource } from '@/test/fixtures';

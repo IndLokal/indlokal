@@ -10,13 +10,11 @@
  * and runtime safety net for fresh/test environments.
  */
 
-import { readFile } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { PipelineSourceType, Prisma, ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
+import bundledDefaults from '../../../../prisma/data/pipeline-source-defaults.json';
 import type {
   PipelineLane,
   PipelineSourceIntent,
@@ -260,13 +258,6 @@ function parseLaneKeywordSeeds(parsed: JsonDefaults): RuntimeLaneKeywordSeeds {
   return { byLane, journeyResourceByStage };
 }
 
-function resolveDefaultsJsonPath(): string {
-  // runtime-config.ts lives in apps/web/src/modules/pipeline/config/.
-  // The bundled defaults live in apps/web/prisma/data/.
-  const moduleDir = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(moduleDir, '../../../../prisma/data/pipeline-source-defaults.json');
-}
-
 /**
  * Derive city slugs for a region by state name.
  * Mirrors the bootstrap logic so runtime fallback matches DB-seeded values.
@@ -294,8 +285,7 @@ function getCitySlugsForState(state: string): string[] {
 }
 
 async function readConfigRowsFromJson(): Promise<ConfigRow[]> {
-  const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
-  const parsed = JSON.parse(raw) as JsonDefaults;
+  const parsed = bundledDefaults as JsonDefaults;
 
   const rows: ConfigRow[] = [];
 
@@ -602,8 +592,7 @@ export async function getRuntimeKeywordStrategies(): Promise<KeywordStrategyTemp
  * Returns empty maps when sections are absent or malformed.
  */
 export async function getRuntimeLaneKeywordSeeds(): Promise<RuntimeLaneKeywordSeeds> {
-  const raw = await readFile(resolveDefaultsJsonPath(), 'utf8');
-  const parsed = JSON.parse(raw) as JsonDefaults;
+  const parsed = bundledDefaults as JsonDefaults;
   return parseLaneKeywordSeeds(parsed);
 }
 
