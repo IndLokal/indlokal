@@ -59,6 +59,7 @@ const keywordStrategies: KeywordStrategyTemplate[] = [
     label: 'Eventbrite',
     enabled: true,
     radiusKm: 50,
+    lane: 'EVENT',
   },
   {
     id: 'google-cse-keyword',
@@ -67,6 +68,7 @@ const keywordStrategies: KeywordStrategyTemplate[] = [
     label: 'Google',
     enabled: true,
     radiusKm: 100,
+    lane: 'COMMUNITY',
   },
   {
     id: 'duckduckgo-keyword',
@@ -75,6 +77,7 @@ const keywordStrategies: KeywordStrategyTemplate[] = [
     label: 'DuckDuckGo',
     enabled: true,
     radiusKm: 100,
+    lane: 'COMMUNITY',
   },
 ];
 
@@ -106,7 +109,6 @@ describe('buildPipelineSourcePlan', () => {
     mocks.getDbCommunityStrategies.mockResolvedValue([]);
     mocks.getApprovedDynamicKeywordsByLane.mockResolvedValue({
       byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
-      unclassified: [],
     });
     mocks.groupEvents.mockResolvedValue([]);
   });
@@ -164,7 +166,6 @@ describe('buildPipelineSourcePlan', () => {
     ]);
     expect(plan.keywordStrategies).toHaveLength(1);
     expect(plan.keywordStrategies[0]?.id).toBe('duckduckgo-keyword');
-    expect(plan.keywordStrategies[0]?.keywords).toContain('Indian event Karlsruhe');
     expect(plan.keywordStrategies[0]?.keywords).toContain('Indian community group Karlsruhe');
     expect(plan.notes).toContain(
       'skipping eventbrite-keyword: required API credentials are not configured',
@@ -225,6 +226,7 @@ describe('buildPipelineSourcePlan', () => {
         label: 'DuckDuckGo',
         enabled: true,
         radiusKm: 100,
+        lane: 'COMMUNITY',
       },
     ]);
     mocks.findCities.mockResolvedValue([
@@ -253,7 +255,6 @@ describe('buildPipelineSourcePlan', () => {
     expect(eventbrite?.keywords).not.toContain('Indian community group Karlsruhe');
     expect(communityGoogle?.keywords.join(' ')).toContain('Indian community group Karlsruhe');
     expect(communityGoogle?.keywords.join(' ')).not.toContain('Indian event Karlsruhe');
-    expect(duckduckgo?.keywords).toContain('Indian event Karlsruhe');
     expect(duckduckgo?.keywords).toContain('Indian community group Karlsruhe');
   });
 
@@ -275,7 +276,6 @@ describe('buildPipelineSourcePlan', () => {
         COMMUNITY: ['Tamil Sangam association'],
         RESOURCE: ['Passport renewal'],
       },
-      unclassified: ['Cricket'],
     });
     mocks.getRuntimeKeywordStrategies.mockResolvedValue([
       {
@@ -312,6 +312,7 @@ describe('buildPipelineSourcePlan', () => {
         label: 'DuckDuckGo',
         enabled: true,
         radiusKm: 100,
+        lane: 'COMMUNITY',
       },
     ]);
     mocks.findCities.mockResolvedValue([
@@ -345,22 +346,17 @@ describe('buildPipelineSourcePlan', () => {
     expect(eventbrite?.keywords).toContain('Diwali festival');
     expect(eventbrite?.keywords).not.toContain('Tamil Sangam association');
     expect(eventbrite?.keywords).not.toContain('Passport renewal');
-    expect(eventbrite?.keywords).not.toContain('Cricket');
-
     expect(communityGoogle?.keywords.join(' ')).toContain('Tamil Sangam association');
     expect(communityGoogle?.keywords.join(' ')).not.toContain('Diwali festival');
     expect(communityGoogle?.keywords.join(' ')).not.toContain('Passport renewal');
-    expect(communityGoogle?.keywords.join(' ')).not.toContain('Cricket');
 
     expect(resourceGoogle?.keywords.join(' ')).toContain('Passport renewal');
     expect(resourceGoogle?.keywords.join(' ')).not.toContain('Diwali festival');
     expect(resourceGoogle?.keywords.join(' ')).not.toContain('Tamil Sangam association');
-    expect(resourceGoogle?.keywords.join(' ')).not.toContain('Cricket');
 
-    expect(duckduckgo?.keywords).toContain('Diwali festival');
     expect(duckduckgo?.keywords).toContain('Tamil Sangam association');
-    expect(duckduckgo?.keywords).toContain('Passport renewal');
-    expect(duckduckgo?.keywords).toContain('Cricket');
+    expect(duckduckgo?.keywords).not.toContain('Diwali festival');
+    expect(duckduckgo?.keywords).not.toContain('Passport renewal');
   });
 
   it('returns additive lane breakdown metadata for the built plan', async () => {
@@ -385,6 +381,7 @@ describe('buildPipelineSourcePlan', () => {
         label: 'DuckDuckGo',
         enabled: true,
         radiusKm: 100,
+        lane: 'COMMUNITY',
       },
     ]);
     mocks.getRuntimePinnedStrategies.mockResolvedValue([
@@ -411,10 +408,11 @@ describe('buildPipelineSourcePlan', () => {
     const plan = await buildPipelineSourcePlan(regions, 'cli');
 
     expect(plan.laneBreakdown.EVENT.keywordStrategies).toBe(1);
+    expect(plan.laneBreakdown.COMMUNITY.keywordStrategies).toBe(1);
     expect(plan.laneBreakdown.COMMUNITY.pinnedStrategies).toBe(1);
-    expect(plan.laneBreakdown.UNKNOWN.keywordStrategies).toBe(1);
+    expect(plan.laneBreakdown.UNKNOWN.keywordStrategies).toBe(0);
     expect(plan.notes).toContain(
-      'lane distribution: COMMUNITY:k0/p1 EVENT:k1/p0 RESOURCE:k0/p0 UNKNOWN:k1/p0',
+      'lane distribution: COMMUNITY:k1/p1 EVENT:k1/p0 RESOURCE:k0/p0 UNKNOWN:k0/p0',
     );
   });
 

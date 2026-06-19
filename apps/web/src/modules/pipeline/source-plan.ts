@@ -145,15 +145,11 @@ function getGapKeywordsForStrategy(
   eventGapKeywords: string[],
   communityGapKeywords: string[],
   resourceGapKeywords: string[],
-  allLaneGapKeywords: string[],
 ): string[] {
   if (strategy.lane === 'EVENT') return eventGapKeywords;
   if (strategy.lane === 'COMMUNITY') return communityGapKeywords;
   if (strategy.lane === 'RESOURCE') return resourceGapKeywords;
-
-  // Back-compat for lane-unaware strategies: use all gap cities (union of event + community).
-  // This ensures comprehensive discovery coverage for multi-lane sources like DuckDuckGo.
-  return allLaneGapKeywords;
+  return [];
 }
 
 function getLaneSeedKeywords(
@@ -170,13 +166,7 @@ function getApprovedKeywordsForStrategy(
   approvedKeywords: ApprovedDynamicKeywordsByLane,
 ): string[] {
   if (strategy.lane) return approvedKeywords.byLane[strategy.lane] ?? [];
-
-  return unique([
-    ...approvedKeywords.byLane.EVENT,
-    ...approvedKeywords.byLane.COMMUNITY,
-    ...approvedKeywords.byLane.RESOURCE,
-    ...approvedKeywords.unclassified,
-  ]);
+  return [];
 }
 
 /**
@@ -525,7 +515,6 @@ export async function buildPipelineSourcePlan(
     ? await getApprovedDynamicKeywordsByLane()
     : {
         byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
-        unclassified: [],
       };
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
   const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
@@ -538,15 +527,11 @@ export async function buildPipelineSourcePlan(
         )
       : [];
 
-  // For lane-unaware strategies, use all gap cities (union of event and community gaps)
-  // to generate keywords covering both gap types.
+  // Use union gap cities for community-discovery searches so community lanes can
+  // still probe organizer discovery in event-starved cities.
   const unionGapCities = [...new Set([...eventGaps, ...communityGaps].map((g) => g.slug))].map(
     (slug) => eventGaps.find((g) => g.slug === slug) || communityGaps.find((g) => g.slug === slug),
   ) as CityGap[];
-  const allLaneGapKeywords = unique([
-    ...expandTemplates(EVENT_GAP_TEMPLATES, unionGapCities),
-    ...expandTemplates(COMMUNITY_GAP_TEMPLATES, unionGapCities),
-  ]);
   const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, unionGapCities);
 
   const keywordStrategies = shouldRunKeywords
@@ -568,7 +553,6 @@ export async function buildPipelineSourcePlan(
           eventGapKeywords,
           communityGapKeywords,
           resourceJourneyGapKeywords,
-          allLaneGapKeywords,
         );
         const laneSeedsForStrategy = laneKeywordSeeds
           ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane)

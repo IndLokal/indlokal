@@ -9,7 +9,6 @@ import type { ExtractedCommunity, SourceLane } from './types';
 
 export type ApprovedDynamicKeywordsByLane = {
   byLane: Record<SourceLane, string[]>;
-  unclassified: string[];
 };
 
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
@@ -592,13 +591,9 @@ export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynami
     COMMUNITY: [],
     RESOURCE: [],
   };
-  const unclassified: string[] = [];
 
   for (const row of rows) {
-    if (!isSourceLane(row.lane)) {
-      unclassified.push(row.keyword);
-      continue;
-    }
+    if (!isSourceLane(row.lane)) continue;
 
     byLane[row.lane].push(row.keyword);
   }
@@ -609,6 +604,5 @@ export async function getApprovedDynamicKeywordsByLane(): Promise<ApprovedDynami
       COMMUNITY: [...new Set(byLane.COMMUNITY)],
       RESOURCE: [...new Set(byLane.RESOURCE)],
     },
-    unclassified: [...new Set(unclassified)],
   };
 }
