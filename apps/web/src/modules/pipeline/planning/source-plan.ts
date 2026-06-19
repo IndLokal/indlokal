@@ -5,7 +5,8 @@
  * and pinned strategies with live DB coverage signals.
  *
  * Responsibilities:
- * - detect event/community coverage gaps for requested region cities
+ * - detect EVENT/COMMUNITY coverage gaps for requested region cities
+ * - shape RESOURCE lane discovery inputs for admin-scoped runs
  * - decide whether keyword discovery should run for this trigger context
  * - apply lane-aware filtering for cron/admin execution modes
  * - prioritize and cap DB-pinned sources for balanced coverage
@@ -148,7 +149,7 @@ function buildLaneBreakdown(
 }
 
 /**
- * Apply lane-based filtering for cron-triggered runs.
+ * Apply lane-based filtering for cron-triggered pinned strategies.
  * Cron runs only execute EVENT pinned strategies; RESOURCE and COMMUNITY are admin/city scoped.
  * Logs skipped strategies in the notes array for observability.
  */
@@ -178,7 +179,7 @@ function filterPinnedStrategiesForRun(
 }
 
 /**
- * Apply lane-based filtering for cron-triggered runs.
+ * Apply lane-based filtering for cron-triggered keyword strategies.
  * Cron runs only execute EVENT keyword strategies; RESOURCE and COMMUNITY require admin/city scoping.
  * Logs skipped strategies in the notes array for observability.
  */

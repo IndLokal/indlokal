@@ -1,15 +1,18 @@
 /**
- * DB-driven source generation - reads community access channels from the
- * database and generates pinned_url strategies automatically.
+ * DB-driven pinned source generation for the fetch layer.
  *
- * Instead of hardcoding community website URLs in runtime pipeline code, this module
- * queries all active communities that have scrapeable channels (WEBSITE, MEETUP)
- * and turns each into a SearchStrategy the orchestrator can fetch.
+ * Instead of hardcoding community website URLs in runtime pipeline code, this
+ * module queries active communities with scrapeable channels (WEBSITE, MEETUP)
+ * and emits pinned-url strategies for planner execution.
  *
  * Benefits:
  *  - New communities added via admin/submit automatically become pipeline sources
  *  - No manual URL maintenance
  *  - Community city is known → hintCitySlug is always accurate
+ *
+ * Lane model:
+ * - Outputs here are EVENT-lane candidates (homepages + event subpages)
+ * - Planner remains responsible for trigger-based lane filtering and caps
  */
 
 import { db } from '@/lib/db';

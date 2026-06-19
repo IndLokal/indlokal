@@ -333,6 +333,15 @@ export async function fetchEventbriteKeywords(
 
 // ─── Pinned URL: generic website / scrape ──────────────
 
+/**
+ * Fetch a pinned URL and return normalized raw content.
+ *
+ * Notes:
+ * - DB community homepages may try safe host/protocol variants
+ * - embedded Google Calendar feeds are ingested as additional raw items
+ * - optional first/second-hop link expansion is env-controlled
+ */
+
 export async function fetchPinnedUrl(
   strategy: SearchStrategy & { kind: 'pinned_url' },
   triggeredBy = 'cron',
@@ -466,9 +475,10 @@ export async function fetchPinnedUrl(
 // ─── Google Custom Search: discover scattered mentions ──
 
 /**
- * Search Google Custom Search API for diaspora community mentions.
- * Finds groups that only exist as mentions on blogs, university pages,
- * directories, or community boards - no dedicated website needed.
+ * Search Google Custom Search API for lane-scoped discovery candidates.
+ *
+ * This adapter is lane-agnostic at fetch time: planner controls whether the
+ * query set targets EVENT, COMMUNITY, or RESOURCE intent.
  *
  * Requires: GOOGLE_CSE_API_KEY + lane-specific CSE ID env var.
  * Preferred lane vars: GOOGLE_CSE_COMMUNITY_ID, GOOGLE_CSE_EVENT_ID,
@@ -546,7 +556,7 @@ export async function fetchGoogleSearch(
 // ─── DuckDuckGo HTML Search: free web search ───────────
 
 /**
- * Search DuckDuckGo HTML endpoint for diaspora community mentions.
+ * Search DuckDuckGo HTML endpoint for lane-scoped discovery candidates.
  * Free, no API key needed. Parses the HTML lite search results page.
  *
  * Limitations:

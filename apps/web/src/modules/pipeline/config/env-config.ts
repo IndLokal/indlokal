@@ -58,6 +58,12 @@ export function hasGoogleCseCredentialsForLane(lane: SourceLane | undefined): bo
   return Boolean(getGoogleCseApiKey() && resolveGoogleCseIdForLane(lane));
 }
 
+/**
+ * Lane run policy for Google CSE execution by trigger context.
+ * - EVENT: cron only
+ * - RESOURCE: admin only
+ * - COMMUNITY/unknown: allowed for both
+ */
 export function isGoogleCseRunModeAllowed(
   lane: SourceLane | undefined,
   triggeredBy: string,
@@ -130,10 +136,12 @@ export function getDbSourceDiscoveryTopK(): number {
   return readPositiveIntEnv('PIPELINE_DB_SOURCE_DISCOVERY_TOP_K', 5);
 }
 
+/** Global force toggle for keyword-search planning (all triggers). */
 export function isForceKeywordSearchEnabled(): boolean {
   return process.env.PIPELINE_FORCE_KEYWORD_SEARCH === '1';
 }
 
+/** Admin-only force toggle for keyword-search planning. */
 export function isAdminForceKeywordSearchEnabled(triggeredBy: string): boolean {
   return triggeredBy === 'admin' && process.env.PIPELINE_ADMIN_FORCE_KEYWORD_SEARCH === '1';
 }
