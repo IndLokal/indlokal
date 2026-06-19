@@ -8,19 +8,17 @@
     "Indian student club",
     "South Asian student association",
     "Indian professionals network",
-    "Indian startup meetup",
-    "Indian founder meetup",
-    "Indian entrepreneur network",
-    "Indian career fair",
-    "Indian tech talk",
-    "Indian product meetup",
     "new Indian chapter",
     "new Indian association",
     "Indian cultural event",
     "South Asian festival",
     "indische Community Treffen",
     "indischer Kulturverein Gruendung",
-    "suedasiatische Community Veranstaltung"
+    "suedasiatische Community Veranstaltung",
+    "Indian consular services Germany",
+    "Anmeldung city office Germany",
+    "residence permit Auslaenderbehoerde",
+    "Integrationskurs migrant support"
   ],
   "regions": [
     {
@@ -50,6 +48,20 @@
       "searchCenter": "Berlin, Germany",
       "state": "Berlin",
       "enabled": true
+    },
+    {
+      "id": "north-rhine-westphalia",
+      "label": "North Rhine-Westphalia",
+      "searchCenter": "Dusseldorf, Germany",
+      "state": "NRW",
+      "enabled": false
+    },
+    {
+      "id": "hamburg",
+      "label": "Hamburg",
+      "searchCenter": "Hamburg, Germany",
+      "state": "Hamburg",
+      "enabled": false
     }
   ],
   "strategies": [
@@ -61,7 +73,15 @@
       "contentScope": "keyword_discovery",
       "label": "Eventbrite keyword search",
       "radiusKm": 50,
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "google-cse-keyword",
@@ -71,7 +91,15 @@
       "contentScope": "keyword_discovery",
       "label": "Google Custom Search - Diaspora Communities",
       "radiusKm": 100,
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "duckduckgo-keyword",
@@ -81,7 +109,15 @@
       "contentScope": "keyword_discovery",
       "label": "DuckDuckGo Web Search - Diaspora Communities",
       "radiusKm": 100,
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-cgi-munich",
@@ -93,7 +129,16 @@
       "url": "https://www.cgimunich.gov.in/",
       "scope": "CITY",
       "hintCitySlug": "munich",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "government_consular",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-cgi-frankfurt",
@@ -105,7 +150,16 @@
       "url": "https://cgifrankfurt.gov.in/",
       "scope": "CITY",
       "hintCitySlug": "frankfurt",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "government_consular",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-indian-embassy-berlin",
@@ -117,7 +171,16 @@
       "url": "https://indianembassyberlin.gov.in/",
       "scope": "CITY",
       "hintCitySlug": "berlin",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "government_consular",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-berlin-integration-beauftragte",
@@ -129,7 +192,16 @@
       "url": "https://www.berlin.de/lb/intmig/",
       "scope": "CITY",
       "hintCitySlug": "berlin",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-berlin-viz-migrationsbeirat",
@@ -141,7 +213,16 @@
       "url": "https://www.berlin.de/lb/intmig/service/",
       "scope": "CITY",
       "hintCitySlug": "berlin",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-meetup-berlin-discovery",
@@ -153,7 +234,15 @@
       "url": "https://www.meetup.com/find/de--berlin/",
       "scope": "CITY",
       "hintCitySlug": "berlin",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-eventbrite-berlin-events",
@@ -165,7 +254,15 @@
       "url": "https://www.eventbrite.com/d/germany--berlin/events/",
       "scope": "CITY",
       "hintCitySlug": "berlin",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "indoeuropean-events",
@@ -175,7 +272,16 @@
       "contentScope": "community_events",
       "label": "IndoEuropean.eu - Events",
       "url": "https://indoeuropean.eu/category/events/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "trustTier": "trusted_directory",
+      "runMode": "cron",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "indoeuropean-germany",
@@ -185,7 +291,16 @@
       "contentScope": "community_portal",
       "label": "IndoEuropean.eu - Germany",
       "url": "https://indoeuropean.eu/country/germany/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "trusted_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-indoeuropean-associations",
@@ -195,7 +310,16 @@
       "contentScope": "directory_listing",
       "label": "IndoEuropean.eu - Indian Associations in Germany",
       "url": "https://indoeuropean.eu/list-of-indian-association-in-germany/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "trusted_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-indoeuropean-association-category",
@@ -205,7 +329,16 @@
       "contentScope": "directory_listing",
       "label": "IndoEuropean.eu - Association Category",
       "url": "https://indoeuropean.eu/category/association/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "trusted_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-indoeuropean-temples",
@@ -215,7 +348,16 @@
       "contentScope": "directory_listing",
       "label": "IndoEuropean.eu - Temples",
       "url": "https://indoeuropean.eu/category/temples/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "trusted_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-indiansingermany-events",
@@ -225,7 +367,15 @@
       "contentScope": "community_events",
       "label": "Indians in Germany - Events",
       "url": "https://indiansingermany.org/events",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "web-aigev",
@@ -235,7 +385,16 @@
       "contentScope": "community_portal",
       "label": "Association of Indians in Germany e.V.",
       "url": "https://www.aigev.org/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "owned_website",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-diz-bw",
@@ -247,7 +406,16 @@
       "url": "https://diz-ev.de/bawue",
       "scope": "REGION",
       "hintState": "Baden-Württemberg",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-stuttgartexpats-events",
@@ -257,7 +425,15 @@
       "contentScope": "community_events",
       "label": "Stuttgart Expats - Events (general expat, cross-reference)",
       "url": "https://stuttgartexpats.com/stuttgart-events/",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "web-forum-der-kulturen-stuttgart",
@@ -269,7 +445,16 @@
       "url": "https://www.forum-der-kulturen.de/das-forum/mitgliedsvereine/",
       "scope": "REGION",
       "hintState": "Baden-Württemberg",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-house-of-resources-stuttgart-map",
@@ -281,7 +466,16 @@
       "url": "https://house-of-resources-stuttgart.de/stadtteilkarte-kontakt-zu-vereinen/",
       "scope": "REGION",
       "hintState": "Baden-Württemberg",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-amka-frankfurt",
@@ -293,7 +487,16 @@
       "url": "https://www.amka.de/",
       "scope": "REGION",
       "hintState": "Hesse",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-amka-frankfurt-vereine",
@@ -305,7 +508,16 @@
       "url": "https://www.amka.de/vereine",
       "scope": "REGION",
       "hintState": "Hesse",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-vielfalt-bewegt-frankfurt",
@@ -317,7 +529,16 @@
       "url": "https://www.vielfalt-bewegt-frankfurt.de/",
       "scope": "REGION",
       "hintState": "Hesse",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-integrationsbeauftragter-bw",
@@ -329,7 +550,16 @@
       "url": "https://sozialministerium.baden-wuerttemberg.de/de/integration/",
       "scope": "REGION",
       "hintState": "Baden-Württemberg",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
     },
     {
       "id": "web-morgen-muenchen-mitglieder",
@@ -341,7 +571,16 @@
       "url": "https://morgen-muenchen.de/thema/mitgliedervereine/",
       "scope": "REGION",
       "hintState": "Bavaria",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "institutional_directory",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-meetup-munich-discovery",
@@ -353,7 +592,15 @@
       "url": "https://www.meetup.com/find/de--munich/",
       "scope": "CITY",
       "hintCitySlug": "munich",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-eventbrite-munich-events",
@@ -365,7 +612,15 @@
       "url": "https://www.eventbrite.com/d/germany--munich/events/",
       "scope": "CITY",
       "hintCitySlug": "munich",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "web-meetup-frankfurt-discovery",
@@ -377,7 +632,15 @@
       "url": "https://www.meetup.com/find/de--frankfurt/",
       "scope": "CITY",
       "hintCitySlug": "frankfurt",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-eventbrite-frankfurt-events",
@@ -389,7 +652,15 @@
       "url": "https://www.eventbrite.com/d/germany--frankfurt/events/",
       "scope": "CITY",
       "hintCitySlug": "frankfurt",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     },
     {
       "id": "web-meetup-karlsruhe-discovery",
@@ -401,7 +672,15 @@
       "url": "https://www.meetup.com/find/de--karlsruhe/",
       "scope": "CITY",
       "hintCitySlug": "karlsruhe",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "org_group_discovery",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
     },
     {
       "id": "web-eventbrite-karlsruhe-events",
@@ -413,7 +692,116 @@
       "url": "https://www.eventbrite.com/d/germany--karlsruhe/events/",
       "scope": "CITY",
       "hintCitySlug": "karlsruhe",
-      "enabled": true
+      "enabled": true,
+      "sourceIntent": "dated_activity_discovery",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 10,
+      "maxChars": 5000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
     }
-  ]
+  ],
+  "baselineKeywordsByLane": {
+    "COMMUNITY": [
+      "Indian community meetup",
+      "South Asian community meetup",
+      "Indian networking meetup",
+      "Indian professionals network",
+      "Indian volunteer group",
+      "Indian student club",
+      "South Asian student association",
+      "new Indian chapter",
+      "new Indian association",
+      "indische Community Treffen",
+      "indischer Kulturverein Gruendung",
+      "suedasiatische Community Veranstaltung",
+      "Indian Verein Germany",
+      "South Asian cultural association Germany",
+      "Indian family community Germany"
+    ],
+    "EVENT": [
+      "Indian cultural event",
+      "South Asian festival",
+      "Indian meetup",
+      "Indian cultural workshop",
+      "Indian festival Germany",
+      "South Asian cultural event Germany",
+      "Indian community calendar Germany"
+    ],
+    "RESOURCE": [
+      "Indian consulate Germany services",
+      "embassy India Germany services",
+      "Integrationsbeauftragte migrant organisations",
+      "Amt fuer multikulturelle Angelegenheiten",
+      "Indian consular services Germany",
+      "Embassy India Germany consular",
+      "Auslaenderbehoerde residence permit",
+      "Anmeldung Meldebescheinigung city office",
+      "Steueridentifikationsnummer registration Germany",
+      "Krankenversicherung public health insurance Germany",
+      "Integrationskurs BAMF",
+      "Anerkennung auslaendischer Abschluesse",
+      "Kindergeld Familienkasse Antrag",
+      "Kita Anmeldung stadt",
+      "Student visa Germany India extension",
+      "Blue Card Germany requirements"
+    ]
+  },
+  "laneDefaults": {
+    "EVENT": {
+      "sourceIntent": "dated_activity_discovery",
+      "trustTier": "event_platform",
+      "runMode": "cron",
+      "llmAllowed": true,
+      "autoApproveAllowed": true,
+      "maxItems": 12,
+      "maxChars": 6000,
+      "requiresDateSignal": true,
+      "officialDomainRequired": false
+    },
+    "COMMUNITY": {
+      "sourceIntent": "org_group_discovery",
+      "trustTier": "mixed_discovery",
+      "runMode": "cron_gap",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 8,
+      "maxChars": 7000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": false
+    },
+    "RESOURCE": {
+      "sourceIntent": "official_service_info_discovery",
+      "trustTier": "official_institutional",
+      "runMode": "admin_scoped",
+      "llmAllowed": true,
+      "autoApproveAllowed": false,
+      "maxItems": 4,
+      "maxChars": 4000,
+      "requiresDateSignal": false,
+      "officialDomainRequired": true
+    }
+  },
+  "journeyKeywordHintsByLane": {
+    "RESOURCE": {
+      "PRE_ARRIVAL": [
+        "student visa Germany India",
+        "Blue Card Germany requirements",
+        "Anerkennung auslaendischer Abschluesse"
+      ],
+      "FIRST_30_DAYS": [
+        "Anmeldung Meldebescheinigung city office",
+        "Steueridentifikationsnummer registration Germany",
+        "Krankenversicherung public health insurance Germany"
+      ],
+      "FIRST_90_DAYS": [
+        "Integrationskurs BAMF",
+        "Kindergeld Familienkasse Antrag",
+        "Kita Anmeldung stadt"
+      ],
+      "SETTLED": ["Niederlassungserlaubnis Germany", "citizenship Einbuergerung Germany"]
+    }
+  }
 }
