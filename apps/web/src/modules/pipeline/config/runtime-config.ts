@@ -13,7 +13,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Prisma, type PipelineSourceType } from '@prisma/client';
+import { PipelineSourceType, Prisma, ResourceStage } from '@prisma/client';
 import { db } from '@/lib/db';
 import { assessEvidenceUrl } from '@/lib/source-policy';
 import { ACTIVE_CITY_DATA, SATELLITE_CITY_DATA, UPCOMING_CITIES } from '@/lib/config/cities';
@@ -27,15 +27,9 @@ export type KeywordStrategyTemplate = Omit<KeywordStrategy, 'keywords'>;
 export const SOURCE_LANES = ['EVENT', 'COMMUNITY', 'RESOURCE'] as const;
 
 /** Canonical lifecycle stages for RESOURCE journey hints. */
-export const JOURNEY_RESOURCE_STAGES = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-] as const;
+export const JOURNEY_RESOURCE_STAGES: readonly ResourceStage[] = Object.values(ResourceStage);
 
-export type JourneyResourceStage = (typeof JOURNEY_RESOURCE_STAGES)[number];
+export type JourneyResourceStage = ResourceStage;
 
 /** Lane-specific keyword seed payload used by source planning. */
 export type RuntimeLaneKeywordSeeds = {
@@ -56,20 +50,16 @@ type ConfigRow = {
 type ConfigSource = 'db' | 'json-fallback';
 type PinnedScope = 'GENERIC' | 'CITY' | 'REGION';
 
-const VALID_SOURCE_TYPES = new Set<SourceType>([
-  'EVENTBRITE',
-  'FACEBOOK',
-  'INSTAGRAM',
-  'WEBSITE_SCRAPE',
-  'CGI_MUNICH',
-  'INDOEUROPEAN',
-  'GOOGLE_ALERT',
-  'GOOGLE_SEARCH',
-  'DUCKDUCKGO',
-  'MEETUP',
-  'COMMUNITY_SUGGESTION',
-  'DB_COMMUNITY',
+const UNSUPPORTED_PIPELINE_SOURCE_TYPES = new Set<PipelineSourceType>([
+  PipelineSourceType.EVENT_SUGGESTION,
+  PipelineSourceType.USER_SUBMITTED,
 ]);
+
+const VALID_SOURCE_TYPES = new Set<SourceType>(
+  Object.values(PipelineSourceType).filter(
+    (sourceType): sourceType is SourceType => !UNSUPPORTED_PIPELINE_SOURCE_TYPES.has(sourceType),
+  ),
+);
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value != null && !Array.isArray(value);

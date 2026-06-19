@@ -22,6 +22,7 @@
 
 import { db } from '@/lib/db';
 import { CATEGORIES } from '@/lib/config';
+import { ResourceAudience, ResourceScope, ResourceStage, ResourceType } from '@prisma/client';
 import { currentLlmContext, withLlmContext, type LlmAuditLane } from './llm-context';
 import type {
   ExtractedData,
@@ -485,40 +486,10 @@ async function filterBatch(
 // ─── Stage 2: Batch structured extraction ──────────────
 
 const CATEGORY_LIST = CATEGORIES.join(', ');
-const RESOURCE_TYPE_LIST = [
-  'CONSULAR_SERVICE',
-  'OFFICIAL_EVENT',
-  'GOVERNMENT_INFO',
-  'VISA_SERVICE',
-  'CITY_REGISTRATION',
-  'DRIVING',
-  'HOUSING',
-  'HEALTH_DOCTORS',
-  'FAMILY_CHILDREN',
-  'JOBS_CAREERS',
-  'TAX_FINANCE',
-  'BUSINESS_SETUP',
-  'GROCERY_FOOD',
-  'COMMUNITY_RESOURCE',
-] as const;
-const RESOURCE_SCOPE_LIST = ['GLOBAL', 'COUNTRY', 'STATE', 'METRO', 'CITY', 'DISTRICT'] as const;
-const RESOURCE_AUDIENCE_LIST = [
-  'NEWCOMER',
-  'FAMILY',
-  'FOUNDER',
-  'EMPLOYEE',
-  'STUDENT',
-  'STUDENT_VISA',
-  'SENIOR',
-  'RETURNEE',
-] as const;
-const RESOURCE_STAGE_LIST = [
-  'PRE_ARRIVAL',
-  'FIRST_30_DAYS',
-  'FIRST_90_DAYS',
-  'SETTLED',
-  'ANYTIME',
-] as const;
+const RESOURCE_TYPE_LIST: readonly ResourceType[] = Object.values(ResourceType);
+const RESOURCE_SCOPE_LIST: readonly ResourceScope[] = Object.values(ResourceScope);
+const RESOURCE_AUDIENCE_LIST: readonly ResourceAudience[] = Object.values(ResourceAudience);
+const RESOURCE_STAGE_LIST: readonly ResourceStage[] = Object.values(ResourceStage);
 
 const EXTRACT_SYSTEM_PROMPT_BASE = `You are a data extraction assistant for IndLokal, a platform for Indian/South Asian diaspora communities across Europe.
 
