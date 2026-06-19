@@ -9,7 +9,12 @@ import {
   getApprovedDynamicKeywordsByLane,
   type ApprovedDynamicKeywordsByLane,
 } from './intelligence';
-import { getAdminResourceJourneyKeywords, renderKeywordsForSource } from './source-plan-keywords';
+import {
+  buildGapKeywordsByLane,
+  getAdminResourceJourneyKeywords,
+  getGapKeywordsForStrategy,
+  renderKeywordsForSource,
+} from './source-plan-keywords';
 import type { SearchRegion, SearchStrategy, SourceLane } from './types';
 import type { KeywordStrategyTemplate } from './runtime-config';
 
@@ -55,22 +60,6 @@ export type PipelineSourcePlan = {
   notes: string[];
 };
 
-const EVENT_GAP_TEMPLATES = [
-  'Indian event {city}',
-  'Indian meetup {city}',
-  'South Asian festival {city}',
-  'indische Veranstaltung {city}',
-] as const;
-
-const COMMUNITY_GAP_TEMPLATES = [
-  'Indian community group {city}',
-  'South Asian community {city}',
-  'Indian student group {city}',
-  'Indian professionals network {city}',
-  'indische Community {city}',
-  'indischer Verein {city}',
-] as const;
-
 function getPositiveIntEnv(name: string, fallback: number): number {
   const parsed = Number.parseInt(process.env[name] ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
@@ -78,16 +67,6 @@ function getPositiveIntEnv(name: string, fallback: number): number {
 
 function unique(values: string[]): string[] {
   return [...new Set(values.map((value) => value.trim()).filter(Boolean))];
-}
-
-/**
- * Expand keyword templates by substituting city names and deduplicating results.
- * E.g., 'Indian event {city}' → 'Indian event Stuttgart', 'Indian event Munich', ...
- */
-function expandTemplates(templates: readonly string[], cities: Array<{ name: string }>): string[] {
-  return unique(
-    cities.flatMap((city) => templates.map((template) => template.replace('{city}', city.name))),
-  );
 }
 
 function getLaneKey(lane: SourceLane | undefined): PipelineSourcePlanLaneKey {
@@ -103,18 +82,6 @@ function formatGapReasonSummary(city: CityGap): string {
     reasons.push(`community(c${city.communityCount}/e${city.upcomingEventCount})`);
   }
   return `${city.slug}:${reasons.join('+')}`;
-}
-
-function getGapKeywordsForStrategy(
-  strategy: KeywordStrategyTemplate,
-  eventGapKeywords: string[],
-  communityGapKeywords: string[],
-  resourceGapKeywords: string[],
-): string[] {
-  if (strategy.lane === 'EVENT') return eventGapKeywords;
-  if (strategy.lane === 'COMMUNITY') return communityGapKeywords;
-  if (strategy.lane === 'RESOURCE') return resourceGapKeywords;
-  return [];
 }
 
 function getLaneSeedKeywords(
@@ -485,15 +452,12 @@ export async function buildPipelineSourcePlan(
         byLane: { EVENT: [], COMMUNITY: [], RESOURCE: [] },
       };
   const laneKeywordSeeds = shouldRunKeywords ? await getRuntimeLaneKeywordSeeds() : null;
-  const eventGapKeywords = expandTemplates(EVENT_GAP_TEMPLATES, eventGaps);
   const resourceJourneyGapKeywords = getAdminResourceJourneyKeywords(triggeredBy, laneKeywordSeeds);
-
-  // Use union gap cities for community-discovery searches so community lanes can
-  // still probe organizer discovery in event-starved cities.
-  const unionGapCities = [...new Set([...eventGaps, ...communityGaps].map((g) => g.slug))].map(
-    (slug) => eventGaps.find((g) => g.slug === slug) || communityGaps.find((g) => g.slug === slug),
-  ) as CityGap[];
-  const communityGapKeywords = expandTemplates(COMMUNITY_GAP_TEMPLATES, unionGapCities);
+  const gapKeywordsByLane = buildGapKeywordsByLane(
+    eventGaps,
+    communityGaps,
+    resourceJourneyGapKeywords,
+  );
 
   const keywordStrategies = shouldRunKeywords
     ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
@@ -509,12 +473,7 @@ export async function buildPipelineSourcePlan(
           return [];
         }
 
-        const gapKeywords = getGapKeywordsForStrategy(
-          strategy,
-          eventGapKeywords,
-          communityGapKeywords,
-          resourceJourneyGapKeywords,
-        );
+        const gapKeywords = getGapKeywordsForStrategy(strategy, gapKeywordsByLane);
         const laneSeedsForStrategy = laneKeywordSeeds
           ? getLaneSeedKeywords(strategy, laneKeywordSeeds.byLane)
           : [];
