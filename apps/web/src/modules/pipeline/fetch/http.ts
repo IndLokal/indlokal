@@ -8,7 +8,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-export const PIPELINE_USER_AGENT = 'IndLokal-ContentBot/1.0 (+https://indlokal.de)';
+export const PIPELINE_USER_AGENT = 'IndLokal-ContentBot/1.0 (+https://indlokal.com)';
 
 export const PIPELINE_FETCH_TIMEOUT_MS = 15_000;
 
