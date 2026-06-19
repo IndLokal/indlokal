@@ -14,6 +14,7 @@
  *                      - (optional) lane-specific Google CSE IDs
  */
 
+import { db } from '@/lib/db';
 import { runPipeline } from './orchestrator';
 import { getDbCommunityStrategies } from './fetch/db-sources';
 import {
@@ -65,6 +66,23 @@ function filterRegionsForPreview(
     .filter((region) => region.citySlugs.length > 0);
 }
 
+/** Verify schema readiness before pipeline execution. */
+async function checkSchemaReadiness(): Promise<void> {
+  try {
+    // Test critical pipeline tables and columns exist
+    await db.$queryRaw`
+      SELECT 1 FROM information_schema.columns 
+      WHERE table_name = 'keyword_suggestions' AND column_name = 'lane'
+      LIMIT 1
+    `;
+  } catch (err) {
+    console.error('\n❌ Database schema is not in sync with Prisma schema.');
+    console.error('   Run: pnpm -F web db:push');
+    console.error('   Then: pnpm -F web pipeline\n');
+    process.exit(1);
+  }
+}
+
 async function main() {
   const args = process.argv.slice(2);
   const dryRun = args.includes('--dry-run');
@@ -98,6 +116,9 @@ async function main() {
     console.error('\n❌ DATABASE_URL is required. Set it in .env or environment.');
     process.exit(1);
   }
+
+  // Check schema readiness before proceeding
+  await checkSchemaReadiness();
 
   const regions = filterRegionsForPreview(await getRuntimeEnabledRegions(), {
     citySlugs,
