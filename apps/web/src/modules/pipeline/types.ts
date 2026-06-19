@@ -42,6 +42,28 @@ export type PipelineSourceIntent =
   | 'org_group_discovery'
   | 'official_service_info_discovery';
 
+/**
+ * Explicit run-mode contract for source planning.
+ * Defaults preserve legacy trigger behavior (`cron` event-refresh, others balanced).
+ */
+export type PipelineRunMode =
+  | 'event_refresh'
+  | 'balanced'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+/**
+ * Intent profile narrows strategies by source intent without changing ETL stages.
+ */
+export type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
+
 // ─── Backward-Compatible Aliases ───────────────────────
 
 /** Back-compat alias kept to avoid broad import churn. */

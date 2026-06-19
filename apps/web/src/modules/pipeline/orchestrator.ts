@@ -87,8 +87,10 @@ import type {
   ExtractedData,
   ExtractedEvent,
   ExtractedResource,
+  PipelineRunMode,
   PipelineLaneBreakdown,
   PipelineLaneMetricKey,
+  PipelineSourceIntentProfile,
   RawContent,
   PipelineRunResult,
   ResolutionProvenance,
@@ -187,6 +189,11 @@ function formatLaneOutcomesSummary(result: PipelineRunResult): string {
 export type PipelineRunScope = {
   citySlugs?: string[];
   regionIds?: string[];
+};
+
+export type PipelineRunOptions = {
+  runMode?: PipelineRunMode;
+  sourceIntentProfile?: PipelineSourceIntentProfile;
 };
 
 /** Restrict enabled regions to optional city/region scope filters. */
@@ -305,6 +312,7 @@ async function timePipelineStage<T>(
 export async function runPipeline(
   triggeredBy = 'cron',
   scope?: PipelineRunScope,
+  options: PipelineRunOptions = {},
 ): Promise<PipelineRunResult> {
   const start = Date.now();
   resetLlmStats();
@@ -392,7 +400,7 @@ export async function runPipeline(
     );
   }
   const uniqueRaw = await timePipelineStage(result, 'fetch', () =>
-    fetchAllSources(regions, result, triggeredBy, scopedCitySlugs, scopedStates),
+    fetchAllSources(regions, result, triggeredBy, scopedCitySlugs, scopedStates, options),
   );
   const candidateRaw = await timePipelineStage(result, 'prefilter', async () => {
     const currentItems = prefilterLikelyCurrentItems(uniqueRaw);
@@ -547,9 +555,13 @@ async function fetchAllSources(
   triggeredBy: string,
   scopedCitySlugs?: string[],
   scopedStates?: string[],
+  options: PipelineRunOptions = {},
 ): Promise<RawContent[]> {
   const allRaw: RawContent[] = [];
-  const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy);
+  const sourcePlan = await buildPipelineSourcePlan(regions, triggeredBy, {
+    runMode: options.runMode,
+    sourceIntentProfile: options.sourceIntentProfile,
+  });
   const scopedCitySet = new Set((scopedCitySlugs ?? []).map((slug) => slug.trim()).filter(Boolean));
   const scopedStateSet = new Set((scopedStates ?? []).map((state) => state.trim()).filter(Boolean));
   const pinnedStrategies =

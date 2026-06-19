@@ -742,7 +742,7 @@ describe('buildPipelineSourcePlan', () => {
     const adminPlan = await buildPipelineSourcePlan(regions, 'admin');
 
     expect(cronPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
-      // explicit COMMUNITY lane discovery is also excluded in event-first cron
+      // explicit COMMUNITY lane discovery is also excluded in event-refresh cron
     ]);
     expect(cronPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([]);
     expect(cronPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
@@ -752,10 +752,10 @@ describe('buildPipelineSourcePlan', () => {
       'cron run: skipped 1 RESOURCE pinned strategies (admin/city scoped only)',
     );
     expect(cronPlan.notes).toContain(
-      'cron run: skipped 1 COMMUNITY pinned strategies (event-first cron)',
+      'cron run: skipped 1 COMMUNITY pinned strategies (event-refresh cron)',
     );
     expect(cronPlan.notes).toContain(
-      'skipping resource-keyword: GOOGLE_SEARCH lane RESOURCE is not enabled for cron runs',
+      'skipping resource-keyword: GOOGLE_SEARCH lane RESOURCE is not enabled for run mode event_refresh',
     );
 
     expect(adminPlan.pinnedStrategies.map((strategy) => strategy.id)).toEqual([
@@ -794,7 +794,7 @@ describe('buildPipelineSourcePlan', () => {
 
     expect(cronPlan.keywordStrategies).toEqual([]);
     expect(cronPlan.notes).toContain(
-      'cron run: skipped 1 COMMUNITY keyword strategies (event-first cron)',
+      'cron run: skipped 1 COMMUNITY keyword strategies (event-refresh cron)',
     );
 
     expect(adminPlan.keywordStrategies.map((strategy) => strategy.id)).toEqual([
@@ -831,7 +831,7 @@ describe('buildPipelineSourcePlan', () => {
     ]);
     expect(adminPlan.keywordStrategies).toEqual([]);
     expect(adminPlan.notes).toContain(
-      'skipping google-event-keyword: GOOGLE_SEARCH lane EVENT is not enabled for admin runs',
+      'skipping google-event-keyword: GOOGLE_SEARCH lane EVENT is not enabled for run mode balanced',
     );
   });
 

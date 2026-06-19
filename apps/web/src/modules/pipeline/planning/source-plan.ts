@@ -42,7 +42,14 @@ import {
   isGoogleCseRunModeAllowed,
   readPositiveIntEnv,
 } from '../config/env-config';
-import type { PipelineLane, SearchRegion, SearchStrategy } from '../types';
+import type {
+  PipelineLane,
+  PipelineRunMode,
+  PipelineSourceIntent,
+  PipelineSourceIntentProfile,
+  SearchRegion,
+  SearchStrategy,
+} from '../types';
 import type { KeywordStrategyTemplate } from '../config/runtime-config';
 
 type KeywordStrategy = SearchStrategy & { kind: 'keyword_search' };
@@ -85,6 +92,11 @@ export type PipelineSourcePlan = {
   communityGaps: CityGap[];
   laneBreakdown: PipelineSourcePlanLaneBreakdown;
   notes: string[];
+};
+
+export type PipelineSourcePlanOptions = {
+  runMode?: PipelineRunMode;
+  sourceIntentProfile?: PipelineSourceIntentProfile;
 };
 
 function unique(values: string[]): string[] {
@@ -172,7 +184,7 @@ function filterPinnedStrategiesForRun(
   }
   if (communityDropped > 0) {
     notes.push(
-      `cron run: skipped ${communityDropped} COMMUNITY pinned strategies (event-first cron)`,
+      `cron run: skipped ${communityDropped} COMMUNITY pinned strategies (event-refresh cron)`,
     );
   }
   return kept;
@@ -202,7 +214,7 @@ function filterKeywordStrategiesForRun(
   }
   if (communityDropped > 0) {
     notes.push(
-      `cron run: skipped ${communityDropped} COMMUNITY keyword strategies (event-first cron)`,
+      `cron run: skipped ${communityDropped} COMMUNITY keyword strategies (event-refresh cron)`,
     );
   }
   return kept;
@@ -310,6 +322,100 @@ function limitDuckDuckGoKeywords(keywords: string[], triggeredBy: string): strin
   return keywords.slice(0, limit);
 }
 
+function resolveRunMode(
+  triggeredBy: string,
+  requestedMode?: PipelineRunMode,
+): { effectiveMode: PipelineRunMode; fromDefault: boolean } {
+  if (requestedMode) return { effectiveMode: requestedMode, fromDefault: false };
+  if (triggeredBy === 'cron') return { effectiveMode: 'event_refresh', fromDefault: true };
+  return { effectiveMode: 'balanced', fromDefault: true };
+}
+
+function resolveIntentProfile(requestedProfile?: PipelineSourceIntentProfile): {
+  effectiveProfile: PipelineSourceIntentProfile;
+  fromDefault: boolean;
+} {
+  if (requestedProfile) return { effectiveProfile: requestedProfile, fromDefault: false };
+  return { effectiveProfile: 'all', fromDefault: true };
+}
+
+function modeAllowsLane(mode: PipelineRunMode, lane: PipelineLane | undefined): boolean {
+  if (mode === 'balanced') return true;
+  if (mode === 'evidence_verification') return true;
+  if (!lane) return false;
+  if (mode === 'event_refresh') return lane === 'EVENT';
+  if (mode === 'community_discovery') return lane === 'COMMUNITY';
+  return lane === 'RESOURCE';
+}
+
+function modeAllowsKeywordSearch(mode: PipelineRunMode): boolean {
+  // Verification mode re-checks known sources only; no broad keyword expansion.
+  return mode !== 'evidence_verification';
+}
+
+function isGoogleKeywordStrategyAllowed(
+  lane: PipelineLane | undefined,
+  triggeredBy: string,
+  mode: PipelineRunMode,
+  runModeDefaulted: boolean,
+): boolean {
+  // Preserve legacy trigger semantics when mode is implicit/defaulted.
+  if (runModeDefaulted) return isGoogleCseRunModeAllowed(lane, triggeredBy);
+
+  // Explicit mode selected: gate by operational mode instead of trigger.
+  if (mode === 'balanced') return true;
+  if (mode === 'event_refresh') return lane === 'EVENT';
+  if (mode === 'community_discovery') return lane === 'COMMUNITY';
+  if (mode === 'resource_discovery') return lane === 'RESOURCE';
+  // evidence_verification never reaches keyword execution (disabled above),
+  // but keep defensive allowance to avoid accidental hard drops.
+  return true;
+}
+
+function profileAllowsIntent(
+  profile: PipelineSourceIntentProfile,
+  sourceIntent: PipelineSourceIntent | undefined,
+): boolean {
+  if (profile === 'all') return true;
+  if (!sourceIntent) return false;
+  if (profile === 'activity_only') return sourceIntent === 'dated_activity_discovery';
+  if (profile === 'community_only') return sourceIntent === 'org_group_discovery';
+  if (profile === 'service_only') return sourceIntent === 'official_service_info_discovery';
+  if (profile === 'evidence_only') return sourceIntent !== undefined;
+  // channel_only currently maps to community-source channels and event channel pages.
+  return sourceIntent === 'org_group_discovery' || sourceIntent === 'dated_activity_discovery';
+}
+
+function applyRunModeFilter<T extends { lane?: PipelineLane; id: string }>(
+  strategies: T[],
+  mode: PipelineRunMode,
+  notes: string[],
+  label: 'keyword' | 'pinned',
+): T[] {
+  const kept = strategies.filter((strategy) => modeAllowsLane(mode, strategy.lane));
+  const dropped = strategies.length - kept.length;
+  if (dropped > 0) {
+    notes.push(`run mode ${mode}: skipped ${dropped} ${label} strategies by lane policy`);
+  }
+  return kept;
+}
+
+function applyIntentProfileFilter<T extends { sourceIntent?: PipelineSourceIntent; id: string }>(
+  strategies: T[],
+  profile: PipelineSourceIntentProfile,
+  notes: string[],
+  label: 'keyword' | 'pinned',
+): T[] {
+  const kept = strategies.filter((strategy) => profileAllowsIntent(profile, strategy.sourceIntent));
+  const dropped = strategies.length - kept.length;
+  if (dropped > 0) {
+    notes.push(
+      `source intent profile ${profile}: skipped ${dropped} ${label} strategies by sourceIntent`,
+    );
+  }
+  return kept;
+}
+
 async function getLowCoverageCities(
   regions: SearchRegion[],
   isCronRun: boolean,
@@ -411,7 +517,7 @@ async function getLowCoverageCities(
  * identifies cities with content gaps, and returns a breakdown for execution.
  *
  * Key behaviors:
- *   - Cron runs filter out COMMUNITY and RESOURCE lanes (event-first only)
+ *   - Cron defaults to event_refresh mode (filters out COMMUNITY and RESOURCE lanes)
  *   - Admin/manual runs include all lanes
  *   - Pinned strategies are prioritized by scored domain strength
  *   - Keyword strategies are expanded with gap-analysis templates for low-coverage cities
@@ -424,11 +530,27 @@ async function getLowCoverageCities(
 export async function buildPipelineSourcePlan(
   regions: SearchRegion[],
   triggeredBy: string,
+  options: PipelineSourcePlanOptions = {},
 ): Promise<PipelineSourcePlan> {
+  const { effectiveMode, fromDefault: runModeDefaulted } = resolveRunMode(
+    triggeredBy,
+    options.runMode,
+  );
+  const { effectiveProfile, fromDefault: intentProfileDefaulted } = resolveIntentProfile(
+    options.sourceIntentProfile,
+  );
+
   const isTimeBoundRun = triggeredBy === 'cron' || triggeredBy === 'admin';
   const notes: string[] = [];
   const forceKeywordSearch = isForceKeywordSearchEnabled();
   const forceAdminKeywordSearch = isAdminForceKeywordSearchEnabled(triggeredBy);
+
+  notes.push(
+    `run mode: ${effectiveMode}${runModeDefaulted ? ` (default from trigger=${triggeredBy})` : ''}`,
+  );
+  notes.push(
+    `source intent profile: ${effectiveProfile}${intentProfileDefaulted ? ' (default)' : ''}`,
+  );
 
   const staticPinned = await getRuntimePinnedStrategies();
   const dbPinnedAll = await getDbCommunityStrategies();
@@ -453,10 +575,16 @@ export async function buildPipelineSourcePlan(
   }
 
   const shouldRunKeywords =
-    forceKeywordSearch ||
-    forceAdminKeywordSearch ||
-    eventGaps.length > 0 ||
-    communityGaps.length > 0;
+    modeAllowsKeywordSearch(effectiveMode) &&
+    (forceKeywordSearch ||
+      forceAdminKeywordSearch ||
+      eventGaps.length > 0 ||
+      communityGaps.length > 0);
+  if (!modeAllowsKeywordSearch(effectiveMode)) {
+    notes.push(
+      'run mode evidence_verification: keyword search disabled (pinned verification only)',
+    );
+  }
   if (!shouldRunKeywords) {
     notes.push('skipping keyword search: no low-coverage DB city gaps');
   }
@@ -481,10 +609,15 @@ export async function buildPipelineSourcePlan(
     ? (await getRuntimeKeywordStrategies()).flatMap((strategy) => {
         if (
           strategy.sourceType === 'GOOGLE_SEARCH' &&
-          !isGoogleCseRunModeAllowed(strategy.lane, triggeredBy)
+          !isGoogleKeywordStrategyAllowed(
+            strategy.lane,
+            triggeredBy,
+            effectiveMode,
+            runModeDefaulted,
+          )
         ) {
           notes.push(
-            `skipping ${strategy.id}: GOOGLE_SEARCH lane ${strategy.lane ?? 'UNKNOWN'} is not enabled for ${triggeredBy} runs`,
+            `skipping ${strategy.id}: GOOGLE_SEARCH lane ${strategy.lane ?? 'UNKNOWN'} is not enabled for run mode ${effectiveMode}`,
           );
           return [];
         }
@@ -526,10 +659,22 @@ export async function buildPipelineSourcePlan(
         return [{ ...strategy, keywords: limitedKeywords }];
       })
     : [];
-  const filteredKeywordStrategies = filterKeywordStrategiesForRun(
+  const triggerFilteredKeywordStrategies = filterKeywordStrategiesForRun(
     keywordStrategies,
     triggeredBy,
     notes,
+  );
+  const modeFilteredKeywordStrategies = applyRunModeFilter(
+    triggerFilteredKeywordStrategies,
+    effectiveMode,
+    notes,
+    'keyword',
+  );
+  const filteredKeywordStrategies = applyIntentProfileFilter(
+    modeFilteredKeywordStrategies,
+    effectiveProfile,
+    notes,
+    'keyword',
   );
 
   // Debug note if keyword search was planned but all strategies were filtered.
@@ -541,7 +686,23 @@ export async function buildPipelineSourcePlan(
 
   // Combine pinned strategies and apply lane filtering consistently.
   const allPinnedStrategies = [...staticPinned, ...dbPinned];
-  const pinnedStrategies = filterPinnedStrategiesForRun(allPinnedStrategies, triggeredBy, notes);
+  const triggerFilteredPinnedStrategies = filterPinnedStrategiesForRun(
+    allPinnedStrategies,
+    triggeredBy,
+    notes,
+  );
+  const modeFilteredPinnedStrategies = applyRunModeFilter(
+    triggerFilteredPinnedStrategies,
+    effectiveMode,
+    notes,
+    'pinned',
+  );
+  const pinnedStrategies = applyIntentProfileFilter(
+    modeFilteredPinnedStrategies,
+    effectiveProfile,
+    notes,
+    'pinned',
+  );
 
   const laneBreakdown = buildLaneBreakdown(filteredKeywordStrategies, pinnedStrategies);
   notes.push(

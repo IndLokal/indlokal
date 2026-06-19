@@ -23,7 +23,24 @@ import {
   getRuntimeKeywordStrategies,
   getRuntimePinnedStrategies,
 } from './config/runtime-config';
-import type { SearchRegion } from './types';
+import type { PipelineRunMode, PipelineSourceIntentProfile, SearchRegion } from './types';
+
+const VALID_RUN_MODES: readonly PipelineRunMode[] = [
+  'balanced',
+  'event_refresh',
+  'community_discovery',
+  'resource_discovery',
+  'evidence_verification',
+];
+
+const VALID_SOURCE_INTENT_PROFILES: readonly PipelineSourceIntentProfile[] = [
+  'all',
+  'activity_only',
+  'community_only',
+  'service_only',
+  'evidence_only',
+  'channel_only',
+];
 
 function parseListArg(args: string[], key: '--city' | '--region'): string[] {
   const values: string[] = [];
@@ -40,6 +57,36 @@ function parseListArg(args: string[], key: '--city' | '--region'): string[] {
     .flatMap((raw) => raw.split(','))
     .map((v) => v.trim())
     .filter(Boolean);
+}
+
+function parseSingleArg(
+  args: string[],
+  key: '--run-mode' | '--intent-profile',
+): string | undefined {
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === key) {
+      const next = args[i + 1];
+      if (next && !next.startsWith('--')) return next.trim();
+      continue;
+    }
+    if (arg.startsWith(`${key}=`)) return arg.slice(key.length + 1).trim();
+  }
+  return undefined;
+}
+
+function parseRunMode(raw: string | undefined): PipelineRunMode | undefined {
+  if (!raw) return undefined;
+  const normalized = raw.trim().toLowerCase() as PipelineRunMode;
+  return VALID_RUN_MODES.includes(normalized) ? normalized : undefined;
+}
+
+function parseSourceIntentProfile(
+  raw: string | undefined,
+): PipelineSourceIntentProfile | undefined {
+  if (!raw) return undefined;
+  const normalized = raw.trim().toLowerCase() as PipelineSourceIntentProfile;
+  return VALID_SOURCE_INTENT_PROFILES.includes(normalized) ? normalized : undefined;
 }
 
 function filterRegionsForPreview(
@@ -89,6 +136,23 @@ async function main() {
   const strictMode = args.includes('--strict') || process.env.PIPELINE_STRICT === '1';
   const citySlugs = parseListArg(args, '--city');
   const regionIds = parseListArg(args, '--region');
+  const runModeRaw = parseSingleArg(args, '--run-mode');
+  const sourceIntentProfileRaw = parseSingleArg(args, '--intent-profile');
+  const runMode = parseRunMode(runModeRaw);
+  const sourceIntentProfile = parseSourceIntentProfile(sourceIntentProfileRaw);
+
+  if (runModeRaw && !runMode) {
+    console.error(
+      `\n❌ Invalid --run-mode '${runModeRaw}'. Allowed: ${VALID_RUN_MODES.join(', ')}`,
+    );
+    process.exit(1);
+  }
+  if (sourceIntentProfileRaw && !sourceIntentProfile) {
+    console.error(
+      `\n❌ Invalid --intent-profile '${sourceIntentProfileRaw}'. Allowed: ${VALID_SOURCE_INTENT_PROFILES.join(', ')}`,
+    );
+    process.exit(1);
+  }
 
   console.log('╔══════════════════════════════════════════╗');
   console.log('║  IndLokal AI Content Pipeline          ║');
@@ -104,6 +168,8 @@ async function main() {
     console.log(
       `Exit behavior: ${strictMode ? 'STRICT (non-zero on pipeline errors)' : 'TOLERANT (warnings do not fail run)'}`,
     );
+    console.log(`Run mode: ${runMode ?? 'default (by trigger)'}`);
+    console.log(`Source intent profile: ${sourceIntentProfile ?? 'default (all)'}`);
   }
 
   // Check required env vars
@@ -171,6 +237,10 @@ async function main() {
           regionIds: regionIds.length > 0 ? regionIds : undefined,
         }
       : undefined,
+    {
+      runMode,
+      sourceIntentProfile,
+    },
   );
 
   console.log('\n═══════════════════════════════════════');
