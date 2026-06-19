@@ -1,3 +1,12 @@
+/**
+ * Embedded Google Calendar ingestion helpers.
+ *
+ * Responsibilities:
+ * - discover Google Calendar embed IDs from fetched HTML
+ * - fetch and parse ICS feeds into normalized event-like raw records
+ * - throttle recurring calendar feed ingestion via cron cadence gates
+ * - reconstruct extraction-ready events from calendar-backed raw content
+ */
 import { db } from '@/lib/db';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { decodeHtmlEntities } from '../text';
@@ -24,6 +33,7 @@ export function isHolidayCalendarId(calendarId: string): boolean {
   return normalized.includes('holiday@group.v.calendar.google.com');
 }
 
+/** Build the public ICS feed URL for a Google Calendar ID. */
 export function buildGoogleCalendarIcsUrl(calendarId: string): string {
   return `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
 }
@@ -200,6 +210,7 @@ export function parseGoogleCalendarIcsEvents(ics: string): IcsEvent[] {
   return events;
 }
 
+/** Cron feed sync cadence control: monthly (default) or always. */
 function getCalendarSyncCadence(): 'monthly' | 'always' {
   const raw = (process.env.PIPELINE_CALENDAR_SYNC_CADENCE ?? 'monthly').trim().toLowerCase();
   return raw === 'always' ? 'always' : 'monthly';

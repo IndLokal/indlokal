@@ -27,15 +27,23 @@ function readEnv(name: string): string | undefined {
   return value && value.length > 0 ? value : undefined;
 }
 
+/** Parse a positive integer env var, otherwise return fallback. */
 export function readPositiveIntEnv(name: string, fallback: number): number {
   const parsed = Number.parseInt(process.env[name] ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+/** Whether Eventbrite API access is configured. */
 export function hasEventbriteApiKey(): boolean {
   return Boolean(readEnv('EVENTBRITE_API_KEY'));
 }
 
+/** Return Eventbrite API key if configured. */
+export function getEventbriteApiKey(): string | undefined {
+  return readEnv('EVENTBRITE_API_KEY');
+}
+
+/** Return Google CSE API key if configured. */
 export function getGoogleCseApiKey(): string | undefined {
   return readEnv('GOOGLE_CSE_API_KEY');
 }
@@ -59,14 +67,52 @@ export function isGoogleCseRunModeAllowed(
   return true;
 }
 
+/** Whether DDG search adapter is enabled for this environment. */
 export function isDuckDuckGoEnabled(): boolean {
   return process.env.PIPELINE_ENABLE_DDG === '1';
 }
 
+/** DDG keyword cap with per-trigger defaults and env override support. */
 export function getDuckDuckGoKeywordLimit(triggeredBy: string): number {
   const configured = Number.parseInt(process.env.PIPELINE_DDG_KEYWORD_LIMIT ?? '', 10);
   if (Number.isFinite(configured) && configured > 0) return configured;
   return triggeredBy === 'cron' ? 8 : triggeredBy === 'admin' ? 16 : 12;
+}
+
+/** Pinned expansion cap for first-hop discovered links. */
+export function getPinnedExpansionLimit(): number {
+  return readPositiveIntEnv('PIPELINE_PINNED_EXPANSION_LIMIT', 6);
+}
+
+/** Pinned expansion cap for second-hop discovered links. */
+export function getPinnedSecondHopLimit(): number {
+  return readPositiveIntEnv('PIPELINE_PINNED_SECOND_HOP_LIMIT', 8);
+}
+
+/** Whether second-hop pinned expansion is enabled. */
+export function isPinnedSecondHopEnabled(): boolean {
+  return process.env.PIPELINE_PINNED_SECOND_HOP === '1';
+}
+
+/** Whether pinned link extraction expansion is enabled. */
+export function isPinnedLinkExpansionEnabled(): boolean {
+  return process.env.PIPELINE_PINNED_LINK_EXPANSION === '1';
+}
+
+/** Whether pinned expansion may follow links across host boundaries. */
+export function isPinnedExpansionAllowCrossHost(): boolean {
+  return process.env.PIPELINE_PINNED_EXPANSION_ALLOW_CROSS_HOST === '1';
+}
+
+/** Source-type allowlist for pinned expansion, normalized to uppercase. */
+export function getPinnedExpansionSourceTypes(): Set<string> {
+  const raw = process.env.PIPELINE_PINNED_EXPANSION_SOURCE_TYPES ?? '';
+  return new Set(
+    raw
+      .split(',')
+      .map((entry) => entry.trim().toUpperCase())
+      .filter(Boolean),
+  );
 }
 
 export function isForceKeywordSearchEnabled(): boolean {

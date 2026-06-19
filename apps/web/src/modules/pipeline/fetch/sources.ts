@@ -1,11 +1,12 @@
 /**
- * Source adapters - fetch raw content from external sources.
+ * Pipeline fetch adapters for external content sources.
  *
- * Two modes:
- *  1. Keyword search (Eventbrite) - takes a region + keywords, returns items from anywhere in that region
- *  2. Pinned URL (Facebook, websites) - fetches a specific known URL
+ * Discovery modes:
+ * 1) keyword search adapters (Eventbrite, Google CSE, DuckDuckGo)
+ * 2) pinned URL adapters (known pages and DB-discovered community sites)
  *
- * Adapters never assign a city. That's the LLM's job.
+ * Adapters return raw items only. City/community assignment and extraction are
+ * downstream concerns handled by planner/orchestrator/extraction stages.
  */
 
 import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from '../types';
@@ -14,7 +15,14 @@ import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
 import {
   GOOGLE_CSE_ENV_BY_LANE,
+  getEventbriteApiKey,
   getGoogleCseApiKey,
+  getPinnedExpansionLimit,
+  getPinnedExpansionSourceTypes,
+  getPinnedSecondHopLimit,
+  isPinnedExpansionAllowCrossHost,
+  isPinnedLinkExpansionEnabled,
+  isPinnedSecondHopEnabled,
   resolveGoogleCseIdForLane,
 } from '../config/env-config';
 
@@ -149,32 +157,24 @@ function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
 }
 
 function getExpansionLimit(): number {
-  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_EXPANSION_LIMIT ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 6;
+  return getPinnedExpansionLimit();
 }
 
 function getSecondHopExpansionLimit(): number {
-  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_SECOND_HOP_LIMIT ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8;
+  return getPinnedSecondHopLimit();
 }
 
 function supportsSecondHopExpansion(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
-  return process.env.PIPELINE_PINNED_SECOND_HOP === '1' && shouldExpandPinnedUrl(strategy);
+  return isPinnedSecondHopEnabled() && shouldExpandPinnedUrl(strategy);
 }
 
 function getExpansionSourceTypes(): Set<string> {
-  const raw = process.env.PIPELINE_PINNED_EXPANSION_SOURCE_TYPES ?? '';
-  return new Set(
-    raw
-      .split(',')
-      .map((entry) => entry.trim().toUpperCase())
-      .filter(Boolean),
-  );
+  return getPinnedExpansionSourceTypes();
 }
 
 function shouldExpandPinnedUrl(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
   if (strategy.sourceType === 'DB_COMMUNITY') return true;
-  if (process.env.PIPELINE_PINNED_LINK_EXPANSION !== '1') return false;
+  if (!isPinnedLinkExpansionEnabled()) return false;
   const allowedSourceTypes = getExpansionSourceTypes();
   if (allowedSourceTypes.size === 0) return false;
   return (
@@ -191,7 +191,7 @@ function shouldSkipExpansionPath(pathname: string): boolean {
 function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
   const base = parseHttpUrl(baseUrl);
   if (!base) return [];
-  const allowCrossHost = process.env.PIPELINE_PINNED_EXPANSION_ALLOW_CROSS_HOST === '1';
+  const allowCrossHost = isPinnedExpansionAllowCrossHost();
 
   const linkPattern =
     /<a\b[^>]*?\bhref=(?:"([^"#][^"]*?)"|'([^'#][^']*?)'|([^\s>"'#][^\s>]*))[^>]*>([\s\S]*?)<\/a>/gi;
@@ -252,7 +252,7 @@ export async function fetchEventbriteKeywords(
   strategy: SearchStrategy & { kind: 'keyword_search' },
   region: SearchRegion,
 ): Promise<FetchResult> {
-  const apiKey = process.env.EVENTBRITE_API_KEY;
+  const apiKey = getEventbriteApiKey();
   const items: RawContent[] = [];
   const errors: string[] = [];
 
