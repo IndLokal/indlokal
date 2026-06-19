@@ -65,6 +65,12 @@ const KEYWORD_CANDIDATE_LIMIT = 30;
 const KEYWORD_PHRASE_MIN_LENGTH = 4;
 const KEYWORD_PHRASE_MAX_LENGTH = 32;
 
+/** Confidence used when the enrichment LLM omits a community-level score. */
+const ENRICHMENT_CONFIDENCE_FALLBACK = 0.75;
+
+/** Field-confidence fallback stored when the enrichment LLM omits per-field scores. */
+const ENRICHMENT_FIELD_CONFIDENCE_FALLBACK: Record<string, number> = { description: 0.8 };
+
 const SEMANTIC_DUPLICATE_PROMPT = `You compare community records and decide whether they refer to the same real-world organization.
 
 Return JSON:
@@ -98,6 +104,34 @@ Reject generic words, cities, person names, and low-signal noise.`;
 
 function normalizeKeyword(keyword: string): string {
   return keyword.trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
+ * Parse a JSON object response from the LLM, tolerating empty, truncated, or
+ * accidentally fenced output. Returns null instead of throwing so a single bad
+ * completion never aborts a cron job — callers decide the fallback behavior.
+ *
+ * `callOpenAI` requests `response_format: json_object`, but a truncated
+ * completion (max_tokens hit) still returns an empty/partial string.
+ */
+function safeParseLlmJson<T>(raw: string): T | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const unfenced = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  try {
+    return JSON.parse(unfenced) as T;
+  } catch {
+    return null;
+  }
+}
+
+/** Clamp a model-provided confidence into [0,1] and round to 2 decimals. */
+function normalizeConfidence(value: unknown, fallback: number): number {
+  const raw = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  return Math.round(Math.min(1, Math.max(0, raw)) * 100) / 100;
 }
 
 function isSourceLane(value: string | null | undefined): value is SourceLane {
@@ -180,9 +214,10 @@ export async function semanticCommunityDuplicateCheck(
       ],
       { maxTokens: 900 },
     );
-    const parsed = JSON.parse(response) as {
+    const parsed = safeParseLlmJson<{
       matches?: Array<{ id?: string; sameEntity?: boolean; confidence?: number; reason?: string }>;
-    };
+    }>(response);
+    if (!parsed) return null;
 
     const best = (parsed.matches ?? [])
       .filter((match) => match.sameEntity && typeof match.id === 'string')
@@ -192,7 +227,7 @@ export async function semanticCommunityDuplicateCheck(
 
     return {
       matchedId: best.id as string,
-      confidence: Math.round((best.confidence ?? 0) * 100) / 100,
+      confidence: normalizeConfidence(best.confidence, 0),
       reason: String(best.reason ?? 'semantic-match'),
     };
   } catch (error) {
@@ -299,8 +334,8 @@ export async function enrichSparseCommunities(limit = 10) {
         ],
         { maxTokens: 1600 },
       );
-      const parsed = JSON.parse(response) as { community?: Record<string, unknown> };
-      if (!parsed.community) {
+      const parsed = safeParseLlmJson<{ community?: Record<string, unknown> }>(response);
+      if (!parsed?.community) {
         skipped++;
         continue;
       }
@@ -324,12 +359,14 @@ export async function enrichSparseCommunities(limit = 10) {
         whatsappUrl: parsed.community.whatsappUrl ? String(parsed.community.whatsappUrl) : null,
         telegramUrl: parsed.community.telegramUrl ? String(parsed.community.telegramUrl) : null,
         contactEmail: parsed.community.contactEmail ? String(parsed.community.contactEmail) : null,
-        confidence:
-          typeof parsed.community.confidence === 'number' ? parsed.community.confidence : 0.75,
+        confidence: normalizeConfidence(
+          parsed.community.confidence,
+          ENRICHMENT_CONFIDENCE_FALLBACK,
+        ),
         fieldConfidence:
           parsed.community.fieldConfidence && typeof parsed.community.fieldConfidence === 'object'
             ? (parsed.community.fieldConfidence as Record<string, number>)
-            : { description: 0.8 },
+            : ENRICHMENT_FIELD_CONFIDENCE_FALLBACK,
       };
 
       await db.pipelineItem.create({
@@ -573,7 +610,7 @@ export async function refreshKeywordSuggestions() {
     { maxTokens: 1200 },
   );
 
-  const parsed = JSON.parse(response) as {
+  const parsed = safeParseLlmJson<{
     suggestions?: Array<{
       keyword?: string;
       accepted?: boolean;
@@ -581,7 +618,10 @@ export async function refreshKeywordSuggestions() {
       confidence?: number;
       reason?: string;
     }>;
-  };
+  }>(response);
+  if (!parsed) {
+    return { created: 0, updated: 0, candidates: candidates.length };
+  }
 
   let created = 0;
   let updated = 0;
@@ -593,6 +633,7 @@ export async function refreshKeywordSuggestions() {
     if (!candidate) continue;
     const lane = isSourceLane(suggestion.lane) ? suggestion.lane : candidate.lane;
     if (!lane) continue;
+    const confidence = normalizeConfidence(suggestion.confidence, KEYWORD_CONFIDENCE_FALLBACK);
 
     const upserted = await db.keywordSuggestion.upsert({
       where: { normalizedKeyword: normalized },
@@ -600,7 +641,7 @@ export async function refreshKeywordSuggestions() {
         keyword: suggestion.keyword,
         normalizedKeyword: normalized,
         lane,
-        confidence: Math.round((suggestion.confidence ?? KEYWORD_CONFIDENCE_FALLBACK) * 100) / 100,
+        confidence,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
@@ -610,7 +651,7 @@ export async function refreshKeywordSuggestions() {
       update: {
         keyword: suggestion.keyword,
         lane,
-        confidence: Math.round((suggestion.confidence ?? KEYWORD_CONFIDENCE_FALLBACK) * 100) / 100,
+        confidence,
         sourceCount: candidate.count,
         evidence: {
           reason: suggestion.reason ?? null,
