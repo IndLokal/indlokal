@@ -2,6 +2,38 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { assertCan } from '@/lib/auth/permissions';
 import { runPipeline, type PipelineRunScope } from '@/modules/pipeline';
 
+type PipelineRunMode =
+  | 'balanced'
+  | 'event_refresh'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
+
+const VALID_RUN_MODES: PipelineRunMode[] = [
+  'balanced',
+  'event_refresh',
+  'community_discovery',
+  'resource_discovery',
+  'evidence_verification',
+];
+
+const VALID_SOURCE_INTENT_PROFILES: PipelineSourceIntentProfile[] = [
+  'all',
+  'activity_only',
+  'community_only',
+  'service_only',
+  'evidence_only',
+  'channel_only',
+];
+
 export const runtime = 'nodejs';
 export const maxDuration = 300;
 
@@ -25,6 +57,28 @@ function getBaseUrl(req: NextRequest): string | null {
   return host ? `${proto}://${host}` : null;
 }
 
+function normalizeSingleString(value: unknown): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function parseRunMode(value: unknown): PipelineRunMode | undefined {
+  const normalized = normalizeSingleString(value);
+  if (!normalized) return undefined;
+  return VALID_RUN_MODES.includes(normalized as PipelineRunMode)
+    ? (normalized as PipelineRunMode)
+    : undefined;
+}
+
+function parseSourceIntentProfile(value: unknown): PipelineSourceIntentProfile | undefined {
+  const normalized = normalizeSingleString(value);
+  if (!normalized) return undefined;
+  return VALID_SOURCE_INTENT_PROFILES.includes(normalized as PipelineSourceIntentProfile)
+    ? (normalized as PipelineSourceIntentProfile)
+    : undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     await assertCan('pipeline.run');
@@ -32,6 +86,8 @@ export async function POST(req: NextRequest) {
     const body = ((await req.json().catch(() => null)) ?? {}) as {
       regionIds?: unknown;
       citySlugs?: unknown;
+      runMode?: unknown;
+      sourceIntentProfile?: unknown;
     };
 
     const regionIds = normalizeScopeList(body.regionIds);
@@ -44,6 +100,28 @@ export async function POST(req: NextRequest) {
           }
         : undefined;
 
+    const rawRunMode = normalizeSingleString(body.runMode);
+    const rawSourceIntentProfile = normalizeSingleString(body.sourceIntentProfile);
+    const runMode = parseRunMode(body.runMode);
+    const sourceIntentProfile = parseSourceIntentProfile(body.sourceIntentProfile);
+    if (rawRunMode && !runMode) {
+      return NextResponse.json(
+        { ok: false, error: `Invalid runMode: ${rawRunMode}` },
+        { status: 400 },
+      );
+    }
+    if (rawSourceIntentProfile && !sourceIntentProfile) {
+      return NextResponse.json(
+        { ok: false, error: `Invalid sourceIntentProfile: ${rawSourceIntentProfile}` },
+        { status: 400 },
+      );
+    }
+
+    const runOptions = {
+      runMode,
+      sourceIntentProfile,
+    };
+
     // Align "Run all enabled regions" with cron semantics: region-sharded
     // dispatch with per-shard lock/timeout behavior.
     if (!scope) {
@@ -53,7 +131,7 @@ export async function POST(req: NextRequest) {
       // Local/dev convenience: allow Run all to work without cron secrets by
       // falling back to direct execution in-process.
       if (!canDispatch) {
-        const result = await runPipeline('admin', undefined);
+        const result = await runPipeline('admin', undefined, runOptions);
         return NextResponse.json({
           ok: true,
           mode: 'direct',
@@ -69,6 +147,7 @@ export async function POST(req: NextRequest) {
           authorization: `Bearer ${process.env.CRON_SECRET}`,
           'content-type': 'application/json',
         },
+        body: JSON.stringify(runOptions),
       });
 
       const dispatchPayload = await dispatchRes.json().catch(() => null);
@@ -83,7 +162,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, mode: 'dispatch', dispatch: dispatchPayload });
     }
 
-    const result = await runPipeline('admin', scope);
+    const result = await runPipeline('admin', scope, runOptions);
     return NextResponse.json({ ok: true, mode: 'direct', scope: scope ?? null, result });
   } catch (err) {
     console.error('[admin/pipeline/run]', err);

@@ -3,7 +3,9 @@ import {
   computeSimilarity,
   isLikelyStaleEventPage,
   normalizeEventTitleForDedup,
+  prefilterLaneAwareItems,
   prefilterLikelyCurrentItems,
+  resolveEventCityDecision,
 } from '../orchestrator';
 
 describe('computeSimilarity', () => {
@@ -136,5 +138,201 @@ describe('prefilterLikelyCurrentItems', () => {
 
     expect(kept).toHaveLength(1);
     expect(kept[0]?.sourceUrl).toBe('https://example.org/upcoming-events/');
+  });
+});
+
+describe('prefilterLaneAwareItems', () => {
+  it('drops EVENT lane items without event/date signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/about-us',
+        text: 'About our community and mission statement.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'EVENT',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps EVENT lane items with clear event signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/upcoming-events/',
+        text: 'Upcoming events for 2026. Join us on 15.08.2026.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'EVENT',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+  });
+
+  it('drops COMMUNITY lane items without organization/community signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'GOOGLE_SEARCH',
+        sourceUrl: 'https://example.org/random-page',
+        text: 'Welcome to our landing page.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'COMMUNITY',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps COMMUNITY lane items with community signals', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'GOOGLE_SEARCH',
+        sourceUrl: 'https://example.org/association',
+        text: 'Indian Association community network for students and professionals.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'COMMUNITY',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+  });
+
+  it('drops RESOURCE lane items from non-strong evidence domains', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://example.org/resource-guide',
+        text: 'Helpful relocation information.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'RESOURCE',
+      },
+    ]);
+
+    expect(kept).toEqual([]);
+  });
+
+  it('keeps RESOURCE lane items from strong official domains', () => {
+    const kept = prefilterLaneAwareItems([
+      {
+        sourceType: 'WEBSITE_SCRAPE',
+        sourceUrl: 'https://www.cgimunich.gov.in/',
+        text: 'Official consular services portal.',
+        fetchedAt: new Date().toISOString(),
+        _lane: 'RESOURCE',
+      },
+    ]);
+
+    expect(kept).toHaveLength(1);
+  });
+});
+
+describe('resolveEventCityDecision', () => {
+  const cities = [
+    { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+    { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+  ];
+  const cityBySlug = new Map([
+    ['stuttgart', { id: 'city-1', name: 'Stuttgart' }],
+    ['karlsruhe', { id: 'city-2', name: 'Karlsruhe' }],
+  ]);
+
+  it('prefers deterministic event location signals over conflicting llm and hint cities', () => {
+    const resolution = resolveEventCityDecision(
+      {
+        type: 'EVENT',
+        title: 'Summer meetup',
+        description: null,
+        date: '2026-08-15',
+        time: '18:00',
+        endDate: null,
+        endTime: null,
+        venueName: 'Stuttgart Hall',
+        venueAddress: 'Stuttgart, Germany',
+        cityName: 'Karlsruhe',
+        isOnline: false,
+        isFree: true,
+        cost: null,
+        costType: 'FREE',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+        entryNote: null,
+        registrationUrl: null,
+        imageUrl: null,
+        hostCommunity: null,
+        categories: [],
+        languages: [],
+        confidence: 0.9,
+        fieldConfidence: {},
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'Event details',
+        fetchedAt: new Date().toISOString(),
+        _hintCitySlug: 'karlsruhe',
+      },
+      cities,
+      cityBySlug,
+      null,
+      undefined,
+    );
+
+    expect(resolution.cityId).toBe('city-1');
+    expect(resolution.resolutionSource).toBe('signal');
+    expect(resolution.cityConflict).toBe(true);
+  });
+
+  it('marks ambiguous multi-city signals as pending with fallback city', () => {
+    const resolution = resolveEventCityDecision(
+      {
+        type: 'EVENT',
+        title: 'Stuttgart and Karlsruhe cultural exchange',
+        description: null,
+        date: '2026-09-01',
+        time: '19:00',
+        endDate: null,
+        endTime: null,
+        venueName: 'Community Hall',
+        venueAddress: 'Stuttgart and Karlsruhe',
+        cityName: null,
+        isOnline: false,
+        isFree: true,
+        cost: null,
+        costType: 'FREE',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+        entryNote: null,
+        registrationUrl: null,
+        imageUrl: null,
+        hostCommunity: null,
+        categories: [],
+        languages: [],
+        confidence: 0.9,
+        fieldConfidence: {},
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'Event details',
+        fetchedAt: new Date().toISOString(),
+      },
+      cities,
+      cityBySlug,
+      { id: 'city-1', name: 'Stuttgart' },
+      'stuttgart',
+    );
+
+    expect(resolution.cityId).toBe('city-1');
+    expect(resolution.isCityPending).toBe(true);
+    expect(resolution.resolutionSource).toBe('fallback');
   });
 });

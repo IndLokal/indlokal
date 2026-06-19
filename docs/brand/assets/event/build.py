@@ -36,7 +36,20 @@ FOREGROUND = "#1E293B"
 MUTED = "#64748B"
 
 FONT = "Inter, 'Helvetica Neue', Arial, sans-serif"
-URL = "https://indlokal.de"
+URL = "https://indlokal.com"
+
+# --- Event tokens (generic, reusable across any expo) ------------------------
+# The public QR always points at the live consumer product (indlokal.com always
+# 200s). Keep this collateral evergreen; avoid event names/dates in artwork.
+EVENT_TAG = "INDIAN LIFE IN GERMANY"
+EVENT_SUBTAG = "JOURNEYS · EVENTS · RESOURCES"
+
+# --- Visiting card contact defaults -----------------------------------------
+# Edit these values to generate personalized cards.
+CARD_NAME = "Jayaprakash Jain"
+CARD_ROLE = "Founder"
+CARD_EMAIL = "founder@indlokal.com"
+CARD_PHONE = "+49 1516 3256868"
 
 
 # --- Building blocks ---------------------------------------------------------
@@ -111,6 +124,28 @@ def pillar_icon(kind: str, cx: float, cy: float, r: float, stroke: str) -> str:
     sw = r * 0.16
     common = (f'fill="none" stroke="{stroke}" stroke-width="{sw}" '
               f'stroke-linecap="round" stroke-linejoin="round"')
+    if kind == "curated":  # hand-reviewed: check inside a circle
+        return (f'<g {common}>'
+                f'<circle cx="{cx}" cy="{cy}" r="{r*0.86}"/>'
+                f'<polyline points="{cx-r*0.42},{cy+r*0.02} {cx-r*0.08},{cy+r*0.38} '
+                f'{cx+r*0.5},{cy-r*0.4}"/>'
+                f'</g>')
+    if kind == "trusted":  # community-backed: shield
+        return (f'<g {common}>'
+                f'<polygon points="{cx},{cy-r*0.92} {cx+r*0.78},{cy-r*0.52} '
+                f'{cx+r*0.78},{cy+r*0.2} {cx},{cy+r*0.92} {cx-r*0.78},{cy+r*0.2} '
+                f'{cx-r*0.78},{cy-r*0.52}"/>'
+                f'<polyline points="{cx-r*0.34},{cy+r*0.02} {cx-r*0.06},{cy+r*0.32} '
+                f'{cx+r*0.42},{cy-r*0.3}"/>'
+                f'</g>')
+    if kind == "corridor":  # India <-> Germany: two-way arrows
+        return (f'<g {common}>'
+                f'<line x1="{cx-r*0.78}" y1="{cy}" x2="{cx+r*0.78}" y2="{cy}"/>'
+                f'<polyline points="{cx-r*0.4},{cy-r*0.34} {cx-r*0.8},{cy} '
+                f'{cx-r*0.4},{cy+r*0.34}"/>'
+                f'<polyline points="{cx+r*0.4},{cy-r*0.34} {cx+r*0.8},{cy} '
+                f'{cx+r*0.4},{cy+r*0.34}"/>'
+                f'</g>')
     if kind == "communities":  # three connected people dots
         d = r * 0.55
         return (f'<g {common}>'
@@ -160,89 +195,53 @@ def banner_a0() -> str:
     W, H = 841, 1189
     M = 70  # safe margin
     cx = W / 2
-    parts = [svg_open(W, H), f'  <title>IndLokal - A0 event banner</title>',
+    parts = [svg_open(W, H), f'  <title>IndLokal - Event banner</title>',
              indigo_bg(W, H, "a0bg")]
 
-    # Decorative pulse echoes (saffron, subtle), kept clear of text blocks.
-    parts.append('  <g>')
-    parts.append(pulse_echo(560, 262, 1.4, ACCENT_500, 0.15, 4))
-    parts.append(pulse_echo(70, 268, 1.0, ACCENT_300, 0.11, 3.5))
-    parts.append(pulse_echo(600, 905, 1.3, ACCENT_500, 0.13, 4))
-    parts.append('  </g>')
+    # Decorative pulse echoes (saffron, subtle) - framing only, lots of air.
+    parts.append(pulse_echo(540, 250, 1.5, ACCENT_500, 0.13, 4))
+    parts.append(pulse_echo(120, 250, 1.1, ACCENT_300, 0.09, 3.5))
 
     # Logo lockup: mark + cream wordmark, centred near top.
     mark = 150
-    parts.append(pulse_mark(cx - 300, 95, mark, reversed_on_dark=True))
-    parts.append(text(cx - 130, 218, "IndLokal", 132, weight=700, fill=CREAM,
+    parts.append(pulse_mark(cx - 300, 110, mark, reversed_on_dark=True))
+    parts.append(text(cx - 130, 233, "IndLokal", 132, weight=700, fill=CREAM,
                       spacing=-4))
 
-    # Eyebrow
-    parts.append(text(cx, 330, "INDIAN LIFE IN GERMANY · CITY BY CITY", 22,
-                      weight=600, fill=ACCENT_300, anchor="middle", spacing=4,
-                      upper=True))
+    # Minimal tag line to retain relevance without event/date lock-in.
+    parts.append(text(cx, 332, EVENT_TAG, 22, weight=600, fill=ACCENT_300,
+                      anchor="middle", spacing=4, upper=True))
 
-    # Headline (primary tagline)
-    parts.append(text(cx, 430, "Your Indian community,", 74, weight=700,
-                      fill=CREAM, anchor="middle", spacing=-2.5))
-    parts.append(text(cx, 512, "locally.", 74, weight=700, fill=ACCENT_300,
-                      anchor="middle", spacing=-2.5))
+    # One emotional headline - the brand promise.
+    parts.append(text(cx, 452, "Your Indian community,", 74, weight=700,
+                      fill=CREAM, anchor="middle", spacing=-3))
+    parts.append(text(cx, 540, "locally.", 74, weight=700, fill=ACCENT_300,
+                      anchor="middle", spacing=-3))
 
-    # Sub
-    parts.append(text(cx, 575, "Communities · Events · Resources — active near you in Germany.",
+    # One supporting line.
+    parts.append(text(cx, 606, "Communities · Events · Resources — active near you in Germany.",
                       24, weight=500, fill=CREAM, anchor="middle", spacing=-0.2,
                       opacity=0.9))
 
-    # Three pillar cards
-    pillars = [
-        ("communities", "Communities", "The groups actually", "alive in your city."),
-        ("events", "Events", "What's on for Indians", "this week."),
-        ("resources", "Resources", "From Anmeldung to", "Diwali, in one place."),
-    ]
-    gap = 22
-    cw = (W - 2 * M - 2 * gap) / 3
-    ch = 250
-    cy0 = 630
-    for i, (kind, title, l1, l2) in enumerate(pillars):
-        x0 = M + i * (cw + gap)
-        ccx = x0 + cw / 2
-        parts.append(
-            f'  <rect x="{x0}" y="{cy0}" width="{cw}" height="{ch}" rx="20" '
-            f'fill="{CREAM}"/>')
-        parts.append(pillar_icon(kind, ccx, cy0 + 70, 34, BRAND_600))
-        parts.append(text(ccx, cy0 + 140, title, 30, weight=700, fill=BRAND_700,
-                          anchor="middle", spacing=-0.5))
-        parts.append(text(ccx, cy0 + 176, l1, 17, weight=400, fill=MUTED,
-                          anchor="middle", spacing=-0.1))
-        parts.append(text(ccx, cy0 + 200, l2, 17, weight=400, fill=MUTED,
-                          anchor="middle", spacing=-0.1))
-
-    # Proof / activity line (numbers over adjectives - brand voice)
-    proof_y = 920
-    parts.append(text(cx, proof_y, "Ranked by what's genuinely active — not who paid for a listing.",
-                      22, weight=500, fill=CREAM, anchor="middle", spacing=-0.2,
-                      opacity=0.85))
-    parts.append(text(cx, proof_y + 38, "Launching across the Stuttgart metro — expanding city by city.",
-                      22, weight=500, fill=ACCENT_300, anchor="middle", spacing=-0.2))
-
-    # QR + CTA block near the bottom
-    qr = 150
-    qx = M
-    qy = H - 52 - qr
-    parts.append(f'  <rect x="{qx-12}" y="{qy-12}" width="{qr+24}" height="{qr+24}" '
-                 f'rx="16" fill="{CREAM}"/>')
+    # The hero: one big QR, centred, impossible to miss - this is the job.
+    qr = 330
+    qx = cx - qr / 2
+    qy = 668
+    pad = 26
+    parts.append(f'  <rect x="{qx-pad}" y="{qy-pad}" width="{qr+2*pad}" '
+                 f'height="{qr+2*pad}" rx="28" fill="{CREAM}"/>')
     parts.append(qr_group(URL, qx, qy, qr, dark=BRAND_700))
-    tx = qx + qr + 44
-    parts.append(text(tx, qy + 38, "Scan to find", 40, weight=700, fill=CREAM, spacing=-1.2))
-    parts.append(text(tx, qy + 86, "your city.", 40, weight=700, fill=ACCENT_300, spacing=-1.2))
-    parts.append(text(tx, qy + 128, "indlokal.de · indlokal.com", 26, weight=600,
-                      fill=CREAM, spacing=0.2, opacity=0.95))
-    parts.append(text(tx, qy + 162, "@indlokal", 24, weight=500, fill=CREAM,
-                      spacing=0.2, opacity=0.8))
+
+    # Single, unmissable call to action.
+    parts.append(text(cx, qy + qr + 80, "Scan to find your city.", 52, weight=700,
+                      fill=CREAM, anchor="middle", spacing=-1.5))
+    parts.append(text(cx, qy + qr + 126, "indlokal.com · @indlokal", 28, weight=600,
+                      fill=ACCENT_300, anchor="middle", spacing=0.4))
 
     # Footer legal
-    parts.append(text(cx, H - 16, "© 2026 IndLokal. Made with care for the Indian diaspora in Germany.",
+    parts.append(text(cx, H - 18, "© 2026 IndLokal. Made with care for the Indian diaspora in Germany.",
                       15, weight=400, fill=CREAM, anchor="middle", spacing=0.1,
-                      opacity=0.55))
+                      opacity=0.5))
 
     parts.append('</svg>')
     return "\n".join(parts)
@@ -252,55 +251,55 @@ def banner_a0() -> str:
 def flyer_a5() -> str:
     W, H = 148, 210
     M = 12
-    parts = [svg_open(W, H), '  <title>IndLokal - A5 event flyer</title>',
+    parts = [svg_open(W, H), '  <title>IndLokal - Event flyer</title>',
              indigo_bg(W, H, "a5bg")]
     parts.append(pulse_echo(98, 18, 0.30, ACCENT_500, 0.16, 0.9))
 
     # Logo
-    mark = 18
-    parts.append(pulse_mark(M, 14, mark, reversed_on_dark=True))
-    parts.append(text(M + mark + 6, 29, "IndLokal", 17, weight=700, fill=CREAM, spacing=-0.7))
+    mark = 16
+    parts.append(pulse_mark(M, 12, mark, reversed_on_dark=True))
+    parts.append(text(M + mark + 6, 25, "IndLokal", 14, weight=700, fill=CREAM, spacing=-0.6))
 
-    # Eyebrow
-    parts.append(text(M, 46, "INDIAN LIFE IN GERMANY", 6, weight=600,
+    # Generic eyebrow lines for reusable event collateral.
+    parts.append(text(M, 41, EVENT_TAG, 6, weight=600,
                       fill=ACCENT_300, spacing=0.9, upper=True))
+    parts.append(text(M, 48, EVENT_SUBTAG, 4.6, weight=600,
+                      fill=CREAM, spacing=0.6, upper=True, opacity=0.8))
 
-    # Headline
-    parts.append(text(M, 66, "Your Indian", 17, weight=700, fill=CREAM, spacing=-0.7))
-    parts.append(text(M, 82, "community,", 17, weight=700, fill=CREAM, spacing=-0.7))
-    parts.append(text(M, 98, "locally.", 17, weight=700, fill=ACCENT_300, spacing=-0.7))
+    # Headline (journey-first, not content-type-first)
+    parts.append(text(M, 63, "Move through Germany", 12.5, weight=700, fill=CREAM,
+                      spacing=-0.5))
+    parts.append(text(M, 78, "with confidence.", 12.5, weight=700, fill=ACCENT_300,
+                      spacing=-0.5))
 
-    # Sub
-    parts.append(text(M, 113, "Communities · Events · Resources,", 7, weight=500,
+    # Journey framing from product strategy: users arrive by transition stage.
+    parts.append(text(M, 93, "IndLokal helps at every stage:", 6.3, weight=500,
                       fill=CREAM, spacing=-0.1, opacity=0.9))
-    parts.append(text(M, 122, "active near you in Germany.", 7, weight=500,
-                      fill=CREAM, spacing=-0.1, opacity=0.9))
+    parts.append(text(M, 108, "Before move", 8.8, weight=700, fill=CREAM,
+                      spacing=-0.2))
+    parts.append(text(M, 121, "First 90 days", 8.8, weight=700, fill=CREAM,
+                      spacing=-0.2))
+    parts.append(text(M, 134, "Settle and grow", 8.8, weight=700, fill=CREAM,
+                      spacing=-0.2))
 
-    # Pillar rows
-    rows = [
-        ("communities", "Communities", "The groups alive in your city."),
-        ("events", "Events", "What's on for Indians this week."),
-        ("resources", "Resources", "From Anmeldung to Diwali."),
-    ]
-    ry = 131
-    for kind, title, line in rows:
-        parts.append(pillar_icon(kind, M + 6, ry - 2.5, 5.0, ACCENT_300))
-        parts.append(text(M + 16, ry, title, 8.5, weight=700, fill=CREAM, spacing=-0.3))
-        parts.append(text(M + 16, ry + 6.5, line, 6, weight=400, fill=CREAM,
-                          spacing=-0.05, opacity=0.85))
-        ry += 13
+    parts.append(text(M, 149, "Find the right people, events,", 6.3, weight=500,
+                      fill=CREAM, spacing=-0.1, opacity=0.88))
+    parts.append(text(M, 157, "and practical resources for your city.", 6.3,
+                      weight=500, fill=CREAM, spacing=-0.1, opacity=0.88))
 
-    # Bottom CTA band
-    by = H - M - 30
-    parts.append(f'  <rect x="{M}" y="{by}" width="{W-2*M}" height="30" rx="6" fill="{CREAM}"/>')
+    # Bottom CTA band - direct scan action.
+    by = H - M - 32
+    parts.append(f'  <rect x="{M}" y="{by}" width="{W-2*M}" height="32" rx="6" fill="{CREAM}"/>')
     qr = 24
     qx = W - M - qr - 3
-    qy = by + 3
+    qy = by + 4
     parts.append(qr_group(URL, qx, qy, qr, dark=BRAND_700))
     parts.append(text(M + 8, by + 13, "Scan to find your city.", 8.5, weight=700,
                       fill=BRAND_700, spacing=-0.3))
-    parts.append(text(M + 8, by + 23, "indlokal.de · indlokal.com", 6.5,
-                      weight=600, fill=MUTED, spacing=0.1))
+    parts.append(text(M + 8, by + 21.5, "Start your journey →", 6, weight=600,
+                      fill=MUTED, spacing=0.0))
+    parts.append(text(M + 8, by + 28, "indlokal.com · @indlokal", 6, weight=600,
+                      fill=MUTED, spacing=0.0))
     parts.append('</svg>')
     return "\n".join(parts)
 
@@ -309,28 +308,113 @@ def flyer_a5() -> str:
 def table_tent_a6() -> str:
     W, H = 105, 148
     cx = W / 2
-    parts = [svg_open(W, H), '  <title>IndLokal - A6 table tent</title>',
+    parts = [svg_open(W, H), '  <title>IndLokal - Event table tent</title>',
              indigo_bg(W, H, "a6bg")]
-    parts.append(pulse_echo(60, 16, 0.24, ACCENT_500, 0.16, 0.8))
+    parts.append(pulse_echo(60, 14, 0.24, ACCENT_500, 0.16, 0.8))
 
-    mark = 26
-    parts.append(pulse_mark(cx - mark / 2, 16, mark, reversed_on_dark=True))
-    parts.append(text(cx, 58, "IndLokal", 17, weight=700, fill=CREAM,
-                      anchor="middle", spacing=-0.7))
-    parts.append(text(cx, 72, "Your Indian community,", 8, weight=500, fill=CREAM,
-                      anchor="middle", spacing=-0.2, opacity=0.95))
-    parts.append(text(cx, 85, "locally.", 12, weight=700, fill=ACCENT_300,
+    mark = 24
+    parts.append(pulse_mark(cx - mark / 2, 12, mark, reversed_on_dark=True))
+    parts.append(text(cx, 49, "IndLokal", 15, weight=700, fill=CREAM,
+                      anchor="middle", spacing=-0.6))
+    parts.append(text(cx, 60, EVENT_TAG, 4.5, weight=600, fill=ACCENT_300,
+                      anchor="middle", spacing=0.4, upper=True))
+    parts.append(text(cx, 73, "Your Indian community,", 8, weight=500, fill=CREAM,
                       anchor="middle", spacing=-0.3))
+    parts.append(text(cx, 83, "locally.", 12, weight=700,
+                      fill=ACCENT_300, anchor="middle", spacing=-0.3))
 
-    qr = 32
+    qr = 30
     qx = cx - qr / 2
-    qy = 90
+    qy = 89
     parts.append(f'  <rect x="{qx-3}" y="{qy-3}" width="{qr+6}" height="{qr+6}" rx="3" fill="{CREAM}"/>')
     parts.append(qr_group(URL, qx, qy, qr, dark=BRAND_700))
-    parts.append(text(cx, qy + qr + 10, "Scan to find your city", 8, weight=700,
+    parts.append(text(cx, qy + qr + 10, "Scan to find your city", 7.5, weight=700,
                       fill=CREAM, anchor="middle", spacing=-0.2))
-    parts.append(text(cx, qy + qr + 19, "indlokal.de · @indlokal", 6.5, weight=600,
+    parts.append(text(cx, qy + qr + 18, "indlokal.com · @indlokal", 6, weight=600,
                       fill=ACCENT_300, anchor="middle", spacing=0.1))
+    parts.append('</svg>')
+    return "\n".join(parts)
+
+
+def visiting_card_85x55() -> str:
+    """Minimal single-side visiting card (EU standard 85 x 55 mm)."""
+    W, H = 85, 55
+    M = 6
+    parts = [svg_open(W, H), '  <title>IndLokal - Visiting card (85x55)</title>']
+
+    # Minimal light card face with soft border for print clarity.
+    parts.append(f'  <rect width="{W}" height="{H}" fill="{CREAM}"/>')
+    parts.append(f'  <rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" fill="none" '
+                 f'stroke="{BRAND_500}" stroke-width="1" opacity="0.35"/>')
+
+    # Brand lockup.
+    mark = 12
+    parts.append(pulse_mark(M, 7, mark, reversed_on_dark=False))
+    parts.append(text(M + mark + 4, 17, "IndLokal", 13, weight=700,
+                      fill=BRAND_700, spacing=-0.5))
+    parts.append(text(M + mark + 4, 22.2, "Your Indian community, locally.", 4.2,
+                      weight=500, fill=MUTED, spacing=-0.05))
+
+    # Subtle decorative pulse to keep brand character while staying minimal.
+    parts.append(pulse_echo(57, 9.5, 0.16, BRAND_500, 0.22, 0.8))
+
+    # Divider.
+    parts.append(f'  <line x1="{M}" y1="28" x2="{W-M}" y2="28" '
+                 f'stroke="{BRAND_500}" stroke-width="0.6" opacity="0.35"/>')
+
+    # Contact block.
+    parts.append(text(M, 37, "indlokal.com", 6.6, weight=700,
+                      fill=BRAND_700, spacing=-0.1))
+    parts.append(text(M, 43.5, "@indlokal", 4.8, weight=600,
+                      fill=MUTED, spacing=0.0))
+    parts.append(text(M, 49, "Scan to start your journey", 4.4, weight=500,
+                      fill=BRAND_500, spacing=-0.05))
+
+    # Compact QR in the lower-right corner.
+    qr = 18
+    qx = W - M - qr
+    qy = H - M - qr
+    parts.append(f'  <rect x="{qx-1.5}" y="{qy-1.5}" width="{qr+3}" height="{qr+3}" '
+                 f'rx="2" fill="{SURFACE}"/>')
+    parts.append(qr_group(URL, qx, qy, qr, dark=BRAND_700))
+
+    parts.append('</svg>')
+    return "\n".join(parts)
+
+
+def visiting_card_personal_85x55() -> str:
+    """Minimal single-side personal visiting card (EU standard 85 x 55 mm)."""
+    W, H = 85, 55
+    M = 6
+    parts = [svg_open(W, H), '  <title>IndLokal - Personal visiting card (85x55)</title>']
+
+    # Minimal light card face with a very soft keyline.
+    parts.append(f'  <rect width="{W}" height="{H}" fill="{CREAM}"/>')
+    parts.append(f'  <rect x="0.5" y="0.5" width="{W-1}" height="{H-1}" fill="none" '
+                 f'stroke="{BRAND_500}" stroke-width="0.6" opacity="0.14"/>')
+
+    # Place a compact QR to the right and build text rhythm around it.
+    qr = 15.0
+    qx = W - M - qr
+    qy = 25.0
+
+    # Brand lockup (small, quiet).
+    mark = 6.2
+    parts.append(pulse_mark(M, 8.2, mark, reversed_on_dark=False))
+    parts.append(text(M + mark + 2.2, 14.4, "IndLokal", 7.2, weight=700,
+                      fill=BRAND_700, spacing=-0.16))
+
+    # Personal details: one clean left column, no decorative dividers.
+    parts.append(text(M, 25.6, CARD_NAME, 4.7, weight=700, fill=BRAND_700, spacing=-0.03))
+    parts.append(text(M, 29.9, CARD_ROLE, 3.2, weight=600, fill=MUTED, spacing=0.0))
+    parts.append(text(M, 40.0, CARD_EMAIL, 3.1, weight=600, fill=BRAND_700, spacing=0.0))
+    parts.append(text(M, 44.4, CARD_PHONE, 3.1, weight=600, fill=MUTED, spacing=0.0))
+
+    # Quiet QR container.
+    parts.append(f'  <rect x="{qx-0.9}" y="{qy-0.9}" width="{qr+1.8}" height="{qr+1.8}" '
+                 f'rx="1.2" fill="{SURFACE}"/>')
+    parts.append(qr_group(URL, qx, qy, qr, dark=BRAND_700))
+
     parts.append('</svg>')
     return "\n".join(parts)
 
@@ -342,6 +426,8 @@ def main():
         "event-banner-a0": banner_a0(),
         "event-flyer-a5": flyer_a5(),
         "event-table-tent-a6": table_tent_a6(),
+        "event-visiting-card-85x55": visiting_card_85x55(),
+        "event-visiting-card-personal-85x55": visiting_card_personal_85x55(),
     }
     for name, svg in artifacts.items():
         svg_path = os.path.join(HERE, name + ".svg")

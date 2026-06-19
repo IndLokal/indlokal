@@ -41,10 +41,10 @@ export const FLAGS = {
   /**
    * Pipeline RESOURCE lane (PRD/TDD-0056). When OFF, extracted RESOURCE items
    * are silently dropped at queue time and the lane behaves as if it does not
-   * exist. Defaults to OFF — enable with PIPELINE_RESOURCE_LANE_ENABLED=true.
-   * Must only be enabled AFTER migration 20260610213000 has been applied.
+   * exist. Defaults to ON — disable with PIPELINE_RESOURCE_LANE_ENABLED=false
+   * if you need to temporarily pause ingestion.
    */
-  pipelineResourceLaneEnabled: process.env.PIPELINE_RESOURCE_LANE_ENABLED === 'true',
+  pipelineResourceLaneEnabled: process.env.PIPELINE_RESOURCE_LANE_ENABLED !== 'false',
 
   /**
    * Cross-surface auth hand-off (PRD/TDD-0058). When ON, a signed-in mobile

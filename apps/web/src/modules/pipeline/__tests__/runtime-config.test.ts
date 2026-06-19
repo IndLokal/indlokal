@@ -13,11 +13,11 @@ describe('runtime-config JSON fallback', () => {
   it('falls back to bundled defaults when DB query throws', async () => {
     dbMock.$queryRaw.mockRejectedValue(new Error('relation does not exist'));
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
-    const seeds = await mod.getRuntimeKeywordSeeds();
+    const laneSeeds = await mod.getRuntimeLaneKeywordSeeds();
     const keyword = await mod.getRuntimeKeywordStrategies();
     const pinned = await mod.getRuntimePinnedStrategies();
     const source = await mod.getRuntimeConfigSource();
@@ -25,7 +25,7 @@ describe('runtime-config JSON fallback', () => {
     expect(source).toBe('json-fallback');
     expect(regions.length).toBeGreaterThan(0);
     expect(regions[0].citySlugs.length).toBeGreaterThan(0);
-    expect(seeds.length).toBeGreaterThan(0);
+    expect((laneSeeds.byLane.EVENT ?? []).length).toBeGreaterThan(0);
     expect(keyword.some((k) => k.sourceType === 'EVENTBRITE')).toBe(true);
     expect(pinned.length).toBeGreaterThan(0);
     // DB was queried exactly once across all four getters (shared cache).
@@ -35,7 +35,7 @@ describe('runtime-config JSON fallback', () => {
   it('falls back when DB returns zero rows', async () => {
     dbMock.$queryRaw.mockResolvedValue([]);
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
@@ -58,22 +58,13 @@ describe('runtime-config JSON fallback', () => {
         payload: { searchCenter: 'Berlin, Germany', citySlugs: ['berlin'] },
       },
       {
-        configType: 'KEYWORD',
-        key: 'seed',
-        label: 'Indian community Berlin',
-        enabled: true,
-        sourceType: null,
-        kind: null,
-        payload: {},
-      },
-      {
         configType: 'STRATEGY',
         key: 'eventbrite-keyword',
         label: 'Eventbrite',
         enabled: true,
         sourceType: 'EVENTBRITE',
         kind: 'keyword_search',
-        payload: { radiusKm: 50 },
+        payload: { radiusKm: 50, lane: 'EVENT', contentScope: 'community_events' },
       },
       {
         configType: 'STRATEGY',
@@ -82,20 +73,78 @@ describe('runtime-config JSON fallback', () => {
         enabled: true,
         sourceType: 'WEBSITE_SCRAPE',
         kind: 'pinned_url',
-        payload: { url: 'https://www.cgimunich.gov.in/' },
+        payload: {
+          url: 'https://www.cgimunich.gov.in/',
+          lane: 'RESOURCE',
+          contentScope: 'official_portal',
+        },
       },
     ]);
 
-    const mod = await import('../runtime-config');
+    const mod = await import('../config/runtime-config');
     mod.resetRuntimeConfigCache();
 
     const regions = await mod.getRuntimeEnabledRegions();
-    const seeds = await mod.getRuntimeKeywordSeeds();
+    const laneSeeds = await mod.getRuntimeLaneKeywordSeeds();
+    const keywordStrategies = await mod.getRuntimeKeywordStrategies();
+    const pinnedStrategies = await mod.getRuntimePinnedStrategies();
     const source = await mod.getRuntimeConfigSource();
 
     expect(source).toBe('db');
     expect(regions).toHaveLength(1);
     expect(regions[0].id).toBe('test-region');
-    expect(seeds).toEqual(['Indian community Berlin']);
+    expect(laneSeeds.byLane.COMMUNITY).toBeDefined();
+    expect(keywordStrategies[0]?.lane).toBe('EVENT');
+    expect(keywordStrategies[0]?.sourceIntent).toBe('dated_activity_discovery');
+    expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');
+    expect(pinnedStrategies[0]?.sourceIntent).toBe('official_service_info_discovery');
+  });
+
+  it('infers legacy lane metadata for DB rows missing payload.lane', async () => {
+    dbMock.$queryRaw.mockResolvedValue([
+      {
+        configType: 'REGION',
+        key: 'test-region',
+        label: 'Test Region',
+        enabled: true,
+        sourceType: null,
+        kind: null,
+        payload: { searchCenter: 'Berlin, Germany', citySlugs: ['berlin'] },
+      },
+      {
+        configType: 'STRATEGY',
+        key: 'legacy-event-keyword',
+        label: 'Legacy Event Keyword',
+        enabled: true,
+        sourceType: 'EVENTBRITE',
+        kind: 'keyword_search',
+        payload: { radiusKm: 50, contentScope: 'community_events' },
+      },
+      {
+        configType: 'STRATEGY',
+        key: 'legacy-resource-pinned',
+        label: 'Legacy Resource Pinned',
+        enabled: true,
+        sourceType: 'WEBSITE_SCRAPE',
+        kind: 'pinned_url',
+        payload: {
+          url: 'https://www.cgimunich.gov.in/',
+          contentScope: 'official_portal',
+        },
+      },
+    ]);
+
+    const mod = await import('../config/runtime-config');
+    mod.resetRuntimeConfigCache();
+
+    const keywordStrategies = await mod.getRuntimeKeywordStrategies();
+    const pinnedStrategies = await mod.getRuntimePinnedStrategies();
+
+    expect(keywordStrategies).toHaveLength(1);
+    expect(keywordStrategies[0]?.lane).toBe('EVENT');
+    expect(keywordStrategies[0]?.sourceIntent).toBe('dated_activity_discovery');
+    expect(pinnedStrategies).toHaveLength(1);
+    expect(pinnedStrategies[0]?.lane).toBe('RESOURCE');
+    expect(pinnedStrategies[0]?.sourceIntent).toBe('official_service_info_discovery');
   });
 });

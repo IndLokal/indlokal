@@ -6,6 +6,38 @@ import { Events } from '@/lib/analytics/events';
 
 export const maxDuration = 300; // 5 min - pipeline can be slow
 
+type PipelineRunMode =
+  | 'balanced'
+  | 'event_refresh'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
+
+const VALID_RUN_MODES: PipelineRunMode[] = [
+  'balanced',
+  'event_refresh',
+  'community_discovery',
+  'resource_discovery',
+  'evidence_verification',
+];
+
+const VALID_SOURCE_INTENT_PROFILES: PipelineSourceIntentProfile[] = [
+  'all',
+  'activity_only',
+  'community_only',
+  'service_only',
+  'evidence_only',
+  'channel_only',
+];
+
 function parseScopeParam(url: URL, key: 'city' | 'region'): string[] {
   return Array.from(
     new Set(
@@ -26,6 +58,27 @@ function buildLockKey(citySlugs: string[], regionIds: string[]): string {
   return `pipeline:cron:${parts.join('|')}`;
 }
 
+function parseOptionParam(url: URL, key: 'runMode' | 'sourceIntentProfile'): string | undefined {
+  const value = url.searchParams.get(key);
+  if (!value) return undefined;
+  const normalized = value.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : undefined;
+}
+
+function parseRunMode(url: URL): PipelineRunMode | undefined {
+  const raw = parseOptionParam(url, 'runMode');
+  if (!raw) return undefined;
+  return VALID_RUN_MODES.includes(raw as PipelineRunMode) ? (raw as PipelineRunMode) : undefined;
+}
+
+function parseSourceIntentProfile(url: URL): PipelineSourceIntentProfile | undefined {
+  const raw = parseOptionParam(url, 'sourceIntentProfile');
+  if (!raw) return undefined;
+  return VALID_SOURCE_INTENT_PROFILES.includes(raw as PipelineSourceIntentProfile)
+    ? (raw as PipelineSourceIntentProfile)
+    : undefined;
+}
+
 export async function POST(req: NextRequest) {
   const secret = req.headers.get('authorization')?.replace('Bearer ', '');
   if (!process.env.CRON_SECRET || secret !== process.env.CRON_SECRET) {
@@ -35,6 +88,8 @@ export async function POST(req: NextRequest) {
   const url = new URL(req.url);
   const citySlugs = parseScopeParam(url, 'city');
   const regionIds = parseScopeParam(url, 'region');
+  const runMode = parseRunMode(url);
+  const sourceIntentProfile = parseSourceIntentProfile(url);
 
   const lockKey = buildLockKey(citySlugs, regionIds);
   const lock = await tryAdvisoryLock(lockKey);
@@ -54,7 +109,7 @@ export async function POST(req: NextRequest) {
             regionIds: regionIds.length > 0 ? regionIds : undefined,
           }
         : undefined;
-    const result = await runPipeline('cron', scope);
+    const result = await runPipeline('cron', scope, { runMode, sourceIntentProfile });
 
     await captureServerEvent('system-cron', Events.PIPELINE_SHARD_COMPLETED, {
       trigger: 'cron',

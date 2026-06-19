@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEventStart } from '../dedup';
+import { parseEventStart } from '../quality/dedup';
 
 describe('parseEventStart (timezone-standardized)', () => {
   it('interprets date/time in the default event timezone (Europe/Berlin summer)', () => {

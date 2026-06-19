@@ -8,7 +8,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
-export const PIPELINE_USER_AGENT = 'IndLokal-ContentBot/1.0 (+https://indlokal.de)';
+export const PIPELINE_USER_AGENT = 'IndLokal-ContentBot/1.0 (+https://indlokal.com)';
 
 export const PIPELINE_FETCH_TIMEOUT_MS = 15_000;
 
@@ -65,14 +65,21 @@ async function fetchTextViaCurl(
   };
 }
 
+/**
+ * Fetch text content with native fetch first, then curl fallback on transport failure.
+ * Keeps adapter behavior resilient on hosts where Node fetch intermittently fails.
+ */
 export async function fetchTextWithFallback(
   url: string,
   options: FetchTextOptions = {},
 ): Promise<FetchedTextResult> {
   try {
+    const timeoutMs = options.timeoutMs ?? PIPELINE_FETCH_TIMEOUT_MS;
+    const hasAbortTimeout =
+      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function';
     const response = await fetch(url, {
       headers: options.headers,
-      signal: AbortSignal.timeout(options.timeoutMs ?? PIPELINE_FETCH_TIMEOUT_MS),
+      signal: hasAbortTimeout ? AbortSignal.timeout(timeoutMs) : undefined,
     });
     return {
       ok: response.ok,

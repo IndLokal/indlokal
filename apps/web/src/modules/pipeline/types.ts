@@ -11,31 +11,120 @@
  *  5. Region config, not city config - add a country by adding keywords + search region
  */
 
-// ─── Source types ──────────────────────────────────────
+import type {
+  PipelineEntityType,
+  PipelineSourceType as PrismaPipelineSourceType,
+} from '@prisma/client';
 
-/** Every source type the pipeline knows how to fetch */
-export type SourceType =
-  | 'EVENTBRITE'
-  | 'FACEBOOK'
-  | 'INSTAGRAM'
-  | 'WEBSITE_SCRAPE'
-  | 'CGI_MUNICH'
-  | 'INDOEUROPEAN'
-  | 'GOOGLE_ALERT'
-  | 'GOOGLE_SEARCH'
-  | 'DUCKDUCKGO'
-  | 'MEETUP'
-  | 'COMMUNITY_SUGGESTION'
-  | 'DB_COMMUNITY';
+// ─── Source Kinds ─────────────────────────────────────
+
+/**
+ * Pipeline-ingest source kinds backed by Prisma's PipelineSourceType enum.
+ * Keep EVENT_SUGGESTION/USER_SUBMITTED out of ingest planning.
+ */
+type UnsupportedPipelineSourceType = 'EVENT_SUGGESTION' | 'USER_SUBMITTED';
+export type PipelineSourceKind = Exclude<PrismaPipelineSourceType, UnsupportedPipelineSourceType>;
+
+// ─── Pipeline Lanes (AI_PIPELINE_LANE_AWARE_SOURCING.md §2, §4) ───────
+
+/**
+ * Primary lane for sourcing/extraction/review.
+ * Mirrors Prisma PipelineEntityType to avoid local string drift.
+ */
+export type PipelineLane = PipelineEntityType;
+
+/**
+ * High-level strategy intent derived from lane/content scope. Lightweight
+ * planning metadata only — not a separate runtime policy engine.
+ */
+export type PipelineSourceIntent =
+  | 'dated_activity_discovery'
+  | 'org_group_discovery'
+  | 'official_service_info_discovery';
+
+/**
+ * Explicit run-mode contract for source planning.
+ * Defaults preserve legacy trigger behavior (`cron` event-refresh, others balanced).
+ */
+export type PipelineRunMode =
+  | 'event_refresh'
+  | 'balanced'
+  | 'community_discovery'
+  | 'resource_discovery'
+  | 'evidence_verification';
+
+/**
+ * Intent profile narrows strategies by source intent without changing ETL stages.
+ */
+export type PipelineSourceIntentProfile =
+  | 'all'
+  | 'activity_only'
+  | 'community_only'
+  | 'service_only'
+  | 'evidence_only'
+  | 'channel_only';
+
+// ─── Backward-Compatible Aliases ───────────────────────
+
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceType = PipelineSourceKind;
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceLane = PipelineLane;
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourceIntent = PipelineSourceIntent;
+
+/**
+ * Per-lane policy constraints — lightweight static table, not a runtime engine.
+ * Defines the boundaries used by prefilters (Phase 4), prompts (Phase 6),
+ * and auto-approval gating (Phase 7).
+ */
+export type PipelineSourcePolicy = {
+  lane: PipelineLane;
+  sourceIntent: PipelineSourceIntent;
+  /** Minimum EvidenceStrength tier required for sources in this lane. */
+  minTrustStrength: 'strong' | 'medium' | 'weak';
+  llmAllowed: boolean;
+  autoApproveAllowed: boolean;
+  /** Max raw text chars per item before LLM batching. */
+  maxCharsPerItem: number;
+  freshnessRequired: boolean;
+  officialDomainRequired: boolean;
+};
+
+/** Back-compat alias kept to avoid broad import churn. */
+export type SourcePolicy = PipelineSourcePolicy;
+
+/**
+ * Resolution provenance — records how city and community were resolved.
+ * Persisted to PipelineItem in Phase 5 for auditability, review ordering,
+ * and auto-approval gating (AI_PIPELINE_LANE_AWARE_SOURCING.md §5.4).
+ * Not yet written by the orchestrator; defined here so Phase 5 can add it.
+ */
+export type ResolutionProvenance = {
+  /** Which evidence source determined the resolved city. */
+  citySource: 'signal' | 'llm' | 'hint' | 'fallback' | 'unresolved';
+  /** True when a strong location signal disagreed with the LLM cityName. */
+  cityConflict: boolean;
+  /** Which evidence source determined the attached community (if any). */
+  communitySource: 'hint' | 'scored_match' | 'unattached';
+  /** Aggregate resolution confidence 0–1; gates auto-approval in Phase 7. */
+  resolutionConfidence: number;
+};
 
 /** Raw content fetched from any source adapter */
 export type RawContent = {
-  sourceType: SourceType;
+  sourceType: PipelineSourceKind;
   sourceUrl: string;
   text: string;
   imageUrls?: string[];
   fetchedAt: string; // ISO 8601
   // Internal pipeline hints (not persisted by source adapters):
+  // propagated from strategy planning to enable deterministic prefilters.
+  _lane?: PipelineLane;
+  _sourceIntent?: PipelineSourceIntent;
+  _strategyId?: string;
+  _evidenceTier?: string;
+  _evidenceStrength?: 'strong' | 'medium' | 'weak' | 'none';
   // propagated from pinned strategy to improve city/community resolution.
   _hintCitySlug?: string;
   _hintCommunityId?: string;
@@ -58,10 +147,21 @@ export type FetchResult = {
 export type SearchStrategy = {
   /** Unique identifier */
   id: string;
-  sourceType: SourceType;
+  sourceType: PipelineSourceKind;
   /** Human label */
   label: string;
   enabled: boolean;
+  /**
+   * Primary sourcing lane — explicit per strategy (Phase 2).
+   * Undefined for legacy rows where sourceType alone is ambiguous
+   * (e.g. GOOGLE_SEARCH, WEBSITE_SCRAPE, FACEBOOK, INSTAGRAM).
+   */
+  lane?: PipelineLane;
+  /**
+   * Lightweight planning intent derived from lane/contentScope.
+   * Optional for legacy rows lacking explicit lane/contentScope metadata.
+   */
+  sourceIntent?: PipelineSourceIntent;
 } & (
   | {
       /** Keyword-based search (Eventbrite, Meetup) - searches region-wide */
@@ -206,6 +306,21 @@ export type PipelineCityBreakdown = {
   pastEvents: number;
 };
 
+export type PipelineLaneMetricKey = PipelineLane | 'UNKNOWN';
+
+export type PipelineLaneMetrics = {
+  fetched: number;
+  passedFilter: number;
+  extracted: number;
+  queued: number;
+  duplicates: number;
+  noCity: number;
+  past: number;
+  cityConflicts: number;
+};
+
+export type PipelineLaneBreakdown = Record<PipelineLaneMetricKey, PipelineLaneMetrics>;
+
 export type PipelineRunResult = {
   regionsScanned: number;
   sourcesProcessed: number;
@@ -231,6 +346,8 @@ export type PipelineRunResult = {
   budgetExceeded: boolean;
   /** PRD-0028: consecutive LLM failures tripped the circuit breaker. */
   circuitBreakerTripped: boolean;
+  /** Lane-level run outcomes for event/community/resource visibility. */
+  laneBreakdown: PipelineLaneBreakdown;
   /** City-level queue outcomes for scoped diagnosis (Berlin/Stuttgart etc.). */
   cityBreakdown: PipelineCityBreakdown[];
 };

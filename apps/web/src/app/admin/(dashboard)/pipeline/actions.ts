@@ -12,6 +12,11 @@ import {
   refreshKeywordSuggestions,
   revertAutoApprovedPipelineItems,
 } from '@/modules/pipeline';
+function isSourceLane(
+  value: FormDataEntryValue | null,
+): value is 'EVENT' | 'COMMUNITY' | 'RESOURCE' {
+  return value === 'EVENT' || value === 'COMMUNITY' || value === 'RESOURCE';
+}
 
 /* --- Approve: create entity from pipeline item --- */
 
@@ -136,10 +141,12 @@ export async function runKeywordExpansionPass() {
 export async function approveKeywordSuggestion(formData: FormData) {
   await assertCan('pipeline.approve');
   const id = formData.get('id') as string;
+  const lane = formData.get('lane');
   if (!id) return;
+  if (!isSourceLane(lane)) return;
   await db.keywordSuggestion.update({
     where: { id },
-    data: { status: 'APPROVED', reviewedAt: new Date() },
+    data: { status: 'APPROVED', reviewedAt: new Date(), lane },
   });
   revalidatePath('/admin/pipeline');
 }

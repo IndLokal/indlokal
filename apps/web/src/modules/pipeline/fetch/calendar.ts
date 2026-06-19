@@ -1,7 +1,16 @@
+/**
+ * Embedded Google Calendar ingestion helpers.
+ *
+ * Responsibilities:
+ * - discover Google Calendar embed IDs from fetched HTML
+ * - fetch and parse ICS feeds into normalized event-like raw records
+ * - throttle recurring calendar feed ingestion via cron cadence gates
+ * - reconstruct extraction-ready events from calendar-backed raw content
+ */
 import { db } from '@/lib/db';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
-import { decodeHtmlEntities } from './text';
-import type { ExtractedEvent, RawContent } from './types';
+import { decodeHtmlEntities } from '../llm';
+import type { ExtractedEvent, RawContent } from '../types';
 
 type IcsParsedDate = {
   date: string;
@@ -19,11 +28,13 @@ type IcsEvent = {
   endsAt: IcsParsedDate | null;
 };
 
+/** Filter out known holiday calendars to avoid non-community event noise. */
 export function isHolidayCalendarId(calendarId: string): boolean {
   const normalized = calendarId.trim().toLowerCase();
   return normalized.includes('holiday@group.v.calendar.google.com');
 }
 
+/** Build the public ICS feed URL for a Google Calendar ID. */
 export function buildGoogleCalendarIcsUrl(calendarId: string): string {
   return `https://calendar.google.com/calendar/ical/${encodeURIComponent(calendarId)}/public/basic.ics`;
 }
@@ -42,6 +53,7 @@ function decodeEmbeddedGoogleCalendarId(value: string): string {
   }
 }
 
+/** Extract embedded Google Calendar IDs from iframe embed markup. */
 export function extractGoogleCalendarIdsFromHtml(html: string): string[] {
   const iframePattern = /<iframe\b[^>]*\bsrc=(?:"([^"]+)"|'([^']+)')[^>]*>/gi;
   const calendarIds = new Set<string>();
@@ -116,6 +128,7 @@ function parseIcsDate(value: string, valueType: string | null): IcsParsedDate | 
   };
 }
 
+/** Parse ICS payload text into normalized calendar event records. */
 export function parseGoogleCalendarIcsEvents(ics: string): IcsEvent[] {
   const lines = unfoldIcsLines(ics);
   const events: IcsEvent[] = [];
@@ -200,6 +213,7 @@ export function parseGoogleCalendarIcsEvents(ics: string): IcsEvent[] {
   return events;
 }
 
+/** Cron feed sync cadence control: monthly (default) or always. */
 function getCalendarSyncCadence(): 'monthly' | 'always' {
   const raw = (process.env.PIPELINE_CALENDAR_SYNC_CADENCE ?? 'monthly').trim().toLowerCase();
   return raw === 'always' ? 'always' : 'monthly';
@@ -259,6 +273,7 @@ function toCalendarEventRawContent(
   };
 }
 
+/** Detect raw items that originated from embedded calendar ICS feeds. */
 export function isEmbeddedCalendarEventRawContent(
   item: Pick<RawContent, 'sourceUrl' | 'text'>,
 ): boolean {
@@ -275,6 +290,7 @@ function getCalendarRawField(text: string, label: string): string | null {
   return match?.[1]?.trim() || null;
 }
 
+/** Rehydrate calendar-derived raw content into a high-confidence event payload. */
 export function extractCalendarEventFromRawContent(item: RawContent): ExtractedEvent | null {
   if (!isEmbeddedCalendarEventRawContent(item)) return null;
 
@@ -326,6 +342,10 @@ export function extractCalendarEventFromRawContent(item: RawContent): ExtractedE
   };
 }
 
+/**
+ * Fetch embedded Google Calendar ICS feeds from page HTML and emit raw items.
+ * Applies cadence gating for cron runs to avoid re-ingesting the same feed too often.
+ */
 export async function fetchEmbeddedGoogleCalendarEvents(
   sourceType: RawContent['sourceType'],
   rawHtml: string,

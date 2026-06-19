@@ -1,33 +1,18 @@
 /**
- * Shared deduplication primitives for the discovery pipeline.
+ * Pipeline dedup primitives and thresholds.
  *
- * WHY THIS MODULE EXISTS
- * ----------------------
- * Dedup logic used to live in two places — `orchestrator.ts` (queue-time, when
- * an extracted item is about to be added to the review queue) and `review.ts`
- * (approval-time, the final safety net before an Event/Community row is
- * created). Both files kept their OWN private copies of the same normalization,
- * similarity, and identity-evidence helpers. That duplication was dangerous:
- * tweaking a threshold or a normalization rule in one file silently diverged
- * the two gates, which is exactly how duplicates slip through.
+ * Centralizes comparison rules used by orchestrator queue-time checks and
+ * review-time approval checks so both paths share the same behavior.
  *
- * This module is now the SINGLE SOURCE OF TRUTH for:
- *   1. Tuning constants (thresholds, windows, scan limits).
- *   2. Text/URL normalization used for comparison.
- *   3. The string-similarity metric (Dice bigram coefficient).
- *   4. The "strong identity evidence" gate that prevents recurring same-title
- *      events from being falsely merged.
- *   5. DB-backed suppression of items that were already REJECTED or already
- *      MERGED, so a pipeline run a day later does not resurface them.
- *
- * DESIGN PRINCIPLE: prefer a temporary duplicate over a wrong merge. False
- * merges destroy data (two distinct events collapse into one); duplicates are
- * visible and an admin can resolve them. Every gate below is therefore
- * deliberately conservative.
+ * Responsibilities:
+ * - define dedup thresholds and status sets
+ * - normalize URLs, titles, and identity signals
+ * - provide similarity and identity-evidence predicates
+ * - suppress re-queueing against recent rejected items
  */
 
 import { db } from '@/lib/db';
-import type { ExtractedData, ExtractedEvent } from './types';
+import type { ExtractedData, ExtractedEvent } from '../types';
 import {
   DEFAULT_EVENT_TIMEZONE,
   parseEventDateTimeInTimeZone,
@@ -41,9 +26,8 @@ import {
 export const EVENT_TITLE_SIMILARITY_THRESHOLD = 0.7;
 
 /**
- * If two normalized titles are an EXACT match and at least this long, we treat
- * them as the same canonical event (short titles like "meetup" are too generic
- * to trust on exact-match alone).
+ * If two normalized titles are an exact match and at least this long, treat
+ * them as a canonical title match.
  */
 export const EVENT_CANONICAL_TITLE_MIN_LENGTH = 8;
 
@@ -73,6 +57,8 @@ export const DEDUP_ACTIVE_STATUSES = ['PENDING', 'APPROVED', 'MERGED'] as const;
 
 /** Pipeline statuses an admin explicitly turned down. */
 export const DEDUP_REJECTED_STATUSES = ['REJECTED'] as const;
+
+// Tuning constants used by queue-time and approval-time dedup checks.
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. Normalization helpers (pure, deterministic, unit-testable).

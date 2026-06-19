@@ -1,17 +1,35 @@
 /**
- * Source adapters - fetch raw content from external sources.
+ * Pipeline fetch adapters for external content sources.
  *
- * Two modes:
- *  1. Keyword search (Eventbrite) - takes a region + keywords, returns items from anywhere in that region
- *  2. Pinned URL (Facebook, websites) - fetches a specific known URL
+ * Discovery modes:
+ * 1) keyword search adapters (Eventbrite, Google CSE, DuckDuckGo)
+ * 2) pinned URL adapters (known pages and DB-discovered community sites)
  *
- * Adapters never assign a city. That's the LLM's job.
+ * Scope boundaries:
+ * - Transport mechanics (timeouts + curl fallback) live in http.ts
+ * - Env toggles/limits/credentials live in config/env-config.ts
+ * - Planner decides whether these adapters are called for a run
+ *
+ * Adapters return raw items only. City/community assignment and extraction stay
+ * downstream in planner/orchestrator/extraction stages.
  */
 
-import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from './types';
-import { collapseWhitespace, decodeHtmlEntities, htmlToText } from './text';
+import type { FetchResult, RawContent, SearchRegion, SearchStrategy } from '../types';
+import { collapseWhitespace, decodeHtmlEntities, htmlToText } from '../llm';
 import { PIPELINE_USER_AGENT, fetchTextWithFallback } from './http';
 import { fetchEmbeddedGoogleCalendarEvents } from './calendar';
+import {
+  GOOGLE_CSE_ENV_BY_LANE,
+  getEventbriteApiKey,
+  getGoogleCseApiKey,
+  getPinnedExpansionLimit,
+  getPinnedExpansionSourceTypes,
+  getPinnedSecondHopLimit,
+  isPinnedExpansionAllowCrossHost,
+  isPinnedLinkExpansionEnabled,
+  isPinnedSecondHopEnabled,
+  resolveGoogleCseIdForLane,
+} from '../config/env-config';
 
 function parseHttpUrl(rawUrl: string): URL | null {
   try {
@@ -143,34 +161,23 @@ function stripHtmlTagBlocks(input: string, tags: readonly string[]): string {
   return output;
 }
 
-function getExpansionLimit(): number {
-  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_EXPANSION_LIMIT ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 6;
-}
-
-function getSecondHopExpansionLimit(): number {
-  const parsed = Number.parseInt(process.env.PIPELINE_PINNED_SECOND_HOP_LIMIT ?? '', 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 8;
-}
-
 function supportsSecondHopExpansion(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
-  return process.env.PIPELINE_PINNED_SECOND_HOP === '1' && shouldExpandPinnedUrl(strategy);
+  return isPinnedSecondHopEnabled() && shouldExpandPinnedUrl(strategy);
 }
 
-function getExpansionSourceTypes(): Set<string> {
-  const raw = process.env.PIPELINE_PINNED_EXPANSION_SOURCE_TYPES ?? '';
-  return new Set(
-    raw
-      .split(',')
-      .map((entry) => entry.trim().toUpperCase())
-      .filter(Boolean),
-  );
+function dedupeRawContentBySourceUrl(items: RawContent[]): RawContent[] {
+  const seen = new Set<string>();
+  return items.filter((item) => {
+    if (seen.has(item.sourceUrl)) return false;
+    seen.add(item.sourceUrl);
+    return true;
+  });
 }
 
 function shouldExpandPinnedUrl(strategy: SearchStrategy & { kind: 'pinned_url' }): boolean {
   if (strategy.sourceType === 'DB_COMMUNITY') return true;
-  if (process.env.PIPELINE_PINNED_LINK_EXPANSION !== '1') return false;
-  const allowedSourceTypes = getExpansionSourceTypes();
+  if (!isPinnedLinkExpansionEnabled()) return false;
+  const allowedSourceTypes = getPinnedExpansionSourceTypes();
   if (allowedSourceTypes.size === 0) return false;
   return (
     allowedSourceTypes.has('*') || allowedSourceTypes.has(String(strategy.sourceType).toUpperCase())
@@ -183,25 +190,58 @@ function shouldSkipExpansionPath(pathname: string): boolean {
   );
 }
 
+function normalizeExpansionHref(rawHref: string): string | null {
+  const decoded = rawHref
+    .trim()
+    .replace(/&quot;|&#34;|&#x22;/gi, '"')
+    .replace(/&apos;|&#39;|&#x27;/gi, "'");
+  if (!decoded) return null;
+
+  let normalized = decoded;
+  if (
+    (normalized.startsWith('"') && normalized.endsWith('"')) ||
+    (normalized.startsWith("'") && normalized.endsWith("'"))
+  ) {
+    normalized = normalized.slice(1, -1).trim();
+  }
+
+  if (!normalized) return null;
+  if (/javascript:|mailto:|tel:|data:/i.test(normalized)) return null;
+  if (/[<>]/.test(normalized)) return null;
+  if (/%22|%27/i.test(normalized)) return null;
+  return normalized;
+}
+
+function isMalformedExpansionHref(rawHref: string, resolved: URL): boolean {
+  const decodedHref = rawHref.replace(/&quot;|&#34;|&#x22;/gi, '"');
+  if (/["'<>]/.test(decodedHref)) return true;
+  if (/%22|%27/i.test(resolved.href)) return true;
+  if (/https?:/i.test(resolved.pathname)) return true;
+  return false;
+}
+
 function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
   const base = parseHttpUrl(baseUrl);
   if (!base) return [];
-  const allowCrossHost = process.env.PIPELINE_PINNED_EXPANSION_ALLOW_CROSS_HOST === '1';
+  const allowCrossHost = isPinnedExpansionAllowCrossHost();
 
   const linkPattern =
     /<a\b[^>]*?\bhref=(?:"([^"#][^"]*?)"|'([^'#][^']*?)'|([^\s>"'#][^\s>]*))[^>]*>([\s\S]*?)<\/a>/gi;
 
   const unique = new Set<string>();
   for (const match of html.matchAll(linkPattern)) {
-    const rawHref = match[1] ?? match[2] ?? match[3];
-    if (!rawHref) continue;
+    const rawHref = match[1] ?? match[2] ?? match[3] ?? '';
+    const normalizedHref = normalizeExpansionHref(rawHref);
+    if (!normalizedHref) continue;
 
     let resolved: URL;
     try {
-      resolved = new URL(rawHref, baseUrl);
+      resolved = new URL(normalizedHref, baseUrl);
     } catch {
       continue;
     }
+
+    if (isMalformedExpansionHref(rawHref, resolved)) continue;
 
     const parsed = parseHttpUrl(resolved.toString());
     if (!parsed) continue;
@@ -214,7 +254,7 @@ function extractPinnedExpansionLinks(html: string, baseUrl: string): string[] {
     unique.add(canonical);
   }
 
-  return [...unique].slice(0, getExpansionLimit());
+  return [...unique].slice(0, getPinnedExpansionLimit());
 }
 
 async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url: string) {
@@ -243,11 +283,16 @@ async function fetchExpandedPinnedPage(sourceType: RawContent['sourceType'], url
 
 // ─── Keyword search: Eventbrite ────────────────────────
 
+/**
+ * Query Eventbrite for keyword + region matches and normalize events as raw items.
+ * Eventbrite naturally biases toward EVENT-lane discovery payloads.
+ */
+
 export async function fetchEventbriteKeywords(
   strategy: SearchStrategy & { kind: 'keyword_search' },
   region: SearchRegion,
 ): Promise<FetchResult> {
-  const apiKey = process.env.EVENTBRITE_API_KEY;
+  const apiKey = getEventbriteApiKey();
   const items: RawContent[] = [];
   const errors: string[] = [];
 
@@ -317,18 +362,23 @@ export async function fetchEventbriteKeywords(
     }
   }
 
-  // Deduplicate by sourceUrl
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: unique, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }
 
 // ─── Pinned URL: generic website / scrape ──────────────
+
+/**
+ * Fetch a pinned URL and return normalized raw content.
+ *
+ * Notes:
+ * - DB community homepages may try safe host/protocol variants
+ * - embedded Google Calendar feeds are ingested as additional raw items
+ * - optional first/second-hop link expansion is env-controlled
+ */
 
 export async function fetchPinnedUrl(
   strategy: SearchStrategy & { kind: 'pinned_url' },
@@ -438,7 +488,7 @@ export async function fetchPinnedUrl(
         }
 
         if (supportsSecondHopExpansion(strategy) && secondHopCandidates.length > 0) {
-          const secondHopLinks = secondHopCandidates.slice(0, getSecondHopExpansionLimit());
+          const secondHopLinks = secondHopCandidates.slice(0, getPinnedSecondHopLimit());
           const secondHop = await Promise.allSettled(
             secondHopLinks.map((url) => fetchExpandedPinnedPage(strategy.sourceType, url)),
           );
@@ -457,40 +507,37 @@ export async function fetchPinnedUrl(
     errors.push(`Fetch ${strategy.url}: ${String(err)}`);
   }
 
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: strategy.id, items: unique, errors };
+  return { sourceId: strategy.id, items: dedupeRawContentBySourceUrl(items), errors };
 }
 
-// ─── Google Custom Search: discover scattered mentions ──
+// ─── Google Custom Search: lane-scoped discovery ─────────
 
 /**
- * Search Google Custom Search API for diaspora community mentions.
- * Finds groups that only exist as mentions on blogs, university pages,
- * directories, or community boards - no dedicated website needed.
+ * Search Google Custom Search API for lane-scoped discovery candidates.
  *
- * Requires: GOOGLE_CSE_API_KEY + GOOGLE_CSE_ID environment variables.
+ * This adapter is lane-agnostic at fetch time: planner controls whether the
+ * query set targets EVENT, COMMUNITY, or RESOURCE intent.
+ *
+ * Requires: GOOGLE_CSE_API_KEY + lane-specific CSE ID env var.
+ * Preferred lane vars: GOOGLE_CSE_COMMUNITY_ID, GOOGLE_CSE_EVENT_ID,
+ * GOOGLE_CSE_RESOURCE_ID. Legacy GOOGLE_CSE_ID is accepted as fallback.
  * Free tier: 100 queries/day. Each keyword search = 1 query.
  */
 export async function fetchGoogleSearch(
   strategy: SearchStrategy & { kind: 'keyword_search' },
   region: SearchRegion,
 ): Promise<FetchResult> {
-  const apiKey = process.env.GOOGLE_CSE_API_KEY;
-  const cseId = process.env.GOOGLE_CSE_ID;
+  const apiKey = getGoogleCseApiKey();
+  const cseId = resolveGoogleCseIdForLane(strategy.lane);
   const items: RawContent[] = [];
   const errors: string[] = [];
 
   if (!apiKey || !cseId) {
+    const laneEnv = strategy.lane ? GOOGLE_CSE_ENV_BY_LANE[strategy.lane] : 'GOOGLE_CSE_ID';
     return {
       sourceId: `${strategy.id}:${region.id}`,
       items,
-      errors: ['GOOGLE_CSE_API_KEY or GOOGLE_CSE_ID not configured'],
+      errors: [`GOOGLE_CSE_API_KEY or ${laneEnv} (fallback: GOOGLE_CSE_ID) not configured`],
     };
   }
 
@@ -537,21 +584,17 @@ export async function fetchGoogleSearch(
     }
   }
 
-  // Deduplicate by URL
-  const seen = new Set<string>();
-  const unique = items.filter((item) => {
-    if (seen.has(item.sourceUrl)) return false;
-    seen.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: unique, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }
 
 // ─── DuckDuckGo HTML Search: free web search ───────────
 
 /**
- * Search DuckDuckGo HTML endpoint for diaspora community mentions.
+ * Search DuckDuckGo HTML endpoint for lane-scoped discovery candidates.
  * Free, no API key needed. Parses the HTML lite search results page.
  *
  * Limitations:
@@ -622,13 +665,9 @@ export async function fetchDuckDuckGoSearch(
     }
   }
 
-  // Deduplicate by URL
-  const seenDdg = new Set<string>();
-  const uniqueDdg = items.filter((item) => {
-    if (seenDdg.has(item.sourceUrl)) return false;
-    seenDdg.add(item.sourceUrl);
-    return true;
-  });
-
-  return { sourceId: `${strategy.id}:${region.id}`, items: uniqueDdg, errors };
+  return {
+    sourceId: `${strategy.id}:${region.id}`,
+    items: dedupeRawContentBySourceUrl(items),
+    errors,
+  };
 }

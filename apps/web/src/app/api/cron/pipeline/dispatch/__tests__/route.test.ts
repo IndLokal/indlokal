@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/modules/pipeline/runtime-config', () => ({
+vi.mock('@/modules/pipeline/config/runtime-config', () => ({
   getRuntimeEnabledRegions: vi.fn(),
 }));
 
@@ -15,7 +15,7 @@ vi.mock('@/lib/analytics/server', () => ({
 }));
 
 import { POST } from '@/app/api/cron/pipeline/dispatch/route';
-import { getRuntimeEnabledRegions } from '@/modules/pipeline/runtime-config';
+import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-config';
 
 const SECRET = 'test-secret';
 
@@ -87,10 +87,16 @@ describe('POST /api/cron/pipeline/dispatch', () => {
     expect(body.dispatched.sort()).toEqual(['bavaria', 'berlin', 'hesse']);
     expect(fetchMock).toHaveBeenCalledTimes(3);
 
-    const urls = fetchMock.mock.calls.map((c) => c[0]);
-    expect(urls).toContain('https://example.test/api/cron/pipeline?region=berlin');
-    expect(urls).toContain('https://example.test/api/cron/pipeline?region=bavaria');
-    expect(urls).toContain('https://example.test/api/cron/pipeline?region=hesse');
+    const urls = fetchMock.mock.calls.map((c) => new URL(String(c[0])));
+    const regionsFromUrls = urls.map((url) => url.searchParams.get('region')).sort();
+    expect(regionsFromUrls).toEqual(['bavaria', 'berlin', 'hesse']);
+
+    for (const url of urls) {
+      expect(url.origin).toBe('https://example.test');
+      expect(url.pathname).toBe('/api/cron/pipeline');
+      expect(url.searchParams.get('runMode')).toBeTruthy();
+      expect(url.searchParams.get('sourceIntentProfile')).toBeTruthy();
+    }
 
     for (const call of fetchMock.mock.calls) {
       const init = call[1] as RequestInit & { headers: Record<string, string> };

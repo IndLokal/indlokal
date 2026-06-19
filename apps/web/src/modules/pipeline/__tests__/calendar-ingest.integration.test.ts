@@ -49,19 +49,23 @@ async function cleanupSyntheticCalendarCities() {
   await db.city.deleteMany({ where: { id: { in: cityIds } } });
 }
 
-vi.mock('../runtime-config', () => ({
-  getRuntimeEnabledRegions: vi.fn(async () => [
-    {
-      id: 'bw',
-      label: 'Baden-Wuerttemberg',
-      searchCenter: 'Stuttgart, Germany',
-      citySlugs: [testCitySlug],
-      enabled: true,
-    },
-  ]),
-}));
+vi.mock('../config/runtime-config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../config/runtime-config')>();
+  return {
+    ...actual,
+    getRuntimeEnabledRegions: vi.fn(async () => [
+      {
+        id: 'bw',
+        label: 'Baden-Wuerttemberg',
+        searchCenter: 'Stuttgart, Germany',
+        citySlugs: [testCitySlug],
+        enabled: true,
+      },
+    ]),
+  };
+});
 
-vi.mock('../source-plan', () => ({
+vi.mock('../planning/source-plan', () => ({
   buildPipelineSourcePlan: vi.fn(async () => ({
     notes: [],
     keywordStrategies: [],
@@ -82,71 +86,75 @@ vi.mock('../source-plan', () => ({
   })),
 }));
 
-vi.mock('../extraction', () => ({
-  resetLlmStats: vi.fn(),
-  getLlmStats: vi.fn(() => ({ calls: 0, tokensEstimate: 0 })),
-  filterRelevance: vi.fn(async (items: Array<unknown>) =>
-    items.map((_, index) => ({ index, isRelevant: true, reason: 'calendar-relevant' })),
-  ),
-  extractBatch: vi.fn(async (items: Array<{ sourceUrl: string; text: string }>) => {
-    if (extractionMode === 'duplicate-community') {
-      return [0, 1].map((index) => ({
-        type: 'COMMUNITY',
-        name: index === 0 ? 'Maharashtra Mandal Stuttgart e.V.' : 'Maharashtra Mandal Stuttgart',
-        description: 'Marathi cultural association in Stuttgart',
-        cityName: testCityName,
-        categories: ['cultural-association'],
-        languages: ['Marathi'],
-        websiteUrl: 'https://www.mmstuttgart.de/',
-        facebookUrl: null,
-        instagramUrl: null,
-        whatsappUrl: null,
-        telegramUrl: null,
-        contactEmail: null,
-        confidence: 0.94,
-        fieldConfidence: { name: 0.99, description: 0.9 },
-        sourceIndex: index,
-      }));
-    }
+vi.mock('../llm', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../llm')>();
+  return {
+    ...actual,
+    resetLlmStats: vi.fn(),
+    getLlmStats: vi.fn(() => ({ calls: 0, tokensEstimate: 0 })),
+    filterRelevance: vi.fn(async (items: Array<unknown>) =>
+      items.map((_, index) => ({ index, isRelevant: true, reason: 'calendar-relevant' })),
+    ),
+    extractBatch: vi.fn(async (items: Array<{ sourceUrl: string; text: string }>) => {
+      if (extractionMode === 'duplicate-community') {
+        return [0, 1].map((index) => ({
+          type: 'COMMUNITY',
+          name: index === 0 ? 'Maharashtra Mandal Stuttgart e.V.' : 'Maharashtra Mandal Stuttgart',
+          description: 'Marathi cultural association in Stuttgart',
+          cityName: testCityName,
+          categories: ['cultural-association'],
+          languages: ['Marathi'],
+          websiteUrl: 'https://www.mmstuttgart.de/',
+          facebookUrl: null,
+          instagramUrl: null,
+          whatsappUrl: null,
+          telegramUrl: null,
+          contactEmail: null,
+          confidence: 0.94,
+          fieldConfidence: { name: 0.99, description: 0.9 },
+          sourceIndex: index,
+        }));
+      }
 
-    const extracted: Array<Record<string, unknown>> = [];
+      const extracted: Array<Record<string, unknown>> = [];
 
-    items.forEach((item, index) => {
-      if (!item.sourceUrl.includes('#uid=')) return;
-      const title = item.text.match(/^Title:\s*(.+)$/m)?.[1] ?? 'Calendar event';
-      const date = item.text.match(/^Date:\s*(.+)$/m)?.[1] ?? '2026-06-27';
-      const venue = item.text.match(/^Venue:\s*(.+)$/m)?.[1] ?? 'Stuttgart';
+      items.forEach((item, index) => {
+        if (!item.sourceUrl.includes('#uid=')) return;
+        const title = item.text.match(/^Title:\s*(.+)$/m)?.[1] ?? 'Calendar event';
+        const date = item.text.match(/^Date:\s*(.+)$/m)?.[1] ?? '2026-06-27';
+        const venue = item.text.match(/^Venue:\s*(.+)$/m)?.[1] ?? 'Stuttgart';
 
-      extracted.push({
-        type: 'EVENT',
-        title,
-        description: 'Calendar event',
-        date,
-        time: null,
-        endDate: date,
-        endTime: null,
-        venueName: venue,
-        venueAddress: venue,
-        cityName: testCityName,
-        isOnline: false,
-        isFree: true,
-        cost: null,
-        registrationUrl: null,
-        imageUrl: null,
-        hostCommunity: 'Maharashtra Mandal Stuttgart',
-        categories: [],
-        languages: ['Marathi'],
-        confidence: 0.96,
-        fieldConfidence: { title: 0.99, date: 0.99 },
-        sourceIndex: index,
+        extracted.push({
+          type: 'EVENT',
+          title,
+          description: 'Calendar event',
+          date,
+          time: null,
+          endDate: date,
+          endTime: null,
+          venueName: venue,
+          venueAddress: venue,
+          cityName: testCityName,
+          isOnline: false,
+          isFree: true,
+          cost: null,
+          registrationUrl: null,
+          imageUrl: null,
+          hostCommunity: 'Maharashtra Mandal Stuttgart',
+          categories: [],
+          languages: ['Marathi'],
+          confidence: 0.96,
+          fieldConfidence: { title: 0.99, date: 0.99 },
+          sourceIndex: index,
+        });
       });
-    });
 
-    return extracted;
-  }),
-}));
+      return extracted;
+    }),
+  };
+});
 
-vi.mock('../review', () => ({
+vi.mock('../quality/review', () => ({
   shouldAutoApprovePipelineItem: vi.fn(async () => false),
   approvePipelineItemRecord: vi.fn(async () => undefined),
 }));
