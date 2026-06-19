@@ -55,7 +55,7 @@ export default async function AdminDashboardPage() {
             ],
           },
           {
-            title: 'Contribution Queue',
+            title: 'Content Pipeline',
             description: 'Contribution and ingestion review, scoring refresh, and merge operations',
             href: '/admin/pipeline',
             pendingCount: pendingCounts.pipeline,
