@@ -22,7 +22,7 @@ import type {
   ExtractedEvent,
   ExtractedResource,
   ResolutionProvenance,
-} from './types';
+} from '../types';
 import {
   DEDUP_QUEUE_SCAN_LIMIT,
   hasStrongEventIdentityEvidence,

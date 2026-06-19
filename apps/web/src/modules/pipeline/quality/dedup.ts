@@ -27,7 +27,7 @@
  */
 
 import { db } from '@/lib/db';
-import type { ExtractedData, ExtractedEvent } from './types';
+import type { ExtractedData, ExtractedEvent } from '../types';
 import {
   DEFAULT_EVENT_TIMEZONE,
   parseEventDateTimeInTimeZone,

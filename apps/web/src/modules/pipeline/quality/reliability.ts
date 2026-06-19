@@ -1,6 +1,6 @@
 import { db } from '@/lib/db';
 import type { PipelineEntityType, PipelineSourceType, PipelineItemStatus } from '@prisma/client';
-import type { SourceLane } from './types';
+import type { SourceLane } from '../types';
 
 export type SourceReliabilityKey = `${PipelineSourceType}:${SourceLane}`;
 

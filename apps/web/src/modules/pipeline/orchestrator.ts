@@ -51,9 +51,9 @@ import {
   applySourceConfidenceAdjustment,
   buildSourceReliabilityKey,
   getSourceReliabilityMap,
-} from './reliability';
+} from './quality/reliability';
 import { semanticCommunityDuplicateCheck } from './intelligence';
-import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './review';
+import { shouldAutoApprovePipelineItem, approvePipelineItemRecord } from './quality/review';
 import { suggestCommunityPersonaSegments } from './journey-tags';
 import { FLAGS } from '@/lib/config/flags';
 import {
@@ -71,11 +71,11 @@ import {
   normalizeComparableUrl,
   normalizeCommunityName,
   normalizeSourceUrlForDedup,
-} from './dedup';
+} from './quality/dedup';
 
 // Re-export dedup primitives that other modules and unit tests import from here
-// for backwards compatibility. The canonical definitions live in ./dedup.
-export { computeSimilarity, normalizeEventTitleForDedup } from './dedup';
+// for backwards compatibility. The canonical definitions live in ./quality/dedup.
+export { computeSimilarity, normalizeEventTitleForDedup } from './quality/dedup';
 import type {
   ExtractedData,
   ExtractedEvent,

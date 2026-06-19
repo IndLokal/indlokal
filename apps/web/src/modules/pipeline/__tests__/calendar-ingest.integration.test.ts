@@ -146,7 +146,7 @@ vi.mock('../extraction', () => ({
   }),
 }));
 
-vi.mock('../review', () => ({
+vi.mock('../quality/review', () => ({
   shouldAutoApprovePipelineItem: vi.fn(async () => false),
   approvePipelineItemRecord: vi.fn(async () => undefined),
 }));

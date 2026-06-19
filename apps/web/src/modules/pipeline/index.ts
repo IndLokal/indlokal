@@ -14,7 +14,7 @@
 export { runPipeline, computeSimilarity } from './orchestrator';
 
 // ─── Review & approval ──────────────────────────────────────────────────
-export { approvePipelineItemRecord, revertAutoApprovedPipelineItems } from './review';
+export { approvePipelineItemRecord, revertAutoApprovedPipelineItems } from './quality/review';
 
 // ─── Intelligence (cron jobs) ───────────────────────────────────────────
 export {
@@ -24,7 +24,7 @@ export {
 } from './intelligence';
 
 // ─── Reliability stats (admin UI) ───────────────────────────────────────
-export { getSourceReliabilityStats } from './reliability';
+export { getSourceReliabilityStats } from './quality/reliability';
 
 // ─── Types ──────────────────────────────────────────────────────────────
 export type {
@@ -35,4 +35,4 @@ export type {
   ExtractedData,
 } from './types';
 export type { PipelineRunScope } from './orchestrator';
-export type { SourceReliabilityStat } from './reliability';
+export type { SourceReliabilityStat } from './quality/reliability';

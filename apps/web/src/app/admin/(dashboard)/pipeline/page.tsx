@@ -15,7 +15,7 @@ import RunPipelineButton from './RunPipelineButton';
 import { getSourceReliabilityStats } from '@/modules/pipeline';
 import { getRuntimeEnabledRegions } from '@/modules/pipeline/config/runtime-config';
 import type { ExtractedEvent, ExtractedCommunity, ExtractedResource } from '@/modules/pipeline';
-import { assessResourceApprovalEligibility } from '@/modules/pipeline/review';
+import { assessResourceApprovalEligibility } from '@/modules/pipeline/quality/review';
 import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 import { parseOffsetPagination, buildOffsetPaginationMeta, buildPageHref } from '@/lib/pagination';
 import { PaginationControls } from '@/components/ui/PaginationControls';

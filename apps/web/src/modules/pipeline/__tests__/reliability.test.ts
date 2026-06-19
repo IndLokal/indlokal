@@ -3,7 +3,7 @@ import {
   applySourceConfidenceAdjustment,
   buildSourceReliabilityKey,
   buildSourceReliabilityStatsFromRows,
-} from '../reliability';
+} from '../quality/reliability';
 
 describe('buildSourceReliabilityStatsFromRows', () => {
   it('keeps separate stats per source and lane', () => {

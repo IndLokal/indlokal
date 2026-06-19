@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { assessResourceApprovalEligibility, shouldAutoApprovePipelineItem } from '../review';
+import {
+  assessResourceApprovalEligibility,
+  shouldAutoApprovePipelineItem,
+} from '../quality/review';
 
 describe('shouldAutoApprovePipelineItem', () => {
   const trustedReliability = {
