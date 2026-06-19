@@ -36,6 +36,13 @@ function fakeRegion(id: string) {
   >[number];
 }
 
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'content-type': 'application/json' },
+  });
+}
+
 describe('POST /api/cron/pipeline/dispatch', () => {
   const originalEnv = { ...process.env };
   const fetchMock = vi.fn();
@@ -78,7 +85,7 @@ describe('POST /api/cron/pipeline/dispatch', () => {
       fakeRegion('bavaria'),
       fakeRegion('hesse'),
     ]);
-    fetchMock.mockResolvedValue({ ok: true, status: 200 } as Response);
+    fetchMock.mockResolvedValue(jsonResponse({ ok: true }, 200));
 
     const res = await POST(buildReq());
     expect(res.status).toBe(200);
@@ -112,9 +119,9 @@ describe('POST /api/cron/pipeline/dispatch', () => {
     ]);
     fetchMock.mockImplementation(async (url: string) => {
       if (url.includes('region=bavaria')) {
-        return { ok: false, status: 500 } as Response;
+        return jsonResponse({ ok: false, error: 'boom' }, 500);
       }
-      return { ok: true, status: 200 } as Response;
+      return jsonResponse({ ok: true }, 200);
     });
 
     const res = await POST(buildReq());
