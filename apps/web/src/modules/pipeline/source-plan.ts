@@ -20,6 +20,8 @@ type CityGap = {
   name: string;
   communityCount: number;
   upcomingEventCount: number;
+  hasEventGap: boolean;
+  hasCommunityGap: boolean;
 };
 
 type PipelineSourcePlanLaneKey = SourceLane | 'UNKNOWN';
@@ -138,6 +140,17 @@ function expandTemplates(templates: readonly string[], cities: Array<{ name: str
 
 function getLaneKey(lane: SourceLane | undefined): PipelineSourcePlanLaneKey {
   return lane ?? 'UNKNOWN';
+}
+
+function formatGapReasonSummary(city: CityGap): string {
+  const reasons: string[] = [];
+  if (city.hasEventGap) {
+    reasons.push(`event(c${city.communityCount}/e${city.upcomingEventCount})`);
+  }
+  if (city.hasCommunityGap) {
+    reasons.push(`community(c${city.communityCount}/e${city.upcomingEventCount})`);
+  }
+  return `${city.slug}:${reasons.join('+')}`;
 }
 
 function getGapKeywordsForStrategy(
@@ -441,12 +454,14 @@ async function getLowCoverageCities(
       name: city.name,
       communityCount: city.communityCount,
       upcomingEventCount: city.upcomingEventCount,
+      hasEventGap: city.upcomingEventCount <= eventThreshold,
+      hasCommunityGap: city.communityCount <= communityThreshold,
     }))
     .slice(0, limit);
 
   // Split gap cities by gap type for lane-specific keyword expansion.
-  const eventGaps = gapCities.filter((city) => city.upcomingEventCount <= eventThreshold);
-  const communityGaps = gapCities.filter((city) => city.communityCount <= communityThreshold);
+  const eventGaps = gapCities.filter((city) => city.hasEventGap);
+  const communityGaps = gapCities.filter((city) => city.hasCommunityGap);
 
   return { eventGaps, communityGaps };
 }
@@ -494,9 +509,10 @@ export async function buildPipelineSourcePlan(
 
   const allGapCities = [...eventGaps, ...communityGaps];
   if (allGapCities.length > 0) {
-    notes.push(
-      `DB-gap cities: ${allGapCities.map((city) => `${city.slug}:c${city.communityCount}/e${city.upcomingEventCount}`).join(', ')}`,
+    const gapCitySummaries = Array.from(
+      new Map(allGapCities.map((city) => [city.slug, city])).values(),
     );
+    notes.push(`DB-gap cities: ${gapCitySummaries.map(formatGapReasonSummary).join(', ')}`);
   }
 
   const shouldRunKeywords =

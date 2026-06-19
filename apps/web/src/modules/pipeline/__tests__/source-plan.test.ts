@@ -162,6 +162,8 @@ describe('buildPipelineSourcePlan', () => {
         name: 'Karlsruhe',
         communityCount: 4,
         upcomingEventCount: 0,
+        hasEventGap: true,
+        hasCommunityGap: false,
       },
     ]);
     expect(plan.keywordStrategies).toHaveLength(1);
@@ -173,6 +175,7 @@ describe('buildPipelineSourcePlan', () => {
     expect(plan.notes).toContain(
       'skipping google-cse-keyword: required API credentials are not configured',
     );
+    expect(plan.notes).toContain('DB-gap cities: karlsruhe:event(c4/e0)');
   });
 
   it('skips DuckDuckGo unless explicitly enabled', async () => {
