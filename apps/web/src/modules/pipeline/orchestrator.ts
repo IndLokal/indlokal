@@ -1133,7 +1133,7 @@ async function resolveAndQueue(
       continue;
     }
 
-    if (item.type === 'EVENT' && sourceRaw._hintCommunityId) {
+    if (item.type === 'EVENT' && sourceRaw._hintCommunityId && !isCityPending) {
       const allowedCityIds = communityCityCoverageById.get(sourceRaw._hintCommunityId);
       if (!isCityWithinCommunityCoverage(cityId, allowedCityIds)) {
         collectSourceOutcome(sourceOutcomeMap, item, sourceRaw, 'noCity');

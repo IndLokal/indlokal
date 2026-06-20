@@ -353,3 +353,55 @@ describe('isCityWithinCommunityCoverage', () => {
     expect(isCityWithinCommunityCoverage('city-4', allowed)).toBe(false);
   });
 });
+
+describe('resolveAndQueue community coverage guard with fallback city', () => {
+  it('does not apply community coverage guard to pending fallback city events', () => {
+    const resolution = resolveEventCityDecision(
+      {
+        type: 'EVENT',
+        title: 'Ambiguous city event',
+        description: null,
+        date: '2026-09-15',
+        time: '18:00',
+        endDate: null,
+        endTime: null,
+        venueName: null,
+        venueAddress: null,
+        cityName: null,
+        isOnline: false,
+        isFree: true,
+        cost: null,
+        costType: 'FREE',
+        priceAmount: null,
+        priceCurrency: null,
+        costNote: null,
+        accessType: 'OPEN_ENTRY',
+        requiresRegistration: false,
+        requiresApproval: false,
+        entryNote: null,
+        registrationUrl: null,
+        imageUrl: null,
+        hostCommunity: 'Indian Community',
+        categories: [],
+        languages: [],
+        confidence: 0.8,
+        fieldConfidence: {},
+      },
+      {
+        sourceType: 'DB_COMMUNITY',
+        sourceUrl: 'https://example.org/events',
+        text: 'Event details',
+        fetchedAt: new Date().toISOString(),
+        _hintCommunityId: 'community-1',
+      },
+      cities,
+      cityBySlug,
+      { id: 'city-1', name: 'Stuttgart' },
+      'stuttgart',
+    );
+
+    expect(resolution.cityId).toBe('city-1');
+    expect(resolution.isCityPending).toBe(true);
+    expect(resolution.resolutionSource).toBe('fallback');
+  });
+});
