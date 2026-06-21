@@ -99,4 +99,45 @@ describe('fetchPinnedUrl', () => {
     expect(fetchedUrls.some((url) => url.includes('%22https:'))).toBe(false);
     expect(fetchedUrls.some((url) => url.includes('https:////stvgermany.de'))).toBe(false);
   });
+
+  it('skips hashed wordpress placeholder expansion links', async () => {
+    const { fetchPinnedUrl } = await import('../fetch/sources');
+
+    fetchTextWithFallbackMock.mockImplementation(async (url: string) => {
+      if (url.endsWith('/events/') || url.endsWith('/events')) {
+        return {
+          ok: true,
+          status: 200,
+          text: '<html><body><a href="/real-event/">Real event</a></body></html>',
+        };
+      }
+
+      return {
+        ok: true,
+        status: 200,
+        text: '<html><body><a href="/44011be62818c762c96aff9ca48d1a532fbdbbbd3204503ceb5c08917c82ae29category44011be62818c762c96aff9ca48d1a532fbdbbbd3204503ceb5c08917c82ae29/44011be62818c762c96aff9ca48d1a532fbdbbbd3204503ceb5c08917c82ae29postname44011be62818c762c96aff9ca48d1a532fbdbbbd3204503ceb5c08917c82ae29/">Bad hashed href</a><a href="/events/">Events</a></body></html>',
+      };
+    });
+
+    const result = await fetchPinnedUrl(
+      {
+        id: 'db-dig-karlsruhe',
+        sourceType: 'DB_COMMUNITY',
+        kind: 'pinned_url',
+        label: 'DIG Karlsruhe',
+        url: 'https://digkarlsruhe.de/',
+        enabled: true,
+      },
+      'cli',
+    );
+
+    expect(result.errors).toEqual([]);
+    expect(result.items.map((item) => item.sourceUrl)).toEqual([
+      'https://digkarlsruhe.de/',
+      'https://digkarlsruhe.de/events/',
+    ]);
+    const fetchedUrls = fetchTextWithFallbackMock.mock.calls.map((call) => call[0] as string);
+    expect(fetchedUrls.some((url) => url.includes('category44011be6'))).toBe(false);
+    expect(fetchedUrls.some((url) => url.includes('postname44011be6'))).toBe(false);
+  });
 });

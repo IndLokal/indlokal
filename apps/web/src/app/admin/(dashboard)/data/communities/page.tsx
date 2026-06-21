@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Prisma } from '@prisma/client';
-import { db } from '@/lib/db';
+import { db, resolveMetroScopeCityIds } from '@/lib/db';
 import { resolveEvidenceReadout } from '@/lib/community-trust';
 import { buildOffsetPaginationMeta, buildPageHref, parseOffsetPagination } from '@/lib/pagination';
 import {
@@ -35,7 +35,10 @@ export default async function AdminCommunitiesPage({
   const sp = await searchParams;
   const pagination = parseOffsetPagination(sp);
   const where: Prisma.CommunityWhereInput = {};
-  if (sp.city) where.city = { slug: sp.city };
+  if (sp.city) {
+    const cityIds = await resolveMetroScopeCityIds(sp.city);
+    where.cityId = { in: cityIds };
+  }
   if (sp.status && ['ACTIVE', 'INACTIVE', 'UNVERIFIED'].includes(sp.status)) {
     where.status = sp.status as 'ACTIVE' | 'INACTIVE' | 'UNVERIFIED';
   }

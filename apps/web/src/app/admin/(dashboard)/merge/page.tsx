@@ -6,7 +6,7 @@ import { AdminPage, AdminPageHeader } from '@/components/admin/page-shell';
 export const metadata = { title: 'Merge Communities - Admin' };
 
 export default async function AdminMergePage() {
-  const [communities, cities] = await Promise.all([
+  const loadCommunities = () =>
     db.community.findMany({
       where: { mergedIntoId: null },
       select: {
@@ -19,26 +19,39 @@ export default async function AdminMergePage() {
         city: { select: { name: true, slug: true } },
       },
       orderBy: [{ city: { name: 'asc' } }, { name: 'asc' }],
-    }),
+    });
+  const loadCities = () =>
     db.city.findMany({
       where: { isActive: true },
       select: { slug: true, name: true },
       orderBy: { name: 'asc' },
-    }),
-  ]);
+    });
+  const loadRecentMerges = () =>
+    db.community.findMany({
+      where: { mergedIntoId: { not: null } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        updatedAt: true,
+        mergedInto: { select: { name: true, slug: true, city: { select: { slug: true } } } },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    });
 
-  const recentMerges = await db.community.findMany({
-    where: { mergedIntoId: { not: null } },
-    select: {
-      id: true,
-      name: true,
-      slug: true,
-      updatedAt: true,
-      mergedInto: { select: { name: true, slug: true, city: { select: { slug: true } } } },
-    },
-    orderBy: { updatedAt: 'desc' },
-    take: 10,
-  });
+  let communities: Awaited<ReturnType<typeof loadCommunities>> = [];
+  let cities: Awaited<ReturnType<typeof loadCities>> = [];
+  let recentMerges: Awaited<ReturnType<typeof loadRecentMerges>> = [];
+  let loadError: string | null = null;
+
+  try {
+    [communities, cities] = await Promise.all([loadCommunities(), loadCities()]);
+    recentMerges = await loadRecentMerges();
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : String(error);
+    console.error('[admin/merge] failed to load merge data', error);
+  }
 
   type RecentMerge = (typeof recentMerges)[number];
 
@@ -50,7 +63,14 @@ export default async function AdminMergePage() {
         backHref="/admin"
       />
 
-      <MergeCommunityForm communities={communities} cities={cities} />
+      {loadError ? (
+        <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Merge data is temporarily unavailable. This usually means the database schema is out of
+          sync with this deploy. Check server logs for details.
+        </div>
+      ) : null}
+
+      {!loadError ? <MergeCommunityForm communities={communities} cities={cities} /> : null}
 
       {recentMerges.length > 0 && (
         <section className="mt-10">
@@ -65,7 +85,7 @@ export default async function AdminMergePage() {
                   <p className="font-medium">{community.name}</p>
                   <p className="text-muted mt-1">
                     Redirects to{' '}
-                    {community.mergedInto ? (
+                    {community.mergedInto && community.mergedInto.city ? (
                       <Link
                         href={`/${community.mergedInto.city.slug}/communities/${community.mergedInto.slug}`}
                         className="text-brand-600 hover:text-brand-700 hover:underline"

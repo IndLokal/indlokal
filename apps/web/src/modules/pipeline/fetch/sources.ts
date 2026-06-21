@@ -217,6 +217,10 @@ function isMalformedExpansionHref(rawHref: string, resolved: URL): boolean {
   if (/["'<>]/.test(decodedHref)) return true;
   if (/%22|%27/i.test(resolved.href)) return true;
   if (/https?:/i.test(resolved.pathname)) return true;
+  // Some WordPress themes emit corrupted hrefs where a long hash token wraps
+  // route placeholders (e.g. `<hash>category<hash>/<hash>postname<hash>/`).
+  // These URLs are synthetic/noisy and consistently timeout.
+  if (/(\b[0-9a-f]{32,})(category|postname)\1/i.test(resolved.pathname)) return true;
   return false;
 }
 
@@ -554,7 +558,24 @@ export async function fetchGoogleSearch(
       const res = await fetchTextWithFallback(url.toString(), { timeoutMs: 15_000 });
 
       if (!res.ok) {
-        errors.push(`Google CSE "${keyword}" in ${region.id}: HTTP ${res.status}`);
+        let detail = '';
+        try {
+          const parsed = JSON.parse(res.text) as {
+            error?: {
+              message?: string;
+              errors?: Array<{ reason?: string; message?: string }>;
+            };
+          };
+          const reason = parsed.error?.errors?.[0]?.reason;
+          const message = parsed.error?.errors?.[0]?.message ?? parsed.error?.message;
+          if (reason || message) {
+            detail = ` (${[reason, message].filter(Boolean).join(': ')})`;
+          }
+        } catch {
+          const snippet = res.text.slice(0, 160).replace(/\s+/g, ' ').trim();
+          if (snippet) detail = ` (${snippet})`;
+        }
+        errors.push(`Google CSE "${keyword}" in ${region.id}: HTTP ${res.status}${detail}`);
         continue;
       }
 
