@@ -477,7 +477,7 @@
       "lane": "EVENT",
       "contentScope": "community_events",
       "label": "WeDesi - Events",
-      "url": "https://wedesi.de",
+      "url": "https://wedesi.de/events",
       "enabled": true,
       "sourceIntent": "dated_activity_discovery",
       "trustTier": "trusted_directory",
