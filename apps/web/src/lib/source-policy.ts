@@ -161,6 +161,8 @@ const INSTITUTIONAL_HOST_SUFFIXES = [
   'morgen-muenchen.de',
   'aigev.org',
   'indoeuropean.eu',
+  'desiway.in',
+  'superexpat.com',
 ] as const;
 
 /** Messaging channels — contact info, not public evidence. */
@@ -205,6 +207,12 @@ const EVENT_PLATFORM_HOST_SUFFIXES = [
   'eventbrite.com',
   'eventbrite.de',
   'eventbrite.co.uk',
+  'eventim.de',
+  'rausgegangen.de',
+  'tugoz.com',
+  'desipass.com',
+  'wedesi.de',
+  'stuttgartexpats.com',
   'allevents.in',
   'ra.co',
   'dice.fm',
