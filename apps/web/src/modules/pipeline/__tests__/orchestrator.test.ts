@@ -355,6 +355,15 @@ describe('isCityWithinCommunityCoverage', () => {
 });
 
 describe('resolveAndQueue community coverage guard with fallback city', () => {
+  const cities = [
+    { id: 'city-1', slug: 'stuttgart', name: 'Stuttgart' },
+    { id: 'city-2', slug: 'karlsruhe', name: 'Karlsruhe' },
+  ];
+  const cityBySlug = new Map([
+    ['stuttgart', { id: 'city-1', name: 'Stuttgart' }],
+    ['karlsruhe', { id: 'city-2', name: 'Karlsruhe' }],
+  ]);
+
   it('does not apply community coverage guard to pending fallback city events', () => {
     const resolution = resolveEventCityDecision(
       {
