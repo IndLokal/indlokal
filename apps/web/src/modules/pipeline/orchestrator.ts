@@ -1133,6 +1133,9 @@ async function resolveAndQueue(
       continue;
     }
 
+    // Preserve CITY_PENDING_REVIEW fallback behavior: when fallback city is used
+    // (`isCityPending=true`), do not enforce hinted-community city coverage here.
+    // Those items must be queued for admin review instead of dropped as no-city.
     if (item.type === 'EVENT' && sourceRaw._hintCommunityId && !isCityPending) {
       const allowedCityIds = communityCityCoverageById.get(sourceRaw._hintCommunityId);
       if (!isCityWithinCommunityCoverage(cityId, allowedCityIds)) {
